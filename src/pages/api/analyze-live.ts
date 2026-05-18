@@ -36,22 +36,12 @@ function hashIp(ip: string) {
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex');
 }
 
-function hasFullCivilName(nome: string) {
-  return nome.trim().split(/\s+/).filter(Boolean).length >= 3;
-}
-
 export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   let body: z.infer<typeof RequestSchema>;
   try {
     body = RequestSchema.parse(await request.json());
   } catch {
     return json({ error: 'Dados invalidos' }, 400);
-  }
-
-  if (!hasFullCivilName(body.nome_candidato)) {
-    return json({
-      error: 'O diagnóstico exige o nome de registro civil completo, com nome e sobrenomes.',
-    }, 400);
   }
 
   const user = (locals as any).user;

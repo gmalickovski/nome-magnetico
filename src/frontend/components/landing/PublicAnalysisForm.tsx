@@ -287,10 +287,6 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (nome.trim().split(/\s+/).filter(Boolean).length < 3) {
-      setError('O diagnóstico exige o nome de registro civil completo, com nome e sobrenomes.');
-      return;
-    }
     if (!/^\d{2}\/\d{2}\/\d{4}$/.test(data)) { setError('Informe a data no formato DD/MM/AAAA.'); return; }
     setLoading(true);
     try {

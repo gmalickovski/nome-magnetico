@@ -166,15 +166,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const isGratuita = product_type === 'analise_gratuita' || is_free === true;
 
-  if (isGratuita && nome_completo.trim().split(/\s+/).filter(Boolean).length < 3) {
-    return new Response(JSON.stringify({
-      error: 'O diagnóstico exige o nome de registro civil completo, com nome e sobrenomes.',
-    }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
   // Verificar acesso
   if (isGratuita && !isAdmin) {
     // Análise gratuita: verificar se já foi utilizada (admin isento para fins de teste)

@@ -30,11 +30,6 @@ export default function FreeAnalysisForm() {
     e.preventDefault();
     setError('');
 
-    if (nome.trim().split(/\s+/).filter(Boolean).length < 3) {
-      setError('O diagnóstico exige o nome de registro civil completo, com nome e sobrenomes.');
-      return;
-    }
-
     if (!data) {
       setError('Informe sua data de nascimento.');
       return;
