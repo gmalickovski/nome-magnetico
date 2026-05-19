@@ -8,6 +8,7 @@ import {
   resolveHqCouponDiscount,
   validateHqAccessCoupon,
 } from '../../backend/payments/prices';
+import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import type { ProductType } from '../../backend/payments/stripe';
 import { logError } from '../../backend/utils/error-logger';
 
@@ -173,6 +174,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       value,
       description: PRODUCT_DESCRIPTIONS[product_type as ProductType],
       couponCode: coupon_code?.trim(),
+      gaClientId: getGaClientIdFromRequest(request),
     });
 
     return new Response(

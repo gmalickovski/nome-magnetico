@@ -6,6 +6,7 @@ import { notify } from '../../backend/notifications/notify';
 import { recordHqAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
+import { trackPurchaseConfirmed } from '../../backend/analytics/ga4';
 
 const PRODUCT_NAMES: Record<string, string> = {
   nome_social:  'Nome Social',
@@ -45,12 +46,13 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('OK', { status: 200 });
   }
 
-  // Formato: "nomemagnetico:userId:productType:couponCode"
+  // Formato: "nomemagnetico:userId:productType:couponCode:gaClientId"
   const parts = payment.externalReference.split(':');
-  const [saasPrefix, userId, productType, rawCouponCode] = parts.length >= 3
+  const [saasPrefix, userId, productType, rawCouponCode, rawGaClientId] = parts.length >= 3
     ? parts
-    : [null, parts[0], parts[1], null]; // compatibilidade com formato legado
+    : [null, parts[0], parts[1], null, null]; // compatibilidade com formato legado
   const couponCode = rawCouponCode ? decodeURIComponent(rawCouponCode) : null;
+  const gaClientId = rawGaClientId ? decodeURIComponent(rawGaClientId) : null;
 
   if (!userId || !productType) {
     console.error('[asaas-webhook] externalReference inválido:', payment.externalReference);
@@ -79,6 +81,17 @@ export const POST: APIRoute = async ({ request }) => {
       userId,
       productType: productType as ProductType,
     }).catch((err) => console.error('[asaas-webhook] Falha ao registrar cupom no HQ:', err));
+
+    await trackPurchaseConfirmed({
+      userId,
+      productType: productType as ProductType,
+      transactionId: `asaas_${payment.id}`,
+      amountCents: Math.round(payment.value * 100),
+      currency: 'brl',
+      paymentProvider: 'asaas',
+      couponCode,
+      gaClientId,
+    });
   } catch (err: unknown) {
     // Idempotência: unique constraint violation → pagamento já processado
     if (

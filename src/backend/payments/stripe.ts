@@ -44,6 +44,8 @@ export interface CreateCheckoutParams {
   promotionCodeId?: string;
   /** Código digitado para registrar uso no HQ após o pagamento. */
   couponCode?: string;
+  /** Client ID do GA4 capturado do cookie _ga para atribuição server-side. */
+  gaClientId?: string;
 }
 
 /**
@@ -91,6 +93,7 @@ export async function createCheckoutSession(
       product_type: params.productType,
       access_duration_days: '30',
       coupon_code: params.couponCode ?? '',
+      ga_client_id: params.gaClientId ?? '',
     },
     custom_text: PRODUCT_CUSTOM_TEXT[params.productType],
     success_url: params.successUrl,
@@ -102,6 +105,7 @@ export async function createCheckoutSession(
         user_id: params.userId,
         product_type: params.productType,
         coupon_code: params.couponCode ?? '',
+        ga_client_id: params.gaClientId ?? '',
       },
     },
   });

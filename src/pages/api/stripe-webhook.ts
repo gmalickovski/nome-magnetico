@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import type Stripe from 'stripe';
 import { constructWebhookEvent, PRODUCT_NAMES } from '../../backend/payments/stripe';
 import {
   createSubscription,
@@ -10,6 +11,7 @@ import { notify } from '../../backend/notifications/notify';
 import { recordHqAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
+import { trackPurchaseConfirmed } from '../../backend/analytics/ga4';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -19,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const body = await request.text();
 
-  let event;
+  let event: Stripe.Event;
   try {
     event = constructWebhookEvent(body, signature);
   } catch (err) {
@@ -29,7 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Tipo base para sessões de checkout
   type CheckoutSession = {
-    metadata?: { user_id?: string; product_type?: string; coupon_code?: string };
+    metadata?: { user_id?: string; product_type?: string; coupon_code?: string; ga_client_id?: string };
     id: string;
     payment_intent?: string | { id: string } | null;
     amount_total?: number | null;
@@ -72,6 +74,17 @@ export const POST: APIRoute = async ({ request }) => {
       userEmail: session.customer_email,
       productType,
     }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom no HQ:', err));
+
+    await trackPurchaseConfirmed({
+      userId,
+      productType,
+      transactionId: session.id,
+      amountCents: session.amount_total,
+      currency: session.currency,
+      paymentProvider: 'stripe',
+      couponCode: session.metadata?.coupon_code,
+      gaClientId: session.metadata?.ga_client_id,
+    });
 
     const n8nUrl = process.env.N8N_WEBHOOK_TRANSACIONAL;
     if (n8nUrl) {

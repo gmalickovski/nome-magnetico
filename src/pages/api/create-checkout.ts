@@ -8,6 +8,7 @@ import {
   resolveHqCouponDiscount,
   validateHqAccessCoupon,
 } from '../../backend/payments/prices';
+import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import { logError } from '../../backend/utils/error-logger';
 
 const schema = z.object({
@@ -163,6 +164,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       couponId,
       promotionCodeId,
       couponCode: couponCode?.trim(),
+      gaClientId: getGaClientIdFromRequest(request),
     });
 
     return new Response(

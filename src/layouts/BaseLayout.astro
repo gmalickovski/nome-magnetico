@@ -32,6 +32,7 @@ const ogImageAbsolute = ogImage.startsWith('http') ? ogImage : `https://nomemagn
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const chatwootBaseUrl = process.env.CHATWOOT_BASE_URL ?? '';
 const chatwootToken = process.env.CHATWOOT_WEBSITE_TOKEN ?? '';
+const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? 'G-HKWP55XDYY';
 ---
 
 <!DOCTYPE html>
@@ -118,10 +119,11 @@ const chatwootToken = process.env.CHATWOOT_WEBSITE_TOKEN ?? '';
       />
     </noscript>
     <!-- Google Analytics 4: carregado somente apos consentimento explicito. -->
-    <script is:inline>
+    <script is:inline define:vars={{ ga4MeasurementId }}>
       function loadGA4() {
         try {
           if (localStorage.getItem('nm-cookie-consent') !== 'all') return;
+          if (!ga4MeasurementId) return;
           if (document.getElementById('ga4-script')) return;
 
           window.dataLayer = window.dataLayer || [];
@@ -130,11 +132,11 @@ const chatwootToken = process.env.CHATWOOT_WEBSITE_TOKEN ?? '';
           const script = document.createElement('script');
           script.id = 'ga4-script';
           script.async = true;
-          script.src = 'https://www.googletagmanager.com/gtag/js?id=G-HKWP55XDYY';
+          script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ga4MeasurementId);
           document.head.appendChild(script);
 
           window.gtag('js', new Date());
-          window.gtag('config', 'G-HKWP55XDYY', { 'anonymize_ip': true });
+          window.gtag('config', ga4MeasurementId, { 'anonymize_ip': true });
         } catch {
           // Falha de storage nao deve quebrar a pagina.
         }
