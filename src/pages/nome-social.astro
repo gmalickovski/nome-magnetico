@@ -62,10 +62,10 @@ const schemaProduct = {
 
   <LandingHeader client:load />
 
-  <main class="bg-[#111111] pt-24">
+  <main class="bg-[#111111] pt-14 sm:pt-24">
 
     {/* ── HERO ── */}
-    <section class="pt-12 pb-16 relative overflow-hidden animate-on-scroll">
+    <section class="pt-8 sm:pt-12 pb-16 relative overflow-hidden animate-on-scroll">
       <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl" />
         <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
@@ -160,7 +160,7 @@ const schemaProduct = {
               desc: 'A renda aumenta mas a estabilidade financeira não vem. Imprevistos que surgem sempre no momento errado, gastos que consomem os avanços antes que você possa consolidar o que construiu.',
             },
           ].map(s => (
-            <div class="flex gap-4 bg-white/3 rounded-2xl p-6 transition-all duration-700 hover:bg-white/5 hover:-translate-y-0.5 group cursor-default">
+            <div class="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition-all duration-700 hover:-translate-y-1 hover:border-[#D4AF37]/25 hover:bg-white/[0.06] hover:shadow-[0_24px_60px_rgba(0,0,0,0.55)] group cursor-default">
               <div class="text-[#D4AF37] text-lg flex-shrink-0 mt-0.5 group-hover:text-[#f2ca50] transition-colors duration-700">{s.icone}</div>
               <div>
                 <h3 class="text-[#e5e2e1] font-semibold text-sm mb-2">{s.titulo}</h3>
