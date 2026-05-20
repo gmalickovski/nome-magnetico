@@ -233,6 +233,8 @@ function GlossaryInfoLink({ href, label, className = '' }: { href: string; label
   return (
     <a
       href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-current text-[10px] font-bold leading-none opacity-70 transition hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current/30 ${className}`}
       title={`Ver no glossário: ${label}`}
       aria-label={`Ver no glossário: ${label}`}
@@ -453,6 +455,17 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
       { key: 'destino', label: 'TRIÂNGULO DE DESTINO', active: false, bloqueio: null, hasBloqueio: bloqueiosDestino.length > 0, glossaryLink: '/glossario/triangulo-de-destino' },
     ];
 
+    const [bloqueioMetric, ...topMetricCards] = metricCards;
+    const trianguloLabelCurto: Record<string, string> = {
+      vida: 'Vida',
+      pessoal: 'Pessoal',
+      social: 'Social',
+      destino: 'Destino',
+    };
+    const triangulosComBloqueio = triangleCards
+      .filter(t => t.hasBloqueio)
+      .map(t => trianguloLabelCurto[t.key] ?? t.label);
+
     return (
       <div className="space-y-5">
 
@@ -487,8 +500,8 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
         </div>
 
         {/* ── ② 4 Métricas ──────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {metricCards.map((m) => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {topMetricCards.map((m) => (
             <div key={m.label} className={`${m.colorBg} ${m.colorBorder} border rounded-2xl p-4 flex flex-col items-center text-center gap-2`}>
               <div className={`${m.colorIcon} rounded-xl p-2 flex items-center justify-center`}>
                 {m.icon}
@@ -500,6 +513,49 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
               <p className={`font-cinzel text-xl font-bold leading-tight ${m.colorValue}`}>{m.value}</p>
             </div>
           ))}
+
+          <div className={`${bloqueioMetric.colorBg} ${bloqueioMetric.colorBorder} border rounded-2xl p-4 sm:col-span-3`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+                <div className={`${bloqueioMetric.colorIcon} rounded-xl p-2 flex flex-shrink-0 items-center justify-center`}>
+                  {bloqueioMetric.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${bloqueioMetric.colorText}`}>
+                      {bloqueioMetric.label}
+                    </p>
+                    <GlossaryInfoLink href={bloqueioMetric.glossaryLink} label={bloqueioMetric.label} className={bloqueioMetric.colorText} />
+                  </div>
+                  <p className={`font-cinzel text-2xl font-bold leading-tight ${bloqueioMetric.colorValue}`}>
+                    {bloqueioMetric.value}
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full sm:w-auto sm:min-w-[280px]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                  Triângulos com bloqueio
+                </p>
+                {triangulosComBloqueio.length > 0 ? (
+                  <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap">
+                    {triangulosComBloqueio.map(triangulo => (
+                      <span
+                        key={triangulo}
+                        className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300 ring-1 ring-red-500/20"
+                      >
+                        {triangulo}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-1 text-xs font-semibold text-emerald-400">
+                    Nenhum triângulo com bloqueio
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ── ③ Status da Geometria de Nascimento ───────────────────────────── */}
