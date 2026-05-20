@@ -274,15 +274,15 @@ const styles = StyleSheet.create({
 // ── Custo da Inércia por bloqueio ─────────────────────────────────────────────
 
 const CUSTO_INERCIA_MAP: Record<string, string> = {
-  '111': 'Enquanto o bloqueio 111 permanecer ativo no seu nome, cada tentativa de iniciar algo novo será travada por hesitação crônica, procrastinação e medo de exposição — como se uma barreira invisível bloqueasse o primeiro passo antes mesmo de você tentar.',
-  '222': 'O bloqueio 222 sabota parcerias e associações: acordos que não se concretizam, colaborações que viram conflito, relacionamentos que perdem a harmonia no momento mais decisivo. A cooperação que deveria ser natural vira campo minado.',
-  '333': 'Com o bloqueio 333 ativo, sua voz, criatividade e capacidade de expressão ficam comprometidas. Oportunidades de visibilidade escorregam porque a comunicação trava exatamente quando mais importa — na apresentação, na negociação, no palco.',
-  '444': 'O bloqueio 444 fragmenta a base: projetos que não chegam ao fim, instabilidade financeira persistente, dificuldade de construir algo sólido. É como tentar erguer uma estrutura sobre areia — o esforço é real, o resultado some.',
-  '555': 'O bloqueio 555 cria turbulência contínua: mudanças que chegam sem avisar, impulsividade que destrói o que foi construído, uma inquietação que impede a colheita. A liberdade desejada se converte em prisão de caos.',
-  '666': 'Com o bloqueio 666, harmonia em casa e nos relacionamentos parece sempre fora de alcance. Responsabilidades que sufocam, desequilíbrio entre dar e receber, e a sensação crônica de que você carrega mais do que deveria — sozinho.',
-  '777': 'O bloqueio 777 isola espiritualmente: respostas que não chegam, conexões que ficam superficiais, uma desconexão com o propósito maior que corrói a motivação silenciosamente. A busca pelo sentido vira labirinto.',
-  '888': 'Você pode se esforçar 10x mais, mas enquanto o bloqueio 888 permanecer ativo, o dinheiro continuará saindo por entre seus dedos — a luta pela abundância está codificada no nome. O esforço financeiro dobra e o resultado não acompanha.',
-  '999': 'O bloqueio 999 perpetua ciclos de perda e sacrifício: relações que terminam em abandono, projetos que chegam ao fim prematuramente, e uma dificuldade crônica de fechar capítulos com paz. O fim sempre chega antes da hora.',
+  '111': 'O bloqueio 111 atua gerando uma barreira invisível na sua capacidade de iniciativa. Ele cria hesitação onde deveria haver ação, fazendo com que excelentes oportunidades de liderança e recomeços sejam adiados. A energia de começo (1) entra em curto-circuito, dissipando-se em dúvidas antes do primeiro passo.',
+  '222': 'O bloqueio 222 cria ruídos na esfera das associações e parcerias. Ele atua desestabilizando o equilíbrio entre o dar e o receber, fazendo com que colaborações naturais frequentemente encontrem atritos ou mal-entendidos. A diplomacia e a sintonia fina com o outro acabam exigindo muito mais esforço do que o normal.',
+  '333': 'A dinâmica do 333 interfere diretamente na sua autoexpressão e visibilidade. Ele atua como um "filtro opaco", fazendo com que a sua verdadeira voz e criatividade não sejam compreendidas com clareza pelas pessoas ao redor, travando a fluidez da comunicação nos momentos mais importantes.',
+  '444': 'O bloqueio 444 atua desestabilizando a solidez das suas bases. Ele fragmenta a energia de concretização, fazendo com que projetos exijam um esforço desproporcional para se manterem de pé. Ele impacta a estruturação da vida financeira e a materialização fluida do seu trabalho.',
+  '555': 'A presença do 555 cria um estado de turbulência vibracional. Em vez da liberdade construtiva, ele atrai mudanças imprevistas e instabilidade frequente. A energia de adaptação fica sobrecarregada, dificultando o estabelecimento de rotinas saudáveis e a colheita tranquila dos seus esforços.',
+  '666': 'O bloqueio 666 atua sobre o eixo das responsabilidades afetivas e familiares. Ele cria uma distorção onde você frequentemente se vê carregando fardos emocionais maiores do que o necessário. A harmonia nos relacionamentos íntimos passa a exigir um desgaste energético constante para ser mantida.',
+  '777': 'A dinâmica do 777 cria uma névoa na sua intuição e conexão espiritual. Em vez da clareza profunda e compreensão de si, ele atua gerando dispersão mental, melancolia sem motivo aparente e uma busca incessante por respostas que parecem sempre escapar no último momento.',
+  '888': 'O bloqueio 888 atua diretamente no seu canal de prosperidade e abundância. Ele cria uma resistência no fluxo de retorno material: o esforço empregado no trabalho não reflete proporcionalmente na colheita financeira, gerando ciclos exaustivos de altos e baixos.',
+  '999': 'O bloqueio 999 atua travando os encerramentos naturais da vida. Ele dificulta o desapego, fazendo com que você permaneça muito tempo ligado a situações, pessoas ou padrões que já não servem mais. A energia de conclusão demora a acontecer, prolongando ciclos exaustivos.',
 };
 
 // ── Textos Expandidos (Apenas para Nome Social) ───────────────────────────────
@@ -370,7 +370,12 @@ export function BloqueiosBlock({ bloqueios, showAntidoto = true, hideSaude = fal
     <View style={styles.sectionBlock}>
       {bloqueios.map((b, i) => {
         const displayTitle = isNomeSocial ? b.titulo.replace(new RegExp(`\\s*\\(${b.codigo}\\)\\s*`), '') : b.titulo;
-        const displayDesc = (isNomeSocial && BLOQUEIOS_EXPANDIDOS[b.codigo]) ? BLOQUEIOS_EXPANDIDOS[b.codigo] : b.descricao;
+        let displayDesc = (isNomeSocial && BLOQUEIOS_EXPANDIDOS[b.codigo]) ? BLOQUEIOS_EXPANDIDOS[b.codigo] : b.descricao;
+        
+        // Remove a frase padrão do antídoto se presente, para evitar redundância com a Bridge Page
+        if (displayDesc.includes('O antídoto é')) {
+          displayDesc = displayDesc.split('O antídoto é')[0].trim();
+        }
         
         return (
         <View key={i} style={[styles.bloqueioRow, ...(i === bloqueios.length - 1 ? [{ marginBottom: 0 }] : [])]} wrap={false}>
@@ -402,12 +407,9 @@ export function BloqueiosBlock({ bloqueios, showAntidoto = true, hideSaude = fal
           ) : null}
           {!showAntidoto && (
             <View style={styles.custoInerciaBox}>
-              <Text style={styles.custoInerciaTitle}>⚠ Custo da Inércia</Text>
+              <Text style={styles.custoInerciaTitle}>Dinâmica do Bloqueio (Como Atua)</Text>
               <Text style={styles.custoInerciaText}>
-                {CUSTO_INERCIA_MAP[b.codigo] ?? 'Esta frequência continua sendo emitida pelo nome 24 horas por dia — apenas a harmonização vibracional do Nome Social pode neutralizá-la.'}
-              </Text>
-              <Text style={[styles.custoInerciaText, { marginTop: 6, fontStyle: 'italic', color: '#991B1B' }]}>
-                Esta frequência é emitida 24h/dia — apenas a harmonização vibracional pode neutralizá-la.
+                {CUSTO_INERCIA_MAP[b.codigo] ?? 'Esta frequência atua de forma contínua no seu campo vibracional diário. Embora os efeitos possam ser aliviados com ações práticas, a sua resolução definitiva requer o alinhamento completo da assinatura.'}
               </Text>
             </View>
           )}

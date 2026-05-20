@@ -448,9 +448,20 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
   let analiseFormatado = analysis.analise_texto
     ? formatAnalysisText(analysis.analise_texto)
     : null;
+  
+  let escudoTexto: string | null = null;
+  
   if (analiseFormatado) {
     analiseFormatado = analiseFormatado.replace(/^#{1,2}\s+[^\n]*\n+/, '');
     analiseFormatado = analiseFormatado.replace(/#{1,6}\s+[^\n]*Manual de Assinatura[^\n]*\n[\s\S]*?(?=#{1,6}\s|\s*$)/i, '');
+    
+    // Extrai o Escudo Magnético (se a IA gerou) e remove do texto principal para não duplicar
+    const escudoRegex = /#{1,3}\s*(?:🛡️\s*)?Escudo Magnético[\s\S]*?(?=\n#{1,3}\s|$)/i;
+    const matchEscudo = analiseFormatado.match(escudoRegex);
+    if (matchEscudo) {
+      escudoTexto = matchEscudo[0].replace(/#{1,3}\s*(?:🛡️\s*)?Escudo Magnético(?: de 72 Horas)?/i, '').trim();
+      analiseFormatado = analiseFormatado.replace(escudoRegex, '');
+    }
   }
   const conclusaoTexto = analiseFormatado ? extractConclusao(analiseFormatado) : null;
 
@@ -637,17 +648,17 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
         <PDFFooter />
       </Page>
 
-      {/* ── BLOCO: OS 4 TRIÂNGULOS ─────────────────────────────────────────── */}
-      {(tVida || tPessoal || tSocial || tDestino) && (
+      {/* ── BLOCO: O TRIÂNGULO DA VIDA ─────────────────────────────────────────── */}
+      {tVida && (
         <Page size="A4" style={styles.page}>
-          <PDFPageHeader subtitle={`${nomeParaExibir} — Os 4 Triângulos Numerológicos`} />
+          <PDFPageHeader subtitle={`${nomeParaExibir} — O Triângulo da Vida`} />
 
           <View style={{ marginTop: 20, marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>O que os 4 Triângulos Dizem Sobre Você</Text>
+            <Text style={styles.hugeTitle}>A Estrutura Fundamental do Nome</Text>
           </View>
 
           <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10 }}>
-            O nome é analisado sob quatro perspectivas distintas — cada pirâmide usa um modificador diferente sobre as mesmas letras, revelando uma dimensão específica da vida.
+            O nome é analisado sob quatro perspectivas distintas. A mais essencial delas é o Triângulo da Vida, calculado a partir do valor puro de cada letra.
           </Text>
 
           {/* O Que São os Arcanos */}
@@ -714,129 +725,68 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
                         {vidaBloqueios.length} Bloqueio{vidaBloqueios.length > 1 ? 's' : ''} Detectado{vidaBloqueios.length > 1 ? 's' : ''} no Triângulo da Vida
                       </Text>
                     )}
-                    <BloqueiosBlock bloqueios={vidaBloqueios} hideTriangulos={true} />
+                    <BloqueiosBlock bloqueios={vidaBloqueios} hideTriangulos={true} showAntidoto={false} />
                   </View>
                 );
               })()}
             </View>
           )}
 
-          {/* ─── TRIÂNGULO PESSOAL ───────────────────────────────────────────── */}
-          {tPessoal && (
-            <View>
-              <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo Pessoal
-              </Text>
-              <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10 }}>
-                Modificado pelo dia de nascimento — acessa reações emocionais, padrões afetivos e relacionamentos íntimos. É o que opera por baixo da superfície em momentos de conflito ou vulnerabilidade.
-              </Text>
-              {/* Pirâmide bloqueada com cadeado — wrap={false} mantém grade+cadeado na mesma página */}
-              <View wrap={false} style={{ position: 'relative' }}>
-                <TrianguloPiramideInline data={tPessoal} label="TRIÂNGULO PESSOAL" cellSize={triCellSize} letras={letrasNome} hideValues={true} />
-                <PadlockOverlay />
-              </View>
-              {/* Caixa de conteúdo bloqueado — Pessoal */}
-              {(() => {
-                const pessoalBloqueios = bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'));
-                return (
-                  <View wrap={false} style={{ marginTop: 10, borderWidth: 1.5, borderColor: '#7C3AED', borderRadius: 8, backgroundColor: '#F5F3FF', padding: 12, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 7, color: '#7C3AED', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: BODY_FONT_BOLD, marginBottom: 5 }}>
-                      Disponível Apenas na Versão Completa
-                    </Text>
-                    <Text style={{ fontFamily: TITLE_FONT, fontSize: 12, color: '#5b21b6', textAlign: 'center', marginBottom: 5 }}>
-                      Arcano Regente Pessoal + Diagnóstico dos Bloqueios
-                    </Text>
-                    {pessoalBloqueios.length > 0 && (
-                      <Text style={{ fontSize: 9, color: '#DC2626', fontFamily: BODY_FONT_BOLD, marginBottom: 5, textAlign: 'center' }}>
-                        {pessoalBloqueios.length} bloqueio{pessoalBloqueios.length !== 1 ? 's' : ''} detectado{pessoalBloqueios.length !== 1 ? 's' : ''} — detalhes bloqueados
-                      </Text>
-                    )}
-                    <Text style={{ fontSize: 8, color: GRAY, textAlign: 'center' }}>
-                      Arcano Regente, vibração dominante e custo de cada bloqueio nesta dimensão estão disponíveis no Nome Social.
-                    </Text>
-                  </View>
-                );
-              })()}
-            </View>
-          )}
+          <PDFFooter />
+        </Page>
+      )}
 
-          {/* ─── TRIÂNGULO SOCIAL ────────────────────────────────────────────── */}
-          {tSocial && (
-            <View>
-              <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo Social
-              </Text>
-              <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10 }}>
-                Modificado pelo mês de nascimento — revela o magnetismo que a assinatura gera externamente e as oportunidades que atrai ou repele. Governa visibilidade, reconhecimento e facilidade de acesso.
-              </Text>
-              {/* Pirâmide bloqueada com cadeado — wrap={false} mantém grade+cadeado na mesma página */}
-              <View wrap={false} style={{ position: 'relative' }}>
-                <TrianguloPiramideInline data={tSocial} label="TRIÂNGULO SOCIAL" cellSize={triCellSize} letras={letrasNome} hideValues={true} />
-                <PadlockOverlay />
-              </View>
-              {/* Caixa de conteúdo bloqueado — Social */}
-              {(() => {
-                const socialBloqueios = bloqueios.filter((b: any) => b.triangulos?.includes('social'));
-                return (
-                  <View wrap={false} style={{ marginTop: 10, borderWidth: 1.5, borderColor: '#059669', borderRadius: 8, backgroundColor: '#F0FDF4', padding: 12, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 7, color: '#059669', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: BODY_FONT_BOLD, marginBottom: 5 }}>
-                      Disponível Apenas na Versão Completa
-                    </Text>
-                    <Text style={{ fontFamily: TITLE_FONT, fontSize: 12, color: '#166534', textAlign: 'center', marginBottom: 5 }}>
-                      Arcano Regente Social + Diagnóstico dos Bloqueios
-                    </Text>
-                    {socialBloqueios.length > 0 && (
-                      <Text style={{ fontSize: 9, color: '#DC2626', fontFamily: BODY_FONT_BOLD, marginBottom: 5, textAlign: 'center' }}>
-                        {socialBloqueios.length} bloqueio{socialBloqueios.length !== 1 ? 's' : ''} detectado{socialBloqueios.length !== 1 ? 's' : ''} — detalhes bloqueados
-                      </Text>
-                    )}
-                    <Text style={{ fontSize: 8, color: GRAY, textAlign: 'center' }}>
-                      O Triângulo Social governa visibilidade e magnetismo público. Arcano Regente e bloqueios disponíveis no Nome Social.
-                    </Text>
-                  </View>
-                );
-              })()}
-            </View>
-          )}
+      {/* ── PÁGINA: O MAPA COMPLETO OCULTO ───────────────────────────────── */}
+      {(tPessoal || tSocial || tDestino) && (
+        <Page size="A4" style={styles.page}>
+          <PDFPageHeader subtitle={`${nomeParaExibir} — O Mapa Completo`} />
 
-          {/* ─── TRIÂNGULO DO DESTINO ────────────────────────────────────────── */}
-          {tDestino && (
-            <View>
-              <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo do Destino
-              </Text>
-              <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10 }}>
-                O mais revelador dos quatro. Combina letra + dia/mês de nascimento — mapeia os resultados que tendem a se materializar: missão concreta, frutos do esforço, legado construído pelo nome.
-              </Text>
-              {/* Pirâmide bloqueada com cadeado — wrap={false} mantém grade+cadeado na mesma página */}
-              <View wrap={false} style={{ position: 'relative' }}>
-                <TrianguloPiramideInline data={tDestino} label="TRIÂNGULO DO DESTINO" cellSize={triCellSize} letras={letrasNome} hideValues={true} />
-                <PadlockOverlay />
-              </View>
-              {/* Caixa de conteúdo bloqueado — Destino */}
-              {(() => {
-                const destinoBloqueios = bloqueios.filter((b: any) => b.triangulos?.includes('destino'));
-                return (
-                  <View wrap={false} style={{ marginTop: 10, borderWidth: 1.5, borderColor: '#D97706', borderRadius: 8, backgroundColor: '#FFFBEB', padding: 12, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 7, color: '#D97706', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: BODY_FONT_BOLD, marginBottom: 5 }}>
-                      Disponível Apenas na Versão Completa
-                    </Text>
-                    <Text style={{ fontFamily: TITLE_FONT, fontSize: 12, color: '#92400E', textAlign: 'center', marginBottom: 5 }}>
-                      Arcano Regente do Destino + Diagnóstico dos Bloqueios
-                    </Text>
-                    {destinoBloqueios.length > 0 && (
-                      <Text style={{ fontSize: 9, color: '#DC2626', fontFamily: BODY_FONT_BOLD, marginBottom: 5, textAlign: 'center' }}>
-                        {destinoBloqueios.length} bloqueio{destinoBloqueios.length !== 1 ? 's' : ''} detectado{destinoBloqueios.length !== 1 ? 's' : ''} — detalhes bloqueados
-                      </Text>
-                    )}
-                    <Text style={{ fontSize: 8, color: GRAY, textAlign: 'center' }}>
-                      O Triângulo do Destino mapeia os resultados que se materializam e o legado do nome. É o mais revelador dos quatro — disponível no Nome Social.
-                    </Text>
-                  </View>
-                );
-              })()}
+          <View style={{ marginTop: 20, marginBottom: 14 }}>
+            <Text style={styles.hugeTitle}>O Mapa Completo Oculto</Text>
+          </View>
+
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 24, textAlign: 'justify' }}>
+            Além do Triângulo da Vida, o seu nome possui mais três dimensões estruturais que governam áreas cruciais da sua jornada. Quando bloqueadas, essas dimensões criam ciclos repetitivos de resistência que não respondem à força de vontade ou mudança de comportamento.
+          </Text>
+
+          {/* Box Pessoal */}
+          <View wrap={false} style={{ backgroundColor: '#F5F3FF', borderRadius: 10, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.2)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <View style={{ width: 4, height: 16, backgroundColor: '#7C3AED', borderRadius: 2 }} />
+              <Text style={{ fontFamily: TITLE_FONT, fontSize: 14, color: '#5B21B6' }}>O Triângulo Pessoal</Text>
             </View>
-          )}
+            <Text style={{ fontSize: 9, color: '#4C1D95', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Relacionamentos Afetivos e Reações Internas</Text>
+            <Text style={{ fontSize: 10, color: '#4B5563', lineHeight: 1.6 }}>
+              Acessa os padrões que operam na vida íntima e nos relacionamentos afetivos. Bloqueios nesta dimensão criam desgaste emocional crônico, dificuldades de conexão verdadeira e padrões de autossabotagem quando você está mais vulnerável.
+            </Text>
+            <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 10, fontStyle: 'italic' }}>* Diagnóstico completo dos bloqueios pessoais disponível na Harmonização.</Text>
+          </View>
+
+          {/* Box Social */}
+          <View wrap={false} style={{ backgroundColor: '#F0FDF4', borderRadius: 10, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(5, 150, 105, 0.2)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <View style={{ width: 4, height: 16, backgroundColor: '#059669', borderRadius: 2 }} />
+              <Text style={{ fontFamily: TITLE_FONT, fontSize: 14, color: '#065F46' }}>O Triângulo Social</Text>
+            </View>
+            <Text style={{ fontSize: 9, color: '#064E3B', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Carreira, Magnetismo e Oportunidades</Text>
+            <Text style={{ fontSize: 10, color: '#4B5563', lineHeight: 1.6 }}>
+              Mapeia a percepção externa e o magnetismo do nome. Bloqueios nesta dimensão fazem com que o mundo não enxergue seu verdadeiro valor, fechando portas profissionais e criando estagnação na carreira mesmo com muito esforço.
+            </Text>
+            <Text style={{ fontSize: 8, color: '#059669', marginTop: 10, fontStyle: 'italic' }}>* Diagnóstico completo dos bloqueios sociais disponível na Harmonização.</Text>
+          </View>
+
+          {/* Box Destino */}
+          <View wrap={false} style={{ backgroundColor: '#FFFBEB', borderRadius: 10, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(217, 119, 6, 0.2)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <View style={{ width: 4, height: 16, backgroundColor: '#D97706', borderRadius: 2 }} />
+              <Text style={{ fontFamily: TITLE_FONT, fontSize: 14, color: '#92400E' }}>O Triângulo do Destino</Text>
+            </View>
+            <Text style={{ fontSize: 9, color: '#78350F', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Legado Construído e Resultados Concretos</Text>
+            <Text style={{ fontSize: 10, color: '#4B5563', lineHeight: 1.6 }}>
+              A dimensão mais reveladora. Combina a essência do nome com o seu dia e mês de nascimento para projetar os resultados materiais e o legado final. Bloqueios aqui dissipam sua energia, impedindo que você consolide suas maiores conquistas.
+            </Text>
+            <Text style={{ fontSize: 8, color: '#D97706', marginTop: 10, fontStyle: 'italic' }}>* Diagnóstico completo dos bloqueios de destino disponível na Harmonização.</Text>
+          </View>
 
           <PDFFooter />
         </Page>
@@ -949,6 +899,58 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
             Nenhum desses padrões responde a esforço ou mudança de comportamento — a origem está na frequência que a assinatura emite. A harmonização reorganiza as letras do nome para eliminar os bloqueios, minimizar os débitos variáveis e introduzir as vibrações ausentes. O resultado é uma assinatura que trabalha a favor do Destino, não contra.
           </Text>
         </View>
+
+        <PDFFooter />
+      </Page>
+
+      {/* ── PÁGINA: A PEQUENA VITÓRIA (BRIDGE PAGE) ────────────────────── */}
+      <Page size="A4" style={styles.darkPage}>
+        <PDFPageHeader subtitle={`${nomeParaExibir} — O Primeiro Passo`} />
+
+        <View style={{ marginTop: 28, marginBottom: 18 }}>
+          <Text style={[styles.hugeTitle, { fontSize: 22, color: GOLD }]}>Ação Imediata: O Escudo Provisório</Text>
+        </View>
+
+        <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
+          Antes de mergulhar na Harmonização completa do seu nome, existe um passo imediato que você pode tomar hoje. Ao aplicar as orientações para amenizar o bloqueio primário da sua assinatura atual, você ergue um "Escudo Provisório" que ajuda a estancar a perda de energia vital.
+        </Text>
+
+        {bloqueios.length > 0 ? (
+          <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderRadius: 10, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: '#f2ca50', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>O Que Fazer Agora?</Text>
+            <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
+              Sua primeira ação prática deve ser neutralizar a repetição primária do {bloqueios[0].titulo}.
+            </Text>
+            {(escudoTexto || bloqueios[0].descricao.includes('O antídoto é')) && (
+              <View style={{ backgroundColor: 'rgba(242, 202, 80, 0.1)', padding: 12, borderRadius: 6, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: '#f2ca50' }}>
+                <Text style={{ fontSize: 10, color: '#f2ca50', fontFamily: BODY_FONT_BOLD, marginBottom: 4 }}>Ação Recomendada (Próximas 72h):</Text>
+                <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.5 }}>
+                  {escudoTexto 
+                    ? escudoTexto 
+                    : `O antídoto imediato para começar a destravar essa energia é ${bloqueios[0].descricao.split('O antídoto é')[1]?.trim().toLowerCase() || 'focar em neutralizar essa sequência na sua assinatura diária.'}`
+                  }
+                </Text>
+              </View>
+            )}
+            <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
+              Nota: Este é apenas um curativo vibracional provisório para contenção de danos. A única forma de eliminar este bloqueio de forma definitiva é através da Harmonização de Assinatura, que construirá um escudo protetor permanente no seu destino.
+            </Text>
+          </View>
+        ) : (
+          <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderRadius: 10, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: '#f2ca50', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>O Que Fazer Agora?</Text>
+            <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
+              Sua primeira ação prática deve ser alinhar sua assinatura para evitar futuras resistências vibracionais. Este pequeno ajuste já é capaz de otimizar a sua energia nas próximas 72 horas.
+            </Text>
+            <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
+              Nota: Este é apenas um passo preventivo. Para o alinhamento completo do seu propósito, a análise profunda de todos os triângulos é indispensável.
+            </Text>
+          </View>
+        )}
+
+        <Text style={{ fontSize: 10, color: '#C9C5C0', lineHeight: 1.7, textAlign: 'center', marginTop: 'auto', marginBottom: 20 }}>
+          Descubra na próxima página como iniciar a sua Harmonização Completa e transformar definitivamente a vibração que rege os seus resultados.
+        </Text>
 
         <PDFFooter />
       </Page>

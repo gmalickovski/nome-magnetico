@@ -230,6 +230,16 @@ Para CADA bloqueio, escreva um subitem "**Antídoto Prático:**" com 3 ações c
   : `**Celebre a ausência de bloqueios:** Escreva 2 parágrafos sobre o que significa ter os 4 triângulos limpos. Que tipo de fluidez, resiliência e facilidade isso cria na vida de ${primeiroNome}.`
 }
 
+${isFreeAnalysis && bloqueios.length > 0 ? `
+---
+
+## 🛡️ Escudo Provisório de 72 Horas
+
+Baseado no bloqueio primário detectado (**${bloqueios[0].titulo}**), escreva um "Escudo Provisório" como se fosse um conselho prático e direto para o usuário (máximo 2 parágrafos).
+Significado numerológico deste bloqueio: "${bloqueios[0].descricao}".
+Seja específico e detalhado! Baseando-se no significado acima, cite as áreas práticas da vida que estão sendo impactadas.
+Em seguida, dê o Antídoto: ações específicas de contenção de danos para as próximas 72 horas baseadas neste bloqueio.
+O objetivo é fornecer uma verdadeira orientação terapêutica paliativa de alto valor, baseada na numerologia cabalística, explicando por que essa atitude segura a "perda de energia" temporariamente. Lembre-o de que a solução definitiva exige a Harmonização do Nome.` : ''}
 ---
 
 ## ⚖️ 4. O Peso do Passado — Karma, Lições e Tendências

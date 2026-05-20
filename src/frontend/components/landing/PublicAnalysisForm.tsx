@@ -47,21 +47,6 @@ function isValidEmail(value: string) {
 
 // ── Mapas de dados estáticos ───────────────────────────────────────────────────
 
-/** Vibração dominante de cada número de Destino */
-const DESTINO_VIBRACAO: Record<number, string> = {
-  1: 'liderança e pioneirismo',
-  2: 'cooperação e diplomacia',
-  3: 'criatividade e expressão',
-  4: 'estrutura e solidez material',
-  5: 'liberdade e transformação',
-  6: 'harmonia e responsabilidade',
-  7: 'conhecimento e sabedoria interior',
-  8: 'poder material e abundância',
-  9: 'compaixão e encerramento de ciclos',
-  11: 'inspiração e missão elevada',
-  22: 'construção de grandes obras',
-};
-
 /** Missão profunda de cada número de Destino */
 const DESTINO_MISSAO: Record<number, string> = {
   1: 'Você veio para liderar e abrir caminhos. Sua missão é ser pioneiro — iniciar o que outros ainda não tiveram coragem de começar. Independência, originalidade e força de vontade são seus maiores recursos.',
@@ -75,21 +60,6 @@ const DESTINO_MISSAO: Record<number, string> = {
   9: 'Você veio para servir e encerrar ciclos. Sua missão é elevar a humanidade — com compaixão, generosidade e a sabedoria de quem já viveu muito. Seu legado é maior do que você imagina.',
   11: 'Você veio para iluminar. Como número mestre, sua missão é ser canal de inspiração — sua sensibilidade elevada e sua intuição são instrumentos para transformar vidas ao seu redor.',
   22: 'Você veio para construir o que parecia impossível. Como número mestre, sua missão é materializar grandes visões que beneficiam muitas pessoas — com visão prática e escala real.',
-};
-
-/** Talento natural de cada número de Expressão */
-const EXPRESSAO_TALENTO: Record<number, string> = {
-  1: 'iniciativa e liderança',
-  2: 'cooperação e sensibilidade',
-  3: 'criatividade e comunicação',
-  4: 'organização e precisão',
-  5: 'versatilidade e adaptação',
-  6: 'harmonia e cuidado',
-  7: 'análise e introspecção',
-  8: 'poder de realização',
-  9: 'visão humanitária',
-  11: 'intuição e inspiração',
-  22: 'manifestação concreta',
 };
 
 /** Como cada número de Expressão se manifesta na vida */
@@ -259,6 +229,19 @@ function IconZap() {
   );
 }
 
+function GlossaryInfoLink({ href, label, className = '' }: { href: string; label: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-current text-[10px] font-bold leading-none opacity-70 transition hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current/30 ${className}`}
+      title={`Ver no glossário: ${label}`}
+      aria-label={`Ver no glossário: ${label}`}
+    >
+      !
+    </a>
+  );
+}
+
 function IconAlert() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -398,12 +381,9 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
 
     const destino = numeros?.destino;
     const expressao = numeros?.expressao;
-    const destinoVib = DESTINO_VIBRACAO[destino] ?? 'propósito e vocação';
     const destinoMissao = DESTINO_MISSAO[destino] ?? null;
-    const expressaoTal = EXPRESSAO_TALENTO[expressao] ?? 'expressão única';
     const expressaoComo = EXPRESSAO_COMO[expressao] ?? null;
 
-    const primeiroNome = nome.trim().split(' ')[0] ?? nome.trim();
     const bloqueioV = bloqueioVida(bloqueios ?? []);
     const sc = getScoreConfig(total);
 
@@ -414,18 +394,18 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
 
     const metricCards = [
       {
-        label: 'BLOQUEIOS',
+        label: 'BLOQUEIOS ENERGÉTICOS',
         value: nb > 0 ? `${nb} ${nb === 1 ? 'Ativo' : 'Ativos'}` : '0 Ativos',
         icon: <IconShield />,
         colorBg: nb > 0 ? 'bg-red-500/10' : 'bg-white/[0.03]',
-        // 0 bloqueios → borda verde; tem bloqueios → borda vermelha
         colorBorder: nb > 0 ? 'border-red-500/25' : 'border-emerald-500/30',
         colorIcon: nb > 0 ? 'text-red-400 bg-red-500/15' : 'text-emerald-400 bg-emerald-500/10',
         colorText: nb > 0 ? 'text-red-400' : 'text-emerald-400',
         colorValue: nb > 0 ? 'text-white' : 'text-gray-300',
+        glossaryLink: '/glossario/bloqueio-energetico',
       },
       {
-        label: 'DÉBITOS',
+        label: 'DÉBITOS KÁRMICOS',
         value: nDebitos > 0 ? `${nDebitos} ${nDebitos === 1 ? 'Crítico' : 'Críticos'}` : '0 Críticos',
         icon: <IconClock />,
         colorBg: nDebitos > 0 ? 'bg-amber-500/10' : 'bg-white/5',
@@ -433,9 +413,10 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
         colorIcon: nDebitos > 0 ? 'text-amber-400 bg-amber-500/15' : 'text-gray-500 bg-white/5',
         colorText: nDebitos > 0 ? 'text-amber-400' : 'text-gray-500',
         colorValue: nDebitos > 0 ? 'text-white' : 'text-gray-400',
+        glossaryLink: '/glossario/debitos-karmicos',
       },
       {
-        label: 'TENDÊNCIAS',
+        label: 'TENDÊNCIAS OCULTAS',
         value: nTendencias > 0 ? `${nTendencias} Oculta${nTendencias !== 1 ? 's' : ''}` : '0 Ocultas',
         icon: <IconEyeOff />,
         colorBg: nTendencias > 0 ? 'bg-sky-500/10' : 'bg-white/5',
@@ -443,9 +424,10 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
         colorIcon: nTendencias > 0 ? 'text-sky-400 bg-sky-500/15' : 'text-gray-500 bg-white/5',
         colorText: nTendencias > 0 ? 'text-sky-400' : 'text-gray-500',
         colorValue: nTendencias > 0 ? 'text-white' : 'text-gray-400',
+        glossaryLink: '/glossario/tendencias-ocultas',
       },
       {
-        label: 'LIÇÕES',
+        label: 'LIÇÕES KÁRMICAS',
         value: nLicoes > 0 ? `${nLicoes} Pendente${nLicoes !== 1 ? 's' : ''}` : '0 Pendentes',
         icon: <IconInfo />,
         colorBg: 'bg-white/5',
@@ -453,6 +435,7 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
         colorIcon: nLicoes > 0 ? 'text-indigo-400 bg-indigo-500/15' : 'text-gray-500 bg-white/5',
         colorText: nLicoes > 0 ? 'text-indigo-400' : 'text-gray-500',
         colorValue: nLicoes > 0 ? 'text-white' : 'text-gray-400',
+        glossaryLink: '/glossario/licoes-karmicas',
       },
     ];
 
@@ -463,10 +446,11 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
         active: true,
         bloqueio: bloqueioV,
         hasBloqueio: !!bloqueioV,
+        glossaryLink: '/glossario/triangulo-da-vida',
       },
-      { key: 'pessoal', label: 'TRIÂNGULO PESSOAL',    active: false, bloqueio: null, hasBloqueio: bloqueiosPessoal.length > 0 },
-      { key: 'social',  label: 'TRIÂNGULO SOCIAL',     active: false, bloqueio: null, hasBloqueio: bloqueiosSocial.length > 0  },
-      { key: 'destino', label: 'TRIÂNGULO DE DESTINO', active: false, bloqueio: null, hasBloqueio: bloqueiosDestino.length > 0 },
+      { key: 'pessoal', label: 'TRIÂNGULO PESSOAL',    active: false, bloqueio: null, hasBloqueio: bloqueiosPessoal.length > 0, glossaryLink: '/glossario/triangulo-pessoal' },
+      { key: 'social',  label: 'TRIÂNGULO SOCIAL',     active: false, bloqueio: null, hasBloqueio: bloqueiosSocial.length > 0,  glossaryLink: '/glossario/triangulo-social' },
+      { key: 'destino', label: 'TRIÂNGULO DE DESTINO', active: false, bloqueio: null, hasBloqueio: bloqueiosDestino.length > 0, glossaryLink: '/glossario/triangulo-de-destino' },
     ];
 
     return (
@@ -509,7 +493,10 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
               <div className={`${m.colorIcon} rounded-xl p-2 flex items-center justify-center`}>
                 {m.icon}
               </div>
-              <p className={`text-[10px] font-bold uppercase tracking-widest ${m.colorText}`}>{m.label}</p>
+              <div className="flex items-center gap-1.5 justify-center">
+                <p className={`text-[10px] font-bold uppercase tracking-widest ${m.colorText}`}>{m.label}</p>
+                <GlossaryInfoLink href={m.glossaryLink} label={m.label} className={m.colorText} />
+              </div>
               <p className={`font-cinzel text-xl font-bold leading-tight ${m.colorValue}`}>{m.value}</p>
             </div>
           ))}
@@ -540,7 +527,10 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
                       <IconActivity />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm tracking-wide">{t.label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-bold text-sm tracking-wide">{t.label}</p>
+                        <GlossaryInfoLink href={t.glossaryLink} label={t.label} className={temBloqueio ? 'text-red-400' : 'text-emerald-400'} />
+                      </div>
                       {temBloqueio ? (
                         <>
                           <p className="text-red-400 text-xs mt-0.5 font-semibold">
@@ -583,9 +573,12 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
                     <IconActivity />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-bold text-sm tracking-wide ${temBloqueioOculto ? 'text-gray-300' : 'text-gray-400'}`}>
-                      {t.label}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className={`font-bold text-sm tracking-wide ${temBloqueioOculto ? 'text-gray-300' : 'text-gray-400'}`}>
+                        {t.label}
+                      </p>
+                      <GlossaryInfoLink href={t.glossaryLink} label={t.label} className={temBloqueioOculto ? 'text-red-400/70' : 'text-[#2DD4BF]/80'} />
+                    </div>
                     <p className={`text-xs mt-0.5 ${temBloqueioOculto ? 'text-red-400/60' : 'text-gray-600'}`}>
                       {temBloqueioOculto ? 'Bloqueio detectado — acesso bloqueado' : 'Dado Oculto (Apenas no PDF)'}
                     </p>
@@ -621,12 +614,15 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
             </div>
 
             {/* Número grande + label */}
-            <div className="flex items-end gap-4 mb-4">
+            <div className="flex items-center gap-4 mb-4">
               <p className="font-cinzel font-bold text-8xl text-[#D4AF37] leading-none drop-shadow-sm">
                 {destino ?? '—'}
               </p>
-              <div className="mb-1.5">
-                <p className="text-[#D4AF37]/50 text-[10px] font-bold uppercase tracking-widest leading-none mb-1">Número de Destino</p>
+              <div className="min-w-0">
+                <div className="mb-1 flex items-center gap-2">
+                  <p className="text-[#D4AF37]/50 text-[10px] font-bold uppercase tracking-widest leading-none">Número de Destino</p>
+                  <GlossaryInfoLink href="/glossario/numero-de-destino" label="Número de Destino" className="text-[#D4AF37]" />
+                </div>
                 <p className="text-white/50 text-xs">Sua Estrada</p>
               </div>
             </div>
@@ -642,21 +638,21 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
           {/* ── EXPRESSÃO — secundário, reflexo do nome ── */}
           <div className="sm:col-span-2 bg-white/[0.06] border border-white/18 rounded-2xl p-5 flex flex-col justify-between">
             <div>
-              {/* Header */}
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="bg-[#D4AF37]/12 text-[#D4AF37]/70 rounded-xl p-2 flex items-center justify-center flex-shrink-0">
-                  <IconZap />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Número de Expressão</p>
+              <div className="mb-4 flex items-center gap-4">
+                <p className="font-cinzel font-bold text-6xl text-white/85 leading-none">
+                  {expressao ?? '—'}
+                </p>
+                <div className="min-w-0">
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="bg-[#D4AF37]/12 text-[#D4AF37]/70 rounded-lg p-1.5 flex items-center justify-center flex-shrink-0">
+                      <IconZap />
+                    </div>
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest leading-tight">Número de Expressão</p>
+                    <GlossaryInfoLink href="/glossario/numero-de-expressao" label="Número de Expressão" className="text-[#D4AF37]" />
+                  </div>
                   <p className="text-gray-500 text-xs">Sua Voz no Mundo</p>
                 </div>
               </div>
-
-              {/* Número */}
-              <p className="font-cinzel font-bold text-6xl text-white/85 leading-none mb-4">
-                {expressao ?? '—'}
-              </p>
 
               {/* Como o número se expressa */}
               {expressaoComo && (

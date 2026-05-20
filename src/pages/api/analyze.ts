@@ -161,21 +161,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
     .eq('id', user.id)
     .single();
 
+
   const gender = profile?.gender || 'Neutro';
   const isAdmin = profile?.role === 'admin';
 
   const isGratuita = product_type === 'analise_gratuita' || is_free === true;
 
   // Verificar acesso
-  if (isGratuita && !isAdmin) {
-    // Análise gratuita: verificar se já foi utilizada (admin isento para fins de teste)
+  if (isGratuita) {
+    // Análise gratuita: verificar se já foi utilizada (admin e dev isentos para fins de teste)
     const jaUsou = await hasUsedFreeAnalysis(user.id);
-    if (jaUsou) {
+    const isDev = import.meta.env.DEV;
+    
+    if (jaUsou && !isAdmin && !isDev) {
       return new Response(JSON.stringify({ error: 'Análise gratuita já utilizada. Acesse "Minhas Análises" para ver seu relatório.' }), {
         status: 403, headers: { 'Content-Type': 'application/json' },
       });
     }
-  } else if (!isGratuita) {
+  } else {
     // Análise paga: verificar subscription
     const hasAccess = await hasActiveSubscription(user.id, product_type as ProductType);
     if (!hasAccess && !isAdmin) {
