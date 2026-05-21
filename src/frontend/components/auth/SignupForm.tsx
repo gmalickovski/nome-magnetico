@@ -81,8 +81,8 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
       ? `/auth/login?produto=${produto}`
       : '/auth/login';
     return (
-      <div className="rounded-2xl border border-slate-700/80 bg-slate-900/70 p-8 text-center shadow-2xl shadow-black/50 backdrop-blur">
-        <h2 className="font-cinzel text-2xl font-bold text-white mb-3">
+      <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#111111]/85 p-8 text-center shadow-[0_24px_70px_rgba(0,0,0,0.48)] backdrop-blur-xl">
+        <h2 className="font-cinzel text-2xl font-bold text-[#e5e2e1] mb-3">
           Verifique seu Email
         </h2>
         <p className="text-gray-400 mb-6">
@@ -98,8 +98,8 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
   }
 
   return (
-    <div className="rounded-2xl border border-slate-700/80 bg-slate-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur">
-      <h2 className="font-cinzel text-2xl font-bold text-white text-center mb-6">
+    <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#111111]/85 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.48)] backdrop-blur-xl">
+      <h2 className="font-cinzel text-2xl font-bold text-[#e5e2e1] text-center mb-6">
         Criar Conta
       </h2>
 
@@ -137,7 +137,7 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
           </div>
         )}
 
-        <Button type="submit" loading={loading} className="w-full bg-[#D4AF37] text-slate-950 hover:bg-[#f2ca50]">
+        <Button type="submit" loading={loading} className="w-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/20">
           Criar Conta
         </Button>
       </form>
@@ -150,7 +150,7 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
             ? `/auth/login?produto=${produto}`
             : '/auth/login'
         }
-        className="mt-4 flex w-full items-center justify-center rounded-xl border border-[#D4AF37]/60 bg-slate-950/40 px-5 py-3 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37]/10"
+        className="mt-4 flex w-full items-center justify-center rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-5 py-3 text-sm font-bold text-[#D4AF37] transition hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50]"
       >
         Já tenho uma conta
       </a>
