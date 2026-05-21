@@ -145,6 +145,8 @@ const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? 'G-HKWP55XDYY'
       loadGA4();
       window.addEventListener('consentGranted', loadGA4);
     </script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2915950435320918" crossorigin="anonymous"></script>
     <slot name="head" />
   </head>
   <body class:list={['bg-[#1a1a1a] text-gray-200 min-h-screen font-inter antialiased', { 'has-bottom-nav': hasBottomNav }]}>

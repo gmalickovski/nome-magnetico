@@ -110,7 +110,7 @@ export function MobileTOC({ items }: Props) {
         }}
         className={`
           lg:hidden fixed right-4 z-40
-          flex items-center justify-center w-10 h-10 rounded-full
+          flex items-center justify-center w-10 h-10 rounded-full p-1
           bg-[#1a1a1a] border border-[#D4AF37]/30
           shadow-[0_8px_24px_rgba(0,0,0,0.6)]
           active:scale-95
@@ -118,7 +118,7 @@ export function MobileTOC({ items }: Props) {
           ${dimmed ? 'opacity-20' : 'opacity-80'}
         `}
       >
-        <svg className="w-4 h-4 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-6 h-6 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
             d="M4 6h16M4 10h10M4 14h12M4 18h8" />
         </svg>

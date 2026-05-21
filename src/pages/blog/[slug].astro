@@ -149,7 +149,7 @@ const categorySlug = post.category ?? null;
 
   <BlogHeader client:load activeCategory={categorySlug ?? ''} />
 
-  <main class="blog-main min-h-screen pt-[72px] pb-12 md:pb-20">
+  <main class="blog-main min-h-screen pt-[120px] sm:pt-[124px] pb-12 md:pb-20">
     <div class="max-w-6xl mx-auto px-4">
 
       {/* ── LAYOUT: conteúdo + sidebar (quando há TOC) ── */}
@@ -417,5 +417,49 @@ const categorySlug = post.category ?? null;
   .toc-arrow-down { animation: toc-arrow-down 2.4s ease-in-out infinite; }
 
   /* ── Ancora links: compensa o header fixo (72px) + respiro (18px) ── */
-  html { scroll-padding-top: 90px; }
+  .blog-main article > nav[aria-label] {
+    position: fixed;
+    top: 72px;
+    left: 1rem;
+    right: 1rem;
+    z-index: 40;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 1rem;
+    background: rgba(17, 17, 17, 0.88);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.30);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    color: #d1d5db;
+    font-size: 0.875rem;
+    font-weight: 600;
+    gap: 0.5rem;
+    margin-bottom: 0;
+  }
+
+  .blog-main article > nav[aria-label] > span {
+    color: rgba(212, 175, 55, 0.55);
+  }
+
+  [data-blog-theme="light"] .blog-main article > nav[aria-label] {
+    background: rgba(250, 249, 247, 0.92);
+    border-color: rgba(146, 112, 10, 0.20);
+    box-shadow: 0 12px 30px rgba(28, 25, 23, 0.10);
+    color: #57534e;
+  }
+
+  [data-blog-theme="light"] .blog-main article > nav[aria-label] > span {
+    color: rgba(146, 112, 10, 0.58);
+  }
+
+  @media (min-width: 640px) {
+    .blog-main article > nav[aria-label] {
+      font-size: 0.9375rem;
+      gap: 0.625rem;
+    }
+  }
+
+  html { scroll-padding-top: 140px; }
 </style>
