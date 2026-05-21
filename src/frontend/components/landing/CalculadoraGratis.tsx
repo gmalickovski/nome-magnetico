@@ -170,8 +170,8 @@ export function CalculadoraGratis() {
             className="block w-full text-center bg-[#D4AF37] text-[#1A1A1A] font-bold py-4 hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-[#D4AF37]/25 text-base"
           >
             {temBloqueios
-              ? 'Desbloquear Minha Análise Completa →'
-              : 'Ver Minha Análise Numerológica Completa →'
+              ? 'Desbloquear Minha Análise Completa'
+              : 'Ver Minha Análise Numerológica Completa'
             }
           </a>
           <div className="bg-[#D4AF37]/8 text-center py-3 px-4">

@@ -116,7 +116,7 @@ export function ProductsSection() {
               </div>
 
               <p className="mt-6 text-xs text-gray-600 group-hover:text-[#D4AF37] transition-colors duration-300">
-                Ver detalhes →
+                Ver detalhes
               </p>
             </a>
           ))}

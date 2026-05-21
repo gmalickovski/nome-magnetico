@@ -789,7 +789,7 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
             onClick={() => { setResult(null); setError(''); setNome(''); setData(''); setEmail(''); }}
             className="w-full text-center text-gray-600 text-xs hover:text-gray-400 transition-colors py-1"
           >
-            ← Analisar outro nome
+            Analisar outro nome
           </button>
         )}
 
@@ -945,7 +945,7 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
                 Analisando…
               </span>
             ) : (
-              'Ver Prévia Gratuita →'
+              'Ver Prévia Gratuita'
             )}
           </button>
         </div>

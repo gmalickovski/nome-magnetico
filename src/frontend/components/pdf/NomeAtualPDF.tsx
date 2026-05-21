@@ -1061,7 +1061,7 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
           <Link src="https://nomemagnetico.com.br/nome-social" style={{ textDecoration: 'none', marginBottom: 8 }}>
             <View style={{ backgroundColor: '#10B981', paddingVertical: 18, paddingHorizontal: 44, borderRadius: 32 }}>
               <Text style={{ color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 15, textAlign: 'center' }}>
-                Harmonizar Minha Assinatura Agora →
+                Harmonizar Minha Assinatura Agora
               </Text>
             </View>
           </Link>

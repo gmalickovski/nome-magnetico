@@ -67,19 +67,19 @@ const schemaProduct = {
     {/* Hero */}
     <section class="pt-8 sm:pt-12 pb-16 relative overflow-hidden animate-on-scroll">
       <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div class="absolute top-1/3 left-1/3 w-80 h-80 bg-[#D4AF37]/5 rounded-full blur-3xl" />
+        <div class="absolute top-1/3 left-1/3 w-80 h-80 bg-[#4A7FC1]/5 rounded-full blur-3xl" />
         <div class="absolute bottom-1/3 right-1/3 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl" />
       </div>
       <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
-        <div class="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5 mb-6">
-          <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
-          <span class="text-[#D4AF37] text-sm font-medium">Branding Vibracional · {getPrice('nome_empresa').formatted}</span>
-          <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
+        <div class="inline-flex items-center gap-2 bg-[#4A7FC1]/10 border border-[#4A7FC1]/30 rounded-full px-4 py-1.5 mb-6">
+          <span class="text-[#4A7FC1] text-xs" aria-hidden="true">✦</span>
+          <span class="text-[#4A7FC1] text-sm font-medium">Branding Vibracional · {getPrice('nome_empresa').formatted}</span>
+          <span class="text-[#4A7FC1] text-xs" aria-hidden="true">✦</span>
         </div>
 
         <h1 class="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
           O Nome da Sua Empresa Está<br/>
-          <span style="background: linear-gradient(135deg, #D4AF37, #E8C84A, #B8960E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+          <span style="background: linear-gradient(135deg, #4A7FC1, #7FB3E8, #2E5D97); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
             Alinhado com o Seu Destino?
           </span>
         </h1>
@@ -94,13 +94,13 @@ const schemaProduct = {
           isLoggedIn={!!user}
           priceInfo={getPrice('nome_empresa')}
           promotion={promotion}
-          label="Analisar o Nome da Minha Empresa →"
-          className="inline-block bg-[#D4AF37] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#D4AF37]/20 cursor-pointer"
+          label="Analisar o Nome da Minha Empresa"
+          className="inline-block bg-[#4A7FC1] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#7FB3E8] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#4A7FC1]/20 cursor-pointer"
         />
         <div class="flex items-center justify-center gap-6 mt-5 flex-wrap">
           <p class="text-gray-600 text-sm">Pagamento único · {getPrice('nome_empresa').formatted} · Acesso imediato</p>
           <div class="flex items-center gap-1.5">
-            <span class="text-[#D4AF37] text-xs">✦</span>
+            <span class="text-[#4A7FC1] text-xs">✦</span>
             <p class="text-gray-600 text-sm">Garantia de 7 dias</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ const schemaProduct = {
     <section class="py-16 bg-[#0d0d0d] animate-on-scroll">
       <div class="max-w-4xl mx-auto px-4">
         <div class="text-center mb-12">
-          <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">O Risco Invisível</p>
+          <p class="text-[#4A7FC1] text-xs font-medium tracking-widest uppercase mb-3">O Risco Invisível</p>
           <h2 class="font-cinzel text-2xl md:text-3xl font-bold text-white mb-4">
             O Custo de um Nome Empresarial Desalinhado
           </h2>
@@ -137,10 +137,11 @@ const schemaProduct = {
               desc: 'Sócios que entram em atrito, equipes que se fragmentam, culturas que não se consolidam. O nome desalinhado com o Destino do fundador cria turbulência na estrutura.',
             },
           ].map(s => (
-            <div class="flex flex-col gap-3 bg-white/3 rounded-2xl p-6 transition-all duration-700 hover:bg-white/5 hover:-translate-y-0.5 group cursor-default">
-              <div class="text-[#D4AF37] text-lg group-hover:text-[#f2ca50] transition-colors duration-700">{s.icone}</div>
-              <h3 class="text-[#e5e2e1] font-semibold text-sm">{s.titulo}</h3>
-              <p class="text-gray-500 text-sm leading-relaxed">{s.desc}</p>
+            <div class="group relative flex min-h-[230px] flex-col gap-4 overflow-hidden rounded-2xl bg-[linear-gradient(145deg,rgba(74,127,193,0.16),rgba(255,255,255,0.045)_48%,rgba(0,0,0,0.16))] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 ring-[#4A7FC1]/22 transition-all duration-700 hover:-translate-y-1 hover:bg-[linear-gradient(145deg,rgba(74,127,193,0.22),rgba(255,255,255,0.06)_48%,rgba(0,0,0,0.12))] hover:shadow-[0_28px_90px_rgba(20,54,96,0.35)] hover:ring-[#7FB3E8]/45 cursor-default">
+              <div class="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#7FB3E8]/45 to-transparent" />
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#4A7FC1]/14 text-[#7FB3E8] shadow-[inset_0_0_24px_rgba(127,179,232,0.12)] transition-all duration-700 group-hover:bg-[#4A7FC1]/24 group-hover:text-[#E2F0FF]">{s.icone}</div>
+              <h3 class="font-cinzel text-[#e5e2e1] font-bold text-base leading-snug">{s.titulo}</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -160,10 +161,11 @@ const schemaProduct = {
             { icon: '⬡', t: 'Data de Fundação', d: 'A data de fundação cria o "Destino da empresa". O nome ideal ressoa com essa energia específica.' },
             { icon: '⚠', t: 'Alerta do 8', d: 'Tendência Oculta do número 8 no nome indica excesso de materialismo — pode atrair conflitos por dinheiro e poder.' },
           ].map(c => (
-            <div class="bg-white/3 rounded-2xl p-6 text-center transition-all duration-700 ease-out hover:bg-white/6 hover:shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:-translate-y-1 group cursor-default">
-              <div class="text-[#D4AF37] text-3xl mb-3 group-hover:text-[#f2ca50] transition-colors duration-700">{c.icon}</div>
+            <div class="group relative overflow-hidden rounded-2xl bg-[linear-gradient(160deg,rgba(255,255,255,0.07),rgba(74,127,193,0.09)_54%,rgba(0,0,0,0.18))] p-6 text-center shadow-[0_20px_60px_rgba(0,0,0,0.42)] ring-1 ring-white/8 transition-all duration-700 ease-out hover:-translate-y-1 hover:shadow-[0_26px_80px_rgba(20,54,96,0.30)] hover:ring-[#4A7FC1]/36 cursor-default">
+              <div class="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#4A7FC1]/40 to-transparent" />
+              <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#4A7FC1]/14 text-2xl text-[#7FB3E8] shadow-[inset_0_0_24px_rgba(127,179,232,0.10)] transition-all duration-700 group-hover:bg-[#4A7FC1]/24 group-hover:text-[#E2F0FF]">{c.icon}</div>
               <h3 class="text-[#e5e2e1] font-semibold text-sm mb-2">{c.t}</h3>
-              <p class="text-gray-500 text-sm leading-relaxed">{c.d}</p>
+              <p class="text-gray-400 text-sm leading-relaxed">{c.d}</p>
             </div>
           ))}
         </div>
@@ -174,7 +176,7 @@ const schemaProduct = {
     <section class="py-16 bg-[#111111] animate-on-scroll">
       <div class="max-w-5xl mx-auto px-4">
         <div class="text-center mb-12">
-          <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Entregável</p>
+          <p class="text-[#4A7FC1] text-xs font-medium tracking-widest uppercase mb-3">Entregável</p>
           <h2 class="font-cinzel text-2xl md:text-3xl font-bold text-white mb-4">O Que Você Recebe</h2>
           <p class="text-gray-500 text-sm max-w-xl mx-auto">Análise estratégica completa com relatório PDF e plano de ação para posicionar sua marca.</p>
         </div>
@@ -187,10 +189,11 @@ const schemaProduct = {
             { icon: '📆', titulo: 'Calendário Ativo Anual', desc: 'Os melhores períodos do ano para lançamentos, negociações, contratações e expansão do negócio.' },
             { icon: '✦', titulo: 'Relatório Estratégico PDF', desc: 'Documento completo com análise de todos os candidatos, riscos ocultos e recomendação final.' },
           ].map(c => (
-            <div class="bg-white/3 rounded-2xl p-5 transition-all duration-700 ease-out hover:bg-white/6 hover:shadow-[0_20px_50px_rgba(0,0,0,0.6)] hover:-translate-y-1 group cursor-default">
-              <div class="text-[#D4AF37] text-2xl mb-3 group-hover:text-[#f2ca50] transition-colors duration-700">{c.icon}</div>
+            <div class="group relative overflow-hidden rounded-2xl bg-[linear-gradient(150deg,rgba(74,127,193,0.12),rgba(255,255,255,0.05)_46%,rgba(0,0,0,0.18))] p-5 shadow-[0_18px_55px_rgba(0,0,0,0.38)] ring-1 ring-[#4A7FC1]/18 transition-all duration-700 ease-out hover:-translate-y-1 hover:shadow-[0_24px_75px_rgba(20,54,96,0.30)] hover:ring-[#7FB3E8]/38 cursor-default">
+              <div class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#4A7FC1]/10 blur-2xl transition-opacity duration-700 group-hover:opacity-80" />
+              <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#4A7FC1]/14 text-xl text-[#7FB3E8] transition-all duration-700 group-hover:bg-[#4A7FC1]/24 group-hover:text-[#E2F0FF]">{c.icon}</div>
               <h3 class="text-[#e5e2e1] font-semibold text-sm mb-2">{c.titulo}</h3>
-              <p class="text-gray-500 text-xs leading-relaxed">{c.desc}</p>
+              <p class="text-gray-400 text-xs leading-relaxed">{c.desc}</p>
             </div>
           ))}
         </div>
@@ -201,7 +204,7 @@ const schemaProduct = {
     <section class="py-16 bg-[#0d0d0d] animate-on-scroll">
       <div class="max-w-4xl mx-auto px-4">
         <div class="text-center mb-12">
-          <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Marcas que Escolheram com Estratégia</p>
+          <p class="text-[#4A7FC1] text-xs font-medium tracking-widest uppercase mb-3">Marcas que Escolheram com Estratégia</p>
           <h2 class="font-cinzel text-2xl md:text-3xl font-bold text-white mb-4">O Que Dizem os Fundadores</h2>
         </div>
         <div class="grid md:grid-cols-2 gap-5">
@@ -221,8 +224,8 @@ const schemaProduct = {
           ].map(d => (
             <div class="bg-white/3 rounded-2xl p-6 flex flex-col gap-4 transition-all duration-700 hover:bg-white/5 hover:-translate-y-0.5">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0">
-                  <span class="font-cinzel font-bold text-[#D4AF37]">{d.inicial}</span>
+                <div class="w-10 h-10 rounded-full bg-[#4A7FC1]/20 flex items-center justify-center flex-shrink-0">
+                  <span class="font-cinzel font-bold text-[#4A7FC1]">{d.inicial}</span>
                 </div>
                 <div>
                   <p class="text-[#e5e2e1] text-sm font-medium">{d.nome}</p>
@@ -230,7 +233,7 @@ const schemaProduct = {
                 </div>
                 <div class="ml-auto flex gap-0.5">
                   {[1,2,3,4,5].map(() => (
-                    <span class="text-[#D4AF37] text-xs">★</span>
+                    <span class="text-[#4A7FC1] text-xs">★</span>
                   ))}
                 </div>
               </div>
@@ -249,7 +252,7 @@ const schemaProduct = {
     {/* ── GARANTIA ── */}
     <section class="py-12 bg-[#111111] animate-on-scroll">
       <div class="max-w-2xl mx-auto px-4">
-        <div class="bg-[#D4AF37]/8 border border-[#D4AF37]/25 rounded-2xl p-8 text-center">
+        <div class="bg-[#4A7FC1]/8 border border-[#4A7FC1]/25 rounded-2xl p-8 text-center">
           <div class="text-4xl mb-4">🛡</div>
           <h3 class="font-cinzel text-xl font-bold text-white mb-3">Garantia de 7 Dias</h3>
           <p class="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
@@ -262,9 +265,9 @@ const schemaProduct = {
     {/* CTA final */}
     <section class="py-20 bg-[#0d0d0d] animate-on-scroll">
       <div class="max-w-xl mx-auto px-4 text-center">
-        <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Investimento</p>
+        <p class="text-[#4A7FC1] text-xs font-medium tracking-widest uppercase mb-3">Investimento</p>
         <h2 class="font-cinzel text-3xl font-bold text-white mb-4">Posicione Sua Marca com Precisão</h2>
-        <div class="font-cinzel text-5xl font-bold text-[#D4AF37] mb-2">{getPrice('nome_empresa').formatted}</div>
+        <div class="font-cinzel text-5xl font-bold text-[#4A7FC1] mb-2">{getPrice('nome_empresa').formatted}</div>
         <p class="text-gray-500 text-sm mb-8">Pagamento único · Acesso por 30 dias · Resultados na hora</p>
         <LandingCheckout
           client:load
@@ -272,8 +275,8 @@ const schemaProduct = {
           isLoggedIn={!!user}
           priceInfo={getPrice('nome_empresa')}
           promotion={promotion}
-          label="Analisar o Nome da Minha Empresa →"
-          className="block w-full text-center bg-[#D4AF37] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#D4AF37]/20 cursor-pointer"
+          label="Analisar o Nome da Minha Empresa"
+          className="block w-full text-center bg-[#4A7FC1] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#7FB3E8] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#4A7FC1]/20 cursor-pointer"
         />
         <div class="flex items-center justify-center gap-6 mt-5 flex-wrap">
           <p class="text-gray-600 text-xs">🔒 Pagamento seguro via Stripe</p>

@@ -356,7 +356,7 @@ export function PricingSection({
                   href={plan.href}
                   className="block text-center text-gray-600 hover:text-[#D4AF37] text-xs transition-colors"
                 >
-                  Ver todos os detalhes →
+                  Ver todos os detalhes
                 </a>
               </div>
             );
@@ -372,7 +372,7 @@ export function PricingSection({
             href="/precos"
             className="inline-block text-[#D4AF37]/70 hover:text-[#D4AF37] text-xs transition-colors underline underline-offset-2"
           >
-            Comparar planos e ver todos os detalhes →
+            Comparar planos e ver todos os detalhes
           </a>
         </div>
       </div>

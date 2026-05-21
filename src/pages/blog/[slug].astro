@@ -324,7 +324,7 @@ const categorySlug = post.category ?? null;
                     href={PRODUTO_HREF[post.produto_relacionado] ?? '/precos'}
                     class="inline-block bg-[#D4AF37] text-[#1A1A1A] font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-lg shadow-[#D4AF37]/20 text-sm"
                   >
-                    Ver Análise de {PRODUTO_LABEL[post.produto_relacionado] ?? 'Nome'} →
+                    Ver Análise de {PRODUTO_LABEL[post.produto_relacionado] ?? 'Nome'}
                   </a>
                   <a
                     href="/analise-gratuita"
@@ -357,7 +357,6 @@ const categorySlug = post.category ?? null;
                     </h3>
                     <div class="flex items-center justify-between text-gray-700 text-xs mt-auto pt-3 border-t border-white/5">
                       <span>{formatDateShort(rel.published_at)}</span>
-                      <span class="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors">→</span>
                     </div>
                   </a>
                 ))}
@@ -368,7 +367,7 @@ const categorySlug = post.category ?? null;
           {/* Navegação final */}
           <div class="mt-10 sm:mt-12 pt-5 sm:pt-6 border-t border-white/8 flex items-center justify-between">
             <a href="/blog" class="text-gray-600 hover:text-[#D4AF37] text-xs sm:text-sm transition-colors">
-              ← Voltar para o Blog
+              Voltar para o Blog
             </a>
             <div class="flex items-center gap-3">
               <ShareButton

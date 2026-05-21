@@ -91,7 +91,7 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
           Clique no link para ativar sua conta.
         </p>
         <a href={loginUrl} className="text-[#D4AF37] hover:underline text-sm">
-          Após confirmar, clique aqui para fazer login →
+          Após confirmar, clique aqui para fazer login
         </a>
       </div>
     );

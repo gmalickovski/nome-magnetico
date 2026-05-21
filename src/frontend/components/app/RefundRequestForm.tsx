@@ -50,7 +50,7 @@ export function RefundRequestForm({ subscriptions }: Props) {
           href="/app/suporte"
           className="inline-block mt-6 text-[#D4AF37] hover:text-[#f2ca50] text-sm transition-colors"
         >
-          Abrir chamado de suporte →
+          Abrir chamado de suporte
         </a>
       </div>
     );
@@ -70,7 +70,7 @@ export function RefundRequestForm({ subscriptions }: Props) {
           href="/comprar"
           className="inline-block mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors"
         >
-          Voltar para produtos →
+          Voltar para produtos
         </a>
       </div>
     );

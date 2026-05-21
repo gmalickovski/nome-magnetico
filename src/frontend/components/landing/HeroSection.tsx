@@ -53,7 +53,7 @@ export function HeroSection() {
             aria-label="Descobrir a frequência do meu nome gratuitamente"
             onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero' })}
           >
-            Descobrir a Frequência do Meu Nome →
+            Descobrir a Frequência do Meu Nome
           </a>
         </div>
 

@@ -170,7 +170,7 @@ const pageTitle = activeCategory
                       {formatDate(featured.published_at)}{featured.content_markdown ? ` · ${readingTime(featured.content_markdown)} min` : ''}
                     </span>
                     <span class="text-[#D4AF37]/60 group-hover:text-[#D4AF37] text-xs sm:text-sm font-medium transition-colors ml-auto">
-                      Ler artigo completo →
+                      Ler artigo completo
                     </span>
                   </div>
                 </div>
@@ -271,10 +271,9 @@ const pageTitle = activeCategory
                       </p>
                     )}
 
-                    {/* Data + seta */}
+                    {/* Data */}
                     <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
                       <span class="text-gray-700 text-[10px]">{formatDate(post.published_at)}</span>
-                      <span class="text-[#D4AF37]/40 group-hover:text-[#D4AF37] text-sm transition-colors">→</span>
                     </div>
                     </div>
                   </a>
@@ -310,12 +309,12 @@ const pageTitle = activeCategory
             {activeCategory && (
               <a href="/blog"
                 class="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/15 text-gray-400 font-medium px-6 py-3 rounded-full hover:border-[#D4AF37]/30 hover:text-[#D4AF37] transition-all duration-300 text-sm">
-                ← Ver todos os artigos
+                Ver todos os artigos
               </a>
             )}
             <a href="/analise-gratuita"
               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-bold px-6 py-3 rounded-full hover:bg-[#f2ca50] transition-all duration-300 shadow-lg shadow-[#D4AF37]/20 text-sm">
-              Fazer Análise Gratuita →
+              Fazer Análise Gratuita
             </a>
           </div>
         </div>
