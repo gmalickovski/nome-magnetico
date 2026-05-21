@@ -139,7 +139,7 @@ export function MobileTOC({ items }: Props) {
         aria-label="Índice do artigo"
         aria-modal="true"
         className={`
-          lg:hidden fixed bottom-0 left-0 right-0 z-50
+          blog-mobile-toc lg:hidden fixed bottom-0 left-0 right-0 z-50
           bg-[#161616] rounded-t-3xl
           shadow-[0_-20px_60px_rgba(0,0,0,0.7)]
           transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
@@ -170,7 +170,7 @@ export function MobileTOC({ items }: Props) {
         </div>
 
         {/* Lista — scroll independente */}
-        <nav className="flex-1 overflow-y-auto px-5 pb-6 space-y-0.5">
+        <nav className="toc-mobile-list flex-1 overflow-y-auto px-5 pb-6 space-y-0.5">
           {items.map((item) => (
             <a
               key={item.id}

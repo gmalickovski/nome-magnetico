@@ -408,6 +408,38 @@
   background-color: rgba(0, 0, 0, 0.03);
 }
 
+.toc-mobile-list {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.toc-mobile-list::-webkit-scrollbar {
+  display: none;
+}
+
+[data-blog-theme="light"] .blog-mobile-toc {
+  background-color: #ffffff !important;
+  box-shadow: 0 -20px 60px rgba(28, 25, 23, 0.12) !important;
+}
+
+[data-blog-theme="light"] .blog-mobile-toc p {
+  color: #78716c !important;
+}
+
+[data-blog-theme="light"] .blog-mobile-toc button {
+  color: #78716c !important;
+}
+
+[data-blog-theme="light"] .blog-mobile-toc a {
+  color: #57534e;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-blog-theme="light"] .blog-mobile-toc a:hover {
+  color: #1c1917;
+  border-color: rgba(146, 112, 10, 0.28);
+}
+
 [data-blog-theme="light"] .blog-footer {
   background-color: #f5f4f0 !important;
   border-top-color: rgba(0, 0, 0, 0.08) !important;
