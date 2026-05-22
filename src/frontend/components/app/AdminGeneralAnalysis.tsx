@@ -453,10 +453,10 @@ export default function AdminGeneralAnalysis() {
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <span className="text-2xl mt-0.5 flex-shrink-0">🔮</span>
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider leading-none mb-1.5">
+                <span className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest leading-none mb-1.5">
                   {activeTab === 'social' ? 'SOCIAL' : activeTab === 'baby' ? 'BEBÊ' : 'EMPRESARIAL'}
                 </span>
-                <span className="text-sm font-semibold text-white break-words whitespace-normal leading-tight">
+                <span className="text-base sm:text-lg font-bold text-white break-words whitespace-normal leading-snug">
                   {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem família') : (partnerName || 'Sem sócio')}
                 </span>
               </div>
