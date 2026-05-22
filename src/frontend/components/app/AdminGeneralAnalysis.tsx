@@ -456,7 +456,7 @@ export default function AdminGeneralAnalysis() {
                 <span className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest leading-none mb-1.5">
                   {activeTab === 'social' ? 'SOCIAL' : activeTab === 'baby' ? 'BEBÊ' : 'EMPRESARIAL'}
                 </span>
-                <span className="text-base sm:text-lg font-bold text-white break-words whitespace-normal leading-snug">
+                <span className="font-cinzel text-base sm:text-lg font-bold text-white break-words whitespace-normal leading-snug">
                   {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem família') : (partnerName || 'Sem sócio')}
                 </span>
               </div>
@@ -472,7 +472,7 @@ export default function AdminGeneralAnalysis() {
           {/* CONTEÚDO REAL DO FORMULÁRIO */}
           <div className={`p-3 sm:p-5 lg:p-10 space-y-8 flex-1 transition-opacity duration-300 ${
             activeTab !== 'social' ? 'pb-[50vh] lg:pb-10' : ''
-          } ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          } ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'hidden lg:block' : 'block'}`}>
             <h2 className="font-cinzel text-lg font-bold text-[#f2ca50] flex items-center gap-2 mb-2">
               🔮 Parâmetros da Consulta
             </h2>
