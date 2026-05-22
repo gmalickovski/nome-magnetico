@@ -692,18 +692,20 @@ export default function AdminGeneralAnalysis() {
                 );
               })()}
 
-              {/* 4 NÚMEROS */}
+              {/* 5 NÚMEROS */}
               <div className="mb-3 px-1">
                 <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Vibração do Nome</p>
-                <h3 className="font-cinzel text-lg font-bold text-white">4 Números Principais</h3>
+                <h3 className="font-cinzel text-lg font-bold text-white">5 Números Principais</h3>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
-                {[{ label: 'Motivação', sublabel: 'A Alma', val: socialResult.numeros?.motivacao, color: '#9A6B00', border: 'rgba(154,107,0,0.55)', bg: 'rgba(154,107,0,0.05)' },
-                  { label: 'Expressão', sublabel: 'O Dom', val: socialResult.numeros?.expressao, color: '#6d28d9', border: 'rgba(109,40,217,0.55)', bg: 'rgba(109,40,217,0.05)' },
-                  { label: 'Destino', sublabel: 'O Chamado', val: socialResult.numeros?.destino, color: '#0369a1', border: 'rgba(3,105,161,0.55)', bg: 'rgba(3,105,161,0.05)' },
-                  { label: 'Missão', sublabel: 'A Vocação', val: socialResult.numeros?.missao, color: '#15803d', border: 'rgba(21,128,61,0.55)', bg: 'rgba(21,128,61,0.05)' },
-                ].map(({ label, sublabel, val, color, border, bg }) => (
-                  <div key={label} style={{ borderRadius: 16, border: `1.5px solid ${border}`, background: bg, padding: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
+                {[
+                  { label: 'Destino', sublabel: 'O Chamado', val: socialResult.numeros?.destino, color: '#0369a1', border: 'rgba(3,105,161,0.55)', bg: 'rgba(3,105,161,0.05)', className: 'col-span-2 md:col-span-1' },
+                  { label: 'Motivação', sublabel: 'A Alma', val: socialResult.numeros?.motivacao, color: '#9A6B00', border: 'rgba(154,107,0,0.55)', bg: 'rgba(154,107,0,0.05)', className: 'col-span-1' },
+                  { label: 'Expressão', sublabel: 'O Dom', val: socialResult.numeros?.expressao, color: '#6d28d9', border: 'rgba(109,40,217,0.55)', bg: 'rgba(109,40,217,0.05)', className: 'col-span-1' },
+                  { label: 'Impressão', sublabel: 'A Aparência', val: socialResult.numeros?.impressao, color: '#be185d', border: 'rgba(190,24,93,0.55)', bg: 'rgba(190,24,93,0.05)', className: 'col-span-1' },
+                  { label: 'Missão', sublabel: 'A Vocação', val: socialResult.numeros?.missao, color: '#15803d', border: 'rgba(21,128,61,0.55)', bg: 'rgba(21,128,61,0.05)', className: 'col-span-1' },
+                ].map(({ label, sublabel, val, color, border, bg, className }) => (
+                  <div key={label} className={className} style={{ borderRadius: 16, border: `1.5px solid ${border}`, background: bg, padding: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
                     <div style={{ fontFamily: "'Cinzel',serif", fontSize: '2.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val ?? '?'}</div>
                     <div style={{ fontSize: 11, color, opacity: 0.8 }}>{sublabel}</div>
