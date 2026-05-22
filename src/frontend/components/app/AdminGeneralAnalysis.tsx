@@ -78,6 +78,11 @@ export default function AdminGeneralAnalysis() {
   const [activeTab, setActiveTab] = useState<'social' | 'baby' | 'company'>('social');
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [isForceOpen, setIsForceOpen] = useState(false);
+  const [pdfModal, setPdfModal] = useState<{ isOpen: boolean; status: 'loading' | 'success' | 'error'; message: string }>({
+    isOpen: false,
+    status: 'loading',
+    message: '',
+  });
 
   // Estados de Scroll para Animação do Container 2
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -282,6 +287,12 @@ export default function AdminGeneralAnalysis() {
     setSaveSuccess(null);
     setSaveError(null);
 
+    setPdfModal({
+      isOpen: true,
+      status: 'loading',
+      message: 'Baixando análise...',
+    });
+
     let productType: string;
     let nomeCompleto: string;
     let dataNascimento: string;
@@ -289,13 +300,19 @@ export default function AdminGeneralAnalysis() {
     let extraParams: any = {};
 
     if (activeTab === 'social') {
-      if (!socialResult) return;
+      if (!socialResult) {
+        setPdfModal({ isOpen: false, status: 'loading', message: '' });
+        return;
+      }
       productType = isFree ? 'analise_gratuita' : 'nome_social';
       nomeCompleto = socialName.trim();
       dataNascimento = formatDateForApi(socialBirthDate);
       calculatedData = socialResult;
     } else if (activeTab === 'baby') {
-      if (!babyResult) return;
+      if (!babyResult) {
+        setPdfModal({ isOpen: false, status: 'loading', message: '' });
+        return;
+      }
       productType = 'nome_bebe';
       nomeCompleto = `(bebê) ${babyLastName.trim()}`;
       dataNascimento = formatDateForApi(babyBirthDate);
@@ -306,7 +323,10 @@ export default function AdminGeneralAnalysis() {
         genero_preferido: babyGender,
       };
     } else {
-      if (!companyResult) return;
+      if (!companyResult) {
+        setPdfModal({ isOpen: false, status: 'loading', message: '' });
+        return;
+      }
       productType = 'nome_empresa';
       nomeCompleto = `Sócio: ${partnerName.trim()}`;
       dataNascimento = formatDateForApi(partnerBirthDate);
@@ -339,15 +359,33 @@ export default function AdminGeneralAnalysis() {
       if (res.ok) {
         setSaveSuccess('Análise salva com sucesso! O PDF está disponível.');
         
+        setPdfModal({
+          isOpen: true,
+          status: 'success',
+          message: 'Download realizado com sucesso!',
+        });
+
         // Abre o PDF em nova aba
         if (data.analysisId) {
           window.open(`/api/generate-pdf?id=${data.analysisId}`, '_blank');
         }
       } else {
-        setSaveError(data.error || 'Erro ao salvar a análise.');
+        const errMsg = data.error || 'Erro ao salvar a análise.';
+        setSaveError(errMsg);
+        setPdfModal({
+          isOpen: true,
+          status: 'error',
+          message: errMsg,
+        });
       }
     } catch (err) {
-      setSaveError('Falha na comunicação com o servidor.');
+      const errMsg = 'Falha na comunicação com o servidor.';
+      setSaveError(errMsg);
+      setPdfModal({
+        isOpen: true,
+        status: 'error',
+        message: errMsg,
+      });
     } finally {
       setSaving(false);
     }
@@ -981,6 +1019,46 @@ export default function AdminGeneralAnalysis() {
                <span className="text-[#D4AF37] font-bold text-xs block mb-1">⚡ Modo Instantâneo</span>
                <p className="text-gray-400 text-xs leading-relaxed">Ao salvar, as fórmulas estruturam o relatório no banco e geram o PDF oficial imediatamente.</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE STATUS DO PDF */}
+      {pdfModal.isOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-[#131313] rounded-2xl p-6 sm:p-8 border border-white/10 max-w-sm w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-center flex flex-col items-center animate-scale-up">
+            {pdfModal.status === 'loading' && (
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <div className="w-14 h-14 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
+                <span className="absolute text-xl animate-pulse">🔮</span>
+              </div>
+            )}
+            {pdfModal.status === 'success' && (
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-bold shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                ✓
+              </div>
+            )}
+            {pdfModal.status === 'error' && (
+              <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center text-3xl font-bold shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                ✕
+              </div>
+            )}
+            <div className="space-y-2">
+              <h4 className="font-cinzel text-base font-bold text-white tracking-wide">
+                {pdfModal.status === 'loading' ? 'Gerando Relatório' : pdfModal.status === 'success' ? 'Sucesso!' : 'Ocorreu um erro'}
+              </h4>
+              <p className="text-gray-400 text-sm leading-relaxed px-2">
+                {pdfModal.message}
+              </p>
+            </div>
+            {pdfModal.status !== 'loading' && (
+              <button 
+                onClick={() => setPdfModal({ isOpen: false, status: 'loading', message: '' })}
+                className="w-full py-2.5 rounded-full text-xs font-bold bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] transition-all cursor-pointer shadow-md"
+              >
+                Fechar
+              </button>
+            )}
           </div>
         </div>
       )}
