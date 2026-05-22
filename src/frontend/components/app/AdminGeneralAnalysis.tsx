@@ -439,28 +439,31 @@ export default function AdminGeneralAnalysis() {
         {/* CONTAINER 3: LADO ESQUERDO (FORMULÁRIOS) */}
         <div 
           className={`
-            bg-[#171717] transition-all duration-500 ease-in-out relative z-10
-            ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'max-h-[76px] lg:max-h-none overflow-hidden opacity-60' : 'max-h-[1200px] lg:max-h-none opacity-100'}
+            bg-[#171717] transition-all duration-500 ease-in-out z-20
+            ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' 
+              ? 'sticky top-0 max-h-[180px] lg:relative lg:top-auto lg:max-h-none overflow-hidden opacity-100 shadow-xl' 
+              : 'relative max-h-[1200px] lg:max-h-none opacity-100'
+            }
             lg:w-[450px] xl:w-[500px] lg:flex-none border-b lg:border-b-0 lg:border-r border-white/10 lg:overflow-y-auto custom-scrollbar flex flex-col
           `}
         >
           
           {/* TOPO DO FORMULÁRIO REDUZIDO (Mobile) */}
-          <div className={`lg:hidden flex items-center justify-between p-4 ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'block' : 'hidden'}`}>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🔮</span>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider leading-none mb-1">
-                  {activeTab === 'social' ? 'Social' : activeTab === 'baby' ? 'Bebê' : 'Empresarial'}
+          <div className={`lg:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'block' : 'hidden'}`}>
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <span className="text-2xl mt-0.5 flex-shrink-0">🔮</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider leading-none mb-1.5">
+                  {activeTab === 'social' ? 'SOCIAL' : activeTab === 'baby' ? 'BEBÊ' : 'EMPRESARIAL'}
                 </span>
-                <span className="text-sm font-semibold text-white truncate max-w-[200px] leading-none">
+                <span className="text-sm font-semibold text-white break-words whitespace-normal leading-tight">
                   {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem família') : (partnerName || 'Sem sócio')}
                 </span>
               </div>
             </div>
             <button 
               onClick={() => setIsForceOpen(!isForceOpen)}
-              className="text-[11px] font-bold text-[#bea5ff] bg-[#bea5ff]/10 hover:bg-[#bea5ff]/20 px-4 py-2 rounded-xl transition-colors"
+              className="self-end sm:self-center text-[11px] font-bold text-[#bea5ff] bg-[#bea5ff]/10 hover:bg-[#bea5ff]/20 px-4 py-2 rounded-xl transition-colors whitespace-nowrap flex-shrink-0"
             >
               {isForceOpen ? 'Fechar' : 'Editar'}
             </button>
