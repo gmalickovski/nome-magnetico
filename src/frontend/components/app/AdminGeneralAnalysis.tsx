@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import TriangleVisualization from './TriangleVisualization';
 import KarmicDebts from './KarmicDebts';
 import KarmicLessons from './KarmicLessons';
@@ -83,6 +84,27 @@ export default function AdminGeneralAnalysis() {
     status: 'loading',
     message: '',
   });
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (pdfModal.isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [pdfModal.isOpen]);
 
   // Estados de Scroll para Animação do Container 2
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -359,15 +381,57 @@ export default function AdminGeneralAnalysis() {
       if (res.ok) {
         setSaveSuccess('Análise salva com sucesso! O PDF está disponível.');
         
-        setPdfModal({
-          isOpen: true,
-          status: 'success',
-          message: 'Download realizado com sucesso!',
-        });
-
-        // Abre o PDF em nova aba
         if (data.analysisId) {
-          window.open(`/api/generate-pdf?id=${data.analysisId}`, '_blank');
+          try {
+            // Atualiza status do modal para baixar o PDF
+            setPdfModal({
+              isOpen: true,
+              status: 'loading',
+              message: 'Preparando o arquivo PDF...',
+            });
+
+            const pdfRes = await fetch(`/api/generate-pdf?id=${data.analysisId}`, {
+              cache: 'no-store',
+              credentials: 'same-origin',
+            });
+            
+            if (!pdfRes.ok) throw new Error('pdf_error');
+
+            const blob = await pdfRes.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Define o nome amigável do arquivo
+            const cleanName = nomeCompleto.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+            a.download = `analise-${productType}-${cleanName}.pdf`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            setPdfModal({
+              isOpen: true,
+              status: 'success',
+              message: 'Download realizado com sucesso!',
+            });
+          } catch (pdfErr) {
+            console.error('Erro ao baixar PDF via Blob:', pdfErr);
+            // Fallback caso falhe: tenta abrir na aba nova
+            window.open(`/api/generate-pdf?id=${data.analysisId}`, '_blank');
+            setPdfModal({
+              isOpen: true,
+              status: 'success',
+              message: 'Salvo com sucesso! PDF aberto em nova aba.',
+            });
+          }
+        } else {
+          setPdfModal({
+            isOpen: true,
+            status: 'success',
+            message: 'Salvo com sucesso!',
+          });
         }
       } else {
         const errMsg = data.error || 'Erro ao salvar a análise.';
@@ -398,6 +462,8 @@ export default function AdminGeneralAnalysis() {
     (activeTab === 'baby' && babyResult) ||
     (activeTab === 'company' && companyResult)
   );
+
+  const isReduced = isScrollingDown && !isForceOpen && hasResults;
 
   const shouldLockScroll = activeTab === 'social' && !hasResults;
 
@@ -478,16 +544,25 @@ export default function AdminGeneralAnalysis() {
         <div 
           className={`
             bg-[#171717] transition-all duration-500 ease-in-out z-20
-            ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' 
-              ? 'sticky top-0 max-h-[100px] lg:relative lg:top-auto lg:max-h-none overflow-hidden opacity-100 shadow-xl border-b border-white/10' 
-              : 'relative max-h-[1200px] lg:max-h-none opacity-100'
+            ${isReduced 
+              ? 'sticky top-0 max-h-[68px] overflow-hidden shadow-xl border-b border-white/10 lg:relative lg:top-auto lg:max-h-none lg:shadow-none' 
+              : 'relative max-h-[1500px] lg:max-h-none'
             }
             lg:w-[450px] xl:w-[500px] lg:flex-none border-b lg:border-b-0 lg:border-r border-white/10 lg:overflow-y-auto custom-scrollbar flex flex-col
           `}
         >
           
           {/* TOPO DO FORMULÁRIO REDUZIDO (Mobile) */}
-          <div className={`lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5 ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'grid' : 'hidden'}`}>
+          <div 
+            className="lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5 transition-all duration-500 ease-in-out"
+            style={{
+              maxHeight: isReduced ? '68px' : '0px',
+              opacity: isReduced ? 1 : 0,
+              transform: isReduced ? 'translateY(0)' : 'translateY(-10px)',
+              pointerEvents: isReduced ? 'auto' : 'none',
+              overflow: 'hidden',
+            }}
+          >
             <div className="flex-shrink-0">
               <span className="text-xl">🔮</span>
             </div>
@@ -496,7 +571,7 @@ export default function AdminGeneralAnalysis() {
                 {activeTab === 'social' ? 'SOCIAL' : activeTab === 'baby' ? 'BEBÊ' : 'EMPRESARIAL'}
               </span>
               <span className="font-cinzel text-[clamp(11px,3.8vw,16px)] font-bold text-white break-words whitespace-normal leading-snug">
-                {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem família') : (partnerName || 'Sem sócio')}
+                {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem sobrenome') : (partnerName || 'Sem sócio')}
               </span>
             </div>
             <div className="flex-shrink-0">
@@ -510,9 +585,21 @@ export default function AdminGeneralAnalysis() {
           </div>
 
           {/* CONTEÚDO REAL DO FORMULÁRIO */}
-          <div className={`p-3 sm:p-5 lg:p-10 space-y-8 flex-1 transition-opacity duration-300 ${
-            activeTab !== 'social' ? 'pb-[50vh] lg:pb-10' : ''
-          } ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'hidden lg:block' : 'block'}`}>
+          <div 
+            className={`space-y-8 flex-1 transition-all duration-500 ease-in-out ${
+              activeTab !== 'social' && !isReduced ? 'pb-[50vh] lg:pb-10' : 'lg:pb-10'
+            }`}
+            style={mounted && isMobile ? {
+              maxHeight: isReduced ? '0px' : '1500px',
+              opacity: isReduced ? 0 : 1,
+              transform: isReduced ? 'translateY(15px)' : 'translateY(0)',
+              padding: isReduced ? '0px' : '20px 16px',
+              overflow: 'hidden',
+              pointerEvents: isReduced ? 'none' : 'auto',
+            } : {
+              padding: '2.5rem', // lg:p-10
+            }}
+          >
             <h2 className="font-cinzel text-lg font-bold text-[#f2ca50] flex items-center gap-2 mb-2">
               🔮 Parâmetros da Consulta
             </h2>
@@ -819,8 +906,8 @@ export default function AdminGeneralAnalysis() {
                   <p className="text-gray-400 text-xs mt-0.5">Gera o PDF oficial e salva no banco.</p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
-                  <button onClick={() => handleSaveAnalysis(true)} disabled={saving} className="flex-1 sm:flex-initial px-4 py-2.5 rounded-full text-xs font-bold border border-[#d7c6ff]/40 bg-[#d7c6ff]/10 text-[#d7c6ff] hover:bg-[#d7c6ff]/20 transition-all">Versão Gratuita</button>
-                  <button onClick={() => handleSaveAnalysis(false)} disabled={saving} className="flex-1 sm:flex-initial px-5 py-2.5 rounded-full text-xs font-bold bg-[#D4AF37] text-black hover:bg-[#f2ca50] transition-all flex items-center justify-center gap-2">
+                  <button type="button" onClick={(e) => { e.preventDefault(); handleSaveAnalysis(true); }} disabled={saving} className="flex-1 sm:flex-initial px-4 py-2.5 rounded-full text-xs font-bold border border-[#d7c6ff]/40 bg-[#d7c6ff]/10 text-[#d7c6ff] hover:bg-[#d7c6ff]/20 transition-all">Versão Gratuita</button>
+                  <button type="button" onClick={(e) => { e.preventDefault(); handleSaveAnalysis(false); }} disabled={saving} className="flex-1 sm:flex-initial px-5 py-2.5 rounded-full text-xs font-bold bg-[#D4AF37] text-black hover:bg-[#f2ca50] transition-all flex items-center justify-center gap-2">
                     {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
                     Versão Completa
                   </button>
@@ -897,7 +984,7 @@ export default function AdminGeneralAnalysis() {
                   <h3 className="font-cinzel text-base font-bold text-white">Salvar Análise de Bebê</h3>
                   <p className="text-gray-400 text-xs mt-0.5">Gera o PDF oficial e salva no banco.</p>
                 </div>
-                <button onClick={() => handleSaveAnalysis(false)} disabled={saving} className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] transition-all flex items-center justify-center gap-2">
+                <button type="button" onClick={(e) => { e.preventDefault(); handleSaveAnalysis(false); }} disabled={saving} className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] transition-all flex items-center justify-center gap-2">
                   {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
                   Salvar e Gerar PDF
                 </button>
@@ -973,7 +1060,7 @@ export default function AdminGeneralAnalysis() {
                   <h3 className="font-cinzel text-base font-bold text-white">Salvar Análise de Empresa</h3>
                   <p className="text-gray-400 text-xs mt-0.5">Gera o PDF oficial e salva no banco.</p>
                 </div>
-                <button onClick={() => handleSaveAnalysis(false)} disabled={saving} className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] transition-all flex items-center justify-center gap-2">
+                <button type="button" onClick={(e) => { e.preventDefault(); handleSaveAnalysis(false); }} disabled={saving} className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] transition-all flex items-center justify-center gap-2">
                   {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
                   Salvar e Gerar PDF
                 </button>
@@ -1023,44 +1110,121 @@ export default function AdminGeneralAnalysis() {
         </div>
       )}
 
-      {/* MODAL DE STATUS DO PDF */}
-      {pdfModal.isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-[#131313] rounded-2xl p-6 sm:p-8 border border-white/10 max-w-sm w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-center flex flex-col items-center animate-scale-up">
-            {pdfModal.status === 'loading' && (
-              <div className="relative w-16 h-16 flex items-center justify-center">
-                <div className="w-14 h-14 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
-                <span className="absolute text-xl animate-pulse">🔮</span>
+      {/* MODAL DE STATUS DO PDF (PORTAL) */}
+      {mounted && pdfModal.isOpen && createPortal(
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            background: 'rgba(0,0,0,0.58)',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget && pdfModal.status !== 'loading') setPdfModal(prev => ({ ...prev, isOpen: false })); }}
+        >
+          <div 
+            style={{
+              width: '100%',
+              maxWidth: '400px',
+              borderRadius: '16px',
+              padding: '24px',
+              background: '#111111',
+              border: '1px solid rgba(212,175,55,0.20)',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {/* Status Icon */}
+              <div style={{ flexShrink: 0, width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {pdfModal.status === 'loading' && (
+                  <svg style={{ width: '32px', height: '32px', color: '#D4AF37', animation: 'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                    <circle style={{ opacity: 0.2 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path style={{ opacity: 0.8 }} fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                )}
+                {pdfModal.status === 'success' && (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', boxShadow: '0 0 15px rgba(16,185,129,0.15)' }}>
+                    ✓
+                  </div>
+                )}
+                {pdfModal.status === 'error' && (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', boxShadow: '0 0 15px rgba(239,68,68,0.15)' }}>
+                    ✕
+                  </div>
+                )}
               </div>
-            )}
-            {pdfModal.status === 'success' && (
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-bold shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                ✓
+
+              {/* Status Text */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {pdfModal.status === 'loading' && (
+                  <>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#e5e2e1', margin: 0, fontFamily: 'Inter, sans-serif' }}>Baixando análise...</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0', fontFamily: 'Inter, sans-serif' }}>Preparando o arquivo PDF...</p>
+                  </>
+                )}
+                {pdfModal.status === 'success' && (
+                  <>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#34d399', margin: 0, fontFamily: 'Inter, sans-serif' }}>Download concluído!</p>
+                    <p style={{ fontSize: '12px', color: '#9ca3af', margin: '2px 0 0', fontFamily: 'Inter, sans-serif' }}>{pdfModal.message}</p>
+                  </>
+                )}
+                {pdfModal.status === 'error' && (
+                  <>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: '#f87171', margin: 0, fontFamily: 'Inter, sans-serif' }}>Falha ao baixar PDF</p>
+                    <p style={{ fontSize: '12px', color: '#9ca3af', margin: '2px 0 0', fontFamily: 'Inter, sans-serif' }}>{pdfModal.message}</p>
+                  </>
+                )}
               </div>
-            )}
-            {pdfModal.status === 'error' && (
-              <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center text-3xl font-bold shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-                ✕
-              </div>
-            )}
-            <div className="space-y-2">
-              <h4 className="font-cinzel text-base font-bold text-white tracking-wide">
-                {pdfModal.status === 'loading' ? 'Gerando Relatório' : pdfModal.status === 'success' ? 'Sucesso!' : 'Ocorreu um erro'}
-              </h4>
-              <p className="text-gray-400 text-sm leading-relaxed px-2">
-                {pdfModal.message}
-              </p>
+
+              {/* Top Close Button */}
+              {pdfModal.status !== 'loading' && (
+                <button
+                  onClick={() => setPdfModal(prev => ({ ...prev, isOpen: false }))}
+                  style={{ flexShrink: 0, width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', color: '#6b7280' }}
+                  aria-label="Fechar"
+                >
+                  <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
+
+            {/* Bottom Button */}
             {pdfModal.status !== 'loading' && (
-              <button 
-                onClick={() => setPdfModal({ isOpen: false, status: 'loading', message: '' })}
-                className="w-full py-2.5 rounded-full text-xs font-bold bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] transition-all cursor-pointer shadow-md"
-              >
-                Fechar
-              </button>
+              <div style={{ paddingTop: '4px' }}>
+                <button 
+                  onClick={() => setPdfModal(prev => ({ ...prev, isOpen: false }))}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    backgroundColor: '#D4AF37',
+                    color: '#131313',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    fontFamily: 'Cinzel, serif',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
