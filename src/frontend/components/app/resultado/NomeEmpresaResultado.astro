@@ -84,7 +84,7 @@ const dataFundacaoFormatted: string = (() => {
 
   {/* Expressão em destaque — magnetismo do negócio */}
   <div class="flex justify-center mb-4">
-    <div class="rounded-2xl bg-[#4A7FC1]/10 border-2 border-[#4A7FC1] p-6 text-center flex flex-col items-center gap-1 w-64 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
+    <div class="rounded-2xl bg-[#4A7FC1]/10 border-2 border-[#4A7FC1] p-4 sm:p-6 text-center flex flex-col items-center gap-1 w-64 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
       <p class="font-cinzel text-[10px] uppercase tracking-[0.12em] text-[#4A7FC1]/70 mb-1">O Magnetismo do Negócio</p>
       <div class="font-cinzel text-7xl font-bold text-[#4A7FC1] leading-none">{expressaoEmpresa ?? '?'}</div>
       <div class="text-white text-sm font-semibold mt-1">Expressão</div>
@@ -113,7 +113,7 @@ const dataFundacaoFormatted: string = (() => {
       <h2 class="font-cinzel text-2xl font-bold text-white">Nome Empresarial Mais Indicado</h2>
     </div>
 
-    <div class="rounded-2xl bg-[#4A7FC1]/5 border border-[#4A7FC1]/30 p-6 md:p-8">
+    <div class="rounded-2xl bg-[#4A7FC1]/5 border border-[#4A7FC1]/30 p-4 sm:p-6 md:p-8">
       <div class="text-center mb-6">
         <span class="text-[10px] text-[#4A7FC1] font-bold uppercase tracking-wider block mb-2">★ Recomendado</span>
         <div class="font-cinzel text-3xl font-bold text-white">{melhorNome.nomeEmpresa}</div>
@@ -155,7 +155,7 @@ const dataFundacaoFormatted: string = (() => {
       <h2 class="font-cinzel text-2xl font-bold text-white">Perfil dos Sócios & Destinos</h2>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <div class="rounded-2xl bg-white/5 p-5 flex flex-col gap-2">
+      <div class="rounded-2xl bg-white/5 p-3 sm:p-5 flex flex-col gap-2">
         <p class="font-cinzel text-[10px] uppercase tracking-[0.12em] text-[#76746a]">Destino do Sócio Principal</p>
         <div class="font-cinzel text-5xl font-bold text-[#4A7FC1] leading-none">{rankingEmpresa.destinoSocio ?? '?'}</div>
         <p class="text-sm text-gray-400">{rankingEmpresa.nomeSocioPrincipal ?? analysis.nome_completo}</p>
@@ -168,7 +168,7 @@ const dataFundacaoFormatted: string = (() => {
       </div>
 
       {rankingEmpresa.nomeSocio2 && (
-        <div class="rounded-2xl bg-white/5 p-5 flex flex-col gap-2">
+        <div class="rounded-2xl bg-white/5 p-3 sm:p-5 flex flex-col gap-2">
           <p class="font-cinzel text-[10px] uppercase tracking-[0.12em] text-[#76746a]">Destino do 2º Sócio</p>
           <div class="font-cinzel text-5xl font-bold text-[#c084fc] leading-none">{rankingEmpresa.destinoSocio2 ?? '?'}</div>
           <p class="text-sm text-gray-400">{rankingEmpresa.nomeSocio2}</p>
@@ -176,7 +176,7 @@ const dataFundacaoFormatted: string = (() => {
       )}
 
       {rankingEmpresa.destinoEmpresa != null && (
-        <div class="rounded-2xl bg-black/20 border border-[#D4AF37]/20 p-5 flex flex-col gap-2">
+        <div class="rounded-2xl bg-black/20 border border-[#D4AF37]/20 p-3 sm:p-5 flex flex-col gap-2">
           <p class="font-cinzel text-[10px] uppercase tracking-[0.12em] text-[#76746a]">Destino da Empresa</p>
           <div class="font-cinzel text-5xl font-bold text-[#D4AF37] leading-none">{rankingEmpresa.destinoEmpresa}</div>
           <p class="text-[10px] text-gray-600">Baseado na data de fundação</p>
@@ -204,7 +204,7 @@ const dataFundacaoFormatted: string = (() => {
       {nomesCandidatos.map((c: any, idx: number) => (
         <button
           type="button"
-          class={`analisar-nome-empresa-card w-full text-left rounded-2xl p-5 md:p-6 hover:opacity-90 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-[#4A7FC1]/50 ${idx === 0 ? 'bg-[#4A7FC1]/5 border border-[#4A7FC1]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
+          class={`analisar-nome-empresa-card w-full text-left rounded-2xl p-3 sm:p-5 md:p-6 hover:opacity-90 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-[#4A7FC1]/50 ${idx === 0 ? 'bg-[#4A7FC1]/5 border border-[#4A7FC1]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
           data-nome-empresa={c.nomeEmpresa}
           data-nome-socio={rankingEmpresa?.nomeSocioPrincipal ?? analysis.nome_completo}
           data-data-nasc={dataNascSocioFormatted}
@@ -367,7 +367,7 @@ const dataFundacaoFormatted: string = (() => {
       <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Análise Estratégica — Nome de Empresa</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Relatório Completo</h2>
     </div>
-    <div class="rounded-2xl bg-white/5 p-6 md:p-8">
+    <div class="rounded-2xl bg-white/5 p-4 sm:p-6 md:p-8">
       <div
         class="prose prose-invert prose-lg max-w-none
                prose-headings:font-cinzel

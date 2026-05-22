@@ -276,7 +276,7 @@ const dimSublabels: Record<TipKey, string> = {
     </div>
 
     {/* Texto introdutório */}
-    <div class="rounded-2xl bg-white/[0.03] p-6 mb-8">
+    <div class="rounded-2xl bg-white/[0.03] p-4 sm:p-6 mb-8">
       <h3 class="font-cinzel text-base font-bold text-[#D4AF37] mb-3">O Escudo Magnético</h3>
       <p class="text-gray-300 text-sm leading-relaxed mb-4">
         O nome de nascimento é o campo vibracional que você recebeu ao chegar nesta encarnação — sua semente de origem.
@@ -323,7 +323,7 @@ const dimSublabels: Record<TipKey, string> = {
               <span class={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${badgeCls}`}>{badgeText}</span>
             </div>
             {isImutavel ? (
-              <div class="rounded-xl bg-gray-600/10 border border-gray-600/20 p-5 text-center">
+              <div class="rounded-xl bg-gray-600/10 border border-gray-600/20 p-3 sm:p-5 text-center">
                 <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-3">Imutável — calculado pela data de nascimento</span>
                 <div class="font-cinzel text-4xl font-bold text-gray-300">{nH ?? '?'}</div>
                 {harmArcano?.nome && <p class="text-[10px] text-gray-400/80 mt-2">{harmArcano.nome}</p>}
@@ -501,7 +501,7 @@ const dimSublabels: Record<TipKey, string> = {
       <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">O Nome de Ouro</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Nome Social Mais Indicado</h2>
     </div>
-    <div class="rounded-2xl bg-[#D4AF37]/5 border border-[#D4AF37]/30 p-6 md:p-8">
+    <div class="rounded-2xl bg-[#D4AF37]/5 border border-[#D4AF37]/30 p-4 sm:p-6 md:p-8">
       <div class="text-center mb-6">
         <span class="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider block mb-2">⭐ Melhor Compatibilidade</span>
         <div class="font-cinzel text-3xl md:text-4xl font-bold text-white">{rankingSocial.melhorNome.nomeCompleto}</div>
@@ -547,7 +547,7 @@ const dimSublabels: Record<TipKey, string> = {
       {nossasSugestoes.map((c: any) => (
         <button
           type="button"
-          class={`analisar-nome-card w-full text-left rounded-2xl bg-white/5 p-5 flex flex-col gap-3 transition-all duration-200 relative group focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 ${canGenerateCandidateReports ? 'hover:bg-white/10 hover:scale-[1.02] cursor-pointer' : 'cursor-not-allowed opacity-75'}`}
+          class={`analisar-nome-card w-full text-left rounded-2xl bg-white/5 p-3 sm:p-5 flex flex-col gap-3 transition-all duration-200 relative group focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 ${canGenerateCandidateReports ? 'hover:bg-white/10 hover:scale-[1.02] cursor-pointer' : 'cursor-not-allowed opacity-75'}`}
           data-nome={c.nomeCompleto}
           data-nome-nasc={candidateBaseName}
           data-data-nasc={candidateBaseDate}
@@ -590,7 +590,7 @@ const dimSublabels: Record<TipKey, string> = {
       {suasSugestoes.map((c: any) => (
         <button
           type="button"
-          class={`analisar-nome-card w-full text-left rounded-2xl bg-white/5 p-5 flex flex-col gap-3 transition-all duration-200 relative group focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 ${canGenerateCandidateReports ? 'hover:bg-white/10 hover:scale-[1.02] cursor-pointer' : 'cursor-not-allowed opacity-75'}`}
+          class={`analisar-nome-card w-full text-left rounded-2xl bg-white/5 p-3 sm:p-5 flex flex-col gap-3 transition-all duration-200 relative group focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 ${canGenerateCandidateReports ? 'hover:bg-white/10 hover:scale-[1.02] cursor-pointer' : 'cursor-not-allowed opacity-75'}`}
           data-nome={c.nomeCompleto}
           data-nome-nasc={candidateBaseName}
           data-data-nasc={candidateBaseDate}
@@ -632,7 +632,7 @@ const dimSublabels: Record<TipKey, string> = {
 
     {/* Card do Destino — destaque central */}
     <div class="flex justify-center mb-8">
-      <div class="rounded-2xl bg-[#bea5ff]/8 border border-[#bea5ff]/30 p-8 text-center flex flex-col items-center gap-2 w-64 transition-all duration-700 hover:shadow-lg hover:shadow-purple-500/10">
+      <div class="rounded-2xl bg-[#bea5ff]/8 border border-[#bea5ff]/30 p-3 sm:p-5 md:p-8 text-center flex flex-col items-center gap-2 w-64 transition-all duration-700 hover:shadow-lg hover:shadow-purple-500/10">
         <span class="text-[#bea5ff]/40 text-2xl leading-none">◈</span>
         <div class="font-cinzel text-7xl font-bold text-[#bea5ff] leading-none">{harmNums.destino ?? '?'}</div>
         <div class="text-white text-sm font-semibold mt-2">Número de Destino</div>
@@ -641,7 +641,7 @@ const dimSublabels: Record<TipKey, string> = {
     </div>
 
     {/* Parágrafo 1 — sobre a imutabilidade do Destino */}
-    <div class="rounded-2xl bg-white/[0.03] p-6 md:p-8">
+    <div class="rounded-2xl bg-white/[0.03] p-4 sm:p-6 md:p-8">
       <h3 class="font-cinzel text-base font-bold text-[#bea5ff] mb-3">O Que Não Pode Ser Mudado — e o Que Pode</h3>
       <p class="text-gray-300 text-sm leading-relaxed">
         O seu Número de Destino é o seu projeto original — calculado a partir da data em que você nasceu, ele
@@ -680,7 +680,7 @@ const dimSublabels: Record<TipKey, string> = {
     </div>
 
     {/* Parágrafo 2 — sobre os 4 números mutáveis */}
-    <div class="rounded-2xl bg-white/[0.03] p-6 md:p-8 mt-5">
+    <div class="rounded-2xl bg-white/[0.03] p-4 sm:p-6 md:p-8 mt-5">
       <h3 class="font-cinzel text-sm font-bold text-white/80 mb-3">Os Números do Nome — O Veículo</h3>
       <p class="text-gray-300 text-sm leading-relaxed">
         Os outros quatro números — Expressão, Motivação, Impressão e Missão — emergem das letras do seu
@@ -701,7 +701,7 @@ const dimSublabels: Record<TipKey, string> = {
       <h2 class="font-cinzel text-2xl font-bold text-white">Os 4 Triângulos Numerológicos</h2>
     </div>
 
-    <div class="mb-6 rounded-2xl bg-white/[0.03] p-6 md:p-8">
+    <div class="mb-6 rounded-2xl bg-white/[0.03] p-4 sm:p-6 md:p-8">
       <h3 class="font-cinzel text-lg font-bold text-[#D4AF37] mb-4">O Que São os 4 Triângulos Numerológicos</h3>
       <p class="text-gray-300 text-sm leading-relaxed mb-4">
         Na Numerologia Cabalística, o nome não é apenas um conjunto de letras — ele funciona como um campo de força
@@ -786,7 +786,7 @@ const dimSublabels: Record<TipKey, string> = {
       modal.id = 'candidate-analysis-modal';
       modal.className = 'fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 px-4 backdrop-blur-md';
       modal.innerHTML = `
-        <div class="w-full max-w-md rounded-2xl bg-[#131313] p-6 shadow-2xl ring-1 ring-[#D4AF37]/25">
+        <div class="w-full max-w-md rounded-2xl bg-[#131313] p-4 sm:p-6 shadow-2xl ring-1 ring-[#D4AF37]/25">
           <div class="flex items-start gap-4">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10 text-[#D4AF37]">
               <span class="candidate-spinner h-7 w-7 animate-spin rounded-full border-2 border-[#D4AF37]/25 border-t-[#D4AF37]"></span>
@@ -941,7 +941,7 @@ const dimSublabels: Record<TipKey, string> = {
           type="button"
           data-variation-nome={name.nome_sugerido}
           data-variation-data={analysis.data_nascimento ? new Date(analysis.data_nascimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : ''}
-          class={`w-full text-left h-full rounded-2xl p-5 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 relative group cursor-pointer
+          class={`w-full text-left h-full rounded-2xl p-3 sm:p-5 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 relative group cursor-pointer
             ${idx === 0 ? 'bg-[#D4AF37]/5' : 'bg-white/5'}`}
         >
           {idx === 0 && (

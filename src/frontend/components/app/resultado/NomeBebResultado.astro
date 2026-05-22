@@ -66,7 +66,7 @@ const numSecundarios = [
 
   {/* Destino do bebê — card herói */}
   <div class="flex justify-center mb-4">
-    <div class="rounded-2xl bg-[#C97B63]/10 border-2 border-[#C97B63] p-6 text-center flex flex-col items-center gap-1 w-64 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[#C97B63]/10">
+    <div class="rounded-2xl bg-[#C97B63]/10 border-2 border-[#C97B63] p-4 sm:p-6 text-center flex flex-col items-center gap-1 w-64 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-[#C97B63]/10">
       <p class="font-cinzel text-[10px] uppercase tracking-[0.12em] text-[#C97B63]/70 mb-1">O Destino que o Céu Escolheu</p>
       <div class="font-cinzel text-7xl font-bold text-[#C97B63] leading-none">{destinoBebe ?? '?'}</div>
       <div class="text-white text-sm font-semibold mt-1">Destino</div>
@@ -102,7 +102,7 @@ const numSecundarios = [
       <h2 class="font-cinzel text-2xl font-bold text-white">Nome Mais Indicado Numericamente</h2>
     </div>
 
-    <div class="rounded-2xl bg-[#C97B63]/5 border border-[#C97B63]/30 p-6 md:p-8">
+    <div class="rounded-2xl bg-[#C97B63]/5 border border-[#C97B63]/30 p-4 sm:p-6 md:p-8">
       <div class="text-center mb-6">
         <span class="text-[10px] text-[#C97B63] font-bold uppercase tracking-wider block mb-2">⭐ Nome de Ouro</span>
         <div class="font-cinzel text-3xl font-bold text-white">{melhorNome.nomeCompleto}</div>
@@ -143,7 +143,7 @@ const numSecundarios = [
       {nomesCandidatos.map((c: any, idx: number) => (
         <button
           type="button"
-          class={`analisar-nome-bebe-card w-full text-left rounded-2xl p-5 md:p-6 hover:opacity-90 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-[#C97B63]/50 ${idx === 0 ? 'bg-[#C97B63]/5 border border-[#C97B63]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
+          class={`analisar-nome-bebe-card w-full text-left rounded-2xl p-3 sm:p-5 md:p-6 hover:opacity-90 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-[#C97B63]/50 ${idx === 0 ? 'bg-[#C97B63]/5 border border-[#C97B63]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
           data-primeiro-nome={c.primeiroNome}
           data-nome-completo={c.nomeCompleto}
           data-data-nasc={dataNascBebeFormatted}
@@ -281,7 +281,7 @@ const numSecundarios = [
       <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Análise Cabalística — Nome de Bebê</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Relatório Completo para os Pais</h2>
     </div>
-    <div class="rounded-2xl bg-white/5 p-6 md:p-8">
+    <div class="rounded-2xl bg-white/5 p-4 sm:p-6 md:p-8">
       <div
         class="prose prose-invert prose-lg max-w-none
                prose-headings:font-cinzel

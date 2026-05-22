@@ -263,7 +263,7 @@ function TrianguloInfo({
     <div className="space-y-4 mt-4">
       {/* Arcano Regente — bloco expandido */}
       {arcanoInfo ? (
-        <div className="rounded-xl bg-[#1a0533]/60 border border-purple-500/30 p-5">
+        <div className="rounded-xl bg-[#1a0533]/60 border border-purple-500/30 p-3 sm:p-5">
           <p className="text-[10px] text-purple-400 font-medium uppercase tracking-[0.15em] mb-3">
             Arcano Regente — {arcanoInfo.numero}: {arcanoInfo.nome}
           </p>
@@ -491,7 +491,7 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
       </div>
 
       {/* Descrição da aba */}
-      <div className="rounded-xl bg-white/[0.03] p-5">
+      <div className="rounded-xl bg-white/[0.03] p-3 sm:p-5">
         <p className="text-sm text-gray-400 leading-relaxed">
           {descricaoDetalhada?.[aba] ?? getDescricao(aba, productType)}
         </p>

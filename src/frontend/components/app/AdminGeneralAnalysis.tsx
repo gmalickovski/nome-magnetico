@@ -1,7 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TriangleVisualization from './TriangleVisualization';
+import KarmicDebts from './KarmicDebts';
+import KarmicLessons from './KarmicLessons';
+import HiddenTendencies from './HiddenTendencies';
+
+const TABELA_CONVERSAO: Record<string, number> = {
+  A: 1, I: 1, Q: 1, J: 1, Y: 1,
+  B: 2, K: 2, R: 2,
+  C: 3, G: 3, L: 3, S: 3,
+  D: 4, M: 4, T: 4, X: 4,
+  E: 5, H: 5, N: 5,
+  U: 6, V: 6, W: 6, Ç: 6,
+  O: 7, Z: 7,
+  F: 8, P: 8,
+};
+
+function calcularValorFront(letra: string): number {
+  const decomposto = letra.normalize('NFD');
+  const base = decomposto.charAt(0).toUpperCase();
+  if (base === 'Ç') return 6;
+  let valor = TABELA_CONVERSAO[base] ?? 0;
+  if (decomposto.length > 1) {
+    const diacritico = decomposto.charAt(1);
+    switch (diacritico) {
+      case '\u0301': valor += 2; break; // agudo
+      case '\u0303': valor += 3; break; // til
+      case '\u0300': valor *= 2; break; // grave
+      case '\u0308': valor *= 2; break; // trema
+      case '\u0302': valor += 7; break; // circunflexo
+    }
+  }
+  return valor;
+}
+
+function reduzirNumeroFront(n: number): number {
+  let numero = Math.floor(n);
+  while (numero > 9) {
+    numero = String(numero).split('').reduce((acc, d) => acc + parseInt(d, 10), 0);
+  }
+  return numero;
+}
+
+function mapearFrequenciasFront(nome: string): Record<number, number> {
+  const letras = nome.replace(/\s+/g, '').split('').filter(l => /\S/.test(l));
+  const freq: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+  for (const letra of letras) {
+    const v = calcularValorFront(letra);
+    const r = reduzirNumeroFront(v);
+    if (r >= 1 && r <= 8) {
+      freq[r] = (freq[r] ?? 0) + 1;
+    }
+  }
+  return freq;
+}
+
+
+const formatDateForApi = (dateStr: string) => {
+  if (dateStr.length === 10 && dateStr.includes('/')) {
+    const [d, m, y] = dateStr.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  return dateStr;
+};
 
 export default function AdminGeneralAnalysis() {
+  const handleDateMask = (val: string) => {
+    let v = val.replace(/\D/g, '');
+    if (v.length > 8) v = v.slice(0, 8);
+    if (v.length >= 5) {
+      return `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+    } else if (v.length >= 3) {
+      return `${v.slice(0, 2)}/${v.slice(2)}`;
+    }
+    return v;
+  };
+
   const [activeTab, setActiveTab] = useState<'social' | 'baby' | 'company'>('social');
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [isForceOpen, setIsForceOpen] = useState(false);
@@ -86,7 +159,7 @@ export default function AdminGeneralAnalysis() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nome_candidato: socialName,
-            data_nascimento_db: socialBirthDate,
+            data_nascimento_db: formatDateForApi(socialBirthDate),
           }),
         });
 
@@ -130,7 +203,7 @@ export default function AdminGeneralAnalysis() {
           body: JSON.stringify({
             nomes_candidatos: candidates,
             sobrenomes_disponiveis: [babyLastName.trim()],
-            data_nascimento: babyBirthDate || '',
+            data_nascimento: babyBirthDate ? formatDateForApi(babyBirthDate) : '',
             genero_preferido: babyGender,
           }),
         });
@@ -173,9 +246,9 @@ export default function AdminGeneralAnalysis() {
         const payload: any = {
           nomes_candidatos: candidates,
           nome_socio_principal: partnerName.trim(),
-          data_nascimento_socio: partnerBirthDate,
+          data_nascimento_socio: formatDateForApi(partnerBirthDate),
         };
-        if (companyFoundDate) payload.data_fundacao = companyFoundDate;
+        if (companyFoundDate) payload.data_fundacao = formatDateForApi(companyFoundDate);
         if (companyArea) payload.ramo_atividade = companyArea;
         if (companyDesc) payload.descricao_negocio = companyDesc;
 
@@ -219,13 +292,13 @@ export default function AdminGeneralAnalysis() {
       if (!socialResult) return;
       productType = isFree ? 'analise_gratuita' : 'nome_social';
       nomeCompleto = socialName.trim();
-      dataNascimento = socialBirthDate;
+      dataNascimento = formatDateForApi(socialBirthDate);
       calculatedData = socialResult;
     } else if (activeTab === 'baby') {
       if (!babyResult) return;
       productType = 'nome_bebe';
       nomeCompleto = `(bebê) ${babyLastName.trim()}`;
-      dataNascimento = babyBirthDate;
+      dataNascimento = formatDateForApi(babyBirthDate);
       calculatedData = babyResult;
       extraParams = {
         sobrenome_familia: babyLastName.trim(),
@@ -236,12 +309,12 @@ export default function AdminGeneralAnalysis() {
       if (!companyResult) return;
       productType = 'nome_empresa';
       nomeCompleto = `Sócio: ${partnerName.trim()}`;
-      dataNascimento = partnerBirthDate;
+      dataNascimento = formatDateForApi(partnerBirthDate);
       calculatedData = companyResult;
       extraParams = {
         nome_socio_principal: partnerName.trim(),
-        data_nascimento_socio: partnerBirthDate,
-        data_fundacao: companyFoundDate || null,
+        data_nascimento_socio: formatDateForApi(partnerBirthDate),
+        data_fundacao: companyFoundDate ? formatDateForApi(companyFoundDate) : null,
         ramo_atividade: companyArea || null,
         descricao_negocio: companyDesc || null,
         nomes_candidatos: companyCandidates.split('\n').map(c => c.trim()).filter(c => c.length >= 2),
@@ -394,7 +467,7 @@ export default function AdminGeneralAnalysis() {
           </div>
 
           {/* CONTEÚDO REAL DO FORMULÁRIO */}
-          <div className={`p-5 lg:p-10 space-y-8 flex-1 transition-opacity duration-300 ${
+          <div className={`p-3 sm:p-5 lg:p-10 space-y-8 flex-1 transition-opacity duration-300 ${
             activeTab !== 'social' ? 'pb-[50vh] lg:pb-10' : ''
           } ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <h2 className="font-cinzel text-lg font-bold text-[#f2ca50] flex items-center gap-2 mb-2">
@@ -416,9 +489,11 @@ export default function AdminGeneralAnalysis() {
                 <div>
                   <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">Data de Nascimento</label>
                   <input
-                    type="date"
+                    type="text"
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
                     value={socialBirthDate}
-                    onChange={e => setSocialBirthDate(e.target.value)}
+                    onChange={e => setSocialBirthDate(handleDateMask(e.target.value))}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors"
                   />
                 </div>
@@ -454,9 +529,11 @@ export default function AdminGeneralAnalysis() {
                 <div>
                   <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">Data de Nascimento do Bebê</label>
                   <input
-                    type="date"
+                    type="text"
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
                     value={babyBirthDate}
-                    onChange={e => setBabyBirthDate(e.target.value)}
+                    onChange={e => setBabyBirthDate(handleDateMask(e.target.value))}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#bea5ff] transition-colors"
                   />
                 </div>
@@ -490,9 +567,11 @@ export default function AdminGeneralAnalysis() {
                 <div>
                   <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">Data de Nascimento do Sócio</label>
                   <input
-                    type="date"
+                    type="text"
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
                     value={partnerBirthDate}
-                    onChange={e => setPartnerBirthDate(e.target.value)}
+                    onChange={e => setPartnerBirthDate(handleDateMask(e.target.value))}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#bea5ff] transition-colors"
                   />
                 </div>
@@ -511,9 +590,11 @@ export default function AdminGeneralAnalysis() {
                 <div>
                   <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">Data de Fundação (Opcional)</label>
                   <input
-                    type="date"
+                    type="text"
+                    placeholder="DD/MM/AAAA"
+                    maxLength={10}
                     value={companyFoundDate}
-                    onChange={e => setCompanyFoundDate(e.target.value)}
+                    onChange={e => setCompanyFoundDate(handleDateMask(e.target.value))}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#bea5ff] transition-colors"
                   />
                 </div>
@@ -541,7 +622,7 @@ export default function AdminGeneralAnalysis() {
             )}
 
             {/* DICAS RÁPIDAS DE USO */}
-            <div className="hidden md:block bg-gradient-to-b from-[#131313] to-black/40 rounded-xl p-5 border border-white/[0.04] text-xs text-gray-400 leading-relaxed shadow-inner">
+            <div className="hidden md:block bg-gradient-to-b from-[#131313] to-black/40 rounded-xl p-3 sm:p-5 border border-white/[0.04] text-xs text-gray-400 leading-relaxed shadow-inner">
               <span className="text-[#f2ca50] font-bold block mb-2">⚡ Modo Instantâneo</span>
               A Área do Analista executa todos os cálculos numerológicos e matemáticos localmente em frações de segundo. Ao salvar, as fórmulas estruturam o relatório no banco e geram o PDF oficial imediatamente.
             </div>
@@ -554,10 +635,10 @@ export default function AdminGeneralAnalysis() {
           className={`
             lg:h-full lg:overflow-y-auto custom-scrollbar bg-[#121212]
             ${hasResults 
-              ? 'flex-1 p-5 lg:p-10 space-y-8 pb-32' 
+              ? 'flex-1 p-3 sm:p-5 lg:p-10 space-y-8 pb-32' 
               : activeTab === 'social' 
-                ? 'flex-1 p-5 lg:p-10 flex flex-col justify-center' 
-                : 'hidden lg:flex flex-1 p-5 lg:p-10 flex-col justify-center'}
+                ? 'flex-1 p-3 sm:p-5 lg:p-10 flex flex-col justify-center' 
+                : 'hidden lg:flex flex-1 p-3 sm:p-5 lg:p-10 flex-col justify-center'}
           `}
         >
 
@@ -571,7 +652,7 @@ export default function AdminGeneralAnalysis() {
 
           {/* ESTADO VAZIO: NOME SOCIAL */}
           {activeTab === 'social' && !hasResults && !socialLoading && !babyLoading && !companyLoading && (
-            <div className="bg-white/[0.02] rounded-2xl p-6 lg:p-12 border border-dashed border-white/10 text-center w-full flex flex-col items-center justify-center min-h-[150px] lg:min-h-full">
+            <div className="bg-white/[0.02] rounded-2xl p-4 sm:p-6 lg:p-12 border border-dashed border-white/10 text-center w-full flex flex-col items-center justify-center min-h-[150px] lg:min-h-full">
               <span className="text-3xl lg:text-5xl block mb-2 lg:mb-4">🪐</span>
               <h3 className="font-cinzel text-base lg:text-lg font-bold text-gray-300 mb-1 lg:mb-2">Aguardando Parâmetros</h3>
               <p className="text-gray-500 text-xs lg:text-sm max-w-md mx-auto hidden lg:block">
@@ -590,60 +671,52 @@ export default function AdminGeneralAnalysis() {
 
           {/* RESULTADO: NOME SOCIAL */}
           {activeTab === 'social' && socialResult && !socialLoading && (
-            <div className="flex flex-col space-y-6">
-              
-              {/* CARD DE AÇÕES E CRIAÇÃO DIRETA */}
-              <div className="order-last lg:order-none bg-gradient-to-r from-[#171717] to-[#121212] border border-[#D4AF37]/20 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-white font-cinzel text-lg font-bold">Baixar Análise</h3>
-                  <p className="text-gray-400 text-xs">Salva no banco e abre a impressão do PDF oficial.</p>
-                </div>
-                <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                  <button
-                    onClick={() => handleSaveAnalysis(true)}
-                    disabled={saving}
-                    className="flex-1 sm:flex-initial px-5 py-3 rounded-full text-xs font-bold border border-[#d7c6ff]/40 bg-[#d7c6ff]/10 text-[#d7c6ff] hover:bg-[#d7c6ff]/20 transition-all"
-                  >
-                    Versão Gratuita
-                  </button>
-                  <button
-                    onClick={() => handleSaveAnalysis(false)}
-                    disabled={saving}
-                    className="flex-1 sm:flex-initial px-6 py-3 rounded-full text-xs font-bold bg-[#D4AF37] text-black hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/10 transition-all flex items-center justify-center gap-2"
-                  >
-                    {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
-                    Versão Completa
-                  </button>
-                </div>
+            <div className="pt-2">
+
+              {/* SCORE */}
+              {(() => {
+                const scoreVal: number = socialResult.score?.total ?? 0;
+                const scoreColor = scoreVal >= 70 ? 'text-emerald-400' : scoreVal >= 40 ? 'text-amber-400' : scoreVal >= 20 ? 'text-red-400' : 'text-red-600';
+                const scoreBg   = scoreVal >= 70 ? 'bg-emerald-500/10 border-emerald-500/20' : scoreVal >= 40 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20';
+                const scoreLabel = scoreVal >= 90 ? '⭐ Excelente' : scoreVal >= 70 ? '✅ Bom' : scoreVal >= 40 ? '〜 Aceitável' : scoreVal >= 20 ? '⚠ Não Recomendado' : '🔴 Crítico';
+                return (
+                  <div className={`rounded-2xl border p-4 sm:p-6 flex items-center justify-between gap-4 mb-8 ${scoreBg}`}>
+                    <div>
+                      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-gray-500 mb-1">Score Vibracional</p>
+                      <p className={`font-cinzel text-4xl font-bold leading-none ${scoreColor}`}>
+                        {scoreVal}<span className="text-base font-normal ml-1">pts</span>
+                      </p>
+                    </div>
+                    <span className={`font-cinzel text-sm font-semibold ${scoreColor}`}>{scoreLabel}</span>
+                  </div>
+                );
+              })()}
+
+              {/* 4 NÚMEROS */}
+              <div className="mb-3 px-1">
+                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Vibração do Nome</p>
+                <h3 className="font-cinzel text-lg font-bold text-white">4 Números Principais</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
+                {[{ label: 'Motivação', sublabel: 'A Alma', val: socialResult.numeros?.motivacao, color: '#9A6B00', border: 'rgba(154,107,0,0.55)', bg: 'rgba(154,107,0,0.05)' },
+                  { label: 'Expressão', sublabel: 'O Dom', val: socialResult.numeros?.expressao, color: '#6d28d9', border: 'rgba(109,40,217,0.55)', bg: 'rgba(109,40,217,0.05)' },
+                  { label: 'Destino', sublabel: 'O Chamado', val: socialResult.numeros?.destino, color: '#0369a1', border: 'rgba(3,105,161,0.55)', bg: 'rgba(3,105,161,0.05)' },
+                  { label: 'Missão', sublabel: 'A Vocação', val: socialResult.numeros?.missao, color: '#15803d', border: 'rgba(21,128,61,0.55)', bg: 'rgba(21,128,61,0.05)' },
+                ].map(({ label, sublabel, val, color, border, bg }) => (
+                  <div key={label} style={{ borderRadius: 16, border: `1.5px solid ${border}`, background: bg, padding: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: '2.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val ?? '?'}</div>
+                    <div style={{ fontSize: 11, color, opacity: 0.8 }}>{sublabel}</div>
+                  </div>
+                ))}
               </div>
 
-              {/* CARD DOS NÚMEROS E SCORE */}
-              <div className="bg-[#171717] rounded-2xl p-6 border border-white/[0.03] grid sm:grid-cols-5 gap-4 text-center">
-                <div className="bg-black/30 p-3 rounded-xl border border-white/5">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Motivação</p>
-                  <p className="font-cinzel text-2xl font-bold text-[#f2ca50]">{socialResult.numeros?.motivacao}</p>
-                </div>
-                <div className="bg-black/30 p-3 rounded-xl border border-white/5">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Expressão</p>
-                  <p className="font-cinzel text-2xl font-bold text-[#f2ca50]">{socialResult.numeros?.expressao}</p>
-                </div>
-                <div className="bg-black/30 p-3 rounded-xl border border-white/5">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Destino</p>
-                  <p className="font-cinzel text-2xl font-bold text-[#f2ca50]">{socialResult.numeros?.destino}</p>
-                </div>
-                <div className="bg-black/30 p-3 rounded-xl border border-white/5">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Missão</p>
-                  <p className="font-cinzel text-2xl font-bold text-[#f2ca50]">{socialResult.numeros?.missao}</p>
-                </div>
-                <div className="bg-black/30 p-3 rounded-xl border border-white/5 sm:col-span-1 col-span-2">
-                  <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1">Score</p>
-                  <p className="font-cinzel text-2xl font-bold text-purple-300">{socialResult.score?.total} pts</p>
-                </div>
+              {/* TRIÂNGULOS */}
+              <div className="mb-3 px-1">
+                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Mapa de Triângulos</p>
+                <h3 className="font-cinzel text-lg font-bold text-white">Os 4 Triângulos Numerológicos</h3>
               </div>
-
-              {/* VISUALIZAÇÃO DOS TRIÂNGULOS */}
-              <div className="bg-[#171717] rounded-2xl p-6 border border-white/[0.03]">
-                <h3 className="text-[#f2ca50] font-cinzel text-base font-bold mb-4">🔺 Triângulos e Bloqueios</h3>
+              <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 mb-10">
                 <TriangleVisualization
                   vida={socialResult.triangulos?.vida}
                   pessoal={socialResult.triangulos?.pessoal}
@@ -656,186 +729,216 @@ export default function AdminGeneralAnalysis() {
                 />
               </div>
 
+              {/* DÉBITOS KÁRMICOS */}
+              {socialResult.debitosCarmicos && socialResult.debitosCarmicos.length > 0 && (
+                <div className="mb-10">
+                  <div className="mb-3 px-1">
+                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">O Peso do Passado</p>
+                    <h3 className="font-cinzel text-lg font-bold text-white">Débitos Kármicos</h3>
+                  </div>
+                  <KarmicDebts debitos={socialResult.debitosCarmicos} nomeCompleto={socialName} />
+                </div>
+              )}
+
+              {/* LIÇÕES KÁRMICAS */}
+              {socialResult.licoesCarmicas && (
+                <div className="mb-10">
+                  <div className="mb-3 px-1">
+                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Lacunas Energéticas</p>
+                    <h3 className="font-cinzel text-lg font-bold text-white">Lições Kármicas</h3>
+                  </div>
+                  <KarmicLessons licoes={socialResult.licoesCarmicas} nomeCompleto={socialName} />
+                </div>
+              )}
+
+              {/* TENDÊNCIAS OCULTAS */}
+              {socialResult.tendenciasOcultas && (
+                <div className="mb-10">
+                  <div className="mb-3 px-1">
+                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Frequências Numéricas</p>
+                    <h3 className="font-cinzel text-lg font-bold text-white">Tendências Ocultas</h3>
+                  </div>
+                  <HiddenTendencies
+                    tendencias={socialResult.tendenciasOcultas}
+                    frequencias={mapearFrequenciasFront(socialName)}
+                    nomeCompleto={socialName}
+                  />
+                </div>
+              )}
+
+              {/* EXPORTAR */}
+              <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Relatório</p>
+                  <h3 className="font-cinzel text-base font-bold text-white">Baixar Análise</h3>
+                  <p className="text-gray-400 text-xs mt-0.5">Gera o PDF oficial e salva no banco.</p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button onClick={() => handleSaveAnalysis(true)} disabled={saving} className="flex-1 sm:flex-initial px-4 py-2.5 rounded-full text-xs font-bold border border-[#d7c6ff]/40 bg-[#d7c6ff]/10 text-[#d7c6ff] hover:bg-[#d7c6ff]/20 transition-all">Versão Gratuita</button>
+                  <button onClick={() => handleSaveAnalysis(false)} disabled={saving} className="flex-1 sm:flex-initial px-5 py-2.5 rounded-full text-xs font-bold bg-[#D4AF37] text-black hover:bg-[#f2ca50] transition-all flex items-center justify-center gap-2">
+                    {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
+                    Versão Completa
+                  </button>
+                </div>
+              </div>
+
             </div>
           )}
 
           {/* RESULTADO: NOME DE BEBÊ */}
           {activeTab === 'baby' && babyResult && !babyLoading && (
-            <div className="space-y-6">
-              
-              {/* CARD DE SALVAR */}
-              <div className="bg-gradient-to-r from-[#171717] to-[#121212] border border-[#bea5ff]/20 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-white font-cinzel text-lg font-bold">Salvar Análise de Bebê</h3>
-                  <p className="text-gray-400 text-xs">Salva no banco e abre a impressão do PDF oficial.</p>
-                </div>
-                <div className="w-full sm:w-auto">
-                  <button
-                    onClick={() => handleSaveAnalysis(false)}
-                    disabled={saving}
-                    className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] shadow-lg shadow-[#bea5ff]/10 transition-all flex items-center justify-center gap-2"
-                  >
-                    {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
-                    Salvar e Gerar PDF
-                  </button>
-                </div>
-              </div>
+            <div className="pt-2">
 
-              {/* GRID DE CANDIDATOS DO BEBÊ */}
-              <div className="bg-[#171717] rounded-2xl p-6 border border-white/[0.03] space-y-4">
-                <h3 className="font-cinzel text-base font-bold text-white">📋 Nomes Analisados ({babyResult.ranking?.length ?? 0})</h3>
-                <div className="space-y-2">
-                  {babyResult.ranking?.map((candidate: any, idx: number) => {
-                    const isSelected = selectedBabyCandidateIdx === idx;
-                    const blockCount = candidate.bloqueios?.length ?? 0;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => setSelectedBabyCandidateIdx(idx)}
-                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#bea5ff]/10 border-[#bea5ff] shadow-lg shadow-[#bea5ff]/5'
-                            : 'bg-black/20 border-white/5 hover:border-white/20'
-                        }`}
-                      >
-                        <div>
-                          <p className="font-semibold text-white">{candidate.nomeCompleto}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Motivação: {candidate.motivacao} · Expressão: {candidate.expressao} · Impressão: {candidate.impressao}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                            blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                          }`}>
-                            {blockCount === 0 ? 'Sem bloqueios' : `${blockCount} Bloqueio(s)`}
-                          </span>
-                          <span className="font-cinzel font-bold text-lg text-[#bea5ff]">
-                            {candidate.score} pts
-                          </span>
-                        </div>
+              {/* CANDIDATOS */}
+              <div className="mb-3 px-1">
+                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Ranking</p>
+                <h3 className="font-cinzel text-lg font-bold text-white">Nomes Candidatos ({babyResult.ranking?.length ?? 0})</h3>
+              </div>
+              <div className="space-y-3 mb-10">
+                {babyResult.ranking?.map((candidate: any, idx: number) => {
+                  const isSelected = selectedBabyCandidateIdx === idx;
+                  const blockCount = candidate.bloqueios?.length ?? 0;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedBabyCandidateIdx(idx)}
+                      className={`rounded-2xl p-3 sm:p-5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-[#bea5ff]/10 ring-1 ring-[#bea5ff]/50'
+                          : 'bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-cinzel text-base font-bold text-white">{candidate.nomeCompleto}</p>
+                        <p className="text-xs text-gray-500 mt-1">Mot: {candidate.motivacao} · Exp: {candidate.expressao} · Imp: {candidate.impressao}</p>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                          blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                        }`}>{blockCount === 0 ? '✓ Sem bloqueios' : `${blockCount} Bloqueio(s)`}</span>
+                        <span className="font-cinzel font-bold text-lg text-[#bea5ff]">{candidate.score}<span className="text-xs font-normal"> pts</span></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* DETALHES DO CANDIDATO SELECIONADO (TRIÂNGULOS) */}
+              {/* TRIÂNGULOS DO CANDIDATO */}
               {babyResult.ranking?.[selectedBabyCandidateIdx] && (
-                <div className="bg-[#171717] rounded-2xl p-6 border border-white/[0.03] space-y-6">
-                  <div>
-                    <h4 className="font-cinzel text-base font-bold text-[#bea5ff] mb-1">
-                      🔺 Detalhes: {babyResult.ranking[selectedBabyCandidateIdx].nomeCompleto}
-                    </h4>
-                    <p className="text-xs text-gray-400">
-                      Visualizando os 4 triângulos de nascimento deste candidato de bebê.
-                    </p>
+                <>
+                  <div className="mb-3 px-1">
+                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Mapa de Triângulos</p>
+                    <h3 className="font-cinzel text-lg font-bold text-white">{babyResult.ranking[selectedBabyCandidateIdx].nomeCompleto}</h3>
                   </div>
-
-                  <TriangleVisualization
-                    vida={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.vida}
-                    pessoal={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.pessoal}
-                    social={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.social}
-                    destino={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.destino}
-                    bloqueios={babyResult.ranking[selectedBabyCandidateIdx].bloqueios || []}
-                    nome={babyResult.ranking[selectedBabyCandidateIdx].nomeCompleto}
-                    productType="nome_bebe"
-                    isFreeAnalysis={false}
-                  />
-                </div>
+                  <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 mb-10">
+                    <TriangleVisualization
+                      vida={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.vida}
+                      pessoal={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.pessoal}
+                      social={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.social}
+                      destino={babyResult.rankingTriangulos?.[selectedBabyCandidateIdx]?.destino}
+                      bloqueios={babyResult.ranking[selectedBabyCandidateIdx].bloqueios || []}
+                      nome={babyResult.ranking[selectedBabyCandidateIdx].nomeCompleto}
+                      productType="nome_bebe"
+                      isFreeAnalysis={false}
+                    />
+                  </div>
+                </>
               )}
+
+              {/* EXPORTAR */}
+              <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Relatório</p>
+                  <h3 className="font-cinzel text-base font-bold text-white">Salvar Análise de Bebê</h3>
+                  <p className="text-gray-400 text-xs mt-0.5">Gera o PDF oficial e salva no banco.</p>
+                </div>
+                <button onClick={() => handleSaveAnalysis(false)} disabled={saving} className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] transition-all flex items-center justify-center gap-2">
+                  {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
+                  Salvar e Gerar PDF
+                </button>
+              </div>
 
             </div>
           )}
 
           {/* RESULTADO: NOME EMPRESARIAL */}
           {activeTab === 'company' && companyResult && !companyLoading && (
-            <div className="space-y-6">
-              
-              {/* CARD DE AÇÃO */}
-              <div className="bg-gradient-to-r from-[#171717] to-[#121212] border border-[#bea5ff]/20 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-white font-cinzel text-lg font-bold">Salvar Análise de Empresa</h3>
-                  <p className="text-gray-400 text-xs">Salva no banco e abre a impressão do PDF oficial.</p>
-                </div>
-                <div className="w-full sm:w-auto">
-                  <button
-                    onClick={() => handleSaveAnalysis(false)}
-                    disabled={saving}
-                    className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] shadow-lg shadow-[#bea5ff]/10 transition-all flex items-center justify-center gap-2"
-                  >
-                    {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
-                    Salvar e Gerar PDF
-                  </button>
-                </div>
-              </div>
+            <div className="pt-2">
 
-              {/* GRID DE CANDIDATOS CORPORATIVOS */}
-              <div className="bg-[#171717] rounded-2xl p-6 border border-white/[0.03] space-y-4">
-                <h3 className="font-cinzel text-base font-bold text-white">📋 Nomes Analisados ({companyResult.ranking?.length ?? 0})</h3>
-                <div className="space-y-2">
-                  {companyResult.ranking?.map((candidate: any, idx: number) => {
-                    const isSelected = selectedCompanyCandidateIdx === idx;
-                    const blockCount = candidate.bloqueios?.length ?? 0;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => setSelectedCompanyCandidateIdx(idx)}
-                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#bea5ff]/10 border-[#bea5ff] shadow-lg shadow-[#bea5ff]/5'
-                            : 'bg-black/20 border-white/5 hover:border-white/20'
-                        }`}
-                      >
-                        <div>
-                          <p className="font-semibold text-white">{candidate.nomeEmpresa}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Expressão: {candidate.expressao} · Missão: {candidate.missao} · Impressão: {candidate.impressao}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                            blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                          }`}>
-                            {blockCount === 0 ? 'Sem bloqueios' : `${blockCount} Bloqueio(s)`}
-                          </span>
-                          <span className="font-cinzel font-bold text-lg text-[#bea5ff]">
-                            {candidate.score} pts
-                          </span>
-                        </div>
+              {/* CANDIDATOS */}
+              <div className="mb-3 px-1">
+                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Ranking</p>
+                <h3 className="font-cinzel text-lg font-bold text-white">Nomes Candidatos ({companyResult.ranking?.length ?? 0})</h3>
+              </div>
+              <div className="space-y-3 mb-10">
+                {companyResult.ranking?.map((candidate: any, idx: number) => {
+                  const isSelected = selectedCompanyCandidateIdx === idx;
+                  const blockCount = candidate.bloqueios?.length ?? 0;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedCompanyCandidateIdx(idx)}
+                      className={`rounded-2xl p-3 sm:p-5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-[#bea5ff]/10 ring-1 ring-[#bea5ff]/50'
+                          : 'bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-cinzel text-base font-bold text-white">{candidate.nomeEmpresa}</p>
+                        <p className="text-xs text-gray-500 mt-1">Exp: {candidate.expressao} · Missão: {candidate.missao} · Imp: {candidate.impressao}</p>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                          blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                        }`}>{blockCount === 0 ? '✓ Sem bloqueios' : `${blockCount} Bloqueio(s)`}</span>
+                        <span className="font-cinzel font-bold text-lg text-[#bea5ff]">{candidate.score}<span className="text-xs font-normal"> pts</span></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* DETALHES DO CANDIDATO CORPORATIVO (TRIÂNGULOS) */}
+              {/* TRIÂNGULOS DO CANDIDATO */}
               {companyResult.ranking?.[selectedCompanyCandidateIdx] && (
-                <div className="bg-[#171717] rounded-2xl p-6 border border-white/[0.03] space-y-6">
-                  <div>
-                    <h4 className="font-cinzel text-base font-bold text-[#bea5ff] mb-1">
-                      🔺 Detalhes: {companyResult.ranking[selectedCompanyCandidateIdx].nomeEmpresa}
-                    </h4>
-                    <p className="text-xs text-gray-400">
-                      Visualizando os 4 triângulos desta opção de nome corporativo.
-                    </p>
+                <>
+                  <div className="mb-3 px-1">
+                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Mapa de Triângulos</p>
+                    <h3 className="font-cinzel text-lg font-bold text-white">{companyResult.ranking[selectedCompanyCandidateIdx].nomeEmpresa}</h3>
                   </div>
-
-                  <TriangleVisualization
-                    vida={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.vida}
-                    pessoal={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.pessoal}
-                    social={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.social}
-                    destino={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.destino}
-                    bloqueios={companyResult.ranking[selectedCompanyCandidateIdx].bloqueios || []}
-                    nome={companyResult.ranking[selectedCompanyCandidateIdx].nomeEmpresa}
-                    productType="nome_empresa"
-                    isFreeAnalysis={false}
-                  />
-                </div>
+                  <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 mb-10">
+                    <TriangleVisualization
+                      vida={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.vida}
+                      pessoal={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.pessoal}
+                      social={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.social}
+                      destino={companyResult.rankingTriangulos?.[selectedCompanyCandidateIdx]?.destino}
+                      bloqueios={companyResult.ranking[selectedCompanyCandidateIdx].bloqueios || []}
+                      nome={companyResult.ranking[selectedCompanyCandidateIdx].nomeEmpresa}
+                      productType="nome_empresa"
+                      isFreeAnalysis={false}
+                    />
+                  </div>
+                </>
               )}
+
+              {/* EXPORTAR */}
+              <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Relatório</p>
+                  <h3 className="font-cinzel text-base font-bold text-white">Salvar Análise de Empresa</h3>
+                  <p className="text-gray-400 text-xs mt-0.5">Gera o PDF oficial e salva no banco.</p>
+                </div>
+                <button onClick={() => handleSaveAnalysis(false)} disabled={saving} className="w-full sm:w-auto px-6 py-2.5 rounded-full text-xs font-bold bg-[#bea5ff] text-black hover:bg-[#d7c6ff] transition-all flex items-center justify-center gap-2">
+                  {saving && <span className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>}
+                  Salvar e Gerar PDF
+                </button>
+              </div>
 
             </div>
           )}
+
+
+
 
           {/* MENSAGENS DE SUCESSO / ERRO */}
           {saveSuccess && (
@@ -857,7 +960,7 @@ export default function AdminGeneralAnalysis() {
       {/* MODAL INFORMATIVO MOBILE */}
       {showInfoModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity" onClick={() => setShowInfoModal(false)}>
-          <div className="bg-[#171717] rounded-2xl p-6 border border-white/10 max-w-sm w-full space-y-4 shadow-2xl relative animate-scale-up" onClick={e => e.stopPropagation()}>
+          <div className="bg-[#171717] rounded-2xl p-4 sm:p-6 border border-white/10 max-w-sm w-full space-y-4 shadow-2xl relative animate-scale-up" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-cinzel font-bold text-[#D4AF37] text-lg">Sobre a Área</h3>
               <button onClick={() => setShowInfoModal(false)} className="text-gray-400 hover:text-white p-1">
