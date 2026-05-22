@@ -10,7 +10,7 @@ import { calcularScore } from '@/backend/numerology/score';
 
 const RequestSchema = z.object({
   nome_candidato: z.string().min(2),
-  data_nascimento_db: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  data_nascimento_db: z.string().optional().or(z.literal('')),
 });
 
 function json(body: object, status = 200) {
@@ -102,8 +102,11 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   }
 
   try {
-    const partes = body.data_nascimento_db.split('-');
-    const bdDataStr = `${partes[2]}/${partes[1]}/${partes[0]}`;
+    let bdDataStr = '';
+    if (body.data_nascimento_db && body.data_nascimento_db.includes('-')) {
+      const partes = body.data_nascimento_db.split('-');
+      bdDataStr = `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
 
     const triangulos = calcularTodosTriangulos(body.nome_candidato, bdDataStr);
     const bloqueios = detectarBloqueios(triangulos);

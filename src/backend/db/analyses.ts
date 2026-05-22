@@ -32,6 +32,7 @@ export interface Analysis {
   score: number | null;
   status: AnalysisStatus;
   is_free: boolean;
+  is_analyst_generated: boolean;
   error_message: string | null;
   created_at: string;
   updated_at: string;

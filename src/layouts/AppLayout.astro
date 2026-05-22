@@ -8,9 +8,10 @@ import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
 export interface Props {
   title: string;
   description?: string;
+  noPadding?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, noPadding = false } = Astro.props;
 
 const user = Astro.locals.user;
 if (!user) {
@@ -127,10 +128,12 @@ const showChatwoot = pathname.startsWith('/app/suporte');
         </a>
 
         {isAdmin && (
-          <a href="https://hq.studiomlk.com.br" target="_blank" rel="noopener noreferrer" class="flex h-12 items-center gap-3 rounded-2xl px-3 text-sm font-semibold text-purple-400 transition-all hover:bg-purple-500/10">
-            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <span class="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">Admin HQ</span>
-          </a>
+          <>
+            <a href="/app/admin-analise" class={`flex h-12 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition-all ${isActive('/app/admin-analise') ? 'bg-[#bea5ff]/12 text-[#bea5ff]' : 'text-gray-500 hover:bg-white/[0.03] hover:text-[#bea5ff]'}`}>
+              <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+              <span class="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100 font-medium">Área do Analista</span>
+            </a>
+          </>
         )}
       </nav>
     </aside>
@@ -151,15 +154,18 @@ const showChatwoot = pathname.startsWith('/app/suporte');
           <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-9 sm:h-10 w-auto" />
         </a>
 
-        <div class="md:hidden flex items-center justify-end w-8 absolute right-4">
-          <AvatarMenu client:load nome={userNome} isAdmin={isAdmin} />
+        <div class="md:hidden flex items-center justify-end gap-2 absolute right-4">
+
+          <div class="w-8 flex justify-center">
+            <AvatarMenu client:load nome={userNome} isAdmin={isAdmin} />
+          </div>
         </div>
       </div>
     </header>
 
     <MobileNavBar isAdmin={isAdmin} showAnalisesNav={showAnalisesNav} />
 
-    <main class="max-w-6xl mx-auto px-4 py-8 pb-24 md:ml-20 md:max-w-none md:px-10 lg:px-14 md:py-10 md:pb-10">
+    <main class={noPadding ? "md:ml-20 h-full" : "max-w-6xl mx-auto px-4 py-8 pb-24 md:ml-20 md:max-w-none md:px-10 lg:px-14 md:py-10 md:pb-10"}>
       <slot />
     </main>
 

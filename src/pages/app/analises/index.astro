@@ -202,6 +202,11 @@ const hasMultipleProducts = uniqueProducts.length > 1;
                         Grátis
                       </span>
                     )}
+                    {analysis.is_analyst_generated && (
+                      <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded font-semibold bg-[#bea5ff]/10 text-[#bea5ff] border border-[#bea5ff]/20 whitespace-nowrap uppercase tracking-wider">
+                        Analista
+                      </span>
+                    )}
                     {/* Date only on Mobile (last tag) */}
                     <span class="sm:hidden text-gray-500 text-[10px] flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded border border-white/5 whitespace-nowrap">
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -348,9 +353,10 @@ const hasMultipleProducts = uniqueProducts.length > 1;
           });
           
           if (res.ok) {
-            if (cardElementToRemove) {
-              cardElementToRemove.classList.add('opacity-0', 'scale-95');
-              setTimeout(() => cardElementToRemove.remove(), 300);
+            const el = cardElementToRemove;
+            if (el) {
+              el.classList.add('opacity-0', 'scale-95');
+              setTimeout(() => el.remove(), 300);
             }
             closeDeleteModal();
           } else {
@@ -369,7 +375,7 @@ const hasMultipleProducts = uniqueProducts.length > 1;
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const id = (btn as HTMLElement).dataset.deleteId;
-        const card = (btn as HTMLElement).closest('.analysis-card');
+        const card = (btn as HTMLElement).closest('.analysis-card') as HTMLElement | null;
         if (id) openDeleteModal(id, card);
       });
     });
