@@ -441,7 +441,7 @@ export default function AdminGeneralAnalysis() {
           className={`
             bg-[#171717] transition-all duration-500 ease-in-out z-20
             ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' 
-              ? 'sticky top-0 max-h-[180px] lg:relative lg:top-auto lg:max-h-none overflow-hidden opacity-100 shadow-xl' 
+              ? 'sticky top-0 max-h-[100px] lg:relative lg:top-auto lg:max-h-none overflow-hidden opacity-100 shadow-xl border-b border-white/10' 
               : 'relative max-h-[1200px] lg:max-h-none opacity-100'
             }
             lg:w-[450px] xl:w-[500px] lg:flex-none border-b lg:border-b-0 lg:border-r border-white/10 lg:overflow-y-auto custom-scrollbar flex flex-col
@@ -449,24 +449,26 @@ export default function AdminGeneralAnalysis() {
         >
           
           {/* TOPO DO FORMULÁRIO REDUZIDO (Mobile) */}
-          <div className={`lg:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'block' : 'hidden'}`}>
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              <span className="text-2xl mt-0.5 flex-shrink-0">🔮</span>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest leading-none mb-1.5">
-                  {activeTab === 'social' ? 'SOCIAL' : activeTab === 'baby' ? 'BEBÊ' : 'EMPRESARIAL'}
-                </span>
-                <span className="font-cinzel text-base sm:text-lg font-bold text-white break-words whitespace-normal leading-snug">
-                  {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem família') : (partnerName || 'Sem sócio')}
-                </span>
-              </div>
+          <div className={`lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5 ${isScrollingDown && !isForceOpen && hasResults && activeTab === 'social' ? 'grid' : 'hidden'}`}>
+            <div className="flex-shrink-0">
+              <span className="text-xl">🔮</span>
             </div>
-            <button 
-              onClick={() => setIsForceOpen(!isForceOpen)}
-              className="self-end sm:self-center text-[11px] font-bold text-[#bea5ff] bg-[#bea5ff]/10 hover:bg-[#bea5ff]/20 px-4 py-2 rounded-xl transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              {isForceOpen ? 'Fechar' : 'Editar'}
-            </button>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest leading-none mb-1">
+                {activeTab === 'social' ? 'SOCIAL' : activeTab === 'baby' ? 'BEBÊ' : 'EMPRESARIAL'}
+              </span>
+              <span className="font-cinzel text-[clamp(11px,3.8vw,16px)] font-bold text-white break-words whitespace-normal leading-snug">
+                {activeTab === 'social' ? (socialName || 'Sem nome') : activeTab === 'baby' ? (babyLastName || 'Sem família') : (partnerName || 'Sem sócio')}
+              </span>
+            </div>
+            <div className="flex-shrink-0">
+              <button 
+                onClick={() => setIsForceOpen(!isForceOpen)}
+                className="text-[11px] font-bold text-[#bea5ff] bg-[#bea5ff]/10 hover:bg-[#bea5ff]/20 px-3.5 py-1.5 rounded-xl transition-colors whitespace-nowrap"
+              >
+                {isForceOpen ? 'Fechar' : 'Editar'}
+              </button>
+            </div>
           </div>
 
           {/* CONTEÚDO REAL DO FORMULÁRIO */}
