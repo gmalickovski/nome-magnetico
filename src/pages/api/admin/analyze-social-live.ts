@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { supabase } from '@/backend/db/supabase';
-import { analisarNomesSocial } from '@/backend/numerology/products/nome-social';
+import { analisarNomeSocial } from '@/backend/numerology/products/nome-social';
 import { calcularTodosTriangulos } from '@/backend/numerology/triangle';
 
 const RequestSchema = z.object({
@@ -51,36 +51,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       bdDataStr = body.data_nascimento || '';
     }
 
-    const candidatos = body.nomes_candidatos || [];
+    // Calcula apenas o Nome de Nascimento (sem puxar sugestões em tempo real)
+    const analiseNascimento = analisarNomeSocial(body.nome_nascimento, bdDataStr);
+    const triangulosNascimento = calcularTodosTriangulos(body.nome_nascimento, bdDataStr);
 
-    // Executa a orquestração numerológica oficial do Nome Social
-    const resultado = analisarNomesSocial(
-      candidatos,
-      body.nome_nascimento,
-      bdDataStr,
-      body.genero_preferido
-    );
-
-    // Enriquece cada candidato no ranking com os 4 triângulos pré-calculados
-    const nomesCandidatosEnriquecidos = resultado.nomesCandidatos.map(c => {
-      const triangulos = calcularTodosTriangulos(c.nomeCompleto, bdDataStr);
-      return {
-        ...c,
-        triangulos,
-      };
-    });
-
-    const melhorNomeEnriquecido = resultado.melhorNome
-      ? {
-          ...resultado.melhorNome,
-          triangulos: calcularTodosTriangulos(resultado.melhorNome.nomeCompleto, bdDataStr),
-        }
-      : null;
+    const analiseEnriquecida = {
+      ...analiseNascimento,
+      triangulos: triangulosNascimento,
+    };
 
     return json({
-      ...resultado,
-      nomesCandidatos: nomesCandidatosEnriquecidos,
-      melhorNome: melhorNomeEnriquecido,
+      nomeNascimento: body.nome_nascimento,
+      dataNascimento: bdDataStr,
+      destino: analiseNascimento.destino,
+      nomesCandidatos: [analiseEnriquecida],
+      melhorNome: analiseEnriquecida,
+      top3: [],
     });
   } catch (error: any) {
     console.error('[analyze-social-live] Erro:', error);

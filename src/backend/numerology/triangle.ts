@@ -38,6 +38,7 @@ export interface Triangulo {
     periodo: string;
     idadeInicio: number;
     idadeFim: number;
+    indice?: number;
   };
 }
 
@@ -175,7 +176,8 @@ function calcularArcanoAtual(idade: number, dataNascimento: string, sequenciaCom
     numero: numeroArcano, 
     periodo, 
     idadeInicio: Math.round(idadeInicioCiclo), 
-    idadeFim: Math.round(idadeFimCiclo) 
+    idadeFim: Math.round(idadeFimCiclo),
+    indice: indiceArcano
   };
 }
 
@@ -244,12 +246,12 @@ export function calcularTrianguloVida(nome: string, dataNascimento?: string): Tr
   const nomeLimpo = nome.replace(/\s+/g, '').toUpperCase();
   if (!nomeLimpo) return construirTriangulo('vida', [], dataNascimento);
 
-  // Usa calcularValor direto (sem reduzir), igual ao formula.js e n8n
-  // Filtra letras sem valor (espaços remanescentes, pontuação)
+  // Filtra letras sem valor e reduz cada valor de letra da linha base a dígito único (1-9)
   const linhaBase = nomeLimpo
     .split('')
     .map(l => calcularValor(l))
-    .filter(v => v > 0);
+    .filter(v => v > 0)
+    .map(v => reduzirNumero(v, false));
   return construirTriangulo('vida', linhaBase, dataNascimento);
 }
 

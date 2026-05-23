@@ -645,21 +645,6 @@ export default function AdminGeneralAnalysis() {
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors"
                   />
                 </div>
-                <div>
-                  <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">
-                    Nomes Candidatos (Opcional)
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={socialCandidates}
-                    onChange={e => setSocialCandidates(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors resize-none text-sm"
-                    placeholder="Digite variações ou sugestões de nomes, um por linha..."
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    Se deixar em branco, o sistema gerará sugestões automaticamente.
-                  </p>
-                </div>
               </div>
             )}
 
@@ -837,38 +822,42 @@ export default function AdminGeneralAnalysis() {
             <div className="pt-2">
 
               {/* CANDIDATOS */}
-              <div className="mb-3 px-1">
-                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Ranking</p>
-                <h3 className="font-cinzel text-lg font-bold text-white">Nomes Candidatos ({socialResult.nomesCandidatos?.length ?? 0})</h3>
-              </div>
-              <div className="space-y-3 mb-10">
-                {socialResult.nomesCandidatos?.map((candidate: any, idx: number) => {
-                  const isSelected = selectedSocialCandidateIdx === idx;
-                  const blockCount = candidate.bloqueios?.length ?? 0;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedSocialCandidateIdx(idx)}
-                      className={`rounded-2xl p-3 sm:p-5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                        isSelected
-                          ? 'bg-[#bea5ff]/10 ring-1 ring-[#bea5ff]/50'
-                          : 'bg-white/5 hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <p className="font-cinzel text-base font-bold text-white">{candidate.nomeCompleto}</p>
-                        <p className="text-xs text-gray-500 mt-1">Mot: {candidate.motivacao} · Exp: {candidate.expressao} · Imp: {candidate.impressao}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                          blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                        }`}>{blockCount === 0 ? '✓ Sem bloqueios' : `${blockCount} Bloqueio(s)`}</span>
-                        <span className="font-cinzel font-bold text-lg text-[#bea5ff]">{candidate.score}<span className="text-xs font-normal"> pts</span></span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {socialResult.nomesCandidatos && socialResult.nomesCandidatos.length > 1 && (
+                <>
+                  <div className="mb-3 px-1">
+                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Ranking</p>
+                    <h3 className="font-cinzel text-lg font-bold text-white">Nomes Candidatos ({socialResult.nomesCandidatos?.length ?? 0})</h3>
+                  </div>
+                  <div className="space-y-3 mb-10">
+                    {socialResult.nomesCandidatos?.map((candidate: any, idx: number) => {
+                      const isSelected = selectedSocialCandidateIdx === idx;
+                      const blockCount = candidate.bloqueios?.length ?? 0;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => setSelectedSocialCandidateIdx(idx)}
+                          className={`rounded-2xl p-3 sm:p-5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                            isSelected
+                              ? 'bg-[#bea5ff]/10 ring-1 ring-[#bea5ff]/50'
+                              : 'bg-white/5 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="font-cinzel text-base font-bold text-white">{candidate.nomeCompleto}</p>
+                            <p className="text-xs text-gray-500 mt-1">Mot: {candidate.motivacao} · Exp: {candidate.expressao} · Imp: {candidate.impressao}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                              blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                            }`}>{blockCount === 0 ? '✓ Sem bloqueios' : `${blockCount} Bloqueio(s)`}</span>
+                            <span className="font-cinzel font-bold text-lg text-[#bea5ff]">{candidate.score}<span className="text-xs font-normal"> pts</span></span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
 
               {/* CANDIDATO DETALHES */}
               {(() => {

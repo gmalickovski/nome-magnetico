@@ -8,8 +8,6 @@ const GRAY = '#4B5563';
 // Cores Padronizadas (Roxo Místico) para o Bloco de Arcanos
 const THEME_PURPLE = '#7C3AED';
 const BG_PURPLE = '#F5F3FF';
-const PILL_BG = '#EDE9FE';
-const PILL_TEXT = '#4C1D95';
 
 interface PDFArcanosBlockProps {
   title: string;
@@ -27,6 +25,7 @@ interface PDFArcanosBlockProps {
     periodo: string;
     idadeInicio: number;
     idadeFim: number;
+    indice?: number; // Índice cronológico do arcano atual
   };
   arcanoAtualDescricao?: string;
   /** Quando true, oculta a nota de rodapé "ver seção de anexos" */
@@ -63,14 +62,14 @@ export function PDFArcanosBlock({
 
       <View wrap={false}>
         {/* Arcano Regente */}
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 8 }}>
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 8, textAlign: 'justify' }}>
           <Text style={{ fontFamily: BODY_FONT_BOLD, color: THEME_PURPLE }}>Arcano Regente {arcanoRegente.numero}: {arcanoRegente.nome} — </Text>
           {arcanoRegente.descricao}
         </Text>
 
         {/* Arcano de Trânsito */}
         {arcanoAtual && arcanoAtual.numero && (
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 12 }}>
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 12, textAlign: 'justify' }}>
             <Text style={{ fontFamily: BODY_FONT_BOLD, color: THEME_PURPLE }}>
               Arcano de Trânsito {arcanoAtual.numero} — {arcanoAtual.periodo} (Idade {arcanoAtual.idadeInicio} a {arcanoAtual.idadeFim}) — 
             </Text>
@@ -89,15 +88,53 @@ export function PDFArcanosBlock({
             }}>
               Sequência de Passagem (Cronologia)
             </Text>
-            <Text style={{ fontSize: 9, color: GRAY, fontStyle: 'italic', marginBottom: 10 }}>
+            <Text style={{ fontSize: 9, color: GRAY, fontStyle: 'italic', marginBottom: 8 }}>
               Duração de cada ciclo: ~{(90 / arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos
             </Text>
+
+            {/* Texto explicativo sobre o que é a sequência cronológica dos arcanos de passagem */}
+            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10, textAlign: 'justify' }}>
+              Os Arcanos de Passagem representam o mapa do tempo e a jornada evolutiva ao longo de toda a sua existência. Cada círculo abaixo corresponde a um ciclo vibracional de aproximadamente {(90 / arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos. Esta ordem cronológica descreve as energias que governaram o seu passado (em cinza), o portal vibracional ativo que você está atravessando no seu presente (em roxo) e as sementes do destino que florescerão no seu futuro (em dourado).
+            </Text>
             
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
               {arcanosDePassagem.map((arcano, idx) => {
-                const isAtual = arcanoAtual && arcano === arcanoAtual.numero;
-                const bgColor = isAtual ? THEME_PURPLE : BG_PURPLE;
-                const textColor = isAtual ? '#FFFFFF' : THEME_PURPLE;
+                // Determina o estado temporal do ciclo
+                let state: 'past' | 'present' | 'future' = 'future';
+                
+                if (arcanoAtual && arcanoAtual.indice !== undefined) {
+                  if (idx < arcanoAtual.indice) {
+                    state = 'past';
+                  } else if (idx === arcanoAtual.indice) {
+                    state = 'present';
+                  } else {
+                    state = 'future';
+                  }
+                } else {
+                  // Fallback: se não temos o índice do trânsito
+                  const isAtual = arcanoAtual && arcano === arcanoAtual.numero;
+                  if (isAtual) state = 'present';
+                }
+
+                let bgColor = BG_PURPLE;
+                let borderColor = THEME_PURPLE;
+                let textColor = THEME_PURPLE;
+
+                if (state === 'past') {
+                  bgColor = '#F3F4F6';
+                  borderColor = '#9CA3AF';
+                  textColor = '#9CA3AF';
+                } else if (state === 'present') {
+                  bgColor = THEME_PURPLE;
+                  borderColor = THEME_PURPLE;
+                  textColor = '#FFFFFF';
+                } else {
+                  // Futuro: Dourado "The Celestial Alchemist"
+                  bgColor = '#FFFDF0';
+                  borderColor = '#D4AF37';
+                  textColor = '#8A661C';
+                }
+
                 return (
                   <View key={`arcano-${idx}`} style={{
                     width: 20,
@@ -105,7 +142,7 @@ export function PDFArcanosBlock({
                     borderRadius: 10,
                     backgroundColor: bgColor,
                     borderWidth: 1,
-                    borderColor: THEME_PURPLE,
+                    borderColor: borderColor,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: 6,
@@ -123,13 +160,22 @@ export function PDFArcanosBlock({
               })}
             </View>
 
-            {/* Legenda das bolinhas */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: THEME_PURPLE, marginRight: 4 }} />
-              <Text style={{ fontSize: 8, color: GRAY }}>Repetições do seu momento de vida atual</Text>
+            {/* Legenda das bolinhas atualizada com as 3 cores */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#9CA3AF', marginRight: 4 }} />
+                <Text style={{ fontSize: 8, color: GRAY }}>Ciclos já vivenciados (Passado)</Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: THEME_PURPLE, marginRight: 4 }} />
+                <Text style={{ fontSize: 8, color: GRAY }}>Momento ativo na sua vida (Presente)</Text>
+              </View>
               
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: BG_PURPLE, borderWidth: 1, borderColor: THEME_PURPLE, marginLeft: 12, marginRight: 4 }} />
-              <Text style={{ fontSize: 8, color: GRAY }}>Demais ciclos da sua jornada</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', marginRight: 4 }} />
+                <Text style={{ fontSize: 8, color: GRAY }}>Ciclos futuros de evolução (Futuro)</Text>
+              </View>
             </View>
           </View>
         )}

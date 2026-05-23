@@ -27,6 +27,13 @@ import { getArquetipo } from '../../../backend/numerology/archetypes';
 import { calcularTodosTriangulos, detectarBloqueios } from '../../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, mapearFrequencias } from '../../../backend/numerology/karmic';
+import {
+  DESTINO_DESC,
+  EXPRESSAO_DESC,
+  MOTIVACAO_DESC,
+  IMPRESSAO_DESC,
+  MISSAO_DESC,
+} from '../../../backend/numerology/interpretations';
 
 
 const theme = THEMES.nome_social;
@@ -677,10 +684,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         {/* Explicações individuais de cada número */}
         <View style={{ gap: 6 }}>
           {[
-            { num: cincoNumNasc.expressao, label: 'Expressão — O Dom Natural', desc: 'Resultante de todas as letras do nome de batismo, revela o potencial nato — o que você veio equipado para fazer bem, naturalmente. Os talentos que surgem sem esforço e a qualidade que as pessoas percebem em você antes mesmo de falar.', color: '#9A6B00', bg: '#FFFBF0' },
-            { num: cincoNumNasc.motivacao, label: 'Motivação — A Alma do Nome', desc: 'Calculada pelas vogais, revela o motor mais profundo por trás das escolhas — não o que você faz, mas o que te move para fazer. Quando o nome cria conflito com a Motivação, há a sensação crônica de viver para fora.', color: '#0369a1', bg: '#F0F9FF' },
-            { num: cincoNumNasc.impressao, label: 'Impressão — A Máscara Social', desc: 'As consoantes formam o esqueleto visível do nome — a frequência que os outros captam antes de te conhecerem. Molda reputações e primeiras impressões. Um número desfavorável pode criar resistência onde deveria haver abertura.', color: '#15803d', bg: '#F0FDF4' },
-            { num: cincoNumNasc.missao, label: 'Missão — A Vocação de Vida', desc: 'Calculada pelo primeiro nome, aponta o campo onde seus dons encontram maior ressonância com o mundo. Quando alinhada com Expressão e Destino, gera propósito inevitável. Quando bloqueada, gera dispersão.', color: '#7C3AED', bg: '#F5F3FF' },
+            { num: cincoNumNasc.destino, label: 'Destino — A Estrada da Alma', desc: 'Calculado a partir da data de nascimento, representa a trilha que sua alma escolheu antes de receber um nome. É imutável e serve como a grande âncora da sua vida.', richDesc: cincoNumNasc.destino ? DESTINO_DESC[cincoNumNasc.destino] : '', color: '#5b21b6', bg: '#F5F3FF' },
+            { num: cincoNumNasc.expressao, label: 'Expressão — O Dom Natural', desc: 'Resultante de todas as letras do nome de batismo, revela o potencial nato — o que você veio equipado para fazer bem, naturalmente. Os talentos que surgem sem esforço e a qualidade que as pessoas percebem em você antes mesmo de falar.', richDesc: cincoNumNasc.expressao ? EXPRESSAO_DESC[cincoNumNasc.expressao] : '', color: '#9A6B00', bg: '#FFFBF0' },
+            { num: cincoNumNasc.motivacao, label: 'Motivação — A Alma do Nome', desc: 'Calculada pelas vogais, revela o motor mais profundo por trás das escolhas — não o que você faz, mas o que te move para fazer. Quando o nome cria conflito com a Motivação, há a sensação crônica de viver para fora.', richDesc: cincoNumNasc.motivacao ? MOTIVACAO_DESC[cincoNumNasc.motivacao] : '', color: '#0369a1', bg: '#F0F9FF' },
+            { num: cincoNumNasc.impressao, label: 'Impressão — A Máscara Social', desc: 'As consoantes formam o esqueleto visível do nome — a frequência que os outros captam antes de te conhecerem. Molda reputações e primeiras impressões. Um número desfavorável pode criar resistência onde deveria haver abertura.', richDesc: cincoNumNasc.impressao ? IMPRESSAO_DESC[cincoNumNasc.impressao] : '', color: '#15803d', bg: '#F0FDF4' },
+            { num: cincoNumNasc.missao, label: 'Missão — A Vocação de Vida', desc: 'Calculada pelo primeiro nome, aponta o campo onde seus dons encontram maior ressonância com o mundo. Quando alinhada com Expressão e Destino, gera propósito inevitável. Quando bloqueada, gera dispersão.', richDesc: cincoNumNasc.missao ? MISSAO_DESC[cincoNumNasc.missao] : '', color: '#7C3AED', bg: '#F5F3FF' },
           ].map((item, i) => (
             <View key={i} wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, backgroundColor: item.bg, borderRadius: 6, padding: 12 }}>
               <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
@@ -689,6 +697,16 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>{item.label}</Text>
                 <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>{item.desc}</Text>
+                {item.richDesc ? (
+                  <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
+                    <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
+                      O Significado do seu Número {item.num}:
+                    </Text>
+                    <Text style={{ fontSize: 9.5, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
+                      {item.richDesc}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             </View>
           ))}
@@ -1626,10 +1644,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         {/* Explicações individuais de cada número */}
         <View style={{ gap: 6 }}>
           {[
-            { num: cincoNumSocial.expressao, label: 'Expressão — O Dom Natural', desc: 'Resultante de todas as letras do nome harmonizado, revela o potencial reorganizado — o que você agora projeta naturalmente para o mundo. Os talentos que surgem sem esforço e a qualidade que as pessoas percebem em você neste novo campo vibracional.', color: '#9A6B00', bg: '#FFFBF0' },
-            { num: cincoNumSocial.motivacao, label: 'Motivação — A Alma do Nome', desc: 'Calculada pelas vogais do nome harmonizado, revela o motor mais profundo por trás das escolhas — não o que você faz, mas o que te move para fazer. Quando o nome harmonizado alinha esse motor, há a sensação de viver de dentro para fora.', color: '#0369a1', bg: '#F0F9FF' },
-            { num: cincoNumSocial.impressao, label: 'Impressão — A Máscara Social', desc: 'As consoantes do nome harmonizado formam o esqueleto visível — a frequência que os outros captam antes de te conhecerem. O novo padrão molda reputações e primeiras impressões de forma mais alinhada com a sua essência real.', color: '#15803d', bg: '#F0FDF4' },
-            { num: cincoNumSocial.missao, label: 'Missão — A Vocação de Vida', desc: 'Calculada pelo primeiro nome harmonizado, aponta o campo onde seus dons encontram maior ressonância com o mundo. Quando alinhada com Expressão e Destino, gera propósito inevitável — e o nome harmonizado busca exatamente esse alinhamento.', color: '#7C3AED', bg: '#F5F3FF' },
+            { num: cincoNumSocial.destino, label: 'Destino — A Estrada da Alma (Imutável)', desc: 'Sua âncora de destino calculada a partir da data de nascimento. O nome harmonizado reorganiza as letras para que a jornada rumo a esta estrada aconteça com menos resistência e mais fluidez.', richDesc: cincoNumSocial.destino ? DESTINO_DESC[cincoNumSocial.destino] : '', color: '#5b21b6', bg: '#F5F3FF' },
+            { num: cincoNumSocial.expressao, label: 'Expressão — O Dom Natural', desc: 'Resultante de todas as letras do nome harmonizado, revela o potencial reorganizado — o que você agora projeta naturalmente para o mundo. Os talentos que surgem sem esforço e a qualidade que as pessoas percebem em você neste novo campo vibracional.', richDesc: cincoNumSocial.expressao ? EXPRESSAO_DESC[cincoNumSocial.expressao] : '', color: '#9A6B00', bg: '#FFFBF0' },
+            { num: cincoNumSocial.motivacao, label: 'Motivação — A Alma do Nome', desc: 'Calculada pelas vogais do nome harmonizado, revela o motor mais profundo por trás das escolhas — não o que você faz, mas o que te move para fazer. Quando o nome harmonizado alinha esse motor, há a sensação de viver de dentro para fora.', richDesc: cincoNumSocial.motivacao ? MOTIVACAO_DESC[cincoNumSocial.motivacao] : '', color: '#0369a1', bg: '#F0F9FF' },
+            { num: cincoNumSocial.impressao, label: 'Impressão — A Máscara Social', desc: 'As consoantes do nome harmonizado formam o esqueleto visível — a frequência que os outros captam antes de te conhecerem. O novo padrão molda reputações e primeiras impressões de forma mais alinhada com a sua essência real.', richDesc: cincoNumSocial.impressao ? IMPRESSAO_DESC[cincoNumSocial.impressao] : '', color: '#15803d', bg: '#F0FDF4' },
+            { num: cincoNumSocial.missao, label: 'Missão — A Vocação de Vida', desc: 'Calculada pelo primeiro nome harmonizado, aponta o campo onde seus dons encontram maior ressonância com o mundo. Quando alinhada com Expressão e Destino, gera propósito inevitável — e o nome harmonizado busca exatamente esse alinhamento.', richDesc: cincoNumSocial.missao ? MISSAO_DESC[cincoNumSocial.missao] : '', color: '#7C3AED', bg: '#F5F3FF' },
           ].map((item, i) => (
             <View key={i} wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, backgroundColor: item.bg, borderRadius: 6, padding: 12 }}>
               <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
@@ -1638,6 +1657,16 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>{item.label}</Text>
                 <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>{item.desc}</Text>
+                {item.richDesc ? (
+                  <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
+                    <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
+                      O Significado do seu Número {item.num}:
+                    </Text>
+                    <Text style={{ fontSize: 9.5, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
+                      {item.richDesc}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             </View>
           ))}

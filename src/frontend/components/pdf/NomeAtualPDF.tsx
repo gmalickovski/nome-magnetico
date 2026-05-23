@@ -23,6 +23,16 @@ import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
 import { calcularScore } from '../../../backend/numerology/score';
 import { avaliarCompatibilidade } from '../../../backend/numerology/harmonization';
+import {
+  DESTINO_TITULO,
+  DESTINO_DESC,
+  EXPRESSAO_TITULO,
+  EXPRESSAO_DESC,
+  MOTIVACAO_DESC,
+  IMPRESSAO_DESC,
+  MISSAO_DESC,
+  NUMERO_VIBRACAO,
+} from '../../../backend/numerology/interpretations';
 
 const theme = THEME_NOME_ATUAL;
 
@@ -30,125 +40,6 @@ const GOLD = theme.primaryColor;
 const GRAY = '#4B5563';
 const LIGHT_GRAY = '#E5E7EB';
 const DARK = '#131313';
-
-// ── Mapas de texto por número de Destino / Expressão ─────────────────────────
-
-const DESTINO_TITULO: Record<number, string> = {
-  1: 'Liderança e Autonomia',
-  2: 'Parceria e Equilíbrio',
-  3: 'Criatividade e Expressão',
-  4: 'Estrutura e Estabilidade',
-  5: 'Liberdade e Transformação',
-  6: 'Harmonia e Cuidado',
-  7: 'Sabedoria e Introspecção',
-  8: 'Prosperidade e Poder',
-  9: 'Compaixão e Conclusão',
-  11: 'Intuição e Iluminação',
-  22: 'Construção e Manifestação',
-};
-
-const DESTINO_DESC: Record<number, string> = {
-  1: 'A trilha da liderança e do pioneirismo. Você nasceu para inaugurar caminhos, tomar iniciativas e afirmar a sua individualidade com autenticidade. O maior desafio deste Destino é equilibrar autonomia com receptividade — a força de um precisa da escuta do outro.',
-  2: 'A trilha da cooperação e do equilíbrio. Você nasceu para unir, mediar e construir pontes entre pessoas e ideias. Sua maior força está nas parcerias — mas o desafio é manter a própria voz enquanto harmoniza os outros.',
-  3: 'A trilha da criatividade e da comunicação. Você nasceu para expressar, inspirar e iluminar o mundo com ideias e palavras. Quando este Destino está bloqueado, a voz se cala exatamente quando mais importa ser ouvido.',
-  4: 'A trilha da construção e da disciplina. Você nasceu para erguer estruturas duradouras — negócios, família, legado. O desafio é sustentar o esforço além do ponto em que os resultados ainda não apareceram.',
-  5: 'A trilha da liberdade e da adaptação. Você nasceu para experimentar, transformar e trazer o novo ao mundo. O desafio é converter a inquietação natural em movimento com direção, não em caos.',
-  6: 'A trilha da responsabilidade e da harmonia. Você nasceu para cuidar, equilibrar e servir — família, comunidade, relacionamentos. O desafio é aprender que servir os outros começa por não se abandonar.',
-  7: 'A trilha do conhecimento e da espiritualidade. Você nasceu para aprofundar, analisar e revelar o que está oculto. O desafio é trazer a sabedoria interior para o mundo sem se perder no isolamento.',
-  8: 'A trilha da prosperidade e da autoridade. Você nasceu para administrar, construir e manifestar abundância. O desafio é exercer o poder com ética — nem a fuga, nem o abuso, mas o uso consciente.',
-  9: 'A trilha da compaixão e do serviço universal. Você nasceu para encerrar ciclos, ajudar e elevar a consciência coletiva. O desafio é soltar o apego ao passado e confiar que encerrar é a forma mais nobre de amor.',
-  11: 'A trilha da intuição e da iluminação. Número mestre que carrega responsabilidade espiritual elevada — você nasceu para inspirar e trazer visões que transcendem o ordinário. O desafio é sustentar a sensibilidade sem se perder na ansiedade.',
-  22: 'A trilha da construção e da manifestação em grande escala. Número mestre que unifica o sonho e a realidade — você nasceu para construir o que poucos ousam imaginar. O desafio é transformar a visão em ação concreta, passo a passo.',
-};
-
-const EXPRESSAO_TITULO: Record<number, string> = {
-  1: 'Liderança Natural',
-  2: 'Diplomacia e Parceria',
-  3: 'Expressão e Criatividade',
-  4: 'Organização e Método',
-  5: 'Versatilidade e Comunicação',
-  6: 'Cuidado e Responsabilidade',
-  7: 'Análise e Profundidade',
-  8: 'Execução e Resultados',
-  9: 'Generosidade e Visão',
-  11: 'Inspiração e Sensibilidade',
-  22: 'Visão e Manifestação',
-};
-
-/** Descrição personalizada por valor de Expressão */
-const EXPRESSAO_DESC: Record<number, string> = {
-  1:  'Sua expressão natural é de liderança e iniciativa — você se destaca quando toma o comando e abre caminhos que outros ainda não ousaram trilhar.',
-  2:  'Sua expressão natural é de empatia e diplomacia — você se destaca quando cria conexões e harmoniza conflitos com sensibilidade e escuta ativa.',
-  3:  'Sua expressão natural é de criatividade e carisma — você se destaca quando usa palavras, arte ou comunicação para inspirar e iluminar quem está ao seu redor.',
-  4:  'Sua expressão natural é de método e confiabilidade — você se destaca quando precisa construir, organizar e entregar resultados sólidos com precisão.',
-  5:  'Sua expressão natural é de versatilidade e adaptação — você se destaca quando traz movimento, inovação e novas perspectivas a ambientes estagnados.',
-  6:  'Sua expressão natural é de harmonia e cuidado — você se destaca quando nutre, equilibra e cria ambientes seguros onde as pessoas se sentem acolhidas.',
-  7:  'Sua expressão natural é de análise e profundidade — você se destaca quando precisa ir além da superfície e revelar o que outros não conseguem enxergar.',
-  8:  'Sua expressão natural é de autoridade e execução — você se destaca quando lidera com visão prática, gerando resultados concretos e de grande escala.',
-  9:  'Sua expressão natural é de humanidade e visão ampla — você se destaca quando serve a causas maiores do que você, com compaixão e generosidade genuína.',
-  11: 'Sua expressão natural é de intuição e presença transformadora — você se destaca quando usa sua sensibilidade elevada para inspirar e transformar os que estão ao seu redor.',
-  22: 'Sua expressão natural é de visão prática em grande escala — você se destaca quando transforma grandes sonhos em estruturas concretas que beneficiam muitas pessoas.',
-};
-
-/** Descrição personalizada por valor de Motivação (vogais — o que te move por dentro) */
-const MOTIVACAO_DESC: Record<number, string> = {
-  1:  'O que te move por dentro é o impulso de ser o primeiro — autonomia, protagonismo e inaugurar algo único são o combustível da sua alma.',
-  2:  'O que te move por dentro é a necessidade de conexão — parceria, harmonia e sentir que faz parte de algo maior são o combustível da sua alma.',
-  3:  'O que te move por dentro é a expressão criativa — criar, comunicar e inspirar são necessidades vitais; quando bloqueadas, geram vazio e estagnação interior.',
-  4:  'O que te move por dentro é a construção — você precisa sentir que está edificando algo concreto e duradouro; o caos e a superficialidade te esgotam.',
-  5:  'O que te move por dentro é a liberdade — explorar, experimentar e nunca ficar preso são necessidades da sua alma; rotinas rígidas te tolhem por dentro.',
-  6:  'O que te move por dentro é o cuidado — você precisa sentir que protege, nutre e cria harmonia; quando o ambiente está em desequilíbrio, você não consegue descansar.',
-  7:  'O que te move por dentro é a busca pela verdade — compreender em profundidade e encontrar sentido nas coisas são necessidades vitais da sua alma.',
-  8:  'O que te move por dentro é o poder de manifestar — você precisa sentir que está construindo, conquistando e expandindo; a estagnação é seu maior inimigo interior.',
-  9:  'O que te move por dentro é o serviço — você sente profunda necessidade de contribuir para algo maior do que si mesmo; quando age apenas para si, sente vazio.',
-  11: 'O que te move por dentro é a missão — você sente uma chamada interior para inspirar e transformar; quando não encontra propósito elevado, a ansiedade toma conta.',
-  22: 'O que te move por dentro é a manifestação em escala — você precisa sentir que está construindo algo grandioso; pequenas realizações não satisfazem sua alma.',
-};
-
-/** Descrição personalizada por valor de Impressão (consoantes — como o mundo te percebe) */
-const IMPRESSAO_DESC: Record<number, string> = {
-  1:  'A impressão que você passa ao mundo é de determinação e força — as pessoas te percebem como alguém que sabe o que quer e age com convicção antes mesmo de falar.',
-  2:  'A impressão que você passa ao mundo é de sensibilidade e gentileza — as pessoas te percebem como alguém próximo, empático e de fácil aproximação.',
-  3:  'A impressão que você passa ao mundo é de entusiasmo e criatividade — as pessoas te percebem como alguém leve, comunicativo e que ilumina o ambiente ao entrar.',
-  4:  'A impressão que você passa ao mundo é de solidez e confiabilidade — as pessoas te percebem como alguém responsável, organizado e em quem se pode contar.',
-  5:  'A impressão que você passa ao mundo é de energia e dinamismo — as pessoas te percebem como alguém inquieto, versátil e sempre em movimento.',
-  6:  'A impressão que você passa ao mundo é de harmonia e responsabilidade — as pessoas te percebem como alguém equilibrado, atencioso e naturalmente cuidadoso.',
-  7:  'A impressão que você passa ao mundo é de profundidade e reserva — as pessoas te percebem como alguém sério, analítico e que fala com substância quando escolhe falar.',
-  8:  'A impressão que você passa ao mundo é de autoridade e segurança — as pessoas te percebem como alguém capaz, decidido e com presença que inspira respeito.',
-  9:  'A impressão que você passa ao mundo é de generosidade e humanidade — as pessoas te percebem como alguém aberto, acolhedor e com visão além do próprio interesse.',
-  11: 'A impressão que você passa ao mundo é de sensibilidade elevada e presença única — as pessoas te percebem como alguém diferente, intuitivo e com algo raro difícil de definir.',
-  22: 'A impressão que você passa ao mundo é de grandiosidade e visão — as pessoas te percebem como alguém com capacidade de realizar coisas que a maioria apenas sonha.',
-};
-
-/** Descrição personalizada por valor de Missão (primeiro nome — campo de maior ressonância) */
-const MISSAO_DESC: Record<number, string> = {
-  1:  'Seu primeiro nome direciona seus dons para o pioneirismo — você encontra maior ressonância quando está inaugurando caminhos e sendo o responsável por dar início ao novo.',
-  2:  'Seu primeiro nome direciona seus dons para a mediação — você encontra maior ressonância em contextos que exigem equilíbrio, parceria e construção de pontes entre pessoas.',
-  3:  'Seu primeiro nome direciona seus dons para a expressão — você encontra maior ressonância quando pode criar, comunicar e inspirar com liberdade e criatividade.',
-  4:  'Seu primeiro nome direciona seus dons para a estrutura — você encontra maior ressonância quando constrói, organiza e sustenta com método o que outros começaram.',
-  5:  'Seu primeiro nome direciona seus dons para a transformação — você encontra maior ressonância quando pode romper padrões, inovar e trazer movimento ao que está estagnado.',
-  6:  'Seu primeiro nome direciona seus dons para o cuidado — você encontra maior ressonância em contextos que envolvem nutrir, equilibrar e criar ambientes seguros.',
-  7:  'Seu primeiro nome direciona seus dons para o conhecimento — você encontra maior ressonância quando pode aprofundar, investigar e revelar o que está oculto.',
-  8:  'Seu primeiro nome direciona seus dons para a prosperidade — você encontra maior ressonância quando lidera, administra e manifesta resultados concretos em escala.',
-  9:  'Seu primeiro nome direciona seus dons para o serviço — você encontra maior ressonância quando contribui para causas maiores e ajuda a encerrar ciclos com compaixão.',
-  11: 'Seu primeiro nome direciona seus dons para a inspiração — você encontra maior ressonância quando atua como canal de transformação e consciência elevada.',
-  22: 'Seu primeiro nome direciona seus dons para a manifestação em grande escala — você encontra maior ressonância quando constrói estruturas que transformam realidades coletivas.',
-};
-
-/** Vibração de cada número — usado em todos os cards de número */
-const NUMERO_VIBRACAO: Record<number, string> = {
-  1: 'Iniciativa e Autonomia',
-  2: 'Sensibilidade e Mediação',
-  3: 'Criatividade e Comunicação',
-  4: 'Método e Construção',
-  5: 'Versatilidade e Movimento',
-  6: 'Harmonia e Cuidado',
-  7: 'Análise e Profundidade',
-  8: 'Poder e Abundância',
-  9: 'Compaixão e Humanidade',
-  11: 'Intuição e Inspiração',
-  22: 'Visão e Manifestação',
-};
 
 // ── Overlay de cadeado para triângulos bloqueados ─────────────────────────────
 

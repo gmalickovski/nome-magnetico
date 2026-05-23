@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { supabase } from '@/backend/db/supabase';
+import { analisarNomesSocial } from '@/backend/numerology/products/nome-social';
+import { calcularTodosTriangulos } from '@/backend/numerology/triangle';
 
 const RequestSchema = z.object({
   product_type: z.enum(['nome_social', 'nome_bebe', 'nome_empresa', 'analise_gratuita']),
@@ -142,20 +144,32 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
     let debitos_carmicos: any[] = [];
     let frequencias_numeros: any = null;
     let arcano_regente: number | null = null;
+    let resultadoSocial: any = null;
 
     if (product_type === 'nome_social' || product_type === 'analise_gratuita') {
-      const melhorNome = live_calculated_data?.melhorNome;
+      let calcDataNasc = data_nascimento;
+      if (data_nascimento.includes('-')) {
+        const [y, m, d] = data_nascimento.split('-');
+        calcDataNasc = `${d}/${m}/${y}`;
+      }
+
+      resultadoSocial = analisarNomesSocial([], nome_completo, calcDataNasc);
+      const melhorNome = resultadoSocial.melhorNome;
+      const melhorNomeTriangulos = melhorNome
+        ? calcularTodosTriangulos(melhorNome.nomeCompleto, calcDataNasc)
+        : null;
+
       numero_expressao = melhorNome?.expressao ?? null;
-      numero_destino = live_calculated_data?.destino ?? null;
+      numero_destino = resultadoSocial.destino ?? null;
       numero_motivacao = melhorNome?.motivacao ?? null;
       numero_missao = melhorNome?.missao ?? null;
       numero_impressao = melhorNome?.impressao ?? null;
       score = melhorNome?.score ?? null;
       bloqueios = melhorNome?.bloqueios ?? [];
-      triangulo_vida = melhorNome?.triangulos?.vida ?? null;
-      triangulo_pessoal = melhorNome?.triangulos?.pessoal ?? null;
-      triangulo_social = melhorNome?.triangulos?.social ?? null;
-      triangulo_destino = melhorNome?.triangulos?.destino ?? null;
+      triangulo_vida = melhorNomeTriangulos?.vida ?? null;
+      triangulo_pessoal = melhorNomeTriangulos?.pessoal ?? null;
+      triangulo_social = melhorNomeTriangulos?.social ?? null;
+      triangulo_destino = melhorNomeTriangulos?.destino ?? null;
       licoes_carmicas = melhorNome?.licoesCarmicas ?? [];
       tendencias_ocultas = melhorNome?.tendenciasOcultas ?? [];
       debitos_carmicos = melhorNome?.debitosCarmicos ?? [];
@@ -174,7 +188,7 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
         if (val) counts[val] = (counts[val] || 0) + 1;
       }
       frequencias_numeros = {
-        ranking: live_calculated_data,
+        ranking: resultadoSocial,
         frequencias: counts,
         selectedNomeSocial: melhorNome?.nomeCompleto ?? null
       };
@@ -260,8 +274,8 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
     const newAnalysisId = insertedAnalysis.id;
 
     // 4. Salvar nomes de candidatos em magnetic_names para listagens e PDFs
-    if (product_type === 'nome_social' && Array.isArray(live_calculated_data?.nomesCandidatos)) {
-      const rows = live_calculated_data.nomesCandidatos.map((sug: any) => ({
+    if (product_type === 'nome_social' && resultadoSocial && Array.isArray(resultadoSocial.nomesCandidatos)) {
+      const rows = resultadoSocial.nomesCandidatos.map((sug: any) => ({
         analysis_id: newAnalysisId,
         user_id: user.id,
         nome_sugerido: sug.nomeCompleto,
