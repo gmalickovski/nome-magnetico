@@ -155,9 +155,11 @@ const cinco_numeros_empresa = isNomeEmpresa && rankingEmpresa?.melhorNome ? [
   { label: 'Missão',     sublabel: 'O Propósito',  value: rankingEmpresa.melhorNome.missao,     icon: '◎' },
   { label: 'Impressão',  sublabel: 'As Consoantes', value: rankingEmpresa.melhorNome.impressao,  icon: '◉' },
 ] : cinco_numeros;
+
+const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 ---
 
-<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} showActions={analysis.status === 'complete'}>
+<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
   <div>
 
     {/* ── PROCESSANDO ─────────────────────────────────────────────── */}

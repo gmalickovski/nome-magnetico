@@ -87,6 +87,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
     filename = `analise-nome-social-${toSlug(selectedSocialName)}-nome-magnetico.pdf`;
   }
 
+  if ((analysis as any).is_analyst_generated === true) {
+    filename = filename.replace('.pdf', '..-analista.pdf');
+  }
+
   const PDFComponent =
     productType === 'nome_bebe'
       ? NomeBebePDF

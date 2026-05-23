@@ -8,9 +8,10 @@ export interface Props {
   productType?: string;
   isFree?: boolean;
   showActions?: boolean;
+  isAnalyst?: boolean;
 }
 
-const { title, analysisId, productType = 'nome_social', isFree = false, showActions = true } = Astro.props;
+const { title, analysisId, productType = 'nome_social', isFree = false, showActions = true, isAnalyst = false } = Astro.props;
 ---
 
 <AppLayout title={title}>
@@ -26,7 +27,7 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
         </a>
 
         {showActions && (
-          <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} showFab={false} />
+          <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} showFab={false} isAnalyst={isAnalyst} />
         )}
       </div>
     </div>
@@ -37,7 +38,7 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
   </div>
 
   {showActions && (
-    <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} fabOnly />
+    <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} fabOnly isAnalyst={isAnalyst} />
   )}
 
   <script is:inline>

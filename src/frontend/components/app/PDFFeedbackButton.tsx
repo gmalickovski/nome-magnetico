@@ -17,6 +17,8 @@ interface Props {
   showFab?: boolean;
   /** Dispara o download automaticamente ao montar o componente */
   autoDownload?: boolean;
+  /** Se a análise foi gerada por um analista */
+  isAnalyst?: boolean;
 }
 
 type Status = 'idle' | 'loading' | 'done' | 'error';
@@ -31,6 +33,7 @@ export function PDFFeedbackButton({
   className,
   showFab = true,
   autoDownload = false,
+  isAnalyst = false,
 }: Props) {
   const [modalOpen, setModalOpen]         = useState(false);
   const [status, setStatus]               = useState<Status>('idle');
@@ -229,7 +232,7 @@ export function PDFFeedbackButton({
               </svg>
             )}
             {status === 'done' && (
-              <svg style={{ width: '32px', height: '32px', color: '#D4AF37' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg style={{ width: '32px', height: '32px', color: isAnalyst ? '#10b981' : '#D4AF37' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             )}
@@ -243,17 +246,23 @@ export function PDFFeedbackButton({
           <div style={{ flex: 1 }}>
             {status === 'loading' && (
               <>
-                <p style={{ fontSize: '14px', fontWeight: 700, color: '#e5e2e1', margin: 0 }}>Preparando seu documento…</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#e5e2e1', margin: 0 }}>
+                  {isAnalyst ? 'Baixando análise...' : 'Preparando seu documento…'}
+                </p>
                 <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0' }}>
-                  {elapsed < 3 ? 'Iniciando geração do PDF' : elapsed < 10 ? 'Montando as seções da análise' : 'Quase lá, finalizando…'}
+                  {isAnalyst ? 'Aguarde um instante...' : (elapsed < 3 ? 'Iniciando geração do PDF' : elapsed < 10 ? 'Montando as seções da análise' : 'Quase lá, finalizando…')}
                   {' '}<span style={{ color: '#4b5563' }}>({elapsed}s)</span>
                 </p>
               </>
             )}
             {status === 'done' && (
               <>
-                <p style={{ fontSize: '14px', fontWeight: 700, color: '#D4AF37', margin: 0 }}>Documento pronto!</p>
-                <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0' }}>Download iniciado automaticamente.</p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: isAnalyst ? '#10b981' : '#D4AF37', margin: 0 }}>
+                  {isAnalyst ? 'Download concluído!' : 'Documento pronto!'}
+                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0' }}>
+                  {isAnalyst ? 'Download realizado com sucesso.' : 'Download iniciado automaticamente.'}
+                </p>
               </>
             )}
             {status === 'error' && (
@@ -278,11 +287,11 @@ export function PDFFeedbackButton({
         </div>
 
         {/* ── Divider ── */}
-        {status !== 'error' && (
+        {status !== 'error' && !isAnalyst && (
           <div style={{ height: '1px', background: 'linear-gradient(to right, transparent, rgba(212,175,55,0.15), transparent)' }} />
         )}
 
-        {isFree && status === 'done' && (
+        {isFree && status === 'done' && !isAnalyst && (
           <div
             style={{
               borderRadius: '14px',
@@ -325,7 +334,7 @@ export function PDFFeedbackButton({
         )}
 
         {/* ── Formulário de feedback ── */}
-        {status !== 'error' && !feedbackSent && (
+        {status !== 'error' && !feedbackSent && !isAnalyst && (
           <form onSubmit={handleFeedback} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <p style={{ fontSize: '11px', fontWeight: 600, color: '#e5e2e1', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>
@@ -412,7 +421,7 @@ export function PDFFeedbackButton({
         )}
 
         {/* ── Feedback enviado ── */}
-        {feedbackSent && (
+        {feedbackSent && !isAnalyst && (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
             <p style={{ fontSize: '14px', fontWeight: 600, color: '#D4AF37', margin: '0 0 4px' }}>Obrigado pelo feedback! ✦</p>
             <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>Sua opinião é muito importante para nós.</p>
@@ -420,8 +429,32 @@ export function PDFFeedbackButton({
         )}
 
         {/* ── Erro ao enviar feedback ── */}
-        {feedbackError && (
+        {feedbackError && !isAnalyst && (
           <p style={{ fontSize: '12px', color: '#f87171', textAlign: 'center', margin: 0 }}>Não foi possível enviar o feedback agora.</p>
+        )}
+
+        {/* ── Botão Fechar para Analista ── */}
+        {isAnalyst && status !== 'loading' && (
+          <button
+            onClick={closeModal}
+            style={{
+              width: '100%',
+              background: '#D4AF37',
+              color: '#131313',
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              padding: '11px',
+              borderRadius: '999px',
+              border: 'none',
+              cursor: 'pointer',
+              marginTop: '8px',
+              transition: 'background 0.2s',
+            }}
+          >
+            Fechar
+          </button>
         )}
       </div>
     </div>,

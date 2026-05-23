@@ -391,9 +391,15 @@ export default function AdminGeneralAnalysis() {
 
       const data = await res.json();
       if (res.ok) {
-        setSaveSuccess('Análise salva com sucesso! O PDF está disponível.');
+        setSaveSuccess('Análise salva com sucesso!');
         
         if (data.analysisId) {
+          if (activeTab === 'social' && !isFree) {
+            // Se for versão completa do nome social do analista, redireciona diretamente para o relatório HTML
+            window.location.href = `/app/resultado/${data.analysisId}`;
+            return;
+          }
+
           try {
             // Atualiza status do modal para baixar o PDF
             setPdfModal({
