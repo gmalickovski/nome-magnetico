@@ -142,9 +142,11 @@ export default function AdminGeneralAnalysis() {
   // --- ESTADOS: NOME SOCIAL ---
   const [socialName, setSocialName] = useState('');
   const [socialBirthDate, setSocialBirthDate] = useState('');
+  const [socialCandidates, setSocialCandidates] = useState('');
   const [socialLoading, setSocialLoading] = useState(false);
   const [socialResult, setSocialResult] = useState<any>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
+  const [selectedSocialCandidateIdx, setSelectedSocialCandidateIdx] = useState<number>(0);
 
   // --- ESTADOS: NOME DE BEBÊ ---
   const [babyCandidates, setBabyCandidates] = useState('');
@@ -181,12 +183,18 @@ export default function AdminGeneralAnalysis() {
       setSocialLoading(true);
       setSocialError(null);
       try {
-        const res = await fetch('/api/analyze-live', {
+        const candidates = socialCandidates
+          .split('\n')
+          .map(c => c.trim())
+          .filter(c => c.length >= 2);
+
+        const res = await fetch('/api/admin/analyze-social-live', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            nome_candidato: socialName,
-            data_nascimento_db: formatDateForApi(socialBirthDate),
+            nome_nascimento: socialName,
+            data_nascimento: formatDateForApi(socialBirthDate),
+            nomes_candidatos: candidates.length > 0 ? candidates : undefined,
           }),
         });
 
@@ -196,6 +204,7 @@ export default function AdminGeneralAnalysis() {
 
         const data = await res.json();
         setSocialResult(data);
+        setSelectedSocialCandidateIdx(0); // Reset selection
       } catch (err: any) {
         setSocialError(err?.message || 'Falha ao processar análise');
         setSocialResult(null);
@@ -205,7 +214,7 @@ export default function AdminGeneralAnalysis() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [socialName, socialBirthDate, activeTab]);
+  }, [socialName, socialBirthDate, socialCandidates, activeTab]);
 
   // --- EFFECT DEBOUNCE: NOME DE BEBÊ ---
   useEffect(() => {
@@ -330,6 +339,9 @@ export default function AdminGeneralAnalysis() {
       nomeCompleto = socialName.trim();
       dataNascimento = formatDateForApi(socialBirthDate);
       calculatedData = socialResult;
+      extraParams = {
+        nomes_candidatos: socialCandidates.split('\n').map(c => c.trim()).filter(c => c.length >= 2),
+      };
     } else if (activeTab === 'baby') {
       if (!babyResult) {
         setPdfModal({ isOpen: false, status: 'loading', message: '' });
@@ -607,13 +619,13 @@ export default function AdminGeneralAnalysis() {
             {activeTab === 'social' && (
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">Nome Completo</label>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">Nome de Nascimento</label>
                   <input
                     type="text"
                     value={socialName}
                     onChange={e => setSocialName(e.target.value)}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors"
-                    placeholder="Nome de nascimento do cliente..."
+                    placeholder="Nome completo de nascimento do cliente..."
                   />
                 </div>
                 <div>
@@ -626,6 +638,21 @@ export default function AdminGeneralAnalysis() {
                     onChange={e => setSocialBirthDate(handleDateMask(e.target.value))}
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors"
                   />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">
+                    Nomes Candidatos (Opcional)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={socialCandidates}
+                    onChange={e => setSocialCandidates(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors resize-none text-sm"
+                    placeholder="Digite variações ou sugestões de nomes, um por linha..."
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Se deixar em branco, o sistema gerará sugestões automaticamente.
+                  </p>
                 </div>
               </div>
             )}
@@ -803,100 +830,141 @@ export default function AdminGeneralAnalysis() {
           {activeTab === 'social' && socialResult && !socialLoading && (
             <div className="pt-2">
 
-              {/* SCORE */}
+              {/* CANDIDATOS */}
+              <div className="mb-3 px-1">
+                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Ranking</p>
+                <h3 className="font-cinzel text-lg font-bold text-white">Nomes Candidatos ({socialResult.nomesCandidatos?.length ?? 0})</h3>
+              </div>
+              <div className="space-y-3 mb-10">
+                {socialResult.nomesCandidatos?.map((candidate: any, idx: number) => {
+                  const isSelected = selectedSocialCandidateIdx === idx;
+                  const blockCount = candidate.bloqueios?.length ?? 0;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedSocialCandidateIdx(idx)}
+                      className={`rounded-2xl p-3 sm:p-5 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-[#bea5ff]/10 ring-1 ring-[#bea5ff]/50'
+                          : 'bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-cinzel text-base font-bold text-white">{candidate.nomeCompleto}</p>
+                        <p className="text-xs text-gray-500 mt-1">Mot: {candidate.motivacao} · Exp: {candidate.expressao} · Imp: {candidate.impressao}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                          blockCount === 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                        }`}>{blockCount === 0 ? '✓ Sem bloqueios' : `${blockCount} Bloqueio(s)`}</span>
+                        <span className="font-cinzel font-bold text-lg text-[#bea5ff]">{candidate.score}<span className="text-xs font-normal"> pts</span></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* CANDIDATO DETALHES */}
               {(() => {
-                const scoreVal: number = socialResult.score?.total ?? 0;
+                const selectedCandidate = socialResult.nomesCandidatos?.[selectedSocialCandidateIdx] || socialResult.melhorNome;
+                if (!selectedCandidate) return null;
+
+                const scoreVal: number = selectedCandidate.score ?? 0;
                 const scoreColor = scoreVal >= 70 ? 'text-emerald-400' : scoreVal >= 40 ? 'text-amber-400' : scoreVal >= 20 ? 'text-red-400' : 'text-red-600';
                 const scoreBg   = scoreVal >= 70 ? 'bg-emerald-500/10 border-emerald-500/20' : scoreVal >= 40 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20';
                 const scoreLabel = scoreVal >= 90 ? '⭐ Excelente' : scoreVal >= 70 ? '✅ Bom' : scoreVal >= 40 ? '〜 Aceitável' : scoreVal >= 20 ? '⚠ Não Recomendado' : '🔴 Crítico';
+
                 return (
-                  <div className={`rounded-2xl border p-4 sm:p-6 flex items-center justify-between gap-4 mb-8 ${scoreBg}`}>
-                    <div>
-                      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-gray-500 mb-1">Score Vibracional</p>
-                      <p className={`font-cinzel text-4xl font-bold leading-none ${scoreColor}`}>
-                        {scoreVal}<span className="text-base font-normal ml-1">pts</span>
-                      </p>
+                  <>
+                    {/* SCORE */}
+                    <div className={`rounded-2xl border p-4 sm:p-6 flex items-center justify-between gap-4 mb-8 ${scoreBg}`}>
+                      <div>
+                        <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-gray-500 mb-1">Score Vibracional</p>
+                        <p className={`font-cinzel text-4xl font-bold leading-none ${scoreColor}`}>
+                          {scoreVal}<span className="text-base font-normal ml-1">pts</span>
+                        </p>
+                      </div>
+                      <span className={`font-cinzel text-sm font-semibold ${scoreColor}`}>{scoreLabel}</span>
                     </div>
-                    <span className={`font-cinzel text-sm font-semibold ${scoreColor}`}>{scoreLabel}</span>
-                  </div>
+
+                    {/* 5 NÚMEROS */}
+                    <div className="mb-3 px-1">
+                      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Vibração do Nome</p>
+                      <h3 className="font-cinzel text-lg font-bold text-white">5 Números Principais</h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
+                      {[
+                        { label: 'Destino', sublabel: 'O Chamado', val: socialResult.destino, color: '#0369a1', border: 'rgba(3,105,161,0.55)', bg: 'rgba(3,105,161,0.05)', className: 'col-span-2 md:col-span-1' },
+                        { label: 'Motivação', sublabel: 'A Alma', val: selectedCandidate.motivacao, color: '#9A6B00', border: 'rgba(154,107,0,0.55)', bg: 'rgba(154,107,0,0.05)', className: 'col-span-1' },
+                        { label: 'Expressão', sublabel: 'O Dom', val: selectedCandidate.expressao, color: '#6d28d9', border: 'rgba(109,40,217,0.55)', bg: 'rgba(109,40,217,0.05)', className: 'col-span-1' },
+                        { label: 'Impressão', sublabel: 'A Aparência', val: selectedCandidate.impressao, color: '#be185d', border: 'rgba(190,24,93,0.55)', bg: 'rgba(190,24,93,0.05)', className: 'col-span-1' },
+                        { label: 'Missão', sublabel: 'A Vocação', val: selectedCandidate.missao, color: '#15803d', border: 'rgba(21,128,61,0.55)', bg: 'rgba(21,128,61,0.05)', className: 'col-span-1' },
+                      ].map(({ label, sublabel, val, color, border, bg, className }) => (
+                        <div key={label} className={className} style={{ borderRadius: 16, border: `1.5px solid ${border}`, background: bg, padding: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+                          <div style={{ fontFamily: "'Cinzel',serif", fontSize: '2.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val ?? '?'}</div>
+                          <div style={{ fontSize: 11, color, opacity: 0.8 }}>{sublabel}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* TRIÂNGULOS */}
+                    <div className="mb-3 px-1">
+                      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Mapa de Triângulos</p>
+                      <h3 className="font-cinzel text-lg font-bold text-white">Os 4 Triângulos Numerológicos</h3>
+                    </div>
+                    <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 mb-10">
+                      <TriangleVisualization
+                        vida={selectedCandidate.triangulos?.vida}
+                        pessoal={selectedCandidate.triangulos?.pessoal}
+                        social={selectedCandidate.triangulos?.social}
+                        destino={selectedCandidate.triangulos?.destino}
+                        bloqueios={selectedCandidate.bloqueios || []}
+                        nome={selectedCandidate.nomeCompleto}
+                        productType="nome_social"
+                        isFreeAnalysis={false}
+                      />
+                    </div>
+
+                    {/* DÉBITOS KÁRMICOS */}
+                    {selectedCandidate.debitosCarmicos && selectedCandidate.debitosCarmicos.length > 0 && (
+                      <div className="mb-10">
+                        <div className="mb-3 px-1">
+                          <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">O Peso do Passado</p>
+                          <h3 className="font-cinzel text-lg font-bold text-white">Débitos Kármicos</h3>
+                        </div>
+                        <KarmicDebts debitos={selectedCandidate.debitosCarmicos} nomeCompleto={selectedCandidate.nomeCompleto} />
+                      </div>
+                    )}
+
+                    {/* LIÇÕES KÁRMICAS */}
+                    {selectedCandidate.licoesCarmicas && selectedCandidate.licoesCarmicas.length > 0 && (
+                      <div className="mb-10">
+                        <div className="mb-3 px-1">
+                          <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Lacunas Energéticas</p>
+                          <h3 className="font-cinzel text-lg font-bold text-white">Lições Kármicas</h3>
+                        </div>
+                        <KarmicLessons licoes={selectedCandidate.licoesCarmicas} nomeCompleto={selectedCandidate.nomeCompleto} />
+                      </div>
+                    )}
+
+                    {/* TENDÊNCIAS OCULTAS */}
+                    {selectedCandidate.tendenciasOcultas && selectedCandidate.tendenciasOcultas.length > 0 && (
+                      <div className="mb-10">
+                        <div className="mb-3 px-1">
+                          <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Frequências Numéricas</p>
+                          <h3 className="font-cinzel text-lg font-bold text-white">Tendências Ocultas</h3>
+                        </div>
+                        <HiddenTendencies
+                          tendencias={selectedCandidate.tendenciasOcultas}
+                          frequencias={mapearFrequenciasFront(selectedCandidate.nomeCompleto)}
+                          nomeCompleto={selectedCandidate.nomeCompleto}
+                        />
+                      </div>
+                    )}
+                  </>
                 );
               })()}
-
-              {/* 5 NÚMEROS */}
-              <div className="mb-3 px-1">
-                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Vibração do Nome</p>
-                <h3 className="font-cinzel text-lg font-bold text-white">5 Números Principais</h3>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
-                {[
-                  { label: 'Destino', sublabel: 'O Chamado', val: socialResult.numeros?.destino, color: '#0369a1', border: 'rgba(3,105,161,0.55)', bg: 'rgba(3,105,161,0.05)', className: 'col-span-2 md:col-span-1' },
-                  { label: 'Motivação', sublabel: 'A Alma', val: socialResult.numeros?.motivacao, color: '#9A6B00', border: 'rgba(154,107,0,0.55)', bg: 'rgba(154,107,0,0.05)', className: 'col-span-1' },
-                  { label: 'Expressão', sublabel: 'O Dom', val: socialResult.numeros?.expressao, color: '#6d28d9', border: 'rgba(109,40,217,0.55)', bg: 'rgba(109,40,217,0.05)', className: 'col-span-1' },
-                  { label: 'Impressão', sublabel: 'A Aparência', val: socialResult.numeros?.impressao, color: '#be185d', border: 'rgba(190,24,93,0.55)', bg: 'rgba(190,24,93,0.05)', className: 'col-span-1' },
-                  { label: 'Missão', sublabel: 'A Vocação', val: socialResult.numeros?.missao, color: '#15803d', border: 'rgba(21,128,61,0.55)', bg: 'rgba(21,128,61,0.05)', className: 'col-span-1' },
-                ].map(({ label, sublabel, val, color, border, bg, className }) => (
-                  <div key={label} className={className} style={{ borderRadius: 16, border: `1.5px solid ${border}`, background: bg, padding: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
-                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: '2.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val ?? '?'}</div>
-                    <div style={{ fontSize: 11, color, opacity: 0.8 }}>{sublabel}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* TRIÂNGULOS */}
-              <div className="mb-3 px-1">
-                <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Mapa de Triângulos</p>
-                <h3 className="font-cinzel text-lg font-bold text-white">Os 4 Triângulos Numerológicos</h3>
-              </div>
-              <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 mb-10">
-                <TriangleVisualization
-                  vida={socialResult.triangulos?.vida}
-                  pessoal={socialResult.triangulos?.pessoal}
-                  social={socialResult.triangulos?.social}
-                  destino={socialResult.triangulos?.destino}
-                  bloqueios={socialResult.bloqueios}
-                  nome={socialName}
-                  productType="nome_social"
-                  isFreeAnalysis={false}
-                />
-              </div>
-
-              {/* DÉBITOS KÁRMICOS */}
-              {socialResult.debitosCarmicos && socialResult.debitosCarmicos.length > 0 && (
-                <div className="mb-10">
-                  <div className="mb-3 px-1">
-                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">O Peso do Passado</p>
-                    <h3 className="font-cinzel text-lg font-bold text-white">Débitos Kármicos</h3>
-                  </div>
-                  <KarmicDebts debitos={socialResult.debitosCarmicos} nomeCompleto={socialName} />
-                </div>
-              )}
-
-              {/* LIÇÕES KÁRMICAS */}
-              {socialResult.licoesCarmicas && (
-                <div className="mb-10">
-                  <div className="mb-3 px-1">
-                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Lacunas Energéticas</p>
-                    <h3 className="font-cinzel text-lg font-bold text-white">Lições Kármicas</h3>
-                  </div>
-                  <KarmicLessons licoes={socialResult.licoesCarmicas} nomeCompleto={socialName} />
-                </div>
-              )}
-
-              {/* TENDÊNCIAS OCULTAS */}
-              {socialResult.tendenciasOcultas && (
-                <div className="mb-10">
-                  <div className="mb-3 px-1">
-                    <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Frequências Numéricas</p>
-                    <h3 className="font-cinzel text-lg font-bold text-white">Tendências Ocultas</h3>
-                  </div>
-                  <HiddenTendencies
-                    tendencias={socialResult.tendenciasOcultas}
-                    frequencias={mapearFrequenciasFront(socialName)}
-                    nomeCompleto={socialName}
-                  />
-                </div>
-              )}
 
               {/* EXPORTAR */}
               <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">

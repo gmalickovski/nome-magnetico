@@ -144,25 +144,27 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
     let arcano_regente: number | null = null;
 
     if (product_type === 'nome_social' || product_type === 'analise_gratuita') {
-      numero_expressao = live_calculated_data?.numeros?.expressao ?? null;
-      numero_destino = live_calculated_data?.numeros?.destino ?? null;
-      numero_motivacao = live_calculated_data?.numeros?.motivacao ?? null;
-      numero_missao = live_calculated_data?.numeros?.missao ?? null;
-      numero_impressao = live_calculated_data?.numeros?.impressao ?? null;
-      score = live_calculated_data?.score?.total ?? null;
-      bloqueios = live_calculated_data?.bloqueios ?? [];
-      triangulo_vida = live_calculated_data?.triangulos?.vida ?? null;
-      triangulo_pessoal = live_calculated_data?.triangulos?.pessoal ?? null;
-      triangulo_social = live_calculated_data?.triangulos?.social ?? null;
-      triangulo_destino = live_calculated_data?.triangulos?.destino ?? null;
-      licoes_carmicas = live_calculated_data?.licoesCarmicas ?? [];
-      tendencias_ocultas = live_calculated_data?.tendenciasOcultas ?? [];
-      debitos_carmicos = live_calculated_data?.debitosCarmicos ?? [];
-      arcano_regente = live_calculated_data?.triangulos?.vida?.arcanoRegente ?? null;
+      const melhorNome = live_calculated_data?.melhorNome;
+      numero_expressao = melhorNome?.expressao ?? null;
+      numero_destino = live_calculated_data?.destino ?? null;
+      numero_motivacao = melhorNome?.motivacao ?? null;
+      numero_missao = melhorNome?.missao ?? null;
+      numero_impressao = melhorNome?.impressao ?? null;
+      score = melhorNome?.score ?? null;
+      bloqueios = melhorNome?.bloqueios ?? [];
+      triangulo_vida = melhorNome?.triangulos?.vida ?? null;
+      triangulo_pessoal = melhorNome?.triangulos?.pessoal ?? null;
+      triangulo_social = melhorNome?.triangulos?.social ?? null;
+      triangulo_destino = melhorNome?.triangulos?.destino ?? null;
+      licoes_carmicas = melhorNome?.licoesCarmicas ?? [];
+      tendencias_ocultas = melhorNome?.tendenciasOcultas ?? [];
+      debitos_carmicos = melhorNome?.debitosCarmicos ?? [];
+      arcano_regente = triangulo_vida?.arcanoRegente ?? null;
 
       // Monta frequências
+      const targetName = melhorNome?.nomeCompleto || nome_completo;
       const counts: Record<string, number> = {};
-      const nomeLimpo = nome_completo.toUpperCase().replace(/[^A-ZÇ]/g, '');
+      const nomeLimpo = targetName.toUpperCase().replace(/[^A-ZÇ]/g, '');
       const mapValores: Record<string, number> = {
         A:1, I:1, Q:1, J:1, Y:1, B:2, K:2, R:2, C:3, G:3, L:3, S:3, D:4, M:4, T:4, X:4,
         E:5, H:5, N:5, U:6, V:6, W:6, Ç:6, O:7, Z:7, F:8, P:8
@@ -171,7 +173,11 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
         const val = mapValores[char];
         if (val) counts[val] = (counts[val] || 0) + 1;
       }
-      frequencias_numeros = { counts };
+      frequencias_numeros = {
+        ranking: live_calculated_data,
+        frequencias: counts,
+        selectedNomeSocial: melhorNome?.nomeCompleto ?? null
+      };
 
     } else if (product_type === 'nome_bebe') {
       const melhorNome = live_calculated_data?.melhorNome;
@@ -254,18 +260,18 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
     const newAnalysisId = insertedAnalysis.id;
 
     // 4. Salvar nomes de candidatos em magnetic_names para listagens e PDFs
-    if (product_type === 'nome_social' && Array.isArray(live_calculated_data?.sugestoes)) {
-      const rows = live_calculated_data.sugestoes.map((sug: any) => ({
+    if (product_type === 'nome_social' && Array.isArray(live_calculated_data?.nomesCandidatos)) {
+      const rows = live_calculated_data.nomesCandidatos.map((sug: any) => ({
         analysis_id: newAnalysisId,
         user_id: user.id,
-        nome_sugerido: sug.nomeSocial,
-        numero_expressao: sug.numeros?.expressao ?? null,
-        numero_motivacao: sug.numeros?.motivacao ?? null,
-        numero_missao: sug.numeros?.missao ?? null,
-        numero_impressao: sug.numeros?.impressao ?? null,
-        tem_bloqueio: sug.bloqueios?.length > 0,
+        nome_sugerido: sug.nomeCompleto,
+        numero_expressao: sug.expressao ?? null,
+        numero_motivacao: sug.motivacao ?? null,
+        numero_missao: sug.missao ?? null,
+        numero_impressao: sug.impressao ?? null,
+        tem_bloqueio: sug.temBloqueio || sug.bloqueios?.length > 0,
         score: sug.score ?? 0,
-        justificativa: sug.resumoMudanca || null,
+        justificativa: Array.isArray(sug.justificativa) ? sug.justificativa.join('; ') : sug.justificativa || null,
       }));
 
       if (rows.length > 0) {
