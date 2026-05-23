@@ -28,14 +28,17 @@ type AnalyticsEvent =
   | 'cta_resultado_gratis_upsell_aceitavel'
   | 'cta_resultado_gratis_upsell'
   | 'analise_gratis_submit'
+  | 'preliminary_analysis_submit'
   | 'analise_resultado_cta_click'
   | 'calculadora_submit'
+  | 'begin_checkout'
+  | 'blog_view'
   | 'blog_cta_click'
   | 'blog_cta_lp_click'
   | 'blog_article_view';
 
 interface EventData {
-  produto?: 'nome_social' | 'nome_bebe' | 'nome_empresa';
+  produto?: 'nome_social' | 'nome_bebe' | 'nome_empresa' | 'analise_gratuita';
   posicao?: string;
   preco?: number;
   promocao?: string | null;
@@ -49,8 +52,17 @@ interface EventData {
 }
 
 export function track(event: AnalyticsEvent, data?: EventData): void {
-  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-    window.gtag('event', event, data);
+  if (typeof window !== 'undefined') {
+    try {
+      if (window.localStorage && window.localStorage.getItem('nm-user-role') === 'admin') {
+        // Ignora envio de analytics para administradores
+        return;
+      }
+    } catch {}
+
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', event, data);
+    }
   }
 }
 

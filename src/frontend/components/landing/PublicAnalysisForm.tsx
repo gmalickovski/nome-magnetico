@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { RegistrationModal } from './RegistrationModal';
 import { PDFFeedbackButton } from '../app/PDFFeedbackButton';
+import { track } from '../../lib/analytics';
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
 
@@ -292,6 +293,7 @@ export function PublicAnalysisForm({ isLoggedIn }: Props) {
         throw new Error(json.error ?? 'Erro na análise.');
       }
       setResult(json as LiveResult);
+      track('preliminary_analysis_submit');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro inesperado.');
     } finally {

@@ -349,4 +349,17 @@ const pageTitle = activeCategory
     });
     window.addEventListener('blog:clear', () => filterBlog(''));
   </script>
+  <script define:vars={{ activeCategory }}>
+    (function () {
+      function sendBlogView() {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'blog_view', {
+            categoria: activeCategory || 'todos'
+          });
+        }
+      }
+      sendBlogView();
+      window.addEventListener('consentGranted', sendBlogView);
+    })();
+  </script>
 </BlogLayout>

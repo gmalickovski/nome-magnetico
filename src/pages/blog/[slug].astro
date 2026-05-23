@@ -519,3 +519,43 @@ const categorySlug = post.category ?? null;
     html { scroll-padding-top: 154px; }
   }
 </style>
+
+<script define:vars={{ articleTitle: post.title, articleSlug: post.slug }}>
+  (function () {
+    // 1. Rastrear visualização do artigo
+    function sendArticleView() {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'blog_article_view', {
+          article_title: articleTitle,
+          article_slug: articleSlug
+        });
+      }
+    }
+    sendArticleView();
+    window.addEventListener('consentGranted', sendArticleView);
+
+    // 2. Rastrear cliques no CTA de conversão do blog
+    function bindCtaClicks() {
+      const ctaContainer = document.querySelector('.blog-cta-inner');
+      if (ctaContainer) {
+        ctaContainer.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            const dest = link.getAttribute('href') || '';
+            if (typeof window.gtag === 'function') {
+              window.gtag('event', 'blog_cta_click', {
+                destination_url: dest,
+                origin_article: articleSlug
+              });
+            }
+          });
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bindCtaClicks);
+    } else {
+      bindCtaClicks();
+    }
+  })();
+</script>

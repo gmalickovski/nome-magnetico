@@ -600,4 +600,15 @@ const products = [
     }
   </style>
 
+  <script define:vars={{ isAdmin }}>
+    (function () {
+      try {
+        if (isAdmin) {
+          localStorage.setItem('nm-user-role', 'admin');
+        } else {
+          localStorage.removeItem('nm-user-role');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </AppLayout>
