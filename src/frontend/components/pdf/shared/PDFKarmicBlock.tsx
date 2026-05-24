@@ -387,15 +387,7 @@ export function BloqueiosBlock({
         const displayTitle = isNomeSocial ? b.titulo.replace(new RegExp(`\\s*\\(${b.codigo}\\)\\s*`), '') : b.titulo;
         
         // Sempre usamos a descrição base que tem o texto exato do PDF.
-        // Se houver um triângulo específico (ex: visualização individual por aba),
-        // anexamos o contexto do triângulo.
-        let displayDesc = b.descricao;
-        if (triangulo) {
-          const interpretacao = obterInterpretacaoEspecifica(b.codigo, triangulo);
-          if (interpretacao) {
-            displayDesc = `${b.descricao} ${interpretacao}`;
-          }
-        }
+        const displayDesc = b.descricao;
         
         return (
         <View key={i} style={[styles.bloqueioRow, ...(i === bloqueios.length - 1 ? [{ marginBottom: 0 }] : [])]} wrap={false}>

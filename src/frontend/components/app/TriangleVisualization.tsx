@@ -447,8 +447,7 @@ function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloquei
       {expandido && (
         <div className="px-4 pb-4 space-y-3 border-t border-red-500/10">
           {(() => {
-            const interpretacao = obterInterpretacaoEspecifica(bloqueio.codigo, abaAtiva);
-            let displayDesc = interpretacao ? `${bloqueio.descricao} ${interpretacao}` : bloqueio.descricao;
+            let displayDesc = bloqueio.descricao;
             if (displayDesc.includes('O antídoto é')) {
               displayDesc = displayDesc.split('O antídoto é')[0].trim();
             }

@@ -70,66 +70,48 @@ export const BLOQUEIOS_MAP: Record<
 > = {
   '111': {
     titulo: 'Bloqueio de Iniciação (111)',
-    descricao:
-      'A pessoa fica limitada, perdendo a coragem de se aventurar em algo novo. Pode, também, ficar um longo período inativo(a), desempregado(a) ou mesmo impotente para realizar o que quer que seja permanecendo nesse estado o tempo que durar o Arcano que domina o período.',
-    aspectoSaude:
-      'Tendência para desenvolver alguns distúrbios ou doenças cardíacas.',
+    descricao: 'Esta sequência gera uma limitação energética que bloqueia a iniciativa, fazendo com que você perca a coragem de se aventurar no novo. Sob essa influência, é comum enfrentar longos períodos de inatividade, estagnação profissional ou uma sensação de impotência para realizar seus desejos, permanecendo nesse estado o tempo que durar o Arcano regente do período.',
+    aspectoSaude: 'Tendência para desenvolver alguns distúrbios ou doenças cardíacas.',
   },
   '222': {
     titulo: 'Bloqueio de Associação (222)',
-    descricao:
-      'Indica possibilidade de timidez e indecisão, podendo levar o(a) seu(a) possuidor(a) a ser subjugado(a) por aqueles mais próximos, sejam eles amigos, sócios, colegas de trabalho ou simplesmente conhecidos. Faz perder a autoestima, limitando-o(a) quanto a seus projetos e realizações.',
-    aspectoSaude:
-      'Pode, eventualmente, surgir alguma doença que provoque dependência.',
+    descricao: 'Esta frequência vibra na polaridade da timidez e indecisão, criando um campo onde você pode ser facilmente subjugado(a) pelas pessoas mais próximas — sejam amigos, sócios ou colegas de trabalho. Esse bloqueio enfraquece a autoestima e limita drasticamente o avanço de seus projetos pessoais e realizações.',
+    aspectoSaude: 'Pode, eventualmente, surgir alguma doença que provoque dependência.',
   },
   '333': {
     titulo: 'Bloqueio de Expressão (333)',
-    descricao:
-      'Indica possibilidade de ser incompreendido(a), dificuldade no diálogo, principalmente com colegas de trabalho e com a(o) companheira(o). Tem dificuldade de se impor em seus projetos e para convencer as pessoas.',
-    aspectoSaude:
-      'Indica possibilidade de doenças respiratórias ou de articulações.',
+    descricao: 'Esta sequência gera uma barreira profunda na comunicação, trazendo a possibilidade de ser constantemente incompreendido(a). Há uma dificuldade severa no diálogo, especialmente no ambiente de trabalho e nas relações afetivas, dificultando a sua imposição em projetos e o seu poder de convencimento.',
+    aspectoSaude: 'Indica possibilidade de doenças respiratórias ou de articulações.',
   },
   '444': {
     titulo: 'Bloqueio de Estruturação (444)',
-    descricao:
-      'Reflete dificuldade na realização profissional. Pode ser mal remunerado(a) e as perspectivas profissionais serem difíceis, ou ter dificuldade em se manter no emprego, ou se dar bem em qualquer atividade.',
-    aspectoSaude:
-      'Indica possibilidade de doenças reumáticas ou arteriais.',
+    descricao: 'Reflete uma dificuldade direta na realização profissional. Esse bloqueio atrai cenários de má remuneração, estagnação na carreira e dificuldade de se firmar em empregos ou de se dar bem em qualquer atividade, tornando as perspectivas de futuro muito difíceis e pesadas.',
+    aspectoSaude: 'Indica possibilidade de doenças reumáticas ou arteriais.',
   },
   '555': {
     titulo: 'Bloqueio de Liberdade (555)',
-    descricao:
-      'Indica possíveis mudanças não desejadas de casa, de profissão ou meio social. Sob esta influência, a pessoa tem frequentes altos e baixos, não se fixando profissionalmente, sempre à procura de melhores oportunidades, e ter dificuldade para as encontrar. Pode, também, causar fuga do meio social em que habita.',
-    aspectoSaude:
-      'Desenvolver alguma doença de pele.',
+    descricao: 'Indica possíveis mudanças não desejadas de casa, de profissão ou de círculo social. Sob essa influência, a pessoa passa por frequentes altos e baixos, não se fixando profissionalmente e buscando sempre melhores oportunidades com enorme dificuldade de encontrá-las. Pode causar, também, uma fuga do meio social em que habita.',
+    aspectoSaude: 'Desenvolver alguma doença de pele.',
   },
   '666': {
     titulo: 'Bloqueio de Harmonia (666)',
-    descricao:
-      'Indica possibilidade de haver decepções com amigos, sócios, parentes e até com o cônjuge (namorada(o) ou companheira(o)), que não o(a) compreende em seus propósitos e sentimentos.',
-    aspectoSaude:
-      'Algum tipo de doença cardíaca pode aparecer nesse estado.',
+    descricao: 'Indica a possibilidade de haver grandes decepções com amigos, sócios, parentes e até com o parceiro amoroso. Cria uma aura onde as pessoas próximas parecem não compreender seus propósitos e sentimentos, gerando frustrações e quebras de confiança constantes.',
+    aspectoSaude: 'Algum tipo de doença cardíaca pode aparecer nesse estado.',
   },
   '777': {
     titulo: 'Bloqueio de Conexão Espiritual (777)',
-    descricao:
-      'Faz com que se afaste de tudo e de todos. Pode levar ao desmando, transformá-lo(a) em um ser dependente, vaidoso(a), arrogante e, consequentemente, vítima da própria intolerância. A persistência nesse sentimento provoca sentimentos de solidão.',
-    aspectoSaude:
-      'Doenças nervosas, dependências e, eventualmente, algum tipo de câncer.',
+    descricao: 'Faz com que a pessoa se afaste de tudo e de todos. Pode levar ao desmando, transformando-o(a) em um ser dependente, vaidoso(a), arrogante e, consequentemente, vítima da própria intolerância. A persistência nesse bloqueio gera profundos sentimentos de solidão existencial.',
+    aspectoSaude: 'Doenças nervosas, dependências e, eventualmente, algum tipo de câncer.',
   },
   '888': {
     titulo: 'Bloqueio de Poder e Abundância (888)',
-    descricao:
-      'Esta sequência torna arredio(a), afastando-o(a) das atividades sociais. Caso não seja evoluído(a) espiritualmente, poderá descontrolar-se emocionalmente com muita facilidade. Sob esta vibração, poderá oscilar entre a riqueza e a pobreza.',
-    aspectoSaude:
-      'Como consequência desse estresse, poderá desenvolver alguma doença.',
+    descricao: 'Esta sequência torna a pessoa arredia, afastando-a das atividades sociais. Caso não seja evoluído(a) espiritualmente, poderá descontrolar-se emocionalmente com muita facilidade frente aos problemas. Sob esta vibração, a vida oscila violentamente entre a riqueza e a pobreza.',
+    aspectoSaude: 'Como consequência desse estresse extremo, poderá desenvolver alguma doença.',
   },
   '999': {
     titulo: 'Bloqueio de Compaixão Universal (999)',
-    descricao:
-      'Reflete uma tendência a passar por dificuldades financeiras, eventualmente perdas de bens, eventuais fracassos nos negócios e vários tipos de provações provocadas pelos períodos de estagnação.',
-    aspectoSaude:
-      'Tudo isto pode afetar o sistema nervoso e o coração.',
+    descricao: 'Reflete uma tendência a passar por grandes dificuldades financeiras, eventuais perdas de bens, fracassos nos negócios e vários tipos de provações provocadas pelos longos períodos de estagnação. Traz o peso das paralisações e dos encerramentos difíceis de ciclos.',
+    aspectoSaude: 'Tudo isto pode afetar diretamente o sistema nervoso e o coração.',
   },
 };
 
