@@ -27,10 +27,10 @@ const DIACRITICO_CIRCUNFLEXO = '\u0302'; // ^ → +7
  * Aplica os modificadores de acento conforme as regras cabalísticas.
  */
 export function calcularValor(letra: string): number {
+  if (letra.toUpperCase() === 'Ç') return 6;
+
   const decomposto = letra.normalize('NFD');
   const base = decomposto.charAt(0).toUpperCase();
-
-  if (base === 'Ç') return 6;
 
   let valor = TABELA_CONVERSAO[base] ?? 0;
 

@@ -17,9 +17,9 @@ const TABELA_CONVERSAO: Record<string, number> = {
 };
 
 function calcularValorFront(letra: string): number {
+  if (letra.toUpperCase() === 'Ç') return 6;
   const decomposto = letra.normalize('NFD');
   const base = decomposto.charAt(0).toUpperCase();
-  if (base === 'Ç') return 6;
   let valor = TABELA_CONVERSAO[base] ?? 0;
   if (decomposto.length > 1) {
     const diacritico = decomposto.charAt(1);

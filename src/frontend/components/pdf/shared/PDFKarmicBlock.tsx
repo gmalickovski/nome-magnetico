@@ -525,13 +525,22 @@ function FrequencyBar({ frequencias }: { frequencias: Record<string, number> }) 
       </Text>
       {entries.map(({ num, count }) => {
         const pct = (count / max) * 100;
+        const isTendencia = count >= 4;
+        const barColor = isTendencia ? '#EF4444' : '#bea5ff';
         return (
           <View key={num} style={styles.freqRow}>
             <Text style={styles.freqLabel}>{num}</Text>
             <View style={styles.freqBar}>
-              <View style={[styles.freqFill, { width: `${pct}%` }]} />
+              <View style={[styles.freqFill, { width: `${pct}%`, backgroundColor: barColor }]} />
             </View>
-            <Text style={styles.freqCount}>{count}x</Text>
+            <Text
+              style={[
+                styles.freqCount,
+                isTendencia ? { color: '#EF4444', fontFamily: 'Helvetica-Bold' } : { color: '#bea5ff' },
+              ]}
+            >
+              {count}x
+            </Text>
           </View>
         );
       })}

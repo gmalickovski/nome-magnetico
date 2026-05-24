@@ -315,8 +315,9 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
     cincoNumNasc.motivacao,
     cincoNumNasc.expressao,
   );
-  const frequenciasNasc: Record<string, number> | null =
-    freqData?.frequencias ?? (freqData && !freqData?.ranking ? freqData : null);
+  const frequenciasNasc = Object.fromEntries(
+    Object.entries(mapearFrequencias(nomeNascimento))
+  ) as Record<string, number>;
 
   const nascBaseLen = Math.max(
     tVidaNasc?.linhas[0]?.length ?? 1,

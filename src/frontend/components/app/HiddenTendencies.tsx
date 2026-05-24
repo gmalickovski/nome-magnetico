@@ -31,14 +31,20 @@ function FrequencyBar({ numero, frequencia, max }: { numero: number; frequencia:
       <span className="w-6 text-center font-mono font-bold text-sm text-gold">{numero}</span>
       <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${isTendencia ? 'bg-blue-400' : 'bg-gold/50'}`}
+          className={`h-full rounded-full transition-all duration-500 ${
+            isTendencia ? 'bg-[#ef4444] shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-[#bea5ff]'
+          }`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className={`w-5 text-right text-sm font-mono ${isTendencia ? 'text-blue-400 font-bold' : 'text-gray-400'}`}>
+      <span
+        className={`w-5 text-right text-sm font-mono ${
+          isTendencia ? 'text-[#ef4444] font-bold' : 'text-[#bea5ff]'
+        }`}
+      >
         {frequencia}
       </span>
-      {isTendencia && <span className="text-xs text-blue-400">⚠</span>}
+      {isTendencia && <span className="text-xs text-[#ef4444]">⚠</span>}
     </div>
   );
 }
@@ -94,8 +100,8 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
           ))}
         </div>
         {tendencias.length > 0 && (
-          <p className="text-xs text-blue-400 mt-3 flex items-center gap-1">
-            <span>⚠</span> Números em azul apareceram 4 ou mais vezes = tendência oculta
+          <p className="text-xs text-[#ef4444] mt-3 flex items-center gap-1">
+            <span>⚠</span> Números em vermelho apareceram 4 ou mais vezes = tendência oculta
           </p>
         )}
       </div>

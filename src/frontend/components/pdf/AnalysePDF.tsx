@@ -405,6 +405,8 @@ function FrequencyChart({ frequencias }: { frequencias: Record<string, number> }
     <View style={{ marginTop: 8 }}>
       {entries.map(({ num, count }) => {
         const pct = (count / max) * 100;
+        const isTendencia = count >= 4;
+        const barColor = isTendencia ? '#EF4444' : '#a78bfa';
         return (
           <View key={num} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
             <Text style={{ fontSize: 8, color: '#4B5563', width: 14, textAlign: 'right', marginRight: 6 }}>
@@ -415,12 +417,21 @@ function FrequencyChart({ frequencias }: { frequencias: Record<string, number> }
                 style={{
                   width: `${pct}%`,
                   height: 10,
-                  backgroundColor: '#a78bfa',
+                  backgroundColor: barColor,
                   borderRadius: 3,
                 }}
               />
             </View>
-            <Text style={{ fontSize: 8, color: '#4B5563', width: 18, textAlign: 'right', marginLeft: 6 }}>
+            <Text
+              style={{
+                fontSize: 8,
+                color: isTendencia ? '#EF4444' : '#4B5563',
+                fontFamily: isTendencia ? 'Helvetica-Bold' : 'Helvetica',
+                width: 18,
+                textAlign: 'right',
+                marginLeft: 6,
+              }}
+            >
               {count}x
             </Text>
           </View>
