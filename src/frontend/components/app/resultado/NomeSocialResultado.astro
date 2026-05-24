@@ -24,6 +24,7 @@ import { ARCANOS } from '../../../../backend/numerology/arcanos';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../../../../backend/numerology/karmic';
 import { calcularCincoNumeros } from '../../../../backend/numerology/numbers';
 import { calcularTodosTriangulos, detectarBloqueios } from '../../../../backend/numerology/triangle';
+import { NUMERO_NOMES, NUMERO_PALAVRAS_CHAVE } from '../../../../backend/numerology/interpretations';
 
 interface Props {
   analysis: any;
@@ -296,7 +297,6 @@ const dimSublabels: Record<TipKey, string> = {
       <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Comparativo</p>
       <h3 class="font-cinzel text-lg font-bold text-white mb-4">Antes × Depois por Dimensão</h3>
     </div>
-
     <div class="space-y-3 mb-10">
       {SVG_TIP_KEYS.map((key, i) => {
         const nN = nascNums[key];
@@ -311,8 +311,6 @@ const dimSublabels: Record<TipKey, string> = {
           : changed
           ? 'text-[#D4AF37] bg-[#D4AF37]/10'
           : 'text-gray-400 bg-white/5';
-        const nascArcano = nN != null ? (ARCANOS[nN] as any) : null;
-        const harmArcano = nH != null ? (ARCANOS[nH] as any) : null;
         return (
           <div class="rounded-2xl bg-white/[0.03] p-4">
             <div class="flex items-center justify-between mb-3">
@@ -323,26 +321,66 @@ const dimSublabels: Record<TipKey, string> = {
               <span class={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${badgeCls}`}>{badgeText}</span>
             </div>
             {isImutavel ? (
-              <div class="rounded-xl bg-gray-600/10 border border-gray-600/20 p-3 sm:p-5 text-center">
-                <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-3">Imutável — calculado pela data de nascimento</span>
-                <div class="font-cinzel text-4xl font-bold text-gray-300">{nH ?? '?'}</div>
-                {harmArcano?.nome && <p class="text-[10px] text-gray-400/80 mt-2">{harmArcano.nome}</p>}
-                {harmArcano?.palavraChave && <p class="text-[9px] text-gray-500 mt-1">{harmArcano.palavraChave}</p>}
+              <div class="rounded-xl bg-[#bea5ff]/5 border border-[#bea5ff]/10 p-3 sm:p-5 text-center">
+                <span class="text-[9px] text-[#bea5ff] font-bold uppercase tracking-wider block mb-3">Imutável — calculado pela data de nascimento</span>
+                <div class="font-cinzel text-4xl font-bold text-[#bea5ff]">{nH ?? '?'}</div>
+                {nH != null && NUMERO_NOMES[nH] && <p class="text-[10px] text-[#e5e2e1] font-bold mt-2">{NUMERO_NOMES[nH]}</p>}
+                {nH != null && NUMERO_PALAVRAS_CHAVE[nH] && (
+                  <div class="mt-2.5 flex flex-wrap justify-center gap-1.5">
+                    {NUMERO_PALAVRAS_CHAVE[nH].split(' · ').map(word => (
+                      <span class="text-[9px] px-2.5 py-0.5 rounded-full bg-[#bea5ff]/10 text-[#d7c6ff] font-medium border border-[#bea5ff]/10">
+                        {word}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                <div class="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-center">
+                <div class="rounded-xl bg-red-500/5 border border-red-500/10 p-3 text-center">
                   <p class="text-[9px] text-red-400 font-bold uppercase mb-1">Nascimento</p>
                   <div class="font-cinzel text-3xl font-bold text-red-400">{nN ?? '?'}</div>
-                  {nascArcano?.nome    && <p class="text-[10px] text-red-300/80 mt-1">{nascArcano.nome}</p>}
-                  {nascArcano?.palavraChave && <p class="text-[9px] text-gray-500">{nascArcano.palavraChave}</p>}
+                  {nN != null && NUMERO_NOMES[nN] && <p class="text-[10px] text-red-300/80 font-bold mt-1.5">{NUMERO_NOMES[nN]}</p>}
+                  {nN != null && NUMERO_PALAVRAS_CHAVE[nN] && (
+                    <div class="mt-2.5 flex flex-wrap justify-center gap-1">
+                      {NUMERO_PALAVRAS_CHAVE[nN].split(' · ').map(word => (
+                        <span class="text-[8px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-300 font-medium border border-red-500/10">
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span class="text-gray-600 text-xl font-bold">»</span>
-                <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
-                  <p class="text-[9px] text-emerald-400 font-bold uppercase mb-1">Harmonizado</p>
-                  <div class="font-cinzel text-3xl font-bold text-emerald-400">{nH ?? '?'}</div>
-                  {harmArcano?.nome    && <p class="text-[10px] text-emerald-300/80 mt-1">{harmArcano.nome}</p>}
-                  {harmArcano?.palavraChave && <p class="text-[9px] text-gray-500">{harmArcano.palavraChave}</p>}
+                <div class={`rounded-xl p-3 text-center transition-all ${
+                  changed 
+                    ? 'bg-[#D4AF37]/5 border border-[#D4AF37]/10' 
+                    : 'bg-white/5 border border-white/10'
+                }`}>
+                  <p class={`text-[9px] font-bold uppercase mb-1 ${
+                    changed ? 'text-[#D4AF37]' : 'text-gray-400'
+                  }`}>Harmonizado</p>
+                  <div class={`font-cinzel text-3xl font-bold ${
+                    changed ? 'text-[#D4AF37]' : 'text-gray-300'
+                  }`}>{nH ?? '?'}</div>
+                  {nH != null && NUMERO_NOMES[nH] && (
+                    <p class={`text-[10px] font-bold mt-1.5 ${
+                      changed ? 'text-[#e5e2e1]' : 'text-gray-400'
+                    }`}>{NUMERO_NOMES[nH]}</p>
+                  )}
+                  {nH != null && NUMERO_PALAVRAS_CHAVE[nH] && (
+                    <div class="mt-2.5 flex flex-wrap justify-center gap-1">
+                      {NUMERO_PALAVRAS_CHAVE[nH].split(' · ').map(word => (
+                        <span class={`text-[8px] px-2 py-0.5 rounded-full font-medium ${
+                          changed
+                            ? 'bg-[#D4AF37]/10 text-[#f2ca50] border border-[#D4AF37]/10'
+                            : 'bg-white/5 text-gray-300 border border-white/10'
+                        }`}>
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

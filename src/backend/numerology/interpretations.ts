@@ -18,6 +18,34 @@ export const NUMERO_VIBRACAO: Record<number, string> = {
   22: 'Visão e Manifestação',
 };
 
+export const NUMERO_NOMES: Record<number, string> = {
+  1: 'Independência e Liderança',
+  2: 'Diplomacia e Cooperação',
+  3: 'Expressão e Criatividade',
+  4: 'Trabalho e Organização',
+  5: 'Versatilidade e Inovação',
+  6: 'Harmonia e Cuidado',
+  7: 'Sabedoria e Espiritualidade',
+  8: 'Poder e Sucesso Material',
+  9: 'Compaixão e Altruísmo',
+  11: 'Intuição e Inspiração Superior',
+  22: 'Materialização e Construção Global',
+};
+
+export const NUMERO_PALAVRAS_CHAVE: Record<number, string> = {
+  1: 'Autonomia · Pioneirismo · Iniciativa',
+  2: 'Parceria · Receptividade · Mediação',
+  3: 'Carisma · Otimismo · Comunicação',
+  4: 'Disciplina · Estabilidade · Método',
+  5: 'Liberdade · Adaptabilidade · Mudança',
+  6: 'Família · Equilíbrio · Conciliação',
+  7: 'Análise · Mistério · Solitude',
+  8: 'Resultado · Autoridade · Prosperidade',
+  9: 'Universalidade · Desapego · Cura',
+  11: 'Despertar · Sensibilidade · Visão Profética',
+  22: 'Legado · Estruturação · Escala Monumental',
+};
+
 export const DESTINO_TITULO: Record<number, string> = {
   1: 'Liderança e Autonomia',
   2: 'Parceria e Equilíbrio',

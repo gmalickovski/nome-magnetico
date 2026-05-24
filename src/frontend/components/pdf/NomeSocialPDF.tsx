@@ -33,6 +33,8 @@ import {
   MOTIVACAO_DESC,
   IMPRESSAO_DESC,
   MISSAO_DESC,
+  NUMERO_NOMES,
+  NUMERO_PALAVRAS_CHAVE,
 } from '../../../backend/numerology/interpretations';
 
 
@@ -699,10 +701,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>{item.desc}</Text>
                 {item.richDesc ? (
                   <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
-                    <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
+                    <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
                       O Significado do seu Número {item.num}:
                     </Text>
-                    <Text style={{ fontSize: 9.5, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
+                    <Text style={{ fontSize: 10, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
                       {item.richDesc}
                     </Text>
                   </View>
@@ -764,7 +766,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo da Vida (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                A estrutura mais fundamental do mapa. Calculado a partir do valor puro de cada letra — sem modificador externo — revela os padrões que atravessam toda a existência. Governa a saúde do corpo, a vitalidade e a relação com a prosperidade material.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Saúde, Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação física e energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa a saúde do seu corpo físico, sua imunidade energética e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
               </Text>
               <TrianguloPiramideInline data={tVidaNasc} label="TRIÂNGULO DA VIDA" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
               {tVidaNasc.arcanoRegente != null && (() => {
@@ -799,7 +801,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo Pessoal (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                Modificado pelo número do dia de nascimento, acessa a dimensão mais interna da vida: a forma como você processa emoções, responde à pressão e se relaciona com as pessoas mais próximas. Bloqueios aqui se manifestam como relacionamentos que seguem o mesmo roteiro.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — Esta dimensão penetra no santuário mais reservado da sua alma, ativada e moldada pelo dia exato do seu nascimento. Ela governa a sua inteligência emocional, a forma como você processa sentimentos íntimos em segredo, sua tolerância a pressões internas e a dinâmica com os seus entes mais próximos. Quando existem bloqueios nesta pirâmide de origem, a vida afetiva tende a repetir ciclos e roteiros repetitivos de frustração ou incompreensão, atuando como espelhos de conflitos internos ainda não resolvidos.
               </Text>
               <TrianguloPiramideInline data={tPessoalNasc} label="TRIÂNGULO PESSOAL" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
               {tPessoalNasc.arcanoRegente != null && (() => {
@@ -834,7 +836,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo Social (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                Modificado pelo número do mês de nascimento, revela como o campo externo responde ao seu nome — o magnetismo que ele gera e as oportunidades que atrai ou repele. Governa a visibilidade pública e o reconhecimento profissional.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#059669' }}>[Carreira, Visibilidade Pública e Magnetismo Social]</Text> — Esta pirâmide irradia a sua assinatura vibracional para o world externo, moldada pela influência do mês do seu nascimento. Ela governa a forma como a sociedade te percebe, o carisma que você emana em ambientes públicos e as oportunidades profissionais que você atrai ou repele. É a frequência que determina a sua reputação, a sua capacidade de vendas, parcerias profissionais e o reconhecimento do seu talento pelo coletivo. Bloqueios aqui geram invisibilidade, sabotagem profissional ou dificuldades de comunicação com o público.
               </Text>
               <TrianguloPiramideInline data={tSocialNasc} label="TRIÂNGULO SOCIAL" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
               {tSocialNasc.arcanoRegente != null && (() => {
@@ -869,7 +871,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo do Destino (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                O mais revelador dos quatro. Combina o valor de cada letra com a soma do dia e mês de nascimento. Mapeia os resultados que tendem a se materializar: a missão concreta, os frutos do esforço e o legado que a frequência do nome constrói com o tempo.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — A pirâmide mais reveladora e soberana de toda a sua jornada terrestre. Ela entrelaça de forma divina a totalidade do seu nome com as coordenadas do seu nascimento (dia + mês reduzidos). Este triângulo governa a colheita prática da sua jornada: a materialização física dos seus esforços, a execução do seu propósito de alma e o legado indelével que você construirá no tempo. Quando há bloqueios nesta área, você pode sentir que despende uma quantidade colossal de energia no trabalho sem nunca alcançar os frutos correspondentes na realidade material.
               </Text>
               <TrianguloPiramideInline data={tDestinoNasc} label="TRIÂNGULO DO DESTINO" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
               {tDestinoNasc.arcanoRegente != null && (() => {
@@ -1048,8 +1050,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             { label: 'Missão', sub: 'Primeiro nome — persona pública', nasc: cincoNumNasc.missao, harm: cincoNumSocial.missao, fixo: false },
           ].map((r, i) => {
             const changed = !r.fixo && r.nasc !== r.harm;
-            const nascArc = r.fixo ? null : getArcano(r.nasc);
-            const harmArc = r.fixo ? null : getArcano(r.harm);
             return (
               <View key={i} wrap={false} style={{ backgroundColor: i % 2 === 0 ? '#FAFAFA' : '#FFFFFF', paddingVertical: 10, paddingHorizontal: 14 }}>
                 {/* Label row */}
@@ -1077,7 +1077,9 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={{ flex: 1, backgroundColor: 'rgba(107,114,128,0.08)', borderRadius: 6, padding: 10, alignItems: 'center' }}>
                       <Text style={{ fontSize: 22, fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>{r.nasc ?? '—'}</Text>
-                      <Text style={{ fontSize: 8, color: '#6B7280', textAlign: 'center', marginTop: 2 }}>Permanece em ambos os campos</Text>
+                      {r.nasc != null && <Text style={{ fontSize: 8, color: '#6B7280', fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>{NUMERO_NOMES[r.nasc]}</Text>}
+                      {r.nasc != null && <Text style={{ fontSize: 7, color: GRAY, textAlign: 'center', marginTop: 1 }}>{NUMERO_PALAVRAS_CHAVE[r.nasc]}</Text>}
+                      <Text style={{ fontSize: 7, color: '#6B7280', fontStyle: 'italic', marginTop: 4 }}>Permanece em ambos os campos</Text>
                     </View>
                   </View>
                 ) : (
@@ -1086,8 +1088,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                     <View style={{ flex: 1, backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 6, padding: 10, alignItems: 'center' }}>
                       <Text style={{ fontSize: 8, color: '#DC2626', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Nascimento</Text>
                       <Text style={{ fontSize: 26, fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>{r.nasc ?? '—'}</Text>
-                      {nascArc && <Text style={{ fontSize: 8, color: '#DC2626', textAlign: 'center', marginTop: 3 }}>{nascArc.nome}</Text>}
-                      {nascArc && <Text style={{ fontSize: 7, color: GRAY, textAlign: 'center', marginTop: 1 }}>{nascArc.palavraChave}</Text>}
+                      {r.nasc != null && <Text style={{ fontSize: 8, color: '#DC2626', fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>{NUMERO_NOMES[r.nasc]}</Text>}
+                      {r.nasc != null && <Text style={{ fontSize: 7, color: GRAY, textAlign: 'center', marginTop: 1 }}>{NUMERO_PALAVRAS_CHAVE[r.nasc]}</Text>}
                     </View>
                     {/* Seta */}
                     <View style={{ justifyContent: 'center', alignItems: 'center', paddingHorizontal: 8 }}>
@@ -1097,8 +1099,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                     <View style={{ flex: 1, backgroundColor: changed ? 'rgba(138,102,28,0.08)' : 'rgba(0,0,0,0.04)', borderRadius: 6, padding: 10, alignItems: 'center' }}>
                       <Text style={{ fontSize: 8, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Harmonizado</Text>
                       <Text style={{ fontSize: 26, fontFamily: BODY_FONT_BOLD, color: '#8A661C' }}>{r.harm ?? '—'}</Text>
-                      {harmArc && <Text style={{ fontSize: 8, color: '#8A661C', textAlign: 'center', marginTop: 3 }}>{harmArc.nome}</Text>}
-                      {harmArc && <Text style={{ fontSize: 7, color: GRAY, textAlign: 'center', marginTop: 1 }}>{harmArc.palavraChave}</Text>}
+                      {r.harm != null && <Text style={{ fontSize: 8, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>{NUMERO_NOMES[r.harm]}</Text>}
+                      {r.harm != null && <Text style={{ fontSize: 7, color: GRAY, textAlign: 'center', marginTop: 1 }}>{NUMERO_PALAVRAS_CHAVE[r.harm]}</Text>}
                     </View>
                   </View>
                 )}
@@ -1297,6 +1299,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           const licoesRestantes  = licoesSocial.filter(l => licoesNasc.some(ln => ln.numero === l.numero));
           const tendenciasRestantes = tendenciasSocial.filter(t => tendenciasNasc.some(tn => tn.numero === t.numero));
           const tendenciasNovas  = tendenciasSocial.filter(t => !tendenciasNasc.some(tn => tn.numero === t.numero));
+          const debitosMantidos = debitosSocial.filter(ds => debitosNasc.some(dn => dn.numero === ds.numero));
+          const debitosNovos = debitosSocial.filter(ds => !debitosNasc.some(dn => dn.numero === ds.numero));
 
           // Sign helpers (math comparison: nasc [sign] harm)
           const cSign = (n: number, h: number) => h < n ? '>' : h > n ? '<' : '=';
@@ -1345,35 +1349,68 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                           <Text style={{ fontSize: 8, color: dGood ? '#059669' : dBad ? '#DC2626' : GRAY, marginTop: 2 }}>débitos ativos</Text>
                         </View>
                       </View>
-                      {debitosNasc.map((d, i) => {
-                        const aliviado = debitosAliviados.some(da => da.numero === d.numero);
-                        return (
-                          <View key={`deb-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: d.fixo ? '#9CA3AF' : aliviado ? '#059669' : '#DC2626', backgroundColor: d.fixo ? 'rgba(107,114,128,0.07)' : aliviado ? 'rgba(5,150,105,0.07)' : 'rgba(220,38,38,0.05)', borderRadius: 8, padding: 10, marginBottom: 6 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                              <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: d.fixo ? '#6B7280' : aliviado ? '#059669' : '#DC2626', marginRight: 8 }}>
-                                {aliviado ? '✓' : '!'} {d.titulo}
+                      
+                      {/* 1.1 Débitos Eliminados/Aliviados (Verde) */}
+                      {debitosAliviados.map((d, i) => (
+                        <View key={`deb-el-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 8, padding: 10, marginBottom: 6 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginRight: 8 }}>
+                              ✓ Eliminado: {d.titulo}
+                            </Text>
+                            <View style={{ backgroundColor: 'rgba(5,150,105,0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                              <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#059669' }}>
+                                ALIVIADO PELA HARMONIZAÇÃO
                               </Text>
-                              <View style={{ backgroundColor: d.fixo ? '#E5E7EB' : aliviado ? 'rgba(5,150,105,0.15)' : 'rgba(220,38,38,0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
-                                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: d.fixo ? '#6B7280' : aliviado ? '#059669' : '#DC2626' }}>
-                                  {d.fixo ? 'IMUTÁVEL' : aliviado ? 'ALIVIADO PELA HARMONIZAÇÃO' : 'PERMANECE ATIVO'}
-                                </Text>
-                              </View>
                             </View>
-                            <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
-                            {d.fixo && (
-                              <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 4, fontStyle: 'italic' }}>
-                                Origem: {d.fontes.includes('dia_natalicio') ? 'Dia de nascimento' : ''}{d.fontes.includes('destino') ? ' · Número de Destino' : ''}. Não pode ser alterado pelo nome.
-                              </Text>
-                            )}
                           </View>
-                        );
-                      })}
+                          <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
+                        </View>
+                      ))}
+
+                      {/* 1.2 Débitos Mantidos (Cinza) */}
+                      {debitosMantidos.map((d, i) => (
+                        <View key={`deb-mt-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#9CA3AF', backgroundColor: '#F3F4F6', borderRadius: 8, padding: 10, marginBottom: 6 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#6B7280', marginRight: 8 }}>
+                              • Mantido: {d.titulo}
+                            </Text>
+                            <View style={{ backgroundColor: '#E5E7EB', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                              <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>
+                                {d.fixo ? 'IMUTÁVEL' : 'PERMANECE ATIVO'}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
+                          {d.fixo && (
+                            <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 4, fontStyle: 'italic' }}>
+                              Origem: {d.fontes.includes('dia_natalicio') ? 'Dia de nascimento' : ''}{d.fontes.includes('destino') ? ' · Número de Destino' : ''}. Não pode ser alterado pelo nome.
+                            </Text>
+                          )}
+                        </View>
+                      ))}
+
+                      {/* 1.3 Débitos Novos/Acrescentados (Vermelho) */}
+                      {debitosNovos.map((d, i) => (
+                        <View key={`deb-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, marginBottom: 6 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginRight: 8 }}>
+                              + Novo Débito: {d.titulo}
+                            </Text>
+                            <View style={{ backgroundColor: 'rgba(220,38,38,0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                              <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>
+                                ACRESCENTADO PELA HARMONIZAÇÃO
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
+                        </View>
+                      ))}
                     </>
                   );
                 })()}
 
                 {/* Separador */}
-                {debitosNasc.length > 0 && <View style={{ height: 1, backgroundColor: '#E5E7EB', marginVertical: 14 }} />}
+                <View style={{ height: 1, backgroundColor: '#E5E7EB', marginVertical: 14 }} />
 
                 {/* ── Sub-bloco B: Lições Kármicas ── */}
                 {(() => {
@@ -1418,30 +1455,36 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                           )}
                         </View>
                       </View>
+                      
+                      {/* 2.1 Lições Eliminadas/Superadas (Verde) */}
                       {licoesEliminadas.map((l, i) => (
                         <View key={`lic-el-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 10, marginBottom: 6 }}>
                           <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Superada: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
                           {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{l.descricao.slice(0, 180)}...</Text>}
                         </View>
                       ))}
+
+                      {/* 2.2 Lições Mantidas (Cinza) */}
                       {licoesRestantes.map((l, i) => (
-                        <View key={`lic-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>! Permanece: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
+                        <View key={`lic-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#6B7280', backgroundColor: '#F3F4F6', borderRadius: 6, padding: 10, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#6B7280', marginBottom: 3 }}>• Mantida: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
                           {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{l.descricao.slice(0, 160)}...</Text>}
                           {l.comoTrabalhar && (
                             <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>Como trabalhar: </Text>{l.comoTrabalhar}
+                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>Como trabalhar: </Text>{l.comoTrabalhar}
                             </Text>
                           )}
                         </View>
                       ))}
+
+                      {/* 2.3 Lições Novas/Acrescentadas (Vermelho) */}
                       {licoesNovas.map((l, i) => (
-                        <View key={`lic-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#D97706', backgroundColor: 'rgba(217,119,6,0.06)', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#D97706', marginBottom: 3 }}>+ Nova: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
+                        <View key={`lic-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 3 }}>+ Nova Lição: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
                           {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{l.descricao.slice(0, 160)}...</Text>}
                           {l.comoTrabalhar && (
                             <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>Como trabalhar: </Text>{l.comoTrabalhar}
+                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>Como trabalhar: </Text>{l.comoTrabalhar}
                             </Text>
                           )}
                         </View>
@@ -1499,30 +1542,36 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                       {tendenciasNasc.length === 0 && (
                         <Text style={{ fontSize: 9, color: '#059669', marginBottom: 4 }}>✓ Nenhum excesso vibracional no nome de nascimento.</Text>
                       )}
+                      
+                      {/* 3.1 Tendências Eliminadas/Neutralizadas (Verde) */}
                       {tendenciasEliminadas.map((t, i) => (
                         <View key={`tend-el-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 10, marginBottom: 6 }}>
                           <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Neutralizada: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
                           {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{t.descricao.slice(0, 180)}...</Text>}
                         </View>
                       ))}
+
+                      {/* 3.2 Tendências Mantidas (Cinza) */}
                       {tendenciasRestantes.map((t, i) => (
-                        <View key={`tend-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>! Permanece: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
+                        <View key={`tend-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#6B7280', backgroundColor: '#F3F4F6', borderRadius: 6, padding: 10, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#6B7280', marginBottom: 3 }}>• Mantida: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
                           {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{t.descricao.slice(0, 160)}...</Text>}
                           {t.comoEquilibrar && (
                             <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>Como equilibrar: </Text>{t.comoEquilibrar}
+                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>Como equilibrar: </Text>{t.comoEquilibrar}
                             </Text>
                           )}
                         </View>
                       ))}
+
+                      {/* 3.3 Tendências Novas/Acrescentadas (Vermelho) */}
                       {tendenciasNovas.map((t, i) => (
-                        <View key={`tend-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#D97706', backgroundColor: 'rgba(217,119,6,0.06)', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#D97706', marginBottom: 3 }}>+ Nova: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
+                        <View key={`tend-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 3 }}>+ Nova Tendência: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
                           {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{t.descricao.slice(0, 160)}...</Text>}
                           {t.comoEquilibrar && (
                             <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>Como equilibrar: </Text>{t.comoEquilibrar}
+                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>Como equilibrar: </Text>{t.comoEquilibrar}
                             </Text>
                           )}
                         </View>
@@ -1659,10 +1708,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>{item.desc}</Text>
                 {item.richDesc ? (
                   <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
-                    <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
+                    <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
                       O Significado do seu Número {item.num}:
                     </Text>
-                    <Text style={{ fontSize: 9.5, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
+                    <Text style={{ fontSize: 10, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
                       {item.richDesc}
                     </Text>
                   </View>
@@ -1724,7 +1773,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo da Vida (Harmonizado)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                A estrutura mais fundamental do mapa, agora recalculada com o nome harmonizado. Governa a saúde do corpo, a vitalidade e a relação com a prosperidade material. Compare com o Triângulo da Vida do nascimento para verificar quais resistências foram dissolvidas.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Saúde, Vitalidade e Prosperidade Material]</Text> — A fundação física e energética mais profunda do seu ser, agora recalculada e harmonizada pelo seu novo nome. Esta nova configuração atua como um escudo que protege a sua saúde física e redireciona os seus canais de atração financeira. Ao sintonizar as frequências do seu corpo físico com uma vibração livre de resistências, o Triângulo da Vida Harmonizado abre espaço para que a vitalidade e a prosperidade fluam de forma leve e natural. Compare esta pirâmide com a de nascimento para contemplar a dissolução dos antigos bloqueios.
               </Text>
               <TrianguloPiramideInline data={triangulosSocial.vida} label="TRIÂNGULO DA VIDA" cellSize={triCellSizeHarm} letras={letrasNome} />
               {triangulosSocial.vida.arcanoRegente != null && (() => {
@@ -1759,7 +1808,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo Pessoal (Harmonizado)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                Modificado pelo número do dia de nascimento, acessa a dimensão mais interna da vida com o novo campo vibracional. Bloqueios aqui se manifestam como relacionamentos que seguem o mesmo roteiro — veja se o nome harmonizado reduziu ou eliminou as sequências de resistência nesta dimensão.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — A dimensão secreta da sua vida afetiva e do seu autoconhecimento, agora recalibrada por um novo campo de frequências. Ao harmonizar este triângulo, você reorganiza a sua ressonância íntima, permitindo que você reaja a pressões com maior centralidade e cure padrões repetitivos de autossabotagem em seus relacionamentos. O Triângulo Pessoal Harmonizado purifica os canais da afetividade, promovendo conexões verdadeiras e uma convivência de respeito, amor e harmonia autêntica.
               </Text>
               <TrianguloPiramideInline data={triangulosSocial.pessoal} label="TRIÂNGULO PESSOAL" cellSize={triCellSizeHarm} letras={letrasNome} />
               {triangulosSocial.pessoal.arcanoRegente != null && (() => {
@@ -1829,7 +1878,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo do Destino (Harmonizado)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                O mais revelador dos quatro. Combina o valor de cada letra do nome harmonizado com a soma do dia e mês de nascimento. Mapeia os novos resultados que tendem a se materializar — a missão concreta, os frutos do esforço e o legado que a nova frequência constrói com o tempo.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — O ápice das suas realizações e a consagração do seu legado de alma, agora impulsionados pela frequência límpida do seu nome harmonizado. Ao realinhar as correntes de energia do Destino, esta pirâmide atua como um acelerador de colheitas, convertendo o seu trabalho e dedicação em resultados duradouros e abundância tangível. O Triângulo do Destino Harmonizado garante que a sua caminhada material caminhe lado a lado com o seu propósito divino superior, assegurando que o seu esforço se traduza em prosperidade sólida e duradoura.
               </Text>
               <TrianguloPiramideInline data={triangulosSocial.destino} label="TRIÂNGULO DO DESTINO" cellSize={triCellSizeHarm} letras={letrasNome} />
               {triangulosSocial.destino.arcanoRegente != null && (() => {

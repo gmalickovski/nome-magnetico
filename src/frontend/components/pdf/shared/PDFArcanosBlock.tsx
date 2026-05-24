@@ -93,7 +93,7 @@ export function PDFArcanosBlock({
             </Text>
 
             {/* Texto explicativo sobre o que é a sequência cronológica dos arcanos de passagem */}
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10, textAlign: 'justify' }}>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6, marginBottom: 10, textAlign: 'justify' }}>
               Os Arcanos de Passagem representam o mapa do tempo e a jornada evolutiva ao longo de toda a sua existência. Cada círculo abaixo corresponde a um ciclo vibracional de aproximadamente {(90 / arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos. Esta ordem cronológica descreve as energias que governaram o seu passado (em cinza), o portal vibracional ativo que você está atravessando no seu presente (em roxo) e as sementes do destino que florescerão no seu futuro (em dourado).
             </Text>
             
