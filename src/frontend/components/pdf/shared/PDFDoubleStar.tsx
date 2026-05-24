@@ -150,8 +150,7 @@ export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
                 x={labelPos.x + ldx}
                 y={labelPos.y + ldy}
                 fill="#4B5563"
-                fontSize={9}
-                fontFamily="Helvetica-Bold"
+                style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}
                 textAnchor={anchor}
               >
                 {labels[i]}
@@ -165,8 +164,7 @@ export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
                     x={outerTip.x}
                     y={outerTip.y + 4}
                     fill={GOLD}
-                    fontSize={14}
-                    fontFamily="Helvetica-Bold"
+                    style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}
                     textAnchor="middle"
                   >
                     {nHarm}
@@ -180,8 +178,7 @@ export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
                   x={innerTip.x}
                   y={innerTip.y + 3}
                   fill={RED}
-                  fontSize={10}
-                  fontFamily="Helvetica-Bold"
+                  style={{ fontSize: 10, fontFamily: 'Helvetica-Bold' }}
                   textAnchor="middle"
                 >
                   {nNasc}

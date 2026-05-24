@@ -99,11 +99,10 @@ Modulo: src/backend/numerology/karmic.ts
     - (nLicoesCarmicas    x 1)
     - penalidade_compatibilidade
 
-  Penalidade de compatibilidade Expressao x Destino:
-    total        (mesma vibracao)      -> 0 pts
-    complementar (somam 9, 11 ou 22)   -> 0 pts
-    aceitavel    (diferenca de 1)      -> 5 pts
-    incompativel (demais casos)        -> 15 pts
+  Penalidade de compatibilidade Expressão × Destino:
+    favoravel    (total/complementar) -> 0 pts
+    neutro       (diferença de 1)     -> 5 pts
+    desfavoravel (tensão vibracional) -> 15 pts
 
   Modulo: src/backend/numerology/score.ts
   Funcao: calcularScore({ bloqueios, licoesCarmicas, tendenciasOcultas, debitosCarmicos, compatibilidade })
@@ -265,7 +264,7 @@ INTERFACE AnaliseNomeBebe (cada item do ranking)
   licoesCarmicas  : LicaoKarmica[]
   tendenciasOcultas: TendenciaOculta[]
   debitosCarmicos : DebitoKarmico[]
-  compatibilidade : string  (total | complementar | aceitavel | incompativel)
+  compatibilidade : string  (favoravel | neutro | desfavoravel)
   score           : number
   origemSugerida  : 'usuario' | 'ia'
   justificativa   : string[]
@@ -367,7 +366,7 @@ INTERFACE AnaliseNomeEmpresa (cada item do ranking / nomesCandidatos)
   motivacao             : number
   missao                : number
   impressao             : number  (primeira palavra — calcularPersonalidade)
-  compatibilidadeSocio  : string  (total | complementar | aceitavel | incompativel)
+  compatibilidadeSocio  : string  (favoravel | neutro | desfavoravel)
   compatibilidadeEmpresa: string | undefined  (so se data_fundacao presente)
   bloqueios             : Bloqueio[]
   temBloqueio           : boolean

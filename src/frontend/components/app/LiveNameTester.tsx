@@ -169,13 +169,15 @@ export function LiveNameTester({ birthName, birthDate }: Props) {
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
                  <h4 className="text-gray-400 text-sm tracking-wider uppercase mb-2">Compatibilidade</h4>
                  <div className="text-4xl font-bold font-cinzel mb-2">
-                   {result.score >= 80 ? (
-                     <span className="text-emerald-400">{result.score}% Excelente</span>
-                   ) : result.score >= 50 ? (
-                     <span className="text-yellow-400">{result.score}% Aceitável</span>
-                   ) : (
-                     <span className="text-red-400">{result.score}% Incompatível</span>
-                   )}
+                    {result.score >= 90 ? (
+                      <span className="text-emerald-400">{result.score}% Excelente</span>
+                    ) : result.score >= 70 ? (
+                      <span className="text-emerald-400">{result.score}% Bom</span>
+                    ) : result.score >= 40 ? (
+                      <span className="text-yellow-400">{result.score}% Aceitável</span>
+                    ) : (
+                      <span className="text-red-400">{result.score}% Tensão Vibracional</span>
+                    )}
                  </div>
                  <p className="text-gray-300 text-sm">{result.compatibilidade?.descricao || ''}</p>
               </div>

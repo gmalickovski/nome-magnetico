@@ -88,8 +88,8 @@ const temPermanentes      = debitosFixos.length > 0;
 type ScoreNivel = 'excelente' | 'aceitavel' | 'baixo' | 'sem-score';
 const scoreNivel: ScoreNivel =
   score === null || score === undefined ? 'sem-score'
-  : score >= 80  ? 'excelente'
-  : score >= 50  ? 'aceitavel'
+  : score >= 70  ? 'excelente'
+  : score >= 40  ? 'aceitavel'
   : 'baixo';
 
 const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 0) || (licoesRaw && licoesRaw.length > 0);

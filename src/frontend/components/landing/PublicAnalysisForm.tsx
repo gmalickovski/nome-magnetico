@@ -118,19 +118,19 @@ function bloqueioVida(bloqueios: Bloqueio[]): Bloqueio | null {
 
 /** Configuração visual baseada no score (mesma lógica de ScoreDisplay.tsx) */
 function getScoreConfig(score: number) {
-  if (score >= 80) return {
+  if (score >= 90) return {
     label: '✦ Excelente',
     textColor: 'text-emerald-400',
     borderClass: 'border-emerald-500/40',
     bgClass: 'bg-emerald-500/5',
     barGradient: 'from-emerald-500 to-emerald-400',
   };
-  if (score >= 60) return {
+  if (score >= 70) return {
     label: '◐ Bom',
-    textColor: 'text-[#D4AF37]',
-    borderClass: 'border-[#D4AF37]/40',
-    bgClass: 'bg-[#D4AF37]/5',
-    barGradient: 'from-[#D4AF37] to-[#f2ca50]',
+    textColor: 'text-emerald-400',
+    borderClass: 'border-emerald-500/30',
+    bgClass: 'bg-emerald-500/5',
+    barGradient: 'from-emerald-500 to-emerald-400',
   };
   if (score >= 40) return {
     label: '◎ Aceitável',

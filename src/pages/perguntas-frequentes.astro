@@ -14,7 +14,7 @@ const schemaFAQPage = {
     name: f.question,
     acceptedAnswer: {
       '@type': 'Answer',
-      text: f.answer_html.replace(/<[^>]+>/g, ''),
+      text: (f.answer_html ?? '').replace(/<[^>]+>/g, ''),
     },
   })),
 };

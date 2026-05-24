@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { createUserClient } from '../../backend/db/supabase';
+import { createUserClient, supabase as globalSupabase } from '../../backend/db/supabase';
 import { hasActiveSubscription } from '../../backend/db/subscriptions';
 import { createAnalysis, updateAnalysis, saveMagneticNames, hasUsedFreeAnalysis } from '../../backend/db/analyses';
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
@@ -108,7 +108,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
 
     if (bearerToken) {
-      const { data, error } = await supabase.auth.getUser(bearerToken);
+      const { data, error } = await globalSupabase.auth.getUser(bearerToken);
       const apps = data.user?.app_metadata?.apps as string[] | undefined;
       if (!error && data.user && (apps === undefined || apps.includes('nome_magnetico'))) {
         user = data.user;

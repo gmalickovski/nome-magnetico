@@ -1,119 +1,82 @@
 # Sistema de Score e Compatibilidade Vibracional
 
-> **Documento de referência** para integrantes da equipe técnica.  
-> Esta lógica é usada pelos 3 produtos: **Nome Social**, **Nome Bebê** e **Nome Empresa**.
+> **Documento de referência técnico** para a equipe de desenvolvimento.  
+> Esta lógica e especificação de pesos são partilhadas por todos os 3 produtos principais: **Nome Social**, **Nome Bebê** e **Nome Empresa**.
 
 ---
 
-## Visão Geral
+## 1. Visão Geral
 
-Cada nome candidato (seja sugerido pelo usuário, gerado pela IA ou derivado do nome original) é avaliado por dois critérios combinados:
+Cada nome candidato avaliado pelo motor passa por dois critérios combinados:
 
-1. **Score numérico 0–100** — mede a qualidade vibratória global do nome
-2. **Tipo de Compatibilidade** — classifica a relação entre o número de Expressão do nome e o número de Destino da pessoa
+1.  **Score numérico (0–100)** — mede a fluidez vibracional global do nome candidato.
+2.  **Tipo de Compatibilidade** — classifica a harmonia entre o número de Expressão do nome e o número de Destino da pessoa (calculado a partir da data de nascimento/fundação).
 
-Ambos são calculados em `src/backend/numerology/harmonization.ts`.
-
----
-
-## Score 0–100
-
-O score reflete a combinação de:
-- Ausência de bloqueios energéticos (sequências repetidas nos 4 triângulos)
-- Tipo de compatibilidade com o Destino
-- Penalidades (ex.: tendência oculta do 8 no produto Empresa)
-- Nível de descaracterização em relação ao nome original (para sugestões)
-
-### Faixas de Score
-
-| Faixa | Classificação | Cor no UI |
-|-------|--------------|-----------|
-| 90–100 | ⭐ Excelente | Verde (`emerald-500`) |
-| 70–89 | ✅ Bom | Verde (`emerald-500`) |
-| 40–69 | 〜 Aceitável | Âmbar (`amber-500`) |
-| 20–39 | ⚠ Não Recomendado | Vermelho claro (`red-400`) |
-| 0–19 | 🔴 Crítico | Vermelho forte (`red-600`) |
-
-> **Regra do "Nome de Ouro":** O nome recomendado ao cliente é o que possui score ≥ 80 E menor descaracterização do nome original. Quando o cliente não sugere candidatos próprios, o sistema usa exclusivamente os nomes gerados pela IA, e o Nome de Ouro é o de maior score.
+Ambos os critérios são calculados no backend em `src/backend/numerology/harmonization.ts` e `src/backend/numerology/score.ts`.
 
 ---
 
-## 4 Tipos de Compatibilidade Expressão × Destino
+## 2. Faixas de Score Oficial
 
-A **Expressão** é calculada a partir de todas as letras do nome candidato.  
-O **Destino** é fixo — calculado a partir da data de nascimento da pessoa (ou data de fundação, no produto Empresa).
+A paleta de cores e labels visuais do frontend baseia-se em 5 faixas estruturadas de score:
 
-### Tabela de Tipos
-
-| Código interno | Label exibido ao usuário | Cor | Critério matemático |
-|----------------|--------------------------|-----|---------------------|
-| `total` | ✦ Ressonância Total | 🟢 Verde (`sky-400`) | Expressão reduzida = Destino. Vibrações idênticas — alinhamento perfeito |
-| `complementar` | ◈ Vibração Complementar | 🔵 Azul (`sky-400`) | Expressão + Destino = 9, 11 ou 22 (números de maestria). Nome e missão se amplificam |
-| `aceitavel` | ◎ Vibração Neutra | 🟡 Âmbar (`amber-400`) | |Expressão − Destino| = 1. Convivência sem tensão, sem sinergia especial |
-| `incompativel` | ⚠ Tensão Vibracional | 🔴 Vermelho (`red-400`) | Demais casos — frequências díspares. Penalidade aplicada ao score |
-
-> ⚠️ **Copy importante:** NUNCA usar a palavra "incompatível" na interface voltada ao cliente. Sempre usar **"Tensão Vibracional"**.
-
-### Como a compatibilidade afeta o score
-
-- `total` → bônus máximo no score
-- `complementar` → bônus intermediário (é positivo — números de maestria)
-- `aceitavel` → sem bônus nem penalidade relevante
-- `incompativel` → penalidade no score (já refletida no valor exibido)
+| Faixa | Classificação | Cor no UI | Tailwind Utility |
+| :--- | :--- | :--- | :--- |
+| **90–100** | ⭐ Excelente | Verde Esmeralda | `text-emerald-500` / `bg-emerald-500/5` |
+| **70–89** | ✅ Bom | Verde Esmeralda | `text-emerald-500` / `bg-emerald-500/5` |
+| **40–69** | 〜 Aceitável | Laranja/Âmbar | `text-amber-500` / `bg-amber-500/5` |
+| **20–39** | ⚠ Não Recomendado | Vermelho Claro | `text-red-400` / `bg-red-500/5` |
+| **0–19** | 🔴 Crítico | Vermelho Forte | `text-red-600` / `bg-red-950/10` |
 
 ---
 
-## Componente UI: `CompatibilityBadge`
+## 3. Pesos de Score e Validação Cabalística
 
-Localização: `src/frontend/components/app/CompatibilityBadge.tsx`
+O score reflete a soma determinística de penalidades aplicadas a um teto de 100 pontos, respeitando rigorosamente a gravidade espiritual e material dos desvios segundo as maiores autoridades de **Numerologia Cabalística**:
 
-```tsx
-import CompatibilityBadge from '@/frontend/components/app/CompatibilityBadge';
+*   **Bloqueios nos Triângulos (`-15` pontos por código único)**: Representa o bloqueio geométrico absoluto e estagnação da energia em uma das quatro pirâmides (Vida, Pessoal, Social ou Destino). É o padrão de maior atrito material e físico, impedindo o fluxo da jornada.
+*   **Ocorrências Extras de Bloqueios (`-3` pontos)**: Desconto sutil para repetições do mesmo bloqueio além da primeira ocorrência em triângulos diferentes.
+*   **Débitos Kármicos (`-12` pontos por débito)**: Dívidas estruturais e morais herdadas de vidas passadas. A severidade alta reflete os grandes desafios materiais/emocionais impostos por essas vibrações em trânsito.
+*   **Compatibilidade de Expressão × Destino (`0`, `-5` ou `-15` pontos)**: Atrito direto entre a energia de manifestação cotidiana (Expressão) e a estrada maior da alma (Destino).
+*   **Tendências Ocultas (`-2` pontos por tendência)**: Desequilíbrios comportamentais leves causados pelo acúmulo compulsivo de um mesmo número (≥ 4 ocorrências).
+*   **Lições Kármicas (`-1` ponto por lição)**: Ausência de uma ferramenta energética primária no nome. Facilmente integrada e compensada sob a harmonização.
 
-// Badge simples (sem tooltip)
-<CompatibilityBadge compatibilidade="total" />
-
-// Badge com tooltip e legenda completa (CSS-only, sem <button> aninhado)
-<CompatibilityBadge compatibilidade="complementar" showTooltip size="sm" />
-```
-
-**Props:**
-
-| Prop | Tipo | Padrão | Descrição |
-|------|------|--------|-----------|
-| `compatibilidade` | `'total' \| 'complementar' \| 'aceitavel' \| 'incompativel'` | obrigatório | Tipo de compatibilidade |
-| `size` | `'sm' \| 'md'` | `'md'` | Tamanho do badge |
-| `showTooltip` | `boolean` | `false` | Exibe tooltip com legenda completa ao hover |
+> 💡 **Nota sobre Débitos Fixos e Score Teto:** Débitos kármicos de nascimento (derivados do dia de nascimento e/ou Destino) são **imutáveis**. Nenhuma alteração de nome pode apagá-los. O motor de cálculo expressa isso subtraindo-os diretamente do teto de score possível da pessoa (`calcularScoreTeto`). Se uma pessoa possui 1 débito fixo, seu score teto máximo é **88**; se possui 2, é **76**.
 
 ---
 
-## Aplicação por Produto
+## 4. Tipos de Compatibilidade Expressão × Destino
 
-### Nome Social (`nome_social`)
-- Compara Expressão do nome candidato × Destino do cliente
-- Candidatos: sugestões do usuário + sugestões da IA (mínimo 3 variações)
-- Ordenação: score DESC, nivel de descaracterização ASC
+O motor de compatibilidade (`src/backend/numerology/harmonization.ts`) avalia a vibração resultante da redução com suporte a números mestres (**11** e **22**), classificando a compatibilidade em 3 estados principais:
 
-### Nome Bebê (`nome_bebe`)
-- Compara Expressão de cada nome candidato × Destino calculado da data de nascimento do bebê
-- Candidatos: lista fornecida pelos pais
-- Considera também lições kármicas do bebê na análise
+| Estado (Código) | Label Exibido ao Usuário | Cor Visual | Desconto no Score | Critério Cabalístico Hebraico |
+| :--- | :--- | :--- | :--- | :--- |
+| **`favoravel`** | ✦ Vibração Favorável | 🟢 Verde (`sky-400`) | `0` pontos | **Ressonância Perfeita:** Expressão e Destino possuem vibração idêntica ou somam números de maestria (9, 11, 22). O nome flui com a missão. |
+| **`neutro`** | ◎ Vibração Neutra | 🟡 Âmbar (`amber-400`) | `-5` pontos | **Afinidade Aceitável:** Diferença absoluta de 1 entre Expressão e Destino. Convivência tolerável, sem sinergia cósmica marcante. |
+| **`desfavoravel`** | ⚠ Tensão Vibracional | 🔴 Vermelho (`red-400`) | `-15` pontos | **Tensão Crítica:** Relação desarmônica entre frequências. Atua como âncora e gera atrito no cotidiano. |
 
-### Nome Empresa (`nome_empresa`)
-- Compara Expressão do nome da empresa × Destino do sócio principal
-- Se data de fundação fornecida: também compara com Destino da empresa
-- Penalidade extra se tendência oculta do 8 (excesso de materialismo) for detectada
+> ⚠️ **Copy Crítico:** É terminantemente proibido exibir o termo "incompatível" na interface pública voltada ao cliente. O label correto a apresentar é sempre **"Tensão Vibracional"**.
 
 ---
 
-## Módulos de referência
+## 5. Fluxo Unificado: Formulários e Relatórios
 
-| Propósito | Arquivo |
-|-----------|---------|
-| Cálculo de score e compatibilidade | `src/backend/numerology/harmonization.ts` |
-| Produto Nome Social | `src/backend/numerology/products/nome-social.ts` |
-| Produto Nome Bebê | `src/backend/numerology/products/nome-bebe.ts` |
-| Produto Nome Empresa | `src/backend/numerology/products/nome-empresa.ts` |
-| Componente badge UI | `src/frontend/components/app/CompatibilityBadge.tsx` |
-| PDF Nome Social | `src/frontend/components/pdf/NomeSocialPDF.tsx` |
-| PDF Análise Gratuita | `src/frontend/components/pdf/NomeAtualPDF.tsx` |
+O ecossistema do Nome Magnético garante unificação total entre as ferramentas e visualizações:
+
+1.  **Formulário Padrão do Usuário Pago** (`/api/analyze.ts` -> `/app/resultado/[id]`): Processa candidatos do cliente e sugestões geradas por IA, escolhendo o Nome de Ouro (`melhorNome`).
+2.  **Área do Analista** (`/pages/app/admin-analise.astro` -> `/api/admin/save-analysis.ts`): Dashboard exclusivo de admin, onde as consultas instantâneas usam a mesma mecânica determinística de cálculo e salvam o nome selecionado em `selectedNomeSocial`.
+3.  **Coerência de Resultados (HTML × PDF)**: A extração do nome dinâmico exibido (`nomeExibido`) prioriza `selectedNomeSocial` (o nome social escolhido e salvo). Os componentes HTML (`NomeSocialResultado.astro`) e PDF (`NomeSocialPDF.tsx`) realizam todos os cálculos comparativos "Antes × Depois" em tempo de execução a partir dessa variável unificada, garantindo que os cards de bloqueios, débitos, lições e tendências combinem perfeitamente em todas as mídias.
+
+---
+
+## 6. Módulos de Referência do Motor
+
+| Função / Componente | Arquivo |
+| :--- | :--- |
+| **Cálculo de Scores e Teto** | `src/backend/numerology/score.ts` |
+| **Tabela de Harmonização Cabalística** | `src/backend/numerology/harmonization.ts` |
+| **Cálculo dos 5 Números** | `src/backend/numerology/numbers.ts` |
+| **Pirâmides e Bloqueios** | `src/backend/numerology/triangle.ts` |
+| **Componente de Badge UI** | `src/frontend/components/app/CompatibilityBadge.tsx` |
+| **Relatório Impresso PDF** | `src/frontend/components/pdf/NomeSocialPDF.tsx` |
+| **Relatório Interativo HTML** | `src/frontend/components/app/resultado/NomeSocialResultado.astro` |

@@ -397,7 +397,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
 
   // Não logado com produto específico — mostrar card escolhido.
   if (!isLoggedIn) {
-    const type = productType;
+    const type = productType!;
     return (
       <div className="min-h-screen bg-[#111111]">
         <StickyHeader />

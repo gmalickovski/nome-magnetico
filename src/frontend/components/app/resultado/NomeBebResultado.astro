@@ -237,18 +237,19 @@ const numSecundarios = [
   <script>
     document.querySelectorAll('.analisar-nome-bebe-card').forEach(function(card) {
       card.addEventListener('click', async function() {
-        var primeiroNome = card.getAttribute('data-primeiro-nome');
-        var nomeCompleto = card.getAttribute('data-nome-completo');
-        var dataNasc     = card.getAttribute('data-data-nasc');
+        var htmlCard = card as HTMLElement;
+        var primeiroNome = htmlCard.getAttribute('data-primeiro-nome');
+        var nomeCompleto = htmlCard.getAttribute('data-nome-completo');
+        var dataNasc     = htmlCard.getAttribute('data-data-nasc');
         if (!primeiroNome || !nomeCompleto || !dataNasc) return;
 
         var sobrenome = primeiroNome
           ? nomeCompleto.slice(primeiroNome.length).trim()
           : '';
 
-        var loadingEl = card.querySelector('.card-loading');
+        var loadingEl = htmlCard.querySelector('.card-loading');
         if (loadingEl) loadingEl.classList.remove('hidden');
-        card.style.pointerEvents = 'none';
+        htmlCard.style.pointerEvents = 'none';
 
         try {
           var res = await fetch('/api/analyze', {
@@ -266,7 +267,7 @@ const numSecundarios = [
           window.location.href = '/app/resultado/' + data.analysisId;
         } catch (err) {
           if (loadingEl) loadingEl.classList.add('hidden');
-          card.style.pointerEvents = '';
+          htmlCard.style.pointerEvents = '';
           alert('Erro ao gerar análise: ' + (err instanceof Error ? err.message : String(err)));
         }
       });

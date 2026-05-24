@@ -119,9 +119,10 @@ const analiseHtml = analiseHtmlRaw && isFree
 const scoreGeral = (analysis as any).score as number | null;
 
 // ── Nome exibido ─────────────────────────────────────────────────────
+const selectedNomeSocial = freqData?.selectedNomeSocial;
 const nomeExibido: string =
   (isNomeBebe    && rankingBebe?.melhorNome?.nomeCompleto)    ? rankingBebe.melhorNome.nomeCompleto
-  : (isNomeSocial  && rankingSocial?.melhorNome?.nomeCompleto) ? rankingSocial.melhorNome.nomeCompleto
+  : isNomeSocial  ? (selectedNomeSocial ?? rankingSocial?.melhorNome?.nomeCompleto ?? analysis.nome_completo)
   : (isNomeEmpresa && rankingEmpresa?.melhorNome?.nomeEmpresa) ? rankingEmpresa.melhorNome.nomeEmpresa
   : analysis.nome_completo;
 
@@ -259,8 +260,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
     {!isProcessing && !isError && (
       <>
 
-        {/* ── SEÇÃO 1: HEADER / CERTIFICADO (oculto para nome_social) ── */}
-        {!isNomeSocial && (
+        {/* ── SEÇÃO 1: HEADER / CERTIFICADO ── */}
         <section class="rounded-2xl bg-white/5 p-6 md:p-8 mb-6">
           <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div class="flex-1 min-w-0">
@@ -313,7 +313,6 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
             </div>
           )}
         </section>
-        )}
 
         {/* ══════════════════════════════════════════════════
             NOME ATUAL (análise gratuita) — ESTRUTURA SEPARADA

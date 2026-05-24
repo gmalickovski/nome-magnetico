@@ -104,25 +104,13 @@ const TRIANGULO_DESC: Record<string, string> = {
 const debitosFixos    = (debitosRaw  ?? []).filter((d: any) => d.fixo === true);
 const debitosVariaveis = (debitosRaw ?? []).filter((d: any) => !d.fixo);
 
-// Bloqueios comparativos
-const harmBloqueios = (rankingSocial?.melhorNome?.bloqueios ?? []) as any[];
-const harmBloqueiosCodigos = new Set(harmBloqueios.map((b: any) => b.codigo));
-
-// Lições e Tendências do nome harmonizado (computadas server-side)
-const nomeHarmCompleto = rankingSocial?.melhorNome?.nomeCompleto as string | undefined;
-const harmLicoes    = nomeHarmCompleto ? detectarLicoesCarmicas(nomeHarmCompleto)    : null;
-const harmTendencias = nomeHarmCompleto ? detectarTendenciasOcultas(nomeHarmCompleto) : null;
-
-// Calcula os 5 números do NOME DE NASCIMENTO diretamente.
-// analysis.numero_expressao etc. guardam os números do nome HARMONIZADO (conforme analyze.ts:237).
+// Nascimento
 const nomeNascStr = (rankingSocial?.nomeNascimento as string | undefined) ?? '';
 const dataNascStr = (analysis.data_nascimento as string | undefined) ?? '';
 const nascCalc = nomeNascStr && dataNascStr
   ? calcularCincoNumeros(nomeNascStr, dataNascStr)
   : null;
 
-// Kármicos do NOME DE NASCIMENTO — computados server-side para o comparativo "antes × depois".
-// O banco salva os dados do nome HARMONIZADO (melhor candidato), por isso recalculamos o nascimento aqui.
 const nascLicoes     = nomeNascStr ? detectarLicoesCarmicas(nomeNascStr)    : null;
 const nascTendencias = nomeNascStr ? detectarTendenciasOcultas(nomeNascStr) : null;
 const nascDebitos    = (nascCalc && dataNascStr)
@@ -130,9 +118,21 @@ const nascDebitos    = (nascCalc && dataNascStr)
   : null;
 const nascTriangulos = (nomeNascStr && dataNascStr) ? calcularTodosTriangulos(nomeNascStr, dataNascStr) : null;
 const nascBloqueios  = nascTriangulos ? detectarBloqueios(nascTriangulos) : [];
+
+// Harmonizado
+const nomeHarmCompleto = nomeExibido;
+const isDifferentName = nomeHarmCompleto && nomeHarmCompleto !== nomeNascStr;
+
+const triangulosSocial = isDifferentName && dataNascStr
+  ? calcularTodosTriangulos(nomeHarmCompleto, dataNascStr)
+  : nascTriangulos;
+const harmBloqueios = triangulosSocial ? detectarBloqueios(triangulosSocial) : nascBloqueios;
+const harmBloqueiosCodigos = new Set(harmBloqueios.map((b: any) => b.codigo));
 const eliminatedBloqueios = nascBloqueios.filter((b: any) => !harmBloqueiosCodigos.has(b.codigo));
 
-// Débitos do nome harmonizado (para comparativo)
+const harmLicoes    = nomeHarmCompleto ? detectarLicoesCarmicas(nomeHarmCompleto)    : null;
+const harmTendencias = nomeHarmCompleto ? detectarTendenciasOcultas(nomeHarmCompleto) : null;
+
 const harmCalcNums = nomeHarmCompleto && dataNascStr ? calcularCincoNumeros(nomeHarmCompleto, dataNascStr) : null;
 const harmDebitos  = (harmCalcNums && dataNascStr)
   ? calcularDebitosCarmicos(dataNascStr, harmCalcNums.destino, harmCalcNums.motivacao, harmCalcNums.expressao)
@@ -187,11 +187,11 @@ const nascNums: Record<TipKey, number | null> = {
   impressao: nascCalc?.impressao ?? null,
 };
 const harmNums: Record<TipKey, number | null> = {
-  destino:   rankingSocial?.destino               ?? analysis.numero_destino   ?? null,
-  expressao: rankingSocial?.melhorNome?.expressao ?? null,
-  motivacao: rankingSocial?.melhorNome?.motivacao ?? null,
-  missao:    rankingSocial?.melhorNome?.missao    ?? null,
-  impressao: rankingSocial?.melhorNome?.impressao ?? null,
+  destino:   nascCalc?.destino ?? analysis.numero_destino ?? null,
+  expressao: harmCalcNums?.expressao ?? null,
+  motivacao: harmCalcNums?.motivacao ?? null,
+  missao:    harmCalcNums?.missao    ?? null,
+  impressao: harmCalcNums?.impressao ?? null,
 };
 
 const svgTips = SVG_TIP_KEYS.map((key, i) => {
