@@ -71,65 +71,65 @@ export const BLOQUEIOS_MAP: Record<
   '111': {
     titulo: 'Bloqueio de Iniciação (111)',
     descricao:
-      'Limitação da força de vontade, perda de coragem e inatividade. Tendência à dependência e dificuldade em iniciar projetos e afirmar a individualidade. O antídoto é desenvolver a coragem, a autonomia e a confiança no próprio potencial de liderança.',
+      'A pessoa fica limitada, perdendo a coragem de se aventurar em algo novo. Pode, também, ficar um longo período inativo(a), desempregado(a) ou mesmo impotente para realizar o que quer que seja permanecendo nesse estado o tempo que durar o Arcano que domina o período.',
     aspectoSaude:
-      'Tendência a distúrbios cardíacos e circulatórios. Atenção à saúde do coração.',
+      'Tendência para desenvolver alguns distúrbios ou doenças cardíacas.',
   },
   '222': {
     titulo: 'Bloqueio de Associação (222)',
     descricao:
-      'Timidez, indecisão e tendência a ser subjugado pelos outros. Dificuldades em parcerias e relacionamentos, com perda de autoestima. O antídoto é cultivar a diplomacia, a paciência e o equilíbrio entre dar e receber.',
+      'Indica possibilidade de timidez e indecisão, podendo levar o(a) seu(a) possuidor(a) a ser subjugado(a) por aqueles mais próximos, sejam eles amigos, sócios, colegas de trabalho ou simplesmente conhecidos. Faz perder a autoestima, limitando-o(a) quanto a seus projetos e realizações.',
     aspectoSaude:
-      'Propensão a doenças que gerem dependência física ou emocional. Atenção ao sistema imunológico.',
+      'Pode, eventualmente, surgir alguma doença que provoque dependência.',
   },
   '333': {
     titulo: 'Bloqueio de Expressão (333)',
     descricao:
-      'Dificuldade no diálogo e em se comunicar com clareza. Tendência a ser incompreendido e a ter dificuldades em se impor nas relações. O antídoto é focar na criatividade, na expressão autêntica e no otimismo.',
+      'Indica possibilidade de ser incompreendido(a), dificuldade no diálogo, principalmente com colegas de trabalho e com a(o) companheira(o). Tem dificuldade de se impor em seus projetos e para convencer as pessoas.',
     aspectoSaude:
-      'Tendência a doenças respiratórias (pulmões, brônquios) ou de articulações.',
+      'Indica possibilidade de doenças respiratórias ou de articulações.',
   },
   '444': {
     titulo: 'Bloqueio de Estruturação (444)',
     descricao:
-      'Dificuldade na realização profissional, tendência a ser mal remunerado e a não receber reconhecimento pelo trabalho. Pode haver rigidez ou desorganização. O antídoto é disciplina, método e persistência.',
+      'Reflete dificuldade na realização profissional. Pode ser mal remunerado(a) e as perspectivas profissionais serem difíceis, ou ter dificuldade em se manter no emprego, ou se dar bem em qualquer atividade.',
     aspectoSaude:
-      'Tendência a doenças reumáticas, arteriais ou ósseas.',
+      'Indica possibilidade de doenças reumáticas ou arteriais.',
   },
   '555': {
     titulo: 'Bloqueio de Liberdade (555)',
     descricao:
-      'Mudanças não desejadas na vida (casa, profissão, relações sociais), altos e baixos constantes e inconstância profissional. Tendência à libertinagem no uso da liberdade. O antídoto é equilíbrio, versatilidade com sabedoria e compromisso.',
+      'Indica possíveis mudanças não desejadas de casa, de profissão ou meio social. Sob esta influência, a pessoa tem frequentes altos e baixos, não se fixando profissionalmente, sempre à procura de melhores oportunidades, e ter dificuldade para as encontrar. Pode, também, causar fuga do meio social em que habita.',
     aspectoSaude:
-      'Tendência à libertinagem com reflexos na saúde geral. Cuidado com vícios e excesses.',
+      'Desenvolver alguma doença de pele.',
   },
   '666': {
     titulo: 'Bloqueio de Harmonia (666)',
     descricao:
-      'Necessidade excessiva de harmonia que leva à dificuldade com responsabilidades. Tendência a ser explorado pelos outros ou a explorar. Ciúme e possessividade. O antídoto é o amor equilibrado e as responsabilidades conscientes.',
+      'Indica possibilidade de haver decepções com amigos, sócios, parentes e até com o cônjuge (namorada(o) ou companheira(o)), que não o(a) compreende em seus propósitos e sentimentos.',
     aspectoSaude:
-      'Tendência a doenças hormonais e do sistema endócrino.',
+      'Algum tipo de doença cardíaca pode aparecer nesse estado.',
   },
   '777': {
     titulo: 'Bloqueio de Conexão Espiritual (777)',
     descricao:
-      'Tendência ao isolamento e à introspecção excessiva. Dificuldade em colocar ideias em prática e de se conectar com o mundo exterior. Ceticismo que bloqueia a intuição. O antídoto é o equilíbrio entre introspecção e ação no mundo.',
+      'Faz com que se afaste de tudo e de todos. Pode levar ao desmando, transformá-lo(a) em um ser dependente, vaidoso(a), arrogante e, consequentemente, vítima da própria intolerância. A persistência nesse sentimento provoca sentimentos de solidão.',
     aspectoSaude:
-      'Introspecção excessiva com reflexo no sistema nervoso. Atenção à saúde mental e ao equilíbrio emocional.',
+      'Doenças nervosas, dependências e, eventualmente, algum tipo de câncer.',
   },
   '888': {
     titulo: 'Bloqueio de Poder e Abundância (888)',
     descricao:
-      'Luta constante pelos bens materiais e dificuldades financeiras recorrentes. Ambição desmedida ou, no extremo oposto, medo do sucesso material. O antídoto é justiça, equilíbrio entre material e espiritual e uso ético do poder.',
+      'Esta sequência torna arredio(a), afastando-o(a) das atividades sociais. Caso não seja evoluído(a) espiritualmente, poderá descontrolar-se emocionalmente com muita facilidade. Sob esta vibração, poderá oscilar entre a riqueza e a pobreza.',
     aspectoSaude:
-      'Tendência a doenças renais ou gástricas. Atenção ao sistema digestivo e urinário.',
+      'Como consequência desse estresse, poderá desenvolver alguma doença.',
   },
   '999': {
     titulo: 'Bloqueio de Compaixão Universal (999)',
     descricao:
-      'Finalização de ciclos de forma lenta ou forçada, com dificuldades de desapego. Risco de perdas materiais ou espirituais. Tendência a guardar rancores. O antídoto é o desapego consciente, o perdão e a abertura para novos começos.',
+      'Reflete uma tendência a passar por dificuldades financeiras, eventualmente perdas de bens, eventuais fracassos nos negócios e vários tipos de provações provocadas pelos períodos de estagnação.',
     aspectoSaude:
-      'Risco de perdas e desgaste físico durante períodos de transição. Atenção à saúde geral em fases de encerramento de ciclos.',
+      'Tudo isto pode afetar o sistema nervoso e o coração.',
   },
 };
 

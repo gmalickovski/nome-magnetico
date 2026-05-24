@@ -312,20 +312,43 @@ function TrianguloInfo({
           {triangulo.arcanosDePassagem && triangulo.arcanosDePassagem.length > 0 && (
             <>
               <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-2 mt-1">
-                Sequência de Passagem · ~{(90 / triangulo.arcanosDePassagem.length).toFixed(1)} anos por ciclo
+                Sequência de Passagem (Cronologia)
               </p>
-              <div className="flex flex-wrap gap-1.5 mb-2">
+              <p className="text-xs text-gray-400/80 italic mb-3">
+                Duração de cada ciclo: ~{(90 / triangulo.arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos
+              </p>
+              <p className="text-sm text-gray-300 leading-relaxed mb-4 text-justify">
+                Os Arcanos de Passagem representam o mapa do tempo e a jornada evolutiva ao longo de toda a sua existência. Cada círculo abaixo corresponde a um ciclo vibracional de aproximadamente {(90 / triangulo.arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos. Esta ordem cronológica descreve as energias que governaram o seu passado (em cinza), o portal vibracional ativo que você está atravessando no seu presente (em roxo) e as sementes do destino que florescerão no seu futuro (em dourado).
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {triangulo.arcanosDePassagem.map((raw, idx) => {
                   const reduced = reduceToArcano(raw);
-                  const isAtual = reduced === reduceToArcano(triangulo.arcanoAtual!.numero!);
+                  
+                  let state: 'past' | 'present' | 'future' = 'future';
+                  const currentArcano = triangulo.arcanoAtual as any;
+                  if (currentArcano && currentArcano.indice !== undefined) {
+                    if (idx < currentArcano.indice) state = 'past';
+                    else if (idx === currentArcano.indice) state = 'present';
+                    else state = 'future';
+                  } else if (triangulo.arcanoAtual?.numero) {
+                    const isAtual = reduced === reduceToArcano(triangulo.arcanoAtual.numero);
+                    if (isAtual) state = 'present';
+                  }
+
+                  const isAtual = state === 'present';
+                  const isPast = state === 'past';
+
                   return (
                     <span
                       key={idx}
                       title={`Arcano ${reduced}`}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all border ${
                         isAtual
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-purple-900/30 text-purple-300 border border-purple-500/25'
+                          ? 'bg-purple-500 text-white border-purple-500'
+                          : isPast
+                            ? 'bg-[#F3F4F6]/10 text-gray-500 border-gray-600/50'
+                            : 'bg-[#FFFDF0]/10 text-[#f2ca50] border-[#D4AF37]/50'
                       }`}
                     >
                       {reduced}
@@ -333,10 +356,22 @@ function TrianguloInfo({
                   );
                 })}
               </div>
-              <p className="text-[9px] text-gray-500 flex items-center gap-1">
-                <span className="inline-block w-3 h-3 rounded-full bg-purple-500 shrink-0" />
-                Arcano de trânsito atual
-              </p>
+
+              {/* Legenda */}
+              <div className="flex flex-wrap items-center gap-4 mt-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#F3F4F6]/10 border border-gray-600/50" />
+                  <span className="text-[10px] text-gray-400">Ciclos já vivenciados (Passado)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                  <span className="text-[10px] text-gray-400">Momento ativo (Presente)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FFFDF0]/10 border border-[#D4AF37]/50" />
+                  <span className="text-[10px] text-gray-400">Ciclos futuros de evolução (Futuro)</span>
+                </div>
+              </div>
             </>
           )}
         </div>
