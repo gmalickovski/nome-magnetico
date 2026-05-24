@@ -397,7 +397,7 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
               Gerando análise...
             </span>
           ) : (
-            'Gerar análise de Nome Social'
+            'Gerar Harmonização'
           )}
         </button>
       </div>
