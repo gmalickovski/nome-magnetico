@@ -184,7 +184,7 @@ export default function AdminGeneralAnalysis() {
       setSocialError(null);
       try {
         const candidates = socialCandidates
-          .split('\n')
+          .split(/[,;\n]+/)
           .map(c => c.trim())
           .filter(c => c.length >= 2);
 
@@ -220,7 +220,7 @@ export default function AdminGeneralAnalysis() {
   useEffect(() => {
     if (activeTab !== 'baby') return;
     const candidates = babyCandidates
-      .split('\n')
+      .split(/[,;\n]+/)
       .map(c => c.trim())
       .filter(c => c.length >= 2);
 
@@ -266,7 +266,7 @@ export default function AdminGeneralAnalysis() {
   useEffect(() => {
     if (activeTab !== 'company') return;
     const candidates = companyCandidates
-      .split('\n')
+      .split(/[,;\n]+/)
       .map(c => c.trim())
       .filter(c => c.length >= 2);
 
@@ -340,7 +340,7 @@ export default function AdminGeneralAnalysis() {
       dataNascimento = formatDateForApi(socialBirthDate);
       calculatedData = socialResult;
       extraParams = {
-        nomes_candidatos: socialCandidates.split('\n').map(c => c.trim()).filter(c => c.length >= 2),
+        nomes_candidatos: socialCandidates.split(/[,;\n]+/).map(c => c.trim()).filter(c => c.length >= 2),
       };
     } else if (activeTab === 'baby') {
       if (!babyResult) {
@@ -353,7 +353,7 @@ export default function AdminGeneralAnalysis() {
       calculatedData = babyResult;
       extraParams = {
         sobrenome_familia: babyLastName.trim(),
-        nomes_candidatos: babyCandidates.split('\n').map(c => c.trim()).filter(c => c.length >= 2),
+        nomes_candidatos: babyCandidates.split(/[,;\n]+/).map(c => c.trim()).filter(c => c.length >= 2),
         genero_preferido: babyGender,
       };
     } else {
@@ -371,7 +371,7 @@ export default function AdminGeneralAnalysis() {
         data_fundacao: companyFoundDate ? formatDateForApi(companyFoundDate) : null,
         ramo_atividade: companyArea || null,
         descricao_negocio: companyDesc || null,
-        nomes_candidatos: companyCandidates.split('\n').map(c => c.trim()).filter(c => c.length >= 2),
+        nomes_candidatos: companyCandidates.split(/[,;\n]+/).map(c => c.trim()).filter(c => c.length >= 2),
       };
     }
 
