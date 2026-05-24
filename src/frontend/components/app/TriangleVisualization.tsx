@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { obterInterpretacaoEspecifica } from '../../../utils/blockageInterpretations';
 
 interface Bloqueio {
   codigo: string;
@@ -362,7 +363,7 @@ function TrianguloInfo({
             );
           })()}
           {bloqueiosFiltrados.map((b, i) => (
-            <BloqueioCard key={i} bloqueio={b} contagemNaAba={b.repeticoesPortriangulo?.[abaAtiva] ?? 1} />
+            <BloqueioCard key={i} bloqueio={b} contagemNaAba={b.repeticoesPortriangulo?.[abaAtiva] ?? 1} abaAtiva={abaAtiva} />
           ))}
         </div>
       ) : (
@@ -377,7 +378,7 @@ function TrianguloInfo({
 // ─────────────────────────────────────────────────────────────────────────────
 // Card de bloqueio expandível
 // ─────────────────────────────────────────────────────────────────────────────
-function BloqueioCard({ bloqueio, contagemNaAba }: { bloqueio: Bloqueio; contagemNaAba: number }) {
+function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloqueio; contagemNaAba: number; abaAtiva: string }) {
   const [expandido, setExpandido] = useState(false);
 
   return (
@@ -411,6 +412,18 @@ function BloqueioCard({ bloqueio, contagemNaAba }: { bloqueio: Bloqueio; contage
       {expandido && (
         <div className="px-4 pb-4 space-y-3 border-t border-red-500/10">
           <p className="text-gray-300 text-sm leading-relaxed pt-3">{bloqueio.descricao}</p>
+          {(() => {
+            const interp = obterInterpretacaoEspecifica(bloqueio.codigo, abaAtiva);
+            if (!interp) return null;
+            return (
+              <div className="rounded-lg p-3 bg-red-500/10 border border-red-500/20">
+                <p className="text-xs text-red-400 uppercase tracking-wider mb-1 font-semibold">
+                  Impacto no {TIPO_LABEL[abaAtiva]?.label ?? abaAtiva}
+                </p>
+                <p className="text-red-200 text-sm leading-relaxed">{interp}</p>
+              </div>
+            );
+          })()}
           <div className="rounded-lg p-3 bg-yellow-500/10 border border-yellow-500/20">
             <p className="text-xs text-yellow-400 uppercase tracking-wider mb-1">Aspecto de Saúde</p>
             <p className="text-yellow-200 text-sm">{bloqueio.aspectoSaude}</p>

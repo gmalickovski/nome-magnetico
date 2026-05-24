@@ -34,14 +34,31 @@ const styles = StyleSheet.create({
 interface PDFFooterProps {
   email?: string;
   site?: string;
+  bgColor?: string;
 }
 
 export function PDFFooter({
   email = 'contato@nomemagnetico.com.br',
   site = 'www.nomemagnetico.com.br',
+  bgColor,
 }: PDFFooterProps) {
   return (
-    <View style={styles.footer} fixed>
+    <View
+      style={[
+        styles.footer,
+        bgColor
+          ? {
+              backgroundColor: bgColor,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 8,
+              borderTopWidth: 0,
+              bottom: 18,
+            }
+          : {},
+      ]}
+      fixed
+    >
       <Text style={styles.email}>{email}</Text>
       <Text style={styles.site}>{site}</Text>
       <Text

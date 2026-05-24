@@ -6,6 +6,7 @@
  */
 import { View, Text, StyleSheet } from '@react-pdf/renderer';
 import { PDF_COLORS } from './PDFTheme';
+import { obterInterpretacaoEspecifica } from '../../../../utils/blockageInterpretations';
 
 const GOLD = PDF_COLORS.gold;
 const GRAY = PDF_COLORS.gray;
@@ -356,7 +357,21 @@ export interface TendenciaData {
 // ── Componentes de bloco ──────────────────────────────────────────────────────
 
 /** Cards de Bloqueios Energéticos */
-export function BloqueiosBlock({ bloqueios, showAntidoto = true, hideSaude = false, hideTriangulos = false, isNomeSocial = false }: { bloqueios: BloqueioData[]; showAntidoto?: boolean; hideSaude?: boolean; hideTriangulos?: boolean; isNomeSocial?: boolean }) {
+export function BloqueiosBlock({
+  bloqueios,
+  showAntidoto = true,
+  hideSaude = false,
+  hideTriangulos = false,
+  isNomeSocial = false,
+  triangulo,
+}: {
+  bloqueios: BloqueioData[];
+  showAntidoto?: boolean;
+  hideSaude?: boolean;
+  hideTriangulos?: boolean;
+  isNomeSocial?: boolean;
+  triangulo?: 'vida' | 'pessoal' | 'social' | 'destino';
+}) {
   if (bloqueios.length === 0) {
     return (
       <View style={styles.debitoNoneBox}>
@@ -393,6 +408,30 @@ export function BloqueiosBlock({ bloqueios, showAntidoto = true, hideSaude = fal
             )}
           </View>
           <Text style={[styles.bloqueioDesc, ...(isNomeSocial ? [{ fontSize: 10 }] : [])]}>{displayDesc}</Text>
+          
+          {triangulo && (() => {
+            const interp = obterInterpretacaoEspecifica(b.codigo, triangulo);
+            if (!interp) return null;
+            return (
+              <View style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.04)',
+                borderLeftWidth: 2,
+                borderLeftColor: '#EF4444',
+                padding: 6,
+                borderRadius: 4,
+                marginTop: 6,
+                marginBottom: 4
+              }}>
+                <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#DC2626', textTransform: 'uppercase', marginBottom: 2, letterSpacing: 0.3 }}>
+                  Impacto no Setor do Triângulo:
+                </Text>
+                <Text style={{ fontSize: 8.5, color: '#4B5563', lineHeight: 1.4 }}>
+                  {interp}
+                </Text>
+              </View>
+            );
+          })()}
+
           {(!hideSaude && b.aspectoSaude) ? (
             <Text style={[styles.bloqueioSaude, ...(isNomeSocial ? [{ fontSize: 9 }] : [])]}>Aspecto de saúde: {b.aspectoSaude}</Text>
           ) : null}

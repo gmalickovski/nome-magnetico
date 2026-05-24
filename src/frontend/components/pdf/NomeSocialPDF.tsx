@@ -54,27 +54,27 @@ const styles = StyleSheet.create({
     fontFamily: BODY_FONT,
     color: DARK,
   },
-  // Seção A Essência — fundo vermelho ultra-sutil
+  // Seção A Essência — fundo revertido para branco, cor do cabeçalho customizada
   pageEssencia: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FFFFFF',
     paddingTop: 56,
     paddingBottom: 56,
     paddingHorizontal: 48,
     fontFamily: BODY_FONT,
     color: DARK,
   },
-  // Seção Harmonização / Comparativos — fundo dourado ultra-sutil
+  // Seção Harmonização / Comparativos — fundo revertido para branco
   pageHarmonizacao: {
-    backgroundColor: '#FEFCE8',
+    backgroundColor: '#FFFFFF',
     paddingTop: 56,
     paddingBottom: 56,
     paddingHorizontal: 48,
     fontFamily: BODY_FONT,
     color: DARK,
   },
-  // Seção Nome Harmonizado escolhido — fundo verde ultra-sutil
+  // Seção Nome Harmonizado escolhido — fundo revertido para branco
   pageHarmonizado: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#FFFFFF',
     paddingTop: 56,
     paddingBottom: 56,
     paddingHorizontal: 48,
@@ -552,7 +552,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
 
       {/* ── PÁGINA: RANKING DOS CANDIDATOS (novo fluxo) ─────────────────────── */}
       {nomesCandidatos.length > 0 && (
-        <Page size="A4" style={styles.pageHarmonizacao}>
+        <Page size="A4" style={styles.page}>
           <PDFPageHeader subtitle={`${nomeParaExibir} — Ranking dos Candidatos`} />
 
           <View style={styles.section}>
@@ -611,7 +611,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
 
       {/* ── SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original ─────────────── */}
       <Page size="A4" style={styles.pageEssencia}>
-        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} />
+        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
         {/* Badge de seção */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
@@ -824,7 +824,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo da Vida
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                 </View>
               )}
             </View>
@@ -859,7 +859,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Pessoal
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                 </View>
               )}
             </View>
@@ -894,7 +894,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Social
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                 </View>
               )}
             </View>
@@ -929,7 +929,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo do Destino
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                 </View>
               )}
             </View>
@@ -990,12 +990,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         </View>
       </View>
 
-        <PDFFooter />
+        <PDFFooter bgColor="#FEF2F2" />
       </Page>
 
       {/* ── BLOCO: A ENGENHARIA DA HARMONIZAÇÃO ────────────────────────────── */}
       <Page size="A4" style={styles.pageHarmonizacao}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
 
         {/* Badge de seção */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
@@ -1663,12 +1663,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           );
         })()}
 
-        <PDFFooter />
+        <PDFFooter bgColor="#FEFCE8" />
       </Page>
 
       {/* ── SEÇÃO: O NOME SOCIAL — O Nome Harmonizado Escolhido ─────────── */}
       <Page size="A4" style={styles.pageHarmonizado}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — O Nome Social`} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — O Nome Social`} bgColor="#F0FDF4" />
 
         {/* Badge de seção */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
@@ -1881,7 +1881,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo da Vida
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                 </View>
               )}
             </View>
@@ -1916,7 +1916,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Pessoal
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                 </View>
               )}
             </View>
@@ -1951,7 +1951,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Social
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                 </View>
               )}
             </View>
@@ -1986,7 +1986,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo do Destino
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                 </View>
               )}
             </View>
@@ -2047,7 +2047,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         </View>
       </View>
 
-        <PDFFooter />
+        <PDFFooter bgColor="#F0FDF4" />
       </Page>
 
       {/* ── BLOCO 5: CONCLUSÃO ──────────────────────────────────────────────── */}

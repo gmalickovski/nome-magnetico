@@ -35,11 +35,27 @@ const styles = StyleSheet.create({
 interface PDFPageHeaderProps {
   brand?: string;
   subtitle: string;
+  bgColor?: string;
 }
 
-export function PDFPageHeader({ brand = 'NOME MAGNETICO', subtitle }: PDFPageHeaderProps) {
+export function PDFPageHeader({ brand = 'NOME MAGNETICO', subtitle, bgColor }: PDFPageHeaderProps) {
   return (
-    <View style={styles.header} fixed>
+    <View
+      style={[
+        styles.header,
+        bgColor
+          ? {
+              backgroundColor: bgColor,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 8,
+              borderBottomWidth: 0,
+              marginBottom: 20,
+            }
+          : {},
+      ]}
+      fixed
+    >
       {HEADER_LOGO_SRC ? (
         <Image src={HEADER_LOGO_SRC} style={{ height: 14, objectFit: 'contain' }} />
       ) : (

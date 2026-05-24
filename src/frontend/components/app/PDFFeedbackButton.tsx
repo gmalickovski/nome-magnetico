@@ -134,66 +134,52 @@ export function PDFFeedbackButton({
       const baseUrl = pdfUrl ?? `/api/generate-pdf?id=${analysisId}`;
       const resolvedUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
 
-      // Detecta se o usuário está em um dispositivo móvel
-      const isMobile = /iPad|iPhone|iPod|android|webos|blackberry|iemobile|opera mini/i.test(
-        navigator.userAgent || navigator.vendor || (window as any).opera
-      );
+      // 1. Faz o único fetch do PDF (funciona em mobile e desktop)
+      // Mantém a tela de loading visível enquanto a API faz todo o cálculo e download do arquivo
+      const res = await fetch(resolvedUrl, {
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      });
+      if (!res.ok) throw new Error('pdf_error');
 
-      if (isMobile) {
-        // No mobile, faz um fetch inicial para "aquecer" o servidor (gera o PDF na API)
-        // Isso permite exibir a tela de loading enquanto a API faz o cálculo pesado.
-        const res = await fetch(resolvedUrl, {
-          cache: 'no-store',
-          credentials: 'same-origin',
-          headers: {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-          },
-        });
-        if (!res.ok) throw new Error('pdf_error');
+      const disposition = res.headers.get('Content-Disposition') ?? '';
+      const filenameMatch = disposition.match(/filename="([^"]+)"/);
+      let filename = filenameMatch?.[1] ?? `analise-${productType}-nome-magnetico.pdf`;
 
-        // Uma vez concluído, redirecionamos para a rota para que o download seja disparado
-        // nativamente pelo navegador, sem problemas de popup blocker ou restrição de blob no WebView.
-        // Graças ao cache temporário de 15s no servidor, o download inicia imediatamente!
-        window.location.href = resolvedUrl;
+      // Adiciona um sufixo temporal AAAAMMDD-HHMM para evitar colisões e cache local agressivo no OS
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const timeStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      filename = filename.replace('.pdf', `-${timeStr}.pdf`);
 
-        setStatus('done');
-        track('pdf_downloaded', { produto: productType as never });
+      // Resolve o arquivo como Blob diretamente na memória
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+
+      // Detecta se é um WebView de app social (Instagram, Facebook, LinkedIn, Twitter, WhatsApp) onde Blobs falham ao salvar localmente
+      const isWebView = /FBAN|FBAV|Instagram|LinkedInApp|Twitter|WhatsApp/i.test(navigator.userAgent);
+
+      if (isWebView) {
+        // Em WebViews sociais, a melhor estratégia é abrir em nova aba para que o usuário
+        // possa visualizar o PDF diretamente e usar a opção nativa do sistema para salvar/compartilhar
+        window.open(resolvedUrl, '_blank');
       } else {
-        // No desktop, mantemos o fluxo de Blob forçado via elemento <a> que funciona perfeitamente
-        const res = await fetch(resolvedUrl, {
-          cache: 'no-store',
-          credentials: 'same-origin',
-          headers: {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-          },
-        });
-        if (!res.ok) throw new Error('pdf_error');
-
-        const disposition = res.headers.get('Content-Disposition') ?? '';
-        const filenameMatch = disposition.match(/filename="([^"]+)"/);
-        let filename = filenameMatch?.[1] ?? `analise-${productType}-nome-magnetico.pdf`;
-
-        // Adiciona um sufixo temporal AAAAMMDD-HHMM para evitar colisões e cache local agressivo no OS
-        const now = new Date();
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const timeStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
-        filename = filename.replace('.pdf', `-${timeStr}.pdf`);
-
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
+        // Em navegadores padrão (Safari, Chrome, etc., mobile e desktop), faz o download via Blob instantâneo
+        const a = document.createElement('a');
+        a.href = url;
         a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-
-        setStatus('done');
-        track('pdf_downloaded', { produto: productType as never });
       }
+
+      setStatus('done');
+      track('pdf_downloaded', { produto: productType as never });
     } catch {
       setStatus('error');
     }
@@ -517,8 +503,12 @@ export function PDFFeedbackButton({
         <button
           ref={fabRef}
           onClick={handleDownload}
-          className="md:hidden fixed bottom-[116px] left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-2 bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-full shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-[#f2ca50] hover:shadow-[0_4px_32px_rgba(212,175,55,0.55)] active:scale-95 transition-all duration-300"
-          style={{ opacity: 1, transition: 'opacity 0.4s ease, background-color 0.3s, box-shadow 0.3s, transform 0.1s' }}
+          className="md:hidden fixed z-50 flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-sm font-bold uppercase tracking-wider py-4 px-6 rounded-full shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-[#f2ca50] hover:shadow-[0_4px_32px_rgba(212,175,55,0.55)] active:scale-95 transition-all duration-300 left-4 right-4"
+          style={{
+            opacity: 1,
+            transition: 'opacity 0.4s ease, background-color 0.3s, box-shadow 0.3s, transform 0.1s',
+            bottom: 'calc(62px + max(0.5rem, env(safe-area-inset-bottom)))',
+          }}
           id="pdf-download-btn"
         >
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
