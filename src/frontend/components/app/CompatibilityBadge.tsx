@@ -1,4 +1,4 @@
-type Compat = 'total' | 'complementar' | 'aceitavel' | 'incompativel';
+type Compat = 'favoravel' | 'neutro' | 'desfavoravel';
 
 interface CompatibilityBadgeProps {
   compatibilidade: Compat;
@@ -14,40 +14,32 @@ interface CompatConfig {
 }
 
 const CONFIG: Record<Compat, CompatConfig> = {
-  total: {
-    label: '✦ Ressonância Total',
+  favoravel: {
+    label: '✦ Harmônica / Favorável',
     className: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-    title: 'Ressonância Total',
+    title: 'Harmônica / Favorável',
     description:
-      'O número de Expressão compartilha a mesma vibração do Destino. Alinhamento perfeito — nome e missão de vida falam a mesma língua.',
+      'O número de Expressão possui alta compatibilidade vibracional com o de Destino. Alinhamento ideal que facilita e impulsiona o seu propósito de vida.',
   },
-  complementar: {
-    label: '◈ Vibração Complementar',
-    className: 'bg-sky-500/15 text-sky-400 border border-sky-500/30',
-    title: 'Vibração Complementar',
-    description:
-      'A soma de Expressão e Destino resulta em 9, 11 ou 22 — números de maestria. Nome e missão se amplificam mutuamente.',
-  },
-  aceitavel: {
-    label: '◎ Vibração Neutra',
+  neutro: {
+    label: '◈ Neutra',
     className: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-    title: 'Vibração Neutra',
+    title: 'Neutra',
     description:
-      'Expressão e Destino diferem em 1 unidade vibracional. Convivência sem tensão, mas sem sinergia especial.',
+      'Expressão e Destino convivem em equilíbrio sem gerar conflitos diretos, porém sem gerar uma sinergia ou impulso ativo especial.',
   },
-  incompativel: {
+  desfavoravel: {
     label: '⚠ Tensão Vibracional',
     className: 'bg-red-500/15 text-red-400 border border-red-500/30',
     title: 'Tensão Vibracional',
     description:
-      'Frequências de Expressão e Destino são díspares. Pode gerar resistência energética — a penalidade já está refletida no score.',
+      'A relação vibracional entre Expressão e Destino é conflitante, gerando resistência ou bloqueios na manifestação dos seus talentos. Gera um desconto de 15 pontos no score.',
   },
 };
 
 const LEGEND_ITEMS: { className: string; text: string }[] = [
-  { className: 'text-emerald-400', text: '✦ Ressonância Total — mesma vibração final' },
-  { className: 'text-sky-400',      text: '◈ Vibração Complementar — somam 9, 11 ou 22' },
-  { className: 'text-amber-400',   text: '◎ Vibração Neutra — diferença de 1' },
+  { className: 'text-emerald-400', text: '✦ Harmônica / Favorável — alta sinergia vibracional' },
+  { className: 'text-amber-400',   text: '◈ Neutra — equilíbrio estável, sem conflito' },
   { className: 'text-red-400',     text: '⚠ Tensão Vibracional — frequências díspares' },
 ];
 
@@ -56,7 +48,7 @@ export default function CompatibilityBadge({
   size = 'md',
   showTooltip = false,
 }: CompatibilityBadgeProps) {
-  const { label, className, title, description } = CONFIG[compatibilidade] ?? CONFIG.incompativel;
+  const { label, className, title, description } = CONFIG[compatibilidade] ?? CONFIG.neutro;
   const padding = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
 
   /* Tooltip via CSS hover — sem <button> aninhado, compatível com cards clicáveis */

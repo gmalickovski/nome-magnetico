@@ -1211,17 +1211,16 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                 {/* Compatibilidade */}
                 <View style={{
                   marginTop: 12, borderRadius: 6, padding: 8,
-                  backgroundColor: freqData.ranking.melhorNome.compatibilidade === 'total' ? '#ECFDF5' : freqData.ranking.melhorNome.compatibilidade === 'complementar' ? '#FFFDF0' : '#FEF9C3',
+                  backgroundColor: freqData.ranking.melhorNome.compatibilidade === 'favoravel' ? '#ECFDF5' : freqData.ranking.melhorNome.compatibilidade === 'neutro' ? '#FFFDF0' : '#FEF2F2',
                 }}>
                   <Text style={{
                     fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'center',
-                    color: freqData.ranking.melhorNome.compatibilidade === 'total' ? '#059669' : freqData.ranking.melhorNome.compatibilidade === 'complementar' ? '#D97706' : '#92400E',
+                    color: freqData.ranking.melhorNome.compatibilidade === 'favoravel' ? '#059669' : freqData.ranking.melhorNome.compatibilidade === 'neutro' ? '#D97706' : '#DC2626',
                   }}>
-                    Compatibilidade Expressao x Destino:{' '}
-                    {freqData.ranking.melhorNome.compatibilidade === 'total' ? 'Harmonia Total'
-                      : freqData.ranking.melhorNome.compatibilidade === 'complementar' ? 'Harmonia Complementar'
-                      : freqData.ranking.melhorNome.compatibilidade === 'aceitavel' ? 'Aceitavel'
-                      : 'Incompativel'}
+                    Compatibilidade Expressão x Destino:{' '}
+                    {freqData.ranking.melhorNome.compatibilidade === 'favoravel' ? 'Harmônica / Favorável'
+                      : freqData.ranking.melhorNome.compatibilidade === 'neutro' ? 'Neutra'
+                      : 'Tensão Vibracional'}
                   </Text>
                 </View>
 
@@ -1285,8 +1284,8 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                 <Text style={[styles.tableCell, { width: '8%', textAlign: 'center' }]}>{c.expressao}</Text>
                 <Text style={[styles.tableCell, { width: '8%', textAlign: 'center' }]}>{c.motivacao}</Text>
                 <Text style={[styles.tableCell, { width: '8%', textAlign: 'center' }]}>{c.impressao ?? '—'}</Text>
-                <Text style={[styles.tableCell, { width: '18%', textAlign: 'center', fontSize: 7, color: c.compatibilidade === 'total' ? '#059669' : c.compatibilidade === 'complementar' ? GOLD : c.compatibilidade === 'aceitavel' ? '#D97706' : '#DC2626' }]}>
-                  {c.compatibilidade === 'total' ? 'Total' : c.compatibilidade === 'complementar' ? 'Complementar' : c.compatibilidade === 'aceitavel' ? 'Aceitavel' : 'Incompat.'}
+                <Text style={[styles.tableCell, { width: '18%', textAlign: 'center', fontSize: 7, color: c.compatibilidade === 'favoravel' ? '#059669' : c.compatibilidade === 'neutro' ? '#D97706' : '#DC2626' }]}>
+                  {c.compatibilidade === 'favoravel' ? 'Favorável' : c.compatibilidade === 'neutro' ? 'Neutra' : 'Tensão Vibr.'}
                 </Text>
                 <Text style={[styles.tableCell, { width: '10%', textAlign: 'center', color: c.temBloqueio ? '#DC2626' : '#059669' }]}>
                   {c.temBloqueio ? `${c.bloqueios?.length ?? 1}x` : 'Limpo'}
@@ -1375,24 +1374,22 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                 </View>
 
                 {/* Compatibilidades */}
-                <View style={{ marginTop: 12, borderRadius: 6, padding: 8, backgroundColor: freqData.melhorNome.compatibilidadeSocio === 'total' ? '#ECFDF5' : '#FFFDF0' }}>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'center', color: freqData.melhorNome.compatibilidadeSocio === 'total' ? '#059669' : '#D97706' }}>
-                    Compatibilidade com Socio Principal:{' '}
-                    {freqData.melhorNome.compatibilidadeSocio === 'total' ? 'Harmonia Total'
-                      : freqData.melhorNome.compatibilidadeSocio === 'complementar' ? 'Complementar'
-                      : freqData.melhorNome.compatibilidadeSocio === 'aceitavel' ? 'Aceitavel'
-                      : 'Incompativel'}
+                <View style={{ marginTop: 12, borderRadius: 6, padding: 8, backgroundColor: freqData.melhorNome.compatibilidadeSocio === 'favoravel' ? '#ECFDF5' : freqData.melhorNome.compatibilidadeSocio === 'neutro' ? '#FFFDF0' : '#FEF2F2' }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'center', color: freqData.melhorNome.compatibilidadeSocio === 'favoravel' ? '#059669' : freqData.melhorNome.compatibilidadeSocio === 'neutro' ? '#D97706' : '#DC2626' }}>
+                    Compatibilidade com Sócio Principal:{' '}
+                    {freqData.melhorNome.compatibilidadeSocio === 'favoravel' ? 'Harmônica / Favorável'
+                      : freqData.melhorNome.compatibilidadeSocio === 'neutro' ? 'Neutra'
+                      : 'Tensão Vibracional'}
                   </Text>
                 </View>
 
                 {freqData.melhorNome.compatibilidadeEmpresa != null && (
-                  <View style={{ marginTop: 6, borderRadius: 6, padding: 8, backgroundColor: freqData.melhorNome.compatibilidadeEmpresa === 'total' ? '#ECFDF5' : '#FFFDF0' }}>
-                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'center', color: freqData.melhorNome.compatibilidadeEmpresa === 'total' ? '#059669' : '#7c3aed' }}>
+                  <View style={{ marginTop: 6, borderRadius: 6, padding: 8, backgroundColor: freqData.melhorNome.compatibilidadeEmpresa === 'favoravel' ? '#ECFDF5' : freqData.melhorNome.compatibilidadeEmpresa === 'neutro' ? '#FFFDF0' : '#FEF2F2' }}>
+                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'center', color: freqData.melhorNome.compatibilidadeEmpresa === 'favoravel' ? '#059669' : freqData.melhorNome.compatibilidadeEmpresa === 'neutro' ? '#D97706' : '#DC2626' }}>
                       Compatibilidade com Empresa:{' '}
-                      {freqData.melhorNome.compatibilidadeEmpresa === 'total' ? 'Harmonia Total'
-                        : freqData.melhorNome.compatibilidadeEmpresa === 'complementar' ? 'Complementar'
-                        : freqData.melhorNome.compatibilidadeEmpresa === 'aceitavel' ? 'Aceitavel'
-                        : 'Incompativel'}
+                      {freqData.melhorNome.compatibilidadeEmpresa === 'favoravel' ? 'Harmônica / Favorável'
+                        : freqData.melhorNome.compatibilidadeEmpresa === 'neutro' ? 'Neutra'
+                        : 'Tensão Vibracional'}
                     </Text>
                   </View>
                 )}
@@ -1466,12 +1463,12 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Text style={{ fontSize: 7, color: c.compatibilidadeSocio === 'total' ? '#059669' : c.compatibilidadeSocio === 'complementar' ? GOLD : c.compatibilidadeSocio === 'aceitavel' ? '#D97706' : '#DC2626' }}>
-                      Socio: {c.compatibilidadeSocio === 'total' ? 'Harmonia Total' : c.compatibilidadeSocio === 'complementar' ? 'Complementar' : c.compatibilidadeSocio === 'aceitavel' ? 'Aceitavel' : 'Incompativel'}
+                    <Text style={{ fontSize: 7, color: c.compatibilidadeSocio === 'favoravel' ? '#059669' : c.compatibilidadeSocio === 'neutro' ? '#D97706' : '#DC2626' }}>
+                      Sócio: {c.compatibilidadeSocio === 'favoravel' ? 'Favorável' : c.compatibilidadeSocio === 'neutro' ? 'Neutra' : 'Tensão Vibr.'}
                     </Text>
                     {c.compatibilidadeEmpresa != null && (
-                      <Text style={{ fontSize: 7, color: c.compatibilidadeEmpresa === 'total' ? '#059669' : c.compatibilidadeEmpresa === 'complementar' ? '#7c3aed' : c.compatibilidadeEmpresa === 'aceitavel' ? '#D97706' : '#DC2626' }}>
-                        Empresa: {c.compatibilidadeEmpresa === 'total' ? 'Harmonia Total' : c.compatibilidadeEmpresa === 'complementar' ? 'Complementar' : c.compatibilidadeEmpresa === 'aceitavel' ? 'Aceitavel' : 'Incompativel'}
+                      <Text style={{ fontSize: 7, color: c.compatibilidadeEmpresa === 'favoravel' ? '#059669' : c.compatibilidadeEmpresa === 'neutro' ? '#D97706' : '#DC2626' }}>
+                        Empresa: {c.compatibilidadeEmpresa === 'favoravel' ? 'Favorável' : c.compatibilidadeEmpresa === 'neutro' ? 'Neutra' : 'Tensão Vibr.'}
                       </Text>
                     )}
                     <Text style={{ fontSize: 7, color: c.temBloqueio ? '#DC2626' : '#059669' }}>

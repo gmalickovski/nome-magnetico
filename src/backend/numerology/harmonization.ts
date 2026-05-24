@@ -27,7 +27,7 @@ export interface AvaliacaoNome {
   temBloqueio: boolean;
   bloqueios: Bloqueio[];
   sequenciasNegativas: string[];
-  compatibilidadeDestino: 'total' | 'complementar' | 'aceitavel' | 'incompativel';
+  compatibilidadeDestino: 'favoravel' | 'neutro' | 'desfavoravel';
   score: number; // 0–100
   /** Score máximo atingível para esta pessoa (100 - débitos fixos × 12). */
   scoreTeto: number;
@@ -67,26 +67,64 @@ export const CRITERIOS_ASSINATURA: CriteriosAssinatura = {
 // AVALIAÇÃO DE COMPATIBILIDADE
 // ================================================================
 
+export type TipoCompatibilidade = 'favoravel' | 'neutro' | 'desfavoravel';
+
+export const TABELA_HARMONIZACAO: Record<
+  number,
+  { favoravel: number[]; desfavoravel: number[]; neutro: number[] }
+> = {
+  1: { favoravel: [3, 5, 9], desfavoravel: [6], neutro: [1, 2, 4, 7, 8, 11, 22] },
+  2: { favoravel: [2, 4, 6, 7], desfavoravel: [5, 9], neutro: [1, 3, 8, 11, 22] },
+  3: { favoravel: [1, 3, 5, 6], desfavoravel: [4, 7, 8], neutro: [2, 9, 11, 22] },
+  4: { favoravel: [2, 6, 8], desfavoravel: [3, 5, 7, 9], neutro: [1, 4, 11, 22] },
+  5: { favoravel: [1, 3, 5, 7, 9], desfavoravel: [2, 4, 6, 8], neutro: [11, 22] },
+  6: { favoravel: [2, 3, 4, 8, 9], desfavoravel: [1, 5, 7], neutro: [6, 11, 22] },
+  7: { favoravel: [2, 5, 7], desfavoravel: [3, 4, 6, 8, 9], neutro: [1, 11, 22] },
+  8: { favoravel: [4, 6], desfavoravel: [3, 5, 7, 8, 9], neutro: [1, 2, 11, 22] },
+  9: { favoravel: [1, 5, 6, 9], desfavoravel: [2, 4, 7, 8], neutro: [3, 11, 22] },
+  11: { favoravel: [1, 3, 5, 7, 9, 11], desfavoravel: [2, 4, 6, 8], neutro: [22] },
+  22: { favoravel: [1, 2, 3, 4, 5, 6, 7, 8, 9, 22], desfavoravel: [], neutro: [11] }
+};
+
 /**
  * Avalia a compatibilidade entre o número de Expressão e o de Destino.
  */
 export function avaliarCompatibilidade(
   expressao: number,
   destino: number
-): 'total' | 'complementar' | 'aceitavel' | 'incompativel' {
-  const expR = reduzirNumero(expressao, false);
-  const destR = reduzirNumero(destino, false);
+): TipoCompatibilidade {
+  const expR = reduzirNumero(expressao, true); // preservar 11 e 22
+  const destR = reduzirNumero(destino, true);   // preservar 11 e 22
 
-  if (expR === destR) return 'total';
+  // Se o destino reduzido não estiver no mapeamento, faz a redução simples dele
+  let rowKey = destR;
+  if (!TABELA_HARMONIZACAO[rowKey]) {
+    rowKey = reduzirNumero(destR, false);
+  }
 
-  // Complementares: somam 9 ou formam 11/22
-  const soma = expR + destR;
-  if (soma === 9 || soma === 11 || soma === 22) return 'complementar';
+  const config = TABELA_HARMONIZACAO[rowKey];
+  if (!config) return 'neutro'; // Fallback absoluto
 
-  // Aceitável: diferença de 1
-  if (Math.abs(expR - destR) === 1) return 'aceitavel';
+  // Função auxiliar de busca
+  const verificar = (num: number): TipoCompatibilidade | null => {
+    if (config.favoravel.includes(num)) return 'favoravel';
+    if (config.desfavoravel.includes(num)) return 'desfavoravel';
+    if (config.neutro.includes(num)) return 'neutro';
+    return null;
+  };
 
-  return 'incompativel';
+  // 1. Tentar com valor direto (preservando master)
+  const direto = verificar(expR);
+  if (direto !== null) return direto;
+
+  // 2. Se for 11 ou 22, tentar com seu valor reduzido (11 -> 2, 22 -> 4)
+  if (expR === 11 || expR === 22) {
+    const reduzidoVal = expR === 11 ? 2 : 4;
+    const reduzido = verificar(reduzidoVal);
+    if (reduzido !== null) return reduzido;
+  }
+
+  return 'neutro'; // Fallback padrão
 }
 
 // ================================================================
@@ -143,17 +181,14 @@ export function avaliarNome(
   }
 
   switch (compatibilidade) {
-    case 'total':
-      justificativa.push(`✓ Expressão (${expressao}) totalmente compatível com Destino (${destino})`);
+    case 'favoravel':
+      justificativa.push(`✓ Expressão (${expressao}) totalmente harmônica e favorável com Destino (${destino})`);
       break;
-    case 'complementar':
-      justificativa.push(`✓ Expressão (${expressao}) complementar ao Destino (${destino})`);
+    case 'neutro':
+      justificativa.push(`~ Expressão (${expressao}) neutra em relação ao Destino (${destino})`);
       break;
-    case 'aceitavel':
-      justificativa.push(`~ Expressão (${expressao}) aceitável em relação ao Destino (${destino})`);
-      break;
-    case 'incompativel':
-      justificativa.push(`✗ Expressão (${expressao}) pouco compatível com Destino (${destino})`);
+    case 'desfavoravel':
+      justificativa.push(`✗ Expressão (${expressao}) pouco compatível e desfavorável com o Destino (${destino})`);
       break;
   }
 

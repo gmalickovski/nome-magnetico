@@ -32,16 +32,15 @@ export interface ScoreParams {
    * Cada ocorrência extra desconta -3 (menor que a primeira aparição, que desconta -15).
    */
   ocorrenciasExtras?: number;
-  compatibilidade: 'total' | 'complementar' | 'aceitavel' | 'incompativel';
+  compatibilidade: 'favoravel' | 'neutro' | 'desfavoravel';
   /** Usado apenas no produto nome_empresa (destino da empresa). */
-  compatibilidadeSecundaria?: 'total' | 'complementar' | 'aceitavel' | 'incompativel';
+  compatibilidadeSecundaria?: 'favoravel' | 'neutro' | 'desfavoravel';
 }
 
 const COMPAT_PENALTY: Record<string, number> = {
-  total: 0,
-  complementar: 0,
-  aceitavel: -5,
-  incompativel: -15,
+  favoravel: 0,
+  neutro: -5,
+  desfavoravel: -15,
 };
 
 export function calcularScore(p: ScoreParams): number {

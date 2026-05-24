@@ -228,11 +228,11 @@ function scoreColor(score: number): string {
 }
 
 function compatColor(c: string): string {
-  return c === 'total' ? '#059669' : c === 'complementar' ? '#7c3aed' : c === 'aceitavel' ? '#D97706' : '#DC2626';
+  return c === 'favoravel' ? '#059669' : c === 'neutro' ? '#D97706' : '#DC2626';
 }
 
 function compatLabel(c: string): string {
-  return c === 'total' ? 'Total' : c === 'complementar' ? 'Complementar' : c === 'aceitavel' ? 'Aceitável' : 'Incompatível';
+  return c === 'favoravel' ? 'Harmônica / Favorável' : c === 'neutro' ? 'Neutra' : 'Tensão Vibracional';
 }
 
 function extractSelectedSocialName(text?: string | null): string | null {
@@ -1311,7 +1311,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             <View style={{ marginBottom: 16 }}>
               <View style={{ backgroundColor: hasAnyImprovement ? '#059669' : '#6B7280', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 6 }}>
                 <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Débitos Kármicos · Lições · Tendências
+                  Débitos Kármicos · Lições Kármicas · Tendências Ocultas
                 </Text>
               </View>
               <View style={{ backgroundColor: '#FAFAFA', paddingVertical: 12, paddingHorizontal: 14 }}>
@@ -1320,7 +1320,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 {debitosNasc.length > 0 && (() => {
                   const dGood = cGood(debitosNasc.length, debitosSocial.length);
                   const dBad  = cBad(debitosNasc.length, debitosSocial.length);
-                  const dSign = cSign(debitosNasc.length, debitosSocial.length);
+                  const dSign = dGood ? '»' : dBad ? '«' : '=';
                   return (
                     <>
                       <View wrap={false}>
@@ -1335,18 +1335,18 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                         }
                       </View>
                       <View wrap={false} style={{ flexDirection: 'row', alignItems: 'stretch', marginBottom: 12 }}>
-                        <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.07)', borderRadius: 8, paddingVertical: 10 }}>
+                        <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 8, paddingVertical: 10 }}>
                           <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Nascimento</Text>
                           <Text style={{ fontSize: 28, fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>{debitosNasc.length}</Text>
-                          <Text style={{ fontSize: 8, color: '#DC2626', marginTop: 2 }}>débitos ativos</Text>
+                          <Text style={{ fontSize: 8, color: '#DC2626', marginTop: 2, fontFamily: BODY_FONT_BOLD }}>Débitos Kármicos Ativos</Text>
                         </View>
                         <View style={{ justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12 }}>
-                          <Text style={{ fontSize: 18, color: dGood ? '#8A661C' : dBad ? '#DC2626' : GRAY }}>{dSign}</Text>
+                          <Text style={{ fontSize: 16, color: dGood ? '#8A661C' : dBad ? '#DC2626' : GRAY }}>{dSign}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center', backgroundColor: dGood ? 'rgba(5,150,105,0.08)' : dBad ? 'rgba(220,38,38,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingVertical: 10 }}>
                           <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: dGood ? '#059669' : dBad ? '#DC2626' : '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Harmonizado</Text>
                           <Text style={{ fontSize: 28, fontFamily: BODY_FONT_BOLD, color: dGood ? '#059669' : dBad ? '#DC2626' : '#6B7280' }}>{debitosSocial.length}</Text>
-                          <Text style={{ fontSize: 8, color: dGood ? '#059669' : dBad ? '#DC2626' : GRAY, marginTop: 2 }}>débitos ativos</Text>
+                          <Text style={{ fontSize: 8, color: dGood ? '#059669' : dBad ? '#DC2626' : GRAY, marginTop: 2, fontFamily: BODY_FONT_BOLD }}>Débitos Kármicos Ativos</Text>
                         </View>
                       </View>
                       
@@ -1363,38 +1363,46 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                               </Text>
                             </View>
                           </View>
-                          <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
+                          <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.5 }}>{d.descricao}</Text>
                         </View>
                       ))}
 
-                      {/* 1.2 Débitos Mantidos (Cinza) */}
-                      {debitosMantidos.map((d, i) => (
-                        <View key={`deb-mt-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#9CA3AF', backgroundColor: '#F3F4F6', borderRadius: 8, padding: 10, marginBottom: 6 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                            <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#6B7280', marginRight: 8 }}>
-                              • Mantido: {d.titulo}
-                            </Text>
-                            <View style={{ backgroundColor: '#E5E7EB', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
-                              <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>
-                                {d.fixo ? 'IMUTÁVEL' : 'PERMANECE ATIVO'}
+                      {/* 1.2 Débitos Mantidos (Cinza ou Dourado se Imutável) */}
+                      {debitosMantidos.map((d, i) => {
+                        const isImutavel = d.fixo === true;
+                        const borderLeftColor = isImutavel ? '#D4AF37' : '#9CA3AF';
+                        const backgroundColor = isImutavel ? '#FFFDF0' : '#F3F4F6';
+                        const textColor = isImutavel ? '#8A661C' : '#6B7280';
+                        const badgeBgColor = isImutavel ? 'rgba(212, 175, 55, 0.15)' : '#E5E7EB';
+
+                        return (
+                          <View key={`deb-mt-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor, backgroundColor, borderRadius: 8, padding: 10, marginBottom: 6 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                              <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: textColor, marginRight: 8 }}>
+                                {isImutavel ? '• Imutável: ' : '• Mantido: '}{d.titulo}
                               </Text>
+                              <View style={{ backgroundColor: badgeBgColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: textColor }}>
+                                  {isImutavel ? 'IMUTÁVEL' : 'PERMANECE ATIVO'}
+                                </Text>
+                              </View>
                             </View>
+                            <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.5 }}>{d.descricao}</Text>
+                            {isImutavel && (
+                              <Text style={{ fontSize: 8, color: '#8A661C', marginTop: 4, fontStyle: 'italic' }}>
+                                Origem: {d.fontes.includes('dia_natalicio') ? 'Dia de Nascimento' : ''}{d.fontes.includes('destino') ? ' · Número de Destino' : ''}. Não pode ser alterado pelo nome.
+                              </Text>
+                            )}
                           </View>
-                          <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
-                          {d.fixo && (
-                            <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 4, fontStyle: 'italic' }}>
-                              Origem: {d.fontes.includes('dia_natalicio') ? 'Dia de nascimento' : ''}{d.fontes.includes('destino') ? ' · Número de Destino' : ''}. Não pode ser alterado pelo nome.
-                            </Text>
-                          )}
-                        </View>
-                      ))}
+                        );
+                      })}
 
                       {/* 1.3 Débitos Novos/Acrescentados (Vermelho) */}
                       {debitosNovos.map((d, i) => (
                         <View key={`deb-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 8, padding: 10, marginBottom: 6 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                             <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginRight: 8 }}>
-                              + Novo Débito: {d.titulo}
+                              + Novo Débito Kármico: {d.titulo}
                             </Text>
                             <View style={{ backgroundColor: 'rgba(220,38,38,0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
                               <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>
@@ -1402,7 +1410,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                               </Text>
                             </View>
                           </View>
-                          <Text style={{ fontSize: 9, color: DARK, lineHeight: 1.5 }}>{d.descricao.slice(0, 200)}...</Text>
+                          <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.5 }}>{d.descricao}</Text>
                         </View>
                       ))}
                     </>
@@ -1416,7 +1424,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 {(() => {
                   const lGood = cGood(licoesNasc.length, licoesSocial.length);
                   const lBad  = cBad(licoesNasc.length, licoesSocial.length);
-                  const lSign = cSign(licoesNasc.length, licoesSocial.length);
+                  const lSign = lGood ? '»' : lBad ? '«' : '=';
                   return (
                     <>
                       <View wrap={false}>
@@ -1431,10 +1439,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                         }
                       </View>
                       <View wrap={false} style={{ flexDirection: 'row', alignItems: 'stretch', marginBottom: 12 }}>
-                        <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.07)', borderRadius: 8, paddingVertical: 10 }}>
+                        <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 8, paddingVertical: 10 }}>
                           <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Nascimento</Text>
                           <Text style={{ fontSize: 28, fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>{licoesNasc.length}</Text>
-                          <Text style={{ fontSize: 8, color: '#DC2626', marginTop: 2 }}>lições presentes</Text>
+                          <Text style={{ fontSize: 8, color: '#DC2626', marginTop: 2, fontFamily: BODY_FONT_BOLD }}>Lições Kármicas Ativas</Text>
                           {licoesNasc.length > 0 && (
                             <Text style={{ fontSize: 7, color: GRAY, marginTop: 3, textAlign: 'center' }}>
                               {licoesNasc.map(l => `Lição ${l.numero}`).join(' · ')}
@@ -1442,12 +1450,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                           )}
                         </View>
                         <View style={{ justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12 }}>
-                          <Text style={{ fontSize: 18, color: lGood ? '#8A661C' : lBad ? '#DC2626' : GRAY }}>{lSign}</Text>
+                          <Text style={{ fontSize: 16, color: lGood ? '#8A661C' : lBad ? '#DC2626' : GRAY }}>{lSign}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center', backgroundColor: lGood ? 'rgba(5,150,105,0.08)' : lBad ? 'rgba(220,38,38,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingVertical: 10 }}>
                           <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: lGood ? '#059669' : lBad ? '#DC2626' : '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Harmonizado</Text>
                           <Text style={{ fontSize: 28, fontFamily: BODY_FONT_BOLD, color: lGood ? '#059669' : lBad ? '#DC2626' : '#6B7280' }}>{licoesSocial.length}</Text>
-                          <Text style={{ fontSize: 8, color: lGood ? '#059669' : lBad ? '#DC2626' : GRAY, marginTop: 2 }}>lições presentes</Text>
+                          <Text style={{ fontSize: 8, color: lGood ? '#059669' : lBad ? '#DC2626' : GRAY, marginTop: 2, fontFamily: BODY_FONT_BOLD }}>Lições Kármicas Ativas</Text>
                           {licoesSocial.length > 0 && (
                             <Text style={{ fontSize: 7, color: GRAY, marginTop: 3, textAlign: 'center' }}>
                               {licoesSocial.map(l => `Lição ${l.numero}`).join(' · ')}
@@ -1459,29 +1467,46 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                       {/* 2.1 Lições Eliminadas/Superadas (Verde) */}
                       {licoesEliminadas.map((l, i) => (
                         <View key={`lic-el-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Superada: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
-                          {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{l.descricao.slice(0, 180)}...</Text>}
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Superada: Lição Kármica {l.numero} — {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
+                          {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{l.descricao}</Text>}
                         </View>
                       ))}
 
-                      {/* 2.2 Lições Mantidas (Cinza) */}
-                      {licoesRestantes.map((l, i) => (
-                        <View key={`lic-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#6B7280', backgroundColor: '#F3F4F6', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#6B7280', marginBottom: 3 }}>• Mantida: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
-                          {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{l.descricao.slice(0, 160)}...</Text>}
-                          {l.comoTrabalhar && (
-                            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>Como trabalhar: </Text>{l.comoTrabalhar}
-                            </Text>
-                          )}
-                        </View>
-                      ))}
+                      {/* 2.2 Lições Mantidas (Cinza ou Dourado se Imutável) */}
+                      {licoesRestantes.map((l, i) => {
+                        const isImutavel = l.fixo === true;
+                        const borderLeftColor = isImutavel ? '#D4AF37' : '#6B7280';
+                        const backgroundColor = isImutavel ? '#FFFDF0' : '#F3F4F6';
+                        const textColor = isImutavel ? '#8A661C' : '#6B7280';
+                        const badgeBgColor = isImutavel ? 'rgba(212, 175, 55, 0.15)' : '#E5E7EB';
+
+                        return (
+                          <View key={`lic-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor, backgroundColor, borderRadius: 6, padding: 10, marginBottom: 6 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                              <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: textColor }}>
+                                {isImutavel ? '• Imutável: ' : '• Mantida: '}Lição Kármica {l.numero} — {l.titulo.replace(/Lição Kármica \d+ — /, '')}
+                              </Text>
+                              <View style={{ backgroundColor: badgeBgColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: textColor }}>
+                                  {isImutavel ? 'IMUTÁVEL' : 'PERMANECE ATIVA'}
+                                </Text>
+                              </View>
+                            </View>
+                            {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{l.descricao}</Text>}
+                            {l.comoTrabalhar && (
+                              <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
+                                <Text style={{ fontFamily: BODY_FONT_BOLD, color: textColor }}>Como trabalhar: </Text>{l.comoTrabalhar}
+                              </Text>
+                            )}
+                          </View>
+                        );
+                      })}
 
                       {/* 2.3 Lições Novas/Acrescentadas (Vermelho) */}
                       {licoesNovas.map((l, i) => (
                         <View key={`lic-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 3 }}>+ Nova Lição: {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
-                          {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{l.descricao.slice(0, 160)}...</Text>}
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 3 }}>+ Nova Lição Kármica: Lição Kármica {l.numero} — {l.titulo.replace(/Lição Kármica \d+ — /, '')}</Text>
+                          {l.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{l.descricao}</Text>}
                           {l.comoTrabalhar && (
                             <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
                               <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>Como trabalhar: </Text>{l.comoTrabalhar}
@@ -1500,7 +1525,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 {(() => {
                   const tGood = cGood(tendenciasNasc.length, tendenciasSocial.length);
                   const tBad  = cBad(tendenciasNasc.length, tendenciasSocial.length);
-                  const tSign = cSign(tendenciasNasc.length, tendenciasSocial.length);
+                  const tSign = tGood ? '»' : tBad ? '«' : '=';
                   return (
                     <>
                       <View wrap={false}>
@@ -1515,10 +1540,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                         }
                       </View>
                       <View wrap={false} style={{ flexDirection: 'row', alignItems: 'stretch', marginBottom: 12 }}>
-                        <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.07)', borderRadius: 8, paddingVertical: 10 }}>
+                        <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 8, paddingVertical: 10 }}>
                           <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Nascimento</Text>
                           <Text style={{ fontSize: 28, fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>{tendenciasNasc.length}</Text>
-                          <Text style={{ fontSize: 8, color: '#DC2626', marginTop: 2 }}>excessos presentes</Text>
+                          <Text style={{ fontSize: 8, color: '#DC2626', marginTop: 2, fontFamily: BODY_FONT_BOLD }}>Tendências Ocultas Ativas</Text>
                           {tendenciasNasc.length > 0 && (
                             <Text style={{ fontSize: 7, color: GRAY, marginTop: 3, textAlign: 'center' }}>
                               {tendenciasNasc.map(t => `Nº${t.numero} (×${t.frequencia})`).join(' · ')}
@@ -1526,12 +1551,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                           )}
                         </View>
                         <View style={{ justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12 }}>
-                          <Text style={{ fontSize: 18, color: tGood ? '#8A661C' : tBad ? '#DC2626' : GRAY }}>{tSign}</Text>
+                          <Text style={{ fontSize: 16, color: tGood ? '#8A661C' : tBad ? '#DC2626' : GRAY }}>{tSign}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center', backgroundColor: tGood ? 'rgba(5,150,105,0.08)' : tBad ? 'rgba(220,38,38,0.05)' : 'rgba(0,0,0,0.04)', borderRadius: 8, paddingVertical: 10 }}>
                           <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: tGood ? '#059669' : tBad ? '#DC2626' : '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Harmonizado</Text>
                           <Text style={{ fontSize: 28, fontFamily: BODY_FONT_BOLD, color: tGood ? '#059669' : tBad ? '#DC2626' : '#6B7280' }}>{tendenciasSocial.length}</Text>
-                          <Text style={{ fontSize: 8, color: tGood ? '#059669' : tBad ? '#DC2626' : GRAY, marginTop: 2 }}>excessos presentes</Text>
+                          <Text style={{ fontSize: 8, color: tGood ? '#059669' : tBad ? '#DC2626' : GRAY, marginTop: 2, fontFamily: BODY_FONT_BOLD }}>Tendências Ocultas Ativas</Text>
                           {tendenciasSocial.length > 0 && (
                             <Text style={{ fontSize: 7, color: GRAY, marginTop: 3, textAlign: 'center' }}>
                               {tendenciasSocial.map(t => `Nº${t.numero} (×${t.frequencia})`).join(' · ')}
@@ -1546,29 +1571,46 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                       {/* 3.1 Tendências Eliminadas/Neutralizadas (Verde) */}
                       {tendenciasEliminadas.map((t, i) => (
                         <View key={`tend-el-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Neutralizada: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
-                          {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{t.descricao.slice(0, 180)}...</Text>}
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Neutralizada: Tendência Oculta {t.numero} — {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
+                          {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{t.descricao}</Text>}
                         </View>
                       ))}
 
-                      {/* 3.2 Tendências Mantidas (Cinza) */}
-                      {tendenciasRestantes.map((t, i) => (
-                        <View key={`tend-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#6B7280', backgroundColor: '#F3F4F6', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#6B7280', marginBottom: 3 }}>• Mantida: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
-                          {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{t.descricao.slice(0, 160)}...</Text>}
-                          {t.comoEquilibrar && (
-                            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-                              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#6B7280' }}>Como equilibrar: </Text>{t.comoEquilibrar}
-                            </Text>
-                          )}
-                        </View>
-                      ))}
+                      {/* 3.2 Tendências Mantidas (Cinza ou Dourado se Imutável) */}
+                      {tendenciasRestantes.map((t, i) => {
+                        const isImutavel = t.fixo === true;
+                        const borderLeftColor = isImutavel ? '#D4AF37' : '#6B7280';
+                        const backgroundColor = isImutavel ? '#FFFDF0' : '#F3F4F6';
+                        const textColor = isImutavel ? '#8A661C' : '#6B7280';
+                        const badgeBgColor = isImutavel ? 'rgba(212, 175, 55, 0.15)' : '#E5E7EB';
+
+                        return (
+                          <View key={`tend-rm-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor, backgroundColor, borderRadius: 6, padding: 10, marginBottom: 6 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                              <Text style={{ flex: 1, fontSize: 10, fontFamily: BODY_FONT_BOLD, color: textColor }}>
+                                {isImutavel ? '• Imutável: ' : '• Mantida: '}Tendência Oculta {t.numero} — {t.titulo.replace(/Tendência Oculta \d+ — /, '')}
+                              </Text>
+                              <View style={{ backgroundColor: badgeBgColor, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: textColor }}>
+                                  {isImutavel ? 'IMUTÁVEL' : 'PERMANECE ATIVA'}
+                                </Text>
+                              </View>
+                            </View>
+                            {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{t.descricao}</Text>}
+                            {t.comoEquilibrar && (
+                              <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
+                                <Text style={{ fontFamily: BODY_FONT_BOLD, color: textColor }}>Como equilibrar: </Text>{t.comoEquilibrar}
+                              </Text>
+                            )}
+                          </View>
+                        );
+                      })}
 
                       {/* 3.3 Tendências Novas/Acrescentadas (Vermelho) */}
                       {tendenciasNovas.map((t, i) => (
                         <View key={`tend-nv-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 3 }}>+ Nova Tendência: {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
-                          {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{t.descricao.slice(0, 160)}...</Text>}
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 3 }}>+ Nova Tendência: Tendência Oculta {t.numero} — {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
+                          {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 5 }}>{t.descricao}</Text>}
                           {t.comoEquilibrar && (
                             <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
                               <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#DC2626' }}>Como equilibrar: </Text>{t.comoEquilibrar}

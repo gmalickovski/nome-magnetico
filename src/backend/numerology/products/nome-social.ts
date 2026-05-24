@@ -162,7 +162,7 @@ export interface AnaliseNomeSocial {
   licoesCarmicas: LicaoCarmica[];
   tendenciasOcultas: TendenciaOculta[];
   debitosCarmicos: DebitoCarmicoInfo[];
-  compatibilidade: 'total' | 'complementar' | 'aceitavel' | 'incompativel';
+  compatibilidade: 'favoravel' | 'neutro' | 'desfavoravel';
   score: number;
   scoreTeto: number;
   justificativa: string[];
@@ -217,10 +217,9 @@ export function analisarNomeSocial(
     justificativa.push(`${bloqueios.length} bloqueio(s): ${bloqueios.map(b => b.codigo).join(', ')}`);
   }
   switch (compatibilidade) {
-    case 'total':        justificativa.push(`Expressão (${expressao}) totalmente harmônica com Destino (${destino})`); break;
-    case 'complementar': justificativa.push(`Expressão (${expressao}) complementar ao Destino (${destino})`); break;
-    case 'aceitavel':    justificativa.push(`Expressão (${expressao}) aceitável para o Destino (${destino})`); break;
-    case 'incompativel': justificativa.push(`Expressão (${expressao}) pouco compatível com Destino (${destino})`); break;
+    case 'favoravel':    justificativa.push(`Expressão (${expressao}) totalmente harmônica e favorável com o Destino (${destino})`); break;
+    case 'neutro':       justificativa.push(`Expressão (${expressao}) neutra em relação ao Destino (${destino})`); break;
+    case 'desfavoravel': justificativa.push(`Expressão (${expressao}) desfavorável e em tensão com o Destino (${destino})`); break;
   }
   if (licoes.length > 0) justificativa.push(`${licoes.length} lição(ões) kármica(s)`);
   if (debitos.length > 0) justificativa.push(`${debitos.length} débito(s): ${debitos.map(d => d.numero).join(', ')}`);
@@ -343,9 +342,25 @@ function gerarSugestoesAutoSocial(
     nivelGerado: nivel,
   }));
 
-  // Ordenação: nivel ASC, score DESC
-  const sortFn = (a: AnaliseNomeSocial, b: AnaliseNomeSocial) =>
-    (a.nivelGerado ?? 999) - (b.nivelGerado ?? 999) || b.score - a.score;
+  // Ordenação: nivel ASC (menos descaracterizado), harmonia DESC, score DESC
+  const sortFn = (a: AnaliseNomeSocial, b: AnaliseNomeSocial) => {
+    const levelDiff = (a.nivelGerado ?? 999) - (b.nivelGerado ?? 999);
+    if (levelDiff !== 0) return levelDiff;
+
+    if (a.score >= 80 && b.score >= 80) {
+      const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+      const rA = compRank[a.compatibilidade] ?? 1;
+      const rB = compRank[b.compatibilidade] ?? 1;
+      if (rA !== rB) return rB - rA;
+    }
+
+    if (a.score !== b.score) return b.score - a.score;
+
+    const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+    const rA = compRank[a.compatibilidade] ?? 1;
+    const rB = compRank[b.compatibilidade] ?? 1;
+    return rB - rA;
+  };
 
   analisados.sort(sortFn);
 
@@ -364,8 +379,8 @@ function gerarSugestoesAutoSocial(
  *
  * Seleção do Nome de Ouro (melhorNome):
  * Entre candidatos com score ≥ 80, prioriza:
- *   1. Sugestões do usuário (origemSugerida = 'usuario') — nivel virtual 0
- *   2. Menor descaracterização (nivelGerado baixo)
+ *   1. Menor descaracterização e preferência do usuário (sugestões do usuário nível 0, IA nível gerado)
+ *   2. Maior harmonia vibracional (favoravel > neutro > desfavoravel)
  *   3. Score mais alto (desempate)
  * Se nenhum candidato atingir score ≥ 80, usa o melhor disponível.
  */
@@ -381,20 +396,52 @@ export function analisarNomesSocial(
   const analisesUsuario: AnaliseNomeSocial[] = nomesCandidatos
     .map(n => n.trim()).filter(n => n.length >= 2)
     .map(n => analisarNomeSocial(n, dataNascimento, 'usuario'));
-  analisesUsuario.sort((a, b) => b.score - a.score);
+  
+  // Ordena os candidatos do usuário usando o critério de harmonia para score >= 80
+  const sortUsuarioFn = (a: AnaliseNomeSocial, b: AnaliseNomeSocial) => {
+    if (a.score >= 80 && b.score >= 80) {
+      const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+      const rA = compRank[a.compatibilidade] ?? 1;
+      const rB = compRank[b.compatibilidade] ?? 1;
+      if (rA !== rB) return rB - rA;
+    }
+    if (a.score !== b.score) return b.score - a.score;
+    const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+    const rA = compRank[a.compatibilidade] ?? 1;
+    const rB = compRank[b.compatibilidade] ?? 1;
+    return rB - rA;
+  };
+  analisesUsuario.sort(sortUsuarioFn);
 
   // Sugestões do sistema
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));
   const sugestoesIA = gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 5)
     .filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
 
-  // Selecionar Nome de Ouro: balanceia score >= 80, menor nivel e preferência do usuário
+  // Selecionar Nome de Ouro: balanceia score >= 80, menor nivel, harmonia e preferência do usuário
   type Candidato = AnaliseNomeSocial & { nivelEfetivo: number };
   const aptos80: Candidato[] = [
     ...analisesUsuario.filter(a => a.score >= 80).map(a => ({ ...a, nivelEfetivo: 0 })),
     ...sugestoesIA.filter(a => a.score >= 80).map(a => ({ ...a, nivelEfetivo: a.nivelGerado ?? 999 })),
   ];
-  aptos80.sort((a, b) => a.nivelEfetivo - b.nivelEfetivo || b.score - a.score);
+
+  aptos80.sort((a, b) => {
+    // 1. Menor descaracterização (sugestões do usuário = 0, IA = nível gerado)
+    if (a.nivelEfetivo !== b.nivelEfetivo) {
+      return a.nivelEfetivo - b.nivelEfetivo;
+    }
+
+    // 2. Na mesma prioridade, prioriza maior harmonia numerológica (tabela Imagem 2)
+    const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+    const rA = compRank[a.compatibilidade] ?? 1;
+    const rB = compRank[b.compatibilidade] ?? 1;
+    if (rA !== rB) {
+      return rB - rA; // Mais favorável primeiro
+    }
+
+    // 3. Desempate por score
+    return b.score - a.score;
+  });
 
   const melhorNome: AnaliseNomeSocial | null =
     aptos80[0] ?? analisesUsuario[0] ?? sugestoesIA[0] ?? null;

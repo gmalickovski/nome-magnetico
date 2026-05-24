@@ -56,7 +56,7 @@ export interface AnaliseNomeBebe {
   licoesCarmicas: LicaoCarmica[];
   tendenciasOcultas: TendenciaOculta[];
   debitosCarmicos: DebitoCarmicoInfo[];
-  compatibilidade: 'total' | 'complementar' | 'aceitavel' | 'incompativel';
+  compatibilidade: 'favoravel' | 'neutro' | 'desfavoravel';
   score: number;
   /** Score máximo atingível para este bebê (100 - débitos fixos × 12). */
   scoreTeto: number;
@@ -118,17 +118,14 @@ export function analisarNomeBebe(
   }
 
   switch (compatibilidade) {
-    case 'total':
-      justificativa.push(`Expressão (${expressao}) totalmente harmônica com Destino (${destino})`);
+    case 'favoravel':
+      justificativa.push(`Expressão (${expressao}) totalmente harmônica e favorável com o Destino (${destino})`);
       break;
-    case 'complementar':
-      justificativa.push(`Expressão (${expressao}) complementar ao Destino (${destino})`);
+    case 'neutro':
+      justificativa.push(`Expressão (${expressao}) neutra em relação ao Destino (${destino})`);
       break;
-    case 'aceitavel':
-      justificativa.push(`Expressão (${expressao}) aceitável para o Destino (${destino})`);
-      break;
-    case 'incompativel':
-      justificativa.push(`Expressão (${expressao}) pouco compatível com Destino (${destino})`);
+    case 'desfavoravel':
+      justificativa.push(`Expressão (${expressao}) desfavorável e em tensão com o Destino (${destino})`);
       break;
   }
 

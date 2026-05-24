@@ -286,8 +286,8 @@ export interface AnaliseNomeEmpresa {
   licoesCarmicas: LicaoCarmica[];
   tendenciasOcultas: TendenciaOculta[];
   debitosCarmicos: DebitoCarmicoInfo[];
-  compatibilidadeSocio: 'total' | 'complementar' | 'aceitavel' | 'incompativel';
-  compatibilidadeEmpresa: 'total' | 'complementar' | 'aceitavel' | 'incompativel' | null;
+  compatibilidadeSocio: 'favoravel' | 'neutro' | 'desfavoravel';
+  compatibilidadeEmpresa: 'favoravel' | 'neutro' | 'desfavoravel' | null;
   score: number;
   /** Score máximo atingível para este sócio (100 - débitos fixos × 12). */
   scoreTeto: number;
