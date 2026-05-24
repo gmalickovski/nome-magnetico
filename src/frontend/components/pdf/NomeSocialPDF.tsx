@@ -1501,7 +1501,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
 
                       {/* 2.2 Lições Mantidas (Cinza ou Dourado se Imutável) */}
                       {licoesRestantes.map((l, i) => {
-                        const isImutavel = l.fixo === true;
+                        const isImutavel = (l as any).fixo === true;
                         const borderLeftColor = isImutavel ? '#D4AF37' : '#6B7280';
                         const backgroundColor = isImutavel ? '#FFFDF0' : '#F3F4F6';
                         const textColor = isImutavel ? '#8A661C' : '#6B7280';
@@ -1605,7 +1605,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
 
                       {/* 3.2 Tendências Mantidas (Cinza ou Dourado se Imutável) */}
                       {tendenciasRestantes.map((t, i) => {
-                        const isImutavel = t.fixo === true;
+                        const isImutavel = (t as any).fixo === true;
                         const borderLeftColor = isImutavel ? '#D4AF37' : '#6B7280';
                         const backgroundColor = isImutavel ? '#FFFDF0' : '#F3F4F6';
                         const textColor = isImutavel ? '#8A661C' : '#6B7280';

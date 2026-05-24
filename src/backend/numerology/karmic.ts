@@ -238,7 +238,7 @@ export interface DebitoCarmicoInfo {
   fixo: boolean;
 }
 
-export const DEBITOS_CARMICOS_MAP: Record<number, Omit<DebitoCarmicoInfo, 'numero'>> = {
+export const DEBITOS_CARMICOS_MAP: Record<number, Omit<DebitoCarmicoInfo, 'numero' | 'fontes' | 'fixo'>> = {
   13: {
     titulo: 'Débito Kármico 13 — Transformação pela Disciplina',
     descricao:
