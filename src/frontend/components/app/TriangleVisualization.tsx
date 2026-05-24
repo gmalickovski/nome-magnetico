@@ -411,17 +411,14 @@ function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloquei
 
       {expandido && (
         <div className="px-4 pb-4 space-y-3 border-t border-red-500/10">
-          <p className="text-gray-300 text-sm leading-relaxed pt-3">{bloqueio.descricao}</p>
           {(() => {
             const interp = obterInterpretacaoEspecifica(bloqueio.codigo, abaAtiva);
-            if (!interp) return null;
+            const originalAntidoto = bloqueio.descricao.includes('O antídoto é')
+              ? ' O antídoto é' + bloqueio.descricao.split('O antídoto é')[1]
+              : '';
+            const displayDesc = interp ? `${interp}${originalAntidoto}` : bloqueio.descricao;
             return (
-              <div className="rounded-lg p-3 bg-red-500/10 border border-red-500/20">
-                <p className="text-xs text-red-400 uppercase tracking-wider mb-1 font-semibold">
-                  Impacto no {TIPO_LABEL[abaAtiva]?.label ?? abaAtiva}
-                </p>
-                <p className="text-red-200 text-sm leading-relaxed">{interp}</p>
-              </div>
+              <p className="text-gray-300 text-sm leading-relaxed pt-3">{displayDesc}</p>
             );
           })()}
           <div className="rounded-lg p-3 bg-yellow-500/10 border border-yellow-500/20">

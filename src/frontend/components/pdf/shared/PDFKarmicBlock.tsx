@@ -385,7 +385,12 @@ export function BloqueiosBlock({
     <View style={styles.sectionBlock}>
       {bloqueios.map((b, i) => {
         const displayTitle = isNomeSocial ? b.titulo.replace(new RegExp(`\\s*\\(${b.codigo}\\)\\s*`), '') : b.titulo;
-        let displayDesc = (isNomeSocial && BLOQUEIOS_EXPANDIDOS[b.codigo]) ? BLOQUEIOS_EXPANDIDOS[b.codigo] : b.descricao;
+        let displayDesc = b.descricao;
+        if (triangulo) {
+          displayDesc = obterInterpretacaoEspecifica(b.codigo, triangulo) || b.descricao;
+        } else if (isNomeSocial && BLOQUEIOS_EXPANDIDOS[b.codigo]) {
+          displayDesc = BLOQUEIOS_EXPANDIDOS[b.codigo];
+        }
         
         // Remove a frase padrão do antídoto se presente, para evitar redundância com a Bridge Page
         if (displayDesc.includes('O antídoto é')) {
@@ -408,29 +413,6 @@ export function BloqueiosBlock({
             )}
           </View>
           <Text style={[styles.bloqueioDesc, ...(isNomeSocial ? [{ fontSize: 10 }] : [])]}>{displayDesc}</Text>
-          
-          {triangulo && (() => {
-            const interp = obterInterpretacaoEspecifica(b.codigo, triangulo);
-            if (!interp) return null;
-            return (
-              <View style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.04)',
-                borderLeftWidth: 2,
-                borderLeftColor: '#EF4444',
-                padding: 6,
-                borderRadius: 4,
-                marginTop: 6,
-                marginBottom: 4
-              }}>
-                <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#DC2626', textTransform: 'uppercase', marginBottom: 2, letterSpacing: 0.3 }}>
-                  Impacto no Setor do Triângulo:
-                </Text>
-                <Text style={{ fontSize: 8.5, color: '#4B5563', lineHeight: 1.4 }}>
-                  {interp}
-                </Text>
-              </View>
-            );
-          })()}
 
           {(!hideSaude && b.aspectoSaude) ? (
             <Text style={[styles.bloqueioSaude, ...(isNomeSocial ? [{ fontSize: 9 }] : [])]}>Aspecto de saúde: {b.aspectoSaude}</Text>
