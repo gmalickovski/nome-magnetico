@@ -669,7 +669,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           {/* Card grande de Destino centralizado */}
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
             <View style={{ borderWidth: 2, borderColor: '#6d28d9', borderRadius: 12, padding: 20, backgroundColor: '#F5F3FF', alignItems: 'center', width: 180 }}>
-              <Text style={{ fontSize: 9, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>◈  Número de Destino</Text>
+              <Text style={{ fontSize: 9, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Número de Destino</Text>
               <Text style={{ fontFamily: TITLE_FONT, fontSize: 52, color: '#5b21b6', lineHeight: 1 }}>{cincoNumNasc.destino}</Text>
               <Text style={{ fontSize: 9, color: '#7c3aed', marginTop: 6 }}>A Estrada da Sua Alma</Text>
             </View>
@@ -709,6 +709,14 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
               </View>
             ))}
           </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 12 }} wrap={false}>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
+          <Text style={{ fontSize: 8, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
+            Detalhamento dos 5 Números do Nome
+          </Text>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
         </View>
 
         {/* Explicações individuais de cada número */}
@@ -1718,7 +1726,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           {/* Card grande de Destino centralizado */}
           <View style={{ alignItems: 'center', marginBottom: 16 }}>
             <View style={{ borderWidth: 2, borderColor: '#6d28d9', borderRadius: 12, padding: 20, backgroundColor: '#F5F3FF', alignItems: 'center', width: 180 }}>
-              <Text style={{ fontSize: 9, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>◈  Número de Destino</Text>
+              <Text style={{ fontSize: 9, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Número de Destino</Text>
               <Text style={{ fontFamily: TITLE_FONT, fontSize: 52, color: '#5b21b6', lineHeight: 1 }}>{cincoNumSocial.destino}</Text>
               <Text style={{ fontSize: 9, color: '#7c3aed', marginTop: 6 }}>A Estrada da Sua Alma</Text>
             </View>
@@ -1758,6 +1766,14 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
               </View>
             ))}
           </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 12 }} wrap={false}>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
+          <Text style={{ fontSize: 8, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
+            Detalhamento dos 5 Números Harmonizados
+          </Text>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
         </View>
 
         {/* Explicações individuais de cada número */}

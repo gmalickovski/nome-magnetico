@@ -187,11 +187,11 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
           <Text style={[styles.bodyText, { color: textColor }]}>
             Para que sua vida flua, a sua <Text style={[styles.bold, { color: boldColor }]}>Expressão</Text> (como você age e se posiciona) e seu <Text style={[styles.bold, { color: boldColor }]}>Destino</Text> (seu caminho de vida) precisam caminhar juntos em perfeita harmonia. Medimos essa compatibilidade através da Tabela de Harmonização Cabalística:
             {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Harmônica / Favorável:</Text> Sinergia máxima! Os dois números vibram na mesma frequência ou são complementares (somas que resultam nos números mestres 9, 11 ou 22). Eles se ajudam mutuamente, abrindo portas com facilidade e atraindo oportunidades.
+            • <Text style={[styles.bold, { color: boldColor }]}>Harmônica / Favorável:</Text> Sinergia e alinhamento perfeito! As vibrações da Expressão (nome) e do Destino (nascimento) trabalham juntas, abrindo caminhos com menor esforço. Cada número de Destino possui parceiros específicos que trazem atração magnética, prosperidade e facilidade de realização.
             {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Neutra:</Text> Relação harmoniosa e sem conflito direto. Há uma diferença sutil de apenas 1 ponto entre eles, permitindo que a vida flua perfeitamente bem no dia a dia.
+            • <Text style={[styles.bold, { color: boldColor }]}>Neutra:</Text> Relação harmoniosa e sem conflito direto. Não há conflito ativo entre as forças da Expressão e do Destino. A vida flui de forma equilibrada, exigindo esforço consciente, mas sem bloqueios ou tensões vibracionais ativas de compatibilidade.
             {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>). É como dirigir com o freio de mão puxado: exige esforço excessivo para poucos resultados. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
+            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>). Ocorre quando a vibração ativa do nome (Expressão) entra em atrito direto com o caminho de nascimento (Destino). Funciona como um "freio de mão puxado": exige esforço gigantesco para obter resultados mínimos, gerando atrasos e estagnação. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
           </Text>
         </View>
 
