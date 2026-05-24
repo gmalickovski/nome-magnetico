@@ -385,7 +385,7 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
         </div>
       )}
 
-      <div className="sticky bottom-4 z-10 rounded-2xl bg-[#131313]/90 p-3 shadow-2xl ring-1 ring-white/10 backdrop-blur md:static md:bg-transparent md:p-0 md:shadow-none md:ring-0">
+      <div className="pt-4">
         <button
           type="submit"
           disabled={loading}

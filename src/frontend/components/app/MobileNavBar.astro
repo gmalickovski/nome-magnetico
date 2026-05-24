@@ -52,7 +52,7 @@ const navSuporteActive = isActive('/app/suporte');
 const navAnalistaActive = isActive('/app/admin-analise');
 ---
 
-<nav class="md:hidden fixed bottom-0 left-0 w-full bg-[#111111]/95 backdrop-blur-xl border-t border-[#D4AF37]/20 z-50 flex items-center overflow-x-auto hide-scrollbar pt-2 px-2" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))">
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#111111]/95 backdrop-blur-xl border-t border-[#D4AF37]/20 z-50 flex items-center overflow-x-auto hide-scrollbar pt-2 px-2" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))">
   <a href="/app" data-astro-prefetch="viewport" class={`flex-1 flex-shrink-0 min-w-[72px] flex flex-col items-center p-2 transition-all duration-200 active:scale-95 active:bg-[#D4AF37]/5 cursor-pointer touch-manipulation select-none ${navAppActive ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
     <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
     <span class="text-[10px] font-medium tracking-wide">Produtos</span>
