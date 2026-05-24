@@ -11,58 +11,58 @@
 
 export const INTERPRETACOES_TRIANGULOS: Record<string, Record<string, string>> = {
   '111': {
-    vida: 'Este bloqueio drena a força de iniciativa e o vigor físico. Age como uma fraqueza no motor vital, gerando cansaço sem causa aparente, falta de iniciativa e hesitação constante para dar novos passos, além de possíveis oscilações na pressão arterial ou saúde cardíaca.',
-    pessoal: 'Cria uma barreira na autoafirmação afetiva. O indivíduo hesita em expor quem realmente é por medo de rejeição, gerando uma perigosa dependência emocional do parceiro e dificuldade crônica em estabelecer limites íntimos.',
-    social: 'Bloqueia a liderança profissional e a iniciativa pública. A pessoa é incapaz de se destacar em apresentações ou reuniões, permitindo que colegas de trabalho tomem o crédito por suas ideias e fiquem com as promoções.',
-    destino: 'Trava a manifestação do propósito de alma. A pessoa hesita em assumir sua verdadeira missão por medo de falhar, iniciando múltiplos caminhos que são abandonados pelo meio, deixando o seu legado permanentemente inacabado.'
+    vida: 'Ao se manifestar no Triângulo da Vida, esta paralisia afeta diretamente sua vitalidade e ação física.',
+    pessoal: 'No Triângulo Pessoal, essa perda de iniciativa gera uma forte dependência afetiva.',
+    social: 'No Triângulo Social, a falta de coragem resulta na perda de oportunidades profissionais e invisibilidade.',
+    destino: 'Como força do Destino, a estagnação impede que você assuma sua verdadeira missão.'
   },
   '222': {
-    vida: 'Cria uma vulnerabilidade no sistema imunológico e dependência de estímulos externos para manter o vigor. A energia física oscila de acordo com o ambiente, somatizando tensões sob a forma de dores nas articulações ou debilidades linfáticas.',
-    pessoal: 'Provoca uma anulação profunda do self nas relações afetivas. A indecisão em expressar sentimentos gera uma timidez paralisante e o medo constante de ser subjugado ou abandonado, gerando ciclos de submissão.',
-    social: 'Falta de posicionamento firme em negociações e parcerias. A pessoa aceita acordos profissionais desvantajosos por receio de confrontos, sendo frequentemente explorada por associados ou chefes sem escrúpulos.',
-    destino: 'O propósito de vida fica refém de decisões alheias. A incapacidade de agir de forma independente desvia o rumo do destino planejado, fazendo com que parcerias e laços societários comandem sua jornada de alma.'
+    vida: 'No Triângulo da Vida, a indecisão constante pode gerar instabilidade imunológica e dependência de estímulos.',
+    pessoal: 'No Triângulo Pessoal, essa timidez cria um padrão de anulação e submissão nos relacionamentos íntimos.',
+    social: 'No Triângulo Social, o medo de confrontos faz com que aceite condições desvantajosas na carreira.',
+    destino: 'No Triângulo do Destino, a dependência excessiva desvia o rumo das suas maiores realizações.'
   },
   '333': {
-    vida: 'Dificulta a livre circulação da energia vital e compromete a saúde respiratória. Gera uma sensação de opressão no peito ou garganta, afetando a imunidade e criando propensão a alergias, inflamações ou problemas articulares que limitam o movimento físico.',
-    pessoal: 'Autoexpressão emocional bloqueada. O indivíduo silencia suas mágoas e desejos, criando uma barreira invisível de comunicação que afasta as pessoas próximas e gera discussões baseadas em silêncios e mal-entendidos.',
-    social: 'Ruído severo na comunicação e marketing profissional. A imagem pública fica distorcida ou apagada; a pessoa sente dificuldade extrema em vender suas ideias ou falar em público, parecendo invisível no mercado.',
-    destino: 'Impossibilidade de propagar sua mensagem e legado no tempo. A criatividade de alma fica enclausurada e incapaz de florescer, impedindo que o indivíduo inspire as pessoas e cumpra sua missão expressiva terrena.'
+    vida: 'No Triângulo da Vida, essa repressão da fala afeta a vitalidade e pode somatizar tensões corporais.',
+    pessoal: 'No Triângulo Pessoal, a dificuldade no diálogo cria barreiras e silêncios pesados nas relações íntimas.',
+    social: 'No Triângulo Social, a falha na comunicação obscurece sua imagem pública e seu prestígio profissional.',
+    destino: 'No Triângulo do Destino, o silenciamento impede que sua criatividade deixe a marca que deveria no mundo.'
   },
   '444': {
-    vida: 'Fragmenta as defesas físicas e a estabilidade material. O esforço exigido para manter a saúde e a rotina de trabalho é desproporcional, gerando rigidez óssea, dores na coluna ou cansaço estrutural que dificulta a sustentação firme do corpo.',
-    pessoal: 'Rigidez e frieza na intimidade. Dificuldade em relaxar e expressar afeto de forma espontânea, frequentemente associando o amor ao dever ou à cobrança, o que atrai relacionamentos pesados e de cobrança mútua.',
-    social: 'Esforço extremo sem reconhecimento profissional correspondente. A carreira parece estagnada, com baixos salários e pouca valorização dos talentos práticos, exigindo o dobro de trabalho para qualquer pequeno avanço.',
-    destino: 'Realização material de longo prazo severamente obstaculizada. A construção do legado de vida desmorona por falta de alinhamento energético, parecendo que o propósito é uma subida contínua sob o peso de rochas pesadas.'
+    vida: 'No Triângulo da Vida, as dificuldades profissionais somatizam na forma de cansaço estrutural e desgaste físico.',
+    pessoal: 'No Triângulo Pessoal, a rigidez e a frustração profissional tornam as relações íntimas frias e baseadas em cobranças.',
+    social: 'No Triângulo Social, o esforço extremo não encontra reconhecimento, estagnando o avanço na carreira.',
+    destino: 'No Triângulo do Destino, a falta de estabilidade adia a materialização dos seus grandes objetivos.'
   },
   '555': {
-    vida: 'Provoca uma instabilidade nervosa crônica no organismo. A falta de ritmo biológico gera estresse severo, distúrbios digestivos ou propensão a vícios e excessos que drenam a imunidade física e a estabilidade das finanças diárias.',
-    pessoal: 'Instabilidade emocional incontrolável. Medo profundo de compromisso misturado com o desejo de intimidade, fazendo com que a pessoa crie brigas do nada ou sabote sentimentos puros para fugir da vulnerabilidade.',
-    social: 'Mudanças profissionais caóticas e instabilidade na carreira. A falta de constância impede que a pessoa se consolide em uma profissão, gerando demissões súbitas ou perda de reputação por atitudes impensadas.',
-    destino: 'Dispersão total da jornada espiritual e material. Desvios e caprichos erráticos impedem que a pessoa concentre sua energia na construção de um legado, deixando rastros de projetos começados e vazios.'
+    vida: 'No Triângulo da Vida, a instabilidade crônica gera estresse no organismo e esgota suas energias diárias.',
+    pessoal: 'No Triângulo Pessoal, as oscilações atraem o caos afetivo e o medo inconsciente de assumir compromissos.',
+    social: 'No Triângulo Social, as mudanças constantes impedem a construção de uma reputação profissional sólida.',
+    destino: 'No Triângulo do Destino, a dispersão energética desvia você repetidamente do seu propósito final.'
   },
   '666': {
-    vida: 'Sobrecarga glandular e hormonal decorrente de estresse acumulado. As energias do corpo físico somatizam conflitos afetivos, afetando o sistema endócrino e a tireoide, enfraquecendo a âncora material de vitalidade da pessoa.',
-    pessoal: 'Cobrança afetiva asfixiante e ciúmes. A pessoa assume um papel de salvador ou controlador da família, cobrando dos entes queridos uma perfeição impossível, o que gera mágoa profunda e sensação crônica de rejeição.',
-    social: 'Carga profissional excessiva por incapacidade de dizer "não". A pessoa assume todas as responsabilidades do time, sacrificando sua visibilidade e prestígio individual para manter a harmonia superficial do ambiente.',
-    destino: 'O propósito pessoal é totalmente sacrificado em prol de dramas familiares. A pessoa se anula para carregar o carma de outros, falhando em materializar a missão única que veio desempenhar nesta existência.'
+    vida: 'No Triângulo da Vida, a sobrecarga de responsabilidades alheias afeta diretamente sua estabilidade hormonal e física.',
+    pessoal: 'No Triângulo Pessoal, a decepção e as cobranças tornam a vida familiar uma fonte de desgaste e isolamento.',
+    social: 'No Triângulo Social, o esforço para agradar a todos consome o tempo que deveria ser dedicado ao seu próprio sucesso.',
+    destino: 'No Triângulo do Destino, o auto-sacrifício excessivo impede que você construa o seu próprio legado.'
   },
   '777': {
-    vida: 'Esgotamento do sistema nervoso por excesso de atividade mental e isolamento. Age gerando melancolia, insônia e enxaquecas frequentes, sinalizando que a mente racional está consumindo a energia que deveria nutrir os órgãos vitais.',
-    pessoal: 'Isolamento voluntário do coração. A pessoa ergue muralhas intelectuais para se proteger da dor, preferindo a solidão à entrega íntima sincera, gerando um profundo sentimento de incompreensão recíproca na vida amorosa.',
-    social: 'Afastamento público e dificuldades em trabalhar em equipe. A postura excessivamente crítica e analítica é interpretada como frieza ou arrogância, gerando barreiras para atrair novos clientes ou investidores.',
-    destino: 'Dificuldade em aceitar a intuição espiritual como guia de vida. O ceticismo rígido ou a arrogância intelectual impedem que o indivíduo enxergue as portas que o destino abre, gerando um eterno descontentamento existencial.'
+    vida: 'No Triângulo da Vida, o esgotamento mental e o isolamento drenam a energia que deveria nutrir sua vitalidade.',
+    pessoal: 'No Triângulo Pessoal, a postura arredia cria distanciamento profundo daqueles que tentam se aproximar.',
+    social: 'No Triângulo Social, o isolamento e o ceticismo dificultam parcerias e afastam oportunidades de mercado.',
+    destino: 'No Triângulo do Destino, o ceticismo e a arrogância bloqueiam as portas da intuição e da realização superior.'
   },
   '888': {
-    vida: 'Tensão contínua ligada à sobrevivência e finanças. Causa bloqueios digestivos e gástricos graves (úlceras, refluxos) e afeta os rins, refletindo a ansiedade extrema gerada pela luta para manter a segurança material e o controle.',
-    pessoal: 'Disputas de poder e controle financeiro na família. A segurança emocional é projetada na estabilidade material, fazendo com que o dinheiro e a autoridade ditem as relações mais íntimas, minando a espontaneidade.',
-    social: 'Ciclos exaustivos de perdas profissionais ou litígios comerciais. Dificuldades extremas em gerir o sucesso ou delegar autoridade, gerando problemas severos com chefias, contratos mal formulados e estresse.',
-    destino: 'Ruína ou crises morais que destroem a colheita prática da vida. A obsessão pelo controle material ou a aversão ao poder minam a realização concreta do destino, bloqueando o fluxo do legado abundante.'
+    vida: 'No Triângulo da Vida, o estresse material constante afeta gravemente o equilíbrio nervoso e gástrico do corpo.',
+    pessoal: 'No Triângulo Pessoal, a disputa pelo controle e a tensão financeira ditam as regras das relações mais íntimas.',
+    social: 'No Triângulo Social, a dificuldade em gerir a pressão resulta em perdas bruscas ou litígios profissionais.',
+    destino: 'No Triângulo do Destino, a oscilação material mina a construção prática do seu propósito maior.'
   },
   '999': {
-    vida: 'Dificuldade extrema em concluir ciclos de cura e restauração física. Gera um desgaste crônico e fadiga ao final de tarefas, fazendo com que o corpo demore a se regenerar e sofra com baixa imunidade nas transições da vida.',
-    pessoal: 'Dificuldade crônica em perdoar e soltar mágoas passadas. A pessoa apega-se a traições ou términos antigos, repetindo padrões tóxicos em novas relações por medo inconsciente de sofrer a mesma dor novamente.',
-    social: 'Persistência em carreiras ou empresas falidas. Dificuldade em encerrar ciclos profissionais obsoletos ou demitir funcionários ineficientes, travando o crescimento e adiando a transição para novos rumos lucrativos.',
-    destino: 'Incapacidade de fechar capítulos cármicos, travando a evolução para o próximo patamar espiritual. O indivíduo arrasta arrependimentos e laços energéticos do passado, impedindo que o seu propósito se realize em plenitude.'
+    vida: 'No Triângulo da Vida, a dificuldade em encerrar ciclos gera uma fadiga crônica, retardando a regeneração física.',
+    pessoal: 'No Triângulo Pessoal, o apego ao passado impede a cura de feridas antigas, repetindo padrões tóxicos.',
+    social: 'No Triângulo Social, a persistência em caminhos profissionais obsoletos bloqueia qualquer chance de renovação.',
+    destino: 'No Triângulo do Destino, a incapacidade de soltar o passado paralisa sua evolução para o próximo nível.'
   }
 };
 

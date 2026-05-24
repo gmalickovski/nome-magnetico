@@ -385,16 +385,16 @@ export function BloqueiosBlock({
     <View style={styles.sectionBlock}>
       {bloqueios.map((b, i) => {
         const displayTitle = isNomeSocial ? b.titulo.replace(new RegExp(`\\s*\\(${b.codigo}\\)\\s*`), '') : b.titulo;
+        
+        // Sempre usamos a descrição base que tem o texto exato do PDF.
+        // Se houver um triângulo específico (ex: visualização individual por aba),
+        // anexamos o contexto do triângulo.
         let displayDesc = b.descricao;
         if (triangulo) {
-          displayDesc = obterInterpretacaoEspecifica(b.codigo, triangulo) || b.descricao;
-        } else if (isNomeSocial && BLOQUEIOS_EXPANDIDOS[b.codigo]) {
-          displayDesc = BLOQUEIOS_EXPANDIDOS[b.codigo];
-        }
-        
-        // Remove a frase padrão do antídoto se presente, para evitar redundância com a Bridge Page
-        if (displayDesc.includes('O antídoto é')) {
-          displayDesc = displayDesc.split('O antídoto é')[0].trim();
+          const interpretacao = obterInterpretacaoEspecifica(b.codigo, triangulo);
+          if (interpretacao) {
+            displayDesc = `${b.descricao} ${interpretacao}`;
+          }
         }
         
         return (
