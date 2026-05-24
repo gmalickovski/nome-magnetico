@@ -54,6 +54,33 @@ const styles = StyleSheet.create({
     fontFamily: BODY_FONT,
     color: DARK,
   },
+  // Seção A Essência — fundo vermelho ultra-sutil
+  pageEssencia: {
+    backgroundColor: '#FFF8F8',
+    paddingTop: 56,
+    paddingBottom: 56,
+    paddingHorizontal: 48,
+    fontFamily: BODY_FONT,
+    color: DARK,
+  },
+  // Seção Harmonização / Comparativos — fundo dourado ultra-sutil
+  pageHarmonizacao: {
+    backgroundColor: '#FFFDF5',
+    paddingTop: 56,
+    paddingBottom: 56,
+    paddingHorizontal: 48,
+    fontFamily: BODY_FONT,
+    color: DARK,
+  },
+  // Seção Nome Harmonizado escolhido — fundo verde ultra-sutil
+  pageHarmonizado: {
+    backgroundColor: '#F7FFF9',
+    paddingTop: 56,
+    paddingBottom: 56,
+    paddingHorizontal: 48,
+    fontFamily: BODY_FONT,
+    color: DARK,
+  },
   darkPage: {
     backgroundColor: DARK,
     paddingTop: 56,
@@ -524,7 +551,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
 
       {/* ── PÁGINA: RANKING DOS CANDIDATOS (novo fluxo) ─────────────────────── */}
       {nomesCandidatos.length > 0 && (
-        <Page size="A4" style={styles.page}>
+        <Page size="A4" style={styles.pageHarmonizacao}>
           <PDFPageHeader subtitle={`${nomeParaExibir} — Ranking dos Candidatos`} />
 
           <View style={styles.section}>
@@ -582,7 +609,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       )}
 
       {/* ── SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original ─────────────── */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.pageEssencia}>
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} />
 
         {/* Badge de seção */}
@@ -958,7 +985,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── BLOCO: A ENGENHARIA DA HARMONIZAÇÃO ────────────────────────────── */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.pageHarmonizacao}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} />
 
         {/* Badge de seção */}
@@ -1631,7 +1658,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── SEÇÃO: O NOME SOCIAL — O Nome Harmonizado Escolhido ─────────── */}
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.pageHarmonizado}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — O Nome Social`} />
 
         {/* Badge de seção */}

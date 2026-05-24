@@ -132,6 +132,27 @@ const nascTriangulos = (nomeNascStr && dataNascStr) ? calcularTodosTriangulos(no
 const nascBloqueios  = nascTriangulos ? detectarBloqueios(nascTriangulos) : [];
 const eliminatedBloqueios = nascBloqueios.filter((b: any) => !harmBloqueiosCodigos.has(b.codigo));
 
+// Débitos do nome harmonizado (para comparativo)
+const harmCalcNums = nomeHarmCompleto && dataNascStr ? calcularCincoNumeros(nomeHarmCompleto, dataNascStr) : null;
+const harmDebitos  = (harmCalcNums && dataNascStr)
+  ? calcularDebitosCarmicos(dataNascStr, harmCalcNums.destino, harmCalcNums.motivacao, harmCalcNums.expressao)
+  : null;
+
+// Diffs de Débitos
+const debitosEliminados = (nascDebitos ?? []).filter((dn: any) => !(harmDebitos ?? []).some((dh: any) => dh.numero === dn.numero));
+const debitosMantidos   = (nascDebitos ?? []).filter((dn: any) =>  (harmDebitos ?? []).some((dh: any) => dh.numero === dn.numero));
+const debitosNovos      = (harmDebitos  ?? []).filter((dh: any) => !(nascDebitos ?? []).some((dn: any) => dn.numero === dh.numero));
+
+// Diffs de Lições
+const licoesEliminadas = (nascLicoes ?? []).filter((ln: any) => !(harmLicoes ?? []).some((lh: any) => lh.numero === ln.numero));
+const licoesMantidas   = (nascLicoes ?? []).filter((ln: any) =>  (harmLicoes ?? []).some((lh: any) => lh.numero === ln.numero));
+const licoesNovas      = (harmLicoes  ?? []).filter((lh: any) => !(nascLicoes ?? []).some((ln: any) => ln.numero === lh.numero));
+
+// Diffs de Tendências
+const tendenciasEliminadas = (nascTendencias ?? []).filter((tn: any) => !(harmTendencias ?? []).some((th: any) => th.numero === tn.numero));
+const tendenciasMantidas   = (nascTendencias ?? []).filter((tn: any) =>  (harmTendencias ?? []).some((th: any) => th.numero === tn.numero));
+const tendenciasNovas      = (harmTendencias  ?? []).filter((th: any) => !(nascTendencias ?? []).some((tn: any) => tn.numero === th.numero));
+
 // ── Estrela SVG dupla — pré-cálculo ──────────────────────────────────────────
 function starPts(cx: number, cy: number, R: number, r: number): string {
   const pts: string[] = [];
@@ -433,7 +454,7 @@ const dimSublabels: Record<TipKey, string> = {
       {nascDebitos !== null && (
         <div class="rounded-2xl bg-white/[0.03] p-4">
           <h4 class="font-cinzel text-sm font-bold text-white mb-3">Débitos Kármicos</h4>
-          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-3">
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-4">
             <div class="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-center">
               <p class="text-[9px] text-red-400 font-bold uppercase mb-2">Nascimento</p>
               <div class="font-cinzel text-4xl font-bold text-red-400">{nascDebitos.length}</div>
@@ -441,34 +462,82 @@ const dimSublabels: Record<TipKey, string> = {
             </div>
             <span class="text-gray-600 text-xl font-bold">»</span>
             <div class="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 text-center">
-              <p class="text-[9px] text-amber-400 font-bold uppercase mb-2">Após Harmonização</p>
-              <div class="font-cinzel text-4xl font-bold text-amber-400">{debitosFixos.length}</div>
-              <p class="text-xs text-amber-400/60 mt-1">fixo{debitosFixos.length !== 1 ? 's' : ''} restante{debitosFixos.length !== 1 ? 's' : ''}</p>
+              <p class="text-[9px] text-amber-400 font-bold uppercase mb-2">Harmonizado</p>
+              <div class="font-cinzel text-4xl font-bold text-amber-400">{harmDebitos?.length ?? '—'}</div>
+              <p class="text-xs text-amber-400/60 mt-1">débito{harmDebitos?.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
-          {debitosVariaveis.length > 0 && (
-            <div class="flex items-start gap-3 px-3 py-2 rounded-lg bg-white/[0.03]">
-              <span class="text-[#D4AF37] shrink-0 text-sm">✦</span>
-              <p class="text-xs text-gray-400">
-                <span class="text-[#D4AF37] font-semibold">{debitosVariaveis.length} débito{debitosVariaveis.length !== 1 ? 's' : ''} variável{debitosVariaveis.length !== 1 ? 'is' : ''}</span> — originado{debitosVariaveis.length !== 1 ? 's' : ''} nos números de Motivação ou Expressão.
-                Pode{debitosVariaveis.length !== 1 ? 'm' : ''} ser reduzido{debitosVariaveis.length !== 1 ? 's' : ''} pelo nome harmonizado.
-                Os {debitosFixos.length} fixo{debitosFixos.length !== 1 ? 's' : ''} são imutáveis — gravados na data de nascimento.
-              </p>
-            </div>
-          )}
-          {debitosFixos.length > 0 && (
-            <div class="space-y-2 mt-3">
-              {debitosFixos.map((d: any) => (
-                <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#D4AF37]/5 border border-[#D4AF37]/20">
-                  <span class="text-[#D4AF37] shrink-0">⚠</span>
-                  <div class="flex-1">
-                    <span class="text-[9px] text-[#D4AF37] font-bold uppercase tracking-wider block mb-0.5">Permanente</span>
-                    <p class="text-sm text-gray-300 font-medium">{d.titulo ?? `Débito Kármico ${d.numero}`}</p>
-                  </div>
+
+          {/* Cards individuais */}
+          <div class="space-y-2">
+            {debitosEliminados.map((d: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/25">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-400 shrink-0 text-sm">✓</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Eliminado</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    Débitos Kármicos {d.numero}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+                <p class="text-sm font-semibold text-emerald-300">{d.titulo}</p>
+                {d.descricao && <p class="text-xs text-gray-400 leading-relaxed">{d.descricao}</p>}
+              </div>
+            ))}
+
+            {debitosMantidos.map((d: any) => {
+              const isImutavel = d.fixo === true;
+              return (
+                <div class={`flex flex-col gap-1 px-4 py-3 rounded-xl border ${
+                  isImutavel
+                    ? 'bg-[#D4AF37]/5 border-[#D4AF37]/30'
+                    : 'bg-white/[0.03] border-white/10'
+                }`}>
+                  <div class="flex items-center gap-2">
+                    <span class={`shrink-0 text-sm ${
+                      isImutavel ? 'text-[#D4AF37]' : 'text-gray-500'
+                    }`}>{isImutavel ? '⚠' : '◎'}</span>
+                    <span class={`text-[10px] font-bold uppercase tracking-wider ${
+                      isImutavel ? 'text-[#D4AF37]' : 'text-gray-500'
+                    }`}>{isImutavel ? 'Imutável' : 'Mantido'}</span>
+                    <span class={`text-[9px] px-1.5 py-0.5 rounded-full border ${
+                      isImutavel
+                        ? 'bg-[#D4AF37]/10 text-[#f2ca50] border-[#D4AF37]/20'
+                        : 'bg-white/5 text-gray-400 border-white/10'
+                    }`}>
+                      Débitos Kármicos {d.numero}
+                    </span>
+                  </div>
+                  <p class={`text-sm font-semibold ${
+                    isImutavel ? 'text-[#f2ca50]' : 'text-gray-300'
+                  }`}>{d.titulo}</p>
+                  {d.descricao && <p class="text-xs text-gray-400 leading-relaxed">{d.descricao}</p>}
+                  {isImutavel && (
+                    <p class="text-[10px] text-[#D4AF37]/70 italic mt-1">
+                      Ligado à data de nascimento — não pode ser eliminado por mudança de nome.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            {debitosNovos.map((d: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-red-500/5 border border-red-500/25">
+                <div class="flex items-center gap-2">
+                  <span class="text-red-400 shrink-0 text-sm">+</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-red-400">Acrescentado</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
+                    Débitos Kármicos {d.numero}
+                  </span>
+                </div>
+                <p class="text-sm font-semibold text-red-300">{d.titulo}</p>
+                {d.descricao && <p class="text-xs text-gray-400 leading-relaxed">{d.descricao}</p>}
+              </div>
+            ))}
+
+            {nascDebitos.length === 0 && harmDebitos?.length === 0 && (
+              <p class="text-xs text-gray-500 text-center py-2">Nenhum débito kármico nos dois campos.</p>
+            )}
+          </div>
         </div>
       )}
 
@@ -476,7 +545,7 @@ const dimSublabels: Record<TipKey, string> = {
       {nascLicoes !== null && (
         <div class="rounded-2xl bg-white/[0.03] p-4">
           <h4 class="font-cinzel text-sm font-bold text-white mb-3">Lições Kármicas</h4>
-          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-4">
             <div class="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-center">
               <p class="text-[9px] text-red-400 font-bold uppercase mb-2">Nascimento</p>
               <div class="font-cinzel text-4xl font-bold text-red-400">{nascLicoes.length}</div>
@@ -489,14 +558,72 @@ const dimSublabels: Record<TipKey, string> = {
               <p class="text-xs text-emerald-400/60 mt-1">ausência{harmLicoes?.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
-          {harmLicoes !== null && nascLicoes.length > (harmLicoes?.length ?? 0) && (
-            <div class="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-              <span class="text-emerald-400 shrink-0">✓</span>
-              <p class="text-xs text-gray-300">
-                <span class="text-emerald-400 font-semibold">{nascLicoes.length - (harmLicoes?.length ?? 0)} lição{nascLicoes.length - (harmLicoes?.length ?? 0) !== 1 ? 'ões' : ''} integrada{nascLicoes.length - (harmLicoes?.length ?? 0) !== 1 ? 's' : ''}</span> com o nome harmonizado.
-              </p>
-            </div>
-          )}
+
+          {/* Cards individuais */}
+          <div class="space-y-2">
+            {licoesEliminadas.map((l: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/25">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-400 shrink-0 text-sm">✓</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Eliminada</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    Lições Kármicas {l.numero}
+                  </span>
+                </div>
+                <p class="text-sm font-semibold text-emerald-300">{l.titulo}</p>
+                {l.descricao && <p class="text-xs text-gray-400 leading-relaxed">{l.descricao}</p>}
+              </div>
+            ))}
+
+            {licoesMantidas.map((l: any) => {
+              const isImutavel = l.fixo === true;
+              return (
+                <div class={`flex flex-col gap-1 px-4 py-3 rounded-xl border ${
+                  isImutavel
+                    ? 'bg-[#D4AF37]/5 border-[#D4AF37]/30'
+                    : 'bg-white/[0.03] border-white/10'
+                }`}>
+                  <div class="flex items-center gap-2">
+                    <span class={`shrink-0 text-sm ${
+                      isImutavel ? 'text-[#D4AF37]' : 'text-gray-500'
+                    }`}>{isImutavel ? '⚠' : '◎'}</span>
+                    <span class={`text-[10px] font-bold uppercase tracking-wider ${
+                      isImutavel ? 'text-[#D4AF37]' : 'text-gray-500'
+                    }`}>{isImutavel ? 'Imutável' : 'Mantida'}</span>
+                    <span class={`text-[9px] px-1.5 py-0.5 rounded-full border ${
+                      isImutavel
+                        ? 'bg-[#D4AF37]/10 text-[#f2ca50] border-[#D4AF37]/20'
+                        : 'bg-white/5 text-gray-400 border-white/10'
+                    }`}>
+                      Lições Kármicas {l.numero}
+                    </span>
+                  </div>
+                  <p class={`text-sm font-semibold ${
+                    isImutavel ? 'text-[#f2ca50]' : 'text-gray-300'
+                  }`}>{l.titulo}</p>
+                  {l.descricao && <p class="text-xs text-gray-400 leading-relaxed">{l.descricao}</p>}
+                </div>
+              );
+            })}
+
+            {licoesNovas.map((l: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-red-500/5 border border-red-500/25">
+                <div class="flex items-center gap-2">
+                  <span class="text-red-400 shrink-0 text-sm">+</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-red-400">Acrescentada</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
+                    Lições Kármicas {l.numero}
+                  </span>
+                </div>
+                <p class="text-sm font-semibold text-red-300">{l.titulo}</p>
+                {l.descricao && <p class="text-xs text-gray-400 leading-relaxed">{l.descricao}</p>}
+              </div>
+            ))}
+
+            {(nascLicoes.length === 0 && harmLicoes?.length === 0) && (
+              <p class="text-xs text-gray-500 text-center py-2">Nenhuma lição kármica nos dois campos.</p>
+            )}
+          </div>
         </div>
       )}
 
@@ -504,7 +631,7 @@ const dimSublabels: Record<TipKey, string> = {
       {nascTendencias !== null && (
         <div class="rounded-2xl bg-white/[0.03] p-4">
           <h4 class="font-cinzel text-sm font-bold text-white mb-3">Tendências Ocultas</h4>
-          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-4">
             <div class="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-center">
               <p class="text-[9px] text-red-400 font-bold uppercase mb-2">Nascimento</p>
               <div class="font-cinzel text-4xl font-bold text-red-400">{nascTendencias.length}</div>
@@ -517,14 +644,55 @@ const dimSublabels: Record<TipKey, string> = {
               <p class="text-xs text-emerald-400/60 mt-1">excesso{harmTendencias?.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
-          {harmTendencias !== null && nascTendencias.length > (harmTendencias?.length ?? 0) && (
-            <div class="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-              <span class="text-emerald-400 shrink-0">✓</span>
-              <p class="text-xs text-gray-300">
-                <span class="text-emerald-400 font-semibold">{nascTendencias.length - (harmTendencias?.length ?? 0)} excesso{nascTendencias.length - (harmTendencias?.length ?? 0) !== 1 ? 's' : ''} reequilibrado{nascTendencias.length - (harmTendencias?.length ?? 0) !== 1 ? 's' : ''}</span> com o nome harmonizado.
-              </p>
-            </div>
-          )}
+
+          {/* Cards individuais */}
+          <div class="space-y-2">
+            {tendenciasEliminadas.map((t: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/25">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-400 shrink-0 text-sm">✓</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Eliminada</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    Tendências Ocultas {t.numero} (×{t.frequencia}x)
+                  </span>
+                </div>
+                <p class="text-sm font-semibold text-emerald-300">{t.titulo}</p>
+                {t.descricao && <p class="text-xs text-gray-400 leading-relaxed">{t.descricao}</p>}
+              </div>
+            ))}
+
+            {tendenciasMantidas.map((t: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10">
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-500 shrink-0 text-sm">◎</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Mantida</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-gray-400 border border-white/10">
+                    Tendências Ocultas {t.numero} (×{t.frequencia}x)
+                  </span>
+                </div>
+                <p class="text-sm font-semibold text-gray-300">{t.titulo}</p>
+                {t.descricao && <p class="text-xs text-gray-400 leading-relaxed">{t.descricao}</p>}
+              </div>
+            ))}
+
+            {tendenciasNovas.map((t: any) => (
+              <div class="flex flex-col gap-1 px-4 py-3 rounded-xl bg-red-500/5 border border-red-500/25">
+                <div class="flex items-center gap-2">
+                  <span class="text-red-400 shrink-0 text-sm">+</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-red-400">Acrescentada</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
+                    Tendências Ocultas {t.numero} (×{t.frequencia}x)
+                  </span>
+                </div>
+                <p class="text-sm font-semibold text-red-300">{t.titulo}</p>
+                {t.descricao && <p class="text-xs text-gray-400 leading-relaxed">{t.descricao}</p>}
+              </div>
+            ))}
+
+            {nascTendencias.length === 0 && harmTendencias?.length === 0 && (
+              <p class="text-xs text-gray-500 text-center py-2">Nenhuma tendência oculta nos dois campos.</p>
+            )}
+          </div>
         </div>
       )}
 
