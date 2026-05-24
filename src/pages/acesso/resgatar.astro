@@ -1,14 +1,30 @@
 ---
 import { supabase } from '../../backend/db/supabase';
+import { recordHqAccessTrialUse } from '../../backend/payments/prices';
+
+const VALID_PRODUCTS = ['nome_social', 'nome_bebe', 'nome_empresa'] as const;
+type TrialProduct = typeof VALID_PRODUCTS[number];
+
+function resolveProducts(product?: string): TrialProduct[] {
+  const requested = (product ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is TrialProduct => VALID_PRODUCTS.includes(item as TrialProduct));
+
+  if (requested.length > 0) return Array.from(new Set(requested));
+
+  return [...VALID_PRODUCTS];
+}
 
 const code = Astro.url.searchParams.get('code');
 const days = parseInt(Astro.url.searchParams.get('days') ?? '7', 10);
 const product = Astro.url.searchParams.get('product') ?? 'all';
+const kind = Astro.url.searchParams.get('kind') ?? 'trial';
 
 const user = Astro.locals.user;
 
 if (!user) {
-  const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code ?? '')}&days=${days}&product=${encodeURIComponent(product)}`;
+  const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code ?? '')}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kind)}`;
   return Astro.redirect(`/auth/login?redirect=${encodeURIComponent(resgatarUrl)}`);
 }
 
@@ -16,7 +32,17 @@ if (!code) {
   return Astro.redirect('/app');
 }
 
-// Verificar se já foi resgatado
+const products = resolveProducts(product);
+
+async function recordTrialUseInHq() {
+  await recordHqAccessTrialUse({
+    trialCode: code,
+    productType: product,
+    userId: user!.id,
+    userEmail: user!.email,
+  }).catch((err) => console.error('[acesso/resgatar] Falha ao registrar trial no HQ:', err));
+}
+
 const { data: existing } = await supabase
   .from('trial_redemptions')
   .select('id')
@@ -25,44 +51,61 @@ const { data: existing } = await supabase
   .single();
 
 if (!existing) {
-  // trialDays === 0 → sem expiração (1 ano como proxy)
+  const now = new Date();
+  const { data: activeSubscriptions } = await supabase
+    .from('subscriptions')
+    .select('product_type, ends_at')
+    .eq('user_id', user.id)
+    .in('product_type', products)
+    .gt('ends_at', now.toISOString());
+
+  const activeProducts = new Set((activeSubscriptions ?? []).map((subscription) => subscription.product_type));
+  const productsToCreate = products.filter((pt) => !activeProducts.has(pt));
+
+  if (productsToCreate.length === 0) {
+    await recordTrialUseInHq();
+    return Astro.redirect('/app?trial=ja_ativo');
+  }
+
   const endsAt =
     days === 0
       ? null
-      : new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      : new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
 
   const subscriptionEndsAt =
-    endsAt ?? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    endsAt ?? new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
-  // 1. Marcar como usuário teste
-  await supabase
-    .from('profiles')
-    .update({ is_test: true, test_ends_at: endsAt })
-    .eq('id', user.id);
+  if (productsToCreate.length === VALID_PRODUCTS.length) {
+    await supabase
+      .from('profiles')
+      .update({ is_test: true, test_ends_at: endsAt })
+      .eq('id', user.id);
+  }
 
-  // 2. Criar subscriptions
-  const products =
-    product !== 'all' ? [product] : ['nome_social', 'nome_bebe', 'nome_empresa'];
-
-  for (const pt of products) {
+  for (const pt of productsToCreate) {
     await supabase.from('subscriptions').insert({
       user_id: user.id,
       product_type: pt,
-      starts_at: new Date().toISOString(),
+      starts_at: now.toISOString(),
       ends_at: subscriptionEndsAt,
       stripe_session_id: `trial_${code}`,
       amount_paid: 0,
+      metadata: { source: kind === 'gift' ? 'gift_access_link' : 'hq_trial_code', code },
     });
   }
 
-  // 3. Registrar resgate
   await supabase.from('trial_redemptions').insert({
     user_id: user.id,
     trial_code: code,
     trial_days: days,
-    product_type: product,
-    source: 'link',
+    product_type: products.length === VALID_PRODUCTS.length ? 'all' : products.join(','),
+    source: kind === 'gift' ? 'gift' : 'link',
   });
+
+  await recordTrialUseInHq();
+} else {
+  await recordTrialUseInHq();
+  return Astro.redirect('/app?trial=ja_ativo');
 }
 
 return Astro.redirect('/app?trial=ativado');

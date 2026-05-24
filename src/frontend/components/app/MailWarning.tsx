@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function MailWarning({ email }: { email: string }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [showSentModal, setShowSentModal] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    setDismissed(localStorage.getItem('nm-mail-warning-dismissed') === email);
+  }, [email]);
+
+  function dismiss() {
+    localStorage.setItem('nm-mail-warning-dismissed', email);
+    setDismissed(true);
+  }
 
   async function resend() {
     setStatus('sending');
@@ -24,9 +34,11 @@ export function MailWarning({ email }: { email: string }) {
     }
   }
 
+  if (dismissed) return null;
+
   return (
     <>
-      <div className="-mx-4 -mt-8 mb-6 flex items-center justify-between gap-3 bg-amber-500 px-4 py-1.5 text-[#131313] md:-mx-10 md:-mt-10 md:mb-8 md:justify-center md:gap-8 md:py-2 lg:-mx-14">
+      <div className="-mx-2 -mt-6 mb-6 flex items-center justify-between gap-3 bg-amber-500 px-4 py-1.5 text-[#131313] sm:-mx-4 md:-mx-10 md:-mt-10 md:mb-8 md:justify-center md:gap-8 md:py-2 lg:-mx-14">
         <div className="flex min-w-0 flex-1 items-center justify-start gap-2 text-left md:flex-none">
           <svg className="h-3.5 w-3.5 flex-shrink-0 md:h-4 md:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -44,6 +56,14 @@ export function MailWarning({ email }: { email: string }) {
           {status === 'sending' ? 'Enviando...' : 'Verificar E-mail'}
         </button>
         {message && <p className="hidden text-center text-[11px] font-bold text-red-950 md:block">{message}</p>}
+        <button
+          type="button"
+          onClick={dismiss}
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-black text-[#131313]/55 transition hover:bg-[#131313]/10 hover:text-[#131313]"
+          aria-label="Fechar aviso de confirmacao de e-mail"
+        >
+          x
+        </button>
       </div>
       {message && <p className="-mt-4 mb-4 text-center text-[10px] font-bold text-red-300 md:hidden">{message}</p>}
 

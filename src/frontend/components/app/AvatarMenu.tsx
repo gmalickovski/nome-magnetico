@@ -15,6 +15,7 @@ const EMPTY_PROFILE: ProfileForm = {
   birth_name: '',
   birth_date: '',
   gender: '',
+  email_verified_at: null,
 };
 
 export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
@@ -26,6 +27,7 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -36,6 +38,23 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    async function loadUnreadNotifications() {
+      try {
+        const res = await fetch('/api/client-messages/unread-count', { credentials: 'same-origin' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setNotificationUnreadCount(Number(data.count ?? 0));
+      } catch {
+        setNotificationUnreadCount(0);
+      }
+    }
+
+    void loadUnreadNotifications();
+    window.addEventListener('focus', loadUnreadNotifications);
+    return () => window.removeEventListener('focus', loadUnreadNotifications);
   }, []);
 
   useEffect(() => {
@@ -70,7 +89,7 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
       const data = await profileRes.json();
       if (!profileRes.ok) throw new Error(data.error ?? 'Erro ao carregar cadastro.');
       setProfile({ ...EMPTY_PROFILE, ...data.profile });
-      setEmailConfirmed(Boolean(authRes.data.user?.email_confirmed_at || (authRes.data.user as any)?.confirmed_at));
+      setEmailConfirmed(Boolean(data.profile?.email_verified_at));
       if (authRes.error) {
         console.warn('[AvatarMenu] falha ao carregar status de e-mail:', authRes.error.message);
       }
@@ -143,6 +162,10 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
     }
   }
 
+  const clearNotificationBadge = React.useCallback(() => {
+    setNotificationUnreadCount(0);
+  }, []);
+
   function toggleMenu() {
     if (isOpen) {
       setIsOpen(false);
@@ -184,6 +207,8 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
       saveAccount={saveAccount}
       saveBirthData={saveBirthData}
       isAdmin={isAdmin}
+      notificationUnreadCount={notificationUnreadCount}
+      onNotificationsSeen={clearNotificationBadge}
     />
   ) : null;
 
@@ -238,6 +263,9 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
         className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#111111] font-cinzel text-lg font-bold text-[#D4AF37] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] focus:outline-none"
         aria-label="Abrir menu da conta"
       >
+        {notificationUnreadCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-[#111111]" />
+        )}
         {initial}
       </button>
       {accountMenu}

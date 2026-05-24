@@ -162,6 +162,41 @@ export async function recordHqAccessCouponUse(params: {
 }
 
 /** Busca preços + promoção ativa via HQ (preferido) ou Stripe (fallback) */
+export async function recordHqAccessTrialUse(params: {
+  trialCode?: string | null;
+  productType?: string | null;
+  userId: string;
+  userEmail?: string | null;
+  saasId?: string;
+}): Promise<void> {
+  const hqUrl = process.env.HQ_API_URL;
+  const trialCode = params.trialCode?.trim();
+  if (!hqUrl || !trialCode) return;
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (process.env.HQ_INTERNAL_TOKEN) {
+    headers['x-hq-internal-token'] = process.env.HQ_INTERNAL_TOKEN;
+  }
+
+  const res = await fetch(`${hqUrl}/access-codes/redeem-trial`, {
+    method: 'POST',
+    headers,
+    signal: AbortSignal.timeout(5000),
+    body: JSON.stringify({
+      saasId: params.saasId ?? 'nome-magnetico',
+      trialCode,
+      productType: params.productType,
+      userId: params.userId,
+      userEmail: params.userEmail,
+    }),
+  });
+
+  if (!res.ok && res.status !== 400 && res.status !== 404 && res.status !== 409) {
+    const text = await res.text();
+    throw new Error(`Falha ao registrar uso do trial no HQ: ${text}`);
+  }
+}
+
 export async function getHqPricesAndPromo(saasId = 'nome-magnetico'): Promise<HqPricesResponse> {
   const hqUrl = process.env.HQ_API_URL;
   if (hqUrl) {

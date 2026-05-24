@@ -36,26 +36,36 @@ export async function hasActiveSubscription(
 
   if (profile?.role === 'admin') return true;
 
-  if (
-    profile?.is_test === true &&
-    (profile.test_ends_at === null ||
-      new Date(profile.test_ends_at) > new Date())
-  ) {
-    return true;
-  }
-
-  // 2. Verificar assinatura normal
+  // 2. Verificar assinatura normal/trial para o produto pedido
+  const now = new Date().toISOString();
   const { data, error } = await supabase
-
     .from('subscriptions')
     .select('id, ends_at')
     .eq('user_id', userId)
     .eq('product_type', productType)
-    .gt('ends_at', new Date().toISOString())
+    .gt('ends_at', now)
     .limit(1);
 
-  if (error) return false;
-  return (data?.length ?? 0) > 0;
+  if (!error && (data?.length ?? 0) > 0) return true;
+
+  // 3. Compatibilidade com usuários teste legados/globais.
+  // Se existem assinaturas trial ativas, elas definem o escopo por produto.
+  // Sem assinatura trial ativa, profiles.is_test continua significando acesso geral.
+  const isActiveTest =
+    profile?.is_test === true &&
+    (profile.test_ends_at === null || new Date(profile.test_ends_at) > new Date());
+
+  if (!isActiveTest) return false;
+
+  const { data: activeTrialSubs } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .gt('ends_at', now)
+    .like('stripe_session_id', 'trial_%')
+    .limit(1);
+
+  return (activeTrialSubs?.length ?? 0) === 0;
 }
 
 /**

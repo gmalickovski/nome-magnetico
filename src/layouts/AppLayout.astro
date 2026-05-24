@@ -70,11 +70,11 @@ const showChatwoot = pathname.startsWith('/app/suporte');
 
 <BaseLayout title={title} description={description} noIndex={true} hasBottomNav={true} showChatwoot={showChatwoot}>
   <div class="min-h-screen bg-[#1a1a1a]">
-    {isTest && (
+    {false && isTest && (
       <div class="bg-[#D4AF37]/10 border-b border-[#D4AF37]/20 px-4 py-2 text-center text-sm text-[#D4AF37]">
         Você está usando um acesso de teste.
         {testEndsAt
-          ? ` Válido até ${testEndsAt.toLocaleDateString('pt-BR')}.`
+          ? ` Válido até ${testEndsAt?.toLocaleDateString('pt-BR')}.`
           : ' Sem data de expiração.'}
         <a href="/comprar" class="underline font-medium ml-1 hover:text-[#f2ca50] transition-colors">
           Assinar agora

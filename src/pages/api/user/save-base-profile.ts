@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ locals }) => {
   const supabase = createUserClient(accessToken);
   const { data, error } = await supabase
     .from('profiles')
-    .select('nome, email, phone, birth_name, birth_date, gender')
+    .select('nome, email, phone, birth_name, birth_date, gender, email_verified_at')
     .eq('id', user.id)
     .single();
 
@@ -52,6 +52,7 @@ export const GET: APIRoute = async ({ locals }) => {
       birth_name: data?.birth_name ?? '',
       birth_date: dbDateToInput(data?.birth_date ?? null),
       gender: data?.gender ?? '',
+      email_verified_at: data?.email_verified_at ?? null,
     },
   });
 };

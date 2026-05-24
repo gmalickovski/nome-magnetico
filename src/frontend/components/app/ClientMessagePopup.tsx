@@ -7,6 +7,22 @@ interface PendingMessage {
   bodyMarkdown: string;
 }
 
+function localTrialNotice(): PendingMessage | null {
+  const url = new URL(window.location.href);
+  const trialStatus = url.searchParams.get('trial');
+
+  if (trialStatus === 'ja_ativo') {
+    return {
+      deliveryId: '',
+      messageId: 'trial-ja-ativo',
+      title: 'Acesso ja ativo',
+      bodyMarkdown: 'Voce ja possui um acesso ativo para esse produto. Mantivemos o acesso atual e evitamos criar uma assinatura trial duplicada.',
+    };
+  }
+
+  return null;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -56,9 +72,16 @@ export default function ClientMessagePopup() {
     async function loadMessage() {
       try {
         const res = await fetch('/api/client-messages/pending', { credentials: 'same-origin' });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (!cancelled) setMessage(localTrialNotice());
+          return;
+        }
         const data = await res.json();
-        if (!cancelled && data?.deliveryId) setMessage(data);
+        if (!cancelled && data?.deliveryId) {
+          setMessage(data);
+          return;
+        }
+        if (!cancelled) setMessage(localTrialNotice());
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -74,6 +97,13 @@ export default function ClientMessagePopup() {
     const current = message;
     setMessage(null);
     if (!current) return;
+
+    if (!current.deliveryId) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('trial');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
 
     await fetch(`/api/client-messages/${current.deliveryId}/dismiss`, {
       method: 'POST',

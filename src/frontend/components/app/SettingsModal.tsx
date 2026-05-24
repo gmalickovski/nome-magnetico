@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DateInput } from '../ui/DateInput';
 import { Select } from '../ui/Select';
@@ -11,6 +11,7 @@ export type ProfileForm = {
   birth_name: string;
   birth_date: string;
   gender: string;
+  email_verified_at: string | null;
 };
 
 interface SettingsModalProps {
@@ -28,9 +29,29 @@ interface SettingsModalProps {
   saveAccount: (e: React.FormEvent) => Promise<void>;
   saveBirthData: (e: React.FormEvent) => Promise<void>;
   isAdmin?: boolean;
+  notificationUnreadCount?: number;
+  onNotificationsSeen?: () => void;
 }
 
-type TabType = 'perfil' | 'analise' | 'seguranca' | 'privacidade';
+type TabType = 'perfil' | 'assinatura' | 'notificacoes' | 'analise' | 'seguranca' | 'privacidade';
+
+type SubscriptionItem = {
+  id: string;
+  product_label: string;
+  access_label: string;
+  is_active: boolean;
+  is_trial: boolean;
+  ends_at: string;
+  days_left: number;
+};
+
+type InternalMessage = {
+  id: string;
+  title: string;
+  bodyMarkdown: string;
+  createdAt: string;
+  dismissedAt: string | null;
+};
 
 export function SettingsModal({
   open,
@@ -47,16 +68,68 @@ export function SettingsModal({
   saveAccount,
   saveBirthData,
   isAdmin,
+  notificationUnreadCount = 0,
+  onNotificationsSeen,
 }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('perfil');
+  const [activeTab, setActiveTab] = useState<TabType>('notificacoes');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>([]);
+  const [internalMessages, setInternalMessages] = useState<InternalMessage[]>([]);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const [emailSendStatus, setEmailSendStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   
   // Confirmação de deleção
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteText, setDeleteText] = useState('');
 
-  if (!open) return null;
+  useEffect(() => {
+    if (open) setActiveTab('notificacoes');
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || activeTab !== 'assinatura') return;
+    setSubscriptionLoading(true);
+    fetch('/api/user/subscriptions')
+      .then(res => res.json())
+      .then(data => setSubscriptions(data.subscriptions ?? []))
+      .catch(() => setError('Erro ao carregar seus acessos.'))
+      .finally(() => setSubscriptionLoading(false));
+  }, [open, activeTab, setError]);
+
+  useEffect(() => {
+    if (!open || activeTab !== 'notificacoes') return;
+    setNotificationLoading(true);
+    fetch('/api/client-messages/history?markSeen=1')
+      .then(res => res.json())
+      .then(data => {
+        setInternalMessages(data.messages ?? []);
+        onNotificationsSeen?.();
+      })
+      .catch(() => setError('Erro ao carregar notificacoes.'))
+      .finally(() => setNotificationLoading(false));
+  }, [open, activeTab, setError, onNotificationsSeen]);
+
+  async function resendConfirmation() {
+    setEmailSendStatus('sending');
+    setMessage('');
+    setError('');
+    try {
+      const res = await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redirect: '/app' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao reenviar confirmacao.');
+      setEmailSendStatus('sent');
+      setMessage('E-mail de confirmacao enviado.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao reenviar confirmacao.');
+      setEmailSendStatus('idle');
+    }
+  }
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -118,7 +191,21 @@ export function SettingsModal({
     }
   }
 
+  if (!open) return null;
+
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
+    {
+      id: 'notificacoes',
+      label: 'Notificacoes',
+      icon: (
+        <span className="relative">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 01-6 0" />
+          </svg>
+          {notificationUnreadCount > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#111]" />}
+        </span>
+      )
+    },
     {
       id: 'perfil',
       label: 'Meu Perfil',
@@ -143,6 +230,15 @@ export function SettingsModal({
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      )
+    },
+    {
+      id: 'assinatura',
+      label: 'Assinatura',
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14h6m-7 4h8M7 4h10a2 2 0 012 2v14l-3-2-3 2-3-2-3 2V6a2 2 0 012-2z" />
         </svg>
       )
     },
@@ -260,6 +356,69 @@ export function SettingsModal({
           )}
 
           {/* ABA: ANÁLISE */}
+          {activeTab === 'assinatura' && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-2xl">
+              <h3 className="mb-2 font-cinzel text-2xl font-bold text-[#D4AF37]">Assinatura e Acessos</h3>
+              <p className="mb-6 text-sm leading-relaxed text-gray-400">Veja quais produtos estao ativos, quando vencem e quanto tempo ainda resta.</p>
+              {subscriptionLoading ? (
+                <p className="text-sm text-gray-400">Carregando acessos...</p>
+              ) : subscriptions.length === 0 ? (
+                <div className="rounded-2xl bg-white/5 p-5 text-sm text-gray-400 ring-1 ring-white/10">Nenhum produto ativo ou historico de acesso encontrado.</div>
+              ) : (
+                <div className="space-y-3">
+                  {subscriptions.map(item => (
+                    <div key={item.id} className="rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-cinzel text-lg font-bold text-[#e5e2e1]">{item.product_label}</p>
+                          <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">{item.access_label}</p>
+                        </div>
+                        <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${item.is_active ? 'bg-emerald-500/12 text-emerald-300 ring-1 ring-emerald-500/25' : 'bg-red-500/10 text-red-300 ring-1 ring-red-500/20'}`}>
+                          {item.is_active ? `${item.days_left} dia${item.days_left === 1 ? '' : 's'} restantes` : 'Expirado'}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm text-gray-400">Vencimento: {new Date(item.ends_at).toLocaleDateString('pt-BR')}</p>
+                      {!emailConfirmed && (
+                        <button
+                          type="button"
+                          onClick={resendConfirmation}
+                          disabled={emailSendStatus === 'sending'}
+                          className="mt-4 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-[#131313] transition hover:bg-[#f2ca50] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {emailSendStatus === 'sending' ? 'Enviando...' : emailSendStatus === 'sent' ? 'E-mail enviado' : 'Verificar e-mail'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'notificacoes' && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-2xl">
+              <h3 className="mb-2 font-cinzel text-2xl font-bold text-[#D4AF37]">Notificacoes Internas</h3>
+              <p className="mb-6 text-sm leading-relaxed text-gray-400">Comunicados importantes enviados pelo Nome Magnetico ficam salvos aqui.</p>
+              {notificationLoading ? (
+                <p className="text-sm text-gray-400">Carregando notificacoes...</p>
+              ) : internalMessages.length === 0 ? (
+                <div className="rounded-2xl bg-white/5 p-5 text-sm text-gray-400 ring-1 ring-white/10">Nenhuma notificacao interna por enquanto.</div>
+              ) : (
+                <div className="space-y-3">
+                  {internalMessages.map(item => (
+                    <article key={item.id} className="rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <h4 className="font-cinzel text-lg font-bold text-[#e5e2e1]">{item.title}</h4>
+                        <span className="text-xs text-gray-600">{new Date(item.createdAt).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-gray-400">{item.bodyMarkdown.replace(/[#*_`>-]/g, '').trim()}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'analise' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-lg">
               <h3 className="mb-2 font-cinzel text-2xl font-bold text-[#D4AF37]">Dados de Análise</h3>

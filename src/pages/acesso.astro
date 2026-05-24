@@ -4,74 +4,88 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const code = Astro.url.searchParams.get('code');
 const days = Astro.url.searchParams.get('days') ?? '7';
 const product = Astro.url.searchParams.get('product') ?? 'all';
+const kind = Astro.url.searchParams.get('kind') ?? 'trial';
 
 if (!code) {
   return Astro.redirect('/');
 }
 
-// Usuário já logado → resgatar direto
 const user = Astro.locals.user;
 if (user) {
-  const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}`;
+  const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kind)}`;
   return Astro.redirect(resgatarUrl);
 }
 
 const PRODUCT_NAMES: Record<string, string> = {
   nome_social: 'Nome Social',
-  nome_bebe: 'Nome de Bebê',
+  nome_bebe: 'Nome de Bebe',
   nome_empresa: 'Nome Empresarial',
   all: 'Todos os Produtos',
 };
 
-const productLabel = PRODUCT_NAMES[product] ?? product;
-const daysLabel = days === '0' ? 'Sem data de expiração' : `${days} dias de acesso`;
+function formatProductLabel(value: string) {
+  const products = value
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
 
-// Redirect para cadastro passando o resgate como destino pós-auth
-const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}`;
+  if (products.length === 0 || products.includes('all')) return 'acesso completo a todos os produtos';
+  if (products.length === 1) return PRODUCT_NAMES[products[0]] ?? products[0];
+
+  return products
+    .map(item => PRODUCT_NAMES[item] ?? item)
+    .join(', ')
+    .replace(/, ([^,]*)$/, ' e $1');
+}
+
+const productLabel = formatProductLabel(product);
+const daysLabel = days === '0' ? 'sem data de expiracao' : `${days} dias de acesso`;
+const isGift = kind === 'gift';
+const pageTitle = isGift
+  ? `Acesso presente para ${productLabel}`
+  : `Acesso especial para ${productLabel}`;
+const pageDescription = `Voce recebeu ${daysLabel} ao Nome Magnetico: ${productLabel}. Ative seu acesso e experimente a analise numerologica cabalistica na hora, direto no sistema.`;
+
+const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kind)}`;
 const cadastroUrl = `/auth/cadastro?redirect=${encodeURIComponent(resgatarUrl)}`;
 const loginUrl = `/auth/login?redirect=${encodeURIComponent(resgatarUrl)}`;
 ---
 
 <BaseLayout
-  title="Acesso Especial — Nome Magnético"
-  description={`Você recebeu ${daysLabel} gratuito ao Nome Magnético — Análise Cabalística de ${productLabel}. Crie sua conta ou faça login para resgatar.`}
+  title={pageTitle}
+  description={pageDescription}
   noIndex={true}
 >
   <div class="min-h-screen bg-[#131313] flex items-center justify-center px-4 py-16">
     <div class="max-w-md w-full">
-
-      <!-- Logo -->
       <div class="text-center mb-8">
         <a href="/" class="font-cinzel text-2xl font-bold text-[#D4AF37] tracking-wider">
-          NOME MAGNÉTICO
+          NOME MAGNETICO
         </a>
       </div>
 
-      <!-- Card principal -->
       <div class="bg-[#1a1a1a] rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
-
-        <!-- Ícone + título -->
         <div class="text-center mb-6">
           <div class="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mx-auto mb-4">
             <svg class="w-8 h-8 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7m16 0H4m16 0h-7m-9 0h7m2 0v9m-2-9v9M7.5 8.5A2.5 2.5 0 0 1 12 7a2.5 2.5 0 1 1 4.5 1.5C16.5 10.5 12 12 12 12S7.5 10.5 7.5 8.5Z" />
             </svg>
           </div>
-          <h1 class="font-cinzel text-2xl font-bold text-white mb-2">
-            Você recebeu um acesso especial
+          <h1 class="font-cinzel text-2xl font-bold text-[#e5e2e1] mb-2">
+            {isGift ? 'Voce recebeu um acesso presente' : 'Voce recebeu um acesso especial'}
           </h1>
           <p class="text-gray-400 text-sm">
             {daysLabel} ao <strong class="text-[#e5e2e1]">{productLabel}</strong>
           </p>
         </div>
 
-        <!-- Código -->
-        <div class="bg-[#D4AF37]/5 rounded-xl px-4 py-3 mb-6 text-center">
-          <p class="text-xs text-[#76746a] font-medium uppercase tracking-widest mb-1">Código de acesso</p>
-          <p class="font-mono text-xl font-bold text-[#D4AF37] tracking-wider">{code}</p>
+        <div class="bg-[#D4AF37]/5 rounded-xl px-4 py-4 mb-6 text-center">
+          <p class="text-xs text-[#76746a] font-medium uppercase tracking-widest mb-1">Ativacao automatica</p>
+          <p class="text-sm text-gray-400">
+            Crie sua conta ou entre para liberar o acesso. Voce nao precisa digitar nenhum codigo.
+          </p>
         </div>
 
-        <!-- CTAs -->
         <div class="space-y-3">
           <a
             href={cadastroUrl}
@@ -83,17 +97,14 @@ const loginUrl = `/auth/login?redirect=${encodeURIComponent(resgatarUrl)}`;
             href={loginUrl}
             class="block w-full text-center border border-[#D4AF37]/30 text-[#D4AF37] font-medium py-3.5 rounded-full hover:bg-[#D4AF37]/10 transition-all duration-300 text-sm"
           >
-            Já tenho conta — Entrar
+            Ja tenho conta - Entrar
           </a>
         </div>
-
       </div>
 
-      <!-- Rodapé -->
       <p class="text-center text-[#76746a] text-xs mt-6">
-        O código será ativado automaticamente após o login.
+        O acesso sera ativado automaticamente apos o login.
       </p>
-
     </div>
   </div>
 </BaseLayout>

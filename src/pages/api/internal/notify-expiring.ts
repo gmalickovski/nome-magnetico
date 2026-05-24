@@ -26,36 +26,29 @@ export const POST: APIRoute = async ({ request }) => {
 
   const results = { expiring7d: 0, expiring1d: 0, expired: 0 };
 
-  // Grupo A: expira em ~7 dias (janela de 1 hora)
-  const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const in7dPlus1h = new Date(in7d.getTime() + 60 * 60 * 1000);
-
-  // Grupo B: expira em ~1 dia (janela de 1 hora)
-  const in1d = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
-  const in1dPlus1h = new Date(in1d.getTime() + 60 * 60 * 1000);
-
-  // Grupo C: expirou entre ontem e agora
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const range7d = saoPauloDayRange(now, 7);
+  const range1d = saoPauloDayRange(now, 1);
+  const rangeExpired = saoPauloDayRange(now, -1);
 
   const [{ data: group7d }, { data: group1d }, { data: groupExpired }] = await Promise.all([
     supabase
       
       .from('subscriptions')
       .select('user_id, product_type')
-      .gte('ends_at', in7d.toISOString())
-      .lt('ends_at', in7dPlus1h.toISOString()),
+      .gte('ends_at', range7d.start.toISOString())
+      .lt('ends_at', range7d.end.toISOString()),
     supabase
       
       .from('subscriptions')
       .select('user_id, product_type')
-      .gte('ends_at', in1d.toISOString())
-      .lt('ends_at', in1dPlus1h.toISOString()),
+      .gte('ends_at', range1d.start.toISOString())
+      .lt('ends_at', range1d.end.toISOString()),
     supabase
       
       .from('subscriptions')
       .select('user_id, product_type')
-      .gte('ends_at', yesterday.toISOString())
-      .lt('ends_at', now.toISOString()),
+      .gte('ends_at', rangeExpired.start.toISOString())
+      .lt('ends_at', rangeExpired.end.toISOString()),
   ]);
 
   async function notifyUser(userId: string, daysLeft: 7 | 1 | null, productType: ProductType) {
@@ -104,6 +97,15 @@ export const POST: APIRoute = async ({ request }) => {
   const sent = results.expiring7d + results.expiring1d + results.expired;
   return json({ sent, groups: results }, 200);
 };
+
+function saoPauloDayRange(now: Date, daysFromNow: number) {
+  const offsetMs = -3 * 60 * 60 * 1000;
+  const shifted = new Date(now.getTime() + offsetMs + daysFromNow * 24 * 60 * 60 * 1000);
+  shifted.setUTCHours(0, 0, 0, 0);
+  const start = new Date(shifted.getTime() - offsetMs);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+}
 
 function json(body: object, status: number) {
   return new Response(JSON.stringify(body), {

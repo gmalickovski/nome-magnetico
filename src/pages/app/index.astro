@@ -255,10 +255,11 @@ const products = [
 ---
 
 <AppLayout title="Meu Painel">
+  {needsEmailConfirmation && user.email && (
+    <MailWarning client:load email={user.email} />
+  )}
+
   <div class="space-y-8">
-    {needsEmailConfirmation && user.email && (
-      <MailWarning client:load email={user.email} />
-    )}
 
     <!-- Banner: Pagamento confirmado -->
     {showCheckoutSuccess && (
