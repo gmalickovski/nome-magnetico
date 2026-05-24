@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   // Seção A Essência — fundo vermelho ultra-sutil
   pageEssencia: {
-    backgroundColor: '#FFF8F8',
+    backgroundColor: '#FEF2F2',
     paddingTop: 56,
     paddingBottom: 56,
     paddingHorizontal: 48,
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   // Seção Harmonização / Comparativos — fundo dourado ultra-sutil
   pageHarmonizacao: {
-    backgroundColor: '#FFFDF5',
+    backgroundColor: '#FEFCE8',
     paddingTop: 56,
     paddingBottom: 56,
     paddingHorizontal: 48,
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   // Seção Nome Harmonizado escolhido — fundo verde ultra-sutil
   pageHarmonizado: {
-    backgroundColor: '#F7FFF9',
+    backgroundColor: '#F0FDF4',
     paddingTop: 56,
     paddingBottom: 56,
     paddingHorizontal: 48,

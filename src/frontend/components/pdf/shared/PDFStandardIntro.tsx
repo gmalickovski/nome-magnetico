@@ -163,14 +163,35 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
           )}
 
           <Text style={[styles.subHead, { color: textColor }]}>
-            A Nota de 0 a 100 e os Dados Imutáveis
+            Como Funciona o Cálculo do Score? (A Nota de 0 a 100)
           </Text>
           <Text style={[styles.bodyText, { color: textColor }]}>
-            O Score é calculado a partir de descontos objetivos: cada Bloqueio Energético retira 15 pontos, cada Débito Kármico retira 12 pontos, cada Tendência Oculta retira 2 pontos e cada Lição Kármica retira 1 ponto. A <Text style={[styles.bold, { color: boldColor }]}>Compatibilidade Vibracional</Text> também impacta: Tensão Vibracional desconta 15 pontos adicionais, enquanto Harmônica/Favorável e Neutra não geram desconto adicional — sendo que a Favorável é a relação de maior sinergia entre Expressão e Destino.
+            O score mede o nível de fluidez do nome em relação ao seu destino. Funciona como um equilíbrio: começamos com <Text style={[styles.bold, { color: boldColor }]}>100 pontos</Text> e vamos descontando conforme as resistências encontradas:
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Cada Bloqueio Energético</Text> (sequências que travam a vida): <Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Cada Débito Kármico</Text> (desafios e aprendizados de vidas passadas): <Text style={[styles.bold, { color: theme.primaryColor }]}>-12 pontos</Text>
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Cada Tendência Oculta</Text> (excesso de uma mesma vibração): <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text>
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Cada Lição Kármica</Text> (qualidades ausentes a desenvolver): <Text style={[styles.bold, { color: theme.primaryColor }]}>-1 ponto</Text>
             {'\n\n'}
-            O grande motivo de raramente atingirmos 100 pontos são os <Text style={[styles.bold, { color: boldColor }]}>Dados Imutáveis</Text>: a data de nascimento jamais pode ser alterada. Ela gera o número de Destino e os Débitos Kármicos — ambos fixos. A análise precisa criar uma geometria de nome <Text style={[styles.italic]}>contornando e respeitando</Text> esses dados gravados na história de vida.
+            O grande motivo de raramente atingirmos 100 pontos são os <Text style={[styles.bold, { color: boldColor }]}>Dados Imutáveis</Text> (sua data de nascimento). Ela jamais pode ser alterada e dita o Destino e os Débitos Kármicos, que são fixos. A análise visa encontrar um nome que contorne essas pendências com o menor atrito possível.
             {'\n\n'}
-            Retire dos ombros a busca pelos 100 pontos. Um score <Text style={[styles.bold, { color: boldColor }]}>acima de 70</Text> já classifica o nome como Bom — alinhamento sólido com o destino. Acima de <Text style={[styles.bold, { color: boldColor }]}>80 pontos</Text> você encontrou um "Nome de Ouro": máximo alinhamento com mínima descaracterização. Acima de <Text style={[styles.bold, { color: boldColor }]}>90 pontos</Text>, um evento raro — comemore.
+            Retire dos ombros a busca pelos 100 pontos. Um score <Text style={[styles.bold, { color: boldColor }]}>acima de 70</Text> já indica um nome Bom (sólido). Acima de <Text style={[styles.bold, { color: boldColor }]}>80 pontos</Text>, um "Nome de Ouro" (máximo alinhamento com mínima alteração). Acima de <Text style={[styles.bold, { color: boldColor }]}>90 pontos</Text>, um alinhamento excepcional e raro.
+          </Text>
+
+          <Text style={[styles.subHead, { color: textColor }]}>
+            A Tabela de Harmonização Cabalística
+          </Text>
+          <Text style={[styles.bodyText, { color: textColor }]}>
+            Para que sua vida flua, a sua <Text style={[styles.bold, { color: boldColor }]}>Expressão</Text> (como você age e se posiciona) e seu <Text style={[styles.bold, { color: boldColor }]}>Destino</Text> (seu caminho de vida) precisam caminhar juntos em perfeita harmonia. Medimos essa compatibilidade através da Tabela de Harmonização Cabalística:
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Harmônica / Favorável:</Text> Sinergia máxima! Os dois números vibram na mesma frequência ou são complementares (somas que resultam nos números mestres 9, 11 ou 22). Eles se ajudam mutuamente, abrindo portas com facilidade e atraindo oportunidades.
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Neutra:</Text> Relação harmoniosa e sem conflito direto. Há uma diferença sutil de apenas 1 ponto entre eles, permitindo que a vida flua perfeitamente bem no dia a dia.
+            {'\n'}
+            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>). É como dirigir com o freio de mão puxado: exige esforço excessivo para poucos resultados. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
           </Text>
         </View>
 

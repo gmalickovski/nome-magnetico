@@ -764,8 +764,10 @@ const dimSublabels: Record<TipKey, string> = {
           <CompatibilityBadge client:load compatibilidade={c.compatibilidade} size="sm" showTooltip={true} />
           <div class="flex flex-wrap gap-3 text-xs text-gray-500">
             <span>Expr: <span class="text-gray-300">{c.expressao}</span></span>
+            <span>Dest: <span class="text-[#D4AF37] font-semibold">{c.destino}</span></span>
             <span>Mot: <span class="text-gray-300">{c.motivacao}</span></span>
             <span>Imp: <span class="text-gray-300">{c.impressao}</span></span>
+            <span>Mis: <span class="text-gray-300">{c.missao}</span></span>
           </div>
           {c.temBloqueio ? (
             <span class="text-xs text-red-400">⚠ {c.bloqueios?.length} bloqueio(s)</span>
@@ -807,8 +809,10 @@ const dimSublabels: Record<TipKey, string> = {
           <CompatibilityBadge client:load compatibilidade={c.compatibilidade} size="sm" showTooltip={true} />
           <div class="flex flex-wrap gap-3 text-xs text-gray-500">
             <span>Expr: <span class="text-gray-300">{c.expressao}</span></span>
+            <span>Dest: <span class="text-[#D4AF37] font-semibold">{c.destino}</span></span>
             <span>Mot: <span class="text-gray-300">{c.motivacao}</span></span>
             <span>Imp: <span class="text-gray-300">{c.impressao}</span></span>
+            <span>Mis: <span class="text-gray-300">{c.missao}</span></span>
           </div>
           {c.temBloqueio ? (
             <span class="text-xs text-red-400">⚠ {c.bloqueios?.length} bloqueio(s)</span>
@@ -1161,7 +1165,10 @@ const dimSublabels: Record<TipKey, string> = {
           </div>
           <div class="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
             <span>Expr: <span class="text-gray-300">{name.numero_expressao}</span></span>
+            <span>Dest: <span class="text-[#D4AF37] font-semibold">{analysis.numero_destino}</span></span>
             <span>Mot: <span class="text-gray-300">{name.numero_motivacao}</span></span>
+            <span>Imp: <span class="text-gray-300">{name.numero_impressao ?? '?'}</span></span>
+            <span>Mis: <span class="text-gray-300">{name.numero_missao ?? '?'}</span></span>
           </div>
           {name.justificativa && (
             <p class="text-gray-500 text-xs leading-relaxed">{name.justificativa}</p>

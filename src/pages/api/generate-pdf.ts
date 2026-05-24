@@ -8,6 +8,10 @@ import { NomeBebePDF } from '../../frontend/components/pdf/NomeBebePDF';
 import { NomeEmpresaPDF } from '../../frontend/components/pdf/NomeEmpresaPDF';
 import { logError } from '../../backend/utils/error-logger';
 
+// Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile)
+const pdfCache = new Map<string, { buffer: Buffer; expiresAt: number }>();
+const CACHE_TTL = 15_000; // 15 segundos
+
 export const GET: APIRoute = async ({ url, locals }) => {
   const user = locals.user;
   if (!user) {
@@ -100,34 +104,53 @@ export const GET: APIRoute = async ({ url, locals }) => {
           ? NomeAtualPDF
           : NomeSocialPDF;
 
+  // Limpa cache expirado periodicamente
+  const agora = Date.now();
+  for (const [key, val] of pdfCache.entries()) {
+    if (val.expiresAt < agora) pdfCache.delete(key);
+  }
+
+  const cacheKey = `${analysisId}-${productType}`;
+  const cached = pdfCache.get(cacheKey);
   let pdfBuffer: Buffer;
-  try {
-    pdfBuffer = await renderToBuffer(
-      React.createElement(PDFComponent, {
-        analysis: analysis as any,
-        magneticNames,
-        userName: firstName,
-      }) as any
-    );
-  } catch (err: any) {
-    const msg = err?.message ?? String(err);
-    const stack = err?.stack ?? '';
-    console.error('[generate-pdf] renderToBuffer FAILED:', msg, stack);
 
-    // Registra falha de PDF no monitor do HQ
-    await logError({
-      type: 'pdf_generation',
-      severity: 'error',
-      userId: user.id,
-      analysisId: analysisId ?? undefined,
-      message: msg,
-      details: { productType, stack: stack.slice(0, 500) },
-    });
+  if (cached && cached.expiresAt > agora) {
+    pdfBuffer = cached.buffer;
+  } else {
+    try {
+      pdfBuffer = await renderToBuffer(
+        React.createElement(PDFComponent, {
+          analysis: analysis as any,
+          magneticNames,
+          userName: firstName,
+        }) as any
+      );
+      
+      // Salva no cache
+      pdfCache.set(cacheKey, {
+        buffer: pdfBuffer,
+        expiresAt: Date.now() + CACHE_TTL,
+      });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      const stack = err?.stack ?? '';
+      console.error('[generate-pdf] renderToBuffer FAILED:', msg, stack);
 
-    return new Response(
-      JSON.stringify({ error: 'Erro ao gerar PDF', detail: msg, stack }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+      // Registra falha de PDF no monitor do HQ
+      await logError({
+        type: 'pdf_generation',
+        severity: 'error',
+        userId: user.id,
+        analysisId: analysisId ?? undefined,
+        message: msg,
+        details: { productType, stack: stack.slice(0, 500) },
+      });
+
+      return new Response(
+        JSON.stringify({ error: 'Erro ao gerar PDF', detail: msg, stack }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   }
 
   return new Response(new Uint8Array(pdfBuffer), {

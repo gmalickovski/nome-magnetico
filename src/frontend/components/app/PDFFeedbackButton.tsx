@@ -133,32 +133,67 @@ export function PDFFeedbackButton({
       // Usa pdfUrl direto se fornecido; senão constrói via analysisId
       const baseUrl = pdfUrl ?? `/api/generate-pdf?id=${analysisId}`;
       const resolvedUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
-      const res = await fetch(resolvedUrl, {
-        cache: 'no-store',
-        credentials: 'same-origin',
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
-      });
-      if (!res.ok) throw new Error('pdf_error');
 
-      const disposition = res.headers.get('Content-Disposition') ?? '';
-      const filenameMatch = disposition.match(/filename="([^"]+)"/);
-      const filename = filenameMatch?.[1] ?? `analise-${productType}-nome-magnetico.pdf`;
+      // Detecta se o usuário está em um dispositivo móvel
+      const isMobile = /iPad|iPhone|iPod|android|webos|blackberry|iemobile|opera mini/i.test(
+        navigator.userAgent || navigator.vendor || (window as any).opera
+      );
 
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (isMobile) {
+        // No mobile, faz um fetch inicial para "aquecer" o servidor (gera o PDF na API)
+        // Isso permite exibir a tela de loading enquanto a API faz o cálculo pesado.
+        const res = await fetch(resolvedUrl, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+          },
+        });
+        if (!res.ok) throw new Error('pdf_error');
 
-      setStatus('done');
-      track('pdf_downloaded', { produto: productType as never });
+        // Uma vez concluído, redirecionamos para a rota para que o download seja disparado
+        // nativamente pelo navegador, sem problemas de popup blocker ou restrição de blob no WebView.
+        // Graças ao cache temporário de 15s no servidor, o download inicia imediatamente!
+        window.location.href = resolvedUrl;
+
+        setStatus('done');
+        track('pdf_downloaded', { produto: productType as never });
+      } else {
+        // No desktop, mantemos o fluxo de Blob forçado via elemento <a> que funciona perfeitamente
+        const res = await fetch(resolvedUrl, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+          },
+        });
+        if (!res.ok) throw new Error('pdf_error');
+
+        const disposition = res.headers.get('Content-Disposition') ?? '';
+        const filenameMatch = disposition.match(/filename="([^"]+)"/);
+        let filename = filenameMatch?.[1] ?? `analise-${productType}-nome-magnetico.pdf`;
+
+        // Adiciona um sufixo temporal AAAAMMDD-HHMM para evitar colisões e cache local agressivo no OS
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const timeStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+        filename = filename.replace('.pdf', `-${timeStr}.pdf`);
+
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        setStatus('done');
+        track('pdf_downloaded', { produto: productType as never });
+      }
     } catch {
       setStatus('error');
     }
