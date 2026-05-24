@@ -413,10 +413,10 @@ function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloquei
         <div className="px-4 pb-4 space-y-3 border-t border-red-500/10">
           {(() => {
             const interp = obterInterpretacaoEspecifica(bloqueio.codigo, abaAtiva);
-            const originalAntidoto = bloqueio.descricao.includes('O antídoto é')
-              ? ' O antídoto é' + bloqueio.descricao.split('O antídoto é')[1]
-              : '';
-            const displayDesc = interp ? `${interp}${originalAntidoto}` : bloqueio.descricao;
+            let displayDesc = interp || bloqueio.descricao;
+            if (displayDesc.includes('O antídoto é')) {
+              displayDesc = displayDesc.split('O antídoto é')[0].trim();
+            }
             return (
               <p className="text-gray-300 text-sm leading-relaxed pt-3">{displayDesc}</p>
             );

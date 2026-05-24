@@ -51,9 +51,13 @@ export function buildAnalysisPrompt(params: AnalysisPromptParams): string {
             const ocorrStr = (b.totalOcorrencias ?? 1) > 1
               ? ` — ${b.totalOcorrencias} ocorrências totais`
               : '';
+            let descLimpa = b.descricao;
+            if (descLimpa.includes('O antídoto é')) {
+              descLimpa = descLimpa.split('O antídoto é')[0].trim();
+            }
             return (
               `- **${b.titulo}** (${b.codigo})${ocorrStr} — aparece em: ${detTriangulos}\n` +
-              `  ${b.descricao}\n` +
+              `  ${descLimpa}\n` +
               `  *Aspecto saúde:* ${b.aspectoSaude}`
             );
           })
@@ -220,13 +224,12 @@ ${bloqueios.length > 0
 
 #### ⚠ Custo da Inércia para cada bloqueio:
 Para CADA bloqueio, escreva um subitem "**Custo da Inércia:**" descrevendo como esse bloqueio específico continua limitando ${primeiroNome} enquanto o nome não for harmonizado — o que está sendo impactado em termos de resultados financeiros, relacionamentos, saúde ou realização pessoal. Seja concreto e específico, sem dar ações práticas. Termine com: "Esta frequência continua sendo emitida pelo nome 24 horas por dia — apenas a harmonização vibracional do Nome Social pode neutralizá-la."`
-    : `**Para cada bloqueio detectado, escreva uma análise aprofundada de 2-3 parágrafos:**
-- O impacto específico e concreto deste bloqueio na vida de ${primeiroNome} (em que situações ele aparece, como sabota)
-- Em quais áreas da vida (carreira, saúde, relacionamentos, finanças) ele se manifesta com mais força
-- O aspecto de saúde associado: a tensão emocional-somática que este padrão pode gerar no corpo (com sensibilidade)
+    : `**Para cada bloqueio detectado, escreva uma análise aprofundada e explicativa de 2-3 parágrafos:**
+- Um texto altamente explicativo e detalhado para que qualquer usuário possa compreender facilmente em quais partes/áreas de sua vida (como carreira, finanças, relacionamentos e realização pessoal) aquele bloqueio interfere no seu dia a dia e como limita seus resultados.
+- Adicione, obrigatoriamente, um parágrafo integrado logo abaixo criando uma relação totalmente personalizada do bloqueio com o triângulo específico no qual o bloqueio foi detectado (seja no Triângulo da Vida, Pessoal, Social ou do Destino) — descrevendo como a energia desse setor específico direciona e amplifica as dificuldades daquele bloqueio na vida do usuário.
+- O aspecto de saúde associado: a somatização e a tensão emocional-somática que este padrão pode gerar no corpo (com sensibilidade).
 
-#### ⚡ Antídoto Prático para cada bloqueio:
-Para CADA bloqueio, escreva um subitem "**Antídoto Prático:**" com 3 ações concretas e específicas que ${primeiroNome} pode adotar nos próximos 30 dias. Seja cirúrgico e acionável.`
+**ATENÇÃO CRÍTICA:** Não mencione, não sugira e não inclua QUALQUER referência a "antídoto", ações práticas paliativas ou soluções temporárias para os bloqueios nesta seção, uma vez que este relatório já visa à Harmonização definitiva do Nome Social, sendo esta a única solução real e permanente.`
   : `**Celebre a ausência de bloqueios:** Escreva 2 parágrafos sobre o que significa ter os 4 triângulos limpos. Que tipo de fluidez, resiliência e facilidade isso cria na vida de ${primeiroNome}.`
 }
 
