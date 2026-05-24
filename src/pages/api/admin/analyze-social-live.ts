@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       bdDataStr = body.data_nascimento || '';
     }
 
-    // Calcula apenas o Nome de Nascimento (sem puxar sugestões em tempo real)
+    // Calcula o Nome de Nascimento
     const analiseNascimento = analisarNomeSocial(body.nome_nascimento, bdDataStr);
     const triangulosNascimento = calcularTodosTriangulos(body.nome_nascimento, bdDataStr);
 
@@ -60,12 +60,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
       triangulos: triangulosNascimento,
     };
 
+    // Calcula os candidatos do usuário digitados no formulário (sem gerar sugestões automáticas do sistema em tempo real)
+    const candidatosEnriquecidos = (body.nomes_candidatos || [])
+      .map(cand => {
+        const analise = analisarNomeSocial(cand, bdDataStr, 'usuario');
+        const triangulos = calcularTodosTriangulos(cand, bdDataStr);
+        return {
+          ...analise,
+          triangulos,
+        };
+      });
+
+    // Ordena os candidatos digitados por score decrescente
+    candidatosEnriquecidos.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+    // O melhor nome é o candidato com melhor score, ou o próprio nome de nascimento se não houver candidatos
+    const melhorNome = candidatosEnriquecidos[0] || analiseEnriquecida;
+
+    // Retorna nascimento primeiro, seguido dos candidatos ordenados
+    const nomesCandidatos = [analiseEnriquecida, ...candidatosEnriquecidos];
+
     return json({
       nomeNascimento: body.nome_nascimento,
       dataNascimento: bdDataStr,
       destino: analiseNascimento.destino,
-      nomesCandidatos: [analiseEnriquecida],
-      melhorNome: analiseEnriquecida,
+      nomesCandidatos,
+      melhorNome,
       top3: [],
     });
   } catch (error: any) {

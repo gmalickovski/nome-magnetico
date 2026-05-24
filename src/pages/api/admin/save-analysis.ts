@@ -153,7 +153,7 @@ Os arcanos de passagem e a regência do nome empresarial foram calculados para s
         calcDataNasc = `${d}/${m}/${y}`;
       }
 
-      resultadoSocial = analisarNomesSocial([], nome_completo, calcDataNasc);
+      resultadoSocial = analisarNomesSocial(body.nomes_candidatos || [], nome_completo, calcDataNasc);
       const melhorNome = resultadoSocial.melhorNome;
       const melhorNomeTriangulos = melhorNome
         ? calcularTodosTriangulos(melhorNome.nomeCompleto, calcDataNasc)

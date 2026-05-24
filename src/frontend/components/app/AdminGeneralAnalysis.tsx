@@ -645,6 +645,21 @@ export default function AdminGeneralAnalysis() {
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors"
                   />
                 </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 block mb-1">
+                    Nomes Candidatos (Um por linha - Opcional)
+                  </label>
+                  <textarea
+                    value={socialCandidates}
+                    onChange={e => setSocialCandidates(e.target.value)}
+                    rows={4}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#f2ca50] transition-colors font-sans resize-none"
+                    placeholder="Ex: Mari&#10;Maria Santos&#10;Mariana Santos..."
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Se você informar nomes candidatos, eles entram no ranking de avaliação. Se deixar vazio, o sistema gerará variações automaticamente ao salvar.
+                  </p>
+                </div>
               </div>
             )}
 
