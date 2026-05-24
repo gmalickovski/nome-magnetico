@@ -507,7 +507,7 @@ export function PDFFeedbackButton({
           style={{
             opacity: 1,
             transition: 'opacity 0.4s ease, background-color 0.3s, box-shadow 0.3s, transform 0.1s',
-            bottom: 'calc(62px + max(0.5rem, env(safe-area-inset-bottom)))',
+            bottom: 'calc(88px + max(0.5rem, env(safe-area-inset-bottom)))',
           }}
           id="pdf-download-btn"
         >
