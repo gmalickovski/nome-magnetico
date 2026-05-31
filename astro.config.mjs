@@ -5,6 +5,7 @@ import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
 
 export default defineConfig({
+  site: 'https://www.nomemagnetico.com.br',
   output: 'server',
   adapter: node({
     mode: 'standalone',

@@ -30,11 +30,11 @@ const schemaDefinedTerm = {
   '@type': 'DefinedTerm',
   name: termData.term,
   description: termData.definition_markdown?.split('\n')[0] ?? termData.term,
-  url: `https://nomemagnetico.com.br/glossario/${termData.slug}`,
+  url: `https://www.nomemagnetico.com.br/glossario/${termData.slug}`,
   inDefinedTermSet: {
     '@type': 'DefinedTermSet',
     name: 'Glossário de Numerologia Cabalística — Nome Magnético',
-    url: 'https://nomemagnetico.com.br/glossario',
+    url: 'https://www.nomemagnetico.com.br/glossario',
   },
 };
 
@@ -42,9 +42,9 @@ const schemaBreadcrumb = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://nomemagnetico.com.br' },
-    { '@type': 'ListItem', position: 2, name: 'Glossário', item: 'https://nomemagnetico.com.br/glossario' },
-    { '@type': 'ListItem', position: 3, name: termData.term, item: `https://nomemagnetico.com.br/glossario/${termData.slug}` },
+    { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.nomemagnetico.com.br' },
+    { '@type': 'ListItem', position: 2, name: 'Glossário', item: 'https://www.nomemagnetico.com.br/glossario' },
+    { '@type': 'ListItem', position: 3, name: termData.term, item: `https://www.nomemagnetico.com.br/glossario/${termData.slug}` },
   ],
 };
 ---
@@ -53,10 +53,10 @@ const schemaBreadcrumb = {
   title={`${termData.term} — O Que É na Numerologia Cabalística | Nome Magnético`}
   description={`Entenda o que é ${termData.term} na numerologia cabalística: definição completa, como calcular e como interpretar no seu mapa numerológico.`}
   keywords={`o que é ${termData.term.toLowerCase()}, ${termData.term.toLowerCase()} numerologia, significado ${termData.term.toLowerCase()}, numerologia cabalística ${termData.term.toLowerCase()}`}
+  noIndex={true}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaDefinedTerm)} />
   <script type="application/ld+json" set:html={JSON.stringify(schemaBreadcrumb)} />
-  <link rel="canonical" href={`https://nomemagnetico.com.br/glossario/${termData.slug}`} />
 
   <GlossaryHeader client:load />
 

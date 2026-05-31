@@ -39,14 +39,14 @@ const schemaProduct = {
   '@type': 'Product',
   name: 'Nome para Bebê — Análise Numerológica Cabalística',
   description: 'Escolha o nome do seu bebê com base na numerologia cabalística. Ranking de nomes candidatos compatíveis com o Número de Destino da criança e o sobrenome da família.',
-  url: 'https://nomemagnetico.com.br/nome-bebe',
+  url: 'https://www.nomemagnetico.com.br/nome-bebe',
   brand: { '@type': 'Brand', name: 'Nome Magnético' },
   offers: {
     '@type': 'Offer',
     price: (getPrice('nome_bebe').cents / 100).toFixed(2),
     priceCurrency: 'BRL',
     availability: 'https://schema.org/InStock',
-    url: 'https://nomemagnetico.com.br/comprar?produto=nome_bebe',
+    url: 'https://www.nomemagnetico.com.br/comprar?produto=nome_bebe',
   },
 };
 ---
@@ -58,7 +58,6 @@ const schemaProduct = {
   showChatwoot={true}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaProduct)} />
-  <link rel="canonical" href="https://nomemagnetico.com.br/nome-bebe" />
 
   <LandingHeader client:load />
 

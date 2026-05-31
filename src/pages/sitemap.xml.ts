@@ -15,6 +15,9 @@ export const GET: APIRoute = async () => {
   const staticPages = [
     { url: '/', changefreq: 'weekly', priority: '1.0', lastmod: currentDate },
     { url: '/blog', changefreq: 'daily', priority: '0.9', lastmod: currentDate },
+    { url: '/blog/sobre', changefreq: 'monthly', priority: '0.6', lastmod: currentDate },
+    { url: '/sobre', changefreq: 'monthly', priority: '0.6', lastmod: currentDate },
+    { url: '/glossario', changefreq: 'monthly', priority: '0.5', lastmod: currentDate },
     { url: '/nome-social', changefreq: 'weekly', priority: '0.9', lastmod: currentDate },
     { url: '/nome-bebe', changefreq: 'weekly', priority: '0.9', lastmod: currentDate },
     { url: '/nome-empresarial', changefreq: 'weekly', priority: '0.9', lastmod: currentDate },

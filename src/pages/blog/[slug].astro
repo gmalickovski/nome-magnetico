@@ -132,6 +132,9 @@ function formatDateShort(dateStr?: string | null): string {
 const readMins = readingTime(post.content_markdown);
 const seoKeywords = (post.keywords ?? post.meta_tags ?? []).join(', ');
 const categorySlug = post.category ?? null;
+const displayAuthor = post.author && post.author !== 'Nome Magnético'
+  ? post.author
+  : 'Claudia Delanni Vitoria';
 ---
 
 <BlogLayout
@@ -143,10 +146,8 @@ const categorySlug = post.category ?? null;
   articleSlug={post.slug}
   articlePublishedTime={post.published_at ?? post.created_at}
   articleModifiedTime={post.updated_at ?? post.published_at ?? post.created_at}
-  articleAuthor={post.author ?? 'Nome Magnético'}
+  articleAuthor={displayAuthor}
 >
-  <link rel="canonical" href={`https://nomemagnetico.com.br/blog/${post.slug}`} />
-
   <BlogHeader client:load activeCategory={categorySlug ?? ''} />
 
   <main class="blog-main min-h-screen pt-[120px] sm:pt-[124px] lg:pt-[134px] pb-12 md:pb-20">
@@ -226,7 +227,7 @@ const categorySlug = post.category ?? null;
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                {post.author ?? 'Nome Magnético'}
+                {displayAuthor}
               </span>
               {post.published_at && (
                 <span class="flex items-center gap-1.5">
@@ -244,6 +245,17 @@ const categorySlug = post.category ?? null;
                 </svg>
                 {readMins} min de leitura
               </span>
+            </div>
+
+            <div class="mt-5 rounded-2xl bg-white/3 p-4 sm:p-5 ring-1 ring-[#D4AF37]/12">
+              <p class="text-[#D4AF37] text-[10px] font-semibold tracking-widest uppercase mb-2">Curadoria editorial</p>
+              <p class="text-gray-400 text-xs sm:text-sm leading-relaxed">
+                Conteúdo escrito por <strong class="text-[#e5e2e1]">{displayAuthor}</strong>, com revisão pela metodologia Nome Magnético:
+                cálculo dos 4 triângulos cabalísticos, identificação de bloqueios e leitura simbólica aplicada ao nome.
+              </p>
+              <a href="/blog/sobre" class="inline-flex mt-3 text-xs text-[#D4AF37] hover:text-[#f2ca50] transition-colors">
+                Conheça a autora e a metodologia
+              </a>
             </div>
 
             {/* Divisor */}

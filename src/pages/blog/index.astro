@@ -86,8 +86,6 @@ const pageTitle = activeCategory
   keywords="blog numerologia cabalística, artigos numerologia, bloqueio energético nome, calcular número expressão, nome magnético"
   activeCategory={activeCategory}
 >
-  <link rel="canonical" href={`https://nomemagnetico.com.br/blog${activeCategory ? `?categoria=${activeCategory}` : ''}`} />
-
   <BlogHeader client:load activeCategory={activeCategory} />
 
   <main class="blog-main min-h-screen pt-[72px] pb-16 md:pb-20">
@@ -107,7 +105,28 @@ const pageTitle = activeCategory
           </h1>
         </div>
       ) : (
-        <div aria-hidden="true"></div>
+        <div class="py-3 sm:py-5">
+          <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-3">Biblioteca editorial</p>
+          <h1 class="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-[#e5e2e1] leading-tight mb-4">
+            Blog de Numerologia Cabalística
+          </h1>
+          <p class="text-gray-400 text-sm sm:text-base leading-relaxed max-w-3xl">
+            Guias profundos sobre nomes, 4 triângulos cabalísticos, bloqueios energéticos, assinatura, nome social,
+            nome para bebê e nome empresarial. Cada artigo traduz a metodologia do Nome Magnético em exemplos práticos
+            para quem quer entender melhor a força simbólica do próprio nome.
+          </p>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <a href="/blog/sobre" class="inline-flex items-center rounded-full bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:text-[#D4AF37] hover:bg-white/8 transition-colors">
+              Sobre o blog
+            </a>
+            <a href="/glossario" class="inline-flex items-center rounded-full bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:text-[#D4AF37] hover:bg-white/8 transition-colors">
+              Glossário
+            </a>
+            <a href="/analise-gratuita" class="inline-flex items-center rounded-full bg-[#D4AF37]/12 px-3 py-1.5 text-xs text-[#D4AF37] hover:bg-[#D4AF37]/18 transition-colors">
+              Teste gratuito
+            </a>
+          </div>
+        </div>
       )}
     </section>
 

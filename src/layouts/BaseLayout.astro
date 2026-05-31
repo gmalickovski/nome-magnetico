@@ -27,8 +27,9 @@ const {
   showChatwoot = false,
 } = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
-const ogImageAbsolute = ogImage.startsWith('http') ? ogImage : `https://nomemagnetico.com.br${ogImage}`;
+const siteOrigin = (Astro.site ?? new URL('https://www.nomemagnetico.com.br')).origin;
+const canonicalURL = new URL(Astro.url.pathname, siteOrigin);
+const ogImageAbsolute = ogImage.startsWith('http') ? ogImage : `${siteOrigin}${ogImage}`;
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const chatwootBaseUrl = process.env.CHATWOOT_BASE_URL ?? '';
 const chatwootToken = process.env.CHATWOOT_WEBSITE_TOKEN ?? '';
