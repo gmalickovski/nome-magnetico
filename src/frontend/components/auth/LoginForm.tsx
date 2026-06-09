@@ -23,6 +23,8 @@ export function LoginForm() {
       setInfoMsg('Use seu email e senha para entrar.');
     } else if (params.get('msg') === 'sem-acesso') {
       setInfoMsg('Este email não está cadastrado no Nome Magnético. Crie uma conta para começar.');
+    } else if (params.get('msg') === 'email-confirmado') {
+      setInfoMsg('Conta confirmada com sucesso! Faça login abaixo com suas credenciais.');
     }
   }, []);
 

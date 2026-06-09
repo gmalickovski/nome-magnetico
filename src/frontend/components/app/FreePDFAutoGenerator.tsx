@@ -74,6 +74,10 @@ export function FreePDFAutoGenerator({ existingAnalysisId, leadNome, leadData, a
         url.searchParams.delete('gen_free_pdf');
         window.history.replaceState({}, '', url.toString());
       } catch {}
+
+      if (autoRun) {
+        window.location.reload();
+      }
     } catch (e) {
       setStage('error');
       setErrorMsg(e instanceof Error ? e.message : 'Erro inesperado.');

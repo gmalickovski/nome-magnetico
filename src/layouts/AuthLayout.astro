@@ -17,28 +17,19 @@ const { title } = Astro.props;
       <div class="absolute inset-0 opacity-[0.06]" style="background-image: linear-gradient(rgba(242,202,80,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(242,202,80,0.14) 1px, transparent 1px); background-size: 48px 48px;"></div>
     </div>
 
-    <header class="relative z-20 w-full">
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8 lg:px-10 xl:px-0">
-        <a href="/" class="inline-flex items-center hover:opacity-85 transition-opacity duration-300" aria-label="Nome Magnético">
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-9 w-auto lg:h-12" />
-        </a>
-        <a
-          href="/"
-          class="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-5 py-2.5 text-sm font-bold text-[#D4AF37] shadow-lg shadow-[#D4AF37]/10 backdrop-blur transition-all duration-300 hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50]"
-        >
-          Voltar ao Início
-        </a>
-      </div>
-    </header>
-
     <!-- Container do Layout Flexível (duas colunas com proporções equivalentes) -->
-    <main class="relative z-10 mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-start gap-10 px-5 pt-10 pb-8 sm:px-8 lg:grid-cols-2 lg:gap-8 lg:px-10 lg:pt-14 xl:px-0">
+    <main class="relative z-10 mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-5 py-6 sm:px-8 lg:grid-cols-2 lg:gap-8 lg:px-10 lg:py-8 xl:px-0">
 
       <!-- ── Painel esquerdo — hero (oculto no mobile) ── -->
-      <section class="hidden lg:flex w-full flex-col items-start justify-start">
+      <section class="hidden lg:flex w-full flex-col items-start justify-center">
 
         <!-- Conteúdo hero -->
         <div class="flex w-full max-w-lg flex-col items-start text-left">
+          
+          <!-- Logo no topo do painel esquerdo -->
+          <a href="/" class="inline-flex items-center hover:opacity-85 transition-opacity duration-300 mb-8" aria-label="Nome Magnético">
+            <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-10 w-auto" />
+          </a>
 
         <h1 class="font-cinzel text-3xl xl:text-4xl font-bold text-[#e5e2e1] leading-tight mb-5">
           Seu nome carrega<br/>uma frequência.<br/>
@@ -53,7 +44,7 @@ const { title } = Astro.props;
         <div class="h-px w-16 bg-gradient-to-r from-[#D4AF37]/50 to-transparent mb-8"></div>
 
         <!-- Bullets de benefícios -->
-        <ul class="space-y-4 text-sm">
+        <ul class="space-y-4 text-sm mb-8">
           <li class="flex items-start gap-3">
             <span class="text-[#D4AF37] mt-0.5 flex-shrink-0">✦</span>
             <div>
@@ -76,13 +67,28 @@ const { title } = Astro.props;
             </div>
           </li>
         </ul>
+
+          <!-- Botão de Voltar no painel esquerdo -->
+          <a
+            href="/"
+            class="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-5 py-2.5 text-sm font-bold text-[#D4AF37] shadow-lg shadow-[#D4AF37]/10 backdrop-blur transition-all duration-300 hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50]"
+          >
+            Voltar ao Início
+          </a>
       </div>
     </section>
 
     <!-- ── Painel direito — formulário ── -->
-    <section class="flex w-full flex-col items-center justify-start">
+    <section class="flex w-full flex-col items-center justify-center">
+      <!-- Logo (mobile only) -->
+      <div class="lg:hidden mb-6 flex justify-center">
+        <a href="/" class="inline-flex items-center hover:opacity-85 transition-opacity duration-300" aria-label="Nome Magnético">
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-8 w-auto" />
+        </a>
+      </div>
+
       <div class="lg:hidden mb-6 max-w-sm text-center">
-        <p class="font-cinzel text-2xl font-bold leading-tight text-[#e5e2e1]">
+        <p class="font-cinzel text-xl font-bold leading-tight text-[#e5e2e1]">
           Seu nome carrega uma frequência.
         </p>
       </div>
@@ -100,13 +106,15 @@ const { title } = Astro.props;
         </div>
       </div>
 
-      <!-- Spacer inferior (Rodapé) -->
-      <div class="pt-5 text-center">
-          <p class="text-gray-700 text-xs">
-            &copy; {new Date().getFullYear()} Nome Magnético. Todos os direitos reservados.
-          </p>
-      </div>
-
+        <!-- Botão Voltar (mobile only) -->
+        <div class="lg:hidden mt-6 flex justify-center">
+          <a
+            href="/"
+            class="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-5 py-2 text-xs font-bold text-[#D4AF37] shadow-lg shadow-[#D4AF37]/10 backdrop-blur transition-all duration-300 hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50]"
+          >
+            Voltar ao Início
+          </a>
+        </div>
     </section>
 
     </main>

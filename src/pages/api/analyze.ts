@@ -497,6 +497,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
           compatibilidade,
         });
+
         marketingStats = {
           score,
           bloqueios: bloqueios.length,
@@ -520,42 +521,52 @@ export const POST: APIRoute = async ({ request, locals }) => {
           licoes_carmicas: licoesCarmicas as unknown[],
           tendencias_ocultas: tendenciasOcultas as unknown[],
           debitos_carmicos: debitosCarmicos as unknown[],
-          frequencias_numeros: frequenciasNumeros as unknown,
+          frequencias_numeros: {
+            frequencias: frequenciasNumeros,
+            ranking: {
+              melhorNome: { nomeCompleto: nome_completo.trim() },
+              dataNascimento: data_nascimento,
+            },
+          } as unknown,
           score,
         });
 
-        analiseTexto = await withTimeout(generateAnalysis(
-          {
-            nomeCompleto: nome_completo,
-            dataNascimento: data_nascimento,
-            cincoNumeros,
-            arcanoRegente,
-            todosTriangulos,
-            bloqueios,
-            licoesCarmicas,
-            tendenciasOcultas,
-            debitosCarmicos,
-            gender,
-            isCurrentNameAnalysis: !!nome_ja_escolhido || isGratuita,
-            isFreeAnalysis: isGratuita,
-          },
-          user.id,
-          analysis.id
-        ));
+        if (isGratuita) {
+          analiseTexto = '';
+        } else {
+          analiseTexto = await withTimeout(generateAnalysis(
+            {
+              nomeCompleto: nome_completo,
+              dataNascimento: data_nascimento,
+              cincoNumeros,
+              arcanoRegente,
+              todosTriangulos,
+              bloqueios,
+              licoesCarmicas,
+              tendenciasOcultas,
+              debitosCarmicos,
+              gender,
+              isCurrentNameAnalysis: !!nome_ja_escolhido || isGratuita,
+              isFreeAnalysis: isGratuita,
+            },
+            user.id,
+            analysis.id
+          ));
+        }
+
+        await updateAnalysis(analysis.id, {
+          analise_texto: analiseTexto,
+          status: 'complete',
+          completed_at: new Date().toISOString(),
+        });
+
         void sequenciasNegativas;
       }
-
-      await updateAnalysis(analysis.id, {
-        analise_texto: analiseTexto,
-        status: 'complete',
-        completed_at: new Date().toISOString(),
-      });
 
       if (isGratuita) {
         const appUrl = process.env.APP_URL ?? 'https://nomemagnetico.com.br';
         const firstName = (profile?.nome || nome_completo || user.email || 'Cliente').split(' ')[0];
         await notify('marketing.free_analysis_completed', {
-          email: profile?.email ?? user.email,
           firstName,
           userId: user.id,
           analysisId: analysis.id,

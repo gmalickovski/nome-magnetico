@@ -18,7 +18,8 @@ type NotificationEvent =
   | 'subscription.expired'
   | 'admin.new_user'
   | 'admin.new_payment'
-  | 'payment.refunded';
+  | 'payment.refunded'
+  | 'free_analysis.requested';
 
 type MarketingEvent =
   | 'marketing.free_analysis_completed'
@@ -38,6 +39,7 @@ interface NotificationPayload {
   renewUrl?: string;
   userId?: string;
   productType?: string;
+  downloadUrl?: string;
   [key: string]: unknown;
 }
 

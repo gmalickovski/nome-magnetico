@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bem-vindo ao Nome Magnético</title>
+  <!--[if !mso]><!-->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" type="text/css">
+  <!--<![endif]-->
+  <style type="text/css">
+    @font-face { font-family:'Cinzel'; font-style:normal; font-weight:400; mso-font-alt:'Georgia'; src:url(https://fonts.gstatic.com/s/cinzel/v26/8vIU7ww63mVu7gtR-kwKxNvkNOjw-tbnTYo.ttf) format('truetype'); }
+    @font-face { font-family:'Cinzel'; font-style:normal; font-weight:700; mso-font-alt:'Georgia'; src:url(https://fonts.gstatic.com/s/cinzel/v26/8vIU7ww63mVu7gtR-kwKxNvkNOjw-jHgTYo.ttf) format('truetype'); }
+    @font-face { font-family:'Inter'; font-style:normal; font-weight:300; mso-font-alt:'Arial'; src:url(https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuOKfMZg.ttf) format('truetype'); }
+    @font-face { font-family:'Inter'; font-style:normal; font-weight:400; mso-font-alt:'Arial'; src:url(https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZg.ttf) format('truetype'); }
+    @font-face { font-family:'Inter'; font-style:normal; font-weight:500; mso-font-alt:'Arial'; src:url(https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZg.ttf) format('truetype'); }
+  
+    @media screen and (max-width: 600px) {
+      .outer-table {
+        padding: 16px 8px !important;
+      }
+      .inner-card-header {
+        padding: 24px 16px !important;
+      }
+      .inner-card-body {
+        padding: 24px 16px 32px !important;
+      }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#131313;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+  <table class="outer-table" width="100%" cellpadding="0" cellspacing="0" style="background-color:#131313;padding:48px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <a href="https://www.nomemagnetico.com.br" style="text-decoration:none;">
+                <img src="https://www.nomemagnetico.com.br/logo-nomemagnetico-header-pdf.png" alt="Nome Magnético" width="180" style="border:0;display:block;outline:none;text-decoration:none;width:180px;max-width:100%;height:auto;" />
+              </a>
+            </td>
+          </tr>
+
+          <!-- Banner -->
+          <tr>
+            <td class="inner-card-header" style="background:linear-gradient(135deg,#1a1a1a 0%,#2a2010 100%);border-radius:24px 24px 0 0;padding:40px 32px;text-align:center;">
+              <div style="font-size:48px;margin-bottom:16px;">✨</div>
+              <h2 style="margin:0;font-family:'Cinzel',Georgia,serif;font-size:20px;font-weight:700;color:#D4AF37;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase;">
+                Bem-vindo, {{ .Data.nome }}!
+              </h2>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td class="inner-card-body" style="background-color:#1c1c1c;border-radius:0 0 24px 24px;padding:36px 32px 40px;">
+              <p style="margin:0 0 16px;font-size:16px;color:#e5e2e1;line-height:1.7;font-family:'Inter',sans-serif;">
+                Sua conta no Nome Magnético foi criada com sucesso. Estamos felizes em tê-lo aqui!
+              </p>
+              <p style="margin:0 0 32px;font-size:15px;color:#76746a;line-height:1.7;font-family:'Inter',sans-serif;font-weight:300;">
+                Descubra como seu nome de nascimento influencia sua energia e sua trajetória de vida. Identifique bloqueios vibracionais ativos na sua essência e encontre o alinhamento que ressoa com seu destino.
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:36px;">
+                    <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup" style="display:inline-block;background:linear-gradient(135deg,#f2ca50 0%,#D4AF37 100%);color:#131313;font-size:14px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:100px;letter-spacing:2px;text-transform:uppercase;font-family:'Inter',sans-serif;">
+                      Confirmar meu E-mail
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Celestial Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="height:1px;background:linear-gradient(to right,transparent,rgba(212,175,55,0.25),transparent);font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-size:13px;color:#76746a;text-align:center;font-family:'Inter',sans-serif;">
+                Dúvidas? Entre em contato pelo nosso
+                <a href="https://nomemagnetico.com.br/suporte" style="color:#D4AF37;text-decoration:none;font-weight:500;">suporte</a>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td style="height:32px;"></td></tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center">
+              <p style="margin:0;font-size:12px;color:#4a4a4a;font-family:'Inter',sans-serif;letter-spacing:0.5px;">
+                © 2026 Nome Magnético. Todos os direitos reservados.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

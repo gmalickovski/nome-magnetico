@@ -8,6 +8,7 @@ export interface Props {
   ogImage?: string;
   ogType?: string;
   noIndex?: boolean;
+  noIndexFollow?: boolean;
   hasBottomNav?: boolean;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
@@ -21,6 +22,7 @@ const {
   ogImage = '/og-image.jpg',
   ogType = 'website',
   noIndex = false,
+  noIndexFollow = false,
   hasBottomNav = false,
   articlePublishedTime,
   articleModifiedTime,
@@ -30,6 +32,9 @@ const {
 const siteOrigin = (Astro.site ?? new URL('https://www.nomemagnetico.com.br')).origin;
 const canonicalURL = new URL(Astro.url.pathname, siteOrigin);
 const ogImageAbsolute = ogImage.startsWith('http') ? ogImage : `${siteOrigin}${ogImage}`;
+const robotsContent = noIndex
+  ? (noIndexFollow ? 'noindex, follow' : 'noindex, nofollow')
+  : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const chatwootBaseUrl = process.env.CHATWOOT_BASE_URL ?? '';
 const chatwootToken = process.env.CHATWOOT_WEBSITE_TOKEN ?? '';
@@ -48,10 +53,7 @@ const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? 'G-HKWP55XDYY'
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords} />
     <link rel="canonical" href={canonicalURL} />
-    {noIndex
-      ? <meta name="robots" content="noindex, nofollow" />
-      : <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    }
+    <meta name="robots" content={robotsContent} />
 
     <!-- Geo (Brasil) -->
     <meta name="geo.region" content="BR" />

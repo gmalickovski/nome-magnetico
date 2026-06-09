@@ -15,12 +15,30 @@ import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoG
 import { MailWarning } from '../../frontend/components/app/MailWarning';
 import { DashboardCheckoutButton } from '../../frontend/components/app/DashboardCheckoutButton';
 import { getHqPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
+import { InitialAnalysisModal } from '../../frontend/components/app/InitialAnalysisModal';
+
+// Funções de numerologia locais para cálculo instantâneo da análise gratuita do lead
+import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
+import {
+  calcularExpressao,
+  calcularDestino,
+  calcularMotivacao,
+  calcularImpressao,
+  calcularMissao,
+} from '../../backend/numerology/numbers';
+import {
+  detectarLicoesCarmicas,
+  detectarTendenciasOcultas,
+  mapearFrequencias,
+  calcularDebitosCarmicos,
+} from '../../backend/numerology/karmic';
+import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
+import { calcularScore } from '../../backend/numerology/score';
 
 // Verifica parÃ¢metros de URL
 const showFreeUsedModal   = Astro.url.searchParams.get('free_used') === 'true';
 const showCheckoutSuccess = Astro.url.searchParams.get('checkout') === 'success';
 const checkoutProduct     = Astro.url.searchParams.get('produto') ?? null;
-const genFreePdf          = Astro.url.searchParams.get('gen_free_pdf') === '1';
 
 // Verificar admin e dados do perfil
 let isAdmin     = false;
@@ -58,36 +76,107 @@ try {
   freeAnalysisId = foundFreeAnalysis?.id ?? null;
 } catch {}
 
-// Busca lead pelo email do usuÃ¡rio (para auto-geraÃ§Ã£o apÃ³s primeiro cadastro)
+// Sincronização automática de lead por e-mail para novas contas
 let leadNome: string | null = null;
 let leadData: string | null = null;
-if (genFreePdf && !freeAnalysisId && user.email) {
+let showOnboardingModal = false;
+
+if (!freeAnalysisId && user.email) {
   try {
     const { data: lead } = await supabase
-      .from('analise_leads')
+      .from('free_analyses_leads')
       .select('id, nome_completo, data_nascimento')
       .eq('email', user.email.toLowerCase().trim())
-      .is('converted_user_id', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+
     if (lead) {
       leadNome = lead.nome_completo;
-      leadData = lead.data_nascimento;
-      const parts = lead.data_nascimento.split('/');
-      const leadBirthDateDb = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : lead.data_nascimento;
-      supabase.from('profiles').update({
+      const parts = lead.data_nascimento.split('-');
+      const formattedBirthDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : lead.data_nascimento;
+      leadData = formattedBirthDate;
+
+      // 1. Calcular a numerologia localmente (sem chamar IA)
+      const todosTriangulos = calcularTodosTriangulos(lead.nome_completo, formattedBirthDate);
+      const bloqueios = detectarBloqueios(todosTriangulos);
+      const expressao = calcularExpressao(lead.nome_completo);
+      const destino = calcularDestino(formattedBirthDate);
+      const motivacao = calcularMotivacao(lead.nome_completo);
+      const impressao = calcularImpressao(lead.nome_completo);
+      const missao = calcularMissao(lead.nome_completo, formattedBirthDate);
+      const licoesCarmicas = detectarLicoesCarmicas(lead.nome_completo);
+      const tendenciasOcultas = detectarTendenciasOcultas(lead.nome_completo);
+      const debitosCarmicos = calcularDebitosCarmicos(formattedBirthDate, destino, motivacao, expressao);
+      const frequencias = mapearFrequencias(lead.nome_completo);
+      const score = calcularScore({
+        bloqueios: bloqueios.length,
+        licoesCarmicas: licoesCarmicas.length,
+        tendenciasOcultas: tendenciasOcultas.length,
+        debitosCarmicos: debitosCarmicos.length,
+        debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
+        compatibilidade: avaliarCompatibilidade(expressao, destino),
+      });
+
+      // 2. Criar a análise no banco como concluída (complete)
+      const { data: newAnalysis, error: analysisError } = await supabase
+        .from('analyses')
+        .insert({
+          user_id: user.id,
+          product_type: 'analise_gratuita',
+          nome_completo: lead.nome_completo,
+          data_nascimento: lead.data_nascimento,
+          numero_expressao: expressao,
+          numero_destino: destino,
+          numero_motivacao: motivacao,
+          numero_missao: missao,
+          numero_impressao: impressao,
+          numero_personalidade: impressao,
+          arcano_regente: todosTriangulos.vida.arcanoRegente,
+          bloqueios: bloqueios,
+          triangulo_vida: todosTriangulos.vida,
+          triangulo_pessoal: todosTriangulos.pessoal,
+          triangulo_social: todosTriangulos.social,
+          triangulo_destino: todosTriangulos.destino,
+          licoes_carmicas: licoesCarmicas,
+          tendencias_ocultas: tendenciasOcultas,
+          debitos_carmicos: debitosCarmicos,
+          frequencias_numeros: {
+            frequencias,
+            ranking: {
+              melhorNome: { nomeCompleto: lead.nome_completo },
+              dataNascimento: lead.data_nascimento,
+            },
+          },
+          score,
+          is_free: true,
+          status: 'complete',
+          completed_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (!analysisError && newAnalysis) {
+        freeAnalysis = newAnalysis;
+        freeAnalysisId = newAnalysis.id;
+      } else if (analysisError) {
+        console.error('[index.astro] Erro ao criar análise gratuita:', analysisError.message);
+      }
+
+      // Salva dados no profiles
+      await supabase.from('profiles').update({
         birth_name: lead.nome_completo,
-        birth_date: leadBirthDateDb,
+        birth_date: lead.data_nascimento,
         updated_at: new Date().toISOString(),
-      }).eq('id', user.id).then(() => {});
-      // Marca o lead como convertido (fire and forget)
-      supabase.from('analise_leads').update({
-        converted_user_id: user.id,
-        converted_at: new Date().toISOString(),
-      }).eq('id', lead.id).then(() => {});
+      }).eq('id', user.id);
+    } else {
+      // Se não há lead e não há análise, mostra o modal de onboarding
+      showOnboardingModal = true;
     }
-  } catch {}
+  } catch (e) {
+    console.error('[index.astro] Erro ao sincronizar lead gratuito:', e);
+    showOnboardingModal = true;
+  }
 }
 
 // Admin: acesso total sem verificar subscriptions
@@ -424,23 +513,56 @@ const products = [
 
           {(() => {
             const theme = getScoreTheme(featuredAnalysis.score);
+            const scoreVal = Math.max(0, Math.min(100, featuredAnalysis.score ?? 0));
+            // Circunferência de raio 44 é 2 * PI * 44 = 276.46
+            const circumference = 276.46;
+            const strokeDashoffset = circumference * (1 - scoreVal / 100);
             return (
-              <div
-                class="order-1 mx-auto flex aspect-square w-44 flex-col items-center justify-center rounded-full border bg-[#111111] md:order-2 md:w-56"
-                style={`border-color:${theme.border}; background:radial-gradient(circle at 50% 30%, ${theme.bg}, #111111 58%); box-shadow:${theme.shadow};`}
-              >
-                <span class="font-cinzel text-6xl font-bold md:text-7xl" style={`color:${theme.color};`}>
-                  {featuredAnalysis.score ?? 0}
-                </span>
-                <span class="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
-                  {featuredIsSocial ? 'Melhor score' : 'Score atual'}
-                </span>
-                <span
-                  class="mt-3 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em]"
-                  style={`background-color:${theme.pillBg}; color:${theme.pillColor};`}
+              <div class="relative flex items-center justify-center w-44 h-44 md:w-56 md:h-56 mx-auto order-1 md:order-2">
+                <!-- SVG de Progresso Circular -->
+                <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <!-- Círculo de Fundo -->
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    fill="transparent"
+                    stroke="rgba(255,255,255,0.03)"
+                    stroke-width="4"
+                  />
+                  <!-- Círculo de Progresso -->
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    fill="transparent"
+                    stroke={theme.color}
+                    stroke-width="4"
+                    stroke-dasharray={circumference}
+                    stroke-dashoffset={strokeDashoffset}
+                    stroke-linecap="round"
+                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;"
+                  />
+                </svg>
+
+                <!-- Conteúdo Interno -->
+                <div
+                  class="flex flex-col items-center justify-center rounded-full w-[88%] h-[88%] bg-[#111111]"
+                  style={`background:radial-gradient(circle at 50% 30%, ${theme.bg}, #111111 58%); box-shadow:${theme.shadow};`}
                 >
-                  {theme.label} · {featuredBlockCount} bloqueios
-                </span>
+                  <span class="font-cinzel text-5xl font-bold md:text-6xl" style={`color:${theme.color};`}>
+                    {scoreVal}
+                  </span>
+                  <span class="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                    {featuredIsSocial ? 'Melhor score' : 'Score atual'}
+                  </span>
+                  <span
+                    class="mt-2.5 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-[0.12em]"
+                    style={`background-color:${theme.pillBg}; color:${theme.pillColor};`}
+                  >
+                    {theme.label} · {featuredBlockCount} {featuredBlockCount === 1 ? 'bloqueio' : 'bloqueios'}
+                  </span>
+                </div>
               </div>
             );
           })()}
@@ -448,24 +570,15 @@ const products = [
       </section>
     )}
 
-    {genFreePdf && !freeAnalysisId && !!leadNome && !!leadData && (
+    {!freeAnalysisId && leadNome && leadData && (
       <div>
         <FreePDFAutoGenerator
           client:load
-          existingAnalysisId={freeAnalysisId}
+          existingAnalysisId={null}
           leadNome={leadNome}
           leadData={leadData}
           autoRun={true}
         />
-      </div>
-    )}
-    {genFreePdf && freeAnalysisId && (
-      <div>
-      <FreePDFAutoGenerator
-        client:load
-        existingAnalysisId={freeAnalysisId}
-        autoRun={true}
-      />
       </div>
     )}
 
@@ -566,6 +679,7 @@ const products = [
   </div>
   
   {showFreeUsedModal && <FreeUsedModal client:only="react" />}
+  {showOnboardingModal && <InitialAnalysisModal client:only="react" />}
 
   <style>
     .product-card-themed {

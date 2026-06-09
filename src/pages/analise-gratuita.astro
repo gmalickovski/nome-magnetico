@@ -37,18 +37,18 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
 
       <p class="text-gray-400 text-base md:text-lg leading-relaxed mb-8">
         Calcule agora os bloqueios energéticos, lições kármicas e os 5 números principais
-        do seu nome de nascimento — sem precisar criar conta.
+        do seu nome de nascimento. Você receberá o relatório completo em PDF direto no seu e-mail.
       </p>
 
       <!-- Bullets -->
       <ul class="flex flex-col sm:flex-row sm:flex-wrap items-center sm:justify-center gap-x-6 gap-y-2 mb-8">
         {[
-          'Análise instantânea e gratuita',
+          'Relatório em PDF enviado por e-mail',
           '4 triângulos numerológicos cabalísticos',
-          'PDF completo após criar conta (grátis)',
+          'Identificação de bloqueios e lições kármicas',
         ].map(item => (
           <li class="flex items-center gap-2 text-gray-400 text-sm">
-            <span class="text-[#2DD4BF] text-xs">✦</span>
+            <span class="text-[#D4AF37] text-xs">✦</span>
             {item}
           </li>
         ))}
@@ -57,7 +57,7 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
 
     <!-- FORMULÁRIO / RESULTADO — largura completa no desktop -->
     <section class="max-w-4xl mx-auto px-4 pb-4">
-      <PublicAnalysisForm isLoggedIn={!!user} client:load />
+      <PublicAnalysisForm client:load />
     </section>
 
     <!-- O QUE A ANÁLISE REVELA -->

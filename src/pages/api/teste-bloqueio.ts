@@ -1,48 +1,42 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
+import { supabase } from '../../backend/db/supabase';
+import { notify } from '../../backend/notifications/notify';
 import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
-import { calcularCincoNumeros } from '../../backend/numerology/numbers';
+import {
+  calcularExpressao,
+  calcularDestino,
+  calcularMotivacao,
+  calcularImpressao,
+  calcularMissao,
+} from '../../backend/numerology/numbers';
+import {
+  detectarLicoesCarmicas,
+  detectarTendenciasOcultas,
+  mapearFrequencias,
+  calcularDebitosCarmicos,
+} from '../../backend/numerology/karmic';
+import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
+import { calcularScore } from '../../backend/numerology/score';
+import { renderToBuffer } from '@react-pdf/renderer';
+import React from 'react';
+import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
 
 const schema = z.object({
   nome_completo: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
   data_nascimento: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Formato: DD/MM/AAAA'),
+  email: z.string().email('E-mail inválido'),
 });
 
-// Rate limit simples em memória (produção: usar Redis)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 3;
-const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hora
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
-    return true;
+function toDbDate(date: string): string {
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+    const [d, m, y] = date.split('/');
+    return `${y}-${m}-${d}`;
   }
-
-  if (entry.count >= RATE_LIMIT) return false;
-
-  entry.count++;
-  return true;
+  return date;
 }
 
-export const POST: APIRoute = async ({ request }) => {
-  // Rate limit por IP
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('cf-connecting-ip') ??
-    '0.0.0.0';
-
-  if (!checkRateLimit(ip)) {
-    return new Response(
-      JSON.stringify({ error: 'Muitas requisições. Tente novamente em 1 hora.' }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  // Validar body
+export const POST: APIRoute = async ({ request, url }) => {
   let body: unknown;
   try {
     body = await request.json();
@@ -61,45 +55,161 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  const { nome_completo, data_nascimento } = parsed.data;
+  const { nome_completo, data_nascimento, email } = parsed.data;
+  const normalizedEmail = email.trim().toLowerCase();
 
   try {
-    const todosTriangulos = calcularTodosTriangulos(nome_completo, data_nascimento);
-    const bloqueios = detectarBloqueios(todosTriangulos);
-    const cincoNumeros = calcularCincoNumeros(nome_completo, data_nascimento);
+    // 1. Verificar se este e-mail já solicitou uma análise gratuita
+    const { data: existingLeads } = await supabase
+      .from('free_analyses_leads')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .limit(1);
 
-    // Retornar apenas dados parciais (chamariz — análise completa requer pagamento)
+    if (existingLeads && existingLeads.length > 0) {
+      return new Response(
+        JSON.stringify({ error: 'already_requested' }),
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Criar o registro na tabela de leads de análises gratuitas como pendente
+    const { data: lead, error: insertError } = await supabase
+      .from('free_analyses_leads')
+      .insert({
+        email: normalizedEmail,
+        nome_completo: nome_completo.trim(),
+        data_nascimento: toDbDate(data_nascimento),
+        status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (insertError || !lead) {
+      throw new Error(`Erro ao salvar lead no Supabase: ${insertError?.message}`);
+    }
+
+    // 3. Executar o processamento em background (não bloqueia a resposta HTTP para a landing page)
+    (async () => {
+      try {
+        // Atualizar status para processando
+        await supabase
+          .from('free_analyses_leads')
+          .update({ status: 'processing' })
+          .eq('id', lead.id);
+
+        // Cálculos numerológicos locais
+        const todosTriangulos = calcularTodosTriangulos(nome_completo, data_nascimento);
+        const bloqueios = detectarBloqueios(todosTriangulos);
+        const expressao = calcularExpressao(nome_completo);
+        const destino = calcularDestino(data_nascimento);
+        const motivacao = calcularMotivacao(nome_completo);
+        const impressao = calcularImpressao(nome_completo);
+        const missao = calcularMissao(nome_completo, data_nascimento);
+        const licoesCarmicas = detectarLicoesCarmicas(nome_completo);
+        const tendenciasOcultas = detectarTendenciasOcultas(nome_completo);
+        const debitosCarmicos = calcularDebitosCarmicos(data_nascimento, destino, motivacao, expressao);
+        const frequencias = mapearFrequencias(nome_completo);
+        const score = calcularScore({
+          bloqueios: bloqueios.length,
+          licoesCarmicas: licoesCarmicas.length,
+          tendenciasOcultas: tendenciasOcultas.length,
+          debitosCarmicos: debitosCarmicos.length,
+          debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
+          compatibilidade: avaliarCompatibilidade(expressao, destino),
+        });
+
+        // Montar objeto de análise compatível com NomeAtualPDF
+        const analysisObj = {
+          nome_completo: nome_completo.trim(),
+          data_nascimento: toDbDate(data_nascimento),
+          numero_expressao: expressao,
+          numero_destino: destino,
+          numero_motivacao: motivacao,
+          numero_missao: missao,
+          numero_impressao: impressao,
+          numero_personalidade: impressao,
+          arcano_regente: todosTriangulos.vida.arcanoRegente,
+          bloqueios,
+          triangulo_vida: todosTriangulos.vida,
+          triangulo_pessoal: todosTriangulos.pessoal,
+          triangulo_social: todosTriangulos.social,
+          triangulo_destino: todosTriangulos.destino,
+          licoes_carmicas: licoesCarmicas,
+          tendencias_ocultas: tendenciasOcultas,
+          debitos_carmicos: debitosCarmicos,
+          frequencias_numeros: {
+            frequencias,
+            ranking: {
+              melhorNome: { nomeCompleto: nome_completo.trim() },
+              dataNascimento: toDbDate(data_nascimento),
+            },
+          },
+          analise_texto: null,
+          score,
+          is_free: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+        };
+
+        // Renderizar o PDF do relatório
+        const pdfBuffer = await renderToBuffer(
+          React.createElement(NomeAtualPDF, {
+            analysis: analysisObj as any,
+            magneticNames: [],
+            userName: nome_completo.split(' ')[0],
+          }) as any
+        );
+        const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+
+        // Atualizar o registro com o PDF gerado
+        await supabase
+          .from('free_analyses_leads')
+          .update({
+            pdf_base64: pdfBase64,
+          })
+          .eq('id', lead.id);
+
+        // Chamar n8n para enviar o e-mail via notify
+        await notify('free_analysis.requested', {
+          email: normalizedEmail,
+          firstName: nome_completo.split(' ')[0] || nome_completo,
+          fullName: nome_completo,
+          downloadUrl: `${url.origin}/api/download-pdf?id=${lead.id}`
+        });
+
+        // Atualizar o status do lead para concluído
+        await supabase
+          .from('free_analyses_leads')
+          .update({
+            status: 'complete',
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', lead.id);
+
+      } catch (err: any) {
+        console.error(`[teste-bloqueio background] erro processando ID ${lead.id}:`, err.message);
+        await supabase
+          .from('free_analyses_leads')
+          .update({
+            status: 'error',
+            error_message: err.message ?? String(err),
+          })
+          .eq('id', lead.id);
+      }
+    })();
+
+    // Retorna imediatamente informando que foi recebido com sucesso
     return new Response(
-      JSON.stringify({
-        nome: nome_completo.split(' ')[0],
-        arcanoRegente: todosTriangulos.vida.arcanoRegente,
-        quantidadeBloqueios: bloqueios.length,
-        bloqueios: bloqueios.map(b => ({
-          codigo: b.codigo,
-          titulo: b.titulo,
-          // Só mostrar o início da descrição como teaser
-          descricao: b.descricao.split('.')[0] + '.',
-        })),
-        numerosBasicos: {
-          expressao: cincoNumeros.expressao,
-          destino: cincoNumeros.destino,
-        },
-        temBloqueios: bloqueios.length > 0,
-        // Análise completa requer plano
-        analiseCompleta: null,
-        cta: {
-          mensagem: bloqueios.length > 0
-            ? `${nome_completo.split(' ')[0]}, detectamos ${bloqueios.length} bloqueio(s) no seu nome. A análise completa revela como transformar essa energia.`
-            : `${nome_completo.split(' ')[0]}, seu nome tem uma vibração energética poderosa! Descubra como potencializá-la ainda mais.`,
-          url: '/#precos',
-        },
-      }),
+      JSON.stringify({ success: true, leadId: lead.id }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  } catch (err) {
+
+  } catch (err: any) {
     console.error('[teste-bloqueio] Erro:', err);
     return new Response(
-      JSON.stringify({ error: 'Erro ao processar análise' }),
+      JSON.stringify({ error: err.message ?? 'Erro ao processar análise' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

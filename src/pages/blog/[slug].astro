@@ -129,12 +129,22 @@ function formatDateShort(dateStr?: string | null): string {
   return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function dateKey(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  return new Date(dateStr).toISOString().slice(0, 10);
+}
+
 const readMins = readingTime(post.content_markdown);
 const seoKeywords = (post.keywords ?? post.meta_tags ?? []).join(', ');
 const categorySlug = post.category ?? null;
 const displayAuthor = post.author && post.author !== 'Nome Magnético'
   ? post.author
   : 'Claudia Delanni Vitoria';
+const wasUpdated = Boolean(
+  post.updated_at
+  && post.published_at
+  && dateKey(post.updated_at) !== dateKey(post.published_at)
+);
 ---
 
 <BlogLayout
@@ -236,6 +246,15 @@ const displayAuthor = post.author && post.author !== 'Nome Magnético'
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <time datetime={post.published_at}>{formatDateFull(post.published_at)}</time>
+                </span>
+              )}
+              {wasUpdated && post.updated_at && (
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h5M20 20v-5h-5M5 13a7 7 0 0012 4M19 11A7 7 0 007 7" />
+                  </svg>
+                  Atualizado em <time datetime={post.updated_at}>{formatDateFull(post.updated_at)}</time>
                 </span>
               )}
               <span class="flex items-center gap-1.5">

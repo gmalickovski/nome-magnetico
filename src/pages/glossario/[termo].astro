@@ -54,6 +54,7 @@ const schemaBreadcrumb = {
   description={`Entenda o que é ${termData.term} na numerologia cabalística: definição completa, como calcular e como interpretar no seu mapa numerológico.`}
   keywords={`o que é ${termData.term.toLowerCase()}, ${termData.term.toLowerCase()} numerologia, significado ${termData.term.toLowerCase()}, numerologia cabalística ${termData.term.toLowerCase()}`}
   noIndex={true}
+  noIndexFollow={true}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaDefinedTerm)} />
   <script type="application/ld+json" set:html={JSON.stringify(schemaBreadcrumb)} />

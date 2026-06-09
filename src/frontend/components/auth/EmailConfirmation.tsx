@@ -54,18 +54,53 @@ export function EmailConfirmation() {
       const produto = params.get('produto');
       const redirect = params.get('redirect');
 
-      setNextUrl(redirect || (produto ? `/comprar?produto=${produto}` : '/app'));
+      const isRecovery = type === 'recovery';
+      if (!isRecovery) {
+        const loginParams = new URLSearchParams();
+        loginParams.set('msg', 'email-confirmado');
+        if (produto) loginParams.set('produto', produto);
+        if (redirect) loginParams.set('redirect', redirect);
+        setNextUrl(`/auth/login?${loginParams.toString()}`);
+      } else {
+        setNextUrl(redirect || (produto ? `/comprar?produto=${produto}` : '/app'));
+      }
 
       try {
         if (tokenHash) {
           const otpType = type === 'magiclink' || type === 'email' || type === 'signup' ? type : 'magiclink';
-          const { data, error } = await supabaseBrowser.auth.verifyOtp({
+          let verifyRes = await supabaseBrowser.auth.verifyOtp({
             token_hash: tokenHash,
-            type: otpType,
+            type: otpType as any,
           });
-          if (error) throw error;
-          syncSessionCookies(data.session);
-          await markVerified(await getActiveAccessToken(data.session));
+
+          // Se falhar e o tipo tentado foi magiclink, tenta signup como fallback
+          if (verifyRes.error && otpType === 'magiclink') {
+            console.log('[EmailConfirmation] Falha com magiclink, tentando signup como fallback...', verifyRes.error.message);
+            verifyRes = await supabaseBrowser.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: 'signup',
+            });
+          }
+          // Se falhar e o tipo tentado foi signup, tenta magiclink como fallback
+          else if (verifyRes.error && otpType === 'signup') {
+            console.log('[EmailConfirmation] Falha com signup, tentando magiclink como fallback...', verifyRes.error.message);
+            verifyRes = await supabaseBrowser.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: 'magiclink',
+            });
+          }
+
+          if (verifyRes.error) throw verifyRes.error;
+
+          syncSessionCookies(verifyRes.data.session);
+          await markVerified(await getActiveAccessToken(verifyRes.data.session));
+
+          if (!isRecovery) {
+            await supabaseBrowser.auth.signOut();
+            document.cookie = 'nome-magnetico-auth-access-token=; path=/; max-age=0; SameSite=Lax';
+            document.cookie = 'nome-magnetico-auth-refresh-token=; path=/; max-age=0; SameSite=Lax';
+          }
+
           if (!cancelled) setState('success');
           return;
         }
@@ -75,6 +110,13 @@ export function EmailConfirmation() {
           if (error) throw error;
           syncSessionCookies(data.session);
           await markVerified(await getActiveAccessToken(data.session));
+
+          if (!isRecovery) {
+            await supabaseBrowser.auth.signOut();
+            document.cookie = 'nome-magnetico-auth-access-token=; path=/; max-age=0; SameSite=Lax';
+            document.cookie = 'nome-magnetico-auth-refresh-token=; path=/; max-age=0; SameSite=Lax';
+          }
+
           if (!cancelled) setState('success');
           return;
         }
@@ -90,6 +132,13 @@ export function EmailConfirmation() {
           syncSessionCookies(data.session);
           await markVerified(await getActiveAccessToken(data.session));
           window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+
+          if (!isRecovery) {
+            await supabaseBrowser.auth.signOut();
+            document.cookie = 'nome-magnetico-auth-access-token=; path=/; max-age=0; SameSite=Lax';
+            document.cookie = 'nome-magnetico-auth-refresh-token=; path=/; max-age=0; SameSite=Lax';
+          }
+
           if (!cancelled) setState('success');
           return;
         }

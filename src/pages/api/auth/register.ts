@@ -19,9 +19,8 @@ const APP_ID = 'nome_magnetico';
 /**
  * POST /api/auth/register
  *
- * Cria a conta sem disparar email no primeiro acesso. O Auth fica confirmado
- * para liberar login imediato; a validação comercial do email fica em
- * profiles.email_verified_at, preenchida pelo banner ou por pagamento aprovado.
+ * Cria a conta e dispara o e-mail de confirmação padrão do Supabase.
+ * Retorna session como null para que o formulário exiba a tela de verificação de e-mail.
  */
 export const POST: APIRoute = async ({ request }) => {
   let body: unknown;
@@ -58,8 +57,6 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // Cliente anon — necessário para signUp() que aciona o email de confirmação.
-  // URL: usa SUPABASE_URL (runtime, definida no .env da VPS igual à do backend).
-  // Anon key: usa import.meta.env (embutida em build-time pelo Vite, pois é chave pública).
   const supabaseUrl = process.env.SUPABASE_URL as string;
   const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
@@ -72,35 +69,51 @@ export const POST: APIRoute = async ({ request }) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const { data: createdData, error: createError } = await supabase.auth.admin.createUser({
+  // Chamada ao signUp padrão (dispara email de confirmação e mantém conta pendente)
+  const { data: signUpData, error: signUpError } = await supabaseAnon.auth.signUp({
     email: normalizedEmail,
     password,
-    email_confirm: true,
-    user_metadata: { nome },
-    app_metadata: { apps: [APP_ID] },
+    options: {
+      data: { nome },
+      emailRedirectTo: `${process.env.APP_URL}/auth/confirmar-email`,
+    },
   });
 
-  if (createError) {
-    console.error('[register] erro ao criar usuario:', createError.message);
-    const msg = createError.message?.includes('already been registered') ||
-      createError.message?.includes('already registered') ||
-      createError.message?.includes('User already registered')
+  if (signUpError) {
+    console.error('[register] erro ao cadastrar usuario:', signUpError.message);
+    const msg = signUpError.message?.includes('already been registered') ||
+      signUpError.message?.includes('already registered') ||
+      signUpError.message?.includes('User already registered')
       ? 'already_registered'
-      : createError.message;
+      : signUpError.message;
     return json({ error: msg }, 400);
   }
 
-  const createdUser = createdData?.user;
+  const createdUser = signUpData?.user;
   if (!createdUser) {
     return json({ error: 'Não foi possível criar a conta. Tente novamente.' }, 500);
   }
 
-  console.log('[register] usuário criado:', {
+  // Detecta se o usuário já existe na tabela auth.users do Supabase
+  // (Em caso de e-mail existente, o Supabase retorna um usuário mockado com id aleatório e sem identidades)
+  if (createdUser.identities && createdUser.identities.length === 0) {
+    return json({ error: 'already_registered' }, 400);
+  }
+
+  console.log('[register] usuário cadastrado (pendente confirmação):', {
     id: createdUser.id,
     email: createdUser.email,
-    confirmed: createdUser.email_confirmed_at ?? 'liberado',
   });
 
+  // 1. Taggear app_metadata para o Nome Magnético via service role
+  const { error: adminUpdateError } = await supabase.auth.admin.updateUserById(createdUser.id, {
+    app_metadata: { apps: [APP_ID] },
+  });
+  if (adminUpdateError) {
+    console.error('[register] falha ao atualizar app_metadata:', adminUpdateError.message);
+  }
+
+  // 2. Garantir que o perfil foi criado corretamente via ensure_profile
   const { error: profileError } = await supabase.rpc('ensure_profile', {
     p_user_id: createdUser.id,
     p_email: normalizedEmail,
@@ -110,6 +123,7 @@ export const POST: APIRoute = async ({ request }) => {
     console.error('[register] falha ao garantir profile:', profileError.message);
   }
 
+  // 3. Salvar dados de nascimento no perfil se fornecidos
   if (birth_name && birth_date) {
     const parts = birth_date.split('/');
     const birthDateDb = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : birth_date;
@@ -127,24 +141,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
   }
 
-  const signIn = await supabaseAnon.auth.signInWithPassword({
-    email: normalizedEmail,
-    password,
-  });
-  if (signIn.error) {
-    console.error('[register] falha no login imediato:', signIn.error.message);
-  }
-  const session = signIn.data.session ?? null;
-
+  // Retornar session como null. O SignupForm no frontend lidará com isso
+  // exibindo a tela solicitando a verificação de e-mail.
   return json({
     success: true,
-    session: session
-      ? {
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_in: session.expires_in,
-        }
-      : null,
+    session: null,
   }, 200);
 };
 
