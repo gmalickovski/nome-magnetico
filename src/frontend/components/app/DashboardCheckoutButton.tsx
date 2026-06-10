@@ -59,6 +59,7 @@ export function DashboardCheckoutButton({
       <button
         type="button"
         onClick={() => {
+          track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
           track('checkout_start', {
             produto: product,
             preco: priceInfo.cents / 100,

@@ -6,7 +6,7 @@ export function InitialAnalysisModal() {
   const [open, setOpen] = useState(true);
   const [nome, setNome] = useState('');
   const [dataNascimento, setDataNascimento] = useState('');
-  const [gender, setGender] = useState<'Masculino' | 'Feminino' | 'Neutro'>('Feminino');
+  const [gender, setGender] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +27,12 @@ export function InitialAnalysisModal() {
       return;
     }
 
+    if (!gender) {
+      setError('Por favor, selecione o sexo / gênero.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Chamar o endpoint /api/analyze para processar a análise gratuita
       const res = await fetch('/api/analyze', {
@@ -37,6 +43,7 @@ export function InitialAnalysisModal() {
           nome_completo: nome.trim(),
           data_nascimento: dataNascimento,
           nome_ja_escolhido: true,
+          gender,
         }),
       });
 
@@ -97,13 +104,15 @@ export function InitialAnalysisModal() {
               Sexo <span className="text-red-400">*</span>
             </label>
             <select
+              required
               value={gender}
-              onChange={e => setGender(e.target.value as any)}
+              onChange={e => setGender(e.target.value)}
               className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]/50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23D4AF37%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.5em_1.5em] bg-no-repeat bg-[position:right_1rem_center]"
             >
+              <option value="" disabled className="bg-neutral-900 border-none text-gray-500">Selecione...</option>
               <option value="Feminino" className="bg-neutral-900 border-none">Feminino</option>
               <option value="Masculino" className="bg-neutral-900 border-none">Masculino</option>
-              <option value="Neutro" className="bg-neutral-900 border-none">Neutro</option>
+              <option value="Neutro" className="bg-neutral-900 border-none">Prefiro não informar / Outro</option>
             </select>
           </div>
         </div>

@@ -177,6 +177,7 @@ export function PricingSection({
         promocao: promotion?.name ?? null,
         origem: 'pricing_section_auto_open',
       });
+      track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
       setCheckoutProduct(product);
       params.delete('checkout');
       window.history.replaceState(
@@ -206,6 +207,7 @@ export function PricingSection({
         promocao: promotion?.name ?? null,
         origem: 'pricing_section',
       });
+      track('begin_checkout', { produto: planId, valor: priceInfo.cents / 100 });
       setCheckoutProduct(planId);
     } else {
       const returnUrl = `${window.location.pathname}?checkout=${planId}`;

@@ -371,7 +371,9 @@ const pageTitle = activeCategory
   <script define:vars={{ activeCategory }}>
     (function () {
       function sendBlogView() {
-        if (typeof window.gtag === 'function') {
+        if (typeof window.gtag === 'function' &&
+            localStorage.getItem('nm-cookie-consent') === 'all' &&
+            localStorage.getItem('nm-user-role') !== 'admin') {
           window.gtag('event', 'blog_view', {
             categoria: activeCategory || 'todos'
           });

@@ -70,47 +70,47 @@ export const BLOQUEIOS_MAP: Record<
 > = {
   '111': {
     titulo: 'Bloqueio de Iniciação (111)',
-    descricao: 'Esta sequência gera uma limitação energética que bloqueia a iniciativa, fazendo com que você perca a coragem de se aventurar no novo. Sob essa influência, é comum enfrentar longos períodos de inatividade, estagnação profissional ou uma sensação de impotência para realizar seus desejos, permanecendo nesse estado o tempo que durar o Arcano regente do período.',
+    descricao: 'Limitação profunda da força de vontade, perda de coragem e inatividade crônica. A presença deste bloqueio gera uma forte tendência à dependência de terceiros e cria bloqueios sistêmicos ao tentar iniciar projetos, defender ideias próprias ou afirmar a sua individualidade autêntica. O grande antídoto kármico para transcender essa energia é desenvolver ativamente a coragem, fortalecer a autonomia pessoal e recuperar a confiança absoluta no próprio potencial de liderança inato.',
     aspectoSaude: 'Tendência para desenvolver alguns distúrbios ou doenças cardíacas.',
   },
   '222': {
     titulo: 'Bloqueio de Associação (222)',
-    descricao: 'Esta frequência vibra na polaridade da timidez e indecisão, criando um campo onde você pode ser facilmente subjugado(a) pelas pessoas mais próximas — sejam amigos, sócios ou colegas de trabalho. Esse bloqueio enfraquece a autoestima e limita drasticamente o avanço de seus projetos pessoais e realizações.',
+    descricao: 'Timidez extrema, indecisão constante e uma perigosa tendência a ser subjugado e apagado pelos outros. Este bloqueio manifesta dificuldades severas em manter parcerias, sociedades e relacionamentos saudáveis, muitas vezes resultando em drástica perda de autoestima e anulação da própria vontade. O antídoto fundamental é cultivar a diplomacia, a paciência e estabelecer limites claros para manter o equilíbrio inegociável entre o que você oferece e o que você recebe.',
     aspectoSaude: 'Pode, eventualmente, surgir alguma doença que provoque dependência.',
   },
   '333': {
     titulo: 'Bloqueio de Expressão (333)',
-    descricao: 'Esta sequência gera uma barreira profunda na comunicação, trazendo a possibilidade de ser constantemente incompreendido(a). Há uma dificuldade severa no diálogo, especialmente no ambiente de trabalho e nas relações afetivas, dificultando a sua imposição em projetos e o seu poder de convencimento.',
+    descricao: 'Dificuldade profunda no diálogo e barreiras persistentes ao tentar se comunicar com clareza. Este bloqueio gera a constante sensação de ser incompreendido e uma forte dificuldade em se impor e expressar seus sentimentos verdadeiros nas relações pessoais e profissionais. Para transcender esse obstáculo, o antídoto exige focar na expressão criativa, treinar a comunicação autêntica e transparente, e sustentar o otimismo mesmo diante das barreiras sociais.',
     aspectoSaude: 'Indica possibilidade de doenças respiratórias ou de articulações.',
   },
   '444': {
     titulo: 'Bloqueio de Estruturação (444)',
-    descricao: 'Reflete uma dificuldade direta na realização profissional. Esse bloqueio atrai cenários de má remuneração, estagnação na carreira e dificuldade de se firmar em empregos ou de se dar bem em qualquer atividade, tornando as perspectivas de futuro muito difíceis e pesadas.',
+    descricao: 'Bloqueio severo na realização profissional e financeira. Indica uma forte tendência a não receber o reconhecimento merecido pelo seu esforço, além de dificuldade crônica em manter estabilidade. Pode gerar excesso de rigidez, pessimismo ou, pelo contrário, extrema desorganização. O antídoto para destravar este fluxo exige o cultivo diário da disciplina, estabelecimento de métodos claros de ação, e uma resiliência inabalável para construir bases sólidas.',
     aspectoSaude: 'Indica possibilidade de doenças reumáticas ou arteriais.',
   },
   '555': {
     titulo: 'Bloqueio de Liberdade (555)',
-    descricao: 'Indica possíveis mudanças não desejadas de casa, de profissão ou de círculo social. Sob essa influência, a pessoa passa por frequentes altos e baixos, não se fixando profissionalmente e buscando sempre melhores oportunidades com enorme dificuldade de encontrá-las. Pode causar, também, uma fuga do meio social em que habita.',
+    descricao: 'Dificuldade crônica em aceitar e lidar com mudanças, acompanhada de instabilidade contínua. Este bloqueio provoca insatisfação constante, agitação interna e uma perigosa atração pela rebeldia ou vícios como válvula de escape. A liberdade pessoal frequentemente se torna uma fonte de caos em vez de paz. O antídoto principal é aprender a aceitar o fluxo natural da vida, desenvolver flexibilidade mental, adaptar-se sem resistência e usar a liberdade com profunda responsabilidade.',
     aspectoSaude: 'Desenvolver alguma doença de pele.',
   },
   '666': {
     titulo: 'Bloqueio de Harmonia (666)',
-    descricao: 'Indica a possibilidade de haver grandes decepções com amigos, sócios, parentes e até com o parceiro amoroso. Cria uma aura onde as pessoas próximas parecem não compreender seus propósitos e sentimentos, gerando frustrações e quebras de confiança constantes.',
+    descricao: 'Conflitos persistentes e instabilidade na vida familiar e afetiva. Este bloqueio gera decepções frequentes nos relacionamentos íntimos, ciúmes, possessividade e uma tendência ao isolamento emocional. Muitas vezes, você atrai parceiros incompatíveis ou se sente sobrecarregado por responsabilidades domésticas. O antídoto essencial é desenvolver o amor-próprio antes de buscar afeto externo, aprender a perdoar e cultivar a compreensão de que as relações devem ser fontes de equilíbrio, não de peso.',
     aspectoSaude: 'Algum tipo de doença cardíaca pode aparecer nesse estado.',
   },
   '777': {
     titulo: 'Bloqueio de Conexão Espiritual (777)',
-    descricao: 'Faz com que a pessoa se afaste de tudo e de todos. Pode levar ao desmando, transformando-o(a) em um ser dependente, vaidoso(a), arrogante e, consequentemente, vítima da própria intolerância. A persistência nesse bloqueio gera profundos sentimentos de solidão existencial.',
+    descricao: 'Desconexão dolorosa do plano espiritual e do propósito maior de vida. Este bloqueio gera desânimo, melancolia, confusão mental frequente, medos infundados e uma sensação de vazio interno que o sucesso material não preenche. A energia fica dispersa e a mente nebulosa. O antídoto fundamental para esta vibração é a interiorização diária, o estudo profundos de temas existenciais, a meditação e o desenvolvimento ativo da sua intuição e sabedoria oculta.',
     aspectoSaude: 'Doenças nervosas, dependências e, eventualmente, algum tipo de câncer.',
   },
   '888': {
     titulo: 'Bloqueio de Poder e Abundância (888)',
-    descricao: 'Esta sequência torna a pessoa arredia, afastando-a das atividades sociais. Caso não seja evoluído(a) espiritualmente, poderá descontrolar-se emocionalmente com muita facilidade frente aos problemas. Sob esta vibração, a vida oscila violentamente entre a riqueza e a pobreza.',
+    descricao: 'Bloqueio crítico no fluxo da abundância financeira e na relação com o mundo material. Manifesta-se através de perdas financeiras súbitas, dificuldades extremas em acumular ou reter riquezas, e um constante sentimento de estagnação na carreira. Pode indicar ambição desmedida ou total aversão ao poder. O antídoto central requer a harmonização da sua relação com o dinheiro, compreendendo-o como energia de troca justa, agindo com máxima ética, justiça e reequilibrando a balança entre a matéria e o espírito.',
     aspectoSaude: 'Como consequência desse estresse extremo, poderá desenvolver alguma doença.',
   },
   '999': {
     titulo: 'Bloqueio de Compaixão Universal (999)',
-    descricao: 'Reflete uma tendência a passar por grandes dificuldades financeiras, eventuais perdas de bens, fracassos nos negócios e vários tipos de provações provocadas pelos longos períodos de estagnação. Traz o peso das paralisações e dos encerramentos difíceis de ciclos.',
+    descricao: 'Prolongamento exaustivo de ciclos que já deveriam ter se encerrado. Este bloqueio cria forte apego ao passado, ressentimentos duradouros e dificuldades crônicas em perdoar e soltar o que não serve mais. Pode gerar desilusões frequentes, perdas emocionais e uma sensação de sacrifício contínuo pelos outros. O antídoto kármico definitivo é o desenvolvimento da compaixão universal, a prática ativa do desapego, o perdão incondicional (a si mesmo e aos outros) e a aceitação pacífica das conclusões.',
     aspectoSaude: 'Tudo isto pode afetar diretamente o sistema nervoso e o coração.',
   },
 };

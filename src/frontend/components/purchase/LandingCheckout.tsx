@@ -37,6 +37,7 @@ export function LandingCheckout({
         promocao: promotion?.name ?? null,
         origem: 'landing_auto_open',
       });
+      track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
       setModalOpen(true);
       params.delete('checkout');
       window.history.replaceState(
@@ -55,6 +56,7 @@ export function LandingCheckout({
         promocao: promotion?.name ?? null,
         origem: 'landing',
       });
+      track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
       setModalOpen(true);
     } else {
       // Redireciona para cadastro com URL de retorno codificada

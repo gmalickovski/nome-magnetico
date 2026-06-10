@@ -62,3 +62,20 @@ npx supabase functions deploy send-free-pdf --project-ref bhxneaeuhybtucmbmpvg -
 5. O backend chama imediatamente a Edge Function `send-free-pdf` passando o `leadId` no body.
 6. A Edge Function baixa o lead, decodifica o PDF, monta o layout de e-mail celestial e despacha o e-mail via AWS SES.
 7. O status é atualizado para `complete`.
+
+---
+
+## 5. Fluxo de Download e Regeneração Inteligente (Sob Demanda)
+
+Com o deploy do novo modelo de PDF da Análise Gratuita em 10/06/2026, implementamos um fluxo inteligente de atualização sob demanda (**lazy evaluation**) para garantir que novos layouts sejam entregues sem a necessidade de reprocessar o banco de dados proativamente.
+
+### 5.1. Funcionamento do Download (Endpoint `/api/download-pdf`)
+Quando um cliente clica no link de download do PDF enviado em seu e-mail, a requisição passa por `src/pages/api/download-pdf.ts`:
+1. **Verificação de PDF Ausente:** Se por qualquer motivo (deleção manual, erro no processamento original, ou limpeza do admin) a coluna `pdf_base64` estiver vazia, o sistema reconstrói os cálculos de numerologia em tempo real, renderiza o novo modelo do PDF e salva a string Base64 atualizada na tabela `free_analyses_leads` antes de enviá-lo ao usuário.
+2. **Atualização de Clientes Antigos (Cutoff de Modelo):** Definimos um marco temporal (`2026-06-10T18:40:00Z`). Se a linha do banco de dados (`created_at`) for anterior a essa data, o sistema identifica que o PDF antigo de modelo obsoleto seria baixado. O endpoint reconstrói o PDF usando as regras de layout modernas (incluindo as novas sugestões de amenização do bloqueio), substitui o Base64 obsoleto no banco e entrega a versão atualizada ao cliente.
+3. **Área do Cliente (Painel Cadastrado):** No painel logado do usuário (`/app`), o botão de download direciona para `/api/generate-pdf`. Esta rota calcula e gera o PDF em tempo real direto dos dados brutos da numerologia salvos na tabela `analyses`, garantindo que usuários cadastrados sempre recebam a versão mais atual do layout.
+
+### 5.2. Prevenção de Caches Locais e Mobile (Cache Busting)
+Para mitigar problemas comuns onde navegadores mobile e web views de aplicativos sociais (Instagram, Facebook) servem cópias em cache de PDFs antigos:
+1. **Timestamp Dinâmico:** Todas as requisições aos endpoints de geração e download adicionam um parâmetro temporal `&t=${Date.now()}` no client-side (`PDFFeedbackButton.tsx` e `AdminGeneralAnalysis.tsx`).
+2. **Headers Anti-Cache:** O servidor responde explicitando `Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0` e `Pragma: no-cache` para evitar o armazenamento indesejado no dispositivo.

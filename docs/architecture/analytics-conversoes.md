@@ -1,6 +1,6 @@
 # Analytics e Conversões de Pagamento
 
-Última atualização: 2026-05-23
+Última atualização: 2026-06-10 — novo fluxo email-first implementado
 
 Este documento descreve a arquitetura de analytics do Nome Magnético para eventos de marketing, checkout, visualização do blog, testes gratuitos e conversões canônicas de pagamento confirmado.
 
@@ -9,6 +9,27 @@ Este documento descreve a arquitetura de analytics do Nome Magnético para event
 ## Objetivo
 
 Medir as conversões com a maior precisão possível sem depender apenas do navegador do usuário. O evento canônico de receita (`purchase`) nasce no backend, após a confirmação real do pagamento pelo provedor (Stripe ou Asaas).
+
+---
+
+## Funil Principal (desde jun/2026 — fluxo email-first)
+
+```
+sessão
+  → analise_gratis_submit   (form /analise-gratuita: nome + data + email → envia PDF por e-mail, sem cadastro)
+  → [usuário lê análise no e-mail]
+  → [opcional] cadastro na plataforma → área gratuita com score + PDF
+  → begin_checkout           (padrão GA4 e-commerce — alimenta Smart Bidding)
+  → purchase                 (server-side Measurement Protocol — fonte de verdade de receita)
+```
+
+### Mudança em relação ao fluxo anterior
+
+Antes de jun/2026, o fluxo exigia criação de conta para acessar o PDF. O evento `preliminary_analysis_submit` era o topo de funil planejado (nunca chegou a ser implementado) e `analise_gratis_submit` disparava ao criar conta. Com o novo fluxo email-first:
+
+- `analise_gratis_submit` passa a ser o **evento de captura de lead**: dispara quando o formulário nome+data+email é submetido com sucesso, sem necessidade de cadastro.
+- `preliminary_analysis_submit` está **depreciado** — não há mais etapa de "preview" separada.
+- A tabela `free_analyses_leads` no Supabase registra cada lead e o PDF gerado/enviado.
 
 ---
 
@@ -23,14 +44,18 @@ Medir as conversões com a maior precisão possível sem depender apenas do nave
 
 | Evento | Tipo | Descrição | Parâmetros |
 | :--- | :--- | :--- | :--- |
-| `preliminary_analysis_submit` | Custom | Disparado quando o usuário preenche o formulário de análise ao vivo em `/analise-gratuita` e vê o score e triângulo inicial. | - |
-| `analise_gratis_submit` | Custom | Disparado quando o usuário converte sua análise preliminar criando uma conta e iniciando a auto-geração do PDF. | - |
-| `pdf_downloaded` | Custom | Disparado após o download de um PDF ser bem-sucedido na plataforma. | `produto`: `'analise_gratuita' \| 'nome_social' \| 'nome_bebe' \| 'nome_empresa'` |
-| `begin_checkout` | Padrão GA4 | Disparado no início do checkout. Auxilia nos algoritmos de Smart Bidding do Google Ads. | `value`, `currency`, `items[]` |
+| `analise_gratis_submit` | Custom | **Lead capturado**: formulário email-first submetido com sucesso em `/analise-gratuita`. PDF enviado por e-mail sem cadastro. | — |
+| `pdf_downloaded` | Custom | Disparado após o download de um PDF ser bem-sucedido na plataforma (área logada). | `produto`: `'analise_gratuita' \| 'nome_social' \| 'nome_bebe' \| 'nome_empresa'` |
+| `begin_checkout` | Padrão GA4 | Disparado no início do checkout. Auxilia nos algoritmos de Smart Bidding do Google Ads. Disparado simultaneamente com `checkout_start`. | `produto`, `valor` |
+| `checkout_start` | Custom | Evento interno de início de checkout (mantido para série histórica). Use `begin_checkout` para relatórios GA4. | `produto`, `preco`, `promocao`, `origem` |
 | `blog_view` | Custom | Disparado ao acessar a home do blog `/blog`. | `categoria`: `'todos' \| slug_da_categoria` |
 | `blog_article_view` | Custom | Disparado ao ler um artigo individual `/blog/slug`. | `article_title`, `article_slug` |
-| `blog_cta_click` | Custom | Disparado quando o usuário clica em um link de CTA no box do artigo (redirecionando para compra ou teste gratuito). | `destination_url`, `origin_article` |
+| `blog_cta_click` | Custom | Disparado quando o usuário clica em um link de CTA no box do artigo. | `destination_url`, `origin_article` |
 | `purchase_complete` | Custom | Indica retorno visual ao app após o checkout. Usado apenas para diagnóstico e UX (não para receita oficial). | `produto` |
+| `calculadora_submit` | Custom | Widget calculadora auxiliar em landing pages. Não é o evento principal de funil. | `origem` |
+| `preliminary_analysis_submit` | **DEPRECATED** | Removido do fluxo em jun/2026. Nunca chegou a ser implementado no código de produção. | — |
+
+> **Nota sobre eventos de blog:** `blog_view`, `blog_article_view` e `blog_cta_click` são disparados via `window.gtag` diretamente nos arquivos `.astro` (não via wrapper `track()`). Todos possuem guard de consentimento (`nm-cookie-consent=all`) e filtro anti-admin (`nm-user-role !== 'admin'`) desde jun/2026.
 
 ---
 
@@ -43,6 +68,7 @@ Para evitar poluir os dados do Google Analytics com visualizações e testes fei
    `localStorage.setItem('nm-user-role', 'admin')`.
 3. Se não for administrador (ou deslogar), a flag é removida.
 4. O wrapper global `track()` em `src/frontend/lib/analytics.ts` verifica a existência da flag e, se ativa, **cancela o envio de qualquer evento** para o `window.gtag`.
+5. Os eventos de blog (disparados via `window.gtag` direto nos arquivos `.astro`) também verificam a flag manualmente antes de disparar.
 
 ---
 
@@ -59,114 +85,97 @@ Webhook Stripe/Asaas -> createSubscription -> trackPurchaseConfirmed -> GA4 purc
 
 ---
 
-## Guia de Configuração Manual do Google Analytics 4 (GA4)
+## Planilha Google Sheets — Relatório Semanal
 
-Para visualizar e separar o tráfego conforme as necessidades descritas, siga este passo a passo dentro do painel do seu Google Analytics:
+**Arquivo:** "Relatório Semanal Google Analytics - Nome Magnético"  
+**Drive:** `1Que6Gxb_THVOQmUZVQhmjuYpxl3Xx_St`  
+**Atualização:** semanal (extensão nativa Google Analytics for Sheets)
+
+### Abas configuradas
+
+| Aba | Métricas | Filtro de eventos |
+|---|---|---|
+| `nm_dados_trafego` | sessions, pageViews por source/page | — |
+| `nm_dados_vendas_produtos` | itemsPurchased, itemRevenue | `purchase` (implícito) |
+| `nm_eventos_conversao` | eventCount por data+eventName | `analise_gratis_submit`, `pdf_downloaded` *(ver nota abaixo)* |
+| `nm_blog_geral` (CTA) | eventCount por artigo origem/destino | `blog_view`, `blog_cta_click` |
+| `nm_blog_geral` (artigos) | eventCount por título/slug | `blog_article_view` |
+| `nm_blog_geral` (geral) | eventCount + purchaseRevenue | todos |
+
+> **⚠️ Atenção (jun/2026):** A aba `nm_eventos_conversao` ainda contém `preliminary_analysis_submit` no filtro. Este evento nunca disparou e está depreciado no novo fluxo. Recomenda-se remover do filtro e substituir por `begin_checkout` para acompanhar o funil completo: `analise_gratis_submit → begin_checkout → purchase`.
+
+### Filtro atualizado recomendado para `nm_eventos_conversao`
+
+```json
+{
+  "filter": {
+    "fieldName": "eventName",
+    "inListFilter": {
+      "values": [
+        "analise_gratis_submit",
+        "begin_checkout",
+        "pdf_downloaded"
+      ]
+    }
+  }
+}
+```
+
+---
+
+## Guia de Configuração Manual do Google Analytics 4 (GA4)
 
 ### Passo 1: Configurar a Exclusão de Acessos Administrativos por IP (Complementar)
 Embora tenhamos o bloqueio de administradores logados via `localStorage`, é recomendável bloquear visualizações na Landing Page pública (antes do login) usando seu endereço de IP:
-1. No GA4, vá em **Administrador** (ícone de engrenagem no canto inferior esquerdo).
-2. Na coluna *Coleta e modificação de dados*, clique em **Fluxos de dados**.
-3. Selecione o fluxo da sua Web Stream.
-4. Role até o final e clique em **Definir as configurações da tag** (Configure tag settings).
-5. Clique em **Mostrar tudo** (Show all) e selecione **Definir tráfego interno** (Define internal traffic).
-6. Clique em **Criar**. Dê o nome de `Administradores`, defina a correspondência como "O endereço IP é igual a" e cole seu IP público (procure no Google por "meu ip" para descobrir). Salve.
-7. Volte ao menu principal do Administrador, vá em **Filtros de dados** (abaixo de Fluxos de dados).
-8. Você verá um filtro criado automaticamente chamado `Internal Traffic`. Clique nele e mude o status de *Testando* para **Ativo**. Salve.
+1. No GA4, vá em **Administrador** → **Fluxos de dados** → selecione o fluxo → **Definir as configurações da tag** → **Definir tráfego interno**.
+2. Crie uma regra com seu IP público. Ative o filtro em **Filtros de dados**.
 
 ### Passo 2: Criar as Dimensões Personalizadas (Custom Dimensions)
-Para ver os parâmetros dos novos eventos do blog nos relatórios padrão do GA4, é preciso registrá-los:
-1. Vá em **Administrador -> Exibição de dados -> Definições personalizadas** (Custom definitions).
-2. Clique em **Criar dimensões personalizadas**.
-3. Crie as seguintes dimensões (todas com escopo de **Evento**):
+Para ver os parâmetros dos eventos de blog nos relatórios:
 
-| Nome da Dimensão | Parâmetro do Evento | Descrição |
+| Nome da Dimensão | Parâmetro do Evento | Escopo |
 | :--- | :--- | :--- |
-| `Categoria do Blog` | `categoria` | Categoria ativa na visualização do blog |
-| `Título do Artigo` | `article_title` | Título do artigo lido no blog |
-| `Slug do Artigo` | `article_slug` | Identificador único do artigo lido |
-| `URL de Destino do CTA` | `destination_url` | URL de destino ao clicar em CTAs no blog |
-| `Artigo de Origem do CTA`| `origin_article` | Artigo onde o clique de CTA aconteceu |
+| `Categoria do Blog` | `categoria` | Evento |
+| `Título do Artigo` | `article_title` | Evento |
+| `Slug do Artigo` | `article_slug` | Evento |
+| `URL de Destino do CTA` | `destination_url` | Evento |
+| `Artigo de Origem do CTA` | `origin_article` | Evento |
+| `Produto` | `produto` | Evento |
+| `Valor` | `valor` | Evento |
 
-### Passo 3: Como Visualizar o Blog vs. Artigos Separadamente nos Relatórios
-Com as configurações feitas, você pode criar relatórios dedicados:
-1. Vá no menu esquerdo em **Gerar Relatórios** (Reports) -> **Engajamento** -> **Páginas e telas** (Pages and screens).
-2. **Método 1 (Filtro por URL):** Na barra de pesquisa acima da tabela, digite `/blog`. O GA4 mostrará a linha `/blog` (home do blog) separada das linhas `/blog/nome-do-artigo` (artigos individuais).
-3. **Método 2 (Filtro por Evento Customizado):** Vá em **Engajamento** -> **Eventos**.
-   - O evento `blog_view` representa os acessos à página principal do Blog.
-   - O evento `blog_article_view` representa acessos a artigos específicos.
-   - O evento `blog_cta_click` mostra os cliques de conversão.
-   - Você pode clicar em `blog_article_view` para ver quais artigos são os mais lidos através do parâmetro `article_title` que registramos!
-
-### Passo 4: Marcar os Eventos Principais como Conversão (Key Events)
-Para monitorar a saúde do negócio e integrar com o Google Ads:
-1. Vá em **Administrador -> Exibição de dados -> Eventos**.
-2. Na lista de eventos, encontre os seguintes eventos e marque a chave **Marcar como evento de conversão** (Mark as key event):
-   - `preliminary_analysis_submit` (Usuários que fizeram o teste gratuito preliminar).
-   - `analise_gratis_submit` (Usuários que geraram o PDF gratuito completo criando conta).
-   - `purchase` (Vendas confirmadas server-side).
+### Passo 3: Marcar os Eventos Principais como Conversão (Key Events)
+1. Vá em **Administrador** → **Exibição de dados** → **Eventos**.
+2. Marque como evento de conversão:
+   - `analise_gratis_submit` — captura de lead via formulário email-first
+   - `begin_checkout` — intenção de compra (Smart Bidding)
+   - `purchase` — venda confirmada server-side
 
 ---
 
 ## Estratégia de Tráfego Pago: Facebook Conversions API (CAPI)
 
-Para obter resultados extraordinários e ROI real nas campanhas de **Facebook Ads e Instagram Ads**, siga este guia para integrar a CAPI utilizando o seu ecossistema existente:
+*(Não implementado — planejado para quando campanhas pagas forem ativadas)*
 
-### O Fluxo Recomendado
-Como você já possui webhooks transacionais robustos enviando atualizações de pagamento para o **n8n** (`N8N_WEBHOOK_TRANSACIONAL`), a implementação é extremamente rápida no backend:
-
-1. **No painel do Gerenciador de Negócios do Facebook (Meta):**
-   - Vá em *Configurações do Negócio -> Fontes de dados -> Pixels* (ou *Conjuntos de dados*).
-   - Selecione seu pixel e clique em **Abrir no Gerenciador de Eventos**.
-   - Vá na aba **Configurações**, role até *API de Conversões* e clique em **Gerar token de acesso**. Guarde este token de forma segura.
-2. **No seu Workflow do n8n (`N8N_WEBHOOK_TRANSACIONAL`):**
-   - Crie um novo nó do tipo **HTTP Request** conectado imediatamente após a confirmação de sucesso de pagamento do Stripe/Asaas.
-   - Configure a chamada POST para a API do Facebook Graph:
-     `POST https://graph.facebook.com/v19.0/{PIXEL_ID}/events`
-   - No corpo do JSON (Body), envie o payload padrão:
-     ```json
-     {
-       "data": [
-         {
-           "event_name": "Purchase",
-           "event_time": {timestamp_do_evento},
-           "event_id": "id_unico_transacao",
-           "user_data": {
-             "em": "{email_do_cliente_criptografado_em_sha256}",
-             "ph": "{telefone_do_cliente_criptografado_em_sha256}",
-             "client_ip_address": "{ip_do_cliente}",
-             "client_user_agent": "{user_agent_do_cliente}"
-           },
-           "custom_data": {
-             "currency": "BRL",
-             "value": 47.90
-           },
-           "action_source": "website"
-         }
-       ],
-       "access_token": "SEU_TOKEN_DE_ACESSO_GERADO"
-     }
-     ```
-3. **Deduplicação Automática:** Enviar o mesmo `event_id` (que pode ser o ID do pagamento do Stripe/Asaas) tanto no pixel do navegador quanto na API de conversões do n8n. O Facebook cruzará os dados automaticamente e descartará duplicatas, mantendo a atribuição 100% precisa mesmo se o pixel do navegador falhar.
+Fluxo via n8n (`N8N_WEBHOOK_TRANSACIONAL`):
+1. Após confirmação de pagamento Stripe/Asaas, n8n envia evento `Purchase` para a Graph API do Facebook.
+2. Usar `event_id = transaction_id` para deduplicação automática com o pixel do browser.
+3. Hash SHA-256 de `email` e `telefone` no campo `user_data`.
+4. Endpoint: `POST https://graph.facebook.com/v19.0/{PIXEL_ID}/events`
 
 ---
 
 ## Integração com Planilhas (Google Sheets) via GA4 API
 
-Se você usa extensões no Google Sheets para importar dados do Analytics automaticamente (como *Google Analytics for Sheets* ou *GA4 Reports Builder*), utilize a seguinte tabela de correspondência exata de **Métricas**, **Dimensões** e **Filtros** da API do GA4 para extrair suas novas métricas:
+Tabela de referência para queries na extensão:
 
-### Tabela de Parâmetros da API do GA4 para o Google Sheets
-
-| Métrica Solicitada | Nome da Métrica na API (`Metrics`) | Dimensões na API (`Dimensions`) | Filtro de Evento (`Filters`) |
+| Métrica | Métricas na API | Dimensões | Filtro de Evento |
 | :--- | :--- | :--- | :--- |
-| **Aprovação de Pagamento (Vendas)** | `eventCount` (ou `purchaseRevenue` para receita) | `date`, `eventName` | `eventName == purchase` |
-| **Teste Preliminar Gratuito** | `eventCount` | `date`, `eventName` | `eventName == preliminary_analysis_submit` |
-| **Geração de Análise Completa** | `eventCount` | `date`, `eventName` | `eventName == analise_gratis_submit` |
-| **Downloads Totais de PDF** | `eventCount` | `date`, `eventName` | `eventName == pdf_downloaded` |
-| **Download de PDF Gratuito** | `eventCount` | `date`, `eventName`, `customEvent:produto` | `eventName == pdf_downloaded` E `customEvent:produto == analise_gratuita` |
-| **Acessos ao Blog (Home)** | `eventCount` (ou `screenPageViews`) | `date`, `eventName` | `eventName == blog_view` |
-| **Leituras de Artigos do Blog** | `eventCount` (ou `screenPageViews`) | `date`, `customEvent:article_title`, `customEvent:article_slug` | `eventName == blog_article_view` |
-| **Cliques de Conversão no Blog (CTAs)** | `eventCount` | `date`, `customEvent:origin_article`, `customEvent:destination_url` | `eventName == blog_cta_click` |
+| Leads capturados (email-first) | `eventCount` | `date`, `eventName` | `eventName == analise_gratis_submit` |
+| Entrada no checkout | `eventCount` | `date`, `eventName` | `eventName == begin_checkout` |
+| Vendas (receita) | `eventCount`, `purchaseRevenue` | `date`, `eventName` | `eventName == purchase` |
+| Downloads de PDF | `eventCount` | `date`, `eventName`, `customEvent:produto` | `eventName == pdf_downloaded` |
+| Blog — acessos home | `eventCount` | `date`, `eventName` | `eventName == blog_view` |
+| Blog — leituras de artigos | `eventCount` | `date`, `customEvent:article_title`, `customEvent:article_slug` | `eventName == blog_article_view` |
+| Blog — cliques CTA | `eventCount` | `date`, `customEvent:origin_article`, `customEvent:destination_url` | `eventName == blog_cta_click` |
 
-> [!NOTE]
-> Para dimensões customizadas, o prefixo `customEvent:` é obrigatório na API do GA4 para mapear o parâmetro enviado no evento. Certifique-se de ter criado a Dimensão Personalizada correspondente no console do GA4 (conforme o Passo 2 do guia manual) antes de tentar puxá-la no Google Sheets, caso contrário a API retornará um erro de campo inexistente.
+> Para dimensões customizadas, o prefixo `customEvent:` é obrigatório na API do GA4.

@@ -1195,7 +1195,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             {bloqueiosEliminados.length > 0 && bloqueiosEliminados.map((b, i) => (
               <View key={i} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 10, marginBottom: 6 }}>
                 <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 4 }}>✓ Eliminado: {b.titulo ?? `Bloqueio ${b.codigo}`}</Text>
-                {b.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{b.descricao.slice(0, 180)}...</Text>}
+                {b.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{b.descricao}</Text>}
               </View>
             ))}
 
@@ -1203,7 +1203,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             {bloqueiosRestantes.length > 0 && bloqueiosRestantes.map((b, i) => (
               <View key={i} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#DC2626', backgroundColor: '#FEF2F2', borderRadius: 6, padding: 10, marginBottom: 6 }}>
                 <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 4 }}>! Permanece: {b.titulo ?? `Bloqueio ${b.codigo}`}</Text>
-                {b.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{b.descricao.slice(0, 180)}...</Text>}
+                {b.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{b.descricao}</Text>}
               </View>
             ))}
 

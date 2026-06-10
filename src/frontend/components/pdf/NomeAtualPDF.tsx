@@ -3,35 +3,38 @@
  *
  * Estrutura de páginas:
  *   1. Capa
- *   2. Guia de Leitura (intro)
- *   3. Os Números — Destino (card central) + 4 números do nome lado a lado
- *   4. Os 4 Triângulos (explicação — se disponíveis)
- *   5. Karma, Lições e Tendências Ocultas
- *   6+. Análise IA completa (triângulos + diagnóstico)
- *   8. CTA / Oferta para a Harmonização (Nome Social)
+ *   2+. A Essência — O Nome de Nascimento Original
+ *       - Banner do nome + O Som do Seu Nascimento
+ *       - Destino card + 4 cards de números + Detalhamento dos 5 números
+ *       - Os 4 Triângulos completos (Vida, Pessoal, Social, Destino) com Arcanos e Bloqueios
+ *       - O Peso do Passado: Débitos, Lições e Tendências Ocultas
+ *   N-2. O Diagnóstico É Claro (fundo escuro)
+ *   N-1. Ação Imediata: O Escudo Provisório (fundo escuro)
+ *   N. CTA / Oferta para a Harmonização (Nome Social)
  */
 import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
 import { THEME_NOME_ATUAL } from './shared/PDFTheme';
 import { PDFCover } from './shared/PDFCover';
 import { PDFPageHeader } from './shared/PDFPageHeader';
 import { PDFFooter } from './shared/PDFFooter';
-import { RenderMarkdownChunks, TrianguloPiramideInline } from './shared/PDFMarkdownRenderer';
+import { TrianguloPiramideInline } from './shared/PDFMarkdownRenderer';
 import { BloqueiosBlock, DebitosBlock, LicoesBlock, TendenciasBlock } from './shared/PDFKarmicBlock';
+import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
 import { calcularScore } from '../../../backend/numerology/score';
 import { avaliarCompatibilidade } from '../../../backend/numerology/harmonization';
+import { calcularTodosTriangulos, detectarBloqueios } from '../../../backend/numerology/triangle';
+import { calcularCincoNumeros } from '../../../backend/numerology/numbers';
+import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, mapearFrequencias } from '../../../backend/numerology/karmic';
 import {
-  DESTINO_TITULO,
   DESTINO_DESC,
-  EXPRESSAO_TITULO,
   EXPRESSAO_DESC,
   MOTIVACAO_DESC,
   IMPRESSAO_DESC,
   MISSAO_DESC,
-  NUMERO_VIBRACAO,
 } from '../../../backend/numerology/interpretations';
 
 const theme = THEME_NOME_ATUAL;
@@ -41,31 +44,65 @@ const GRAY = '#4B5563';
 const LIGHT_GRAY = '#E5E7EB';
 const DARK = '#131313';
 
-// ── Overlay de cadeado para triângulos bloqueados ─────────────────────────────
-
-function PadlockOverlay() {
-  // SVG causava crash (resolveAspectRatio falha em absolute-positioned containers)
-  // Padlock reconstruído 100% com Views — sem SVG.
-  return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ backgroundColor: '#4C1D95', borderRadius: 10, paddingVertical: 14, paddingHorizontal: 22, alignItems: 'center', borderWidth: 1.5, borderColor: '#7C3AED' }}>
-        {/* Arco do cadeado (shackle) */}
-        <View style={{ width: 20, height: 13, borderLeftWidth: 3, borderTopWidth: 3, borderRightWidth: 3, borderColor: '#22D3EE', borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: -1 }} />
-        {/* Corpo do cadeado */}
-        <View style={{ width: 30, height: 20, backgroundColor: '#22D3EE', borderRadius: 3, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-          {/* Buraco da fechadura */}
-          <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#4C1D95', marginBottom: -3 }} />
-          <View style={{ width: 3, height: 5, backgroundColor: '#4C1D95', borderRadius: 1 }} />
-        </View>
-        <Text style={{ color: '#FFFFFF', fontFamily: TITLE_FONT, fontSize: 11, letterSpacing: 1.5 }}>BLOQUEADO</Text>
-        <Text style={{ color: '#C4B5FD', fontSize: 6.5, marginTop: 3, textAlign: 'center' }}>Disponivel no Nome Social</Text>
-      </View>
-    </View>
-  );
-}
+const SUGESTOES_AMENIZAR: Record<string, string[]> = {
+  '111': [
+    'Inicie um pequeno projeto pessoal ou hábito hoje e comprometa-se a mantê-lo por 7 dias.',
+    'Tome uma decisão importante que você vinha adiando por medo ou hesitação.',
+    'Pratique se posicionar de forma firme e expressar sua opinião individual em conversas cotidianas.'
+  ],
+  '222': [
+    'Defina e comunique um limite claro em uma relação pessoal ou profissional nas próximas 48 horas.',
+    'Pratique dizer "não" a solicitações secundárias que drenam sua energia.',
+    'Equilibre as trocas nas suas relações: certifique-se de que o que você entrega está proporcional ao que recebe.'
+  ],
+  '333': [
+    'Escreva livremente seus pensamentos e sentimentos em um diário por 10 minutos antes de dormir.',
+    'Exponha sua voz de forma autêntica: fale o que precisa sem esperar que os outros adivinhem.',
+    'Engaje-se em uma atividade criativa (desenho, escrita, música) sem se preocupar com o julgamento alheio.'
+  ],
+  '444': [
+    'Organize fisicamente sua mesa de trabalho ou guarda-roupa para reestruturar a energia ao seu redor.',
+    'Crie e siga uma rotina ou cronograma diário simples e objetivo para as suas tarefas mais importantes.',
+    'Faça um controle básico das suas finanças pessoais, registrando cada entrada e saída sem exceções.'
+  ],
+  '555': [
+    'Mude intencionalmente um pequeno hábito da sua rotina diária (como o caminho que faz ou a ordem do seu café).',
+    'Faça um descarte consciente de arquivos digitais ou objetos físicos acumulados.',
+    'Pratique a flexibilidade: diante de um imprevisto, respire fundo e adapte-se ao novo cenário sem resistência.'
+  ],
+  '666': [
+    'Reserve um momento diário de silêncio e cuidado voltado inteiramente para você (autonutrição).',
+    'Delegue uma responsabilidade doméstica ou profissional que você costuma carregar sozinho.',
+    'Evite absorver ou tentar resolver os problemas e conflitos emocionais que pertencem a outras pessoas.'
+  ],
+  '777': [
+    'Reserve de 10 a 15 minutos diários para silenciar a mente, meditar ou praticar respiração consciente.',
+    'Estude ou leia sobre um tema de filosofia, autoconhecimento ou sabedoria oculta.',
+    'Fique longe de telas e redes sociais por pelo menos duas horas antes de dormir para acalmar os pensamentos.'
+  ],
+  '888': [
+    'Faça um exercício de desapego material doando um item de valor que você já não utiliza.',
+    'Organize suas contas e estabeleça uma meta profissional clara, focando na ética e no valor real do seu serviço.',
+    'Pratique a gratidão ativa pelas suas conquistas materiais atuais para reequilibrar o fluxo da abundância.'
+  ],
+  '999': [
+    'Desfaça-se de cartas, fotos ou objetos antigos que mantêm sua mente presa a situações do passado.',
+    'Escreva uma carta de perdão (para alguém ou para si mesmo), coloque nela todas as mágoas e depois queime-a ou descarte-a, simbolizando o encerramento do ciclo.',
+    'Conclua oficialmente um projeto, conversa ou compromisso pendente que já não faz sentido na sua vida atual.'
+  ]
+};
 
 const styles = StyleSheet.create({
   page: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 56,
+    paddingBottom: 56,
+    paddingHorizontal: 48,
+    fontFamily: BODY_FONT,
+    color: DARK,
+  },
+  // Seção A Essência — fundo branco, cabeçalho rosado
+  pageEssencia: {
     backgroundColor: '#FFFFFF',
     paddingTop: 56,
     paddingBottom: 56,
@@ -235,13 +272,6 @@ const styles = StyleSheet.create({
   },
 });
 
-/** Extrai estritamente o bloco de Conclusão Final do texto */
-function extractConclusao(text: string): string | null {
-  const match = text.match(/##[^\n]*(?:\d+\.\s*conclus|\d+\.\s*o nome como|conclus[aã]o)/i);
-  if (!match || match.index === undefined) return null;
-  return text.slice(match.index).trim();
-}
-
 function scoreColor(score: number): string {
   return score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#DC2626';
 }
@@ -255,51 +285,56 @@ function normalizeScore(value: unknown): number | null {
   return null;
 }
 
-function compatColor(c: string): string {
-  return c === 'total' ? '#059669' : c === 'complementar' ? '#7c3aed' : c === 'aceitavel' ? '#D97706' : '#DC2626';
-}
-
-function compatLabel(c: string): string {
-  return c === 'total' ? 'Total' : c === 'complementar' ? 'Complementar' : c === 'aceitavel' ? 'Aceitável' : 'Incompatível';
-}
-
-export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFProps) {
+export function NomeAtualPDF({ analysis, magneticNames: _magneticNames, userName: _userName }: ProductPDFProps) {
   const logoSrc = loadLogoSrc();
   const freqData = analysis.frequencias_numeros as any;
-  // Para o novo fluxo, exibir o nome social escolhido (não o nome de nascimento)
-  const nomeParaExibir = freqData?.ranking?.melhorNome?.nomeCompleto ?? analysis.nome_completo;
+  const nomeParaExibir = analysis.nome_completo;
   const nomeNascimento = analysis.nome_completo;
-  const primeiroNome = nomeNascimento.split(' ')[0] || nomeNascimento;
   const dataNascimento = formatDate(
     freqData?.ranking?.dataNascimento ?? analysis.data_nascimento
   );
   const dataGeracao = formatDate(analysis.completed_at ?? analysis.created_at);
 
-  const letrasNome = nomeParaExibir
+  // ── Dados calculados em tempo real a partir do nome de nascimento ──────────
+  const dataNascimentoRaw = freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '';
+  const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
+  const triangulosNasc = calcularTodosTriangulos(nomeNascimento, dataNascimentoRaw);
+  const bloqueios = detectarBloqueios(triangulosNasc);
+  const tVida    = triangulosNasc.vida;
+  const tPessoal = triangulosNasc.pessoal;
+  const tSocial  = triangulosNasc.social;
+  const tDestino = triangulosNasc.destino;
+  const licoes     = detectarLicoesCarmicas(nomeNascimento);
+  const tendencias = detectarTendenciasOcultas(nomeNascimento);
+  const debitos    = calcularDebitosCarmicos(
+    dataNascimentoRaw,
+    cincoNumNasc.destino,
+    cincoNumNasc.motivacao,
+    cincoNumNasc.expressao,
+  );
+  const frequencias = Object.fromEntries(
+    Object.entries(mapearFrequencias(nomeNascimento))
+  ) as Record<string, number>;
+
+  const letrasNomeBatismo = nomeNascimento
     .replace(/\s+/g, '')
     .replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ]/g, '')
     .toUpperCase()
     .split('');
 
-  const melhorNome = freqData?.ranking?.melhorNome;
-  const nomesCandidatos: any[] = freqData?.ranking?.nomesCandidatos ?? [];
+  const TRIANGLE_FULL_WIDTH = 430;
+  const baseLen = Math.max(
+    tVida?.linhas[0]?.length ?? 1,
+    tPessoal?.linhas[0]?.length ?? 1,
+    tSocial?.linhas[0]?.length ?? 1,
+    tDestino?.linhas[0]?.length ?? 1,
+  );
+  const triCellSize = Math.min(18, Math.max(5, Math.floor(TRIANGLE_FULL_WIDTH / baseLen) - 1));
 
-  const nums = [
-    { label: 'Expressão', sublabel: 'O Dom', value: analysis.numero_expressao, icon: '✦' },
-    { label: 'Destino', sublabel: 'A Estrada (imutável)', value: analysis.numero_destino, icon: '◈' },
-    { label: 'Motivação', sublabel: 'A Alma', value: analysis.numero_motivacao, icon: '♡' },
-    { label: 'Impressão', sublabel: 'As Consoantes', value: analysis.numero_impressao, icon: '◎' },
-    { label: 'Missão', sublabel: 'A Vocação', value: analysis.numero_missao, icon: '◇' },
-  ];
-
-  const bloqueios = Array.isArray(analysis.bloqueios) ? analysis.bloqueios : [];
-  const debitos = Array.isArray(analysis.debitos_carmicos) ? analysis.debitos_carmicos : [];
-  const licoes = Array.isArray(analysis.licoes_carmicas) ? analysis.licoes_carmicas : [];
-  const tendencias = Array.isArray(analysis.tendencias_ocultas) ? analysis.tendencias_ocultas : [];
-
+  // ── Score (para a CTA final) ──────────────────────────────────────────────
   const storedScore = normalizeScore(analysis.score);
   const fallbackScore =
-    storedScore == null && analysis.numero_expressao != null && analysis.numero_destino != null
+    storedScore == null && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
       ? calcularScore({
           bloqueios: bloqueios.length,
           ocorrenciasExtras: Math.max(
@@ -310,7 +345,7 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
           tendenciasOcultas: tendencias.length,
           debitosCarmicos: debitos.length,
           debitosCarmicoFixos: debitos.filter((debito: any) => debito?.fixo === true).length,
-          compatibilidade: avaliarCompatibilidade(analysis.numero_expressao, analysis.numero_destino),
+          compatibilidade: avaliarCompatibilidade(cincoNumNasc.expressao, cincoNumNasc.destino),
         })
       : null;
   const rawScore = storedScore ?? fallbackScore;
@@ -320,32 +355,18 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
       : rawScore >= 80 ? 'excelente'
         : rawScore >= 50 ? 'aceitavel'
           : 'baixo';
-  const frequencias: Record<string, number> | null =
-    freqData?.frequencias ?? (freqData && !freqData?.ranking ? freqData : null);
 
-  const tVida = analysis.triangulo_vida ?? null;
-  const tPessoal = analysis.triangulo_pessoal ?? null;
-  const tSocial = analysis.triangulo_social ?? null;
-  const tDestino = analysis.triangulo_destino ?? null;
-
-  const TRIANGLE_FULL_WIDTH = 430;
-  const baseLen = Math.max(
-    tVida?.linhas[0]?.length ?? 1,
-    tPessoal?.linhas[0]?.length ?? 1,
-    tSocial?.linhas[0]?.length ?? 1,
-    tDestino?.linhas[0]?.length ?? 1,
-  );
-  const triCellSize = Math.min(18, Math.max(5, Math.floor(TRIANGLE_FULL_WIDTH / baseLen) - 1));
+  // ── Texto da IA (escudo provisório) ───────────────────────────────────────
   let analiseFormatado = analysis.analise_texto
     ? formatAnalysisText(analysis.analise_texto)
     : null;
-  
+
   let escudoTexto: string | null = null;
-  
+
   if (analiseFormatado) {
     analiseFormatado = analiseFormatado.replace(/^#{1,2}\s+[^\n]*\n+/, '');
     analiseFormatado = analiseFormatado.replace(/#{1,6}\s+[^\n]*Manual de Assinatura[^\n]*\n[\s\S]*?(?=#{1,6}\s|\s*$)/i, '');
-    
+
     // Extrai o Escudo Magnético (se a IA gerou) e remove do texto principal para não duplicar
     const escudoRegex = /#{1,3}\s*(?:🛡️\s*)?Escudo Magnético[\s\S]*?(?=\n#{1,3}\s|$)/i;
     const matchEscudo = analiseFormatado.match(escudoRegex);
@@ -354,7 +375,6 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
       analiseFormatado = analiseFormatado.replace(escudoRegex, '');
     }
   }
-  const conclusaoTexto = analiseFormatado ? extractConclusao(analiseFormatado) : null;
 
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
@@ -370,361 +390,417 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
         titleFont={TITLE_FONT}
       />
 
-      {/* ── PÁGINA 2: A SUA ESSÊNCIA ─────────────────────────────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência dos Seus Números`} />
+      {/* ═══════════════════════════════════════════════════════════════════════
+       *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
+       *  (Bloco completo — idêntico à seção "A Essência" do NomeSocialPDF)
+       * ═══════════════════════════════════════════════════════════════════════ */}
+      <Page size="A4" style={styles.pageEssencia}>
+        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
-        {/* Título */}
-        <View style={{ marginTop: 16, marginBottom: 20, alignItems: 'center' }}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 22, color: '#0F766E', textAlign: 'center', letterSpacing: 0.5 }}>
-            A Sua Essência
+        {/* Badge de seção */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
+          <View style={{ backgroundColor: '#991B1B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              A ESSÊNCIA
+            </Text>
+          </View>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
+        </View>
+
+        {/* 1.1 — Banner do nome de nascimento */}
+        <View style={{ backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#991B1B', borderRadius: 10, padding: 24, marginBottom: 16, alignItems: 'center' }}>
+          <Text style={{ fontSize: 8, color: '#991B1B', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10, opacity: 0.8 }}>
+            Seu Nome de Nascimento
+          </Text>
+          <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: '#991B1B', textAlign: 'center', letterSpacing: 2, marginBottom: 8 }}>
+            {nomeNascimento}
+          </Text>
+          <View style={{ height: 0.5, width: 100, backgroundColor: '#991B1B', opacity: 0.5, marginBottom: 8 }} />
+          <Text style={{ fontSize: 9, color: '#991B1B', opacity: 0.7, textAlign: 'center', letterSpacing: 0.5 }}>
+            {dataNascimento}
           </Text>
         </View>
 
-        {/* Card Destino centralizado */}
-        <View style={{ alignItems: 'center', marginBottom: 16 }}>
-          <View style={{ borderWidth: 2, borderColor: '#7C3AED', borderRadius: 12, padding: 18, backgroundColor: '#F5F3FF', alignItems: 'center', width: 230 }}>
-            <Text style={{ fontSize: 8, color: '#7C3AED', textTransform: 'uppercase', letterSpacing: 1.2, fontFamily: BODY_FONT_BOLD, marginBottom: 10 }}>
-              Número de Destino  ·  Imutável
+        {/* "O Som do Seu Nascimento" */}
+        <View style={{ marginTop: 20, marginBottom: 16 }}>
+          <Text style={styles.sectionTitle}>
+            O Som do Seu Nascimento
+          </Text>
+          <Text style={styles.bodyText}>
+            "Este é o código vibracional que o universo registrou no instante do seu primeiro fôlego. Seu nome de nascimento não é um erro; ele é a sua Semente de Essência. Nele, estão gravadas as memórias da sua árvore genealógica, os talentos brutos que você veio lapidar e a missão que sua alma aceitou cumprir. Ele é a sua base inabalável, a nota fundamental da melodia da sua vida que nunca deixará de soar."
+          </Text>
+        </View>
+
+        {/* O Papel da Frequência Original */}
+        <View style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
+          <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#8A661C', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            O Papel da Frequência Original
+          </Text>
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7 }}>
+            O nome de nascimento é o motor interno da sua jornada — ele emana qualidades permanentes, inscritas antes mesmo de qualquer escolha consciente. Esses talentos brutos são genuínos e poderosos, mas por serem energia pura e não lapidada, podem atrair interferências que se manifestam como bloqueios: padrões em loop que drenam o que você planta antes de colher. É exatamente para organizar essa frequência que a Harmonização de Assinatura existe — não para apagar quem você é, mas para que a sua essência originária possa fluir sem obstáculos.
+          </Text>
+        </View>
+
+        {/* ── O Destino: A Estrada Imutável ── */}
+        <View wrap={false}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, marginTop: 4 }}>
+            <View style={{ flex: 1, height: 0.5, backgroundColor: '#6d28d9', opacity: 0.3 }} />
+            <Text style={{ fontSize: 9, color: '#6d28d9', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
+              O Destino: A Estrada Imutável
             </Text>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 52, color: '#5b21b6', lineHeight: 1, marginBottom: 8 }}>
-              {analysis.numero_destino ?? '?'}
-            </Text>
-            {analysis.numero_destino != null && NUMERO_VIBRACAO[analysis.numero_destino] && (
-              <Text style={{ fontSize: 11, fontFamily: BODY_FONT_BOLD, color: '#5b21b6', marginBottom: 8, textAlign: 'center' }}>
-                {NUMERO_VIBRACAO[analysis.numero_destino]}
-              </Text>
-            )}
-            <Text style={{ fontSize: 8, color: '#7C3AED', textAlign: 'center' }}>
-              Permanece após a harmonização de assinatura
+            <View style={{ flex: 1, height: 0.5, backgroundColor: '#6d28d9', opacity: 0.3 }} />
+          </View>
+
+          {/* Card grande de Destino centralizado */}
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ borderWidth: 2, borderColor: '#6d28d9', borderRadius: 12, padding: 20, backgroundColor: '#F5F3FF', alignItems: 'center', width: 180 }}>
+              <Text style={{ fontSize: 9, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Número de Destino</Text>
+              <Text style={{ fontFamily: TITLE_FONT, fontSize: 52, color: '#5b21b6', lineHeight: 1 }}>{cincoNumNasc.destino}</Text>
+              <Text style={{ fontSize: 9, color: '#7c3aed', marginTop: 6 }}>A Estrada da Sua Alma</Text>
+            </View>
+          </View>
+
+          <View style={{ borderRadius: 8, backgroundColor: '#F5F3FF', padding: 12, marginBottom: 16 }}>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#5b21b6', marginBottom: 6 }}>O Que Não Pode Ser Mudado</Text>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
+              Calculado a partir da data de nascimento, o Destino representa a trilha que sua alma escolheu antes de receber um nome. Não pode ser alterado por nenhuma prática ou mudança de nome — está gravado no tecido do tempo. A Harmonização de Assinatura não altera o Destino; ela organiza o campo vibracional para que a jornada rumo a ele aconteça com menos resistência e mais fluidez.
             </Text>
           </View>
         </View>
 
-        {/* O Que Não Pode Ser Mudado */}
-        <View style={{ backgroundColor: '#F5F3FF', borderRadius: 8, padding: 14, marginBottom: 16 }}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#5b21b6', marginBottom: 6 }}>
-            O Que Não Pode Ser Mudado — e o Que Pode
+        {/* ── Os 4 números do nome de nascimento ── */}
+        <View wrap={false}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+            <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
+            <Text style={{ fontSize: 9, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
+              Os Números do Nome
+            </Text>
+            <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
+          </View>
+          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.55, marginBottom: 12 }}>
+            Derivados das letras do nome de nascimento, estes quatro números revelam as qualidades inatas, os dons, a percepção externa e a vocação que estão codificados na semente original. Diferente do Destino, eles respondem à vibração das letras — e podem ser reorganizados pela Harmonização de Assinatura.
           </Text>
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.65 }}>
-            O Destino é o único número fora do alcance da harmonização. Calculado a partir da data de nascimento, representa a trilha original — o fio condutor que atravessa todas as fases da vida, independente da assinatura usada.
-          </Text>
-        </View>
-
-        {/* 4 cards lado a lado */}
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-          {nums.filter(n => n.label !== 'Destino').map((num, i) => {
-            const palettes = [
-              { color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
-              { color: '#6d28d9', border: '#7C3AED', bg: '#F5F3FF' },
-              { color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
-              { color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
-            ];
-            const p = palettes[i % palettes.length];
-            const vibracao = num.value != null ? (NUMERO_VIBRACAO[num.value] ?? null) : null;
-            return (
-              <View key={i} style={{ flex: 1, borderWidth: 1.5, borderColor: p.border, borderRadius: 8, padding: 10, alignItems: 'center', backgroundColor: p.bg }}>
-                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: p.color, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>{num.label}</Text>
-                <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: p.color, lineHeight: 1 }}>{num.value ?? '?'}</Text>
-                <Text style={{ fontSize: 7, color: p.color, textAlign: 'center', marginTop: 4 }}>{num.sublabel}</Text>
-                {vibracao && (
-                  <Text style={{ fontSize: 7, color: p.color, textAlign: 'center', marginTop: 2, fontFamily: BODY_FONT_BOLD }}>{vibracao}</Text>
-                )}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+            {[
+              { label: 'Expressão', sublabel: 'O Dom Natural', value: cincoNumNasc.expressao, color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
+              { label: 'Motivação', sublabel: 'A Alma', value: cincoNumNasc.motivacao, color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
+              { label: 'Impressão', sublabel: 'A Máscara', value: cincoNumNasc.impressao, color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
+              { label: 'Missão', sublabel: 'A Vocação', value: cincoNumNasc.missao, color: '#7C3AED', border: '#7C3AED', bg: '#F5F3FF' },
+            ].map((n, i) => (
+              <View key={i} style={{ flex: 1, borderWidth: 1.5, borderColor: n.border, borderRadius: 8, padding: 10, alignItems: 'center', backgroundColor: n.bg }}>
+                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: n.color, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>{n.label}</Text>
+                <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: n.color, lineHeight: 1 }}>{n.value ?? '?'}</Text>
+                <Text style={{ fontSize: 7, color: n.color, textAlign: 'center', marginTop: 4 }}>{n.sublabel}</Text>
               </View>
-            );
-          })}
+            ))}
+          </View>
         </View>
 
-        {/* Os Números do Nome — O Veículo */}
-        <View style={{ borderRadius: 8, backgroundColor: 'rgba(212,175,55,0.06)', padding: 14 }}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#8A5C00', marginBottom: 6 }}>Os Números do Nome — O Veículo</Text>
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.65 }}>
-            Expressão, Motivação, Impressão e Missão emergem das letras do nome de batismo. Diferente do Destino, esses números respondem ao arranjo da assinatura — e podem ser reorganizados.
+        {/* ── Detalhamento dos 5 Números do Nome ── */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 12 }} wrap={false}>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
+          <Text style={{ fontSize: 8, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
+            Detalhamento dos 5 Números do Nome
           </Text>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
         </View>
 
-        <PDFFooter />
-      </Page>
-
-      {/* ── PÁGINA 3: OS SEUS NÚMEROS ────────────────────────────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFPageHeader subtitle={`${nomeNascimento} — Os Seus Números`} />
-
-        {/* Título da seção */}
-        <View style={{ marginTop: 16, marginBottom: 6 }}>
-          <Text style={[styles.sectionTitle, { color: '#0F766E', borderBottomColor: '#0F766E', fontSize: 14 }]}>
-            Os Seus Números
-          </Text>
+        <View style={{ gap: 6 }}>
+          {[
+            { num: cincoNumNasc.destino, label: 'Destino — A Estrada da Alma', desc: 'Calculado a partir da data de nascimento, representa a trilha que sua alma escolheu antes de receber um nome. É imutável e serve como a grande âncora da sua vida.', richDesc: cincoNumNasc.destino ? DESTINO_DESC[cincoNumNasc.destino] : '', color: '#5b21b6', bg: '#F5F3FF' },
+            { num: cincoNumNasc.expressao, label: 'Expressão — O Dom Natural', desc: 'Resultante de todas as letras do nome de batismo, revela o potencial nato — o que você veio equipado para fazer bem, naturalmente. Os talentos que surgem sem esforço e a qualidade que as pessoas percebem em você antes mesmo de falar.', richDesc: cincoNumNasc.expressao ? EXPRESSAO_DESC[cincoNumNasc.expressao] : '', color: '#9A6B00', bg: '#FFFBF0' },
+            { num: cincoNumNasc.motivacao, label: 'Motivação — A Alma do Nome', desc: 'Calculada pelas vogais, revela o motor mais profundo por trás das escolhas — não o que você faz, mas o que te move para fazer. Quando o nome cria conflito com a Motivação, há a sensação crônica de viver para fora.', richDesc: cincoNumNasc.motivacao ? MOTIVACAO_DESC[cincoNumNasc.motivacao] : '', color: '#0369a1', bg: '#F0F9FF' },
+            { num: cincoNumNasc.impressao, label: 'Impressão — A Máscara Social', desc: 'As consoantes formam o esqueleto visível do nome — a frequência que os outros captam antes de te conhecerem. Molda reputações e primeiras impressões. Um número desfavorável pode criar resistência onde deveria haver abertura.', richDesc: cincoNumNasc.impressao ? IMPRESSAO_DESC[cincoNumNasc.impressao] : '', color: '#15803d', bg: '#F0FDF4' },
+            { num: cincoNumNasc.missao, label: 'Missão — A Vocação de Vida', desc: 'Calculada pelo primeiro nome, aponta o campo onde seus dons encontram maior ressonância com o mundo. Quando alinhada com Expressão e Destino, gera propósito inevitável. Quando bloqueada, gera dispersão.', richDesc: cincoNumNasc.missao ? MISSAO_DESC[cincoNumNasc.missao] : '', color: '#7C3AED', bg: '#F5F3FF' },
+          ].map((item, i) => (
+            <View key={i} wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, backgroundColor: item.bg, borderRadius: 6, padding: 12 }}>
+              <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
+                <Text style={{ fontFamily: TITLE_FONT, fontSize: 24, color: item.color, lineHeight: 1 }}>{item.num ?? '?'}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>{item.label}</Text>
+                <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>{item.desc}</Text>
+                {item.richDesc ? (
+                  <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
+                    <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
+                      O Significado do seu Número {item.num}:
+                    </Text>
+                    <Text style={{ fontSize: 10, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
+                      {item.richDesc}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          ))}
         </View>
 
-        <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
-          Cada número é uma camada da frequência que a assinatura emite 24h por dia. Alguns são imutáveis; outros respondem ao arranjo das letras e podem ser ajustados.
-        </Text>
-
-        {/* Destino — purple */}
-        <View wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, backgroundColor: '#F5F3FF', borderRadius: 6, padding: 12 }}>
-          <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 22, color: '#5b21b6', lineHeight: 1 }}>{analysis.numero_destino ?? '?'}</Text>
+      {/* ── SEÇÃO A ESSÊNCIA: OS 4 TRIÂNGULOS DO NOME DE NASCIMENTO ──────── */}
+      {(tVida || tPessoal || tSocial || tDestino) && (
+        <View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
+            <View style={{ backgroundColor: '#991B1B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+              <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                A ESSÊNCIA
+              </Text>
+            </View>
+            <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#5b21b6', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>Destino — A Estrada da Alma</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6 }}>
-              {analysis.numero_destino != null && DESTINO_DESC[analysis.numero_destino]
-                ? DESTINO_DESC[analysis.numero_destino]
-                : 'Número imutável calculado da data de nascimento — o fio condutor que atravessa todas as fases da vida.'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Expressão — gold */}
-        <View wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, backgroundColor: '#FFFBF0', borderRadius: 6, padding: 12 }}>
-          <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 22, color: '#9A6B00', lineHeight: 1 }}>{analysis.numero_expressao ?? '?'}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#9A6B00', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>Expressão — O Dom Natural</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6 }}>
-              {analysis.numero_expressao != null && EXPRESSAO_DESC[analysis.numero_expressao]
-                ? EXPRESSAO_DESC[analysis.numero_expressao]
-                : 'Soma vibratória das letras do nome — revela o dom nato e como você se manifesta naturalmente.'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Motivação — purple */}
-        <View wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, backgroundColor: '#F5F3FF', borderRadius: 6, padding: 12 }}>
-          <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 22, color: '#6d28d9', lineHeight: 1 }}>{analysis.numero_motivacao ?? '?'}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#6d28d9', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>Motivação — A Alma do Nome</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6 }}>
-              {analysis.numero_motivacao != null && MOTIVACAO_DESC[analysis.numero_motivacao]
-                ? MOTIVACAO_DESC[analysis.numero_motivacao]
-                : 'As vogais revelam o motor profundo por trás das escolhas — não o que você faz, mas o que verdadeiramente te move.'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Impressão — sky blue */}
-        <View wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10, backgroundColor: '#F0F9FF', borderRadius: 6, padding: 12 }}>
-          <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 22, color: '#0369a1', lineHeight: 1 }}>{analysis.numero_impressao ?? '?'}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#0369a1', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>Impressão — A Máscara Social</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6 }}>
-              {analysis.numero_impressao != null && IMPRESSAO_DESC[analysis.numero_impressao]
-                ? IMPRESSAO_DESC[analysis.numero_impressao]
-                : 'As consoantes formam a estrutura que o mundo percebe primeiro — molda reputações e primeiras impressões.'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Missão — green */}
-        <View wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 12 }}>
-          <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 22, color: '#15803d', lineHeight: 1 }}>{analysis.numero_missao ?? '?'}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#15803d', marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>Missão — A Vocação de Vida</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6 }}>
-              {analysis.numero_missao != null && MISSAO_DESC[analysis.numero_missao]
-                ? MISSAO_DESC[analysis.numero_missao]
-                : 'Calculada pelo primeiro nome — aponta o campo onde seus dons encontram maior ressonância com o mundo.'}
-            </Text>
-          </View>
-        </View>
-
-        <PDFFooter />
-      </Page>
-
-      {/* ── BLOCO: O TRIÂNGULO DA VIDA ─────────────────────────────────────────── */}
-      {tVida && (
-        <Page size="A4" style={styles.page}>
-          <PDFPageHeader subtitle={`${nomeParaExibir} — O Triângulo da Vida`} />
-
-          <View style={{ marginTop: 20, marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>A Estrutura Fundamental do Nome</Text>
+          <View style={{ marginBottom: 14 }}>
+            <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
           </View>
 
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10 }}>
-            O nome é analisado sob quatro perspectivas distintas. A mais essencial delas é o Triângulo da Vida, calculado a partir do valor puro de cada letra.
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
+            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para dissolvê-los e recuperar a fluidez.
           </Text>
 
-          {/* O Que São os Arcanos */}
-          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED', padding: 10, marginBottom: 8 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#7C3AED', marginBottom: 4 }}>O Que São os Arcanos</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.55 }}>
-              Em cada pirâmide, o número no vértice superior é o Arcano Regente — a força dominante que governa aquela dimensão. É a identificação matemática do padrão que já opera por trás dos eventos, independente da sua vontade.
+          {/* Arcanos info box */}
+          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED', padding: 12, marginBottom: 10 }}>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#7C3AED', marginBottom: 6 }}>O Que São os Arcanos</Text>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 6 }}>
+              A Numerologia Cabalística é a ciência que decodifica as vibrações ocultas por trás do seu nome. Para revelar as forças que regem o seu destino, ela utiliza os <Text style={{ fontFamily: BODY_FONT_BOLD }}>Arcanos</Text> — arquétipos profundos de energia. Embora a estrutura principal da vida seja governada por 22 Arcanos Maiores (as forças primordiais), a sua jornada diária desdobra-se em ciclos menores e mais sutis, expandindo essa roda para até 99 vibrações numerológicas para mapear o dia a dia. Dentro de cada triângulo, você encontrará três tipos de Arcanos atuando em conjunto:
+            </Text>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
+              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>1. Arcano Regente:</Text> É a grande força dominante. Sempre um dos 22 Arcanos Maiores, ele é o "sol" que ilumina e governa aquela dimensão da sua vida desde o nascimento. É a fundação do seu cenário.
+            </Text>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
+              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>2. Sequência de Passagem:</Text> É a sua linha do tempo. Representa os capítulos cronológicos da sua estrada. Utilizando as vibrações menores (até 99), ela revela por onde a sua energia vai caminhar, ciclo após ciclo.
+            </Text>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
+              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>3. Arcano de Trânsito:</Text> É o seu "aqui e agora". É o capítulo específico e a vibração exata de provação, renovação ou colheita que você está atravessando neste exato momento.
             </Text>
           </View>
 
-          {/* O Que São os Bloqueios */}
-          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', padding: 10, marginBottom: 8 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#DC2626', marginBottom: 4 }}>O Que São os Bloqueios Energéticos</Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.55 }}>
-              Quando o mesmo número aparece três ou mais vezes consecutivas, forma-se um Bloqueio — a frequência do nome emite o mesmo padrão em loop. Opera independente de esforço ou força de vontade. Células vermelhas na pirâmide indicam onde o bloqueio está ativo.
+          {/* Bloqueios info box */}
+          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', padding: 12, marginBottom: 8 }}>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#DC2626', marginBottom: 6 }}>O Que São os Bloqueios Energéticos</Text>
+            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
+              Na numerologia cabalística, quando um mesmo número aparece três ou mais vezes consecutivas na pirâmide, ele cria uma densidade vibracional que chamamos de Bloqueio. Não é um castigo, mas uma interrupção temporária no fluxo da energia vital. Identificar essas áreas (nas marcações em vermelho abaixo) permite que você traga consciência para as esferas da vida que exigem maior cuidado e alinhamento.
             </Text>
           </View>
 
-          {/* ─── TRIÂNGULO DA VIDA ───────────────────────────────────────────── */}
+          {/* ─── TRIÂNGULO DA VIDA ─── */}
           {tVida && (
             <View>
               <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo da Vida
+                O Triângulo da Vida (Nascimento)
               </Text>
-              <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 10 }}>
-                A estrutura mais fundamental — calculada do valor puro de cada letra. Governa saúde, vitalidade e prosperidade material. Bloqueios aqui criam ciclos crônicos de desgaste físico e instabilidade financeira.
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Saúde, Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação física e energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa a saúde do seu corpo físico, sua imunidade energética e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
               </Text>
-              <TrianguloPiramideInline data={tVida} label="TRIÂNGULO DA VIDA" cellSize={triCellSize} letras={letrasNome} />
-              {/* Arcano Regente do Triângulo da Vida — versão simplificada (dossiê gratuito) */}
+              <TrianguloPiramideInline data={tVida} label="TRIÂNGULO DA VIDA" cellSize={triCellSize} letras={letrasNomeBatismo} />
               {tVida.arcanoRegente != null && (() => {
                 const arc = getArcano(tVida.arcanoRegente!);
+                const arcAtual = tVida.arcanoAtual?.numero ? getArcano(tVida.arcanoAtual.numero) : null;
                 return (
-                  <View wrap={false} style={{ marginTop: 14 }}>
-                    <Text style={{ fontSize: 11, fontFamily: TITLE_FONT, color: '#C89000', borderBottomWidth: 1, borderBottomColor: '#C89000', paddingBottom: 4, marginBottom: 10, letterSpacing: 0.5 }}>
-                      {'Arcano Regente da Vida — ' + String(arc?.numero ?? '') + ': ' + (arc?.nome ?? '')}
-                    </Text>
-                    <View wrap={false} style={{ borderWidth: 1, borderColor: '#7C3AED', borderRadius: 6, padding: 12, backgroundColor: '#F5F3FF' }}>
-                      <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#5b21b6', textAlign: 'center', marginBottom: 10 }}>
-                        {arc?.palavraChave ?? ''}
-                      </Text>
-                      <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#7C3AED', letterSpacing: 0.8, marginBottom: 4 }}>
-                        VIBRAÇÃO DOMINANTE
-                      </Text>
-                      <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                        {arc?.descricao ?? ''}
-                      </Text>
-                      <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#7C3AED', letterSpacing: 0.8, marginBottom: 4 }}>
-                        DESAFIO A INTEGRAR
-                      </Text>
-                      <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.65, fontFamily: 'Helvetica-Oblique' }}>
-                        {arc?.desafio ?? ''}
-                      </Text>
-                    </View>
-                  </View>
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo da Vida"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tVida.arcanosDePassagem}
+                    arcanoAtual={tVida.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
                 );
               })()}
-              {/* Bloqueios do Triângulo da Vida — exibidos completos na prévia */}
-              {(() => {
-                const vidaBloqueios = bloqueios.filter((b: any) => b.triangulos?.includes('vida'));
-                return (
-                  <View style={{ marginTop: 12 }}>
-                    {vidaBloqueios.length > 0 && (
-                      <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#DC2626', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
-                        {vidaBloqueios.length} Bloqueio{vidaBloqueios.length > 1 ? 's' : ''} Detectado{vidaBloqueios.length > 1 ? 's' : ''} no Triângulo da Vida
-                      </Text>
-                    )}
-                    <BloqueiosBlock bloqueios={vidaBloqueios} hideTriangulos={true} showAntidoto={false} />
-                  </View>
-                );
-              })()}
+              {bloqueios.filter((b: any) => b.triangulos?.includes('vida')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo da Vida
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
+                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
+                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                  </Text>
+                </View>
+              )}
             </View>
           )}
 
-          <PDFFooter />
-        </Page>
+          {/* ─── TRIÂNGULO PESSOAL ─── */}
+          {tPessoal && (
+            <View>
+              <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+                O Triângulo Pessoal (Nascimento)
+              </Text>
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — Esta dimensão penetra no santuário mais reservado da sua alma, ativada e moldada pelo dia exato do seu nascimento. Ela governa a sua inteligência emocional, a forma como você processa sentimentos íntimos em segredo, sua tolerância a pressões internas e a dinâmica com os seus entes mais próximos. Quando existem bloqueios nesta pirâmide de origem, a vida afetiva tende a repetir ciclos e roteiros repetitivos de frustração ou incompreensão, atuando como espelhos de conflitos internos ainda não resolvidos.
+              </Text>
+              <TrianguloPiramideInline data={tPessoal} label="TRIÂNGULO PESSOAL" cellSize={triCellSize} letras={letrasNomeBatismo} />
+              {tPessoal.arcanoRegente != null && (() => {
+                const arc = getArcano(tPessoal.arcanoRegente!);
+                const arcAtual = tPessoal.arcanoAtual?.numero ? getArcano(tPessoal.arcanoAtual.numero) : null;
+                return (
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo Pessoal"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tPessoal.arcanosDePassagem}
+                    arcanoAtual={tPessoal.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
+                );
+              })()}
+              {bloqueios.filter((b: any) => b.triangulos?.includes('pessoal')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo Pessoal
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
+                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
+                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ─── TRIÂNGULO SOCIAL ─── */}
+          {tSocial && (
+            <View>
+              <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+                O Triângulo Social (Nascimento)
+              </Text>
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#059669' }}>[Carreira, Visibilidade Pública e Magnetismo Social]</Text> — Esta pirâmide irradia a sua assinatura vibracional para o mundo externo, moldada pela influência do mês do seu nascimento. Ela governa a forma como a sociedade te percebe, o carisma que você emana em ambientes públicos e as oportunidades profissionais que você atrai ou repele. É a frequência que determina a sua reputação, a sua capacidade de vendas, parcerias profissionais e o reconhecimento do seu talento pelo coletivo. Bloqueios aqui geram invisibilidade, sabotagem profissional ou dificuldades de comunicação com o público.
+              </Text>
+              <TrianguloPiramideInline data={tSocial} label="TRIÂNGULO SOCIAL" cellSize={triCellSize} letras={letrasNomeBatismo} />
+              {tSocial.arcanoRegente != null && (() => {
+                const arc = getArcano(tSocial.arcanoRegente!);
+                const arcAtual = tSocial.arcanoAtual?.numero ? getArcano(tSocial.arcanoAtual.numero) : null;
+                return (
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo Social"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tSocial.arcanosDePassagem}
+                    arcanoAtual={tSocial.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
+                );
+              })()}
+              {bloqueios.filter((b: any) => b.triangulos?.includes('social')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo Social
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="social" />
+                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
+                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ─── TRIÂNGULO DO DESTINO ─── */}
+          {tDestino && (
+            <View>
+              <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+                O Triângulo do Destino (Nascimento)
+              </Text>
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — A pirâmide mais reveladora e soberana de toda a sua jornada terrestre. Ela entrelaça de forma divina a totalidade do seu nome com as coordenadas do seu nascimento (dia + mês reduzidos). Este triângulo governa a colheita prática da sua jornada: a materialização física dos seus esforços, a execução do seu propósito de alma e o legado indelével que você construirá no tempo. Quando há bloqueios nesta área, você pode sentir que despende uma quantidade colossal de energia no trabalho sem nunca alcançar os frutos correspondentes na realidade material.
+              </Text>
+              <TrianguloPiramideInline data={tDestino} label="TRIÂNGULO DO DESTINO" cellSize={triCellSize} letras={letrasNomeBatismo} />
+              {tDestino.arcanoRegente != null && (() => {
+                const arc = getArcano(tDestino.arcanoRegente!);
+                const arcAtual = tDestino.arcanoAtual?.numero ? getArcano(tDestino.arcanoAtual.numero) : null;
+                return (
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo do Destino"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tDestino.arcanosDePassagem}
+                    arcanoAtual={tDestino.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
+                );
+              })()}
+              {bloqueios.filter((b: any) => b.triangulos?.includes('destino')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo do Destino
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
+                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
+                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
       )}
 
-      {/* ── PÁGINA: O MAPA COMPLETO OCULTO ───────────────────────────────── */}
-      {(tPessoal || tSocial || tDestino) && (
-        <Page size="A4" style={styles.page}>
-          <PDFPageHeader subtitle={`${nomeParaExibir} — O Mapa Completo`} />
-
-          <View style={{ marginTop: 20, marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>O Mapa Completo Oculto</Text>
-          </View>
-
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 24, textAlign: 'justify' }}>
-            Além do Triângulo da Vida, o seu nome possui mais três dimensões estruturais que governam áreas cruciais da sua jornada. Quando bloqueadas, essas dimensões criam ciclos repetitivos de resistência que não respondem à força de vontade ou mudança de comportamento.
-          </Text>
-
-          {/* Box Pessoal */}
-          <View wrap={false} style={{ backgroundColor: '#F5F3FF', borderRadius: 10, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.2)' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <View style={{ width: 4, height: 16, backgroundColor: '#7C3AED', borderRadius: 2 }} />
-              <Text style={{ fontFamily: TITLE_FONT, fontSize: 14, color: '#5B21B6' }}>O Triângulo Pessoal</Text>
-            </View>
-            <Text style={{ fontSize: 9, color: '#4C1D95', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Relacionamentos Afetivos e Reações Internas</Text>
-            <Text style={{ fontSize: 10, color: '#4B5563', lineHeight: 1.6 }}>
-              Acessa os padrões que operam na vida íntima e nos relacionamentos afetivos. Bloqueios nesta dimensão criam desgaste emocional crônico, dificuldades de conexão verdadeira e padrões de autossabotagem quando você está mais vulnerável.
+      {/* ── SEÇÃO A ESSÊNCIA: O PESO DO PASSADO ───────────────────── */}
+      <View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
+          <View style={{ backgroundColor: '#991B1B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              A ESSÊNCIA
             </Text>
-            <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 10, fontStyle: 'italic' }}>* Diagnóstico completo dos bloqueios pessoais disponível na Harmonização.</Text>
           </View>
-
-          {/* Box Social */}
-          <View wrap={false} style={{ backgroundColor: '#F0FDF4', borderRadius: 10, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(5, 150, 105, 0.2)' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <View style={{ width: 4, height: 16, backgroundColor: '#059669', borderRadius: 2 }} />
-              <Text style={{ fontFamily: TITLE_FONT, fontSize: 14, color: '#065F46' }}>O Triângulo Social</Text>
-            </View>
-            <Text style={{ fontSize: 9, color: '#064E3B', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Carreira, Magnetismo e Oportunidades</Text>
-            <Text style={{ fontSize: 10, color: '#4B5563', lineHeight: 1.6 }}>
-              Mapeia a percepção externa e o magnetismo do nome. Bloqueios nesta dimensão fazem com que o mundo não enxergue seu verdadeiro valor, fechando portas profissionais e criando estagnação na carreira mesmo com muito esforço.
-            </Text>
-            <Text style={{ fontSize: 8, color: '#059669', marginTop: 10, fontStyle: 'italic' }}>* Diagnóstico completo dos bloqueios sociais disponível na Harmonização.</Text>
-          </View>
-
-          {/* Box Destino */}
-          <View wrap={false} style={{ backgroundColor: '#FFFBEB', borderRadius: 10, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(217, 119, 6, 0.2)' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <View style={{ width: 4, height: 16, backgroundColor: '#D97706', borderRadius: 2 }} />
-              <Text style={{ fontFamily: TITLE_FONT, fontSize: 14, color: '#92400E' }}>O Triângulo do Destino</Text>
-            </View>
-            <Text style={{ fontSize: 9, color: '#78350F', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>Legado Construído e Resultados Concretos</Text>
-            <Text style={{ fontSize: 10, color: '#4B5563', lineHeight: 1.6 }}>
-              A dimensão mais reveladora. Combina a essência do nome com o seu dia e mês de nascimento para projetar os resultados materiais e o legado final. Bloqueios aqui dissipam sua energia, impedindo que você consolide suas maiores conquistas.
-            </Text>
-            <Text style={{ fontSize: 8, color: '#D97706', marginTop: 10, fontStyle: 'italic' }}>* Diagnóstico completo dos bloqueios de destino disponível na Harmonização.</Text>
-          </View>
-
-          <PDFFooter />
-        </Page>
-      )}
-
-      {/* ── PÁGINA 4/5: KARMA E TENDÊNCIAS ─────────────────────────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — O Peso do Passado`} />
-
-        <View style={{ marginTop: 20, marginBottom: 8 }}>
-          <Text style={styles.hugeTitle}>Karma, Lições e Tendências Ocultas</Text>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
+        </View>
+        <View style={{ marginBottom: 8 }}>
+          <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
         </View>
 
-        <View style={{ ...styles.section, marginTop: 12 }}>
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 16 }}>
+          Além dos bloqueios detectados nos triângulos, o nome de nascimento carrega padrões kármicos mais profundos: os Débitos (contas de encarnações passadas ainda ativas), as Lições (vibrações ausentes que precisam ser desenvolvidas) e as Tendências Ocultas (excessos que criam ciclos de sabotagem).
+        </Text>
+
+        {/* Débitos Kármicos */}
+        <View style={{ ...styles.section, marginTop: 0 }}>
           <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
             Débitos Kármicos
           </Text>
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 8 }}>
-            Padrões de encarnações anteriores ainda ativos no nome — manifestam-se como ciclos repetitivos de perda, esforço redobrado sem resultado ou bloqueios onde você mais quer prosperar.
+          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
+            Os Débitos Kármicos emergem como ecos de vidas anteriores — áreas onde o livre-arbítrio foi utilizado em desequilíbrio. Não são punições, mas leis de compensação que exigem reintegração. Os mesmos cenários de traição, perda ou esforço redobrado tendem a se repetir até que a lição seja integrada conscientemente.
           </Text>
-          <DebitosBlock debitos={debitos} showSolution={false} compact={true} />
+          <DebitosBlock debitos={debitos} />
         </View>
 
+        {/* Lições Kármicas */}
         <View style={{ ...styles.section, marginTop: 0 }}>
           <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
             Lições Kármicas
           </Text>
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 8 }}>
-            Números ausentes no nome — qualidades que precisam ser construídas do zero nesta vida. Criam pontos cegos crônicos em áreas onde o esforço parece desproporcional ao resultado.
+          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
+            As Lições Kármicas são os "quartos vazios" da arquitetura energética: determinam exatamente quais virtudes estão ausentes no momento da encarnação. São traços não desenvolvidos em vidas anteriores — o Destino orquestrará desafios propositais para forçar o desenvolvimento dessas ferramentas ocultas.
           </Text>
-          <LicoesBlock licoes={licoes} showSolution={false} compact={true} />
+          <LicoesBlock licoes={licoes} />
         </View>
 
+        {/* Tendências Ocultas */}
         <View style={{ ...styles.section, marginTop: 0 }}>
           <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
             Tendências Ocultas
           </Text>
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.6, marginBottom: 8 }}>
-            Quando um número aparece 4 ou mais vezes no nome, domina o comportamento automaticamente. O que seria talento torna-se compulsão — sabotando exatamente onde você mais quer prosperar.
+          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
+            As Tendências Ocultas emergem quando um número aparece quatro ou mais vezes no nome — um talento amplificado ao ponto de se tornar compulsão. O excesso incontrolado converte a habilidade primária em desequilíbrio, sabotando resultados a longo prazo. O mapeamento preciso dessas forças é o primeiro passo para direcioná-las conscientemente.
           </Text>
-          <TendenciasBlock tendencias={tendencias} frequencias={frequencias} showSolution={false} />
+          <TendenciasBlock tendencias={tendencias} frequencias={frequencias} />
         </View>
 
-        <PDFFooter />
+        {/* Gancho sutil pós-karma */}
+        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginTop: 4, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
+          <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, textAlign: 'center', fontStyle: 'italic' }}>
+            Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
+          </Text>
+        </View>
+      </View>
+
+        <PDFFooter bgColor="#FEF2F2" />
       </Page>
 
-      {/* ── DIAGNÓSTICO DO NOME removido do relatório gratuito ──────────── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+       *  PÁGINAS FINAIS — mantidas do PDF gratuito original
+       * ═══════════════════════════════════════════════════════════════════════ */}
 
       {/* ── PÁGINA: DIAGNÓSTICO É CLARO (FUNDO ESCURO) ──────────────────── */}
       <Page size="A4" style={styles.darkPage}>
@@ -743,7 +819,7 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
             <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{bloqueios.length} bloqueio{bloqueios.length !== 1 ? 's' : ''} {bloqueios.length !== 1 ? 'energéticos' : 'energético'}</Text>
-              {' '}detectado{bloqueios.length !== 1 ? 's' : ''} no Triângulo da Vida — loops vibracionais ativos 24h/dia, independente de esforço ou força de vontade.
+              {' '}detectado{bloqueios.length !== 1 ? 's' : ''} nos 4 triângulos do nome de nascimento — loops vibracionais ativos 24h/dia, independente de esforço ou força de vontade.
             </Text>
           </View>
 
@@ -812,15 +888,21 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
             <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
               Sua primeira ação prática deve ser neutralizar a repetição primária do {bloqueios[0].titulo}.
             </Text>
-            {(escudoTexto || bloqueios[0].descricao.includes('O antídoto é')) && (
+            {(escudoTexto || SUGESTOES_AMENIZAR[bloqueios[0].codigo]) && (
               <View style={{ backgroundColor: 'rgba(242, 202, 80, 0.1)', padding: 12, borderRadius: 6, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: '#f2ca50' }}>
-                <Text style={{ fontSize: 10, color: '#f2ca50', fontFamily: BODY_FONT_BOLD, marginBottom: 4 }}>Ação Recomendada (Próximas 72h):</Text>
-                <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.5 }}>
-                  {escudoTexto 
-                    ? escudoTexto 
-                    : `O antídoto imediato para começar a destravar essa energia é ${bloqueios[0].descricao.split('O antídoto é')[1]?.trim().toLowerCase() || 'focar em neutralizar essa sequência na sua assinatura diária.'}`
+                <Text style={{ fontSize: 10, color: '#f2ca50', fontFamily: BODY_FONT_BOLD, marginBottom: 6 }}>Ação Recomendada (Próximas 72h):</Text>
+                <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.5, marginBottom: escudoTexto ? 0 : 6 }}>
+                  {escudoTexto
+                    ? escudoTexto
+                    : `Para neutralizar provisoriamente essa vibração e restabelecer o equilíbrio do seu campo, você pode adotar atitudes práticas imediatas. Escolha pelo menos uma das ações abaixo para aplicar nos próximos dias:`
                   }
                 </Text>
+                {!escudoTexto && (SUGESTOES_AMENIZAR[bloqueios[0].codigo] || []).map((sugestao, idx) => (
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 4, paddingLeft: 4 }}>
+                    <Text style={{ color: '#f2ca50', fontSize: 9, marginRight: 6, marginTop: 1 }}>✦</Text>
+                    <Text style={{ fontSize: 9.5, color: '#e5e2e1', lineHeight: 1.45, flex: 1 }}>{sugestao}</Text>
+                  </View>
+                ))}
               </View>
             )}
             <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
@@ -845,8 +927,6 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
 
         <PDFFooter />
       </Page>
-
-      {/* A seção de Variações Numerológicas foi removida do PDF (só aparece no HTML) */}
 
       {/* ── PÁGINA FINAL: CTA — DIAGNÓSTICO DEFINITIVO (FUNDO ESCURO) ──────── */}
       <Page size="A4" style={styles.darkPage}>
@@ -904,8 +984,8 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1, gap: 6 }}>
               <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Análise completa dos 4 triângulos'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Triângulos Pessoal, Social e do Destino desbloqueados</Text>
+                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Comparativo completo dos 4 triângulos'}</Text>
+                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Nascimento vs. Harmonizado lado a lado</Text>
               </View>
               <View>
                 <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Variações de assinatura sem bloqueios'}</Text>
@@ -914,8 +994,8 @@ export function NomeAtualPDF({ analysis, magneticNames, userName }: ProductPDFPr
             </View>
             <View style={{ flex: 1, gap: 6 }}>
               <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Todos os arcanos revelados'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Vibração dominante e desafio de cada dimensão</Text>
+                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Todos os arcanos reorganizados'}</Text>
+                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Novas forças governando cada dimensão</Text>
               </View>
               <View>
                 <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Guia de implementação'}</Text>

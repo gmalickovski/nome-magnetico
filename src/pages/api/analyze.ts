@@ -41,7 +41,7 @@ const schema = z.object({
   descricao_negocio: z.string().optional(),
   nome_socio2: z.string().min(2).max(150).optional(),
   data_nascimento_socio2: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
-  // campos específicos nome_social (novo fluxo)
+  // campos específicos nome_social
   objetivo_apresentacao: z.string().max(500).optional(),
   vibracoes_desejadas: z.string().max(300).optional(),
   contexto_uso: z.string().optional(),
@@ -50,6 +50,7 @@ const schema = z.object({
   nome_ja_escolhido: z.boolean().optional(),
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
+  gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
 });
 
 const AI_TIMEOUT_MS = 75_000;
@@ -152,6 +153,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     nome_social_principal,
     nome_ja_escolhido,
     is_free,
+    gender: inputGender,
   } = parsed.data;
 
   const { data: profile } = await supabase
@@ -161,8 +163,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     .eq('id', user.id)
     .single();
 
-
-  const gender = profile?.gender || 'Neutro';
+  const gender: string = inputGender || profile?.gender || 'Neutro';
   const isAdmin = profile?.role === 'admin';
 
   const isGratuita = product_type === 'analise_gratuita' || is_free === true;
@@ -193,16 +194,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const birthDateDb = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : data_nascimento;
     const shouldUpdateBirthProfile =
       profile?.birth_name !== nome_completo.trim() ||
-      profile?.birth_date !== birthDateDb;
+      profile?.birth_date !== birthDateDb ||
+      (gender && profile?.gender !== gender);
 
     if (shouldUpdateBirthProfile) {
+      const updates: any = {
+        birth_name: nome_completo.trim(),
+        birth_date: birthDateDb,
+        updated_at: new Date().toISOString(),
+      };
+      if (gender) {
+        updates.gender = gender;
+      }
+
       const { error: birthProfileError } = await supabase
         .from('profiles')
-        .update({
-          birth_name: nome_completo.trim(),
-          birth_date: birthDateDb,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq('id', user.id);
 
       if (birthProfileError) {

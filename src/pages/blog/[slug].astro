@@ -555,7 +555,9 @@ const wasUpdated = Boolean(
   (function () {
     // 1. Rastrear visualização do artigo
     function sendArticleView() {
-      if (typeof window.gtag === 'function') {
+      if (typeof window.gtag === 'function' &&
+          localStorage.getItem('nm-cookie-consent') === 'all' &&
+          localStorage.getItem('nm-user-role') !== 'admin') {
         window.gtag('event', 'blog_article_view', {
           article_title: articleTitle,
           article_slug: articleSlug
@@ -572,7 +574,9 @@ const wasUpdated = Boolean(
         ctaContainer.querySelectorAll('a').forEach(function (link) {
           link.addEventListener('click', function () {
             const dest = link.getAttribute('href') || '';
-            if (typeof window.gtag === 'function') {
+            if (typeof window.gtag === 'function' &&
+                localStorage.getItem('nm-cookie-consent') === 'all' &&
+                localStorage.getItem('nm-user-role') !== 'admin') {
               window.gtag('event', 'blog_cta_click', {
                 destination_url: dest,
                 origin_article: articleSlug

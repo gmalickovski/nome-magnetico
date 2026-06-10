@@ -314,6 +314,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                   promocao: promotion?.name ?? null,
                   origem: 'comprar',
                 });
+                track('begin_checkout', { produto: type, valor: priceInfo.cents / 100 });
                 setModalProduct(type);
               }
             }}

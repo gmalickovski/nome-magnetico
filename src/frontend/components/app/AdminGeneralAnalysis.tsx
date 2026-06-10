@@ -408,9 +408,14 @@ export default function AdminGeneralAnalysis() {
               message: 'Preparando o arquivo PDF...',
             });
 
-            const pdfRes = await fetch(`/api/generate-pdf?id=${data.analysisId}`, {
+            const pdfUrl = `/api/generate-pdf?id=${data.analysisId}&t=${Date.now()}`;
+            const pdfRes = await fetch(pdfUrl, {
               cache: 'no-store',
               credentials: 'same-origin',
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+              },
             });
             
             if (!pdfRes.ok) throw new Error('pdf_error');
@@ -437,7 +442,7 @@ export default function AdminGeneralAnalysis() {
           } catch (pdfErr) {
             console.error('Erro ao baixar PDF via Blob:', pdfErr);
             // Fallback caso falhe: tenta abrir na aba nova
-            window.open(`/api/generate-pdf?id=${data.analysisId}`, '_blank');
+            window.open(`/api/generate-pdf?id=${data.analysisId}&t=${Date.now()}`, '_blank');
             setPdfModal({
               isOpen: true,
               status: 'success',
