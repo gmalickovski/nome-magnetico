@@ -158,7 +158,11 @@ const styles = StyleSheet.create({
 });
 
 function scoreColor(score: number): string {
-  return score >= 70 ? '#059669' : score >= 40 ? '#D97706' : '#DC2626';
+  if (score >= 90) return '#10B981'; // Excelente
+  if (score >= 70) return '#84CC16'; // Bom
+  if (score >= 40) return '#FACC15'; // Aceitável
+  if (score >= 20) return '#F97316'; // Não recomendado
+  return '#EF4444'; // Crítico
 }
 
 function compatColor(c: string): string {

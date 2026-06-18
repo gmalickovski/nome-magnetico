@@ -917,6 +917,14 @@ function extractConclusao(text: string): string | null {
   return text.slice(match.index).trim();
 }
 
+function scoreColor(score: number): string {
+  if (score >= 90) return '#10B981'; // Excelente
+  if (score >= 70) return '#84CC16'; // Bom
+  if (score >= 40) return '#FACC15'; // Aceitável
+  if (score >= 20) return '#F97316'; // Não recomendado
+  return '#EF4444'; // Crítico
+}
+
 export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
   const isBebe = analysis.product_type === 'nome_bebe';
   const isEmpresa = analysis.product_type === 'nome_empresa';
@@ -1195,12 +1203,12 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                 <View style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ fontSize: 9, color: GRAY }}>Score Numerologico</Text>
-                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: freqData.ranking.melhorNome.score >= 70 ? '#059669' : freqData.ranking.melhorNome.score >= 40 ? '#D97706' : '#DC2626' }}>
+                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: scoreColor(freqData.ranking.melhorNome.score) }}>
                       {freqData.ranking.melhorNome.score}/100
                     </Text>
                   </View>
                   <View style={{ height: 8, backgroundColor: LIGHT_GRAY, borderRadius: 4 }}>
-                    <View style={{ width: `${freqData.ranking.melhorNome.score}%`, height: 8, backgroundColor: freqData.ranking.melhorNome.score >= 70 ? '#059669' : freqData.ranking.melhorNome.score >= 40 ? '#D97706' : '#DC2626', borderRadius: 4 }} />
+                    <View style={{ width: `${freqData.ranking.melhorNome.score}%`, height: 8, backgroundColor: scoreColor(freqData.ranking.melhorNome.score), borderRadius: 4 }} />
                   </View>
                 </View>
 
@@ -1285,11 +1293,11 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                   )}
                 </View>
                 <View style={{ width: '20%', paddingRight: 6, justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: c.score >= 70 ? '#059669' : c.score >= 40 ? '#D97706' : '#DC2626', marginBottom: 2 }}>
+                  <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: scoreColor(c.score), marginBottom: 2 }}>
                     {c.score}/100
                   </Text>
                   <View style={{ height: 5, backgroundColor: LIGHT_GRAY, borderRadius: 2 }}>
-                    <View style={{ width: `${Math.min(100, c.score)}%`, height: 5, backgroundColor: c.score >= 70 ? '#059669' : c.score >= 40 ? '#D97706' : '#DC2626', borderRadius: 2 }} />
+                    <View style={{ width: `${Math.min(100, c.score)}%`, height: 5, backgroundColor: scoreColor(c.score), borderRadius: 2 }} />
                   </View>
                 </View>
                 <Text style={[styles.tableCell, { width: '8%', textAlign: 'center' }]}>{c.expressao}</Text>
@@ -1360,12 +1368,12 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                 <View style={{ marginBottom: 14 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text style={{ fontSize: 9, color: GRAY }}>Score Numerologico</Text>
-                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: freqData.melhorNome.score >= 70 ? '#059669' : freqData.melhorNome.score >= 40 ? '#D97706' : '#DC2626' }}>
+                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: scoreColor(freqData.melhorNome.score) }}>
                       {freqData.melhorNome.score}/100
                     </Text>
                   </View>
                   <View style={{ height: 8, backgroundColor: LIGHT_GRAY, borderRadius: 4 }}>
-                    <View style={{ width: `${Math.min(100, freqData.melhorNome.score)}%`, height: 8, backgroundColor: freqData.melhorNome.score >= 70 ? '#059669' : freqData.melhorNome.score >= 40 ? '#D97706' : '#DC2626', borderRadius: 4 }} />
+                    <View style={{ width: `${Math.min(100, freqData.melhorNome.score)}%`, height: 8, backgroundColor: scoreColor(freqData.melhorNome.score), borderRadius: 4 }} />
                   </View>
                 </View>
 
@@ -1437,7 +1445,7 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
             </Text>
 
             {(freqData.nomesCandidatos as any[]).slice(0, 10).map((c: any, i: number) => {
-              const scoreColor = c.score >= 70 ? '#059669' : c.score >= 40 ? '#D97706' : '#DC2626';
+              const scoreColorVal = scoreColor(c.score);
               const isTop = i === 0;
               const isIA = c.origemSugerida === 'ia';
               return (
@@ -1457,13 +1465,13 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                         {c.nomeEmpresa}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: scoreColor }}>
+                    <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: scoreColorVal }}>
                       {c.score}/100
                     </Text>
                   </View>
 
                   <View style={{ height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, marginBottom: 5 }}>
-                    <View style={{ width: `${Math.min(100, c.score)}%`, height: 4, backgroundColor: scoreColor, borderRadius: 2 }} />
+                    <View style={{ width: `${Math.min(100, c.score)}%`, height: 4, backgroundColor: scoreColorVal, borderRadius: 2 }} />
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -1603,7 +1611,7 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
             </Text>
 
             {magneticNames.slice(0, 3).map((name, i) => {
-              const scoreColor = name.score >= 70 ? '#059669' : name.score >= 40 ? '#D97706' : '#DC2626';
+              const scoreColorVal = scoreColor(name.score);
               const isTop = i === 0;
               return (
                 <View key={i} style={{
@@ -1621,14 +1629,14 @@ export function AnalysePDF({ analysis, magneticNames, userName }: Props) {
                         {name.nome_sugerido}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: scoreColor }}>
+                    <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: scoreColorVal }}>
                       {name.score}/100
                     </Text>
                   </View>
 
                   {/* Score bar */}
                   <View style={{ height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, marginBottom: 6 }}>
-                    <View style={{ width: `${Math.min(100, name.score)}%`, height: 4, backgroundColor: scoreColor, borderRadius: 2 }} />
+                    <View style={{ width: `${Math.min(100, name.score)}%`, height: 4, backgroundColor: scoreColorVal, borderRadius: 2 }} />
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: 16, marginBottom: name.justificativa ? 5 : 0 }}>

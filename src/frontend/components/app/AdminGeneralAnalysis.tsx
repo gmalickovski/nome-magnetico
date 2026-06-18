@@ -885,8 +885,8 @@ export default function AdminGeneralAnalysis() {
                 if (!selectedCandidate) return null;
 
                 const scoreVal: number = selectedCandidate.score ?? 0;
-                const scoreColor = scoreVal >= 70 ? 'text-emerald-400' : scoreVal >= 40 ? 'text-amber-400' : scoreVal >= 20 ? 'text-red-400' : 'text-red-600';
-                const scoreBg   = scoreVal >= 70 ? 'bg-emerald-500/10 border-emerald-500/20' : scoreVal >= 40 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20';
+                const scoreColor = scoreVal >= 90 ? 'text-emerald-400' : scoreVal >= 70 ? 'text-lime-400' : scoreVal >= 40 ? 'text-yellow-400' : scoreVal >= 20 ? 'text-orange-400' : 'text-red-500';
+                const scoreBg   = scoreVal >= 90 ? 'bg-emerald-500/10 border-emerald-500/20' : scoreVal >= 70 ? 'bg-lime-500/10 border-lime-500/20' : scoreVal >= 40 ? 'bg-yellow-500/10 border-yellow-500/20' : scoreVal >= 20 ? 'bg-orange-500/10 border-orange-500/20' : 'bg-red-500/10 border-red-500/20';
                 const scoreLabel = scoreVal >= 90 ? '⭐ Excelente' : scoreVal >= 70 ? '✅ Bom' : scoreVal >= 40 ? '〜 Aceitável' : scoreVal >= 20 ? '⚠ Não Recomendado' : '🔴 Crítico';
 
                 return (

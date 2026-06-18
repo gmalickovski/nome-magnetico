@@ -172,11 +172,13 @@ export function LiveNameTester({ birthName, birthDate }: Props) {
                     {result.score >= 90 ? (
                       <span className="text-emerald-400">{result.score}% Excelente</span>
                     ) : result.score >= 70 ? (
-                      <span className="text-emerald-400">{result.score}% Bom</span>
+                      <span className="text-lime-400">{result.score}% Bom</span>
                     ) : result.score >= 40 ? (
                       <span className="text-yellow-400">{result.score}% Aceitável</span>
+                    ) : result.score >= 20 ? (
+                      <span className="text-orange-500">{result.score}% Não Recomendado</span>
                     ) : (
-                      <span className="text-red-400">{result.score}% Tensão Vibracional</span>
+                      <span className="text-red-500">{result.score}% Tensão Vibracional</span>
                     )}
                  </div>
                  <p className="text-gray-300 text-sm">{result.compatibilidade?.descricao || ''}</p>

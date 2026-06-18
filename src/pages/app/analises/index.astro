@@ -163,7 +163,7 @@ const hasMultipleProducts = uniqueProducts.length > 1;
                   
                   <div class="flex sm:hidden items-center gap-2">
                     {analysis.score !== null && (
-                      <span class={`inline-flex items-center text-[10px] px-2 py-1 font-bold rounded border bg-black/20 whitespace-nowrap flex-shrink-0 uppercase tracking-wider ${analysis.score >= 70 ? 'text-emerald-400 border-emerald-500/20' : analysis.score >= 40 ? 'text-yellow-400 border-yellow-500/20' : 'text-red-400 border-red-500/20'}`}>
+                      <span class={`inline-flex items-center text-[10px] px-2 py-1 font-bold rounded border bg-black/20 whitespace-nowrap flex-shrink-0 uppercase tracking-wider ${analysis.score >= 90 ? 'text-emerald-400 border-emerald-500/20' : analysis.score >= 70 ? 'text-lime-400 border-lime-500/20' : analysis.score >= 40 ? 'text-yellow-400 border-yellow-500/20' : analysis.score >= 20 ? 'text-orange-400 border-orange-500/20' : 'text-red-400 border-red-500/20'}`}>
                         {analysis.score}% Compatível
                       </span>
                     )}
@@ -189,7 +189,7 @@ const hasMultipleProducts = uniqueProducts.length > 1;
                   <div class="flex flex-wrap items-center gap-2">
                     {/* Desktop Compatibility Score (hidden on mobile) */}
                     {analysis.score !== null && (
-                      <span class={`hidden sm:inline-flex items-center text-xs px-2 py-0.5 font-bold rounded border bg-black/20 whitespace-nowrap flex-shrink-0 uppercase tracking-wider ${analysis.score >= 70 ? 'text-emerald-400 border-emerald-500/20' : analysis.score >= 40 ? 'text-yellow-400 border-yellow-500/20' : 'text-red-400 border-red-500/20'}`}>
+                      <span class={`hidden sm:inline-flex items-center text-xs px-2 py-0.5 font-bold rounded border bg-black/20 whitespace-nowrap flex-shrink-0 uppercase tracking-wider ${analysis.score >= 90 ? 'text-emerald-400 border-emerald-500/20' : analysis.score >= 70 ? 'text-lime-400 border-lime-500/20' : analysis.score >= 40 ? 'text-yellow-400 border-yellow-500/20' : analysis.score >= 20 ? 'text-orange-400 border-orange-500/20' : 'text-red-400 border-red-500/20'}`}>
                         {analysis.score}% Compatível
                       </span>
                     )}

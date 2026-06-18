@@ -15,7 +15,7 @@ const BABY_CANDIDATES: BabyCandidate[] = [
     score: 48,
     label: 'Aceitável',
     details: '1 Bloqueio de Instabilidade familiar no Triângulo Pessoal',
-    colorClass: 'text-amber-400',
+    colorClass: 'text-yellow-400',
     isGold: false,
   },
   {
@@ -23,7 +23,7 @@ const BABY_CANDIDATES: BabyCandidate[] = [
     score: 76,
     label: 'Bom',
     details: 'Sem bloqueios. Harmonia aceitável com o Destino do bebê.',
-    colorClass: 'text-emerald-400',
+    colorClass: 'text-lime-400',
     isGold: false,
   },
   {

@@ -24,8 +24,8 @@ function getScoreLevel(clamped: number): ScoreLevel {
 
   if (clamped >= 70) {
     return {
-      bar: 'from-emerald-600 to-emerald-400',
-      text: 'text-emerald-400',
+      bar: 'from-lime-500 to-lime-400',
+      text: 'text-lime-400',
       label: 'Bom',
       description: 'Boa vibração geral. Pontos positivos superam eventuais tensões menores.',
     };
@@ -33,8 +33,8 @@ function getScoreLevel(clamped: number): ScoreLevel {
 
   if (clamped >= 40) {
     return {
-      bar: 'from-amber-500 to-amber-400',
-      text: 'text-amber-400',
+      bar: 'from-yellow-500 to-yellow-400',
+      text: 'text-yellow-400',
       label: 'Aceitável',
       description: 'Vibração mediana. Funcional, mas há oportunidades de melhora energética.',
     };
@@ -42,15 +42,15 @@ function getScoreLevel(clamped: number): ScoreLevel {
 
   if (clamped >= 20) {
     return {
-      bar: 'from-red-500 to-red-400',
-      text: 'text-red-400',
+      bar: 'from-orange-500 to-orange-400',
+      text: 'text-orange-400',
       label: 'Não recomendado',
       description: 'Vibração desfavorável. Este nome carrega tensões que podem impactar negativamente.',
     };
   }
 
   return {
-    bar: 'from-red-700 to-red-600',
+    bar: 'from-red-600 to-red-500',
     text: 'text-red-500',
     label: 'Crítico',
     description: 'Vibração muito desfavorável. Bloqueios ou tensões significativas detectados.',
@@ -93,9 +93,9 @@ export default function ScoreDisplay({
                 <span className="block text-gray-400 mb-2">{level.description}</span>
                 <span className="block border-t border-white/10 pt-2 space-y-0.5 text-gray-500">
                   <span className="block"><span className="text-emerald-400">Excelente</span> 90-100</span>
-                  <span className="block"><span className="text-emerald-400">Bom</span> 70-89</span>
-                  <span className="block"><span className="text-amber-400">Aceitável</span> 40-69</span>
-                  <span className="block"><span className="text-red-400">Não recomendado</span> 20-39</span>
+                  <span className="block"><span className="text-lime-400">Bom</span> 70-89</span>
+                  <span className="block"><span className="text-yellow-400">Aceitável</span> 40-69</span>
+                  <span className="block"><span className="text-orange-400">Não recomendado</span> 20-39</span>
                   <span className="block"><span className="text-red-500">Crítico</span> 0-19</span>
                 </span>
               </span>
