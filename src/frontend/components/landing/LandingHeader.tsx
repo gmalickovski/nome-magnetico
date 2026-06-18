@@ -51,7 +51,7 @@ export function LandingHeader() {
           : 'bg-transparent border-transparent'
       }`}
     >
-      <div className={`max-w-6xl mx-auto px-4 flex items-center justify-between ${scrolled ? 'py-3' : 'py-5'}`}>
+      <div className={`max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between ${scrolled ? 'py-3' : 'py-5'}`}>
         {/* Logo */}
         <a href="/" className="hover:opacity-80 transition-opacity flex-shrink-0">
           <img src="/logo-nm-header.svg" alt="Nome Magnético" className="h-9 sm:h-10 md:h-11 w-auto" />

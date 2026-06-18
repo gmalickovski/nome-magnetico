@@ -34,14 +34,6 @@ interface ImportMetaEnv {
   readonly N8N_WEBHOOK_SUPORTE: string;
   readonly N8N_WEBHOOK_MARKETING: string;
   readonly RATE_LIMIT_TESTE_BLOQUEIO: string;
-  readonly CHATWOOT_BASE_URL: string;
-  readonly CHATWOOT_WEBSITE_TOKEN: string;
-  readonly CHATWOOT_API_TOKEN: string;
-  readonly CHATWOOT_ACCOUNT_ID: string;
-  readonly CHATWOOT_INBOX_ID: string;
-  readonly CHATWOOT_INBOX_ID_CLIENTES: string;
-  readonly CHATWOOT_PORTAL_SLUG: string;
-  readonly CHATWOOT_WEBHOOK_SECRET: string;
   readonly PRODUCT_SLUG: string;
   readonly INTERNAL_API_SECRET: string;
 }

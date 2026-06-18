@@ -110,9 +110,6 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
     await supabaseBrowser.auth.signOut();
     document.cookie = 'nome-magnetico-auth-access-token=; path=/; max-age=0';
     document.cookie = 'nome-magnetico-auth-refresh-token=; path=/; max-age=0';
-    if ((window as any).$chatwoot) {
-      (window as any).$chatwoot.reset();
-    }
     window.location.href = '/auth/login';
   };
 

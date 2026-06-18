@@ -12,9 +12,10 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
   <LandingHeader client:load />
 
   <main class="min-h-screen pt-[72px] pb-16 md:pb-24" style="background-color: #131313;">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
 
-    {/* ── HERO ── */}
-    <section class="max-w-3xl mx-auto px-4 pt-12 sm:pt-20 pb-8 sm:pb-16 flex flex-col items-center text-center">
+      {/* ── HERO ── */}
+      <section class="max-w-3xl mx-auto pt-12 sm:pt-20 pb-8 sm:pb-16 flex flex-col items-center text-center">
 
       {/* Badge de identificação */}
       <div class="inline-flex items-center justify-center gap-2 mb-5">
@@ -39,7 +40,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
     </section>
 
     {/* ── A HISTÓRIA ── */}
-    <section class="max-w-3xl mx-auto px-4 pb-16">
+    <section class="max-w-3xl mx-auto pb-16">
       <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-3">A Origem</p>
       <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-6">
         A história por trás da ferramenta
@@ -74,7 +75,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
     </section>
 
     {/* ── MISSÃO ── */}
-    <section class="max-w-3xl mx-auto px-4 pb-16">
+    <section class="max-w-3xl mx-auto pb-16">
       <div class="rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center"
         style="background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(212,175,55,0.02) 100%); border: 1px solid rgba(212,175,55,0.15);">
         <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-4">Nossa Missão</p>
@@ -85,7 +86,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
     </section>
 
     {/* ── OS IDEALIZADORES ── */}
-    <section class="max-w-3xl mx-auto px-4 pb-16">
+    <section class="max-w-3xl mx-auto pb-16">
       <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-3">Quem Está Por Trás</p>
       <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-8">
         Os idealizadores
@@ -143,7 +144,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
     </section>
 
     {/* ── LINKS CALL TO ACTION ── */}
-    <section class="max-w-3xl mx-auto px-4 pb-12">
+    <section class="max-w-3xl mx-auto pb-12">
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
         <a
           href="/analise-gratuita"
@@ -160,6 +161,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
       </div>
     </section>
 
+    </div>
   </main>
 
   <LandingFooter client:visible />

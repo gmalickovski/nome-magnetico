@@ -13,8 +13,12 @@ const { title, description } = Astro.props;
 
 <BaseLayout title={title} description={description}>
   <LandingHeader client:load />
-  <main class="max-w-3xl mx-auto px-4 pt-24 pb-16 text-gray-300">
-    <slot />
+  <main class="text-gray-300 pt-24 pb-16">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
+      <div class="max-w-3xl mx-auto">
+        <slot />
+      </div>
+    </div>
   </main>
   <LandingFooter client:load />
 </BaseLayout>

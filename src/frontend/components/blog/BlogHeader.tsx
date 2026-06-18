@@ -86,7 +86,7 @@ export function BlogHeader({ activeCategory = '' }: Props) {
           : 'bg-[#111111]/80 backdrop-blur-sm border-transparent'
       }`}
     >
-      <div className={`max-w-6xl mx-auto px-4 flex items-center gap-3 ${scrolled ? 'py-3' : 'py-4'}`}>
+      <div className={`max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center gap-3 ${scrolled ? 'py-3' : 'py-4'}`}>
 
         {/* ── Logo ── */}
         <a href="/blog" className="hover:opacity-80 transition-opacity flex-shrink-0">

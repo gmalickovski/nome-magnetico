@@ -8,6 +8,7 @@ import { FAQSection } from '../frontend/components/landing/FAQSection';
 import { getHqPricesAndPromo } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 import { LandingCheckout } from '../frontend/components/purchase/LandingCheckout';
+import { HeroNomeEmpresa } from '../frontend/components/landing/HeroNomeEmpresa';
 
 const user = Astro.locals.user;
 
@@ -55,7 +56,6 @@ const schemaProduct = {
   title="Nome Empresarial com Numerologia — Branding Vibracional | Nome Magnético"
   description="Analise o nome da sua empresa com numerologia cabalística. Compatibilidade com o Destino do fundador, posicionamento de marca e sugestões de nomes harmonizados."
   keywords="nome empresa numerologia, branding vibracional, numerologia nome empresarial, nome empresa energia positiva, numerologia cabalística empresa, nome marca numerologia, nome empresarial sem bloqueios"
-  showChatwoot={true}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaProduct)} />
 
@@ -69,39 +69,53 @@ const schemaProduct = {
         <div class="absolute top-1/3 left-1/3 w-80 h-80 bg-[#4A7FC1]/5 rounded-full blur-3xl" />
         <div class="absolute bottom-1/3 right-1/3 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl" />
       </div>
-      <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
-        <div class="inline-flex items-center gap-2 bg-[#4A7FC1]/10 border border-[#4A7FC1]/30 rounded-full px-4 py-1.5 mb-6">
-          <span class="text-[#4A7FC1] text-xs" aria-hidden="true">✦</span>
-          <span class="text-[#4A7FC1] text-sm font-medium">Branding Vibracional · {getPrice('nome_empresa').formatted}</span>
-          <span class="text-[#4A7FC1] text-xs" aria-hidden="true">✦</span>
-        </div>
+      <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 relative z-10">
+        <div class="grid lg:grid-cols-12 gap-12 items-center text-center lg:text-left">
+          
+          {/* Coluna Esquerda: Copy e CTA */}
+          <div class="lg:col-span-7 flex flex-col items-center lg:items-start">
+            <div class="inline-flex items-center gap-2 bg-[#4A7FC1]/10 border border-[#4A7FC1]/30 rounded-full px-4 py-1.5 mb-6">
+              <span class="text-[#4A7FC1] text-xs" aria-hidden="true">✦</span>
+              <span class="text-[#4A7FC1] text-sm font-medium">Branding Vibracional · {getPrice('nome_empresa').formatted}</span>
+              <span class="text-[#4A7FC1] text-xs" aria-hidden="true">✦</span>
+            </div>
 
-        <h1 class="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-          O Nome da Sua Empresa Está<br/>
-          <span style="background: linear-gradient(135deg, #4A7FC1, #7FB3E8, #2E5D97); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Alinhado com o Seu Destino?
-          </span>
-        </h1>
+            <h1 class="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              O Nome da Sua Empresa Está<br/>
+              <span style="background: linear-gradient(135deg, #4A7FC1, #7FB3E8, #2E5D97); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Alinhado com o Seu Destino?
+              </span>
+            </h1>
 
-        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Na numerologia cabalística, o nome da sua empresa precisa estar em harmonia com o Número de Destino do fundador. Um desalinhamento vibratório cria <strong class="text-white">resistências invisíveis</strong> que travam crescimento, vendas e posicionamento de marca.
-        </p>
+            <p class="text-gray-400 text-lg md:text-xl max-w-2xl lg:max-w-none mb-10 leading-relaxed">
+              Na numerologia cabalística, o nome da sua empresa precisa estar em harmonia com o Número de Destino do fundador. Um desalinhamento vibratório cria <strong class="text-white">resistências invisíveis</strong> que travam crescimento, vendas e posicionamento de marca.
+            </p>
 
-        <LandingCheckout
-          client:load
-          product="nome_empresa"
-          isLoggedIn={!!user}
-          priceInfo={getPrice('nome_empresa')}
-          promotion={promotion}
-          label="Analisar o Nome da Minha Empresa"
-          className="inline-block bg-[#4A7FC1] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#7FB3E8] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#4A7FC1]/20 cursor-pointer"
-        />
-        <div class="flex items-center justify-center gap-6 mt-5 flex-wrap">
-          <p class="text-gray-600 text-sm">Pagamento único · {getPrice('nome_empresa').formatted} · Acesso imediato</p>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[#4A7FC1] text-xs">✦</span>
-            <p class="text-gray-600 text-sm">Garantia de 7 dias</p>
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4 mb-8">
+              <LandingCheckout
+                client:load
+                product="nome_empresa"
+                isLoggedIn={!!user}
+                priceInfo={getPrice('nome_empresa')}
+                promotion={promotion}
+                label="Analisar o Nome da Minha Empresa"
+                className="w-full sm:w-auto text-center bg-[#4A7FC1] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#7FB3E8] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#4A7FC1]/20 cursor-pointer"
+              />
+            </div>
+            <div class="flex items-center justify-center lg:justify-start gap-6 flex-wrap">
+              <p class="text-gray-600 text-sm">Pagamento único · {getPrice('nome_empresa').formatted} · Acesso imediato</p>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[#4A7FC1] text-xs">✦</span>
+                <p class="text-gray-600 text-sm">Garantia de 7 dias</p>
+              </div>
+            </div>
           </div>
+
+          {/* Coluna Direita: Animação */}
+          <div class="lg:col-span-5 w-full flex justify-center">
+            <HeroNomeEmpresa client:load />
+          </div>
+
         </div>
       </div>
     </section>

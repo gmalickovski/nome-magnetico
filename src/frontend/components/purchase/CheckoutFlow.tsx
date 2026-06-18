@@ -181,8 +181,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
 
   function StickyHeader() {
     return (
-      <header className="sticky top-0 z-40 border-b border-[#D4AF37]/20 bg-[#111111]/95 px-4 py-4 backdrop-blur-sm md:fixed md:inset-x-0 md:top-0">
-        <div className="max-w-6xl mx-auto flex items-center justify-between relative">
+      <header className="sticky top-0 z-40 border-b border-[#D4AF37]/20 bg-[#111111]/95 py-4 backdrop-blur-sm md:fixed md:inset-x-0 md:top-0">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between relative">
           <button
             type="button"
             onClick={() => {
@@ -382,8 +382,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
     return (
       <div className="min-h-screen bg-[#111111]">
         <StickyHeader />
-        <div className="pt-10 pb-20 px-4 md:pt-28">
-          <div className="max-w-6xl mx-auto">
+        <div className="pt-10 pb-20 md:pt-28">
+          <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
             <PageHeader singular={false} />
             <div className="grid md:grid-cols-3 gap-8">
               {ALL_PRODUCTS.map(t => (
@@ -418,8 +418,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
       <>
         <div className="min-h-screen bg-[#111111]">
           <StickyHeader />
-          <div className="pt-10 pb-28 md:pb-20 md:pt-28 px-4">
-            <div className="max-w-6xl mx-auto">
+          <div className="pt-10 pb-28 md:pb-20 md:pt-28">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
               <PageHeader singular={false} />
               {errorMsg && (
                 <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm text-center">

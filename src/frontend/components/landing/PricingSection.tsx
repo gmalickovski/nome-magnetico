@@ -246,7 +246,7 @@ export function PricingSection({
 
   return (
     <section id="precos" className="py-20 md:py-28 bg-[#1a1a1a]">
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
         {/* Header */}
         <div className="text-center mb-12">
           <p className="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Produtos</p>

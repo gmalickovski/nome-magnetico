@@ -6,7 +6,6 @@ export interface Props {
   description?: string;
   keywords?: string;
   ogImage?: string;
-  showChatwoot?: boolean;
 }
 
 const {
@@ -14,7 +13,6 @@ const {
   description = 'Descubra se seu nome tem bloqueios energéticos que sabotam carreira e relacionamentos. Numerologia cabalística com mapa completo dos 4 triângulos, 5 números e sugestões de nome harmonizado.',
   keywords = 'numerologia cabalística, numerologia do nome, mapa numerológico, bloqueios energéticos nome, análise vibracional nome, nome magnético, significado do nome numerologia, nome para bebê numerologia, nome empresarial numerologia, cabala numerologia, como meu nome afeta minha vida, nome sem bloqueios, mudar nome numerologia, numerologia nome social, análise vibracional gratuita nome, mapa numerológico completo, arquétipo junguiano nome',
   ogImage = '/og-image.jpg',
-  showChatwoot = false,
 } = Astro.props;
 
 // Schema.org — WebSite principal
@@ -221,7 +219,6 @@ const schemaFAQ = {
   description={description}
   keywords={keywords}
   ogImage={ogImage}
-  showChatwoot={showChatwoot}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaWebSite)} />
   <script type="application/ld+json" set:html={JSON.stringify(schemaService)} />

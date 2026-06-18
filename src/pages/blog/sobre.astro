@@ -12,9 +12,10 @@ import { LandingFooter } from '../../frontend/components/landing/LandingFooter';
   <BlogHeader client:load activeCategory="" />
 
   <main class="blog-main min-h-screen pt-[72px] pb-16 md:pb-24">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
 
-    {/* ── HERO ── */}
-    <section class="max-w-3xl mx-auto px-4 pt-4 sm:pt-10 pb-8 sm:pb-14">
+      {/* ── HERO ── */}
+      <section class="max-w-3xl mx-auto pt-4 sm:pt-10 pb-8 sm:pb-14">
 
       {/* Breadcrumb */}
       <nav class="flex items-center gap-2 text-[10px] sm:text-xs text-gray-600 mb-8" aria-label="Navegação estrutural">
@@ -48,7 +49,7 @@ import { LandingFooter } from '../../frontend/components/landing/LandingFooter';
     </section>
 
     {/* ── CONTEÚDO PRINCIPAL ── */}
-    <div class="max-w-3xl mx-auto px-4 space-y-16">
+    <div class="max-w-3xl mx-auto space-y-16">
 
       {/* 1. A história */}
       <section>
@@ -240,7 +241,8 @@ import { LandingFooter } from '../../frontend/components/landing/LandingFooter';
       </section>
 
     </div>
-  </main>
+  </div>
+</main>
 
   <LandingFooter client:visible />
 </BlogLayout>

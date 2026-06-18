@@ -41,14 +41,4 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
     <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} fabOnly isAnalyst={isAnalyst} />
   )}
 
-  <script is:inline>
-    function _hideChatwootResultado() {
-      if (window.$chatwoot) window.$chatwoot.toggleBubbleVisibility('hide');
-    }
-    if (window.$chatwoot) {
-      _hideChatwootResultado();
-    } else {
-      window.addEventListener('chatwoot:ready', _hideChatwootResultado);
-    }
-  </script>
 </AppLayout>

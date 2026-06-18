@@ -161,10 +161,10 @@ const wasUpdated = Boolean(
   <BlogHeader client:load activeCategory={categorySlug ?? ''} />
 
   <main class="blog-main min-h-screen pt-[120px] sm:pt-[124px] lg:pt-[134px] pb-12 md:pb-20">
-    <div class="max-w-6xl mx-auto px-4">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
 
       {/* ── LAYOUT: conteúdo + sidebar (quando há TOC) ── */}
-      <div class={`${toc.length >= 3 ? 'lg:grid lg:grid-cols-[1fr_240px] lg:gap-12' : ''} mt-6 sm:mt-8`}>
+      <div class={`${toc.length >= 3 ? 'lg:grid lg:grid-cols-[1fr_240px] lg:gap-12' : 'max-w-3xl mx-auto'} mt-6 sm:mt-8`}>
 
         {/* ── COLUNA PRINCIPAL ── */}
         <article class="min-w-0">

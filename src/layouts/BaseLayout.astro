@@ -12,7 +12,6 @@ export interface Props {
   hasBottomNav?: boolean;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
-  showChatwoot?: boolean;
 }
 
 const {
@@ -26,7 +25,6 @@ const {
   hasBottomNav = false,
   articlePublishedTime,
   articleModifiedTime,
-  showChatwoot = false,
 } = Astro.props;
 
 const siteOrigin = (Astro.site ?? new URL('https://www.nomemagnetico.com.br')).origin;
@@ -36,8 +34,6 @@ const robotsContent = noIndex
   ? (noIndexFollow ? 'noindex, follow' : 'noindex, nofollow')
   : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
-const chatwootBaseUrl = process.env.CHATWOOT_BASE_URL ?? '';
-const chatwootToken = process.env.CHATWOOT_WEBSITE_TOKEN ?? '';
 const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
 ---
 
@@ -155,49 +151,11 @@ const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
   <body class:list={['bg-[#1a1a1a] text-gray-200 min-h-screen font-inter antialiased', { 'has-bottom-nav': hasBottomNav }]}>
     <slot />
     <CookieBanner client:only="react" />
-    {chatwootBaseUrl && chatwootToken && (
-      <script is:inline define:vars={{ chatwootBaseUrl, chatwootToken, showChatwoot }}>
-        (function(d,t) {
-          // Configurar antes de carregar o SDK para ocultar o balão por padrão
-          window.chatwootSettings = {
-            hideMessageBubble: !showChatwoot,
-            position: 'right',
-            locale: 'pt_BR',
-          };
-          var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-          g.src=chatwootBaseUrl+"/packs/js/sdk.js";
-          g.async=true;
-          s.parentNode.insertBefore(g,s);
-          g.onload=function(){
-            window.chatwootSDK.run({
-              websiteToken: chatwootToken,
-              baseUrl: chatwootBaseUrl
-            });
-          }
-        })(document,"script");
-      </script>
-    )}
   </body>
 </html>
 
 <style is:global>
   @import '../styles/global.css';
-
-  /* Chatwoot: reposicionar balão acima da bottom nav no mobile (apenas páginas com nav). */
-  @media (max-width: 768px) {
-    body.has-bottom-nav .woot-widget-bubble,
-    body.has-bottom-nav .woot--bubble-holder,
-    body.has-bottom-nav .woot-widget-wrap {
-      bottom: 96px !important;
-    }
-  }
-
-  /* Transparência ao rolar — balão Chatwoot */
-  body.is-scrolling .woot-widget-bubble,
-  body.is-scrolling .woot--bubble-holder {
-    opacity: 0.25 !important;
-    transition: opacity 0.3s ease !important;
-  }
 
   /* Transparência ao rolar — botão PDF mobile */
   body.is-scrolling #mobile-pdf-btn {
@@ -205,8 +163,6 @@ const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
     transition: opacity 0.3s ease;
   }
 
-  .woot-widget-bubble,
-  .woot--bubble-holder,
   #mobile-pdf-btn {
     transition: opacity 0.3s ease;
   }

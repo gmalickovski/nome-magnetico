@@ -33,7 +33,7 @@ export function GlossaryHeader() {
           : 'bg-[#111111]/80 backdrop-blur-sm py-4'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-4 flex items-center gap-3">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center gap-3">
 
         {/* ── Logo ── */}
         <a href="/glossario" className="hover:opacity-80 transition-opacity flex-shrink-0">

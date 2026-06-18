@@ -8,6 +8,7 @@ import { FAQSection } from '../frontend/components/landing/FAQSection';
 import { getHqPricesAndPromo } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 import { LandingCheckout } from '../frontend/components/purchase/LandingCheckout';
+import { HeroNomeSocial } from '../frontend/components/landing/HeroNomeSocial';
 
 const user = Astro.locals.user;
 
@@ -55,7 +56,6 @@ const schemaProduct = {
   title="Harmonização de Assinatura e Nome Social | Nome Magnético"
   description="Compare seu nome de nascimento e variações de nome social para escolher uma assinatura harmonizada: ranking, score 0–100, numerologia cabalística, 4 triângulos, arcanos, bloqueios e PDF."
   keywords="harmonização de assinatura, assinatura numerológica, numerologia do nome social, numerologia do nome completo, mudar nome numerologia, assinatura harmonizada, nome sem bloqueios energéticos, análise vibracional nome, nome magnético numerologia, numerologia cabalística nome"
-  showChatwoot={true}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaProduct)} />
 
@@ -69,41 +69,54 @@ const schemaProduct = {
         <div class="absolute top-1/3 left-1/4 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl" />
         <div class="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
       </div>
-      <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
+      <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 relative z-10">
+        <div class="grid lg:grid-cols-12 gap-12 items-center text-center lg:text-left">
+          
+          {/* Coluna Esquerda: Texto e CTA */}
+          <div class="lg:col-span-7 flex flex-col items-center lg:items-start">
+            <div class="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5 mb-6">
+              <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
+              <span class="text-[#D4AF37] text-sm font-medium">Harmonização de Assinatura · {getPrice('nome_social').formatted}</span>
+              <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
+            </div>
 
-        <div class="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5 mb-6">
-          <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
-          <span class="text-[#D4AF37] text-sm font-medium">Harmonização de Assinatura · {getPrice('nome_social').formatted}</span>
-          <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
-        </div>
+            <h1 class="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              Sua Assinatura Tem<br/>
+              <span style="background: linear-gradient(135deg, #D4AF37, #E8C84A, #B8960E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Mais Poder Do Que Você Imagina
+              </span>
+            </h1>
 
-        <h1 class="font-cinzel text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-          Sua Assinatura Tem Mais Poder<br/>
-          <span style="background: linear-gradient(135deg, #D4AF37, #E8C84A, #B8960E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Do Que Você Imagina
-          </span>
-        </h1>
+            <p class="text-[#e5e2e1]/70 text-lg md:text-xl max-w-2xl lg:max-w-none mb-10 leading-relaxed">
+              Harmonize sua assinatura com uma análise de Nome Social que compara seu nome de nascimento com variações possíveis e mostra qual assinatura tem mais fluidez para o seu destino. Você recebe ranking dos candidatos, score 0–100, 5 números, 4 triângulos, arcanos, bloqueios e variações harmonizadas para testar no uso social, profissional e digital.
+            </p>
 
-        <p class="text-[#e5e2e1]/70 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Harmonize sua assinatura com uma análise de Nome Social que compara seu nome de nascimento com variações possíveis e mostra qual assinatura tem mais fluidez para o seu destino. Você recebe ranking dos candidatos, score 0–100, 5 números, 4 triângulos, arcanos, bloqueios e variações harmonizadas para testar no uso social, profissional e digital.
-        </p>
+            <div class="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4 mb-8">
+              <LandingCheckout
+                client:load
+                product="nome_social"
+                isLoggedIn={!!user}
+                priceInfo={getPrice('nome_social')}
+                promotion={promotion}
+                label="Harmonizar Minha Assinatura"
+                className="w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#D4AF37]/20 cursor-pointer"
+              />
+            </div>
 
-        <LandingCheckout
-          client:load
-          product="nome_social"
-          isLoggedIn={!!user}
-          priceInfo={getPrice('nome_social')}
-          promotion={promotion}
-          label="Harmonizar Minha Assinatura"
-          className="inline-block bg-[#D4AF37] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#D4AF37]/20 cursor-pointer"
-        />
-
-        <div class="flex items-center justify-center gap-6 mt-5 flex-wrap">
-          <p class="text-gray-600 text-sm">Pagamento único · {getPrice('nome_social').formatted} · Acesso imediato</p>
-          <div class="flex items-center gap-2">
-            <span class="text-[#D4AF37] text-xs">✦</span>
-            <p class="text-gray-600 text-sm">PDF completo com ranking e recomendação</p>
+            <div class="flex items-center justify-center lg:justify-start gap-6 flex-wrap">
+              <p class="text-gray-600 text-sm">Pagamento único · {getPrice('nome_social').formatted} · Acesso imediato</p>
+              <div class="flex items-center gap-2">
+                <span class="text-[#D4AF37] text-xs">✦</span>
+                <p class="text-gray-600 text-sm">PDF completo com ranking e recomendação</p>
+              </div>
+            </div>
           </div>
+
+          {/* Coluna Direita: Animação */}
+          <div class="lg:col-span-5 w-full flex justify-center">
+            <HeroNomeSocial client:load />
+          </div>
+
         </div>
       </div>
     </section>

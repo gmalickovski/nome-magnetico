@@ -55,7 +55,7 @@ const products = [
 export function ProductsSection() {
   return (
     <section id="produtos" className="py-20 md:py-32 bg-[#111111]">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-[#D4AF37] text-sm font-medium tracking-widest uppercase mb-3">

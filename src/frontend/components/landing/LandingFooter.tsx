@@ -3,7 +3,7 @@ import React from 'react';
 export function LandingFooter() {
   return (
     <footer className="bg-[#0a0a0a] border-t border-white/5 py-12 blog-footer">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
         <div className="grid md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div>
