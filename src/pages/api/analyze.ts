@@ -17,6 +17,7 @@ import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerolog
 import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { notify } from '../../backend/notifications/notify';
+import { logError } from '../../backend/utils/error-logger';
 
 const schema = z.object({
   nome_completo: z.string().min(2).max(150),
@@ -237,7 +238,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     try {
       await updateAnalysis(analysis.id, { status: 'processing' });
 
-      let analiseTexto: string;
+      let analiseTexto = '';
       let marketingStats = {
         score: null as number | null,
         bloqueios: 0,
@@ -561,14 +562,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
           ));
         }
 
-        await updateAnalysis(analysis.id, {
-          analise_texto: analiseTexto,
-          status: 'complete',
-          completed_at: new Date().toISOString(),
-        });
-
         void sequenciasNegativas;
       }
+
+      // Salva o texto da IA e marca como completo — aplica a TODOS os produtos
+      await updateAnalysis(analysis.id, {
+        analise_texto: analiseTexto,
+        status: 'complete',
+        completed_at: new Date().toISOString(),
+      });
 
       if (isGratuita) {
         const appUrl = process.env.APP_URL ?? 'https://nomemagnetico.com.br';
@@ -596,12 +598,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const isQuota = errMsg.includes('QUOTA_EXCEEDED');
       const isTimeout = errMsg.includes('AI_TIMEOUT');
       console.error('[analyze] Erro ao processar:', isQuota ? 'QUOTA_EXCEEDED (Groq + OpenAI)' : err);
-      await updateAnalysis(analysis.id, {
-        status: 'error',
-        error_message: isQuota || isTimeout
-          ? 'Nosso sistema de análise está com alta demanda agora. Por favor, tente novamente em alguns minutos. 🙏'
-          : 'Nao foi possivel concluir a analise agora. Tente novamente em alguns instantes.',
-      });
+
+      const friendlyMessage = isQuota || isTimeout
+        ? 'Nosso sistema de análise está com alta demanda agora. Por favor, tente novamente em alguns minutos. 🙏'
+        : 'Nao foi possivel concluir a analise agora. Tente novamente em alguns instantes.';
+
+      await Promise.all([
+        updateAnalysis(analysis.id, {
+          status: 'error',
+          error_message: friendlyMessage,
+        }),
+        logError({
+          type: isTimeout ? 'ai_timeout' : isQuota ? 'ai_timeout' : 'other',
+          severity: 'critical',
+          userId: user.id,
+          analysisId: analysis.id,
+          message: errMsg,
+          details: { productType: product_type, url: '/api/analyze', friendlyMessage },
+        }),
+      ]);
     }
   })();
 

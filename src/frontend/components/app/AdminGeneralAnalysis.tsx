@@ -496,8 +496,12 @@ export default function AdminGeneralAnalysis() {
       onScroll={handleScroll}
     >
       
-      {/* CONTAINER 1: HEADER FIXO (Desktop) / NATIVO (Mobile) */}
-      <div className="flex-none bg-[#111111] lg:z-30 px-4 lg:px-10 py-4 lg:py-5 border-b border-[#D4AF37]/10 lg:shadow-md">
+      {/* CONTAINER 1: HEADER — esconde suavemente ao rolar (só desktop lg+) */}
+      <div className={`flex-none bg-[#111111] lg:z-30 px-4 lg:px-10 py-4 border-b border-[#D4AF37]/10 lg:shadow-md lg:transition-all lg:duration-500 lg:ease-in-out lg:overflow-hidden ${
+        isScrollingDown
+          ? 'lg:max-h-0 lg:py-0 lg:border-transparent lg:opacity-0'
+          : 'lg:py-5 lg:max-h-40 lg:opacity-100'
+      }`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 md:gap-3">

@@ -61,7 +61,7 @@ const showAnalisesNav = isAdmin || hasAnyActive || hasPaidAnalysisHistory;
 const pathname = Astro.url.pathname;
 const isActive = (path: string) =>
   pathname === path || pathname.startsWith(path + '/');
-const navAppActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte');
+const navAppActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte') && !isActive('/app/admin-analise');
 const navAnalisesActive = isActive('/app/analises') || isActive('/app/resultado');
 const navSuporteActive = isActive('/app/suporte');
 ---
@@ -80,7 +80,7 @@ const navSuporteActive = isActive('/app/suporte');
       </div>
     )}
 
-    <aside class="group hidden md:flex fixed inset-y-0 left-0 z-40 w-20 flex-col overflow-hidden border-r border-[#D4AF37]/15 bg-[#111111]/95 px-4 py-7 transition-[width] duration-300 ease-out hover:w-72">
+    <aside id="app-sidebar" class="group hidden md:flex fixed inset-y-0 left-0 z-40 w-20 flex-col overflow-hidden border-r border-[#D4AF37]/15 bg-[#111111]/95 px-4 py-7 transition-[width] duration-300 ease-out hover:w-72">
       <a href="/app" class="mb-9 flex h-11 items-center gap-3 hover:opacity-85 transition-opacity">
         <span class="relative flex h-11 w-11 flex-shrink-0 items-center justify-center">
           <img src="/favicon.png" alt="Nome Magnético" class="absolute h-9 w-9 object-contain opacity-100 transition-opacity duration-200 group-hover:opacity-0" />
@@ -171,3 +171,24 @@ const navSuporteActive = isActive('/app/suporte');
   </div>
 
 </BaseLayout>
+
+<style is:global>
+  :root { --sidebar-w: 80px; }
+  .app-fixed-header {
+    transition: left 300ms ease-out;
+    left: var(--sidebar-w, 80px);
+  }
+</style>
+
+<script>
+  (function () {
+    const sidebar = document.getElementById('app-sidebar');
+    if (!sidebar) return;
+    const COLLAPSED = '80px';   /* w-20 */
+    const EXPANDED  = '288px';  /* w-72 */
+    sidebar.addEventListener('mouseenter', () =>
+      document.documentElement.style.setProperty('--sidebar-w', EXPANDED));
+    sidebar.addEventListener('mouseleave', () =>
+      document.documentElement.style.setProperty('--sidebar-w', COLLAPSED));
+  })();
+</script>

@@ -16,8 +16,9 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
 
 <AppLayout title={title}>
   <div class="md:-mx-10 md:-mt-10 lg:-mx-14">
-    <div class="sticky top-0 z-30 hidden border-b border-[#D4AF37]/15 bg-[#111111]/92 backdrop-blur-md md:block">
-      <div class="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 md:px-6">
+    <!-- Header fixo: left acompanha sidebar via --sidebar-w (z-39 < sidebar z-40) -->
+    <div class="app-fixed-header fixed top-0 right-0 z-30 hidden border-b border-[#D4AF37]/15 bg-[#111111]/95 backdrop-blur-md md:block">
+      <div class="flex w-full items-center justify-between gap-4 px-5 py-2 md:px-6">
         <a href="/app/analises" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-400 transition-colors hover:text-[#D4AF37]">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -31,6 +32,9 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
         )}
       </div>
     </div>
+
+    <!-- Spacer: compensates fixed header height (~36px) -->
+    <div class="hidden md:block h-9"></div>
 
     <main class="mx-auto max-w-4xl px-2 pb-32 md:px-6 md:py-12 md:pb-24">
       <slot />

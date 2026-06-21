@@ -5,6 +5,8 @@
  * Roteamento:
  *   marketing.* → N8N_WEBHOOK_MARKETING
  *   demais eventos → N8N_WEBHOOK_TRANSACIONAL
+ *
+ * Erros do sistema → tabela Supabase `error_logs` via error-logger.ts
  */
 
 type NotificationEvent =
@@ -19,7 +21,8 @@ type NotificationEvent =
   | 'admin.new_user'
   | 'admin.new_payment'
   | 'payment.refunded'
-  | 'free_analysis.requested';
+  | 'free_analysis.requested'
+;
 
 type MarketingEvent =
   | 'marketing.free_analysis_completed'
@@ -121,3 +124,4 @@ export async function notifyMarketing(
 
   await sendToWebhook(webhookUrl, event, payload);
 }
+
