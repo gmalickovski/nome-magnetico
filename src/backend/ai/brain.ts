@@ -59,15 +59,27 @@ async function runWithGuard(
       return response.content;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      const status = (err as { status?: number; response?: { status?: number } } | null)?.status
+        ?? (err as { status?: number; response?: { status?: number } } | null)?.response?.status;
+      const lowerMessage = message.toLowerCase();
 
-      // Groq atingiu limite diário → fallback automático para OpenAI
-      // Detecta tanto o erro já convertido quanto o erro raw do SDK (429 + rate_limit)
-      const isGroqRateLimit = message === 'GROQ_RATE_LIMITED' ||
-        (provider === 'groq' && message.includes('429') &&
-          (message.toLowerCase().includes('rate_limit') || message.toLowerCase().includes('rate limit')));
+      // Groq atingiu limite diário (TPD) → fallback automático para OpenAI.
+      // Antes dependia só de `message === 'GROQ_RATE_LIMITED'` (conversão feita em
+      // providers/groq.ts) ou de string-matching frágil — se qualquer uma dessas
+      // camadas falhasse (ex: instanceof quebrado por dependência duplicada), caía
+      // no retry genérico contra o próprio Groq 3x, inútil pra um limite diário, e
+      // a análise nunca terminava. Agora checa `status` 429 direto também.
+      const isGroqRateLimit = provider === 'groq' && (
+        message === 'GROQ_RATE_LIMITED' ||
+        status === 429 ||
+        lowerMessage.includes('429') ||
+        lowerMessage.includes('rate_limit') ||
+        lowerMessage.includes('rate limit') ||
+        lowerMessage.includes('quota')
+      );
 
       if (isGroqRateLimit) {
-        console.warn('[Brain] Groq rate limited — fallback automático para OpenAI');
+        console.warn(`[Brain] Groq indisponível (${message.slice(0, 160)}) — fallback automático para OpenAI`);
         try {
           const userPrompt = buildPrompt();
           const fallback = await callAI(systemPrompt, userPrompt, task, 'openai');

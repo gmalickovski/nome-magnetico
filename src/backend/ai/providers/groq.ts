@@ -4,9 +4,16 @@ import { getModel } from '../config/models';
 import { getTaskConfig } from '../config/temperatures';
 
 function isRateLimit(err: unknown): boolean {
-  if (err instanceof Groq.APIError && err.status === 429) return true;
-  const msg = err instanceof Error ? err.message.toLowerCase() : '';
-  return msg.includes('rate_limit') || msg.includes('rate limit') || msg.includes('quota');
+  // Não confia só em `instanceof Groq.APIError` — em builds com múltiplas cópias
+  // do pacote no node_modules (comum em monorepo/hoisting), a checagem de classe
+  // pode falhar mesmo sendo o mesmo erro. Checa a propriedade `status` direto
+  // e cai para análise de mensagem (incluindo String(err), não só Error.message).
+  const status = (err as { status?: number; response?: { status?: number } } | null)?.status
+    ?? (err as { status?: number; response?: { status?: number } } | null)?.response?.status;
+  if (status === 429) return true;
+
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return msg.includes('429') || msg.includes('rate_limit') || msg.includes('rate limit') || msg.includes('quota');
 }
 
 let groqClient: Groq | null = null;
