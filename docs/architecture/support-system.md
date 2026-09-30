@@ -487,7 +487,7 @@ Mensagens do usuário devem ser postadas com `message_type: "incoming"` (aparece
 
 ## Bot Suporte — só a FAQ
 
-O bot Suporte não usa service role nem lê tickets, perfis ou pagamentos. O acesso é a view `support_faq.support_faq_v` com a role `support_bot`. Padrão, grants e checklist de aceite: `docs/architecture/support-bot-faq-readonly.md`.
+O bot Suporte não usa service role. Lê a FAQ em `support_faq.support_faq_v` e o status mínimo de um e-mail em `support_faq.support_lookup_contact`. Não lê tabelas de perfil, assinatura, lead, análise ou auth. Padrão, grants e checklist: `docs/architecture/support-bot-faq-readonly.md`.
 
 ## Como Replicar em Outro SaaS
 
@@ -513,7 +513,7 @@ O bot Suporte não usa service role nem lê tickets, perfis ou pagamentos. O ace
 - [ ] Aplicar migration com tabelas `support_tickets`, `support_messages`, `faq_categories`, `faq_items`
 - [ ] Configurar 3 DB Webhooks (tickets, messages, faq_items)
 - [ ] Configurar RLS policies
-- [ ] Aplicar o padrão do bot Suporte (view `support_faq.support_faq_v` + role `support_bot`). Ver `docs/architecture/support-bot-faq-readonly.md`. Não criar senha nem aplicar em produção sem ok do responsável do SaaS.
+- [ ] Aplicar o padrão do bot Suporte (view `support_faq.support_faq_v`, função `support_lookup_contact`, role `support_bot`). Ver `docs/architecture/support-bot-faq-readonly.md`. Não criar senha na migration.
 
 ### Chatwoot
 

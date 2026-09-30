@@ -4,13 +4,13 @@ Regras de execução no Linear para o Nome Magnético. Linear guarda o próximo 
 
 ## Bot Suporte — FAQ read-only
 
-O bot Suporte de cada SaaS lê só a FAQ ativa. O resto do banco fica negado: clientes, pagamentos, leads, auth e HQ.
+O bot Suporte de cada SaaS lê a FAQ ativa e consulta o status mínimo de um contato por e-mail. O resto do banco fica negado: conteúdo de análise, pagamentos detalhados, leads além da presença, auth e HQ.
 
 Modelo deste repositório, para repetir em Simulaweb, Vibraweb e SaaS novos (a FAQ desses produtos não é criada aqui):
 
 - View `support_faq.support_faq_v`: categorias e itens com `is_active = true`. Sem `faq_embeddings`.
-- Role `support_bot`: `NOLOGIN`, `NOINHERIT`, `SELECT` só nessa view. Sem `GRANT` em outras tabelas.
-- A migration não cria senha, JWT nem mexe na service role.
-- Aplicar em `nome_magnetico` e criar a credencial só depois do ok do Guilherme.
+- Função `support_faq.support_lookup_contact(email)`: uma linha com `is_registered`, `is_subscriber`, `is_lead_only` e os campos mínimos (perfil, produtos e `ends_at`, ou datas/status de lead). Sem ids Stripe/Asaas, valores, metadata, PDF ou texto de análise.
+- Role `support_bot`: `NOLOGIN`, `NOINHERIT`. `SELECT` só na view e `EXECUTE` só na função. Sem `GRANT` em `profiles`, `subscriptions`, `analise_leads`, `free_analyses_leads` ou qualquer outra tabela.
+- A migration não cria senha nem mexe na service role. Guilherme autorizou o apply em `nome_magnetico` depois do PR alinhado; a senha continua fora do git.
 
 Detalhe, grants e checklist de aceite: `docs/architecture/support-bot-faq-readonly.md`.
