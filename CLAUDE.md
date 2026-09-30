@@ -251,6 +251,7 @@ Pagamento único por ciclo de 30 dias (não recorrente)
 - `ai_usage` — log de uso (loop guard)
 - `support_tickets` + `support_messages` — suporte
 - `faq_categories` + `faq_items` — FAQ editável
+- `support_faq.support_faq_v` — view read-only da FAQ ativa para o bot Suporte (role `support_bot`). Sem embeddings. Sem senha na migration. Ver `docs/architecture/support-bot-faq-readonly.md`
 
 ### Migrations aplicadas
 - `001_nome_magnetico.sql` — schema base completo (schema public no Supabase Cloud)
@@ -376,3 +377,4 @@ O n8n recebe o evento via webhook e processa o envio. Webhooks configurados:
 11. **NUNCA** mencionar radiestesia, pêndulo ou técnicas radiestésicas — o projeto usa APENAS critérios formais objetivos
 12. Análise SEMPRE usa os 4 triângulos (não só o Triângulo da Vida) — importar `calcularTodosTriangulos` de `triangle.ts`
 13. **DOCUMENTAÇÃO OBRIGATÓRIA**: Todo novo processo, componente reutilizável ou decisão de arquitetura deve ser documentada na pasta `docs/` seguindo a estrutura exata: `architecture/`, `sops/`, `snippets/` ou `devops/`. Nunca crie arquivos `.md` soltos na raiz do `docs/`.
+14. **Bot Suporte = FAQ read-only.** A role `support_bot` só faz `SELECT` em `support_faq.support_faq_v`. Não dar acesso a clientes, pagamentos, leads, auth ou HQ. Não criar senha nem aplicar a migration em produção sem ok do Guilherme.

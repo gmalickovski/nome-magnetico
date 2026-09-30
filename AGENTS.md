@@ -89,6 +89,16 @@ type ProductType = 'nome_social' | 'nome_bebe' | 'nome_empresa'
 - Modelo comercial: pagamento unico por ciclo de 30 dias, nao recorrente.
 - Produto e self-service: usar "Acesso imediato", "Analise na hora", "voce mesmo faz sua analise". Nao usar promessa de entrega manual ou revisao individual.
 
+## Bot Suporte
+
+O bot Suporte le somente a FAQ ativa. O resto do banco fica negado.
+
+- View: `support_faq.support_faq_v` (categorias + itens com `is_active`; sem embeddings).
+- Role: `support_bot` (`NOLOGIN`, `SELECT` so nessa view). Sem `GRANT` em `subscriptions`, `analise_leads`, `profiles`, `auth.users` ou qualquer outra tabela.
+- Nao criar senha, JWT ou service role nova na migration. Nao aplicar em producao sem ok do Guilherme.
+- Padrao para Simulaweb, Vibraweb e SaaS novos. Nao criar a FAQ desses produtos neste repositorio.
+- Detalhe e checklist: `docs/architecture/support-bot-faq-readonly.md`. Regra curta: `LINEAR.md`.
+
 ## Auth, Admin e HQ
 
 - `/app/*`: exige session e acesso ativo.
