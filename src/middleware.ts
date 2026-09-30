@@ -1,7 +1,10 @@
+import type { APIContext, MiddlewareNext } from 'astro';
+import * as Sentry from '@sentry/astro';
 import { defineMiddleware } from 'astro:middleware';
 import { supabase } from './backend/db/supabase';
+import '../sentry.server.config';
 
-export const onRequest = defineMiddleware(async (context, next) => {
+async function handle(context: APIContext, next: MiddlewareNext): Promise<Response> {
   const { pathname } = context.url;
 
   // Fast-path para assets estáticos para não bater no Supabase
@@ -77,4 +80,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   return next();
+}
+
+export const onRequest = defineMiddleware(async (context, next) => {
+  try {
+    return await handle(context, next);
+  } catch (error) {
+    Sentry.captureException(error);
+    throw error;
+  }
 });

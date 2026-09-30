@@ -1,5 +1,6 @@
 ---
 import { CookieBanner } from '../frontend/components/ui/CookieBanner';
+import { getSentryRuntimeConfig } from '../sentry/env';
 
 export interface Props {
   title: string;
@@ -35,12 +36,16 @@ const robotsContent = noIndex
   : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
+const sentry = getSentryRuntimeConfig();
 ---
 
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+    {sentry && <meta name="nm-sentry-dsn" content={sentry.dsn} />}
+    {sentry && <meta name="nm-sentry-environment" content={sentry.environment} />}
+    {sentry?.release && <meta name="nm-sentry-release" content={sentry.release} />}
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
 

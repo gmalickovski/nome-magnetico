@@ -351,6 +351,21 @@ O n8n recebe o evento via webhook e processa o envio. Webhooks configurados:
 
 ---
 
+## Sentry
+
+Erros não tratados em produção vão para **studio-mlk / nome-magnetico** (`https://de.sentry.io`) via `@sentry/astro`. O DSN só entra por env, lido em runtime na VPS (`start.mjs`), porque o build de CI não tem o segredo.
+
+- `SENTRY_DSN` (aliases aceitos: `PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`)
+- Liga só com DSN e ambiente `production` (`SENTRY_ENABLED=true` força fora disso)
+- Sem Session Replay e sem tracing (`tracesSampleRate: 0`)
+- Scrubbing de e-mail, token, cookie, chave e corpo de análise/PDF
+- Smoke sem link na UI: `/app/sentry-test` (admin) e `POST /api/internal/sentry-test`
+- Source maps: `SENTRY_AUTH_TOKEN` no build, quando Guilherme criar o token. Sem token o build segue.
+
+Guia: `docs/devops/sentry.md`.
+
+---
+
 ## Pagamentos (Stripe & Asaas)
 
 - O sistema suporta múltiplos provedores (`payment_provider` na tabela `subscriptions`).

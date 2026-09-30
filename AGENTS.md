@@ -127,6 +127,14 @@ await notify('payment.confirmed', { email, firstName, accessUrl })
 - Sempre usar a conta Stripe do Nome Magnetico, a partir do `.env` do projeto.
 - Se aparecerem produtos "Sincro Sinergia" ou "Sincro Desperta", a chave Stripe esta errada.
 
+## Sentry
+
+Erros nao tratados em producao vao para o projeto Sentry `studio-mlk / nome-magnetico` (regiao DE) via `@sentry/astro`. O app nao e Next.js: o DSN entra em runtime (`SENTRY_DSN`, com alias `PUBLIC_SENTRY_DSN` e `NEXT_PUBLIC_SENTRY_DSN`). Sem DSN, ou fora de `production`, o SDK fica desligado.
+
+Nao gravar o DSN no codigo. Nao ligar Session Replay nem tracing. Scrubbing tira e-mail, token, cookie, chave e corpo de analise/PDF.
+
+Smoke interno (sem link no menu): `/app/sentry-test` para admin, ou `POST /api/internal/sentry-test` com `X-Internal-Secret`. Detalhe e token de source maps: `docs/devops/sentry.md`.
+
 ## Deploy
 
 - Deploy de producao roda por tag semver `v*.*.*`, conforme `.github/workflows/deploy.yml`.
