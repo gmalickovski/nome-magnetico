@@ -19,6 +19,13 @@ jobs:
           node-version: '20'
 
       - name: Instalar dependências e Build
+        env:
+          # Source maps só sobem se o secret existir. Sem token o build segue e o SDK
+          # continua reportando erros (stack minificada até o token ser criado).
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: studio-mlk
+          SENTRY_PROJECT: nome-magnetico
+          SENTRY_URL: https://de.sentry.io
         run: |
           echo "PUBLIC_SUPABASE_URL=https://bhxneaeuhybtucmbmpvg.supabase.co" >> .env
           echo "PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoeG5lYWV1aHlidHVjbWJtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzMwMDUsImV4cCI6MjA4OTYwOTAwNX0.CM5eismxAXiccsqNNkTjqCBLgDx4Ndr2mQUziWSMwKQ" >> .env

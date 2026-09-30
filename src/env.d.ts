@@ -36,6 +36,16 @@ interface ImportMetaEnv {
   readonly RATE_LIMIT_TESTE_BLOQUEIO: string;
   readonly PRODUCT_SLUG: string;
   readonly INTERNAL_API_SECRET: string;
+  readonly SENTRY_DSN: string;
+  readonly PUBLIC_SENTRY_DSN: string;
+  readonly NEXT_PUBLIC_SENTRY_DSN: string;
+  readonly SENTRY_ENVIRONMENT: string;
+  readonly SENTRY_ENABLED: string;
+  readonly SENTRY_RELEASE: string;
+  readonly SENTRY_AUTH_TOKEN: string;
+  readonly SENTRY_ORG: string;
+  readonly SENTRY_PROJECT: string;
+  readonly SENTRY_URL: string;
 }
 
 interface ImportMeta {

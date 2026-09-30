@@ -61,7 +61,7 @@ const showAnalisesNav = isAdmin || hasAnyActive || hasPaidAnalysisHistory;
 const pathname = Astro.url.pathname;
 const isActive = (path: string) =>
   pathname === path || pathname.startsWith(path + '/');
-const navAppActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte') && !isActive('/app/admin-analise');
+const navAppActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte') && !isActive('/app/admin-analise') && !isActive('/app/sentry-test');
 const navAnalisesActive = isActive('/app/analises') || isActive('/app/resultado');
 const navSuporteActive = isActive('/app/suporte');
 ---
