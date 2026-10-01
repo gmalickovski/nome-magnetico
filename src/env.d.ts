@@ -5,6 +5,8 @@ declare namespace App {
   interface Locals {
     user: import('@supabase/supabase-js').User | null;
     accessToken: string | null;
+    /** true só depois que o middleware confirmou profiles.role = admin no host staff. */
+    opsAdmin?: boolean;
   }
 }
 

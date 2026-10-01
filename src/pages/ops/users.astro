@@ -1,0 +1,163 @@
+---
+import OpsLayout from '../../layouts/OpsLayout.astro';
+import { requestHost, opsHref } from '../../backend/ops/host';
+import { listOpsUsers, parseOpsUsersQuery, type OpsUserRow } from '../../backend/ops/users';
+
+if (!Astro.locals.opsAdmin) {
+  return Astro.redirect(opsHref(requestHost(Astro.request, Astro.url), '/login'));
+}
+
+const hostname = requestHost(Astro.request, Astro.url);
+const usersHref = opsHref(hostname, '/users');
+const { page, q } = parseOpsUsersQuery(Astro.url.searchParams.get('page'), Astro.url.searchParams.get('q'));
+
+let result: Awaited<ReturnType<typeof listOpsUsers>> | null = null;
+let loadError = false;
+
+try {
+  result = await listOpsUsers({ page, q });
+} catch (error) {
+  console.error('[ops/users] falha ao listar usuários:', error);
+  loadError = true;
+}
+
+const total = result?.total ?? 0;
+const perPage = result?.perPage ?? 25;
+const totalPages = Math.max(1, Math.ceil(total / perPage));
+const from = total === 0 ? 0 : (page - 1) * perPage + 1;
+const to = Math.min(page * perPage, total);
+
+const productLabels: Record<string, string> = {
+  nome_social: 'Nome Social',
+  nome_bebe: 'Nome de Bebê',
+  nome_empresa: 'Nome Empresarial',
+};
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
+function testLabel(user: OpsUserRow): string | null {
+  if (!user.is_test) return null;
+  if (!user.test_ends_at) return 'Teste';
+  const ends = new Date(user.test_ends_at);
+  if (Number.isNaN(ends.getTime()) || ends.getTime() > Date.now()) return 'Teste';
+  return 'Teste expirado';
+}
+
+function pageHref(target: number): string {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (target > 1) params.set('page', String(target));
+  const query = params.toString();
+  return query ? `${usersHref}?${query}` : usersHref;
+}
+---
+
+<OpsLayout title="Usuários" section="users" hostname={hostname} adminEmail={Astro.locals.user?.email}>
+  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs font-medium uppercase tracking-[0.16em] text-[#76746a]">Consulta</p>
+      <h1 class="mt-2 font-cinzel text-3xl font-bold text-[#e5e2e1]">Usuários</h1>
+      <p class="mt-2 text-sm text-[#76746a]">Leitura apenas. Alterar papel, teste ou assinatura fica para a próxima fatia.</p>
+    </div>
+    <form method="get" action={usersHref} class="flex w-full gap-2 sm:w-auto">
+      <label class="sr-only" for="q">Buscar por nome ou email</label>
+      <input
+        id="q"
+        name="q"
+        value={q}
+        placeholder="Nome ou email"
+        class="w-full rounded-full bg-[#1c1b19] px-4 py-2.5 text-sm text-[#e5e2e1] outline-none placeholder:text-[#76746a] focus:outline focus:outline-2 focus:outline-[#d7c6ff]/40 sm:w-64"
+      />
+      <button type="submit" class="rounded-full bg-[#24221c] px-4 py-2.5 text-sm text-[#e5e2e1] transition duration-700 hover:bg-[#2c291f]">
+        Buscar
+      </button>
+    </form>
+  </header>
+
+  {loadError && (
+    <p class="rounded-2xl bg-[#1c1b19] px-5 py-4 text-sm text-[#e5e2e1]">Não foi possível carregar os usuários.</p>
+  )}
+
+  {result && result.users.length === 0 && (
+    <p class="rounded-2xl bg-[#1c1b19] px-5 py-8 text-center text-sm text-[#76746a]">Nenhum usuário encontrado.</p>
+  )}
+
+  {result && result.users.length > 0 && (
+    <div class="overflow-x-auto rounded-2xl bg-[#1c1b19] shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+      <table class="w-full min-w-[760px] text-left text-sm">
+        <thead class="text-xs uppercase tracking-[0.12em] text-[#76746a]">
+          <tr>
+            <th class="px-5 py-4 font-medium">Email</th>
+            <th class="px-5 py-4 font-medium">Nome</th>
+            <th class="px-5 py-4 font-medium">Papel</th>
+            <th class="px-5 py-4 font-medium">Acesso</th>
+            <th class="px-5 py-4 font-medium">Cadastro</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.users.map((user) => {
+            const trial = testLabel(user);
+            return (
+              <tr class="odd:bg-white/[0.03]">
+                <td class="px-5 py-4 text-[#e5e2e1]">{user.email}</td>
+                <td class="px-5 py-4 text-[#e5e2e1]">{user.nome || '—'}</td>
+                <td class="px-5 py-4">
+                  <span class:list={[
+                    'rounded-full px-2.5 py-1 text-xs',
+                    user.role === 'admin' ? 'bg-[#f2ca50]/15 text-[#f2ca50]' : 'bg-white/5 text-[#76746a]',
+                  ]}>
+                    {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                  </span>
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-wrap gap-1.5">
+                    {trial && (
+                      <span class="rounded-full bg-[#d7c6ff]/15 px-2.5 py-1 text-xs text-[#d7c6ff]">{trial}</span>
+                    )}
+                    {user.active_products.length === 0 && !trial && (
+                      <span class="text-[#76746a]">—</span>
+                    )}
+                    {user.active_products.map((product) => (
+                      <span class="rounded-full bg-[#f2ca50]/10 px-2.5 py-1 text-xs text-[#f2ca50]">
+                        {productLabels[product] ?? product}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td class="px-5 py-4 text-[#76746a]">{formatDate(user.created_at)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {result && total > 0 && (
+    <div class="mt-4 flex items-center justify-between gap-3 text-sm text-[#76746a]">
+      <p>{from}–{to} de {total}</p>
+      <div class="flex gap-2">
+        {page > 1 ? (
+          <a href={pageHref(page - 1)} class="rounded-full bg-[#1c1b19] px-4 py-2 text-[#e5e2e1]">Anterior</a>
+        ) : (
+          <span class="rounded-full bg-[#1c1b19] px-4 py-2 opacity-40">Anterior</span>
+        )}
+        {page < totalPages ? (
+          <a href={pageHref(page + 1)} class="rounded-full bg-[#1c1b19] px-4 py-2 text-[#e5e2e1]">Próxima</a>
+        ) : (
+          <span class="rounded-full bg-[#1c1b19] px-4 py-2 opacity-40">Próxima</span>
+        )}
+      </div>
+    </div>
+  )}
+</OpsLayout>

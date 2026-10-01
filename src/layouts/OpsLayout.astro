@@ -1,0 +1,82 @@
+---
+import '../styles/global.css';
+import { opsHref, type OpsCleanPath } from '../backend/ops/host';
+
+export interface Props {
+  title: string;
+  section: 'home' | 'users';
+  hostname: string;
+  adminEmail?: string | null;
+}
+
+const { title, section, hostname, adminEmail } = Astro.props;
+
+const links: { id: Props['section']; href: OpsCleanPath; label: string }[] = [
+  { id: 'home', href: '/', label: 'Painel' },
+  { id: 'users', href: '/users', label: 'Usuários' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#131313" />
+    <title>{title} | Nome Magnético</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-screen bg-[#131313] font-inter text-[#e5e2e1] antialiased">
+    <div class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(242,202,80,0.08),transparent_32%)]">
+      <header class="bg-[#171614]/80 backdrop-blur-xl">
+        <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <a href={opsHref(hostname, '/')} class="inline-flex items-center gap-3">
+            <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-8 w-auto" />
+            <span class="font-cinzel text-xs tracking-[0.18em] text-[#f2ca50]">STAFF</span>
+          </a>
+          <div class="flex items-center gap-3">
+            {adminEmail && <span class="hidden max-w-[220px] truncate text-sm text-[#76746a] sm:block">{adminEmail}</span>}
+            <form method="post" action="/api/ops/auth/logout">
+              <button
+                type="submit"
+                class="rounded-full bg-[#24221c] px-4 py-2 text-sm text-[#e5e2e1] shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition duration-700 hover:bg-[#2c291f]"
+              >
+                Sair
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:py-8">
+        <nav class="flex gap-2 overflow-x-auto lg:flex-col lg:gap-1" aria-label="Painel staff">
+          {links.map((link) => {
+            const active = link.id === section;
+            return (
+              <a
+                href={opsHref(hostname, link.href)}
+                class:list={[
+                  'rounded-full px-4 py-2 text-sm whitespace-nowrap transition duration-700 lg:rounded-2xl',
+                  active ? 'bg-[#f2ca50]/15 text-[#f2ca50]' : 'text-[#76746a] hover:bg-[#1c1b19] hover:text-[#e5e2e1]',
+                ]}
+                aria-current={active ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            );
+          })}
+        </nav>
+        <main>
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

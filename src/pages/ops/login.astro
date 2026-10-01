@@ -1,0 +1,83 @@
+---
+import '../../styles/global.css';
+
+const msg = Astro.url.searchParams.get('msg');
+const message =
+  msg === 'sem-permissao'
+    ? 'Esta conta não tem permissão de administração.'
+    : msg === 'sessao-expirada'
+      ? 'Sua sessão expirou. Entre novamente.'
+      : msg === 'limite'
+        ? 'Muitas tentativas. Aguarde alguns minutos.'
+        : msg === 'credenciais'
+          ? 'Email ou senha incorretos.'
+          : '';
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#131313" />
+    <title>Entrar | Nome Magnético</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-screen bg-[#131313] font-inter text-[#e5e2e1] antialiased">
+    <main class="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,rgba(242,202,80,0.12),transparent_36%)] px-4 py-10">
+      <div class="w-full max-w-md">
+        <div class="mb-8 flex justify-center">
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-10 w-auto" />
+        </div>
+        <div class="w-full rounded-2xl bg-[#1c1b19]/80 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+          <p class="mb-2 text-center text-xs font-medium uppercase tracking-[0.18em] text-[#f2ca50]">Staff</p>
+          <h1 class="mb-6 text-center font-cinzel text-2xl font-bold text-[#e5e2e1]">Entrar no painel</h1>
+
+          {message && (
+            <div class="mb-6 rounded-2xl bg-[#f2ca50]/10 px-4 py-3 text-sm text-[#f2ca50]" role="alert">
+              {message}
+            </div>
+          )}
+
+          <form method="post" action="/api/ops/auth/login" class="space-y-5">
+            <label class="block text-sm text-[#e5e2e1]" for="email">
+              Email
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autocomplete="username"
+                class="mt-2 w-full rounded-2xl bg-black/40 px-4 py-3 text-[#e5e2e1] outline-none placeholder:text-[#76746a] focus:outline focus:outline-2 focus:outline-[#d7c6ff]/40"
+              />
+            </label>
+            <label class="block text-sm text-[#e5e2e1]" for="password">
+              Senha
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autocomplete="current-password"
+                class="mt-2 w-full rounded-2xl bg-black/40 px-4 py-3 text-[#e5e2e1] outline-none focus:outline focus:outline-2 focus:outline-[#d7c6ff]/40"
+              />
+            </label>
+            <button
+              type="submit"
+              class="w-full rounded-full bg-[#f2ca50] px-6 py-3 text-sm font-medium text-[#131313] transition duration-700 hover:bg-[#d4af37]"
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
