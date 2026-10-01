@@ -1,5 +1,6 @@
 ---
 import { CookieBanner } from '../frontend/components/ui/CookieBanner';
+import PostHog from '../components/posthog.astro';
 import { getSentryRuntimeConfig } from '../sentry/env';
 
 export interface Props {
@@ -149,6 +150,7 @@ const sentry = getSentryRuntimeConfig();
       loadGA4();
       window.addEventListener('consentGranted', loadGA4);
     </script>
+    <PostHog />
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2915950435320918" crossorigin="anonymous"></script>
     <slot name="head" />

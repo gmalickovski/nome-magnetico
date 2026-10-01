@@ -16,6 +16,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL: string;
   readonly PUBLIC_SUPABASE_ANON_KEY: string;
   readonly PUBLIC_GA4_MEASUREMENT_ID: string;
+  readonly PUBLIC_POSTHOG_KEY: string;
+  readonly PUBLIC_POSTHOG_HOST: string;
   readonly GA4_MEASUREMENT_ID: string;
   readonly GA4_API_SECRET: string;
   readonly GA4_CLIENT_ID_HASH_SECRET: string;

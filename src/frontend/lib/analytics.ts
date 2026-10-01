@@ -8,6 +8,9 @@
  *   → begin_checkout         (padrão GA4 e-commerce — alimenta Smart Bidding)
  *   → purchase               (server-side Measurement Protocol — fonte de verdade de receita)
  *
+ * PostHog (em paralelo, taxonomia Growth): $pageview via SDK, analise_gratis_submit,
+ * begin_checkout (product_type, value, currency) e purchase server-side. O GA4 não muda.
+ *
  * NOTA: preliminary_analysis_submit foi removido do fluxo principal em jun/2026.
  * O antigo fluxo de "preview + criação de conta" foi substituído pelo fluxo email-first.
  * O evento calculadora_submit (CalculadoraGratis) continua existindo como widget auxiliar.
@@ -75,24 +78,82 @@ interface EventData {
   [key: string]: unknown;
 }
 
-export function track(event: AnalyticsEvent, data?: EventData): void {
-  if (typeof window !== 'undefined') {
-    try {
-      if (window.localStorage && window.localStorage.getItem('nm-user-role') === 'admin') {
-        // Ignora envio de analytics para administradores
-        return;
-      }
-    } catch {}
+const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>(['analise_gratis_submit', 'begin_checkout']);
 
+function isAdminBrowser(): boolean {
+  try {
+    return window.localStorage?.getItem('nm-user-role') === 'admin';
+  } catch {
+    return false;
+  }
+}
+
+function posthogCheckoutProps(data?: EventData): Record<string, unknown> {
+  const produto = data?.produto;
+  const productType =
+    produto === 'nome_social' || produto === 'nome_bebe' || produto === 'nome_empresa'
+      ? produto
+      : undefined;
+
+  const props: Record<string, unknown> = { currency: 'BRL' };
+  if (productType) props.product_type = productType;
+  if (typeof data?.valor === 'number') props.value = data.valor;
+  return props;
+}
+
+function capturePostHog(event: AnalyticsEvent, data?: EventData): void {
+  if (!POSTHOG_CLIENT_EVENTS.has(event)) return;
+  if (!window.__nm_posthog_ready || typeof window.posthog?.capture !== 'function') return;
+
+  if (event === 'begin_checkout') {
+    window.posthog.capture(event, posthogCheckoutProps(data));
+    return;
+  }
+
+  window.posthog.capture(event);
+}
+
+export function track(event: AnalyticsEvent, data?: EventData): void {
+  if (typeof window === 'undefined') return;
+  if (isAdminBrowser()) return;
+
+  try {
     if (typeof window.gtag === 'function') {
       window.gtag('event', event, data);
     }
-  }
+  } catch {}
+
+  try {
+    capturePostHog(event, data);
+  } catch {}
+}
+
+/** Liga o navegador anônimo ao id do Supabase, o mesmo distinct_id do purchase server-side. */
+export function identifyUser(userId: string): void {
+  if (typeof window === 'undefined' || !userId || isAdminBrowser()) return;
+  try {
+    if (window.__nm_posthog_ready && typeof window.posthog?.identify === 'function') {
+      window.posthog.identify(userId);
+    }
+  } catch {}
+}
+
+export function resetAnalytics(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.posthog?.reset?.();
+  } catch {}
 }
 
 declare global {
   interface Window {
     gtag?: (command: string, action: string | Date, params?: Record<string, unknown>) => void;
     dataLayer?: unknown[];
+    __nm_posthog_ready?: boolean;
+    posthog?: {
+      capture: (event: string, properties?: Record<string, unknown>) => void;
+      identify: (distinctId: string) => void;
+      reset: () => void;
+    };
   }
 }

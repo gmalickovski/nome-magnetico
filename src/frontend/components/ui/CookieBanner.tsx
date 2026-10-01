@@ -38,7 +38,7 @@ export function CookieBanner() {
       >
         <div className="flex-1 min-w-0">
           <p className="text-[#e5e2e1] text-sm leading-relaxed">
-            Usamos cookies essenciais para o funcionamento do site e cookies do Google Analytics para entender nosso tráfego e melhorar campanhas. Seu IP é anonimizado e os scripts só rodam com sua permissão.{' '}
+            Usamos cookies essenciais para o funcionamento do site e cookies de analytics (Google Analytics e PostHog) para entender tráfego, funil e campanhas. Os scripts só rodam com sua permissão.{' '}
             <a href="/privacidade" className="text-[#D4AF37] hover:text-[#f2ca50] underline underline-offset-2 transition-colors">
               Política de Privacidade
             </a>

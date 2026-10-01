@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { DateInput } from '../ui/DateInput';
 import { Select } from '../ui/Select';
 import { supabaseBrowser } from '../../lib/supabase-browser';
+import { resetAnalytics } from '../../lib/analytics';
 
 export type ProfileForm = {
   nome: string;
@@ -182,6 +183,7 @@ export function SettingsModal({
       if (!res.ok) throw new Error(data.error || 'Erro ao excluir conta.');
       
       // Se deu certo, desloga e redireciona
+      resetAnalytics();
       await supabaseBrowser.auth.signOut();
       window.location.href = '/';
     } catch (err) {

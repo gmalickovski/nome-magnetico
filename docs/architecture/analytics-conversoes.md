@@ -1,6 +1,6 @@
 # Analytics e Conversões de Pagamento
 
-Última atualização: 2026-06-10 — novo fluxo email-first implementado
+Última atualização: 2026-10-01 — PostHog Free em paralelo ao GA4
 
 Este documento descreve a arquitetura de analytics do Nome Magnético para eventos de marketing, checkout, visualização do blog, testes gratuitos e conversões canônicas de pagamento confirmado.
 
@@ -39,6 +39,28 @@ Antes de jun/2026, o fluxo exigia criação de conta para acessar o PDF. O event
 - **Layout Base:** `src/layouts/BaseLayout.astro`
 - O script do Google Analytics 4 é carregado apenas após o consentimento de cookies (`nm-cookie-consent=all`). O ID público é injetado a partir da variável `PUBLIC_GA4_MEASUREMENT_ID`.
 - Eventos client-side são gerenciados centralizadamente por: `src/frontend/lib/analytics.ts`
+- O GA4 permanece ativo. O PostHog não substitui nem desliga esses eventos.
+
+### 1b. PostHog (analytics de produto)
+
+Fonte de funil para Growth. O GA4 continua para Ads, Search Console e remarketing.
+
+- **Snippet:** `src/components/posthog.astro`, incluído no `BaseLayout` (não há layout separado).
+- **Liga só com** `PUBLIC_POSTHOG_KEY`. Host: `PUBLIC_POSTHOG_HOST` (padrão `https://us.i.posthog.com`). As duas variáveis são lidas em runtime (`process.env`), no mesmo padrão do GA4, para a VPS injetar o `.env` sem rebuild.
+- **Consentimento:** o mesmo banner (`nm-cookie-consent=all`). Sem aceite, o SDK não inicializa.
+- **Projeto:** `639826` (US Cloud). `defaults: '2026-05-30'`.
+- **Pessoa:** no login e nas páginas `/app` de quem não é admin, `posthog.identify(userId)` usa o id do Supabase. O `purchase` server-side usa o mesmo `distinct_id`. Logout chama `posthog.reset()`.
+
+Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso continua sendo só a tabela):
+
+| Evento | Onde | Propriedades |
+| :--- | :--- | :--- |
+| `$pageview` | SDK, no init (defaults `2026-05-30` usam `capture_pageview: history_change`) | automáticas |
+| `analise_gratis_submit` | `track()` — lead do form público `/analise-gratuita` (`PublicAnalysisForm`) e o mesmo evento já existente na análise gratuita logada (`FreeAnalysisForm`) | — |
+| `begin_checkout` | `track()` nos inícios de checkout (pricing, landing, modal e botão do app) | `product_type` (`nome_social` \| `nome_bebe` \| `nome_empresa`), `value`, `currency=BRL` |
+| `purchase` | `capturePostHogPurchase` dentro de `trackPurchaseConfirmed` (webhooks Stripe e Asaas) | `product_type`, `value`, `currency=BRL`, mais `transaction_id`, `payment_provider` e `$insert_id` para deduplicar retry |
+
+O wrapper `track()` continua mandando todos os eventos atuais para o GA4. Para o PostHog, só replica `analise_gratis_submit` e `begin_checkout`, traduzindo `produto`/`valor` para `product_type`/`value`. `purchase_complete` no retorno visual do app segue só no GA4; a receita no PostHog é o `purchase` do webhook.
 
 ### 2. Eventos Client-side Implementados
 
