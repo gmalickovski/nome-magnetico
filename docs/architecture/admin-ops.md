@@ -26,20 +26,45 @@ No site público, `/ops/*` responde 404 e `/api/ops/*` responde 403. `/admin` va
 - Conta autenticada sem esse papel cai em `/sem-permissao`, sem ir para `/app`.
 - `service_role` só no servidor (`src/backend/**` e `src/pages/api/ops/**`).
 
-## Rotas desta fatia
+## Rotas
 
 URLs limpas no host admin. O middleware reescreve para `src/pages/ops/*`.
 
 | URL | Estado |
 |-----|--------|
-| `/` | Dashboard (stub) |
-| `/users` | Lista somente leitura |
-| `/subscriptions`, `/billing`, `/promocoes`, `/monitor`, `/faq`, `/support`, `/blog`, `/mensagens`, `/settings` | Stub “Em breve” |
-| `GET /api/ops/users` | Lista perfis: email, nome, papel, teste, produtos ativos |
+| `/` | Dashboard (stub, com atalhos) |
+| `/users` | Lista de usuários |
+| `/users/:id` | Ficha, papel e acesso teste |
+| `/subscriptions` | Assinaturas, somente leitura |
+| `/billing`, `/promocoes`, `/monitor`, `/faq`, `/support`, `/blog`, `/mensagens`, `/settings` | Stub “Em breve” |
 
-Filtros da lista: `q`, `role` (`user` \| `admin`), `is_test` (`true` \| `false`), `page`, `per_page` (máx. 50).
+### Usuários
 
-Não há ban, grant, troca de papel, reembolso nem outras mutações.
+`GET /api/ops/users` lista perfis. Filtros: `q`, `role` (`user` | `admin`), `is_test` (`true` | `false`), `page`, `per_page` (máx. 50).
+
+`GET /api/ops/users/:id` devolve a ficha: email, nome, telefone, papel, teste, produtos ativos (assinatura com `ends_at` futuro e `refunded_at` nulo), nascimento, gênero, confirmação de email, último acesso e origem. A resposta inclui `is_self`.
+
+`PATCH /api/ops/users/:id` aceita um ou mais destes campos:
+
+| Campo | Efeito |
+|-------|--------|
+| `role` | `user` ou `admin` |
+| `is_test` | liga ou desliga o acesso teste em `profiles` |
+| `test_ends_at` | data ISO com fuso, ou `null` para teste sem expiração |
+
+Ao desligar o teste, `test_ends_at` volta para `null`. A própria conta não pode perder o papel admin. Também não dá para rebaixar o último admin. O log no servidor registra só o id de quem alterou, o id alvo e os campos — sem email.
+
+`profiles` não tem coluna de banimento ou desativação. Esta fatia não grava `banned_until` no Auth e não cria tabela nova.
+
+### Assinaturas
+
+`GET /api/ops/subscriptions` lê `subscriptions` e junta email/nome de `profiles`. Sem mutação.
+
+Filtros: `q` (email, nome, ou UUID de usuário/assinatura), `user_id`, `product_type` (`nome_social` | `nome_bebe` | `nome_empresa`), `status` (`active` | `expired` | `refunded`), `provider` (`stripe` | `asaas`), `kind` (`trial` | `paid`), `page`, `per_page` (máx. 50).
+
+A busca por texto considera no máximo 100 perfis. Trial é `stripe_session_id` começando com `trial_`; esse código não volta na resposta. Sessão Stripe e id Asaas voltam só quando não é trial. `kind=paid` inclui sessão nula. `metadata` e ids de reembolso Stripe ficam de fora.
+
+Situação ativa: `refunded_at` nulo e `ends_at` no futuro.
 
 ## Como testar local
 
@@ -62,6 +87,14 @@ ADMIN_HOST_OVERRIDE=ops.localhost npm run dev
 
 Deixe `ADMIN_HOST_OVERRIDE` vazio em produção. Se apontar para `www`, o site público passa a exigir staff.
 
+O que conferir nesta fatia:
+
+- `/users` abre a ficha ao clicar no email.
+- Na ficha, trocar papel e ligar/desligar teste persiste depois de recarregar.
+- A própria conta não oferece troca de papel. Rebaixar o último admin responde 409.
+- `/subscriptions` filtra por produto, situação, provedor e tipo. Não há botão de reembolso.
+- No host público, `/api/ops/*` continua 403.
+
 ## Fora desta fatia
 
-Mutações de usuário, billing, migração de `access_codes`, blog, campanhas e DNS/TLS. O bloco Nginx está em `docs/devops/admin-host-nginx.md` para a Infra; `scripts/nginx.conf` ainda não inclui o host admin.
+Banimento, billing, reembolso, migração de `access_codes`, blog, campanhas e DNS/TLS. O bloco Nginx está em `docs/devops/admin-host-nginx.md` para a Infra; `scripts/nginx.conf` ainda não inclui o host admin.

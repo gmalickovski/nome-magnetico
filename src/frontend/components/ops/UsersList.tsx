@@ -169,7 +169,11 @@ export function UsersList() {
               const trial = testLabel(user);
               return (
                 <tr key={user.id} className="odd:bg-white/[0.02]">
-                  <td className="px-5 py-4 text-[#e5e2e1]">{user.email}</td>
+                  <td className="px-5 py-4">
+                    <a href={`/users/${user.id}`} className="text-[#f2ca50] transition-colors duration-700 hover:text-[#d4af37]">
+                      {user.email}
+                    </a>
+                  </td>
                   <td className="px-5 py-4 text-[#e5e2e1]">{user.nome || '—'}</td>
                   <td className="px-5 py-4">
                     <span className={`rounded-full px-3 py-1 text-xs ${user.role === 'admin' ? 'bg-[#f2ca50]/15 text-[#f2ca50]' : 'bg-white/5 text-[#76746a]'}`}>

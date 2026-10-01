@@ -23,6 +23,26 @@ function normalizePathname(pathname: string): string {
   return pathname;
 }
 
+const USER_UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const USER_PUBLIC = new RegExp(`^/users/(${USER_UUID})$`, 'i');
+const USER_INTERNAL = new RegExp(`^/ops/users/(${USER_UUID})$`, 'i');
+
+/** Ficha `/users/:id`. O id volta em minúsculas para a URL ficar estável. */
+export function matchOpsUserPath(pathname: string): { publicPath: string; internalPath: string } | null {
+  const path = normalizePathname(pathname);
+  const pub = path.match(USER_PUBLIC);
+  if (pub?.[1]) {
+    const id = pub[1].toLowerCase();
+    return { publicPath: `/users/${id}`, internalPath: `/ops/users/${id}` };
+  }
+  const internal = path.match(USER_INTERNAL);
+  if (internal?.[1]) {
+    const id = internal[1].toLowerCase();
+    return { publicPath: `/users/${id}`, internalPath: `/ops/users/${id}` };
+  }
+  return null;
+}
+
 /** Destino interno após o login. Só rotas do próprio painel. */
 export function safeOpsRedirect(raw: string | null | undefined): string {
   if (!raw) return '/';
@@ -31,6 +51,8 @@ export function safeOpsRedirect(raw: string | null | undefined): string {
     return '/';
   }
   const path = normalizePathname(value.split('?')[0] ?? '/');
-  if (!Object.prototype.hasOwnProperty.call(OPS_STAFF_ROUTES, path)) return '/';
-  return path;
+  if (Object.prototype.hasOwnProperty.call(OPS_STAFF_ROUTES, path)) return path;
+  const detail = matchOpsUserPath(path);
+  if (detail && path.toLowerCase() === detail.publicPath) return detail.publicPath;
+  return '/';
 }

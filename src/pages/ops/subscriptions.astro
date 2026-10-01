@@ -1,4 +1,8 @@
 ---
-import OpsStub from '../../layouts/OpsStub.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { SubscriptionsList } from '../../frontend/components/ops/SubscriptionsList';
 ---
-<OpsStub title="Assinaturas" />
+
+<AdminLayout title="Assinaturas" description="Assinaturas do Nome Magnético, somente leitura.">
+  <SubscriptionsList client:load />
+</AdminLayout>

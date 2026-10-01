@@ -1,4 +1,4 @@
-import { OPS_PUBLIC_ROUTES, OPS_STAFF_ROUTES, safeOpsRedirect } from '../../shared/ops-routes';
+import { OPS_PUBLIC_ROUTES, OPS_STAFF_ROUTES, matchOpsUserPath, safeOpsRedirect } from '../../shared/ops-routes';
 
 const FIXED_ADMIN_HOSTS = new Set([
   'admin.nomemagnetico.com.br',
@@ -81,6 +81,11 @@ export function classifyAdminPath(pathname: string): AdminRouteKind {
 
   const staffInternal = STAFF_ROUTES[path];
   if (staffInternal) return { kind: 'staff', publicPath: path, internalPath: staffInternal };
+
+  const userDetail = matchOpsUserPath(path);
+  if (userDetail) {
+    return { kind: 'staff', publicPath: userDetail.publicPath, internalPath: userDetail.internalPath };
+  }
 
   const internal = INTERNAL_TO_PUBLIC.get(path);
   if (internal) {

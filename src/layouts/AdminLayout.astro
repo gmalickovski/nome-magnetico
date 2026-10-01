@@ -33,7 +33,9 @@ const analystUrl = `${(process.env.APP_URL || 'https://www.nomemagnetico.com.br'
 
       <nav class="flex gap-2 overflow-x-auto px-3 pb-4 md:block md:space-y-1 md:px-3 md:pb-8" aria-label="Painel operacional">
         {OPS_NAV.map((item) => {
-          const active = item.href === '/' ? current === '/' : current === item.href;
+          const active = item.href === '/'
+            ? current === '/'
+            : current === item.href || current.startsWith(`${item.href}/`);
           return (
             <a
               href={item.href}
