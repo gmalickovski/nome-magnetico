@@ -1,4 +1,5 @@
 import { supabase } from '../db/supabase';
+import { quoteFilter, searchToken } from './search';
 
 export interface OpsUserRow {
   id: string;
@@ -24,18 +25,6 @@ export interface ListOpsUsersResult {
   total: number;
   page: number;
   per_page: number;
-}
-
-function searchToken(raw: string): string {
-  return raw
-    .normalize('NFKC')
-    .replace(/[^\p{L}\p{N}@.+_\- ]/gu, '')
-    .trim()
-    .slice(0, 120);
-}
-
-function quoteFilter(value: string): string {
-  return `"${value.replace(/"/g, '')}"`;
 }
 
 export async function listOpsUsers(params: ListOpsUsersParams): Promise<ListOpsUsersResult> {
@@ -69,6 +58,7 @@ export async function listOpsUsers(params: ListOpsUsersParams): Promise<ListOpsU
       .from('subscriptions')
       .select('user_id, product_type')
       .in('user_id', ids)
+      .is('refunded_at', null)
       .gt('ends_at', new Date().toISOString());
 
     if (subsError) throw subsError;

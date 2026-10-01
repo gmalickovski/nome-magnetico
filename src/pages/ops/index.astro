@@ -6,10 +6,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   <section class="rounded-2xl bg-[#1c1b1a] px-8 py-12 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
     <p class="font-cinzel text-2xl text-[#e5e2e1]">Painel em construção</p>
     <p class="mt-4 max-w-xl text-sm leading-relaxed text-[#76746a]">
-      Os indicadores entram na próxima fatia. A listagem de usuários já está disponível.
+      Usuários e assinaturas já estão disponíveis. Os indicadores entram depois.
     </p>
-    <a href="/users" class="mt-8 inline-flex rounded-full bg-[#f2ca50] px-6 py-2.5 text-sm font-medium text-[#131313] transition-colors duration-700 hover:bg-[#d4af37]">
-      Abrir usuários
-    </a>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/users" class="inline-flex rounded-full bg-[#f2ca50] px-6 py-2.5 text-sm font-medium text-[#131313] transition-colors duration-700 hover:bg-[#d4af37]">
+        Abrir usuários
+      </a>
+      <a href="/subscriptions" class="inline-flex rounded-full bg-white/5 px-6 py-2.5 text-sm text-[#e5e2e1] transition-colors duration-700 hover:bg-white/10">
+        Abrir assinaturas
+      </a>
+    </div>
   </section>
 </AdminLayout>

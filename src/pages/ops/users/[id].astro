@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { UserDetail } from '../../../frontend/components/ops/UserDetail';
+
+const id = Astro.params.id;
+if (!id) return Astro.redirect('/users');
+---
+
+<AdminLayout title="Usuário" description="Ficha e acesso de um usuário do Nome Magnético.">
+  <UserDetail client:load userId={id} />
+</AdminLayout>
