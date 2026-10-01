@@ -5,12 +5,16 @@ declare namespace App {
   interface Locals {
     user: import('@supabase/supabase-js').User | null;
     accessToken: string | null;
+    isStaff?: boolean;
+    adminPath?: string;
   }
 }
 
 interface ImportMetaEnv {
   readonly APP_ENV: 'development' | 'production';
   readonly APP_URL: string;
+  readonly ADMIN_HOST_OVERRIDE: string;
+  readonly ADMIN_OPS_URL: string;
   readonly SUPABASE_URL: string;
   readonly SUPABASE_SERVICE_ROLE_KEY: string;
   readonly PUBLIC_SUPABASE_URL: string;
