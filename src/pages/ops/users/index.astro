@@ -1,0 +1,8 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { UsersList } from '../../../frontend/components/ops/UsersList';
+---
+
+<AdminLayout title="Usuários" description="Lista de usuários do Nome Magnético.">
+  <UsersList client:load />
+</AdminLayout>

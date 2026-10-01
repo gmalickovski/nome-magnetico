@@ -1,0 +1,8 @@
+---
+import AdminAuthLayout from '../../layouts/AdminAuthLayout.astro';
+import { StaffLoginForm } from '../../frontend/components/ops/StaffLoginForm';
+---
+
+<AdminAuthLayout title="Acesso da equipe">
+  <StaffLoginForm client:load />
+</AdminAuthLayout>

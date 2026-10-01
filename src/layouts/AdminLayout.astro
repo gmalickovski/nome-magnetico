@@ -1,0 +1,75 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { OPS_NAV } from '../frontend/ops/nav';
+import { OpsLogoutButton } from '../frontend/components/ops/OpsLogoutButton';
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Painel operacional do Nome Magnético.' } = Astro.props;
+
+if (!Astro.locals.user || !Astro.locals.isStaff) {
+  return Astro.redirect('/login');
+}
+
+const current = Astro.locals.adminPath ?? Astro.url.pathname;
+const analystUrl = `${(process.env.APP_URL || 'https://www.nomemagnetico.com.br').replace(/\/$/, '')}/app/admin-analise`;
+---
+
+<BaseLayout title={title} description={description} noIndex={true} opsShell={true}>
+  <div class="min-h-screen bg-[#131313] text-[#e5e2e1] md:grid md:grid-cols-[240px_1fr]">
+    <aside class="bg-[#0c0c0c] md:min-h-screen">
+      <div class="flex items-center justify-between px-5 py-6 md:block">
+        <a href="/" class="block">
+          <p class="font-cinzel text-sm tracking-[0.18em] text-[#f2ca50]">NOME MAGNÉTICO</p>
+          <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#76746a]">Operação</p>
+        </a>
+        <div class="md:hidden">
+          <OpsLogoutButton client:load />
+        </div>
+      </div>
+
+      <nav class="flex gap-2 overflow-x-auto px-3 pb-4 md:block md:space-y-1 md:px-3 md:pb-8" aria-label="Painel operacional">
+        {OPS_NAV.map((item) => {
+          const active = item.href === '/' ? current === '/' : current === item.href;
+          return (
+            <a
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              class:list={[
+                'block whitespace-nowrap rounded-full px-4 py-2.5 text-sm transition-colors duration-700',
+                active ? 'bg-[#f2ca50]/15 text-[#f2ca50]' : 'text-[#e5e2e1]/80 hover:bg-white/5 hover:text-[#f2ca50]',
+              ]}
+            >
+              {item.label}
+            </a>
+          );
+        })}
+      </nav>
+
+      <div class="hidden space-y-2 px-3 pb-8 md:block">
+        <a
+          href={analystUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block rounded-full px-4 py-2.5 text-sm text-[#d7c6ff] transition-colors duration-700 hover:bg-[#d7c6ff]/10"
+        >
+          Área do Analista
+        </a>
+        <OpsLogoutButton client:load className="w-full text-left" />
+      </div>
+    </aside>
+
+    <div class="min-w-0">
+      <header class="px-5 py-8 md:px-10">
+        <p class="text-[11px] uppercase tracking-[0.16em] text-[#76746a]">Operação</p>
+        <h1 class="mt-2 font-cinzel text-3xl font-bold text-[#e5e2e1]">{title}</h1>
+      </header>
+      <div class="px-5 pb-16 md:px-10">
+        <slot />
+      </div>
+    </div>
+  </div>
+</BaseLayout>

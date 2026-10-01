@@ -1,0 +1,16 @@
+---
+import AdminLayout from './AdminLayout.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<AdminLayout title={title}>
+  <section class="rounded-2xl bg-[#1c1b1a] px-8 py-16 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+    <p class="font-cinzel text-2xl text-[#e5e2e1]">{title}</p>
+    <p class="mt-4 text-sm text-[#76746a]">Em breve.</p>
+  </section>
+</AdminLayout>

@@ -14,6 +14,7 @@ export interface Props {
   hasBottomNav?: boolean;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
+  opsShell?: boolean;
 }
 
 const {
@@ -27,13 +28,14 @@ const {
   hasBottomNav = false,
   articlePublishedTime,
   articleModifiedTime,
+  opsShell = false,
 } = Astro.props;
 
 const siteOrigin = (Astro.site ?? new URL('https://www.nomemagnetico.com.br')).origin;
 const canonicalURL = new URL(Astro.url.pathname, siteOrigin);
 const ogImageAbsolute = ogImage.startsWith('http') ? ogImage : `${siteOrigin}${ogImage}`;
-const robotsContent = noIndex
-  ? (noIndexFollow ? 'noindex, follow' : 'noindex, nofollow')
+const robotsContent = noIndex || opsShell
+  ? (noIndexFollow && !opsShell ? 'noindex, follow' : 'noindex, nofollow')
   : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
@@ -123,6 +125,8 @@ const sentry = getSentryRuntimeConfig();
         rel="stylesheet"
       />
     </noscript>
+    {!opsShell && (
+    <>
     <!-- Google Analytics 4: carregado somente apos consentimento explicito. -->
     <script is:inline define:vars={{ ga4MeasurementId }}>
       function loadGA4() {
@@ -153,11 +157,13 @@ const sentry = getSentryRuntimeConfig();
     <PostHog />
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2915950435320918" crossorigin="anonymous"></script>
+    </>
+    )}
     <slot name="head" />
   </head>
   <body class:list={['bg-[#1a1a1a] text-gray-200 min-h-screen font-inter antialiased', { 'has-bottom-nav': hasBottomNav }]}>
     <slot />
-    <CookieBanner client:only="react" />
+    {!opsShell && <CookieBanner client:only="react" />}
   </body>
 </html>
 
