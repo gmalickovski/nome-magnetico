@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabaseBrowser } from '../../lib/supabase-browser';
+import { identifyUser } from '../../lib/analytics';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -91,6 +92,8 @@ export function LoginForm() {
         window.location.href = '/app';
         return;
       }
+
+      if (signInData.user?.id) identifyUser(signInData.user.id);
 
       // Setar cookies para que o middleware SSR encontre o token
       if (session) {

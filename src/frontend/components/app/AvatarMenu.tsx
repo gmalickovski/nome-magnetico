@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { supabaseBrowser } from '../../lib/supabase-browser';
+import { resetAnalytics } from '../../lib/analytics';
 import { SettingsModal, type ProfileForm } from './SettingsModal';
 
 interface AvatarMenuProps {
@@ -107,6 +108,7 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
   }
 
   const handleLogout = async () => {
+    resetAnalytics();
     await supabaseBrowser.auth.signOut();
     document.cookie = 'nome-magnetico-auth-access-token=; path=/; max-age=0';
     document.cookie = 'nome-magnetico-auth-refresh-token=; path=/; max-age=0';
