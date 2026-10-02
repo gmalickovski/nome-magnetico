@@ -85,7 +85,7 @@ export function StaffLoginForm() {
         <div className="mb-4 rounded-2xl bg-[#d7c6ff]/10 px-4 py-3 text-sm text-[#d7c6ff]">{info}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-5">
         <Input
           label="Email"
           type="email"
@@ -114,8 +114,8 @@ export function StaffLoginForm() {
           <div className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>
         )}
 
-        <div className="-mt-1 flex justify-end">
-          <a href="/auth/esqueci-senha" className="inline-flex min-h-[44px] items-center text-sm text-[#76746a] transition-colors hover:text-[#f2ca50] -my-3">
+        <div className="flex justify-end">
+          <a href="/auth/esqueci-senha" className="-my-2 inline-flex min-h-[44px] items-center text-sm text-[#76746a] transition-colors hover:text-[#f2ca50]">
             Esqueci minha senha
           </a>
         </div>
