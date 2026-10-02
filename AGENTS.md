@@ -10,6 +10,14 @@ Orientacao para agentes IA que trabalham neste repositorio. Este arquivo e a bas
 - Regra de marca: "Astro" e apenas o framework tecnico. Nunca usar "Astro" em copy, branding, nomes de produto ou interface.
 - Fluxo atual do usuario: trabalhar direto na `main`, sem PR por enquanto. Mudancas devem ser testadas antes de commit/push/deploy.
 
+## Playbooks Studio MLK (obrigatório) <!-- pragma: allowlist secret -->
+
+Um time Linear: **Desenvolvimento** (`DEV-*`). FE/BE = labels `area:frontend` / `area:backend` — não criar times separados.
+
+Antes de mudar UI/layout/mobile/fold/tipografia/SVG/containers: seguir o [Playbook Frontend](https://linear.app/studio-mlk/document/playbook-frontend-layout-tipografia-mobilefold-4ad2081fba87). <!-- pragma: allowlist secret -->
+Antes de mudar API/auth/DB/migrations/LGPD/segurança: seguir o [Playbook Backend](https://linear.app/studio-mlk/document/playbook-backend-seguranca-api-lgpd-400dc095d4f4). <!-- pragma: allowlist secret -->
+Guia Linear: https://linear.app/studio-mlk/document/guia-linear-regras-e-suporte-b9d5bfb39654 <!-- pragma: allowlist secret -->
+
 ## Comandos
 
 ```bash

@@ -2,6 +2,14 @@
 
 Regras de execução no Linear para o Nome Magnético. Linear guarda o próximo passo; o detalhe de arquitetura fica em `docs/`.
 
+## Playbooks Studio MLK <!-- pragma: allowlist secret -->
+
+Um time Linear: **Desenvolvimento** (`DEV-*`). FE/BE = labels `area:frontend` / `area:backend`, sem times separados.
+
+- UI/layout/mobile/fold/tipografia/SVG/containers: [Playbook Frontend](https://linear.app/studio-mlk/document/playbook-frontend-layout-tipografia-mobilefold-4ad2081fba87). <!-- pragma: allowlist secret -->
+- API/auth/DB/migrations/LGPD/segurança: [Playbook Backend](https://linear.app/studio-mlk/document/playbook-backend-seguranca-api-lgpd-400dc095d4f4). <!-- pragma: allowlist secret -->
+- Guia Linear: https://linear.app/studio-mlk/document/guia-linear-regras-e-suporte-b9d5bfb39654 <!-- pragma: allowlist secret -->
+
 ## Bot Suporte — FAQ read-only
 
 O bot Suporte de cada SaaS lê a FAQ ativa e consulta o status mínimo de um contato por e-mail. O resto do banco fica negado: conteúdo de análise, pagamentos detalhados, leads além da presença, auth e HQ.

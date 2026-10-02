@@ -161,7 +161,7 @@ const sentry = getSentryRuntimeConfig();
     )}
     <slot name="head" />
   </head>
-  <body class:list={['bg-[#1a1a1a] text-gray-200 min-h-screen font-inter antialiased', { 'has-bottom-nav': hasBottomNav }]}>
+  <body class:list={['bg-[#1a1a1a] text-gray-200 font-inter antialiased', opsShell ? 'overflow-hidden' : 'min-h-screen', { 'has-bottom-nav': hasBottomNav }]}>
     <slot />
     {!opsShell && <CookieBanner client:only="react" />}
   </body>
