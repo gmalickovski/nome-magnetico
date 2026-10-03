@@ -23,7 +23,7 @@ export function SignaturePullGesture({ play, reducedMotion }: SignaturePullGestu
 
   return (
     <div
-      className="mt-5 md:mt-6 mb-1 w-full max-w-[min(100%,14rem)] sm:max-w-xs select-none"
+      className="mt-5 md:mt-6 mb-1 w-full max-w-[min(100%,14rem)] sm:max-w-xs select-none mx-auto lg:mx-0"
       aria-hidden="true"
     >
       <style>
