@@ -46,6 +46,10 @@ function displayPrice(
   return priceInfo.formatted;
 }
 
+function prominentPrice(label: string): string {
+  return label.replace(/,00$/, '');
+}
+
 interface PricingSectionProps {
   /** @deprecated use hqPrices instead */
   stripePrices?: StripePrices;
@@ -163,35 +167,59 @@ export function PricingSection({
     <section
       id="precos"
       ref={reveal.ref}
-      className={`py-20 md:py-28 bg-[#1a1a1a] overflow-x-hidden ${reveal.className}`}
+      className={`py-16 md:py-20 bg-[#111111] overflow-x-hidden ${reveal.className}`}
     >
+      <style>
+        {`
+          @keyframes nm-price-border-shift {
+            0%, 100% { border-color: #D4AF37; }
+            50% { border-color: #E8C84A; }
+          }
+          .nm-price-border {
+            border: 2px solid #D4AF37;
+            animation: nm-price-border-shift 4.8s ease-in-out infinite;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .nm-price-border {
+              animation: none;
+              border-color: #D4AF37;
+            }
+          }
+        `}
+      </style>
       <div className={landingSectionShellClass}>
-        <div className="max-w-prose lg:max-w-2xl min-w-0">
-          <p className="text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-6">
-            Preço
-          </p>
+        <div className="mx-auto w-full max-w-xl min-w-0">
+          <div className="nm-price-border rounded-2xl bg-[#111111] px-6 py-8 md:px-10 md:py-10 text-center">
+            <p className="text-[#e5e2e1] text-sm leading-relaxed">
+              Nome Social.
+            </p>
 
-          <p className="text-[#e5e2e1] text-base md:text-lg leading-relaxed mb-4">
-            Nome Social. {priceLabel}, pagamento único, sem mensalidade.
-          </p>
+            <p className="mt-3 font-cinzel text-6xl md:text-8xl font-bold leading-none text-[#D4AF37]">
+              {prominentPrice(priceLabel)}
+            </p>
 
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-8">
-            Você recebe o ranking das assinaturas, o nome recomendado e as variações. Acesso na hora.
-            Sete dias de garantia.
-          </p>
+            <p className="mt-3 text-[#e5e2e1] text-sm leading-relaxed">
+              pagamento único, sem mensalidade.
+            </p>
 
-          <button
-            type="button"
-            onClick={handleBuy}
-            disabled={priceUnavailableOnHq}
-            className={`w-full sm:w-auto ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
-              priceUnavailableOnHq
-                ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500'
-                : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
-            }`}
-          >
-            Harmonizar minha assinatura
-          </button>
+            <p className="mt-3 text-gray-400 text-sm leading-relaxed">
+              ranking, nome recomendado e variações. Acesso na hora.{' '}
+              <span className="whitespace-nowrap">Sete dias de garantia.</span>
+            </p>
+
+            <button
+              type="button"
+              onClick={handleBuy}
+              disabled={priceUnavailableOnHq}
+              className={`mt-6 w-full ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
+                priceUnavailableOnHq
+                  ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500'
+                  : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
+              }`}
+            >
+              Harmonizar minha assinatura
+            </button>
+          </div>
         </div>
       </div>
 
