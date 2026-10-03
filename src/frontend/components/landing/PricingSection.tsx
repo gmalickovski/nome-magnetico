@@ -203,7 +203,8 @@ export function PricingSection({
             </p>
 
             <p className="mt-3 text-gray-400 text-sm leading-relaxed">
-              ranking, nome recomendado e variações. Acesso na hora. Sete dias de garantia.
+              ranking, nome recomendado e variações. Acesso na hora.{' '}
+              <span className="whitespace-nowrap">Sete dias de garantia.</span>
             </p>
 
             <button
