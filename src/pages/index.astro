@@ -44,27 +44,27 @@ const user = Astro.locals.user;
   <HowItWorksSection client:visible />
   <ProductsSection client:visible />
   {/* Teaser calculadora gratuita */}
-  <section id="teste" class="pt-8 pb-20 bg-[#111111]">
-    <div class="max-w-2xl mx-auto px-4 text-center">
-      <div class="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5 mb-6">
-        <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
-        <span class="text-[#D4AF37] text-sm font-medium">Ferramenta Gratuita</span>
-        <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
+  <section id="teste" class="py-20 md:py-28 bg-[#111111]">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
+      <div class="max-w-2xl mx-auto text-center">
+        <p class="text-[#D4AF37] text-xs md:text-sm font-bold tracking-[0.15em] mb-4 md:mb-6">
+          Ferramenta gratuita
+        </p>
+        <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-[#e5e2e1] mb-4 leading-tight">
+          Descubra a Frequência<br/>do Seu Nome — Grátis
+        </h2>
+        <p class="text-gray-400 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+          Descubra os bloqueios energéticos, lições kármicas e tendências ocultas do seu nome de nascimento.
+          Análise completa com os 4 triângulos numerológicos — relatório em PDF incluído.
+        </p>
+        <a
+          href="/analise-gratuita"
+          class="inline-block bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-10 py-3 rounded-full hover:bg-[#f2ca50] transition-colors duration-300 shadow-lg shadow-[#D4AF37]/20 motion-reduce:transition-none"
+        >
+          Fazer Análise Gratuita
+        </a>
+        <p class="text-gray-600 text-sm mt-4">Gratuito · Crie sua conta · Relatório completo com PDF</p>
       </div>
-      <h2 class="font-cinzel text-3xl md:text-4xl font-bold text-white mb-4">
-        Descubra a Frequência<br/>do Seu Nome — Grátis
-      </h2>
-      <p class="text-gray-400 text-base md:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-        Descubra os bloqueios energéticos, lições kármicas e tendências ocultas do seu nome de nascimento.
-        Análise completa com os 4 triângulos numerológicos — relatório em PDF incluído.
-      </p>
-      <a
-        href="/analise-gratuita"
-        class="inline-block bg-[#D4AF37] text-[#1A1A1A] font-bold text-base px-10 py-4 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
-      >
-        Fazer Análise Gratuita
-      </a>
-      <p class="text-gray-600 text-sm mt-4">Gratuito · Crie sua conta · Relatório completo com PDF</p>
     </div>
   </section>
   <PricingSection hqPrices={hqPrices} promotion={promotion} isLoggedIn={!!user} client:visible />
