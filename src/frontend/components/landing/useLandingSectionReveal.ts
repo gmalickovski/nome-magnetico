@@ -32,7 +32,12 @@ export function useLandingSectionReveal(threshold = 0.12) {
   }, [threshold, reduceMotion]);
 
   if (reduceMotion) {
-    return { ref, className: '' };
+    return {
+      ref,
+      className: '',
+      revealed: true,
+      reduceMotion: true,
+    };
   }
 
   const opacityClass = revealed ? 'opacity-100' : 'opacity-0';
@@ -40,5 +45,7 @@ export function useLandingSectionReveal(threshold = 0.12) {
   return {
     ref,
     className: `transition-opacity duration-700 ease-out ${opacityClass}`,
+    revealed,
+    reduceMotion: false,
   };
 }

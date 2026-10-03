@@ -5,6 +5,7 @@ import {
   landingSectionStackGapClass,
 } from './LandingSectionIntro';
 import { useLandingSectionReveal } from './useLandingSectionReveal';
+import { SignaturePullGesture } from './SignaturePullGesture';
 
 export function ProductsSection() {
   const reveal = useLandingSectionReveal();
@@ -29,6 +30,10 @@ export function ProductsSection() {
               align="left"
               label="Produto"
               title="Sua assinatura de nome social"
+            />
+            <SignaturePullGesture
+              play={reveal.revealed}
+              reducedMotion={reveal.reduceMotion}
             />
           </div>
 

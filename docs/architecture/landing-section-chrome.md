@@ -8,7 +8,9 @@ Home sections below the hero share spacing with `HeroSection`:
 
 ## Motion
 
-`useLandingSectionReveal` changes **opacity only** once on enter (700ms ease). No translate, stagger, or bounce. `prefers-reduced-motion: reduce` skips the fade (no transition class). No magnet gesture.
+`useLandingSectionReveal` changes **opacity only** once on enter (700ms ease). No translate, stagger, or bounce. `prefers-reduced-motion: reduce` skips the fade (no transition class).
+
+**Produto only:** `SignaturePullGesture` plays once on enter — thin `#f2ca50` signature line with a closing gap and 2–3 faint dots that meet the line (no icon/coin/loop). With reduced motion, the line is already closed and dots are static.
 
 ## Mobile
 
