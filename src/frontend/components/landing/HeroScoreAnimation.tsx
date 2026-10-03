@@ -82,7 +82,7 @@ const CANDIDATES: NameCandidate[] = [
   },
 ];
 
-export function HeroScoreAnimation() {
+export function HeroScoreAnimation({ stacked = false }: { stacked?: boolean } = {}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [displayedScore, setDisplayedScore] = useState(CANDIDATES[0].score);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -148,10 +148,10 @@ export function HeroScoreAnimation() {
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
-    <div className="w-full flex flex-col md:flex-row gap-4 items-center bg-[#181818]/40 backdrop-blur-md p-5 rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 max-w-2xl mx-auto">
+    <div className={`w-full flex flex-col gap-4 items-center bg-[#181818]/40 backdrop-blur-md p-5 rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 max-w-2xl mx-auto ${stacked ? '' : 'md:flex-row'}`}>
       
       {/* Esquerda: Lista de Opções */}
-      <div className="w-full md:w-[56%] flex flex-col gap-2 order-2 md:order-1">
+      <div className={`w-full flex flex-col gap-2 order-2 ${stacked ? '' : 'md:w-[56%] md:order-1'}`}>
         {CANDIDATES.map((cand, idx) => {
           const isSelected = activeIndex === idx;
           return (
@@ -195,7 +195,7 @@ export function HeroScoreAnimation() {
       </div>
 
       {/* Direita: Visor Circular do Score (Maior e Centralizado) */}
-      <div className="w-full md:w-[44%] flex flex-col items-center justify-center p-2 order-1 md:order-2">
+      <div className={`w-full flex flex-col items-center justify-center p-2 order-1 ${stacked ? '' : 'md:w-[44%] md:order-2'}`}>
         <div className="relative w-56 h-56 flex items-center justify-center">
           {/* Background circle */}
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 224 224">
