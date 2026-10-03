@@ -8,7 +8,7 @@ Home sections below the hero share spacing with `HeroSection`:
 
 ## Motion
 
-`useLandingSectionReveal` fades the section in once on enter (700ms ease, slight translate). `prefers-reduced-motion: reduce` shows content immediately with no transition. No bounce, scale, stagger, or magnet gesture.
+`useLandingSectionReveal` changes **opacity only** once on enter (700ms ease). No translate, stagger, or bounce. `prefers-reduced-motion: reduce` skips the fade (no transition class). No magnet gesture.
 
 ## Mobile
 

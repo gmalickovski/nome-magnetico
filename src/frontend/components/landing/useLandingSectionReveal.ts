@@ -1,18 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 
-/** One-time fade when section enters viewport; disabled when prefers-reduced-motion. */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** One-time opacity fade when section enters viewport. No translate or stagger. */
 export function useLandingSectionReveal(threshold = 0.12) {
   const ref = useRef<HTMLElement>(null);
-  const [revealed, setRevealed] = useState(false);
+  const [reduceMotion] = useState(prefersReducedMotion);
+  const [revealed, setRevealed] = useState(() => prefersReducedMotion());
 
   useEffect(() => {
+    if (reduceMotion) return;
+
     const el = ref.current;
     if (!el) return;
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setRevealed(true);
-      return;
-    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -26,14 +29,16 @@ export function useLandingSectionReveal(threshold = 0.12) {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [threshold]);
+  }, [threshold, reduceMotion]);
 
-  const motionClass = revealed
-    ? 'opacity-100 translate-y-0'
-    : 'opacity-0 translate-y-2 motion-reduce:opacity-100 motion-reduce:translate-y-0';
+  if (reduceMotion) {
+    return { ref, className: '' };
+  }
+
+  const opacityClass = revealed ? 'opacity-100' : 'opacity-0';
 
   return {
     ref,
-    className: `transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ${motionClass}`,
+    className: `transition-opacity duration-700 ease-out ${opacityClass}`,
   };
 }
