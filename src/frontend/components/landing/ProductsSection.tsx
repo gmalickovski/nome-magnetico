@@ -14,7 +14,7 @@ export function ProductsSection() {
     <section
       id="produtos"
       ref={reveal.ref}
-      className={`relative py-20 md:py-32 bg-[#111111] overflow-x-hidden ${reveal.className}`}
+      className={`relative py-20 md:py-20 bg-[#111111] overflow-x-hidden ${reveal.className}`}
     >
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -25,16 +25,16 @@ export function ProductsSection() {
 
       <div className={`relative ${landingSectionShellClass}`}>
         <div className={`grid grid-cols-1 lg:grid-cols-2 ${landingSectionStackGapClass} items-center`}>
-          <div className="min-w-0">
+          <div className="min-w-0 [&_h2]:!text-3xl [&_h2]:md:!text-4xl [&_h2]:lg:!text-5xl [&_h2]:!leading-tight">
             <LandingSectionIntro
               align="left"
               label="Produto"
-              title="Sua assinatura de nome social"
+              title="Sua assinatura de nome social."
             />
-            <p className="text-[#e5e2e1] text-base md:text-lg leading-relaxed mt-6 mb-6 max-w-prose mx-auto lg:mx-0">
+            <p className="text-[#e5e2e1] text-sm md:text-base leading-relaxed mt-4 mb-3 max-w-prose mx-auto lg:mx-0">
               Do nome de nascimento à assinatura que você usa no dia a dia.
             </p>
-            <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-prose mx-auto lg:mx-0">
+            <p className="text-gray-400 text-xs sm:text-sm leading-relaxed max-w-prose mx-auto lg:mx-0">
               A gente compara o nome de nascimento com variações de nome social. O cálculo mostra
               quais ficam mais alinhadas ao Destino e quais ainda carregam o bloqueio do nome
               original. No fim, uma assinatura recomendada e as variações para testar, com score de
@@ -42,8 +42,8 @@ export function ProductsSection() {
             </p>
           </div>
 
-          <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 p-1">
-            <HeroScoreAnimation stacked />
+          <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 p-1 [&>div]:md:!flex-col [&>div>div]:md:!w-full [&>div>div:nth-child(1)]:md:!order-2 [&>div>div:nth-child(2)]:md:!order-1">
+            <HeroScoreAnimation />
           </div>
         </div>
       </div>

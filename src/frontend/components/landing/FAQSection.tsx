@@ -52,7 +52,7 @@ export function FAQSection({ items }: FAQSectionProps) {
           <p className="text-[#D4AF37] text-sm font-medium tracking-widest uppercase mb-3">
             Dúvidas
           </p>
-          <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mb-4">
+          <h2 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight">
             Perguntas Frequentes
           </h2>
         </div>

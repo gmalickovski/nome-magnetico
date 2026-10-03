@@ -63,17 +63,17 @@ export function HowItWorksSection() {
     <section
       id="como-funciona"
       ref={reveal.ref}
-      className={`py-20 md:py-32 bg-[#1a1a1a] overflow-x-hidden ${reveal.className}`}
+      className={`py-20 md:py-20 bg-[#1a1a1a] overflow-x-hidden ${reveal.className}`}
       aria-label="Como funciona"
     >
       <div className={landingSectionShellClass}>
-        <LandingSectionIntro label="Como funciona" className="mb-10 md:mb-12" />
+        <LandingSectionIntro label="Como funciona" className="mb-8 md:mb-10" />
 
         <ol className="grid grid-cols-1 lg:grid-cols-4 gap-0 list-none m-0 p-0" role="list">
           {steps.map((step, index) => (
             <li key={step.title} className="relative min-w-0 lg:pr-8" role="listitem">
               <div className="flex items-center gap-3 min-w-0">
-                <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] leading-tight">
+                <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold leading-tight text-[#e5e2e1]">
                   {step.title}
                 </h3>
                 {index < steps.length - 1 && (
@@ -82,7 +82,7 @@ export function HowItWorksSection() {
                   </span>
                 )}
               </div>
-              <p className="mt-3 text-sm md:text-base leading-relaxed text-gray-400">
+              <p className="mt-2 text-sm leading-relaxed text-gray-400">
                 {step.body}
               </p>
               {index < steps.length - 1 && (
