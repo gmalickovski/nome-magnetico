@@ -7,10 +7,11 @@ import {
   validateHqAccessCoupon,
 } from '../../backend/payments/prices';
 import { stripe } from '../../backend/payments/stripe';
+import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 
 const schema = z.object({
   coupon_code:  z.string().min(1),
-  product_type: z.enum(['nome_social', 'nome_bebe', 'nome_empresa']),
+  product_type: z.enum(SELLABLE_PRODUCT_TYPES),
 });
 
 const FALLBACK_CENTS: Record<string, number> = {

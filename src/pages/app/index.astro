@@ -187,16 +187,20 @@ if (!freeAnalysisId && user.email) {
   }
 }
 
-// Admin: acesso total sem verificar subscriptions
-const [hasNomeSocial, hasNomeBebe, hasNomeEmpresa] = isAdmin
-  ? [true, true, true]
+// Admin: acesso total sem verificar subscriptions.
+// Nome de Bebê e Nome Empresarial não são mais vendidos; assinaturas antigas ainda ativas
+// só evitam o aviso de "acesso expirado" e continuam vendo as análises em /app/analises.
+const [hasNomeSocial, hasLegacyAccess] = isAdmin
+  ? [true, false]
   : await Promise.all([
       hasActiveSubscription(user.id, 'nome_social'),
-      hasActiveSubscription(user.id, 'nome_bebe'),
-      hasActiveSubscription(user.id, 'nome_empresa'),
+      Promise.all([
+        hasActiveSubscription(user.id, 'nome_bebe'),
+        hasActiveSubscription(user.id, 'nome_empresa'),
+      ]).then(([bebe, empresa]) => bebe || empresa),
     ]);
 
-const hasAnyAccess = hasNomeSocial || hasNomeBebe || hasNomeEmpresa;
+const hasAnyAccess = hasNomeSocial || hasLegacyAccess;
 
 try {
   const { data: foundBestSocial } = await _client
@@ -284,6 +288,10 @@ const featuredName =
     ?? bestSocialAnalysis?.nome_completo
     ?? freeAnalysis?.nome_completo
     ?? '';
+const socialPrice = priceMap.nome_social;
+const socialPriceLabel = socialPrice && socialPrice.cents > 0
+  ? (socialPrice.hasDiscount && socialPrice.discountedFormatted ? socialPrice.discountedFormatted : socialPrice.formatted)
+  : null;
 const featuredTheme = getScoreTheme(featuredAnalysis?.score);
 const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
 
@@ -308,46 +316,6 @@ const products = [
       infoClass: 'inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2.5 text-sm font-bold text-gray-400 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]',
     },
   },
-  {
-    id: 'nome_bebe',
-    iconSvg: `<svg viewBox="0 0 24 24" aria-hidden="true" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10.5h.01"/><path d="M15 10.5h.01"/><path d="M9.5 15c1.5 1.2 3.5 1.2 5 0"/><path d="M12 21a8 8 0 0 0 8-8c0-4.2-3.1-7.7-7.2-8"/><path d="M12 21a8 8 0 0 1-8-8c0-4.2 3.1-7.7 7.2-8"/><path d="M12 5c1.8 0 3-1 3-2.5C13.2 2.3 12 3.3 12 5Z"/></svg>`,
-    name: 'Nome de Bebê',
-    description: 'Encontre o nome ideal para seu filho com compatibilidade familiar.',
-    href: '/app/analise/nome-bebe',
-    infoHref: '/nome-bebe',
-    hasAccess: hasNomeBebe,
-    theme: {
-      primary: '#C97B63',
-      accent: '#E8A598',
-      border: 'rgba(201,123,99,0.24)',
-      borderHover: 'rgba(232,165,152,0.44)',
-      bg: 'linear-gradient(145deg, rgba(201,123,99,0.12), rgba(255,255,255,0.035) 52%, rgba(0,0,0,0.12))',
-      bgHover: 'linear-gradient(145deg, rgba(201,123,99,0.17), rgba(255,255,255,0.050) 52%, rgba(0,0,0,0.10))',
-      shadow: 'rgba(201,123,99,0.17)',
-      checkoutClass: 'inline-flex items-center justify-center rounded-xl bg-[#C97B63]/10 border border-[#C97B63]/30 text-[#C97B63] text-sm font-bold px-4 py-2.5 hover:bg-[#C97B63]/20 transition-all',
-      infoClass: 'inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2.5 text-sm font-bold text-gray-400 transition hover:border-[#C97B63]/40 hover:text-[#E8A598]',
-    },
-  },
-  {
-    id: 'nome_empresa',
-    iconSvg: `<svg viewBox="0 0 24 24" aria-hidden="true" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16"/><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M9 7h1"/><path d="M14 7h1"/><path d="M9 11h1"/><path d="M14 11h1"/><path d="M9 15h1"/><path d="M14 15h1"/></svg>`,
-    name: 'Nome Empresarial',
-    description: 'Avalie nomes de empresa alinhados ao destino do fundador.',
-    href: '/app/analise/nome-empresa',
-    infoHref: '/nome-empresarial',
-    hasAccess: hasNomeEmpresa,
-    theme: {
-      primary: '#4A7FC1',
-      accent: '#7FB3E8',
-      border: 'rgba(74,127,193,0.24)',
-      borderHover: 'rgba(127,179,232,0.44)',
-      bg: 'linear-gradient(145deg, rgba(74,127,193,0.13), rgba(255,255,255,0.035) 52%, rgba(0,0,0,0.12))',
-      bgHover: 'linear-gradient(145deg, rgba(74,127,193,0.19), rgba(255,255,255,0.050) 52%, rgba(0,0,0,0.10))',
-      shadow: 'rgba(74,127,193,0.18)',
-      checkoutClass: 'inline-flex items-center justify-center rounded-xl bg-[#4A7FC1]/10 border border-[#4A7FC1]/30 text-[#7FB3E8] text-sm font-bold px-4 py-2.5 hover:bg-[#4A7FC1]/20 transition-all',
-      infoClass: 'inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2.5 text-sm font-bold text-gray-400 transition hover:border-[#4A7FC1]/40 hover:text-[#7FB3E8]',
-    },
-  },
 ];
 ---
 
@@ -370,7 +338,7 @@ const products = [
           <div>
             <h3 class="font-cinzel text-base font-bold text-[#D4AF37] mb-0.5">Pagamento confirmado!</h3>
             <p class="text-[#e5e2e1] text-sm leading-relaxed">
-              Bem-vindo ao Nome Magnético. Seu acesso está liberado - escolha seu produto abaixo para começar.
+              Bem-vindo ao Nome Magnético. Seu acesso está liberado - abra o Nome Social abaixo para começar.
             </p>
           </div>
         </div>
@@ -510,8 +478,15 @@ const products = [
             <p class="mt-2 text-sm leading-relaxed text-gray-500">
               {featuredIsSocial
                 ? 'Este é o melhor resultado salvo nas suas harmonizações. Acesse o relatório completo, baixe a análise gratuita ou gere uma nova análise do Nome Social.'
-                : 'Seu diagnóstico inicial está salvo. Baixe novamente o PDF ou avance para harmonizar seu nome.'}
+                : hasNomeSocial
+                  ? 'Seu diagnóstico inicial está salvo. Baixe novamente o PDF ou avance para harmonizar seu nome.'
+                  : 'Seu diagnóstico gratuito está salvo. O próximo passo é o Nome Social: a partir do seu nome de nascimento, você gera a assinatura harmonizada, com ranking de score 0–100 e acesso imediato após o pagamento.'}
             </p>
+            {!featuredIsSocial && !hasNomeSocial && socialPriceLabel && (
+              <p class="mt-2 text-xs font-medium text-[#D4AF37]">
+                Nome Social · {socialPriceLabel} · pagamento único
+              </p>
+            )}
             <div class="mt-5 flex flex-col gap-3 sm:flex-row">
               {featuredIsSocial ? (
                 <>
@@ -635,8 +610,8 @@ const products = [
 
     <!-- Produtos -->
     <div>
-      <h2 class="font-cinzel text-xl font-bold text-gray-100 mb-4">Seus Produtos</h2>
-      <div class="grid md:grid-cols-3 gap-6">
+      <h2 class="font-cinzel text-xl font-bold text-gray-100 mb-4">Seu Produto</h2>
+      <div class="grid md:grid-cols-2 gap-6">
         {products.map(product => {
           return product.hasAccess ? (
             <a

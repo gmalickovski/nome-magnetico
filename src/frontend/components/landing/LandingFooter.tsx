@@ -18,11 +18,9 @@ export function LandingFooter() {
 
           {/* Produtos */}
           <div>
-            <h4 className="text-gray-300 font-medium mb-4 text-sm">Produtos</h4>
+            <h4 className="text-gray-300 font-medium mb-4 text-sm">Produto</h4>
             <ul className="space-y-2">
               <li><a href="/nome-social" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Análise de Nome Social</a></li>
-              <li><a href="/nome-bebe" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Nome para Bebê</a></li>
-              <li><a href="/nome-empresarial" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Nome Empresarial</a></li>
             </ul>
           </div>
 

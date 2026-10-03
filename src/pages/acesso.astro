@@ -16,29 +16,7 @@ if (user) {
   return Astro.redirect(resgatarUrl);
 }
 
-const PRODUCT_NAMES: Record<string, string> = {
-  nome_social: 'Nome Social',
-  nome_bebe: 'Nome de Bebe',
-  nome_empresa: 'Nome Empresarial',
-  all: 'Todos os Produtos',
-};
-
-function formatProductLabel(value: string) {
-  const products = value
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-
-  if (products.length === 0 || products.includes('all')) return 'acesso completo a todos os produtos';
-  if (products.length === 1) return PRODUCT_NAMES[products[0]] ?? products[0];
-
-  return products
-    .map(item => PRODUCT_NAMES[item] ?? item)
-    .join(', ')
-    .replace(/, ([^,]*)$/, ' e $1');
-}
-
-const productLabel = formatProductLabel(product);
+const productLabel = 'Nome Social';
 const daysLabel = days === '0' ? 'sem data de expiracao' : `${days} dias de acesso`;
 const isGift = kind === 'gift';
 const pageTitle = isGift

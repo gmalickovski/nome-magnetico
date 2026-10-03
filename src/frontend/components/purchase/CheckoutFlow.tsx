@@ -2,8 +2,9 @@ import { useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { track } from '../../lib/analytics';
 import { CheckoutModal } from './CheckoutModal';
+import type { SellableProductType } from '../../../shared/product-labels';
 
-type ProductType = 'nome_social' | 'nome_bebe' | 'nome_empresa';
+type ProductType = SellableProductType;
 
 function promotionAppliesToProduct(promotion: ActivePromotion | null | undefined, productType: ProductType): boolean {
   const products = String(promotion?.productType ?? '')
@@ -15,7 +16,7 @@ function promotionAppliesToProduct(promotion: ActivePromotion | null | undefined
 }
 
 interface Props {
-  productType: ProductType | null;
+  productType: ProductType;
   isLoggedIn: boolean;
   isOwned: boolean;
   paymentLinks: Record<ProductType, string>;
@@ -24,8 +25,6 @@ interface Props {
   autoOpenCheckout?: boolean;
 }
 
-const ALL_PRODUCTS: ProductType[] = ['nome_social', 'nome_bebe', 'nome_empresa'];
-
 const PRODUCT_STATIC: Record<ProductType, {
   name: string;
   subtitle: string;
@@ -33,7 +32,6 @@ const PRODUCT_STATIC: Record<ProductType, {
   description: string;
   features: string[];
   cta: string;
-  popular: boolean;
 }> = {
   nome_social: {
     name: 'Nome Social',
@@ -52,45 +50,11 @@ const PRODUCT_STATIC: Record<ProductType, {
       'Relatório PDF premium para baixar e consultar',
     ],
     cta: 'Harmonizar Minha Assinatura',
-    popular: true,
-  },
-  nome_bebe: {
-    name: 'Nome de Bebê',
-    subtitle: 'A Decisão Mais Importante do Seu Filho',
-    period: 'acesso por 30 dias',
-    description: 'Tenha a certeza matemática de dar o melhor começo vibracional e livre de bloqueios ao destino do seu filho.',
-    features: [
-      'Verifica compatibilidade entre nomes',
-      'Identifica bloqueios nos candidatos',
-      'Descobre O Nome de Ouro',
-      'Identifica o Arquétipo da Criança',
-      'Guia dos pais para lidar com o perfil',
-      'Relatório PDF para imprimir',
-    ],
-    cta: 'Analisar Nome do Bebê',
-    popular: false,
-  },
-  nome_empresa: {
-    name: 'Nome Empresarial',
-    subtitle: 'Branding com Fundamento Vibracional',
-    period: 'acesso por 30 dias',
-    description: 'Um nome magnético atrai fluxo de negócios. Um nome qualquer afasta prosperidade. Obtenha um posicionamento certeiro.',
-    features: [
-      'Cruza vibração do nome com a do sócio',
-      'Riscos ocultos mapeados',
-      'Posicionamento de Mercado natural',
-      'Arquétipo da Marca revelado',
-      'Calendário ativo anual para vendas',
-    ],
-    cta: 'Analisar Minha Empresa',
-    popular: false,
   },
 };
 
 const FALLBACK_PRICES: Record<string, PriceInfo> = {
   nome_social:  { cents:  9800, formatted: 'R$ 98,00',  hasDiscount: false },
-  nome_bebe:    { cents:  8000, formatted: 'R$ 80,00',  hasDiscount: false },
-  nome_empresa: { cents: 12500, formatted: 'R$ 125,00', hasDiscount: false },
 };
 
 function PriceDisplay({ priceInfo, promotion, productId }: { priceInfo: PriceInfo; promotion?: ActivePromotion | null; productId: string }) {
@@ -128,13 +92,12 @@ function PriceDisplay({ priceInfo, promotion, productId }: { priceInfo: PriceInf
 }
 
 export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false }: Props) {
-  const [showAll, setShowAll]   = useState(productType === null);
   const [loading, setLoading]   = useState<ProductType | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Produto selecionado para abrir o pré-checkout modal
   const [modalProduct, setModalProduct] = useState<ProductType | null>(
-    autoOpenCheckout && isLoggedIn && !isOwned && productType ? productType : null
+    autoOpenCheckout && isLoggedIn && !isOwned ? productType : null
   );
 
   const prices = hqPrices ?? FALLBACK_PRICES;
@@ -208,27 +171,11 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 <span>Voltar para Meus Produtos</span>
               </a>
-              {!showAll && productType && (
-                <button
-                  onClick={() => setShowAll(true)}
-                  className="bg-[#D4AF37] text-[#1A1A1A] font-bold px-4 py-2 rounded-lg hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-500/20 text-sm"
-                >
-                  Ver todos os produtos
-                </button>
-              )}
-              {showAll && productType && (
-                <button
-                  onClick={() => setShowAll(false)}
-                  className="bg-[#D4AF37] text-[#1A1A1A] font-bold px-4 py-2 rounded-lg hover:bg-yellow-300 transition-all shadow-lg shadow-yellow-500/20 text-sm"
-                >
-                  Voltar
-                </button>
-              )}
             </div>
             </>
           ) : (
             <a
-              href={`/auth/login?redirect=/comprar${productType ? `?produto=${productType}` : ''}`}
+              href={`/auth/login?redirect=/comprar?produto=${productType}`}
               className="border border-[#D4AF37]/40 text-[#D4AF37] font-medium px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all text-sm"
             >
               Entrar
@@ -239,14 +186,14 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
     );
   }
 
-  function PageHeader({ singular }: { singular: boolean }) {
+  function PageHeader() {
     return (
       <div className="text-center mb-10">
         <p className="text-[#D4AF37] text-sm font-medium tracking-widest uppercase mb-3">
           Investimento
         </p>
         <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mb-3">
-          {singular ? 'Plano' : 'Planos'}
+          Plano
         </h2>
         <p className="text-gray-400">
           Pagamento único. Sem assinatura. Acesso completo por 30 dias.
@@ -260,24 +207,13 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
     );
   }
 
-  function ProductCard({ type, showPayButton, forceHighlight = false }: { type: ProductType; showPayButton: boolean; forceHighlight?: boolean }) {
+  function ProductCard({ type, showPayButton }: { type: ProductType; showPayButton: boolean }) {
     const p = PRODUCT_STATIC[type];
     const priceInfo = prices[type] ?? FALLBACK_PRICES[type];
     const isLoadingThis = loading === type;
-    const isHighlighted = forceHighlight || p.popular;
 
     return (
-      <div className={`relative rounded-2xl p-6 sm:p-8 flex flex-col transition-all duration-300 ${
-        isHighlighted
-          ? 'bg-white/5 border-2 border-[#D4AF37]/50 shadow-xl shadow-yellow-500/10'
-          : 'bg-white/3 border border-white/10 hover:border-[#D4AF37]/30 hover:bg-white/5'
-      }`}>
-        {p.popular && (
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4AF37] text-black text-xs font-bold px-4 py-1.5 rounded-full">
-            MAIS POPULAR
-          </div>
-        )}
-
+      <div className="relative rounded-2xl p-6 sm:p-8 flex flex-col transition-all duration-300 bg-white/5 border-2 border-[#D4AF37]/50 shadow-xl shadow-yellow-500/10">
         <div className="mb-6">
           <h3 className="font-cinzel text-xl font-bold text-white mb-1">{p.name}</h3>
           <p className="text-gray-500 text-sm">{p.subtitle}</p>
@@ -318,11 +254,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                 setModalProduct(type);
               }
             }}
-            className={`block text-center w-full font-bold py-3.5 rounded-xl transition-all duration-300 ${
-              isHighlighted
-                ? 'bg-[#D4AF37] text-black hover:bg-yellow-300 hover:scale-105 shadow-lg shadow-yellow-500/20'
-                : 'border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/70'
-            } ${isLoadingThis ? 'pointer-events-none opacity-60 cursor-not-allowed' : ''}`}
+            className={`block text-center w-full font-bold py-3.5 rounded-xl transition-all duration-300 bg-[#D4AF37] text-black hover:bg-yellow-300 hover:scale-105 shadow-lg shadow-yellow-500/20 ${isLoadingThis ? 'pointer-events-none opacity-60 cursor-not-allowed' : ''}`}
           >
             {isLoadingThis ? 'Aguarde...' : p.cta}
           </a>
@@ -335,11 +267,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
               promocao: promotion?.name ?? null,
               origem: 'comprar_publico',
             })}
-            className={`block text-center font-bold py-3.5 rounded-xl transition-all duration-300 ${
-              isHighlighted
-                ? 'bg-[#D4AF37] text-black hover:bg-yellow-300 hover:scale-105 shadow-lg shadow-yellow-500/20'
-                : 'border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/70'
-            }`}
+            className="block text-center font-bold py-3.5 rounded-xl transition-all duration-300 bg-[#D4AF37] text-black hover:bg-yellow-300 hover:scale-105 shadow-lg shadow-yellow-500/20"
           >
             {p.cta}
           </a>
@@ -349,7 +277,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
   }
 
   // Produto já adquirido
-  if (isOwned && productType) {
+  if (isOwned) {
     const p = PRODUCT_STATIC[productType];
     return (
       <div className="min-h-screen bg-[#111111]">
@@ -377,78 +305,24 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
     );
   }
 
-  // Não logado sem produto específico — mostrar todos os produtos.
-  if (!isLoggedIn && !productType) {
-    return (
-      <div className="min-h-screen bg-[#111111]">
-        <StickyHeader />
-        <div className="pt-10 pb-20 md:pt-28">
-          <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
-            <PageHeader singular={false} />
-            <div className="grid md:grid-cols-3 gap-8">
-              {ALL_PRODUCTS.map(t => (
-                <ProductCard key={t} type={t} showPayButton={false} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Não logado com produto específico — mostrar card escolhido.
   if (!isLoggedIn) {
-    const type = productType!;
+    const type = productType;
     return (
       <div className="min-h-screen bg-[#111111]">
         <StickyHeader />
         <div className="pt-10 pb-20 px-4 md:pt-28">
           <div className="max-w-md mx-auto">
-            <PageHeader singular={true} />
-            <ProductCard type={type} showPayButton={false} forceHighlight={true} />
+            <PageHeader />
+            <ProductCard type={type} showPayButton={false} />
           </div>
         </div>
       </div>
     );
   }
 
-  // Todos os produtos
-  if (showAll) {
-    return (
-      <>
-        <div className="min-h-screen bg-[#111111]">
-          <StickyHeader />
-          <div className="pt-10 pb-28 md:pb-20 md:pt-28">
-            <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
-              <PageHeader singular={false} />
-              {errorMsg && (
-                <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm text-center">
-                  {errorMsg}
-                </div>
-              )}
-              <div className="grid md:grid-cols-3 gap-8">
-                {ALL_PRODUCTS.map(t => (
-                  <ProductCard key={t} type={t} showPayButton={true} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-        {modalProduct && (
-          <CheckoutModal
-            productType={modalProduct}
-            priceInfo={prices[modalProduct] ?? FALLBACK_PRICES[modalProduct]}
-            promotion={promotion}
-            onClose={() => setModalProduct(null)}
-            onTriggerCard={triggerCheckout}
-          />
-        )}
-      </>
-    );
-  }
-
   // Produto específico (logado, não possui)
-  const type = productType!;
+  const type = productType;
   return (
     <>
       <div className="min-h-screen bg-[#111111]">
@@ -483,7 +357,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         <div className="px-4 py-6 md:pt-28 md:pb-20">
           <div className="max-w-md mx-auto">
             <div className="hidden md:block">
-              <PageHeader singular={true} />
+              <PageHeader />
             </div>
             {errorMsg && (
               <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm text-center">
@@ -493,7 +367,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                 </button>
               </div>
             )}
-            <ProductCard type={type} showPayButton={true} forceHighlight={true} />
+            <ProductCard type={type} showPayButton={true} />
           </div>
         </div>
       </div>

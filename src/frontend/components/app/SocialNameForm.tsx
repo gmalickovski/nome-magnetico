@@ -196,6 +196,11 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
 
   return (
     <form onSubmit={handleSubmitCriar} className="space-y-5">
+      <p className="px-1 text-sm leading-relaxed text-gray-400">
+        Só a seção <strong className="text-[#D4AF37]">01</strong> é obrigatória. As demais são opcionais
+        e só personalizam o relatório.
+      </p>
+
       <div className="rounded-2xl bg-[#202020]/80 p-5 ring-1 ring-[#D4AF37]/15 md:p-6">
         <div className="space-y-6">
           <SectionTitle
@@ -400,6 +405,9 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
             'Gerar Harmonização'
           )}
         </button>
+        <p className="mt-3 text-center text-xs leading-relaxed text-gray-500">
+          O resultado abre na hora, com ranking de assinaturas, score 0–100 e PDF para baixar.
+        </p>
       </div>
     </form>
   );

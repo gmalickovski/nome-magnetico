@@ -20,8 +20,6 @@ try {
 
 const FALLBACK: Record<string, PriceInfo> = {
   nome_social:  { cents: 9700,  formatted: 'R$ 97',  hasDiscount: false },
-  nome_bebe:    { cents: 14700, formatted: 'R$ 147', hasDiscount: false },
-  nome_empresa: { cents: 19700, formatted: 'R$ 197', hasDiscount: false },
 };
 
 const prices = hqPrices ?? FALLBACK;
@@ -49,8 +47,8 @@ function originalPrice(id: string): string {
 
 <LandingLayout
   title="Preços e Planos — Nome Magnético"
-  description="Escolha a análise certa para você: harmonização de assinatura pelo Nome Social, Nome de Bebê ou Nome Empresarial. Pagamento único, sem recorrência. Acesso por 30 dias."
-  keywords="preços numerologia cabalística, harmonização de assinatura preço, assinatura numerológica, análise nome preço, nome social preço, nome bebê preço, nome empresarial preço, planos nome magnético"
+  description="Harmonização de assinatura pelo Nome Social, a partir do seu nome de nascimento. Pagamento único, sem recorrência. Acesso por 30 dias."
+  keywords="preços numerologia cabalística, harmonização de assinatura preço, assinatura numerológica, análise nome preço, nome social preço, planos nome magnético"
 >
 
 
@@ -73,23 +71,17 @@ function originalPrice(id: string): string {
         </span>
       </h1>
       <p class="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed mb-3">
-        Pagamento único. Sem recorrência. Acesso completo por 30 dias à análise numerológica mais profunda que você já fez sobre um nome, uma assinatura ou uma marca.
+        Pagamento único. Sem recorrência. Acesso completo por 30 dias à assinatura do seu nome social, a partir do seu nome de nascimento.
       </p>
       <p class="text-gray-600 text-sm">Garantia de 7 dias · Acesso imediato · Suporte por e-mail</p>
     </section>
 
     {/* ── CARDS COMPLETOS ── */}
     <section class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 mb-24">
-      <div class="grid lg:grid-cols-3 gap-8 items-start">
+      <div class="mx-auto max-w-xl">
 
-        {/* ─── NOME SOCIAL (Popular) ─── */}
-        <div class="relative order-first lg:order-none lg:-mt-4">
-          {/* Badge popular */}
-          <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-            <span class="bg-[#D4AF37] text-[#1A1A1A] text-xs font-bold px-5 py-1.5 rounded-full tracking-wider shadow-lg shadow-[#D4AF37]/30">
-              MAIS POPULAR
-            </span>
-          </div>
+        {/* ─── NOME SOCIAL ─── */}
+        <div class="relative">
 
           <div class="relative rounded-3xl overflow-hidden border-2 border-[#D4AF37]/60 shadow-[0_30px_80px_rgba(212,175,55,0.15)]"
             style="background: radial-gradient(ellipse at top, #1d1a0d 0%, #131313 65%);">
@@ -170,151 +162,13 @@ function originalPrice(id: string): string {
           </div>
         </div>
 
-        {/* ─── NOME DE BEBÊ ─── */}
-        <div class="rounded-3xl border border-white/10 bg-white/3 hover:border-[#D4AF37]/25 transition-all duration-500 flex flex-col">
-          <div class="p-8 pb-4">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">👶</span>
-              <div>
-                <h2 class="font-cinzel text-xl font-bold text-white">Nome de Bebê</h2>
-                <p class="text-gray-500 text-xs">Para seu filho</p>
-              </div>
-            </div>
-
-            <p class="text-gray-400 text-sm leading-relaxed mt-4 mb-6">
-              Encontre o nome perfeito para o seu bebê: sem bloqueios, alinhado ao destino da família e com harmonia entre sobrenome e numerologia do nascimento.
-            </p>
-
-            <div class="mb-6">
-              {showDiscount('nome_bebe') ? (
-                <div class="flex items-baseline gap-3">
-                  <span class="font-cinzel text-2xl font-bold text-gray-500 line-through opacity-60">{originalPrice('nome_bebe')}</span>
-                  <span class="font-cinzel text-5xl font-bold text-[#D4AF37]">{displayPrice('nome_bebe')}</span>
-                </div>
-              ) : (
-                <span class="font-cinzel text-5xl font-bold text-[#D4AF37]">{displayPrice('nome_bebe')}</span>
-              )}
-              <p class="text-gray-600 text-xs mt-1">pagamento único · acesso por 30 dias</p>
-            </div>
-
-            <LandingCheckout
-              client:load
-              product="nome_bebe"
-              isLoggedIn={!!user}
-              priceInfo={getPrice('nome_bebe')}
-              promotion={promotion}
-              label="Analisar Nome do Bebê"
-              className="block w-full text-center border border-[#D4AF37]/50 text-[#D4AF37] font-bold py-4 rounded-2xl hover:bg-[#D4AF37]/10 hover:border-[#D4AF37] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] text-base mb-3 cursor-pointer"
-            />
-            <a href="/nome-bebe" class="block text-center text-gray-600 hover:text-[#D4AF37] text-xs transition-colors mb-6">
-              Ver página do produto
-            </a>
-          </div>
-
-          <div class="mx-8 h-px bg-white/5"></div>
-
-          <div class="p-8 pt-6 flex-1">
-            <p class="text-gray-500 text-xs font-medium uppercase tracking-widest mb-4">O que está incluído</p>
-            <ul class="space-y-3">
-              {[
-                'Análise de múltiplos nomes candidatos (lista livre)',
-                'Compatibilidade com sobrenome da família',
-                'Alinhamento com data de nascimento do bebê',
-                '4 triângulos cabalísticos por candidato',
-                'Detecção de bloqueios em todos os candidatos',
-                'Ranking com score 0–100 por harmonia numerológica',
-                'Identificação do Arquétipo da Criança',
-                'Relatório completo para os pais',
-                'PDF para download',
-                'Suporte por e-mail incluso',
-              ].map(feature => (
-                <li class="flex items-start gap-3 text-sm">
-                  <svg class="w-4 h-4 text-[#D4AF37] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span class="text-gray-300">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* ─── NOME EMPRESARIAL ─── */}
-        <div class="rounded-3xl border border-white/10 bg-white/3 hover:border-[#D4AF37]/25 transition-all duration-500 flex flex-col">
-          <div class="p-8 pb-4">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">🏢</span>
-              <div>
-                <h2 class="font-cinzel text-xl font-bold text-white">Nome Empresarial</h2>
-                <p class="text-gray-500 text-xs">Para sua empresa</p>
-              </div>
-            </div>
-
-            <p class="text-gray-400 text-sm leading-relaxed mt-4 mb-6">
-              Avalie nomes para sua empresa pela compatibilidade com o fundador e o destino do negócio. Cada real em marketing amplifica o nome — certo ou errado.
-            </p>
-
-            <div class="mb-6">
-              {showDiscount('nome_empresa') ? (
-                <div class="flex items-baseline gap-3">
-                  <span class="font-cinzel text-2xl font-bold text-gray-500 line-through opacity-60">{originalPrice('nome_empresa')}</span>
-                  <span class="font-cinzel text-5xl font-bold text-[#D4AF37]">{displayPrice('nome_empresa')}</span>
-                </div>
-              ) : (
-                <span class="font-cinzel text-5xl font-bold text-[#D4AF37]">{displayPrice('nome_empresa')}</span>
-              )}
-              <p class="text-gray-600 text-xs mt-1">pagamento único · acesso por 30 dias</p>
-            </div>
-
-            <LandingCheckout
-              client:load
-              product="nome_empresa"
-              isLoggedIn={!!user}
-              priceInfo={getPrice('nome_empresa')}
-              promotion={promotion}
-              label="Analisar Minha Empresa"
-              className="block w-full text-center border border-[#D4AF37]/50 text-[#D4AF37] font-bold py-4 rounded-2xl hover:bg-[#D4AF37]/10 hover:border-[#D4AF37] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] text-base mb-3 cursor-pointer"
-            />
-            <a href="/nome-empresarial" class="block text-center text-gray-600 hover:text-[#D4AF37] text-xs transition-colors mb-6">
-              Ver página do produto
-            </a>
-          </div>
-
-          <div class="mx-8 h-px bg-white/5"></div>
-
-          <div class="p-8 pt-6 flex-1">
-            <p class="text-gray-500 text-xs font-medium uppercase tracking-widest mb-4">O que está incluído</p>
-            <ul class="space-y-3">
-              {[
-                'Análise de múltiplos nomes candidatos',
-                'Compatibilidade com Número de Destino do fundador',
-                'Análise da data de fundação da empresa',
-                '4 triângulos cabalísticos por candidato',
-                'Alerta de Tendência Oculta do 8 (excesso de materialismo)',
-                'Ranking com score 0–100 por harmonia estratégica',
-                'Revelação do Arquétipo da Marca',
-                'Relatório estratégico completo',
-                'PDF para download',
-                'Suporte por e-mail incluso',
-              ].map(feature => (
-                <li class="flex items-start gap-3 text-sm">
-                  <svg class="w-4 h-4 text-[#D4AF37] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span class="text-gray-300">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
       </div>
     </section>
 
     {/* ── TUDO INCLUÍDO ── */}
     <section class="max-w-4xl mx-auto px-4 mb-24">
       <div class="text-center mb-10">
-        <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Em todos os planos</p>
+        <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Em toda compra</p>
         <h2 class="font-cinzel text-2xl md:text-3xl font-bold text-[#e5e2e1]">Sempre incluído</h2>
       </div>
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
@@ -363,10 +217,6 @@ function originalPrice(id: string): string {
           {
             q: 'Quanto tempo leva para ter acesso?',
             a: 'O acesso é liberado automaticamente assim que o pagamento é confirmado. Você começa sua análise na hora, sem esperar. Não há entrega — o sistema é self-service.',
-          },
-          {
-            q: 'Posso adquirir mais de um produto?',
-            a: 'Sim. Cada análise (Nome Social, Nome de Bebê, Nome Empresarial) é adquirida separadamente. Você pode ter os três ativos ao mesmo tempo.',
           },
           {
             q: 'O que é o "acesso por 30 dias"?',
