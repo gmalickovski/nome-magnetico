@@ -10,25 +10,37 @@ interface AccordionItem {
 interface AccordionProps {
   items: AccordionItem[];
   className?: string;
+  /** Landing FAQ: tonal panel without gold outline boxes */
+  variant?: 'default' | 'landing';
 }
 
-export function Accordion({ items, className = '' }: AccordionProps) {
+export function Accordion({ items, className = '', variant = 'default' }: AccordionProps) {
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const itemSurface =
+    variant === 'landing'
+      ? 'rounded-2xl overflow-hidden bg-[#181818]/40 backdrop-blur-md ring-1 ring-white/5 shadow-lg shadow-black/40'
+      : 'border border-[#D4AF37]/20 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm';
 
   return (
     <div className={`space-y-3 ${className}`}>
       {items.map(item => (
         <div
           key={item.id}
-          className="border border-[#D4AF37]/20 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm"
+          className={itemSurface}
         >
           <button
+            type="button"
             onClick={() => setOpenId(openId === item.id ? null : item.id)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/5 transition-colors"
+            className={`w-full min-h-12 flex items-center justify-between gap-3 px-4 sm:px-5 py-4 text-left hover:bg-white/5 transition-colors touch-manipulation motion-reduce:transition-none ${
+              variant === 'landing' ? 'sm:min-h-[52px]' : ''
+            }`}
           >
-            <span className="font-medium text-gray-200 pr-4">{item.question}</span>
+            <span className="font-medium text-gray-200 text-sm sm:text-base leading-snug break-words min-w-0">
+              {item.question}
+            </span>
             <svg
-              className={`w-5 h-5 text-[#D4AF37] flex-shrink-0 transition-transform duration-300 ${
+              className={`w-5 h-5 text-[#D4AF37] flex-shrink-0 transition-transform duration-300 motion-reduce:transition-none ${
                 openId === item.id ? 'rotate-180' : ''
               }`}
               fill="none"

@@ -1,86 +1,53 @@
 import React from 'react';
-import { track } from '../../lib/analytics';
-
-const products = [
-  {
-    id: 'nome_social',
-    icon: '✨',
-    name: 'Nome Social',
-    tagline: 'Harmonização de assinatura pelo nome social',
-    description:
-      'Sua assinatura tem mais poder do que você imagina. Harmonize sua assinatura comparando o nome de nascimento com variações de nome social mais fluidas, compatíveis com o Destino e livres dos bloqueios que pesam no campo original.',
-    benefits: [
-      'Ranking numerológico dos candidatos com score 0–100.',
-      '5 números principais, 4 triângulos e arcanos por dimensão.',
-      'Bloqueios, débitos, lições kármicas e tendências ocultas.',
-      'Assinatura recomendada e variações harmonizadas prontas para testar.',
-    ],
-    highlight: true,
-    href: '/nome-social',
-  },
-];
+import {
+  LandingSectionIntro,
+  landingSectionShellClass,
+  landingSectionStackGapClass,
+} from './LandingSectionIntro';
+import { useLandingSectionReveal } from './useLandingSectionReveal';
+import { SignaturePullGesture } from './SignaturePullGesture';
 
 export function ProductsSection() {
+  const reveal = useLandingSectionReveal();
+
   return (
-    <section id="produtos" className="py-20 md:py-32 bg-[#111111]">
-      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <p className="text-[#D4AF37] text-sm font-medium tracking-widest uppercase mb-3">
-            Produto
-          </p>
-          <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mb-4">
-            Sua Assinatura de Nome Social
-          </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Parta do seu nome de nascimento e encontre a assinatura que sustenta melhor a identidade
-            que você quer viver.
-          </p>
-        </div>
+    <section
+      id="produtos"
+      ref={reveal.ref}
+      className={`relative py-20 md:py-32 bg-[#111111] overflow-x-hidden ${reveal.className}`}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="absolute top-0 right-0 md:right-[10%] w-[min(100%,280px)] h-[280px] md:w-[420px] md:h-[420px] bg-[#D4AF37]/5 rounded-full blur-[80px] md:blur-[120px]" />
+      </div>
 
-        {/* Cards clicáveis */}
-        <div className="mx-auto max-w-xl">
-          {products.map((product) => (
-            <a
-              key={product.id}
-              href={product.href}
-              onClick={() => track('cta_produto_click', {
-                produto: 'nome_social',
-                posicao: 'products_section',
-              })}
-              className={`relative rounded-2xl p-8 flex flex-col cursor-pointer group transition-all duration-500 hover:-translate-y-2 hover:scale-[1.03] hover:shadow-2xl hover:shadow-[#D4AF37]/20 ${
-                product.highlight
-                  ? 'bg-white/5 border-2 border-[#D4AF37]/50'
-                  : 'bg-white/3 border border-white/10 hover:border-[#D4AF37]/30 hover:bg-white/5'
-              }`}
-            >
-              <div className="text-5xl mb-5">{product.icon}</div>
+      <div className={`relative ${landingSectionShellClass}`}>
+        <div className={`grid lg:grid-cols-10 ${landingSectionStackGapClass} items-start`}>
+          <div className="lg:col-span-4 min-w-0">
+            <LandingSectionIntro
+              align="left"
+              label="Produto"
+              title="Sua assinatura de nome social"
+            />
+            <SignaturePullGesture
+              play={reveal.revealed}
+              reducedMotion={reveal.reduceMotion}
+            />
+          </div>
 
-              <h3 className="font-cinzel text-xl font-bold text-white mb-1">{product.name}</h3>
-              <p
-                className={`text-sm mb-4 ${product.highlight ? 'text-[#D4AF37]' : 'text-gray-400'}`}
-              >
-                {product.tagline}
-              </p>
-
-              <p className="text-gray-300 text-sm leading-relaxed mb-4 font-medium">
-                {product.description}
-              </p>
-
-              <div className="flex-1 space-y-2">
-                {product.benefits.map((benefit) => (
-                  <p key={benefit} className="flex items-start gap-2 text-sm text-gray-400">
-                    <span className="text-[#D4AF37] font-bold">-</span>
-                    <span className="leading-snug">{benefit}</span>
-                  </p>
-                ))}
-              </div>
-
-              <p className="mt-6 text-xs text-gray-600 group-hover:text-[#D4AF37] transition-colors duration-300">
-                Ver detalhes
-              </p>
-            </a>
-          ))}
+          <div className="lg:col-span-6 min-w-0 max-w-prose lg:max-w-none">
+            <p className="text-[#e5e2e1] text-base md:text-lg leading-relaxed mb-6">
+              Do nome de nascimento à assinatura que você usa no dia a dia.
+            </p>
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+              A gente compara o nome de nascimento com variações de nome social. O cálculo mostra
+              quais ficam mais alinhadas ao Destino e quais ainda carregam o bloqueio do nome
+              original. No fim, uma assinatura recomendada e as variações para testar, com score de
+              0 a 100.
+            </p>
+          </div>
         </div>
       </div>
     </section>

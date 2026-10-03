@@ -3,6 +3,11 @@ import { track } from '../../lib/analytics';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
+import {
+  landingSectionShellClass,
+  landingTouchTargetClass,
+} from './LandingSectionIntro';
+import { useLandingSectionReveal } from './useLandingSectionReveal';
 
 export interface StripePrices {
   nome_social: string;
@@ -10,21 +15,14 @@ export interface StripePrices {
 
 type ProductType = SellableProductType;
 
-interface Plan {
-  id: ProductType;
-  name: string;
-  subtitle: string;
-  emoji: string;
-  period: string;
-  highlights: string[];
-  cta: string;
-  href: string;
-}
-
-// Preço exibido quando o HQ não retornou dados (botão desabilitado)
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
 
-// Função pura — não importa do backend para evitar bundle com Stripe SDK
+const PRICE_FALLBACK: PriceInfo = {
+  cents: 9800,
+  formatted: 'R$ 98',
+  hasDiscount: false,
+};
+
 function promotionAppliesToProduct(
   promotion: ActivePromotion | null | undefined,
   productType: ProductType,
@@ -36,22 +34,17 @@ function promotionAppliesToProduct(
   return products.length === 0 || products.includes(productType);
 }
 
-const PLANS: Plan[] = [
-  {
-    id: 'nome_social',
-    name: 'Nome Social',
-    subtitle: 'Harmonização de Assinatura',
-    emoji: '✦',
-    period: 'pagamento único',
-    highlights: [
-      'Harmonize sua assinatura com base no seu nome',
-      'Ranking de assinaturas com score 0–100',
-      'Nome social recomendado + variações harmonizadas',
-    ],
-    cta: 'Harmonizar Minha Assinatura',
-    href: '/nome-social',
-  },
-];
+function displayPrice(
+  priceInfo: PriceInfo,
+  promotion: ActivePromotion | null | undefined,
+  productId: ProductType,
+): string {
+  const applies = promotionAppliesToProduct(promotion, productId);
+  if (promotion && applies && priceInfo.hasDiscount && priceInfo.discountedFormatted) {
+    return priceInfo.discountedFormatted;
+  }
+  return priceInfo.formatted;
+}
 
 interface PricingSectionProps {
   /** @deprecated use hqPrices instead */
@@ -61,44 +54,6 @@ interface PricingSectionProps {
   isLoggedIn?: boolean;
 }
 
-function PriceDisplay({
-  priceInfo,
-  promotion,
-  productId,
-}: {
-  priceInfo: PriceInfo;
-  promotion?: ActivePromotion | null;
-  productId: ProductType;
-}) {
-  const appliesToThis = promotionAppliesToProduct(promotion, productId);
-  const showDiscount =
-    promotion && appliesToThis && priceInfo.hasDiscount && priceInfo.discountedFormatted;
-
-  if (showDiscount) {
-    return (
-      <div>
-        <div className="flex items-baseline gap-2">
-          <span className="font-cinzel text-base font-bold text-gray-500 line-through opacity-60">
-            {priceInfo.formatted}
-          </span>
-          <span className="font-cinzel text-3xl font-bold text-[#D4AF37]">
-            {priceInfo.discountedFormatted}
-          </span>
-        </div>
-        <span className="inline-block bg-[#D4AF37] text-black text-xs font-bold px-2 py-0.5 rounded-full mt-1">
-          {promotion!.discountType === 'percent'
-            ? `−${promotion!.discountValue}%`
-            : `−R$ ${promotion!.discountValue}`}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <span className="font-cinzel text-3xl font-bold text-[#D4AF37]">{priceInfo.formatted}</span>
-  );
-}
-
 export function PricingSection({
   stripePrices,
   hqPrices,
@@ -106,8 +61,8 @@ export function PricingSection({
   isLoggedIn = false,
 }: PricingSectionProps) {
   const [checkoutProduct, setCheckoutProduct] = useState<ProductType | null>(null);
+  const reveal = useLandingSectionReveal();
 
-  // Analytics: registra quando a seção de preços entra no viewport
   useEffect(() => {
     const el = document.getElementById('precos');
     if (!el) return;
@@ -124,7 +79,6 @@ export function PricingSection({
     return () => observer.disconnect();
   }, []);
 
-  // Auto-abre o modal quando o usuário volta do cadastro com ?checkout=PRODUCT
   useEffect(() => {
     if (!isLoggedIn) return;
     const params = new URLSearchParams(window.location.search);
@@ -151,14 +105,18 @@ export function PricingSection({
   const resolvedPrices: Record<string, PriceInfo> = hqPrices ?? (
     stripePrices
       ? {
-          nome_social:  { cents: 0, formatted: stripePrices.nome_social,  hasDiscount: false },
+          nome_social: { cents: 0, formatted: stripePrices.nome_social, hasDiscount: false },
         }
       : {}
   );
 
-  function handleBuy(planId: ProductType) {
+  const planId: ProductType = 'nome_social';
+  const priceInfo = resolvedPrices[planId] ?? PRICE_FALLBACK;
+  const priceUnavailableOnHq = Boolean(hqPrices) && !resolvedPrices[planId];
+  const priceLabel = displayPrice(priceInfo, promotion, planId);
+
+  function handleBuy() {
     if (isLoggedIn) {
-      const priceInfo = resolvedPrices[planId] ?? PRICE_UNAVAILABLE;
       track('checkout_start', {
         produto: planId,
         preco: priceInfo.cents / 100,
@@ -173,13 +131,12 @@ export function PricingSection({
     }
   }
 
-  // Chamado pelo CheckoutModal → redireciona para Stripe (cartão)
   async function handleTriggerCard(type: ProductType, couponCode?: string) {
     try {
-      const priceInfo = resolvedPrices[type] ?? PRICE_UNAVAILABLE;
+      const info = resolvedPrices[type] ?? PRICE_UNAVAILABLE;
       track('checkout_redirect_start', {
         produto: type,
-        preco: priceInfo.cents / 100,
+        preco: info.cents / 100,
         promocao: promotion?.name ?? null,
         codigo_cupom: couponCode,
         origem: 'pricing_section',
@@ -203,120 +160,45 @@ export function PricingSection({
   }
 
   return (
-    <section id="precos" className="py-20 md:py-28 bg-[#1a1a1a]">
-      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <p className="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Produto</p>
-          <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-[#e5e2e1] mb-4">
-            Nome Social
-          </h2>
-          <p className="text-gray-400 max-w-lg mx-auto text-sm leading-relaxed">
-            Pagamento único. Sem recorrência. A assinatura do seu nome social, a partir do seu nome
-            de nascimento.
+    <section
+      id="precos"
+      ref={reveal.ref}
+      className={`py-20 md:py-28 bg-[#1a1a1a] overflow-x-hidden ${reveal.className}`}
+    >
+      <div className={landingSectionShellClass}>
+        <div className="max-w-prose lg:max-w-2xl min-w-0">
+          <p className="text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-6">
+            Preço
           </p>
-          {promotion && (
-            <div className="inline-flex items-center gap-2 mt-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5">
-              <span className="text-[#D4AF37] text-sm font-semibold">
-                🎉 {promotion.name} — desconto ativo!
-              </span>
-            </div>
-          )}
-        </div>
 
-        {/* Cards */}
-        <div className="mx-auto max-w-md">
-          {PLANS.map((plan) => {
-            const priceInfo = resolvedPrices[plan.id] ?? PRICE_UNAVAILABLE;
-            const priceAvailable = !!resolvedPrices[plan.id];
-
-            return (
-              <div
-                key={plan.id}
-                className="relative rounded-2xl p-7 flex flex-col transition-all duration-300 bg-white/5 border-2 border-[#D4AF37]/50 shadow-[0_20px_50px_rgba(212,175,55,0.10)]"
-              >
-                {/* Nome + preço */}
-                <div className="mb-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg leading-none">{plan.emoji}</span>
-                    <h3 className="font-cinzel text-lg font-bold text-white">{plan.name}</h3>
-                  </div>
-                  <p className="text-gray-500 text-xs mb-4">{plan.subtitle}</p>
-                  <PriceDisplay priceInfo={priceInfo} promotion={promotion} productId={plan.id} />
-                  <p className="text-gray-600 text-xs mt-1">{plan.period}</p>
-                </div>
-
-                {/* 3 destaques */}
-                <ul className="space-y-2 mb-6 flex-1">
-                  {plan.highlights.map((h) => (
-                    <li key={h} className="flex items-start gap-2 text-sm text-gray-400">
-                      <svg
-                        className="w-4 h-4 text-[#D4AF37] flex-shrink-0 mt-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      {h}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <button
-                  onClick={() => handleBuy(plan.id)}
-                  disabled={!priceAvailable}
-                  className={`w-full text-center font-medium px-6 py-3 rounded-xl transition-all duration-300 text-sm mb-3 ${
-                    !priceAvailable
-                      ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500 border border-white/10'
-                      : 'bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20'
-                  }`}
-                >
-                  {plan.cta}
-                </button>
-
-                {/* Garantia */}
-                <p className="text-center text-[11px] text-gray-500 mt-2 mb-1 leading-snug">
-                  ⚡ Acesso imediato · 🛡 7 dias de garantia
-                </p>
-
-                {/* Link para detalhes */}
-                <a
-                  href={plan.href}
-                  className="block text-center text-gray-600 hover:text-[#D4AF37] text-xs transition-colors"
-                >
-                  Ver todos os detalhes
-                </a>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Rodapé */}
-        <div className="text-center mt-10 space-y-2">
-          <p className="text-gray-600 text-xs">
-            🔒 Pagamento seguro via Stripe · Garantia de 7 dias · Suporte incluso
+          <p className="text-[#e5e2e1] text-base md:text-lg leading-relaxed mb-4">
+            Nome Social. {priceLabel}, pagamento único, sem mensalidade.
           </p>
-          <a
-            href="/precos"
-            className="inline-block text-[#D4AF37]/70 hover:text-[#D4AF37] text-xs transition-colors underline underline-offset-2"
+
+          <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-8">
+            Você recebe o ranking das assinaturas, o nome recomendado e as variações. Acesso na hora.
+            Sete dias de garantia.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleBuy}
+            disabled={priceUnavailableOnHq}
+            className={`w-full sm:w-auto ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
+              priceUnavailableOnHq
+                ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500'
+                : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
+            }`}
           >
-            Ver detalhes do Nome Social
-          </a>
+            Harmonizar minha assinatura
+          </button>
         </div>
       </div>
 
-      {/* CheckoutModal — usa Portal internamente (z-[99999], fora do stacking context) */}
       {checkoutProduct && (
         <CheckoutModal
           productType={checkoutProduct}
-          priceInfo={resolvedPrices[checkoutProduct] ?? PRICE_UNAVAILABLE}
+          priceInfo={resolvedPrices[checkoutProduct] ?? PRICE_FALLBACK}
           promotion={promotion}
           onClose={() => setCheckoutProduct(null)}
           onTriggerCard={handleTriggerCard}
