@@ -284,6 +284,10 @@ const featuredName =
     ?? bestSocialAnalysis?.nome_completo
     ?? freeAnalysis?.nome_completo
     ?? '';
+const socialPrice = priceMap.nome_social;
+const socialPriceLabel = socialPrice && socialPrice.cents > 0
+  ? (socialPrice.hasDiscount && socialPrice.discountedFormatted ? socialPrice.discountedFormatted : socialPrice.formatted)
+  : null;
 const featuredTheme = getScoreTheme(featuredAnalysis?.score);
 const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
 
@@ -510,8 +514,15 @@ const products = [
             <p class="mt-2 text-sm leading-relaxed text-gray-500">
               {featuredIsSocial
                 ? 'Este é o melhor resultado salvo nas suas harmonizações. Acesse o relatório completo, baixe a análise gratuita ou gere uma nova análise do Nome Social.'
-                : 'Seu diagnóstico inicial está salvo. Baixe novamente o PDF ou avance para harmonizar seu nome.'}
+                : hasNomeSocial
+                  ? 'Seu diagnóstico inicial está salvo. Baixe novamente o PDF ou avance para harmonizar seu nome.'
+                  : 'Seu diagnóstico gratuito está salvo. O próximo passo é o Nome Social: a partir do seu nome de nascimento, você gera a assinatura harmonizada, com ranking de score 0–100 e acesso imediato após o pagamento.'}
             </p>
+            {!featuredIsSocial && !hasNomeSocial && socialPriceLabel && (
+              <p class="mt-2 text-xs font-medium text-[#D4AF37]">
+                Nome Social · {socialPriceLabel} · pagamento único
+              </p>
+            )}
             <div class="mt-5 flex flex-col gap-3 sm:flex-row">
               {featuredIsSocial ? (
                 <>
