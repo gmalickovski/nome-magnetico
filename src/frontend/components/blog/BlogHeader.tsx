@@ -5,8 +5,6 @@ const CATEGORIES = [
   { label: 'Numerologia', slug: 'numerologia' },
   { label: 'Bloqueios Energéticos', slug: 'bloqueios' },
   { label: 'Nome Social', slug: 'nome-social' },
-  { label: 'Nome para Bebê', slug: 'nome-bebe' },
-  { label: 'Nome Empresarial', slug: 'nome-empresa' },
   { label: 'Espiritualidade', slug: 'espiritualidade' },
 ];
 

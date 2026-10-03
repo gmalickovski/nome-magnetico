@@ -10,10 +10,11 @@ import {
 } from '../../backend/payments/prices';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import type { ProductType } from '../../backend/payments/stripe';
+import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
 
 const schema = z.object({
-  product_type: z.enum(['nome_social', 'nome_bebe', 'nome_empresa']),
+  product_type: z.enum(SELLABLE_PRODUCT_TYPES),
   coupon_code:  z.string().optional(),
 });
 

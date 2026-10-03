@@ -7,11 +7,9 @@ import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } 
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
 import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
-import { generateAnalysis, generateSuggestions, generateBabyAnalysis, generateCompanyAnalysis, generateSocialAnalysis } from '../../backend/ai/brain';
+import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
 import { calcularScore, calcularScoreTeto } from '../../backend/numerology/score';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
-import { analisarNomesBebe } from '../../backend/numerology/products/nome-bebe';
-import { analisarNomesEmpresa } from '../../backend/numerology/products/nome-empresa';
 import { verificarDisponibilidadeNomes } from '../../backend/utils/availability';
 import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerology/products/nome-social';
 import type { ProductType } from '../../backend/payments/stripe';
@@ -22,32 +20,18 @@ import { logError } from '../../backend/utils/error-logger';
 const schema = z.object({
   nome_completo: z.string().min(2).max(150),
   data_nascimento: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/),
-  product_type: z.enum(['nome_social', 'nome_bebe', 'nome_empresa', 'analise_gratuita']).default('nome_social'),
-  // campos específicos nome_bebe
-  sobrenome_familia: z.string().min(1).max(100).optional(),
+  product_type: z
+    .enum(['nome_social', 'analise_gratuita'], { errorMap: () => ({ message: 'Produto indisponível.' }) })
+    .default('nome_social'),
   nomes_candidatos: z.array(z.string().min(2)).optional(),
-  nome_pai: z.string().optional(),
-  sobrenome_pai: z.string().optional(),
-  ignorar_pai: z.boolean().optional(),
-  nome_mae: z.string().optional(),
-  sobrenome_mae: z.string().optional(),
-  ignorar_mae: z.boolean().optional(),
-  outros_sobrenomes: z.array(z.string()).optional(),
   genero_preferido: z.string().optional(),
   estilo_preferido: z.string().optional(),
-  caracteristicas_desejadas: z.string().max(300).optional(),
-  // campos específicos nome_empresa
-  data_fundacao: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
-  ramo_atividade: z.string().optional(),
-  descricao_negocio: z.string().optional(),
-  nome_socio2: z.string().min(2).max(150).optional(),
-  data_nascimento_socio2: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
   // campos específicos nome_social
   objetivo_apresentacao: z.string().max(500).optional(),
   vibracoes_desejadas: z.string().max(300).optional(),
   contexto_uso: z.string().optional(),
   nome_social_principal: z.string().min(2).max(150).optional(),
-  // flag de modo nome_bebe: indica que o nome já foi registrado em cartório
+  // indica que o nome social já foi escolhido (análise sem ranking de candidatos)
   nome_ja_escolhido: z.boolean().optional(),
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
@@ -143,13 +127,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const {
     nome_completo, data_nascimento, product_type,
-    sobrenome_familia, nomes_candidatos,
-    nome_pai, sobrenome_pai, ignorar_pai,
-    nome_mae, sobrenome_mae, ignorar_mae,
-    outros_sobrenomes,
-    genero_preferido, estilo_preferido, caracteristicas_desejadas,
-    data_fundacao, ramo_atividade, descricao_negocio,
-    nome_socio2, data_nascimento_socio2,
+    nomes_candidatos,
+    genero_preferido, estilo_preferido,
     objetivo_apresentacao, vibracoes_desejadas, contexto_uso,
     nome_social_principal,
     nome_ja_escolhido,
@@ -247,133 +226,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         debitosCarmicos: 0,
       };
 
-      if (product_type === 'nome_empresa') {
-        // ── Produto: Nome da Empresa ──
-        const candidatos = nomes_candidatos ?? [];
-
-        const resultado = analisarNomesEmpresa(
-          candidatos,
-          nome_completo,
-          data_nascimento,
-          data_fundacao ?? null,
-          nome_socio2,
-          data_nascimento_socio2,
-          ramo_atividade,
-          descricao_negocio
-        );
-
-        // Enriquecer com disponibilidade digital (.com, .com.br, Instagram)
-        try {
-          const nomesParaVerificar = resultado.nomesCandidatos.map(a => a.nomeEmpresa);
-          const disponibilidades = await verificarDisponibilidadeNomes(nomesParaVerificar);
-          resultado.nomesCandidatos = resultado.nomesCandidatos.map(a => ({
-            ...a,
-            disponibilidade: disponibilidades.get(a.nomeEmpresa.toLowerCase()) ?? null,
-          }));
-          if (resultado.melhorNome) {
-            resultado.melhorNome = {
-              ...resultado.melhorNome,
-              disponibilidade: disponibilidades.get(resultado.melhorNome.nomeEmpresa.toLowerCase()) ?? null,
-            };
-          }
-        } catch {
-          // Falha na verificação não deve bloquear a análise
-        }
-
-        // Calcular triângulos do melhor nome (mesmo padrão do nome_bebe)
-        const melhorNomeEmpresaStr = resultado.melhorNome?.nomeEmpresa ?? null;
-        const dataTriangulosEmpresa = data_fundacao ?? data_nascimento;
-        const todosTriangulosEmpresa = melhorNomeEmpresaStr
-          ? calcularTodosTriangulos(melhorNomeEmpresaStr, dataTriangulosEmpresa)
-          : null;
-
-        await updateAnalysis(analysis.id, {
-          frequencias_numeros: resultado as unknown,
-          numero_destino: resultado.destinoSocio,
-          numero_missao: resultado.melhorNome?.missao ?? null,
-          numero_impressao: resultado.melhorNome?.impressao ?? null,
-          score: resultado.melhorNome?.score ?? null,
-          triangulo_vida:    todosTriangulosEmpresa?.vida    as unknown ?? null,
-          triangulo_pessoal: todosTriangulosEmpresa?.pessoal as unknown ?? null,
-          triangulo_social:  todosTriangulosEmpresa?.social  as unknown ?? null,
-          triangulo_destino: todosTriangulosEmpresa?.destino as unknown ?? null,
-        });
-
-        analiseTexto = await withTimeout(generateCompanyAnalysis(
-          {
-            resultado,
-            ramoAtividade: ramo_atividade,
-            descricaoNegocio: descricao_negocio,
-          },
-          user.id,
-          analysis.id
-        ));
-      } else if (product_type === 'nome_bebe') {
-        // ── Produto: Nome do Bebê ──
-        const candidatos = nomes_candidatos ?? [];
-
-        const sobrenomesValidos: string[] = [];
-        if (outros_sobrenomes && outros_sobrenomes.length > 0) {
-          sobrenomesValidos.push(...outros_sobrenomes);
-        }
-        if (!ignorar_mae && sobrenome_mae) {
-          sobrenomesValidos.push(sobrenome_mae);
-        }
-        if (!ignorar_pai && sobrenome_pai) {
-          sobrenomesValidos.push(sobrenome_pai);
-        }
-        
-        // Fallback for legacy requests 
-        if (sobrenomesValidos.length === 0 && sobrenome_familia) {
-          sobrenomesValidos.push(sobrenome_familia);
-        }
-        if (sobrenomesValidos.length === 0 && !nome_ja_escolhido) {
-          sobrenomesValidos.push(nome_completo.replace('(bebê) ', ''));
-        }
-
-        const resultado = analisarNomesBebe(candidatos, sobrenomesValidos, data_nascimento, genero_preferido, nome_ja_escolhido);
-
-        const melhorNome = resultado.melhorNome;
-        const cincoNums = melhorNome
-          ? calcularCincoNumeros(melhorNome.nomeCompleto, data_nascimento)
-          : null;
-        const todosTriangulosBebe = melhorNome
-          ? calcularTodosTriangulos(melhorNome.nomeCompleto, data_nascimento)
-          : null;
-        const freqMapBebe = melhorNome ? mapearFrequencias(melhorNome.nomeCompleto) : {};
-
-        await updateAnalysis(analysis.id, {
-          frequencias_numeros: { ranking: resultado, frequencias: freqMapBebe } as unknown,
-          numero_expressao:    melhorNome?.expressao    ?? null,
-          numero_destino:      resultado.destino,
-          numero_motivacao:    melhorNome?.motivacao    ?? null,
-          numero_missao:       melhorNome?.missao       ?? null,
-          numero_impressao:    melhorNome?.impressao    ?? null,
-          bloqueios:           (melhorNome?.bloqueios ?? []) as unknown[],
-          triangulo_vida:      todosTriangulosBebe?.vida    as unknown ?? null,
-          triangulo_pessoal:   todosTriangulosBebe?.pessoal as unknown ?? null,
-          triangulo_social:    todosTriangulosBebe?.social  as unknown ?? null,
-          triangulo_destino:   todosTriangulosBebe?.destino as unknown ?? null,
-          licoes_carmicas:     (melhorNome?.licoesCarmicas ?? [])    as unknown[],
-          tendencias_ocultas:  (melhorNome?.tendenciasOcultas ?? []) as unknown[],
-          debitos_carmicos:    (melhorNome?.debitosCarmicos ?? [])   as unknown[],
-          score: melhorNome?.score ?? null,
-        });
-
-        analiseTexto = await withTimeout(generateBabyAnalysis(
-          {
-            resultado,
-            nomePai: nome_pai,
-            nomeMae: nome_mae,
-            generoPreferido: genero_preferido,
-            estiloPreferido: estilo_preferido,
-            caracteristicasDesejadas: caracteristicas_desejadas,
-            nomeJaEscolhido: nome_ja_escolhido ?? false,
-          },
-          user.id,
-          analysis.id
-        ));
-      } else if (product_type === 'nome_social' && !nome_ja_escolhido) {
+      if (product_type === 'nome_social' && !nome_ja_escolhido) {
         // ── Produto: Nome Social (novo fluxo) ──
         const candidatos = nomes_candidatos ?? [];
 

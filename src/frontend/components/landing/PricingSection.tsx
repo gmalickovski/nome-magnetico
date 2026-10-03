@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { track } from '../../lib/analytics';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
+import type { SellableProductType } from '../../../shared/product-labels';
 
 export interface StripePrices {
   nome_social: string;
-  nome_bebe: string;
-  nome_empresa: string;
 }
 
-type ProductType = 'nome_social' | 'nome_bebe' | 'nome_empresa';
+type ProductType = SellableProductType;
 
 interface Plan {
   id: ProductType;
@@ -20,7 +19,6 @@ interface Plan {
   highlights: string[];
   cta: string;
   href: string;
-  popular: boolean;
 }
 
 // Preço exibido quando o HQ não retornou dados (botão desabilitado)
@@ -52,42 +50,10 @@ const PLANS: Plan[] = [
     ],
     cta: 'Harmonizar Minha Assinatura',
     href: '/nome-social',
-    popular: true,
-  },
-  {
-    id: 'nome_bebe',
-    name: 'Nome de Bebê',
-    subtitle: 'Para seu filho',
-    emoji: '👶',
-    period: 'pagamento único',
-    highlights: [
-      'Análise de múltiplos nomes candidatos',
-      'Compatibilidade com sobrenome e destino',
-      'Ranking com score 0–100 por harmonia',
-    ],
-    cta: 'Analisar Nome do Bebê',
-    href: '/nome-bebe',
-    popular: false,
-  },
-  {
-    id: 'nome_empresa',
-    name: 'Nome Empresarial',
-    subtitle: 'Para sua empresa',
-    emoji: '🏢',
-    period: 'pagamento único',
-    highlights: [
-      'Compatibilidade com destino do fundador',
-      'Análise da data de fundação',
-      'Ranking dos candidatos com score',
-    ],
-    cta: 'Analisar Minha Empresa',
-    href: '/nome-empresarial',
-    popular: false,
   },
 ];
 
 interface PricingSectionProps {
-  highlight?: string;
   /** @deprecated use hqPrices instead */
   stripePrices?: StripePrices;
   hqPrices?: Record<string, PriceInfo>;
@@ -134,7 +100,6 @@ function PriceDisplay({
 }
 
 export function PricingSection({
-  highlight,
   stripePrices,
   hqPrices,
   promotion,
@@ -149,9 +114,7 @@ export function PricingSection({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          track('pricing_view', {
-            produto: (highlight as ProductType | undefined) ?? undefined,
-          });
+          track('pricing_view', { produto: 'nome_social' });
           observer.disconnect();
         }
       },
@@ -159,17 +122,14 @@ export function PricingSection({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [highlight]);
+  }, []);
 
   // Auto-abre o modal quando o usuário volta do cadastro com ?checkout=PRODUCT
   useEffect(() => {
     if (!isLoggedIn) return;
     const params = new URLSearchParams(window.location.search);
     const product = params.get('checkout') as ProductType | null;
-    if (
-      product &&
-      (product === 'nome_social' || product === 'nome_bebe' || product === 'nome_empresa')
-    ) {
+    if (product === 'nome_social') {
       const priceInfo = resolvedPrices[product] ?? PRICE_UNAVAILABLE;
       track('checkout_start', {
         produto: product,
@@ -192,8 +152,6 @@ export function PricingSection({
     stripePrices
       ? {
           nome_social:  { cents: 0, formatted: stripePrices.nome_social,  hasDiscount: false },
-          nome_bebe:    { cents: 0, formatted: stripePrices.nome_bebe,    hasDiscount: false },
-          nome_empresa: { cents: 0, formatted: stripePrices.nome_empresa, hasDiscount: false },
         }
       : {}
   );
@@ -249,13 +207,13 @@ export function PricingSection({
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <p className="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Produtos</p>
+          <p className="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Produto</p>
           <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-[#e5e2e1] mb-4">
-            Escolha Sua Análise
+            Nome Social
           </h2>
           <p className="text-gray-400 max-w-lg mx-auto text-sm leading-relaxed">
-            Pagamento único. Sem recorrência. Acesso completo à análise mais profunda que você já
-            fez sobre um nome, uma assinatura ou uma marca.
+            Pagamento único. Sem recorrência. A assinatura do seu nome social, a partir do seu nome
+            de nascimento.
           </p>
           {promotion && (
             <div className="inline-flex items-center gap-2 mt-4 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5">
@@ -267,27 +225,16 @@ export function PricingSection({
         </div>
 
         {/* Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="mx-auto max-w-md">
           {PLANS.map((plan) => {
-            const isHighlighted = highlight ? plan.id === highlight : plan.popular;
             const priceInfo = resolvedPrices[plan.id] ?? PRICE_UNAVAILABLE;
             const priceAvailable = !!resolvedPrices[plan.id];
 
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl p-7 flex flex-col transition-all duration-300 ${
-                  isHighlighted
-                    ? 'bg-white/5 border-2 border-[#D4AF37]/50 shadow-[0_20px_50px_rgba(212,175,55,0.10)]'
-                    : 'bg-white/3 border border-white/8 hover:border-[#D4AF37]/25 hover:bg-white/4'
-                }`}
+                className="relative rounded-2xl p-7 flex flex-col transition-all duration-300 bg-white/5 border-2 border-[#D4AF37]/50 shadow-[0_20px_50px_rgba(212,175,55,0.10)]"
               >
-                {isHighlighted && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D4AF37] text-black text-xs font-bold px-4 py-1 rounded-full tracking-wide">
-                    MAIS POPULAR
-                  </div>
-                )}
-
                 {/* Nome + preço */}
                 <div className="mb-5">
                   <div className="flex items-center gap-2 mb-1">
@@ -328,9 +275,7 @@ export function PricingSection({
                   className={`w-full text-center font-medium px-6 py-3 rounded-xl transition-all duration-300 text-sm mb-3 ${
                     !priceAvailable
                       ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500 border border-white/10'
-                      : isHighlighted
-                        ? 'bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20'
-                        : 'border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:border-[#D4AF37] hover:scale-[1.02] active:scale-[0.98]'
+                      : 'bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20'
                   }`}
                 >
                   {plan.cta}
@@ -338,7 +283,7 @@ export function PricingSection({
 
                 {/* Garantia */}
                 <p className="text-center text-[11px] text-gray-500 mt-2 mb-1 leading-snug">
-                  {isHighlighted ? '⚡ Acesso imediato · 🛡 7 dias de garantia' : '🛡 7 dias de garantia'}
+                  ⚡ Acesso imediato · 🛡 7 dias de garantia
                 </p>
 
                 {/* Link para detalhes */}
@@ -362,7 +307,7 @@ export function PricingSection({
             href="/precos"
             className="inline-block text-[#D4AF37]/70 hover:text-[#D4AF37] text-xs transition-colors underline underline-offset-2"
           >
-            Comparar planos e ver todos os detalhes
+            Ver detalhes do Nome Social
           </a>
         </div>
       </div>

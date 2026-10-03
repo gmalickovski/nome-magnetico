@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from './CheckoutModal';
 import { track } from '../../lib/analytics';
+import type { SellableProductType } from '../../../shared/product-labels';
 
-type ProductType = 'nome_social' | 'nome_bebe' | 'nome_empresa';
+type ProductType = SellableProductType;
 
 interface Props {
   product: ProductType;

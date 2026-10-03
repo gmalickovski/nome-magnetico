@@ -18,38 +18,6 @@ const products = [
     highlight: true,
     href: '/nome-social',
   },
-  {
-    id: 'nome_bebe',
-    icon: '👶',
-    name: 'Nome de Bebê',
-    tagline: 'A Decisão Mais Importante do Seu Filho',
-    description:
-      'A certeza de dar ao seu filho o melhor começo vibracional possível. Sem bloqueios. Com um nome que ressoará com o destino dele para sempre.',
-    benefits: [
-      'Análise cruzada dos nomes candidatos com o Destino da criança.',
-      'Ranking objetivo do pior ao "Nome de Ouro".',
-      'Identificação do Arquétipo da Criança (perfil e talentos naturais).',
-      'Guia dos pais para criar o bebê segundo sua natureza numérica original.',
-    ],
-    highlight: false,
-    href: '/nome-bebe',
-  },
-  {
-    id: 'nome_empresa',
-    icon: '🏢',
-    name: 'Nome Empresarial',
-    tagline: 'Branding com Fundamento Vibracional',
-    description:
-      'A diferença entre uma marca que as pessoas esquecem e uma que atrai clientes, sócios e oportunidades com magnetismo natural.',
-    benefits: [
-      'Avaliação da sinergia entre o Destino dos sócios e o nome da marca.',
-      'Verificação rigorosa de riscos ocultos operacionais e financeiros.',
-      'Guia de Posicionamento e Arquétipo de Marca (como a Apple ou a Nike têm).',
-      'Sugestões de tom de voz e ativação anual para a empresa.',
-    ],
-    highlight: false,
-    href: '/nome-empresarial',
-  },
 ];
 
 export function ProductsSection() {
@@ -59,26 +27,25 @@ export function ProductsSection() {
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-[#D4AF37] text-sm font-medium tracking-widest uppercase mb-3">
-            Produtos
+            Produto
           </p>
           <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-white mb-4">
-            Três Produtos, Uma Missão: Harmonizar o Nome que Abre Caminhos
+            Sua Assinatura de Nome Social
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Seja para você, para o seu filho ou para sua empresa — cada nome carrega uma assinatura
-            vibracional própria. A análise mostra qual nome sustenta melhor a identidade que você
-            quer viver.
+            Parta do seu nome de nascimento e encontre a assinatura que sustenta melhor a identidade
+            que você quer viver.
           </p>
         </div>
 
         {/* Cards clicáveis */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="mx-auto max-w-xl">
           {products.map((product) => (
             <a
               key={product.id}
               href={product.href}
               onClick={() => track('cta_produto_click', {
-                produto: product.id as 'nome_social' | 'nome_bebe' | 'nome_empresa',
+                produto: 'nome_social',
                 posicao: 'products_section',
               })}
               className={`relative rounded-2xl p-8 flex flex-col cursor-pointer group transition-all duration-500 hover:-translate-y-2 hover:scale-[1.03] hover:shadow-2xl hover:shadow-[#D4AF37]/20 ${
@@ -87,12 +54,6 @@ export function ProductsSection() {
                   : 'bg-white/3 border border-white/10 hover:border-[#D4AF37]/30 hover:bg-white/5'
               }`}
             >
-              {product.highlight && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4AF37] text-black text-xs font-bold px-4 py-1.5 rounded-full">
-                  MAIS POPULAR
-                </div>
-              )}
-
               <div className="text-5xl mb-5">{product.icon}</div>
 
               <h3 className="font-cinzel text-xl font-bold text-white mb-1">{product.name}</h3>

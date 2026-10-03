@@ -33,8 +33,6 @@ type AnalyticsEvent =
   | 'cta_hero_click'
   | 'cta_produto_click'
   | 'cta_nome_social_hero'
-  | 'cta_nome_bebe_hero'
-  | 'cta_nome_empresarial_hero'
   | 'analise_resultado_cta_click'
   | 'calculadora_submit'           // Widget calculadora auxiliar (não é o evento principal de funil)
 
@@ -65,7 +63,7 @@ type AnalyticsEvent =
   | 'preliminary_analysis_submit'; // DEPRECATED jun/2026: substituído por analise_gratis_submit no novo fluxo email-first
 
 interface EventData {
-  produto?: 'nome_social' | 'nome_bebe' | 'nome_empresa' | 'analise_gratuita';
+  produto?: 'nome_social' | 'analise_gratuita';
   posicao?: string;
   preco?: number;
   promocao?: string | null;
@@ -91,9 +89,7 @@ function isAdminBrowser(): boolean {
 function posthogCheckoutProps(data?: EventData): Record<string, unknown> {
   const produto = data?.produto;
   const productType =
-    produto === 'nome_social' || produto === 'nome_bebe' || produto === 'nome_empresa'
-      ? produto
-      : undefined;
+    produto === 'nome_social' ? produto : undefined;
 
   const props: Record<string, unknown> = { currency: 'BRL' };
   if (productType) props.product_type = productType;
