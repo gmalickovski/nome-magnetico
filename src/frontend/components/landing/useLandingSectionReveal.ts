@@ -46,7 +46,7 @@ export function useLandingSectionReveal(threshold = 0.12) {
 
   return {
     ref,
-    className: `transition-[opacity,transform] duration-[600ms] ease-out ${motionClass}`,
+    className: `transition-[opacity,transform] duration-[600ms] ease-out motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${motionClass}`,
     revealed,
     reduceMotion: false,
   };
