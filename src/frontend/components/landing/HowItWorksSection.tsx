@@ -72,7 +72,7 @@ export function HowItWorksSection() {
     <section
       id="como-funciona"
       ref={reveal.ref}
-      className={`py-20 md:py-20 bg-[#1a1a1a] overflow-x-hidden scroll-mt-28 ${reveal.className}`}
+      className={`pt-32 pb-20 lg:py-20 bg-[#1a1a1a] overflow-x-hidden scroll-mt-32 lg:scroll-mt-28 ${reveal.className}`}
       aria-label="Como funciona"
     >
       <div className={landingSectionShellClass}>
