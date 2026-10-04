@@ -23,6 +23,14 @@ const PRICE_FALLBACK: PriceInfo = {
   hasDiscount: false,
 };
 
+const NOME_SOCIAL_DELIVERABLES = [
+  'ranking com score',
+  'nome mais indicado',
+  'antes e depois nos 4 triângulos',
+  'bloqueios, débitos, lições e tendências',
+  'PDF com guia de 30 dias e folha de treino da assinatura',
+] as const;
+
 function promotionAppliesToProduct(
   promotion: ActivePromotion | null | undefined,
   productType: ProductType,
@@ -198,12 +206,18 @@ export function PricingSection({
               {prominentPrice(priceLabel)}
             </p>
 
+            <ul className="mt-3 space-y-0.5 text-xs leading-relaxed text-[#76746a] list-none p-0 m-0">
+              {NOME_SOCIAL_DELIVERABLES.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+
             <p className="mt-3 text-[#e5e2e1] text-sm leading-relaxed">
               pagamento único, sem mensalidade.
             </p>
 
             <p className="mt-3 text-gray-400 text-sm leading-relaxed">
-              ranking, nome recomendado e variações. Acesso na hora.{' '}
+              Acesso na hora.{' '}
               <span className="whitespace-nowrap">Sete dias de garantia.</span>
             </p>
 
