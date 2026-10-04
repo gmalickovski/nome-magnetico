@@ -84,8 +84,8 @@ export function HowItWorksSection() {
             const last = index === steps.length - 1;
             return (
               <li key={step.title} className="relative min-w-0" role="listitem">
-                <article className={KIT_CARD}>
-                  <div className="mb-6">
+                <article className={`${KIT_CARD} text-center lg:text-left`}>
+                  <div className="mb-6 flex justify-center lg:justify-start">
                     <Figure />
                   </div>
                   <h3 className="font-cinzel text-lg md:text-xl font-bold leading-tight text-[#e5e2e1]">
