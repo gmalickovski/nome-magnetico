@@ -140,19 +140,23 @@ export function HowItWorksSection() {
     <section
       id="como-funciona"
       ref={ref}
-      className={`relative bg-[#111111] scroll-mt-20 ${
+      className={`relative bg-[#111111] scroll-mt-28 lg:scroll-mt-32 ${
         reduceMotion ? 'py-20 lg:py-28' : 'lg:h-[340vh] py-20 lg:py-0'
       }`}
       aria-label="Como funciona"
     >
       {/* ── DESKTOP PINNED EXPERIENCE (lg: 1024px+) ────────────────────── */}
-      <div className={`hidden lg:flex flex-col justify-center ${reduceMotion ? '' : 'sticky top-0 h-screen'} w-full overflow-x-clip`}>
+      <div
+        className={`hidden lg:flex flex-col justify-center pt-24 xl:pt-28 pb-8 ${
+          reduceMotion ? '' : 'sticky top-0 h-screen'
+        } w-full overflow-x-clip`}
+      >
         <div className={landingSectionShellClass}>
           <LandingSectionIntro
             label="Como funciona"
             title="Quatro passos até a sua nova assinatura"
             description="Entenda como a análise cabalística encontra a vibração ideal para harmonizar seu nome e destravar seu caminho."
-            className="mb-12"
+            className="mb-8 xl:mb-10"
           />
 
           {/* Rail Track with dynamic horizontal offset */}
