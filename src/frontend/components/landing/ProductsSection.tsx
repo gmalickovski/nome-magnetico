@@ -14,7 +14,7 @@ export function ProductsSection() {
     <section
       id="produtos"
       ref={reveal.ref}
-      className={`relative py-20 md:py-20 bg-[#111111] overflow-x-hidden ${reveal.className}`}
+      className={`relative py-20 md:py-20 bg-[#111111] overflow-x-hidden scroll-mt-28 ${reveal.className}`}
     >
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"

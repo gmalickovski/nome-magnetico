@@ -1,7 +1,9 @@
 import React from 'react';
 
 const GOLD = '#D4AF37';
+/** Existing landing/result gray (labels / secondary), not app red. */
 const GRAY = '#76746a';
+const GRAY_LINE = '#9CA3AF';
 
 const BIRTH_NAME = 'JOÃO ALBERTO DA SILVA';
 const INDICATED_NAME = 'JOÃO ALBERTO SILVA';
@@ -27,7 +29,7 @@ function tipXY(cx: number, cy: number, r: number, i: number) {
 const CX = 330;
 const CY = 260;
 const OUTER_PTS = starPts(CX, CY, 160, 62);
-const INNER_PTS = starPts(CX, CY, 88, 34);
+const INNER_PTS = starPts(CX, CY, 118, 46);
 const LABEL_ANCHORS = ['middle', 'start', 'start', 'end', 'end'] as const;
 const LABEL_DX = [0, 5, 5, -5, -5];
 const LABEL_DY = [-5, 0, 8, 8, 0];
@@ -53,17 +55,15 @@ export function ProductResultFrame() {
         >
           <polygon
             points={OUTER_PTS}
-            fill={GOLD}
-            fillOpacity="0.10"
+            fill="none"
             stroke={GOLD}
-            strokeWidth="2"
+            strokeWidth="2.5"
           />
           <polygon
             points={INNER_PTS}
-            fill={GRAY}
-            fillOpacity="0.12"
-            stroke={GRAY}
-            strokeWidth="1.5"
+            fill="none"
+            stroke={GRAY_LINE}
+            strokeWidth="2.25"
           />
           {STAR_LABELS.map((label, i) => {
             const pos = tipXY(CX, CY, 210, i);

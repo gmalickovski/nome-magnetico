@@ -12,7 +12,7 @@ function FigureFrame({
   return (
     <svg
       viewBox="0 0 64 48"
-      className="h-12 w-16"
+      className="h-16 w-20"
       role="img"
       aria-label={label}
       fill="none"
@@ -64,10 +64,10 @@ export function BlocksFigure() {
 export function RankingFigure() {
   return (
     <FigureFrame label="Três linhas, a indicada marcada">
-      <path d="M14 14h40" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M14 24h40" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="8" cy="24" r="2.25" stroke={GOLD} strokeWidth="1.5" />
-      <path d="M14 34h40" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M16 12h38" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M16 24h38" stroke={GOLD} strokeWidth="2.25" strokeLinecap="round" />
+      <circle cx="8" cy="24" r="3" stroke={GOLD} strokeWidth="1.5" />
+      <path d="M16 36h38" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" />
     </FigureFrame>
   );
 }
