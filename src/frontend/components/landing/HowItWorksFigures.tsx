@@ -39,23 +39,16 @@ export function FrequencyFigure() {
 export function BlocksFigure() {
   return (
     <FigureFrame label="Quatro triângulos, um interrompido">
-      <path d="M3 34 L9 16 L15 34 Z" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M18 34 L24 16 L30 34 Z" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M2 40 L8 10 L14 40 Z" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M18 40 L24 10 L30 40 Z" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
       <path
-        d="M33 34 L39 16"
+        d="M34 40 L40 10 M34 40 L46 40 M40 10 L40.6 13 M45.4 37 L46 40"
         stroke={GOLD}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M45 34 L39 16"
-        stroke={GOLD}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M48 34 L54 16 L60 34 Z" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M50 40 L56 10 L62 40 Z" stroke={GOLD} strokeWidth="1.5" strokeLinejoin="round" />
     </FigureFrame>
   );
 }
