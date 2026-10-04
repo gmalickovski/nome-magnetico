@@ -24,10 +24,6 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-10 gap-12 items-center text-center lg:text-left">
           {/* Left Column: Headlines */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start">
-            <p className="text-[#D4AF37] text-xs md:text-sm font-bold tracking-[0.2em] uppercase mb-6">
-              Harmonização de Assinatura com Fundamento Vibracional
-            </p>
-
             <h1 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
               Sua Assinatura Tem<br />
               <span
