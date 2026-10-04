@@ -38,6 +38,8 @@ secretkey-*.tx
 # Claude e Agentes (Evitar loop de IA lendo IA)
 .claude/
 .agents/
+.codex/
+.impeccable/
 
 # temp / scripts locais
 tmp/

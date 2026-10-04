@@ -41,7 +41,7 @@ const user = Astro.locals.user;
   {promotion && <PromoBanner promotion={promotion} client:load />}
   <LandingHeader client:load />
   <HeroSection client:load />
-  <HowItWorksSection client:visible />
+  <HowItWorksSection client:load />
   <ProductsSection client:visible />
   {/* Teaser calculadora gratuita */}
   <section id="teste" class="py-20 md:py-28 bg-[#111111]">
