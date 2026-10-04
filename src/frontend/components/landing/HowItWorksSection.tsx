@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { LandingSectionIntro, landingSectionShellClass } from './LandingSectionIntro';
 import { useScrollProgress } from './useScrollProgress';
 import {
@@ -45,8 +45,8 @@ function StepArrow({ direction, active = true }: { direction: 'right' | 'down'; 
       aria-hidden="true"
     >
       <svg
-        viewBox="0 0 24 24"
-        className={horizontal ? 'h-5 w-8' : 'h-8 w-5'}
+        viewBox={horizontal ? '0 0 24 24' : '0 0 24 36'}
+        className={horizontal ? 'h-5 w-8' : 'h-9 w-6'}
         fill="none"
       >
         {horizontal ? (
@@ -60,7 +60,7 @@ function StepArrow({ direction, active = true }: { direction: 'right' | 'down'; 
           />
         ) : (
           <path
-            d="M12 2v18M6 14l6 6 6-6"
+            d="M12 2v24M5 19l7 7 7-7"
             stroke="#f2ca50"
             strokeWidth="2"
             strokeLinecap="round"
@@ -70,6 +70,92 @@ function StepArrow({ direction, active = true }: { direction: 'right' | 'down'; 
         )}
       </svg>
     </div>
+  );
+}
+
+/** Card de passo no layout mobile, com reveal suave ao rolar */
+function MobileStepItem({
+  step,
+  index,
+  isLast,
+  reduceMotion,
+}: {
+  step: (typeof steps)[number];
+  index: number;
+  isLast: boolean;
+  reduceMotion: boolean;
+}) {
+  const itemRef = useRef<HTMLLIElement>(null);
+  const [revealed, setRevealed] = useState(reduceMotion);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+
+    const el = itemRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [reduceMotion]);
+
+  const Figure = step.Figure;
+
+  return (
+    <li
+      ref={itemRef}
+      className={`relative flex flex-col items-center w-full transition-all duration-700 ease-out ${
+        reduceMotion || revealed
+          ? 'opacity-100 translate-y-0 scale-100'
+          : 'opacity-0 translate-y-8 scale-95'
+      }`}
+    >
+      <article className="w-full max-w-md mx-auto rounded-2xl bg-[#161616]/95 border border-[#D4AF37]/35 hover:border-[#D4AF37]/60 p-6 shadow-2xl shadow-black/70 transition-all duration-500">
+        <div className="flex items-center justify-between mb-4">
+          <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full border border-[#f2ca50]/20">
+            PASSO {step.stepNumber}
+          </span>
+          <div className="text-[#D4AF37]">
+            <Figure active={reduceMotion || revealed} />
+          </div>
+        </div>
+
+        <h3 className="font-cinzel text-lg font-bold leading-tight text-[#e5e2e1] mb-2">
+          {step.title}
+        </h3>
+        <p className="text-sm leading-relaxed text-gray-400 font-normal">
+          {step.body}
+        </p>
+
+        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+          <span className="uppercase tracking-widest">Etapa {index + 1} de 4</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+        </div>
+      </article>
+
+      {/* Seta vertical conectando ao próximo card */}
+      {!isLast && (
+        <div
+          className={`py-3 transition-all duration-700 delay-150 ease-out ${
+            reduceMotion || revealed
+              ? 'opacity-100 translate-y-0 scale-100'
+              : 'opacity-0 -translate-y-2 scale-75'
+          }`}
+          aria-hidden="true"
+        >
+          <StepArrow direction="down" active={reduceMotion || revealed} />
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -141,7 +227,7 @@ export function HowItWorksSection() {
       id="como-funciona"
       ref={ref}
       className={`relative bg-[#111111] scroll-mt-28 lg:scroll-mt-32 ${
-        reduceMotion ? 'py-20 lg:py-28' : 'lg:h-[340vh] py-20 lg:py-0'
+        reduceMotion ? 'py-20 lg:py-28' : 'lg:h-[340vh] pt-24 pb-20 lg:py-0'
       }`}
       aria-label="Como funciona"
     >
@@ -253,40 +339,19 @@ export function HowItWorksSection() {
             label="Como funciona"
             title="Quatro passos até a sua nova assinatura"
             description="Entenda como a análise cabalística encontra a vibração ideal para harmonizar seu nome."
-            className="mb-10 text-center"
+            className="mb-8 text-center"
           />
 
-          <ol className="flex flex-col gap-4 list-none m-0 p-0" role="list">
-            {steps.map((step, index) => {
-              const Figure = step.Figure;
-              const isLast = index === steps.length - 1;
-
-              return (
-                <li key={step.stepNumber} className="relative flex flex-col items-center">
-                  <article className="w-full rounded-2xl bg-[#161616]/90 border border-[#D4AF37]/35 p-6 shadow-xl shadow-black/60">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full border border-[#f2ca50]/20">
-                        PASSO {step.stepNumber}
-                      </span>
-                      <Figure active={true} />
-                    </div>
-                    <h3 className="font-cinzel text-lg font-bold leading-tight text-[#e5e2e1] mb-2">
-                      {step.title}
-                    </h3>
-                    <p className="text-sm leading-relaxed text-gray-400">
-                      {step.body}
-                    </p>
-                  </article>
-
-                  {/* Seta vertical no mobile */}
-                  {!isLast && (
-                    <div className="py-2">
-                      <StepArrow direction="down" active={true} />
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+          <ol className="flex flex-col gap-2 list-none m-0 p-0 w-full" role="list">
+            {steps.map((step, index) => (
+              <MobileStepItem
+                key={step.stepNumber}
+                step={step}
+                index={index}
+                isLast={index === steps.length - 1}
+                reduceMotion={reduceMotion}
+              />
+            ))}
           </ol>
         </div>
       </div>
