@@ -5,7 +5,7 @@ import {
   landingSectionStackGapClass,
 } from './LandingSectionIntro';
 import { useLandingSectionReveal } from './useLandingSectionReveal';
-import { HeroScoreAnimation } from './HeroScoreAnimation';
+import { ProductResultFrame } from './ProductResultFrame';
 
 export function ProductsSection() {
   const reveal = useLandingSectionReveal();
@@ -14,7 +14,7 @@ export function ProductsSection() {
     <section
       id="produtos"
       ref={reveal.ref}
-      className={`relative py-20 md:py-20 bg-[#111111] overflow-x-hidden ${reveal.className}`}
+      className={`relative py-20 md:py-20 bg-[#111111] overflow-x-hidden scroll-mt-28 ${reveal.className}`}
     >
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -42,8 +42,8 @@ export function ProductsSection() {
             </p>
           </div>
 
-          <div className="min-w-0 rounded-2xl border border-[#D4AF37]/35 p-1 [&>div]:md:!flex-col [&>div>div]:md:!w-full [&>div>div:nth-child(1)]:md:!order-2 [&>div>div:nth-child(2)]:md:!order-1">
-            <HeroScoreAnimation />
+          <div className="min-w-0 rounded-2xl border border-[#D4AF37] p-1">
+            <ProductResultFrame />
           </div>
         </div>
       </div>
