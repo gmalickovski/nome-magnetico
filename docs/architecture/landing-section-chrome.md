@@ -11,7 +11,7 @@ Home sections below the hero share spacing with `HeroSection`:
 
 ## Motion
 
-`useLandingSectionReveal` changes **opacity only** once on enter (700ms ease). No translate, stagger, or bounce. `prefers-reduced-motion: reduce` skips the fade (no transition class).
+`useLandingSectionReveal` fades and rises once on enter: 600ms ease-out, 12px (`translate-y-3`). No bounce, parallax, stagger, or loop. `prefers-reduced-motion: reduce` shows the section still (no transition class).
 
 The purchase border is the only looping motion. Product border, result frame, and step arrows do not move.
 

@@ -5,7 +5,7 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** One-time opacity fade when section enters viewport. No translate or stagger. */
+/** One-time fade + light rise when a landing section enters the viewport. */
 export function useLandingSectionReveal(threshold = 0.12) {
   const ref = useRef<HTMLElement>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
@@ -40,11 +40,13 @@ export function useLandingSectionReveal(threshold = 0.12) {
     };
   }
 
-  const opacityClass = revealed ? 'opacity-100' : 'opacity-0';
+  const motionClass = revealed
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-3';
 
   return {
     ref,
-    className: `transition-opacity duration-700 ease-out ${opacityClass}`,
+    className: `transition-[opacity,transform] duration-[600ms] ease-out motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${motionClass}`,
     revealed,
     reduceMotion: false,
   };
