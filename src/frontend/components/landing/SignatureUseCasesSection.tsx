@@ -75,80 +75,14 @@ const USE_CASES: UseCaseItem[] = [
   },
 ];
 
-/** Card para a visualização mobile com entrada suave via scroll */
-function MobileUseCaseCard({
-  item,
-  reduceMotion,
-}: {
-  item: UseCaseItem;
-  reduceMotion: boolean;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [revealed, setRevealed] = useState(reduceMotion);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    const el = cardRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setRevealed(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [reduceMotion]);
-
-  const Mockup = item.MockupComponent;
-
-  return (
-    <article
-      ref={cardRef}
-      className={`rounded-2xl bg-[#161616]/95 border border-[#D4AF37]/25 p-6 sm:p-7 shadow-2xl shadow-black/80 transition-all duration-700 ease-out flex flex-col gap-6 ${
-        reduceMotion || revealed
-          ? 'opacity-100 translate-y-0 scale-100'
-          : 'opacity-0 translate-y-8 scale-95'
-      }`}
-    >
-      <div>
-        <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-3 leading-tight">
-          {item.title}
-        </h3>
-
-        <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mb-4">
-          {item.description}
-        </p>
-
-        <ul className="space-y-2 mb-2 text-xs sm:text-sm text-gray-400">
-          {item.bulletPoints.map((bullet, idx) => (
-            <li key={idx} className="flex items-start gap-2">
-              <span className="text-[#f2ca50] text-sm shrink-0 leading-none">✦</span>
-              <span>{bullet}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Mockup flutuando livremente no mobile sem container com borda dourada externa */}
-      <div className="pt-2 flex justify-center w-full">
-        <Mockup />
-      </div>
-    </article>
-  );
-}
-
 export function SignatureUseCasesSection() {
   const { ref, progress, reduceMotion } = useScrollProgress<HTMLElement>();
   const [manualIndex, setManualIndex] = useState<number | null>(null);
 
-  // Mapeia o progresso do scroll no desktop para a etapa ativa (0 a 3)
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  // Mapeia o progresso do scroll para a etapa ativa (0 a 3)
   const activeIndex = useMemo(() => {
     if (manualIndex !== null) return manualIndex;
     if (reduceMotion) return 0;
@@ -159,7 +93,7 @@ export function SignatureUseCasesSection() {
     return 3;
   }, [progress, reduceMotion, manualIndex]);
 
-  // Se o usuário clicar manualmente em um marcador, sincroniza o scroll suave para a etapa correspondente
+  // Se o usuário clicar manualmente em um marcador ou der swipe, sincroniza o scroll suave para a etapa correspondente
   const handleSelectTab = (idx: number) => {
     setManualIndex(idx);
     const el = ref.current;
@@ -179,12 +113,34 @@ export function SignatureUseCasesSection() {
     }, 1500);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Se o swipe for horizontal com amplitude maior que 40px
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+      if (deltaX < 0 && activeIndex < USE_CASES.length - 1) {
+        handleSelectTab(activeIndex + 1);
+      } else if (deltaX > 0 && activeIndex > 0) {
+        handleSelectTab(activeIndex - 1);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   return (
     <section
       id="onde-usar"
       ref={ref}
-      className={`relative bg-[#111111] scroll-mt-28 ${
-        reduceMotion ? 'py-20 md:py-28' : 'lg:h-[380vh] py-20 lg:py-0'
+      className={`relative bg-[#111111] scroll-mt-20 ${
+        reduceMotion ? 'py-16 md:py-24' : 'h-[360vh] py-0'
       }`}
       aria-label="Onde e como usar sua assinatura harmonizada"
     >
@@ -314,18 +270,104 @@ export function SignatureUseCasesSection() {
         </div>
       </div>
 
-      {/* ── EXPERIÊNCIA MOBILE / TABLET (< 1024px) ──────────────────────── */}
-      <div className="lg:hidden">
-        <div className={landingSectionShellClass}>
-          <div className="flex flex-col gap-6" role="list">
-            {USE_CASES.map((item) => (
-              <MobileUseCaseCard
+      {/* ── EXPERIÊNCIA MOBILE / TABLET (< 1024px) PINNED ────────────────── */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className={`lg:hidden flex flex-col justify-between w-full ${
+          reduceMotion ? 'py-16 min-h-screen' : 'sticky top-0 h-[100dvh]'
+        } pt-16 pb-5 px-4 overflow-hidden select-none`}
+      >
+        {/* PARTE SUPERIOR: MOCKUPS (Transição Horizontal da esquerda para a direita) */}
+        <div className="flex-1 min-h-0 flex items-center justify-center relative w-full max-w-[420px] mx-auto overflow-hidden">
+          {USE_CASES.map((item, idx) => {
+            const Mockup = item.MockupComponent;
+            const isActive = idx === activeIndex;
+            const isPast = idx < activeIndex;
+
+            const mockupTransform = isActive
+              ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto relative z-10'
+              : isPast
+              ? 'opacity-0 -translate-x-12 scale-95 pointer-events-none absolute inset-0 z-0'
+              : 'opacity-0 translate-x-12 scale-95 pointer-events-none absolute inset-0 z-0';
+
+            return (
+              <div
                 key={item.id}
-                item={item}
-                reduceMotion={reduceMotion}
+                className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full flex justify-center items-center ${mockupTransform}`}
+                aria-hidden={!isActive}
+              >
+                <div className="w-full scale-[0.78] xs:scale-[0.85] sm:scale-[0.92] origin-center">
+                  <Mockup />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* MARCADORES HORIZONTAIS NO SENTIDO DA ROLAGEM */}
+        <div
+          className="flex items-center justify-center gap-2 py-2 shrink-0"
+          role="tablist"
+          aria-label="Etapas dos casos de uso"
+        >
+          {USE_CASES.map((item, idx) => {
+            const isActive = idx === activeIndex;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleSelectTab(idx)}
+                title={item.title}
+                className={`cursor-pointer transition-all duration-500 rounded-full ${
+                  isActive
+                    ? 'w-7 h-1.5 bg-[#f2ca50] shadow-[0_0_8px_rgba(242,202,80,0.7)]'
+                    : 'w-2 h-1.5 bg-white/20 hover:bg-white/40'
+                }`}
               />
-            ))}
-          </div>
+            );
+          })}
+        </div>
+
+        {/* PARTE INFERIOR: TEXTOS CORRESPONDENTES (Transição Horizontal) */}
+        <div className="shrink-0 relative w-full max-w-[420px] mx-auto min-h-[175px] xs:min-h-[190px] overflow-hidden flex items-center">
+          {USE_CASES.map((item, idx) => {
+            const isActive = idx === activeIndex;
+            const isPast = idx < activeIndex;
+
+            const textTransform = isActive
+              ? 'opacity-100 translate-x-0 pointer-events-auto relative z-10'
+              : isPast
+              ? 'opacity-0 -translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0'
+              : 'opacity-0 translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0';
+
+            return (
+              <div
+                key={item.id}
+                className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform w-full text-center ${textTransform}`}
+                aria-hidden={!isActive}
+              >
+                <h3 className="font-cinzel text-lg xs:text-xl font-bold text-[#e5e2e1] mb-1.5 leading-tight text-balance">
+                  {item.title}
+                </h3>
+
+                <p className="text-gray-300 text-xs leading-relaxed mb-2.5 max-w-sm mx-auto line-clamp-3 xs:line-clamp-none">
+                  {item.description}
+                </p>
+
+                <div className="space-y-1 max-w-xs mx-auto text-left">
+                  {item.bulletPoints.map((bullet, bIdx) => (
+                    <div key={bIdx} className="flex items-start gap-2 text-[11px] text-gray-300">
+                      <span className="text-[#f2ca50] text-xs shrink-0 leading-none">✦</span>
+                      <span className="line-clamp-1 xs:line-clamp-none">{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
