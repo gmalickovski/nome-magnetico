@@ -216,8 +216,8 @@ export function SignatureUseCasesSection() {
                         className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform w-full ${transformClass}`}
                         aria-hidden={!isActive}
                       >
-                        {/* Título Grande mantido como solicitado */}
-                        <h3 className="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance">
+                        {/* Título com o mesmo tamanho do título principal das outras seções */}
+                        <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance">
                           {item.title}
                         </h3>
 
@@ -332,7 +332,7 @@ export function SignatureUseCasesSection() {
         </div>
 
         {/* PARTE INFERIOR: TEXTOS CORRESPONDENTES (Transição Horizontal) */}
-        <div className="shrink-0 relative w-full max-w-[420px] mx-auto min-h-[175px] xs:min-h-[190px] overflow-hidden flex items-center">
+        <div className="shrink-0 relative w-full max-w-[420px] mx-auto min-h-[190px] xs:min-h-[205px] overflow-hidden flex items-center">
           {USE_CASES.map((item, idx) => {
             const isActive = idx === activeIndex;
             const isPast = idx < activeIndex;
@@ -349,7 +349,8 @@ export function SignatureUseCasesSection() {
                 className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform w-full text-center ${textTransform}`}
                 aria-hidden={!isActive}
               >
-                <h3 className="font-cinzel text-lg xs:text-xl font-bold text-[#e5e2e1] mb-1.5 leading-tight text-balance">
+                {/* Título com o mesmo padrão e tamanho do título principal das outras seções */}
+                <h3 className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
                   {item.title}
                 </h3>
 
