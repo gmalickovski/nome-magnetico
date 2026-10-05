@@ -20,10 +20,11 @@ import {
 } from '../app/harmonizationStarGeometry';
 
 const GOLD = '#D4AF37';
-const BIRTH_NAME = 'Maria da Silva Santos';
+/** Demo pairing validated against analisarNomeSocial("Maria da Silva Santos", "26/05/1971"). */
+const BIRTH_NAME = 'MARIA DA SILVA SANTOS';
 const INDICATED_NAME = 'MARIÃ SILVA';
 const BIRTH_DATE = '26 de maio de 1971';
-const DEMO_SCORE_BIRTH = 41;
+const DEMO_SCORE_BIRTH = 0;
 const DEMO_SCORE_HARMONIZED = 83;
 
 /** Demo values — outer (harmonizado) / inner (nascimento), same order as star tips. */
