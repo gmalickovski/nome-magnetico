@@ -59,8 +59,8 @@ interface DemoSuggestion {
   bloqueios: number;
 }
 
-/** Grouped demo suggestions — same fields as app result cards. */
-const DEMO_SUGGESTIONS: DemoSuggestion[] = [
+/** System suggestions (IA) — mirrors "Nossas Sugestões". */
+const DEMO_SYSTEM_SUGGESTIONS: DemoSuggestion[] = [
   {
     nome: 'MARIA DA SANNTOS',
     score: 84,
@@ -94,6 +94,10 @@ const DEMO_SUGGESTIONS: DemoSuggestion[] = [
     missao: 4,
     bloqueios: 0,
   },
+];
+
+/** User candidates — mirrors "Suas Sugestões". */
+const DEMO_USER_SUGGESTIONS: DemoSuggestion[] = [
   {
     nome: 'MARIA SANTOS',
     score: 57,
@@ -125,6 +129,58 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+function SuggestionCard({
+  c,
+  stagger,
+  delayIndex,
+}: {
+  c: DemoSuggestion;
+  stagger: boolean;
+  delayIndex: number;
+}) {
+  return (
+    <div
+      className={`rounded-2xl bg-white/5 p-2.5 sm:p-3 flex flex-col gap-1.5 sm:gap-2 min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
+        stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+      }`}
+      style={{ transitionDelay: stagger ? `${delayIndex * 90}ms` : '0ms' }}
+    >
+      <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] break-words leading-tight">
+        {c.nome}
+      </div>
+      <ProductAnimatedScore
+        score={c.score}
+        play={stagger}
+        size="sm"
+        delayMs={stagger ? delayIndex * 80 : 0}
+      />
+      <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
+      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] sm:text-[11px] text-gray-500">
+        <span>
+          Expr: <span className="text-gray-300">{c.expressao}</span>
+        </span>
+        <span>
+          Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
+        </span>
+        <span>
+          Mot: <span className="text-gray-300">{c.motivacao}</span>
+        </span>
+        <span>
+          Imp: <span className="text-gray-300">{c.impressao}</span>
+        </span>
+        <span>
+          Mis: <span className="text-gray-300">{c.missao}</span>
+        </span>
+      </div>
+      {c.bloqueios > 0 ? (
+        <span className="text-[11px] text-red-400">⚠ {c.bloqueios} bloqueio(s)</span>
+      ) : (
+        <span className="text-[11px] text-emerald-400">✓ Sem bloqueios</span>
+      )}
+    </div>
+  );
+}
+
 function HarmonyPanel({
   visible,
   scoresPlay,
@@ -134,10 +190,10 @@ function HarmonyPanel({
 }) {
   return (
     <div
-      className={`col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
+      className={`col-start-1 row-start-1 w-full min-w-0 ${
         visible
-          ? 'opacity-100 translate-y-0 relative z-10'
-          : 'opacity-0 translate-y-3 pointer-events-none z-0'
+          ? 'relative z-10 opacity-100'
+          : 'absolute inset-0 z-0 opacity-0 pointer-events-none invisible'
       }`}
       aria-hidden={!visible}
     >
@@ -304,62 +360,52 @@ function SuggestionsPanel({
     <div
       className={`col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
         visible
-          ? 'opacity-100 translate-y-0 relative z-10'
-          : 'opacity-0 translate-y-3 pointer-events-none z-0'
+          ? 'relative z-10 opacity-100 translate-y-0'
+          : 'absolute inset-0 z-0 opacity-0 translate-y-2 pointer-events-none invisible'
       }`}
       aria-hidden={!visible}
     >
-      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2 px-0.5">
-        Comparar e escolher
-      </p>
-      <h4 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] px-0.5 mb-1">
-        Sugestões para testar
-      </h4>
-      <p className="text-xs text-gray-400 px-0.5 mb-4 leading-relaxed">
-        Variações ranqueadas com score, compatibilidade e bloqueios — você escolhe a assinatura.
-      </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {DEMO_SUGGESTIONS.map((c, index) => (
-          <div
-            key={c.nome}
-            className={`rounded-2xl bg-white/5 p-3 sm:p-4 flex flex-col gap-2.5 transition-[opacity,transform] duration-[800ms] ease-out ${
-              stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-            }`}
-            style={{ transitionDelay: stagger ? `${index * 120}ms` : '0ms' }}
-          >
-            <div className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1]">{c.nome}</div>
-            <ProductAnimatedScore
-              score={c.score}
-              play={stagger}
-              size="sm"
-              delayMs={stagger ? index * 100 : 0}
-            />
-            <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
-              <span>
-                Expr: <span className="text-gray-300">{c.expressao}</span>
-              </span>
-              <span>
-                Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
-              </span>
-              <span>
-                Mot: <span className="text-gray-300">{c.motivacao}</span>
-              </span>
-              <span>
-                Imp: <span className="text-gray-300">{c.impressao}</span>
-              </span>
-              <span>
-                Mis: <span className="text-gray-300">{c.missao}</span>
-              </span>
-            </div>
-            {c.bloqueios > 0 ? (
-              <span className="text-xs text-red-400">⚠ {c.bloqueios} bloqueio(s)</span>
-            ) : (
-              <span className="text-xs text-emerald-400">✓ Sem bloqueios</span>
-            )}
+      <div className="flex flex-col gap-5 sm:gap-6 min-w-0 h-full">
+        {/* Nossas Sugestões — sistema */}
+        <div className="min-w-0">
+          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
+            Selecionadas para Você
+          </p>
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+            Nossas Sugestões
+          </h4>
+          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
+            Criadas para o seu perfil numerológico.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+            {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
+              <SuggestionCard key={c.nome} c={c} stagger={stagger} delayIndex={index} />
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Suas Sugestões — candidatas do usuário */}
+        <div className="min-w-0">
+          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
+            Seus Candidatos
+          </p>
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+            Suas Sugestões
+          </h4>
+          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
+            Nomes que você indicou, analisados numerologicamente.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+            {DEMO_USER_SUGGESTIONS.map((c, index) => (
+              <SuggestionCard
+                key={c.nome}
+                c={c}
+                stagger={stagger}
+                delayIndex={DEMO_SYSTEM_SUGGESTIONS.length + index}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -399,10 +445,8 @@ export function ProductResultFrame() {
       schedule(() => setPhase('scores'), 700);
       // Hold the harmonization card long enough to read (~5.5s after scores start).
       schedule(() => setPhase('suggestions'), 7200);
-      schedule(() => {
-        setPhase('idle');
-        schedule(runSequence, 600);
-      }, 16000);
+      // Loop without empty idle (keeps card height stable).
+      schedule(() => runSequence(), 16000);
     };
 
     const observer = new IntersectionObserver(

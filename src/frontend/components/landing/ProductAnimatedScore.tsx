@@ -97,25 +97,27 @@ export function ProductAnimatedScore({
   const numSizes = size === 'sm' ? 'text-lg' : 'text-2xl md:text-3xl';
   const rowMinH = size === 'sm' ? 'min-h-[1.75rem]' : 'min-h-[2.25rem]';
   const fill = started ? displayed : 0;
+  // Label follows the live value so score/tier stay in sync while counting up.
+  const shownLevel = started ? liveLevel : finalLevel;
 
   return (
     <div className="w-full min-w-0 max-w-full">
       <div className={`flex items-end justify-between gap-2 mb-1.5 ${rowMinH}`}>
         <span
-          className={`font-cinzel font-bold tabular-nums ${numSizes} ${liveLevel.text} inline-flex items-baseline shrink-0`}
+          className={`font-cinzel font-bold tabular-nums ${numSizes} ${shownLevel.text} inline-flex items-baseline shrink-0`}
         >
           <span className="inline-block min-w-[2ch] text-right">{fill}</span>
           <span className={`${textSizes} font-inter font-normal text-gray-500 ml-0.5`}>/100</span>
         </span>
         <span
-          className={`${textSizes} font-medium ${finalLevel.text} text-right leading-tight max-w-[6.5rem]`}
+          className={`${textSizes} font-medium ${shownLevel.text} text-right leading-tight w-[6.75rem] shrink-0`}
         >
-          {finalLevel.label}
+          {shownLevel.label}
         </span>
       </div>
       <div className={`w-full bg-white/10 rounded-full ${heights} overflow-hidden`}>
         <div
-          className={`${heights} rounded-full bg-gradient-to-r ${liveLevel.bar}`}
+          className={`${heights} rounded-full bg-gradient-to-r ${shownLevel.bar}`}
           style={{ width: `${fill}%` }}
         />
       </div>
