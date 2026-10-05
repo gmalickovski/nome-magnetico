@@ -122,11 +122,23 @@ const DEMO_USER_SUGGESTIONS: DemoSuggestion[] = [
   },
 ];
 
-type Phase = 'idle' | 'harmony' | 'scores' | 'suggestions';
+/** Soft crossfade shared by Harmonização ↔ Sugestões (both directions). */
+const PANEL_FADE_MS = 1100;
+// Static class string so Tailwind JIT emits the duration utility.
+const PANEL_EASE = 'duration-[1100ms] ease-[cubic-bezier(0.33,1,0.32,1)]';
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function panelShellClass(active: boolean) {
+  const z = active ? 'z-20' : 'z-10';
+  // Subtle lift only — mostly opacity so the swap feels fluid, not jumpy.
+  const motion = active
+    ? 'opacity-100 translate-y-0 scale-100'
+    : 'opacity-0 translate-y-1.5 scale-[0.992] pointer-events-none';
+  return `col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] ${PANEL_EASE} motion-reduce:transition-none ${z} ${motion}`;
 }
 
 function SuggestionCard({
@@ -140,10 +152,10 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl bg-white/5 p-2.5 sm:p-3 flex flex-col gap-1.5 sm:gap-2 min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
-        stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+      className={`rounded-2xl bg-white/5 p-2.5 sm:p-3 flex flex-col gap-1.5 sm:gap-2 min-w-0 transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
+        stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1.5'
       }`}
-      style={{ transitionDelay: stagger ? `${delayIndex * 90}ms` : '0ms' }}
+      style={{ transitionDelay: stagger ? `${delayIndex * 70}ms` : '0ms' }}
     >
       <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] break-words leading-tight">
         {c.nome}
@@ -182,20 +194,18 @@ function SuggestionCard({
 }
 
 function HarmonyPanel({
-  visible,
+  active,
   scoresPlay,
+  cycle,
 }: {
-  visible: boolean;
+  active: boolean;
   scoresPlay: boolean;
+  cycle: number;
 }) {
   return (
     <div
-      className={`col-start-1 row-start-1 w-full min-w-0 ${
-        visible
-          ? 'relative z-10 opacity-100'
-          : 'absolute inset-0 z-0 opacity-0 pointer-events-none invisible'
-      }`}
-      aria-hidden={!visible}
+      className={panelShellClass(active)}
+      aria-hidden={!active}
     >
       <section className="rounded-2xl bg-white/5 p-3 sm:p-5 mb-5 overflow-hidden min-w-0">
         <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4 break-words">
@@ -203,7 +213,6 @@ function HarmonyPanel({
         </p>
 
         <div className="flex flex-col gap-5 min-w-0">
-          {/* Stack name + score on phone; side-by-side only from md up */}
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between min-w-0">
             <div className="min-w-0 flex-1">
               <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#76746a] mb-1">
@@ -215,7 +224,13 @@ function HarmonyPanel({
               <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
             </div>
             <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
-              <ProductAnimatedScore score={DEMO_SCORE_BIRTH} play={scoresPlay} size="lg" delayMs={0} />
+              <ProductAnimatedScore
+                key={`birth-${cycle}`}
+                score={DEMO_SCORE_BIRTH}
+                play={scoresPlay}
+                size="lg"
+                delayMs={0}
+              />
             </div>
           </div>
 
@@ -230,6 +245,7 @@ function HarmonyPanel({
             </div>
             <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
               <ProductAnimatedScore
+                key={`harm-${cycle}`}
                 score={DEMO_SCORE_HARMONIZED}
                 play={scoresPlay}
                 size="lg"
@@ -350,23 +366,20 @@ function HarmonyPanel({
 }
 
 function SuggestionsPanel({
-  visible,
+  active,
   stagger,
+  cycle,
 }: {
-  visible: boolean;
+  active: boolean;
   stagger: boolean;
+  cycle: number;
 }) {
   return (
     <div
-      className={`col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
-        visible
-          ? 'relative z-10 opacity-100 translate-y-0'
-          : 'absolute inset-0 z-0 opacity-0 translate-y-2 pointer-events-none invisible'
-      }`}
-      aria-hidden={!visible}
+      className={panelShellClass(active)}
+      aria-hidden={!active}
     >
       <div className="flex flex-col gap-5 sm:gap-6 min-w-0 h-full">
-        {/* Nossas Sugestões — sistema */}
         <div className="min-w-0">
           <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
             Selecionadas para Você
@@ -379,12 +392,16 @@ function SuggestionsPanel({
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard key={c.nome} c={c} stagger={stagger} delayIndex={index} />
+              <SuggestionCard
+                key={`${c.nome}-${cycle}`}
+                c={c}
+                stagger={stagger}
+                delayIndex={index}
+              />
             ))}
           </div>
         </div>
 
-        {/* Suas Sugestões — candidatas do usuário */}
         <div className="min-w-0">
           <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
             Seus Candidatos
@@ -398,7 +415,7 @@ function SuggestionsPanel({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             {DEMO_USER_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
-                key={c.nome}
+                key={`${c.nome}-${cycle}`}
                 c={c}
                 stagger={stagger}
                 delayIndex={DEMO_SYSTEM_SUGGESTIONS.length + index}
@@ -412,13 +429,16 @@ function SuggestionsPanel({
 }
 
 /**
- * Animated preview of the Nome Social result:
- * card enters → scores count up → crossfade to suggestion cards.
+ * Animated preview: certificate → scores → soft crossfade to suggestions → loop back with the same fade.
  */
 export function ProductResultFrame() {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<Phase>('idle');
+  const [panel, setPanel] = useState<'harmony' | 'suggestions'>('harmony');
+  const [scoresPlay, setScoresPlay] = useState(false);
+  const [suggestionsStagger, setSuggestionsStagger] = useState(false);
+  const [cycle, setCycle] = useState(0);
   const timersRef = useRef<number[]>([]);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -433,25 +453,55 @@ export function ProductResultFrame() {
       timersRef.current.push(window.setTimeout(fn, ms));
     };
 
+    const SCORE_AT = 520;
+    const TO_SUGGESTIONS_AT = 7200;
+    const HOLD_SUGGESTIONS_MS = 8800;
+    const STAGGER_AFTER_FADE = 180;
+    const LOOP_MS = TO_SUGGESTIONS_AT + PANEL_FADE_MS + HOLD_SUGGESTIONS_MS;
+
+    const playHarmonyCycle = (nextCycle: number) => {
+      clearTimers();
+      setCycle(nextCycle);
+      setPanel('harmony');
+      setScoresPlay(false);
+
+      schedule(() => setScoresPlay(true), SCORE_AT);
+
+      schedule(() => {
+        // Soft outbound: final scores stay painted while the panel fades.
+        setPanel('suggestions');
+        schedule(() => setSuggestionsStagger(true), STAGGER_AFTER_FADE);
+      }, TO_SUGGESTIONS_AT);
+
+      schedule(() => {
+        // Soft return — same easing. Reset scores while harmony is still
+        // hidden; keep suggestion keys stable so cards don't remount mid-fade.
+        setScoresPlay(false);
+        setPanel('harmony');
+        schedule(() => {
+          setSuggestionsStagger(false);
+          playHarmonyCycle(nextCycle + 1);
+        }, PANEL_FADE_MS);
+      }, LOOP_MS);
+    };
+
     const runSequence = () => {
       clearTimers();
 
       if (prefersReducedMotion()) {
-        setPhase('suggestions');
+        setPanel('suggestions');
+        setSuggestionsStagger(true);
+        setScoresPlay(true);
         return;
       }
 
-      setPhase('harmony');
-      schedule(() => setPhase('scores'), 700);
-      // Hold the harmonization card long enough to read (~5.5s after scores start).
-      schedule(() => setPhase('suggestions'), 7200);
-      // Loop without empty idle (keeps card height stable).
-      schedule(() => runSequence(), 16000);
+      playHarmonyCycle(0);
     };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !startedRef.current) {
+          startedRef.current = true;
           runSequence();
           observer.disconnect();
         }
@@ -466,10 +516,8 @@ export function ProductResultFrame() {
     };
   }, []);
 
-  const harmonyVisible = phase === 'harmony' || phase === 'scores';
-  // Keep final scores while the harmony panel fades out; reset only on loop idle.
-  const scoresPlay = phase === 'scores' || phase === 'suggestions';
-  const suggestionsVisible = phase === 'suggestions';
+  const harmonyActive = panel === 'harmony';
+  const suggestionsActive = panel === 'suggestions';
 
   return (
     <div
@@ -477,8 +525,12 @@ export function ProductResultFrame() {
       className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden"
     >
       <div className="relative grid min-w-0">
-        <HarmonyPanel visible={harmonyVisible} scoresPlay={scoresPlay} />
-        <SuggestionsPanel visible={suggestionsVisible} stagger={suggestionsVisible} />
+        <HarmonyPanel active={harmonyActive} scoresPlay={scoresPlay} cycle={cycle} />
+        <SuggestionsPanel
+          active={suggestionsActive}
+          stagger={suggestionsStagger}
+          cycle={cycle}
+        />
       </div>
 
       <style>{`
