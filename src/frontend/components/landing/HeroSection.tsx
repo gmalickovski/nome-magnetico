@@ -6,7 +6,7 @@ export function HeroSection() {
   return (
     <section
       id="inicio"
-      className="relative flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-28 md:pt-28 md:pb-20"
+      className="relative min-h-svh flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-28 md:pt-28 md:pb-20"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
