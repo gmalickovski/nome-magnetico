@@ -1,122 +1,215 @@
 import React from 'react';
+import ScoreDisplay from '../app/ScoreDisplay';
+import {
+  HARMONY_STAR_CX,
+  HARMONY_STAR_CY,
+  HARMONY_STAR_GOLD_NUM_RADIUS,
+  HARMONY_STAR_INNER_INNER,
+  HARMONY_STAR_INNER_R,
+  HARMONY_STAR_LABEL_ANCHORS,
+  HARMONY_STAR_LABEL_DX,
+  HARMONY_STAR_LABEL_DY,
+  HARMONY_STAR_LABEL_RADIUS,
+  HARMONY_STAR_OUTER_INNER,
+  HARMONY_STAR_OUTER_R,
+  HARMONY_STAR_RED_NUM_RADIUS,
+  HARMONY_STAR_TIP_LABELS,
+  HARMONY_STAR_VIEWBOX,
+  harmonyStarPts,
+  harmonyStarTipXY,
+} from '../app/harmonizationStarGeometry';
 
 const GOLD = '#D4AF37';
-/** Existing landing/result gray (labels / secondary), not app red. */
-const GRAY = '#76746a';
-const GRAY_LINE = '#9CA3AF';
+const BIRTH_NAME = 'Maria da Silva Santos';
+const INDICATED_NAME = 'MARIÃ SILVA';
+const BIRTH_DATE = '26 de maio de 1971';
+const DEMO_SCORE = 83;
 
-const BIRTH_NAME = 'JOÃO ALBERTO DA SILVA';
-const INDICATED_NAME = 'JOÃO ALBERTO SILVA';
+/** Demo values — outer (harmonizado) / inner (nascimento), same order as star tips. */
+const DEMO_GOLD_NUMS = [4, 8, 8, 3, 9];
+const DEMO_RED_NUMS = [4, 6, 5, 1, 1];
 
-const STAR_LABELS = ['Destino', 'Expressão', 'Motivação', 'Missão', 'Impressão'] as const;
-
-function starPts(cx: number, cy: number, outerR: number, innerR: number): string {
-  const pts: string[] = [];
-  for (let i = 0; i < 5; i++) {
-    const a1 = ((-90 + i * 72) * Math.PI) / 180;
-    pts.push(`${(cx + outerR * Math.cos(a1)).toFixed(1)},${(cy + outerR * Math.sin(a1)).toFixed(1)}`);
-    const a2 = ((-90 + 36 + i * 72) * Math.PI) / 180;
-    pts.push(`${(cx + innerR * Math.cos(a2)).toFixed(1)},${(cy + innerR * Math.sin(a2)).toFixed(1)}`);
-  }
-  return pts.join(' ');
-}
-
-function tipXY(cx: number, cy: number, r: number, i: number) {
-  const a = ((-90 + i * 72) * Math.PI) / 180;
-  return { x: +(cx + r * Math.cos(a)).toFixed(1), y: +(cy + r * Math.sin(a)).toFixed(1) };
-}
-
-const CX = 330;
-const CY = 260;
-const OUTER_PTS = starPts(CX, CY, 160, 62);
-const INNER_PTS = starPts(CX, CY, 118, 46);
-const LABEL_ANCHORS = ['middle', 'start', 'start', 'end', 'end'] as const;
-const LABEL_DX = [0, 5, 5, -5, -5];
-const LABEL_DY = [-5, 0, 8, 8, 0];
+const OUTER_PTS = harmonyStarPts(
+  HARMONY_STAR_CX,
+  HARMONY_STAR_CY,
+  HARMONY_STAR_OUTER_R,
+  HARMONY_STAR_OUTER_INNER,
+);
+const INNER_PTS = harmonyStarPts(
+  HARMONY_STAR_CX,
+  HARMONY_STAR_CY,
+  HARMONY_STAR_INNER_R,
+  HARMONY_STAR_INNER_INNER,
+);
 
 /**
- * Static first screen of the Nome Social result.
- * Uses the landing name pair already on the hero. No score ring and no invented numbers.
+ * Static preview of the Nome Social result (certificate + harmonization star).
+ * Mirrors the live resultado layout; numbers and names are illustrative only.
  */
 export function ProductResultFrame() {
   return (
-    <div className="rounded-2xl bg-[#131313] px-4 py-6 sm:px-6 sm:py-8 min-w-0">
-      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">
+    <div className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0">
+      <section className="rounded-2xl bg-white/5 p-4 sm:p-5 mb-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-2">
+              Análise de Nome Social — Certificado Cabalístico
+            </p>
+            <h3 className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1] mb-1">
+              {INDICATED_NAME}
+            </h3>
+            <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
+          </div>
+          <div className="w-full sm:w-44 shrink-0">
+            <ScoreDisplay score={DEMO_SCORE} size="lg" />
+          </div>
+        </div>
+      </section>
+
+      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2 px-0.5">
         A Transformação
       </p>
-      <h3 className="font-cinzel text-2xl font-bold text-[#e5e2e1]">A Harmonização</h3>
+      <h4 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] px-0.5 mb-3">
+        A Harmonização
+      </h4>
 
-      <div className="flex justify-center mt-4 mb-4">
+      <div className="harmony-star-wrap mb-4">
         <svg
-          viewBox="0 0 660 520"
-          className="w-full max-w-[28rem]"
+          className="harmony-star-svg w-full"
+          viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
           role="img"
-          aria-label="Estrela da harmonização e estrela do nome de nascimento"
+          aria-label="Estrela comparativa entre nome de nascimento e nome harmonizado"
         >
           <polygon
             points={OUTER_PTS}
-            fill="none"
+            fill={GOLD}
+            fillOpacity={0.1}
             stroke={GOLD}
-            strokeWidth="2.5"
+            strokeWidth={2}
           />
           <polygon
             points={INNER_PTS}
-            fill="none"
-            stroke={GRAY_LINE}
-            strokeWidth="2.25"
+            fill="#DC2626"
+            fillOpacity={0.12}
+            stroke="#DC2626"
+            strokeWidth={1.5}
           />
-          {STAR_LABELS.map((label, i) => {
-            const pos = tipXY(CX, CY, 210, i);
+          {HARMONY_STAR_TIP_LABELS.map((label, i) => {
+            const labelPos = harmonyStarTipXY(
+              HARMONY_STAR_CX,
+              HARMONY_STAR_CY,
+              HARMONY_STAR_LABEL_RADIUS,
+              i,
+            );
+            const goldPos = harmonyStarTipXY(
+              HARMONY_STAR_CX,
+              HARMONY_STAR_CY,
+              HARMONY_STAR_GOLD_NUM_RADIUS,
+              i,
+            );
+            const redPos = harmonyStarTipXY(
+              HARMONY_STAR_CX,
+              HARMONY_STAR_CY,
+              HARMONY_STAR_RED_NUM_RADIUS,
+              i,
+            );
             return (
-              <text
-                key={label}
-                x={pos.x + LABEL_DX[i]}
-                y={pos.y + LABEL_DY[i]}
-                fill={GRAY}
-                fontSize="12"
-                fontFamily="Inter, sans-serif"
-                textAnchor={LABEL_ANCHORS[i]}
-              >
-                {label}
-              </text>
+              <g key={label}>
+                <text
+                  className="harmony-star-label"
+                  x={labelPos.x + HARMONY_STAR_LABEL_DX[i]}
+                  y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
+                  fill="#b0b7c3"
+                  fontFamily="Inter, sans-serif"
+                  textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
+                >
+                  {label}
+                </text>
+                <text
+                  className="harmony-star-num-gold"
+                  x={goldPos.x}
+                  y={goldPos.y + 6}
+                  fill={GOLD}
+                  fontFamily="Inter, sans-serif"
+                  fontWeight={700}
+                  textAnchor="middle"
+                >
+                  {DEMO_GOLD_NUMS[i]}
+                </text>
+                <text
+                  className="harmony-star-num-red"
+                  x={redPos.x}
+                  y={redPos.y + 5}
+                  fill="#DC2626"
+                  fontFamily="Inter, sans-serif"
+                  fontWeight={700}
+                  textAnchor="middle"
+                >
+                  {DEMO_RED_NUMS[i]}
+                </text>
+              </g>
             );
           })}
         </svg>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-8 mb-6 text-xs text-gray-400">
-        <span className="inline-flex items-center gap-2 min-w-0">
+      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-8 mb-2 text-xs text-gray-400 px-0.5">
+        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
           <span
-            className="inline-block w-3 h-3 rounded-full shrink-0"
-            style={{ background: 'rgba(118,116,106,0.25)', outline: `1px solid ${GRAY}` }}
+            className="inline-block w-3 h-3 rounded-full shrink-0 border border-red-500"
+            style={{ background: 'rgba(220,38,38,0.25)' }}
             aria-hidden="true"
           />
           <span className="truncate">{BIRTH_NAME}</span>
         </span>
-        <span className="inline-flex items-center gap-2 min-w-0">
+        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
           <span
-            className="inline-block w-3 h-3 rounded-full shrink-0"
-            style={{ background: 'rgba(212,175,55,0.2)', outline: `1px solid ${GOLD}` }}
+            className="inline-block w-3 h-3 rounded-full shrink-0 border border-[#D4AF37]"
+            style={{ background: 'rgba(212,175,55,0.2)' }}
             aria-hidden="true"
           />
           <span className="truncate font-medium text-[#D4AF37]">{INDICATED_NAME}</span>
         </span>
       </div>
 
-      <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-6">
-        <h4 className="font-cinzel text-base font-bold text-[#D4AF37] mb-3">O Escudo Magnético</h4>
-        <p className="text-gray-400 text-sm leading-relaxed mb-4">
-          O nome de nascimento é o campo vibracional que você recebeu ao chegar nesta encarnação — sua
-          semente de origem. Ele carrega padrões genuínos de força, mas também pode conter sequências
-          de energia que criam resistência e ciclos difíceis de romper. Não é um defeito: é
-          simplesmente o ponto de partida ainda sem o refinamento que apenas a intenção consciente
-          pode trazer.
-        </p>
-        <p className="text-gray-400 text-sm leading-relaxed">
-          A Harmonização cria uma segunda camada — um escudo vibracional que se sobrepõe ao campo
-          original sem apagá-lo.
-        </p>
-      </div>
+      <style>{`
+        .harmony-star-wrap {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          padding-inline: 0.125rem;
+        }
+        .harmony-star-svg {
+          max-width: 660px;
+        }
+        .harmony-star-label {
+          fill: #b0b7c3;
+          font-size: 15px;
+        }
+        .harmony-star-num-gold {
+          font-size: 19px;
+        }
+        .harmony-star-num-red {
+          font-size: 16px;
+        }
+        @media (max-width: 639px) {
+          .harmony-star-wrap {
+            transform: scale(1.05);
+            transform-origin: center top;
+          }
+        }
+        @media (min-width: 640px) {
+          .harmony-star-label {
+            font-size: 13px;
+          }
+          .harmony-star-num-gold {
+            font-size: 18px;
+          }
+          .harmony-star-num-red {
+            font-size: 15px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
