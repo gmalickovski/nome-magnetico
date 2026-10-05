@@ -6,12 +6,18 @@ import { supabase } from '../db/supabase';
 
 // Tabela de preços por modelo (USD por 1M tokens)
 const PRICE_TABLE: Record<string, { input: number; output: number }> = {
+  // Groq (legado + atuais pós-depreciação 16/08/2026)
   'llama-3.3-70b-versatile': { input: 0.59, output: 0.79 },
   'llama-3.1-8b-instant':    { input: 0.05, output: 0.08 },
   'mixtral-8x7b-32768':      { input: 0.24, output: 0.24 },
+  'openai/gpt-oss-120b':     { input: 0.15, output: 0.60 },
+  'openai/gpt-oss-20b':      { input: 0.10, output: 0.50 },
+  'qwen/qwen3.8-27b':        { input: 0.15, output: 0.60 },
+  // OpenAI
   'gpt-4o':                  { input: 2.50, output: 10.00 },
   'gpt-4o-mini':             { input: 0.15, output: 0.60 },
   'gpt-4-turbo':             { input: 10.00, output: 30.00 },
+  // Claude
   'claude-sonnet-4-6':       { input: 3.00, output: 15.00 },
   'claude-haiku-4-5-20251001': { input: 0.80, output: 4.00 },
   'claude-opus-4-6':         { input: 15.00, output: 75.00 },

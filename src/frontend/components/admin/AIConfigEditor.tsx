@@ -29,9 +29,9 @@ interface ModelOption {
 
 const PROVIDER_MODELS: Record<AIProvider, ModelOption[]> = {
   groq: [
-    { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', tag: '⭐ Recomendado', recommended: true },
-    { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant', tag: 'Mais rápido' },
-    { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B', tag: 'Textos longos' },
+    { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: '⭐ Recomendado', recommended: true },
+    { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B', tag: 'Mais rápido' },
+    { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B', tag: 'Alternativa' },
   ],
   openai: [
     { id: 'gpt-4o', label: 'GPT-4o', tag: '⭐ Recomendado', recommended: true },
