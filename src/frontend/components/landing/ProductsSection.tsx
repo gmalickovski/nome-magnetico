@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  LandingSectionIntro,
   landingSectionShellClass,
   landingSectionStackGapClass,
 } from './LandingSectionIntro';
@@ -51,32 +50,23 @@ export function ProductsSection() {
         */}
         <div className={`grid grid-cols-1 lg:grid-cols-2 ${landingSectionStackGapClass} items-start`}>
           <aside className="min-w-0 order-1 lg:sticky lg:top-28 lg:self-start">
-            <div className="[&_h2]:!text-3xl [&_h2]:md:!text-4xl [&_h2]:lg:!text-5xl [&_h2]:!leading-tight">
+            <div>
               <TextBlock revealed={reveal.revealed} delayMs={0}>
-                <LandingSectionIntro
-                  align="left"
-                  label="Produto"
-                  title="Sua assinatura de nome social."
-                />
-              </TextBlock>
-
-              <TextBlock revealed={reveal.revealed} delayMs={120}>
-                <p className="text-[#e5e2e1] text-sm md:text-base leading-relaxed mt-4 mb-6 max-w-prose mx-auto lg:mx-0">
-                  Do nome de nascimento à assinatura que você usa no dia a dia — com acesso imediato
-                  e análise na hora.
+                <p className="text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-6 text-center lg:text-left">
+                  Produto
                 </p>
               </TextBlock>
 
-              <div className="space-y-6 max-w-prose mx-auto lg:mx-0">
-                <TextBlock revealed={reveal.revealed} delayMs={220}>
+              <div className="space-y-10 max-w-prose mx-auto lg:mx-0">
+                <TextBlock revealed={reveal.revealed} delayMs={120}>
                   <div>
                     <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
                       A Harmonização
                     </p>
-                    <h3 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-2">
+                    <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
                       Seu nome pode estar travando o que você quer realizar.
                     </h3>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
+                    <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
                       Cada letra carrega uma frequência. Quando o nome de nascimento acumula bloqueios,
                       a vibração trava — e isso aparece no score de 0 a 100. A Harmonização cria um
                       escudo: uma variação de nome social alinhada ao seu Destino, sem apagar quem você
@@ -85,15 +75,15 @@ export function ProductsSection() {
                   </div>
                 </TextBlock>
 
-                <TextBlock revealed={reveal.revealed} delayMs={340}>
+                <TextBlock revealed={reveal.revealed} delayMs={240}>
                   <div>
                     <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
                       As Sugestões
                     </p>
-                    <h3 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-2">
+                    <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
                       Não é um nome imposto. É um ranking para você escolher.
                     </h3>
-                    <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
+                    <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
                       O sistema gera sugestões e também analisa as variações que você indicar. Cada
                       card mostra score, compatibilidade Expressão × Destino, os 5 números e se ainda
                       há bloqueios. Compare, escolha a assinatura que ressoa — e rode a análise completa

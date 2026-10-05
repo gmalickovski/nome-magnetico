@@ -43,6 +43,12 @@ export default defineConfig({
     checkOrigin: false,
   },
   vite: {
+    server: {
+      fs: {
+        strict: false,
+        allow: ['..', 'C:/Dev/nome-magnetico'],
+      },
+    },
     ssr: {
       noExternal: ['@react-pdf/renderer'],
     },

@@ -35,7 +35,7 @@ export function LandingSectionIntro({
       )}
       {title && (
         <h2
-          className="font-cinzel text-2xl leading-tight sm:text-3xl md:text-4xl font-bold text-[#e5e2e1] mb-4 text-balance"
+          className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance"
         >
           {title}
         </h2>
