@@ -134,44 +134,45 @@ function HarmonyPanel({
 }) {
   return (
     <div
-      className={`col-start-1 row-start-1 w-full transition-[opacity,transform] duration-[800ms] ease-out ${
+      className={`col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
         visible
           ? 'opacity-100 translate-y-0 relative z-10'
           : 'opacity-0 translate-y-3 pointer-events-none z-0'
       }`}
       aria-hidden={!visible}
     >
-      <section className="rounded-2xl bg-white/5 p-4 sm:p-5 mb-5">
-        <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4">
+      <section className="rounded-2xl bg-white/5 p-3 sm:p-5 mb-5 overflow-hidden min-w-0">
+        <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4 break-words">
           Análise de Nome Social — Certificado Cabalístico
         </p>
 
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-5 min-w-0">
+          {/* Stack name + score on phone; side-by-side only from md up */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between min-w-0">
             <div className="min-w-0 flex-1">
               <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#76746a] mb-1">
                 Nome de nascimento
               </p>
-              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-1">
+              <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
                 {BIRTH_NAME}
               </h3>
               <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
             </div>
-            <div className="w-full sm:w-44 shrink-0">
+            <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
               <ProductAnimatedScore score={DEMO_SCORE_BIRTH} play={scoresPlay} size="lg" delayMs={0} />
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between pt-5 border-t border-white/10">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between pt-5 border-t border-white/10 min-w-0">
             <div className="min-w-0 flex-1">
               <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#D4AF37]/70 mb-1">
                 Nome harmonizado
               </p>
-              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-1">
+              <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
                 {INDICATED_NAME}
               </h3>
             </div>
-            <div className="w-full sm:w-44 shrink-0">
+            <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
               <ProductAnimatedScore
                 score={DEMO_SCORE_HARMONIZED}
                 play={scoresPlay}
@@ -301,7 +302,7 @@ function SuggestionsPanel({
 }) {
   return (
     <div
-      className={`col-start-1 row-start-1 w-full transition-[opacity,transform] duration-[800ms] ease-out ${
+      className={`col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] duration-[800ms] ease-out ${
         visible
           ? 'opacity-100 translate-y-0 relative z-10'
           : 'opacity-0 translate-y-3 pointer-events-none z-0'
@@ -431,7 +432,7 @@ export function ProductResultFrame() {
       ref={rootRef}
       className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden"
     >
-      <div className="relative grid">
+      <div className="relative grid min-w-0">
         <HarmonyPanel visible={harmonyVisible} scoresPlay={scoresPlay} />
         <SuggestionsPanel visible={suggestionsVisible} stagger={suggestionsVisible} />
       </div>
@@ -441,26 +442,25 @@ export function ProductResultFrame() {
           display: flex;
           justify-content: center;
           width: 100%;
+          max-width: 100%;
+          overflow: hidden;
           padding-inline: 0.125rem;
         }
         .harmony-star-svg {
+          width: 100%;
           max-width: 660px;
+          height: auto;
+          display: block;
         }
         .harmony-star-label {
           fill: #b0b7c3;
-          font-size: 15px;
+          font-size: 13px;
         }
         .harmony-star-num-gold {
-          font-size: 19px;
+          font-size: 17px;
         }
         .harmony-star-num-red {
-          font-size: 16px;
-        }
-        @media (max-width: 639px) {
-          .harmony-star-wrap {
-            transform: scale(1.05);
-            transform-origin: center top;
-          }
+          font-size: 14px;
         }
         @media (min-width: 640px) {
           .harmony-star-label {

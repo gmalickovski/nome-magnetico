@@ -32,7 +32,7 @@ interface ProductAnimatedScoreProps {
 
 /**
  * Landing-only score bar with count-up + growing fill.
- * Fixed geometry so label/number animation never shifts the layout.
+ * Fixed row height + tabular nums so animation never shifts the layout.
  */
 export function ProductAnimatedScore({
   score,
@@ -91,25 +91,24 @@ export function ProductAnimatedScore({
     };
   }, [play, target, durationMs, delayMs]);
 
-  // Color follows the animated value; label stays on the final tier to avoid width jumps.
   const liveLevel = getScoreLevel(started ? displayed : 0);
-  const heights = size === 'sm' ? 'h-1.5' : 'h-3';
-  const textSizes = size === 'sm' ? 'text-xs' : 'text-base';
-  const numSizes = size === 'sm' ? 'text-lg' : 'text-3xl';
-  const rowMinH = size === 'sm' ? 'min-h-[1.75rem]' : 'min-h-[2.5rem]';
+  const heights = size === 'sm' ? 'h-1.5' : 'h-2.5';
+  const textSizes = size === 'sm' ? 'text-xs' : 'text-sm';
+  const numSizes = size === 'sm' ? 'text-lg' : 'text-2xl md:text-3xl';
+  const rowMinH = size === 'sm' ? 'min-h-[1.75rem]' : 'min-h-[2.25rem]';
   const fill = started ? displayed : 0;
 
   return (
-    <div className="w-full shrink-0">
+    <div className="w-full min-w-0 max-w-full">
       <div className={`flex items-end justify-between gap-2 mb-1.5 ${rowMinH}`}>
         <span
-          className={`font-cinzel font-bold tabular-nums ${numSizes} ${liveLevel.text} inline-flex items-baseline`}
+          className={`font-cinzel font-bold tabular-nums ${numSizes} ${liveLevel.text} inline-flex items-baseline shrink-0`}
         >
           <span className="inline-block min-w-[2ch] text-right">{fill}</span>
           <span className={`${textSizes} font-inter font-normal text-gray-500 ml-0.5`}>/100</span>
         </span>
         <span
-          className={`${textSizes} font-medium ${finalLevel.text} text-right whitespace-nowrap min-w-[7.5rem]`}
+          className={`${textSizes} font-medium ${finalLevel.text} text-right leading-tight max-w-[6.5rem]`}
         >
           {finalLevel.label}
         </span>

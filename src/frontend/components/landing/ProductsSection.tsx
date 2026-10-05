@@ -45,9 +45,12 @@ export function ProductsSection() {
       </div>
 
       <div className={`relative ${landingSectionShellClass}`}>
+        {/*
+          Sticky confined to this grid row: top aligns under the header,
+          bottom releases with the card column (no translate centering).
+        */}
         <div className={`grid grid-cols-1 lg:grid-cols-2 ${landingSectionStackGapClass} items-start`}>
-          {/* Sticky copy: stays centered in viewport while the tall mock scrolls. */}
-          <div className="min-w-0 lg:sticky lg:top-1/2 lg:-translate-y-1/2 lg:self-start">
+          <aside className="min-w-0 order-1 lg:sticky lg:top-28 lg:self-start">
             <div className="[&_h2]:!text-3xl [&_h2]:md:!text-4xl [&_h2]:lg:!text-5xl [&_h2]:!leading-tight">
               <TextBlock revealed={reveal.revealed} delayMs={0}>
                 <LandingSectionIntro
@@ -100,9 +103,9 @@ export function ProductsSection() {
                 </TextBlock>
               </div>
             </div>
-          </div>
+          </aside>
 
-          <div className="min-w-0 rounded-2xl border border-[#D4AF37] p-1 overflow-x-clip">
+          <div className="min-w-0 order-2 rounded-2xl border border-[#D4AF37] p-1 overflow-hidden">
             <ProductResultFrame />
           </div>
         </div>
