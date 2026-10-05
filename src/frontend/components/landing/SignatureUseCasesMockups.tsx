@@ -21,7 +21,9 @@ export function CleanSignatureSvg({
   name?: string;
   className?: string;
 }) {
-  const isMaria = name.includes('Mariã');
+  const reactId = React.useId().replace(/[^a-zA-Z0-9]/g, '');
+  const gradId = `goldGrad-${reactId}`;
+  const glowId = `sigGlow-${reactId}`;
 
   return (
     <svg
@@ -32,13 +34,13 @@ export function CleanSignatureSvg({
       aria-label={`Assinatura harmonizada limpa e legível de ${name}`}
     >
       <defs>
-        <linearGradient id={`goldGrad-${isMaria ? 'maria' : 'joao'}`} x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#f2ca50" />
           <stop offset="45%" stopColor="#ffe57f" />
           <stop offset="85%" stopColor="#d4af37" />
           <stop offset="100%" stopColor="#f2ca50" />
         </linearGradient>
-        <filter id="sigGlowClean" x="-10%" y="-10%" width="120%" height="120%">
+        <filter id={glowId} x="-10%" y="-10%" width="120%" height="120%">
           <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#f2ca50" floodOpacity="0.45" />
         </filter>
       </defs>
@@ -50,8 +52,8 @@ export function CleanSignatureSvg({
           x="160"
           y="38"
           textAnchor="middle"
-          fill={`url(#goldGrad-${isMaria ? 'maria' : 'joao'})`}
-          filter="url(#sigGlowClean)"
+          fill={`url(#${gradId})`}
+          filter={`url(#${glowId})`}
           style={{
             fontFamily: "'Segoe Script', 'Caveat', 'Dancing Script', 'Alex Brush', 'Playfair Display', cursive, sans-serif",
             fontSize: '34px',
@@ -68,7 +70,7 @@ export function CleanSignatureSvg({
           y1="48"
           x2="284"
           y2="42"
-          stroke={`url(#goldGrad-${isMaria ? 'maria' : 'joao'})`}
+          stroke={`url(#${gradId})`}
           strokeWidth="1.6"
           strokeLinecap="round"
           strokeDasharray="4 3"
@@ -88,7 +90,7 @@ export function CleanSignatureSvg({
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[500px] mx-auto rounded-2xl bg-[#141414]/95 p-5 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[500px] mx-auto rounded-2xl bg-[#141414]/95 p-4 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
     >
       {/* Padrão geométrico de fundo estilo cédula de segurança */}
       <div
@@ -220,7 +222,7 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
 export function SocialProfileMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto rounded-2xl bg-[#141414]/95 p-5 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[480px] mx-auto rounded-2xl bg-[#141414]/95 p-4 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
     >
       {/* Brilho de fundo místico roxo e dourado */}
       <div

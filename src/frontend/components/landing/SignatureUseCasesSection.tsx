@@ -276,10 +276,10 @@ export function SignatureUseCasesSection() {
         onTouchEnd={handleTouchEnd}
         className={`lg:hidden flex flex-col justify-between w-full ${
           reduceMotion ? 'py-16 min-h-screen' : 'sticky top-0 h-[100dvh]'
-        } pt-16 pb-5 px-4 overflow-hidden select-none`}
+        } pt-14 xs:pt-16 pb-4 px-3 sm:px-4 overflow-hidden select-none`}
       >
         {/* PARTE SUPERIOR: MOCKUPS (Transição Horizontal da esquerda para a direita) */}
-        <div className="flex-1 min-h-0 flex items-center justify-center relative w-full max-w-[420px] mx-auto overflow-hidden">
+        <div className="flex-1 min-h-0 flex items-center justify-center relative w-full max-w-[480px] mx-auto overflow-hidden">
           {USE_CASES.map((item, idx) => {
             const Mockup = item.MockupComponent;
             const isActive = idx === activeIndex;
@@ -297,7 +297,7 @@ export function SignatureUseCasesSection() {
                 className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full flex justify-center items-center ${mockupTransform}`}
                 aria-hidden={!isActive}
               >
-                <div className="w-full scale-[0.78] xs:scale-[0.85] sm:scale-[0.92] origin-center">
+                <div className="w-full scale-[0.90] xs:scale-[0.96] sm:scale-100 origin-center">
                   <Mockup />
                 </div>
               </div>
@@ -332,7 +332,7 @@ export function SignatureUseCasesSection() {
         </div>
 
         {/* PARTE INFERIOR: TEXTOS CORRESPONDENTES (Transição Horizontal) */}
-        <div className="shrink-0 relative w-full max-w-[420px] mx-auto min-h-[190px] xs:min-h-[205px] overflow-hidden flex items-center">
+        <div className="shrink-0 relative w-full max-w-[480px] mx-auto min-h-[185px] xs:min-h-[200px] overflow-hidden flex items-center">
           {USE_CASES.map((item, idx) => {
             const isActive = idx === activeIndex;
             const isPast = idx < activeIndex;
