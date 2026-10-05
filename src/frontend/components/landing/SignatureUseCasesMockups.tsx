@@ -201,9 +201,6 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
             <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50] animate-ping" />
             Assinatura do Titular / Holder's Signature
           </p>
-          <span className="text-[8px] font-mono text-[#f2ca50]/80 uppercase tracking-widest bg-[#f2ca50]/10 px-2 py-0.5 rounded-full border border-[#f2ca50]/20">
-            Nome Harmonizado
-          </span>
         </div>
 
         {/* Quadro com a assinatura límpida e legível Mariã Silva */}
@@ -211,9 +208,6 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f2ca50]/5 to-transparent pointer-events-none" />
           <CleanSignatureSvg name="Mariã Silva" className="w-full h-12 sm:h-14" />
         </div>
-        <p className="text-center text-[9px] text-gray-400 mt-1.5 italic">
-          Nome harmonizado adotado como firma oficial: <strong className="text-[#f2ca50] not-italic">Mariã Silva</strong> (sem cruzar letras, traço límpido)
-        </p>
       </div>
     </div>
   );
@@ -290,19 +284,14 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 
       {/* Nome e Biografia Profissional / Artística */}
       <div className="relative z-10 mt-4 space-y-1.5">
-        <div className="flex items-center gap-2">
-          <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] leading-tight">
-            João Silva
-          </h4>
-          <span className="text-[10px] text-[#f2ca50] font-medium bg-[#f2ca50]/10 border border-[#f2ca50]/30 px-2 py-0.5 rounded-full">
-            Nome Magnético
-          </span>
-        </div>
+        <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] leading-tight">
+          João Silva
+        </h4>
         <p className="text-xs text-[#d7c6ff]/90 font-medium">
-          Diretor Criativo & Autor • Frequência Alinhada
+          Diretor Criativo & Palestrante Internacional
         </p>
         <p className="text-xs text-gray-400 leading-relaxed">
-          Projetos autorais, palestras e consultoria de alto impacto. Transmitindo clareza e autoridade magnética.
+          Projetos autorais, palestras e consultoria de alto impacto.
         </p>
         <p className="text-xs font-mono text-[#f2ca50]/90 flex items-center gap-1 pt-0.5">
           <span>🔗</span> joaosilva.com.br
@@ -420,7 +409,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
           <CleanSignatureSvg name="Mariã Silva" className="w-full h-12 sm:h-14" />
           <div className="mt-1 pt-1.5 border-t border-[#f2ca50]/20 flex items-center justify-between text-[9px] sm:text-[10px]">
             <div>
-              <p className="font-cinzel font-bold text-[#e5e2e1] leading-none">MARIÃ SILVA</p>
+              <p className="font-cinzel font-bold text-[#e5e2e1] leading-none">MARIA DA SILVA SANTOS</p>
               <p className="text-gray-400 text-[8px] uppercase tracking-widest leading-none mt-0.5">
                 Contratante / Titular
               </p>
@@ -437,82 +426,55 @@ export function ContractMockup({ className = '' }: MockupProps) {
 
 /**
  * MOCKUP 4: Marca Pessoal & Cartão de Visita / Autoria
- * Destaque: Cartão executivo escuro com monograma, tipografia e assinatura límpida de João Silva.
+ * Destaque: Cartão executivo escuro limpo com monograma, tipografia e assinatura límpida de João Silva.
  */
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto rounded-2xl bg-[#141414]/95 p-6 sm:p-7 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[440px] mx-auto rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#121212] border border-[#f2ca50]/40 p-6 sm:p-7 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
     >
-      {/* Geometria sagrada decorativa no canto */}
-      <svg
-        className="absolute -top-10 -right-10 w-44 h-44 text-[#f2ca50]/10 pointer-events-none"
-        viewBox="0 0 100 100"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.75"
-        aria-hidden="true"
-      >
-        <circle cx="50" cy="50" r="45" />
-        <circle cx="50" cy="50" r="30" />
-        <polygon points="50,5 90,75 10,75" />
-        <polygon points="50,95 10,25 90,25" />
-      </svg>
-
-      {/* Cartão de Visita Flutuante com Efeito Dourado */}
-      <div className="relative z-10 rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#121212] border border-[#f2ca50]/40 p-5 sm:p-6 shadow-xl shadow-black/80">
-        {/* Topo do cartão: Monograma 'JS' + Selo de Excelência */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f2ca50]/20 to-[#d4af37]/5 border border-[#f2ca50]/40 flex items-center justify-center shadow-inner">
-            <span className="font-cinzel text-lg font-bold text-[#f2ca50] tracking-wider">
-              JS
-            </span>
-          </div>
-          <div className="text-right">
-            <p className="font-cinzel text-[10px] tracking-[0.2em] text-[#f2ca50] uppercase font-bold">
-              Nome Magnético
-            </p>
-            <p className="text-[9px] text-gray-500 uppercase tracking-widest font-mono">
-              Frequência Harmonizada
-            </p>
-          </div>
+      {/* Topo do cartão: Monograma 'JS' + Identidade */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f2ca50]/20 to-[#d4af37]/5 border border-[#f2ca50]/40 flex items-center justify-center shadow-inner">
+          <span className="font-cinzel text-lg font-bold text-[#f2ca50] tracking-wider">
+            JS
+          </span>
         </div>
-
-        {/* Nome do Profissional / Autor */}
-        <div className="mb-4">
-          <h4 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] tracking-wide mb-1">
-            João Silva
-          </h4>
-          <p className="text-xs text-[#d7c6ff] font-medium tracking-wide">
-            Estrategista Criativo & Palestrante Internacional
+        <div className="text-right">
+          <p className="font-cinzel text-[10px] tracking-[0.2em] text-[#f2ca50] uppercase font-bold">
+            Studio JS
           </p>
-        </div>
-
-        {/* Assinatura limpa e legível sem rabiscos */}
-        <div className="py-2 border-y border-white/5 my-3 bg-black/20 rounded-lg px-2">
-          <CleanSignatureSvg name="João Silva" className="w-full h-11 sm:h-13" />
-        </div>
-
-        {/* Informações de contato e autoridade */}
-        <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-[11px] text-gray-400 pt-2">
-          <div>
-            <p className="text-[8px] uppercase tracking-wider text-gray-500">E-mail Profissional</p>
-            <p className="text-[#e5e2e1] font-mono">contato@joaosilva.com</p>
-          </div>
-          <div>
-            <p className="text-[8px] uppercase tracking-wider text-gray-500">Presença & Mídia</p>
-            <p className="text-[#f2ca50] font-mono">@joaosilva.oficial</p>
-          </div>
+          <p className="text-[9px] text-gray-400 uppercase tracking-widest font-mono">
+            Consultoria & Autoria
+          </p>
         </div>
       </div>
 
-      {/* Nota de aplicação */}
-      <div className="relative z-10 mt-4 flex items-center justify-between text-[10px] text-gray-400 px-1">
-        <span className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]" />
-          Uso em capas de livros, crachás e rodapés de e-mail
-        </span>
-        <span className="font-mono text-[#f2ca50]/70">Exemplo 04</span>
+      {/* Nome do Profissional / Autor */}
+      <div className="mb-4">
+        <h4 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] tracking-wide mb-1">
+          João Silva
+        </h4>
+        <p className="text-xs text-[#d7c6ff] font-medium tracking-wide">
+          Estrategista Criativo & Palestrante Internacional
+        </p>
+      </div>
+
+      {/* Assinatura limpa e legível sem rabiscos */}
+      <div className="py-2 border-y border-white/5 my-3 bg-black/20 rounded-lg px-2">
+        <CleanSignatureSvg name="João Silva" className="w-full h-11 sm:h-13" />
+      </div>
+
+      {/* Informações de contato e autoridade */}
+      <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-[11px] text-gray-400 pt-2">
+        <div>
+          <p className="text-[8px] uppercase tracking-wider text-gray-500">E-mail Profissional</p>
+          <p className="text-[#e5e2e1] font-mono">contato@joaosilva.com</p>
+        </div>
+        <div>
+          <p className="text-[8px] uppercase tracking-wider text-gray-500">Presença & Mídia</p>
+          <p className="text-[#f2ca50] font-mono">@joaosilva.oficial</p>
+        </div>
       </div>
     </div>
   );
