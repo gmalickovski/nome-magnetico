@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   LandingSectionIntro,
   landingSectionShellClass,
+  landingSectionStackGapClass,
 } from './LandingSectionIntro';
 import { useScrollProgress } from './useScrollProgress';
 import {
@@ -26,23 +27,23 @@ const USE_CASES: UseCaseItem[] = [
   {
     id: 'documentos-oficiais',
     stepNumber: '01',
-    tag: 'Validade Cívica & Identidade Oficial',
+    tag: 'A Identidade Oficial',
     title: 'Documentos Pessoais: CNH, RG e CIN',
-    exampleName: 'Maria Silva',
+    exampleName: 'Mariã Silva',
     description:
-      'A legislação brasileira assegura sua liberdade para assinar como desejar em documentos oficiais, desde que mantida a consistência grafotécnica. Ao emitir ou renovar a Carteira de Identidade Nacional (CIN), CNH ou passaporte com seu Nome Harmonizado, você ancora essa nova vibração em todas as esferas cívicas da sua vida.',
+      'A legislação brasileira assegura sua liberdade para assinar como desejar em documentos oficiais, desde que mantida a consistência grafotécnica. No documento, o nome de certidão de nascimento permanece no registro civil, enquanto o seu Nome Harmonizado — Mariã Silva — é adotado como a assinatura oficial límpida, ancorando essa frequência em todas as esferas cívicas da sua vida.',
     bulletPoints: [
-      'Válida na emissão da Carteira de Identidade Nacional (CIN)',
-      'Aceita em CNH, passaportes e cartórios de registro',
-      'Proteção jurídica através da consistência grafotécnica',
+      'O nome civil de certidão permanece inalterado no documento',
+      'O nome harmonizado (Mariã Silva) é firmado no campo oficial de assinatura',
+      'Assinatura límpida, legível e ascendente, sem traços que cruzem letras',
     ],
     MockupComponent: DocumentCinMockup,
   },
   {
     id: 'redes-sociais',
     stepNumber: '02',
-    tag: 'Projeção Magnética & Autoridade',
-    title: 'Presença Digital & Redes Sociais',
+    tag: 'A Presença Digital',
+    title: 'Nome Artístico & Redes Sociais',
     exampleName: 'João Silva',
     description:
       'No Instagram, LinkedIn, YouTube e no seu ecossistema digital, seu nome é a primeira frequência que o mundo recebe. Adotar a variação harmonizada no @handle, no nome de exibição e na biografia elimina bloqueios de visibilidade e atrai conexões e oportunidades alinhadas ao seu propósito de Destino.',
@@ -56,11 +57,11 @@ const USE_CASES: UseCaseItem[] = [
   {
     id: 'contratos-negocios',
     stepNumber: '03',
-    tag: 'Prosperidade Comercial & Acordos',
+    tag: 'Os Negócios',
     title: 'Contratos, Sociedades & Bancos',
-    exampleName: 'Maria Silva',
+    exampleName: 'Mariã Silva',
     description:
-      'Em contratos de prestação de serviços, abertura de empresas, fechamento de propostas e transações bancárias — físicas ou via Gov.br e DocuSign. A vibração equilibrada da assinatura harmonizada protege a energia de troca e realização material, prevenindo atritos contratuais e destravando a prosperidade nos negócios.',
+      'Em contratos de prestação de serviços, abertura de empresas, fechamento de propostas e transações bancárias — físicas ou via Gov.br e DocuSign. A assinatura límpida com seu nome harmonizado — Mariã Silva —, escrita de forma limpa e ascendente sem letras que cruzem por cima, equilibra a energia de realização material e destravamento comercial.',
     bulletPoints: [
       'Contratos de prestação de serviços e parcerias comerciais',
       'Assinatura digital avançada (Gov.br, DocuSign, Clicksign)',
@@ -71,14 +72,14 @@ const USE_CASES: UseCaseItem[] = [
   {
     id: 'marca-pessoal',
     stepNumber: '04',
-    tag: 'Alinhamento Diário & Criação',
+    tag: 'A Marca Pessoal',
     title: 'Marca Pessoal, E-mails & Cartões',
     exampleName: 'João Silva',
     description:
       'Em assinaturas de e-mail profissional, cartões de visita, crachás, capas de livros, certificados e obras autorais. Cada repetição consciente da sua assinatura harmonizada condiciona sua mente e seu campo vibracional ao novo padrão de clareza, abundância e realização.',
     bulletPoints: [
       'Rodapé e assinatura de e-mails profissionais',
-      'Cartões de visita, timbrados e papelaria de luxo',
+      'Cartões de visita, timbrados e papelaria executiva',
       'Obras autorais, capas de livros e cursos',
     ],
     MockupComponent: BrandingCardMockup,
@@ -125,7 +126,7 @@ function MobileUseCaseCard({
   return (
     <article
       ref={cardRef}
-      className={`rounded-2xl bg-[#161616]/95 border border-[#D4AF37]/25 p-5 sm:p-6 shadow-2xl shadow-black/80 transition-all duration-700 ease-out flex flex-col gap-5 ${
+      className={`rounded-2xl bg-[#161616]/95 border border-[#D4AF37]/35 p-5 sm:p-6 shadow-2xl shadow-black/80 transition-all duration-700 ease-out flex flex-col gap-5 ${
         reduceMotion || revealed
           ? 'opacity-100 translate-y-0 scale-100'
           : 'opacity-0 translate-y-8 scale-95'
@@ -141,15 +142,15 @@ function MobileUseCaseCard({
           </span>
         </div>
 
-        <p className="font-cinzel text-[10px] uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-1">
+        <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
           {item.tag}
         </p>
 
-        <h3 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-3 leading-tight">
+        <h3 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-2 leading-tight">
           {item.title}
         </h3>
 
-        <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mb-4">
+        <p className="text-gray-400 text-xs sm:text-sm leading-relaxed mb-4">
           {item.description}
         </p>
 
@@ -163,9 +164,11 @@ function MobileUseCaseCard({
         </ul>
       </div>
 
-      {/* Mockup do Item no Mobile */}
-      <div className="pt-2">
-        <Mockup />
+      {/* Mockup do Item no Mobile dentro do frame padrão */}
+      <div className="rounded-2xl border border-[#D4AF37]/60 p-1 overflow-hidden">
+        <div className="rounded-xl bg-[#131313] p-2 sm:p-3 overflow-hidden">
+          <Mockup />
+        </div>
       </div>
     </article>
   );
@@ -187,160 +190,151 @@ export function SignatureUseCasesSection() {
     return 3;
   }, [progress, reduceMotion, manualIndex]);
 
-  // Se o usuário clicar manualmente num pill, solta o controle manual após um tempo
+  // Se o usuário clicar manualmente em um marcador, libera o controle manual após alguns segundos
   const handleSelectTab = (idx: number) => {
     setManualIndex(idx);
     window.setTimeout(() => {
       setManualIndex(null);
-    }, 4000);
+    }, 4500);
   };
-
-  const currentItem = USE_CASES[activeIndex] ?? USE_CASES[0];
 
   return (
     <section
       id="onde-usar"
       ref={ref}
-      className={`relative bg-[#111111] scroll-mt-28 lg:scroll-mt-32 ${
-        reduceMotion ? 'py-20 lg:py-28' : 'lg:h-[350vh] pt-20 pb-20 lg:py-0'
+      className={`relative bg-[#111111] scroll-mt-28 ${
+        reduceMotion ? 'py-20 md:py-20' : 'lg:h-[320vh] py-20 md:py-20'
       }`}
       aria-label="Onde e como usar sua assinatura harmonizada"
     >
-      {/* Brilho de fundo cósmico sutil */}
+      {/* Brilho cósmico sutil no mesmo padrão de ProductsSection */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        <div className="absolute top-1/4 left-[5%] w-[320px] h-[320px] lg:w-[480px] lg:h-[480px] bg-[#D4AF37]/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 right-[5%] w-[300px] h-[300px] lg:w-[440px] lg:h-[440px] bg-[#d7c6ff]/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 right-0 md:right-[10%] w-[min(100%,280px)] h-[280px] md:w-[420px] md:h-[420px] bg-[#D4AF37]/5 rounded-full blur-[80px] md:blur-[120px]" />
       </div>
 
       {/* ── EXPERIÊNCIA DESKTOP PINNED (lg: 1024px+) ────────────────────── */}
-      <div
-        className={`hidden lg:flex flex-col justify-center pt-24 pb-12 ${
-          reduceMotion ? '' : 'sticky top-0 h-screen'
-        } w-full overflow-hidden`}
-      >
-        <div className={landingSectionShellClass}>
-          {/* Cabeçalho da Seção */}
-          <div className="mb-8 xl:mb-10 text-center lg:text-left">
-            <LandingSectionIntro
-              align="left"
-              label="Onde e como usar"
-              title="Sua Assinatura Harmonizada no Mundo Real"
-              description="Entenda como e onde aplicar seu Nome Social no dia a dia — da documentação oficial aos seus negócios e presença digital."
-            />
-          </div>
+      <div className="hidden lg:block w-full">
+        <div className={`relative ${landingSectionShellClass}`}>
+          {/*
+            Padrão rigoroso idêntico a ProductsSection:
+            - Grid de 2 colunas com landingSectionStackGapClass
+            - Lado Esquerdo: aside com lg:sticky lg:top-28 contendo todo o texto e marcadores
+            - Lado Direito: frame dourado border border-[#D4AF37] p-1 contendo apenas os mockups
+          */}
+          <div className={`grid grid-cols-1 lg:grid-cols-2 ${landingSectionStackGapClass} items-start`}>
+            {/* ── LADO ESQUERDO: Título, Descrição, Marcadores e Conteúdo Dinâmico ── */}
+            <aside className="min-w-0 order-1 lg:sticky lg:top-28 lg:self-start">
+              <div className="[&_h2]:!text-3xl [&_h2]:md:!text-4xl [&_h2]:lg:!text-5xl [&_h2]:!leading-tight">
+                <LandingSectionIntro
+                  align="left"
+                  label="Onde e como usar"
+                  title="Sua assinatura no mundo real."
+                />
 
-          {/* Grid Principal em 2 Colunas */}
-          <div className="grid grid-cols-12 gap-8 xl:gap-12 items-center">
-            {/* Coluna Esquerda: Texto dinâmico com transição de subida */}
-            <div className="col-span-6 flex flex-col justify-between min-h-[460px]">
-              <div>
-                {/* Indicador de passos em pills clicáveis */}
-                <div className="flex items-center gap-2 mb-6">
-                  {USE_CASES.map((item, idx) => {
-                    const isActive = idx === activeIndex;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleSelectTab(idx)}
-                        className={`transition-all duration-300 rounded-full px-3 py-1 text-xs font-semibold flex items-center gap-1.5 ${
-                          isActive
-                            ? 'bg-[#f2ca50] text-[#131313] shadow-md shadow-[#f2ca50]/20 scale-105'
-                            : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
-                        }`}
-                      >
-                        <span className="font-cinzel">{item.stepNumber}</span>
-                        <span className="hidden xl:inline text-[11px] font-normal truncate max-w-[110px]">
-                          {item.title.split(':')[0]}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <p className="text-[#e5e2e1] text-sm md:text-base leading-relaxed mt-4 mb-6 max-w-prose mx-auto lg:mx-0">
+                  Da documentação oficial aos negócios e presença digital — entenda como aplicar seu Nome Social no dia a dia.
+                </p>
 
-                {/* Bloco de Texto Ativo com Transição Suave */}
-                <div className="relative overflow-hidden min-h-[280px]">
-                  {USE_CASES.map((item, idx) => {
-                    const isActive = idx === activeIndex;
-                    return (
-                      <div
-                        key={item.id}
-                        className={`transition-all duration-700 ease-[cubic-bezier(0.33,1,0.32,1)] ${
-                          isActive
-                            ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
-                            : 'opacity-0 translate-y-8 pointer-events-none absolute inset-x-0 top-0 z-0'
-                        }`}
-                        aria-hidden={!isActive}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full border border-[#f2ca50]/20">
-                            CASO {item.stepNumber}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            Exemplo com: <strong className="text-[#f2ca50]">{item.exampleName}</strong>
-                          </span>
+                {/* Área de conteúdo dos casos com marcadores verticais no lado esquerdo */}
+                <div className="flex items-start gap-4 sm:gap-6 mt-8">
+                  {/* Marcadores verticais no estilo da Seção 2 no sentido da rolagem */}
+                  <div
+                    className="flex flex-col items-center gap-2.5 pt-2 shrink-0"
+                    role="tablist"
+                    aria-label="Etapas dos casos de uso"
+                  >
+                    {USE_CASES.map((item, idx) => {
+                      const isActive = idx === activeIndex;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          onClick={() => handleSelectTab(idx)}
+                          title={`Caso ${item.stepNumber}: ${item.title}`}
+                          className={`cursor-pointer transition-all duration-500 rounded-full ${
+                            isActive
+                              ? 'w-1.5 h-10 bg-[#f2ca50] shadow-[0_0_8px_rgba(242,202,80,0.6)]'
+                              : 'w-1.5 h-2.5 bg-white/20 hover:bg-white/40'
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Textos dinâmicos dos casos com transição que acompanha a direção do scroll:
+                      - Ao descer a página: o item anterior sobe (-translate-y-12) e o novo vem de baixo (+translate-y-12 -> 0).
+                      - Ao subir a página: o item atual desce (+translate-y-12) e o anterior vem de cima (-translate-y-12 -> 0).
+                  */}
+                  <div className="flex-1 min-w-0 relative overflow-hidden min-h-[310px]">
+                    {USE_CASES.map((item, idx) => {
+                      const isActive = idx === activeIndex;
+                      const isPast = idx < activeIndex;
+
+                      const transformClass = isActive
+                        ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
+                        : isPast
+                        ? 'opacity-0 -translate-y-12 pointer-events-none absolute inset-x-0 top-0 z-0'
+                        : 'opacity-0 translate-y-12 pointer-events-none absolute inset-x-0 top-0 z-0';
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform ${transformClass}`}
+                          aria-hidden={!isActive}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-0.5 rounded-full border border-[#f2ca50]/20">
+                              USO {item.stepNumber}
+                            </span>
+                            <span className="text-xs text-gray-400 font-mono">
+                              Exemplo: <strong className="text-[#f2ca50] font-sans">{item.exampleName}</strong>
+                            </span>
+                          </div>
+
+                          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
+                            {item.tag}
+                          </p>
+
+                          <h3 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-2 leading-tight">
+                            {item.title}
+                          </h3>
+
+                          <p className="text-gray-400 text-xs sm:text-sm leading-relaxed mb-4 max-w-prose">
+                            {item.description}
+                          </p>
+
+                          {/* Bullets de destaque */}
+                          <div className="space-y-2">
+                            {item.bulletPoints.map((bullet, bIdx) => (
+                              <div key={bIdx} className="flex items-start gap-2 text-xs text-gray-300">
+                                <span className="text-[#f2ca50] text-xs shrink-0 mt-0.5">✦</span>
+                                <span>{bullet}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-
-                        <p className="font-cinzel text-xs uppercase tracking-[0.16em] text-[#D4AF37]/80 mb-2">
-                          {item.tag}
-                        </p>
-
-                        <h3 className="font-cinzel text-2xl xl:text-3xl font-bold text-[#e5e2e1] mb-4 leading-tight">
-                          {item.title}
-                        </h3>
-
-                        <p className="text-gray-300 text-sm xl:text-base leading-relaxed mb-6 max-w-prose">
-                          {item.description}
-                        </p>
-
-                        {/* Bullets de destaque */}
-                        <div className="space-y-2.5">
-                          {item.bulletPoints.map((bullet, bIdx) => (
-                            <div key={bIdx} className="flex items-start gap-2.5 text-xs xl:text-sm text-gray-300">
-                              <span className="text-[#f2ca50] text-sm shrink-0">✦</span>
-                              <span>{bullet}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
+            </aside>
 
-              {/* Barra de progresso de scroll sutil na base da coluna esquerda */}
-              <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500">
-                <span className="font-mono">
-                  Etapa {activeIndex + 1} de {USE_CASES.length}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  {USE_CASES.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-1.5 rounded-full transition-all duration-500 ${
-                        idx === activeIndex
-                          ? 'w-6 bg-[#f2ca50] shadow-[0_0_8px_rgba(242,202,80,0.5)]'
-                          : 'w-2 bg-white/20'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Coluna Direita: Mockup Vetorial Abstrato com Crossfade */}
-            <div className="col-span-6 flex justify-center items-center">
-              <div className="w-full max-w-[500px] min-h-[460px] flex items-center justify-center relative">
+            {/* ── LADO DIREITO: SOMENTE O MOCKUP NO MESMO FRAME PADRÃO ────── */}
+            <div className="min-w-0 order-2 rounded-2xl border border-[#D4AF37] p-1 overflow-hidden">
+              <div className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden flex items-center justify-center min-h-[460px]">
                 {USE_CASES.map((item, idx) => {
                   const Mockup = item.MockupComponent;
                   const isActive = idx === activeIndex;
                   return (
                     <div
                       key={item.id}
-                      className={`transition-all duration-700 ease-[cubic-bezier(0.33,1,0.32,1)] w-full ${
+                      className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full ${
                         isActive
                           ? 'opacity-100 scale-100 relative z-10'
                           : 'opacity-0 scale-95 pointer-events-none absolute inset-0 z-0'
@@ -362,7 +356,7 @@ export function SignatureUseCasesSection() {
         <div className={landingSectionShellClass}>
           <LandingSectionIntro
             label="Onde e como usar"
-            title="Sua Assinatura Harmonizada no Mundo Real"
+            title="Sua assinatura no mundo real."
             description="Entenda como aplicar sua nova assinatura nos documentos oficiais, redes sociais, contratos e dia a dia profissional."
             className="mb-8 text-center"
           />

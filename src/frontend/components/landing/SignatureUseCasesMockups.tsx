@@ -2,150 +2,88 @@ import React from 'react';
 
 const GOLD = '#D4AF37';
 const GOLD_LIGHT = '#f2ca50';
-const GOLD_MUTED = 'rgba(212, 175, 55, 0.4)';
-const PURPLE = '#d7c6ff';
 
 interface MockupProps {
   className?: string;
 }
 
 /**
- * Assinatura caligráfica vetorial fluida de Maria Silva (ascendente, harmoniosa).
+ * Assinatura harmonizada límpida e legível em SVG.
+ * Regras cabalísticas da assinatura:
+ * - Legível (escrita limpa, sem rabiscos ou traços cortantes negativos).
+ * - Traçado suavemente ascendente (-2 graus) para emanar expansão e prosperidade.
+ * - Mantém o acento de harmonização exato (Mariã Silva / João Silva).
  */
-export function SignatureMariaSilva({ className = 'w-full h-auto' }: { className?: string }) {
+export function CleanSignatureSvg({
+  name = 'Mariã Silva',
+  className = 'w-full h-12 sm:h-14',
+}: {
+  name?: string;
+  className?: string;
+}) {
+  const isMaria = name.includes('Mariã');
+
   return (
     <svg
-      viewBox="0 0 320 80"
+      viewBox="0 0 320 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      aria-label="Assinatura caligráfica de Maria Silva"
+      aria-label={`Assinatura harmonizada limpa e legível de ${name}`}
     >
       <defs>
-        <linearGradient id="sigGoldMaria" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`goldGrad-${isMaria ? 'maria' : 'joao'}`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#f2ca50" />
-          <stop offset="60%" stopColor="#d4af37" />
-          <stop offset="100%" stopColor="#fef08a" />
+          <stop offset="45%" stopColor="#ffe57f" />
+          <stop offset="85%" stopColor="#d4af37" />
+          <stop offset="100%" stopColor="#f2ca50" />
         </linearGradient>
-        <filter id="sigGlowMaria" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#f2ca50" floodOpacity="0.4" />
+        <filter id="sigGlowClean" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#f2ca50" floodOpacity="0.45" />
         </filter>
       </defs>
 
-      {/* Traçado cursivo ascendente principal "Maria" */}
-      <path
-        d="M 24 58 C 30 32, 42 16, 52 18 C 58 20, 56 48, 62 48 C 68 48, 76 28, 84 28 C 90 28, 92 46, 98 46 C 104 46, 114 36, 120 40 C 126 44, 128 50, 134 44 C 140 38, 142 34, 148 38 C 152 42, 154 50, 160 42 C 166 34, 174 36, 178 40"
-        stroke="url(#sigGoldMaria)"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#sigGlowMaria)"
-      />
+      {/* Rotação ascendente suave de 2 graus (regra: traço ascendente sem cruzar letras) */}
+      <g transform="rotate(-2.5 160 32)">
+        {/* Texto manuscrito/caligráfico límpido e 100% legível */}
+        <text
+          x="160"
+          y="38"
+          textAnchor="middle"
+          fill={`url(#goldGrad-${isMaria ? 'maria' : 'joao'})`}
+          filter="url(#sigGlowClean)"
+          style={{
+            fontFamily: "'Segoe Script', 'Caveat', 'Dancing Script', 'Alex Brush', 'Playfair Display', cursive, sans-serif",
+            fontSize: '34px',
+            fontWeight: 600,
+            letterSpacing: '1.5px',
+          }}
+        >
+          {name}
+        </text>
 
-      {/* Laço e conexão "Silva" */}
-      <path
-        d="M 174 44 C 182 30, 192 18, 198 22 C 204 26, 196 52, 206 48 C 214 44, 222 28, 228 26 C 234 24, 236 48, 244 46 C 252 44, 260 20, 268 18 C 274 16, 272 46, 280 44 C 286 42, 296 34, 304 32"
-        stroke="url(#sigGoldMaria)"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#sigGlowMaria)"
-      />
-
-      {/* Pingo na letra 'i' em formato de centelha dourada */}
-      <circle cx="132" cy="24" r="2.2" fill="#fef08a" />
-      <circle cx="232" cy="18" r="2.2" fill="#fef08a" />
-
-      {/* Traço inferior ascendente de sustentação vibracional */}
-      <path
-        d="M 38 66 C 90 62, 180 58, 298 38"
-        stroke="url(#sigGoldMaria)"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeDasharray="4 2"
-        opacity="0.85"
-      />
-    </svg>
-  );
-}
-
-/**
- * Assinatura caligráfica vetorial fluida de João Silva (firme, ascendente e magnética).
- */
-export function SignatureJoaoSilva({ className = 'w-full h-auto' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 320 80"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="Assinatura caligráfica de João Silva"
-    >
-      <defs>
-        <linearGradient id="sigGoldJoao" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#f2ca50" />
-          <stop offset="55%" stopColor="#d4af37" />
-          <stop offset="100%" stopColor="#fef08a" />
-        </linearGradient>
-        <filter id="sigGlowJoao" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#f2ca50" floodOpacity="0.4" />
-        </filter>
-      </defs>
-
-      {/* Traço 'J' maiúsculo fluido e dinâmico com laço profundo */}
-      <path
-        d="M 44 24 C 62 18, 78 20, 68 34 C 58 48, 54 62, 48 72 C 42 82, 30 78, 34 64 C 38 50, 64 42, 88 40"
-        stroke="url(#sigGoldJoao)"
-        strokeWidth="3.0"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#sigGlowJoao)"
-      />
-
-      {/* 'oão' com til estilizado */}
-      <path
-        d="M 88 40 C 94 32, 106 32, 110 40 C 114 48, 106 52, 114 46 C 122 40, 130 36, 136 44 C 142 52, 150 36, 158 42"
-        stroke="url(#sigGoldJoao)"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#sigGlowJoao)"
-      />
-      {/* Til vibracional no 'a' */}
-      <path
-        d="M 124 24 C 130 20, 136 28, 144 22"
-        stroke="url(#sigGoldJoao)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-
-      {/* 'Silva' com 'S' aberto e corte ascendente */}
-      <path
-        d="M 172 46 C 182 30, 196 20, 202 24 C 208 28, 198 50, 208 48 C 216 46, 226 26, 232 24 C 238 22, 240 46, 248 44 C 256 42, 266 18, 274 16 C 280 14, 280 44, 288 42 C 294 40, 304 32, 312 30"
-        stroke="url(#sigGoldJoao)"
-        strokeWidth="2.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#sigGlowJoao)"
-      />
-      {/* Pingo no 'i' */}
-      <circle cx="236" cy="16" r="2.2" fill="#fef08a" />
-
-      {/* Traço ascendente de finalização firme */}
-      <path
-        d="M 68 68 C 120 66, 210 58, 308 34"
-        stroke="url(#sigGoldJoao)"
-        strokeWidth="2.0"
-        strokeLinecap="round"
-        opacity="0.9"
-      />
+        {/* Linha guia suave de sustentação ascendente na base */}
+        <line
+          x1="36"
+          y1="48"
+          x2="284"
+          y2="42"
+          stroke={`url(#goldGrad-${isMaria ? 'maria' : 'joao'})`}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeDasharray="4 3"
+          opacity="0.75"
+        />
+      </g>
     </svg>
   );
 }
 
 /**
  * MOCKUP 1: Documento Oficial (CIN - Carteira de Identidade Nacional / CNH)
- * Estilo: Linhas douradas sobre matriz obsidian, micrografia de segurança e campo de assinatura.
+ * Destaque:
+ * - Nome Civil no documento: MARIA DA SILVA SANTOS (registro de nascimento).
+ * - Campo da assinatura: MARIÃ SILVA (nome harmonizado adotado como assinatura oficial limpa).
  */
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
@@ -207,7 +145,6 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
         {/* Foto biométrica / Silhueta estilizada com auréola */}
         <div className="col-span-4 sm:col-span-3 flex flex-col items-center">
           <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl bg-gradient-to-b from-white/10 to-white/5 border border-[#f2ca50]/30 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-            {/* Linha holográfica biométrica */}
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#f2ca50] to-transparent animate-pulse" />
             <svg viewBox="0 0 24 24" className="w-10 h-10 text-gray-400/80" fill="currentColor">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
@@ -222,11 +159,11 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
           </div>
         </div>
 
-        {/* Campos Oficiais */}
+        {/* Campos Oficiais com Nome de Certidão de Nascimento */}
         <div className="col-span-8 sm:col-span-9 space-y-2">
           <div>
             <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-gray-400">
-              Nome Social / Nome Civil
+              Nome Civil (Certidão de Nascimento)
             </p>
             <p className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] tracking-wide">
               MARIA DA SILVA SANTOS
@@ -257,25 +194,25 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
         </div>
       </div>
 
-      {/* Campo Destacado da Assinatura com Linhas Douradas */}
+      {/* Campo da Assinatura: onde vai o NOME HARMONIZADO LIMPO (Mariã Silva) */}
       <div className="relative z-10 mt-4 pt-3 border-t border-dashed border-[#f2ca50]/30">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-1.5">
           <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] font-medium text-[#f2ca50] flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50] animate-ping" />
             Assinatura do Titular / Holder's Signature
           </p>
-          <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest">
-            Frequência Alinhada
+          <span className="text-[8px] font-mono text-[#f2ca50]/80 uppercase tracking-widest bg-[#f2ca50]/10 px-2 py-0.5 rounded-full border border-[#f2ca50]/20">
+            Nome Harmonizado
           </span>
         </div>
 
-        {/* Quadro da assinatura caligráfica */}
-        <div className="relative rounded-xl bg-black/40 border border-[#f2ca50]/40 p-2 sm:p-3 overflow-hidden group">
+        {/* Quadro com a assinatura límpida e legível Mariã Silva */}
+        <div className="relative rounded-xl bg-black/40 border border-[#f2ca50]/40 p-2 sm:p-3 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f2ca50]/5 to-transparent pointer-events-none" />
-          <SignatureMariaSilva className="w-full h-12 sm:h-14" />
+          <CleanSignatureSvg name="Mariã Silva" className="w-full h-12 sm:h-14" />
         </div>
         <p className="text-center text-[9px] text-gray-400 mt-1.5 italic">
-          Nome Harmonizado adotado como firma oficial: <strong className="text-[#f2ca50] not-italic">Maria Silva</strong>
+          Nome harmonizado adotado como firma oficial: <strong className="text-[#f2ca50] not-italic">Mariã Silva</strong> (sem cruzar letras, traço límpido)
         </p>
       </div>
     </div>
@@ -415,7 +352,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 
 /**
  * MOCKUP 3: Contratos & Negócios (Instrumento Particular de Contrato / Acordo Comercial)
- * Estilo: Pergaminho executivo obsidian com carimbo dourado holográfico e linha de assinatura autenticada.
+ * Destaque: Campo de assinatura com MARIÃ SILVA escrito de forma limpa, ascendente e legível.
  */
 export function ContractMockup({ className = '' }: MockupProps) {
   return (
@@ -471,7 +408,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
         </div>
       </div>
 
-      {/* Fechamento formal do contrato e assinatura autenticada */}
+      {/* Fechamento formal do contrato e assinatura límpida MARIÃ SILVA */}
       <div className="relative z-10 mt-5 pt-3 border-t border-dashed border-[#f2ca50]/30">
         <div className="flex items-center justify-between text-[9px] text-gray-400 mb-2">
           <span>São Paulo, SP — Em testemunho da verdade</span>
@@ -480,10 +417,10 @@ export function ContractMockup({ className = '' }: MockupProps) {
 
         {/* Bloco de assinatura da parte */}
         <div className="rounded-xl bg-black/40 border border-[#f2ca50]/40 p-2 sm:p-3 relative overflow-hidden">
-          <SignatureMariaSilva className="w-full h-12 sm:h-14" />
+          <CleanSignatureSvg name="Mariã Silva" className="w-full h-12 sm:h-14" />
           <div className="mt-1 pt-1.5 border-t border-[#f2ca50]/20 flex items-center justify-between text-[9px] sm:text-[10px]">
             <div>
-              <p className="font-cinzel font-bold text-[#e5e2e1] leading-none">MARIA SILVA</p>
+              <p className="font-cinzel font-bold text-[#e5e2e1] leading-none">MARIÃ SILVA</p>
               <p className="text-gray-400 text-[8px] uppercase tracking-widest leading-none mt-0.5">
                 Contratante / Titular
               </p>
@@ -500,7 +437,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
 
 /**
  * MOCKUP 4: Marca Pessoal & Cartão de Visita / Autoria
- * Estilo: Cartão executivo escuro com monograma em alto relevo, acabamento dourado e contatos.
+ * Destaque: Cartão executivo escuro com monograma, tipografia e assinatura límpida de João Silva.
  */
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
@@ -551,9 +488,9 @@ export function BrandingCardMockup({ className = '' }: MockupProps) {
           </p>
         </div>
 
-        {/* Assinatura em Hot-Stamping Dourado sobre o cartão */}
+        {/* Assinatura limpa e legível sem rabiscos */}
         <div className="py-2 border-y border-white/5 my-3 bg-black/20 rounded-lg px-2">
-          <SignatureJoaoSilva className="w-full h-11 sm:h-13" />
+          <CleanSignatureSvg name="João Silva" className="w-full h-11 sm:h-13" />
         </div>
 
         {/* Informações de contato e autoridade */}
