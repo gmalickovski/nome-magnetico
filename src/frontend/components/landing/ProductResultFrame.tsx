@@ -1,5 +1,5 @@
-import React from 'react';
-import ScoreDisplay from '../app/ScoreDisplay';
+import React, { useEffect, useRef, useState } from 'react';
+import CompatibilityBadge from '../app/CompatibilityBadge';
 import {
   HARMONY_STAR_CX,
   HARMONY_STAR_CY,
@@ -18,8 +18,10 @@ import {
   harmonyStarPts,
   harmonyStarTipXY,
 } from '../app/harmonizationStarGeometry';
+import { ProductAnimatedScore } from './ProductAnimatedScore';
 
 const GOLD = '#D4AF37';
+
 /** Demo pairing validated against analisarNomeSocial("Maria da Silva Santos", "26/05/1971"). */
 const BIRTH_NAME = 'MARIA DA SILVA SANTOS';
 const INDICATED_NAME = 'MARIÃ SILVA';
@@ -27,7 +29,6 @@ const BIRTH_DATE = '26 de maio de 1971';
 const DEMO_SCORE_BIRTH = 0;
 const DEMO_SCORE_HARMONIZED = 83;
 
-/** Demo values — outer (harmonizado) / inner (nascimento), same order as star tips. */
 const DEMO_GOLD_NUMS = [4, 8, 8, 3, 9];
 const DEMO_RED_NUMS = [4, 6, 5, 1, 1];
 
@@ -44,13 +45,102 @@ const INNER_PTS = harmonyStarPts(
   HARMONY_STAR_INNER_INNER,
 );
 
-/**
- * Static preview of the Nome Social result (certificate + harmonization star).
- * Mirrors the live resultado layout; numbers and names are illustrative only.
- */
-export function ProductResultFrame() {
+type Compat = 'favoravel' | 'neutro' | 'desfavoravel';
+
+interface DemoSuggestion {
+  nome: string;
+  score: number;
+  compatibilidade: Compat;
+  expressao: number;
+  destino: number;
+  motivacao: number;
+  impressao: number;
+  missao: number;
+  bloqueios: number;
+}
+
+/** Grouped demo suggestions — same fields as app result cards. */
+const DEMO_SUGGESTIONS: DemoSuggestion[] = [
+  {
+    nome: 'MARIA DA SANNTOS',
+    score: 84,
+    compatibilidade: 'favoravel',
+    expressao: 9,
+    destino: 4,
+    motivacao: 5,
+    impressao: 4,
+    missao: 4,
+    bloqueios: 0,
+  },
+  {
+    nome: 'MARIÃ SILVA',
+    score: 83,
+    compatibilidade: 'favoravel',
+    expressao: 8,
+    destino: 4,
+    motivacao: 8,
+    impressao: 9,
+    missao: 3,
+    bloqueios: 0,
+  },
+  {
+    nome: 'MARIA SILVA',
+    score: 84,
+    compatibilidade: 'favoravel',
+    expressao: 9,
+    destino: 4,
+    motivacao: 6,
+    impressao: 3,
+    missao: 4,
+    bloqueios: 0,
+  },
+  {
+    nome: 'MARIA SANTOS',
+    score: 57,
+    compatibilidade: 'desfavoravel',
+    expressao: 5,
+    destino: 4,
+    motivacao: 11,
+    impressao: 3,
+    missao: 9,
+    bloqueios: 0,
+  },
+  {
+    nome: 'MARIA DA SILVA',
+    score: 6,
+    compatibilidade: 'neutro',
+    expressao: 1,
+    destino: 4,
+    motivacao: 6,
+    impressao: 4,
+    missao: 5,
+    bloqueios: 4,
+  },
+];
+
+type Phase = 'idle' | 'harmony' | 'scores' | 'suggestions';
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function HarmonyPanel({
+  visible,
+  scoresPlay,
+}: {
+  visible: boolean;
+  scoresPlay: boolean;
+}) {
   return (
-    <div className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0">
+    <div
+      className={`w-full transition-[opacity,transform] duration-[800ms] ease-out ${
+        visible
+          ? 'opacity-100 translate-y-0 relative'
+          : 'opacity-0 translate-y-3 pointer-events-none absolute inset-0'
+      }`}
+      aria-hidden={!visible}
+    >
       <section className="rounded-2xl bg-white/5 p-4 sm:p-5 mb-5">
         <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4">
           Análise de Nome Social — Certificado Cabalístico
@@ -68,7 +158,7 @@ export function ProductResultFrame() {
               <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
             </div>
             <div className="w-full sm:w-44 shrink-0">
-              <ScoreDisplay score={DEMO_SCORE_BIRTH} size="lg" />
+              <ProductAnimatedScore score={DEMO_SCORE_BIRTH} play={scoresPlay} size="lg" delayMs={0} />
             </div>
           </div>
 
@@ -82,7 +172,12 @@ export function ProductResultFrame() {
               </h3>
             </div>
             <div className="w-full sm:w-44 shrink-0">
-              <ScoreDisplay score={DEMO_SCORE_HARMONIZED} size="lg" />
+              <ProductAnimatedScore
+                score={DEMO_SCORE_HARMONIZED}
+                play={scoresPlay}
+                size="lg"
+                delayMs={450}
+              />
             </div>
           </div>
         </div>
@@ -175,7 +270,7 @@ export function ProductResultFrame() {
         </svg>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-8 mb-2 text-xs text-gray-400 px-0.5">
+      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-8 text-xs text-gray-400 px-0.5">
         <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
           <span
             className="inline-block w-3 h-3 rounded-full shrink-0 border border-red-500"
@@ -192,6 +287,152 @@ export function ProductResultFrame() {
           />
           <span className="truncate font-medium text-[#D4AF37]">{INDICATED_NAME}</span>
         </span>
+      </div>
+    </div>
+  );
+}
+
+function SuggestionsPanel({
+  visible,
+  stagger,
+}: {
+  visible: boolean;
+  stagger: boolean;
+}) {
+  return (
+    <div
+      className={`w-full transition-[opacity,transform] duration-[800ms] ease-out ${
+        visible
+          ? 'opacity-100 translate-y-0 relative'
+          : 'opacity-0 translate-y-3 pointer-events-none absolute inset-0'
+      }`}
+      aria-hidden={!visible}
+    >
+      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2 px-0.5">
+        Comparar e escolher
+      </p>
+      <h4 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+        Sugestões para testar
+      </h4>
+      <p className="text-xs text-gray-400 px-0.5 mb-4 leading-relaxed">
+        Variações ranqueadas com score, compatibilidade e bloqueios — você escolhe a assinatura.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {DEMO_SUGGESTIONS.map((c, index) => (
+          <div
+            key={c.nome}
+            className={`rounded-2xl bg-white/5 p-3 sm:p-4 flex flex-col gap-2.5 transition-[opacity,transform] duration-[800ms] ease-out ${
+              stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            }`}
+            style={{ transitionDelay: stagger ? `${index * 120}ms` : '0ms' }}
+          >
+            <div className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1]">{c.nome}</div>
+            <ProductAnimatedScore
+              score={c.score}
+              play={stagger}
+              size="sm"
+              delayMs={stagger ? index * 100 : 0}
+            />
+            <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
+              <span>
+                Expr: <span className="text-gray-300">{c.expressao}</span>
+              </span>
+              <span>
+                Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
+              </span>
+              <span>
+                Mot: <span className="text-gray-300">{c.motivacao}</span>
+              </span>
+              <span>
+                Imp: <span className="text-gray-300">{c.impressao}</span>
+              </span>
+              <span>
+                Mis: <span className="text-gray-300">{c.missao}</span>
+              </span>
+            </div>
+            {c.bloqueios > 0 ? (
+              <span className="text-xs text-red-400">⚠ {c.bloqueios} bloqueio(s)</span>
+            ) : (
+              <span className="text-xs text-emerald-400">✓ Sem bloqueios</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Animated preview of the Nome Social result:
+ * card enters → scores count up → crossfade to suggestion cards.
+ */
+export function ProductResultFrame() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const timersRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    const clearTimers = () => {
+      timersRef.current.forEach((id) => window.clearTimeout(id));
+      timersRef.current = [];
+    };
+
+    const schedule = (fn: () => void, ms: number) => {
+      timersRef.current.push(window.setTimeout(fn, ms));
+    };
+
+    const runSequence = () => {
+      clearTimers();
+
+      if (prefersReducedMotion()) {
+        setPhase('suggestions');
+        return;
+      }
+
+      setPhase('harmony');
+      schedule(() => setPhase('scores'), 700);
+      schedule(() => setPhase('suggestions'), 3200);
+      schedule(() => {
+        setPhase('idle');
+        schedule(runSequence, 500);
+      }, 10000);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          runSequence();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.28 },
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      clearTimers();
+    };
+  }, []);
+
+  const harmonyVisible = phase === 'harmony' || phase === 'scores';
+  // Keep final scores while the harmony panel fades out; reset only on loop idle.
+  const scoresPlay = phase === 'scores' || phase === 'suggestions';
+  const suggestionsVisible = phase === 'suggestions';
+
+  return (
+    <div
+      ref={rootRef}
+      className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden"
+    >
+      <div className="relative min-h-[34rem] sm:min-h-[36rem]">
+        <HarmonyPanel visible={harmonyVisible} scoresPlay={scoresPlay} />
+        <SuggestionsPanel visible={suggestionsVisible} stagger={suggestionsVisible} />
       </div>
 
       <style>{`
