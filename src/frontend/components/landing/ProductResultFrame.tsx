@@ -23,7 +23,8 @@ const GOLD = '#D4AF37';
 const BIRTH_NAME = 'Maria da Silva Santos';
 const INDICATED_NAME = 'MARIÃ SILVA';
 const BIRTH_DATE = '26 de maio de 1971';
-const DEMO_SCORE = 83;
+const DEMO_SCORE_BIRTH = 41;
+const DEMO_SCORE_HARMONIZED = 83;
 
 /** Demo values — outer (harmonizado) / inner (nascimento), same order as star tips. */
 const DEMO_GOLD_NUMS = [4, 8, 8, 3, 9];
@@ -50,18 +51,38 @@ export function ProductResultFrame() {
   return (
     <div className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0">
       <section className="rounded-2xl bg-white/5 p-4 sm:p-5 mb-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-2">
-              Análise de Nome Social — Certificado Cabalístico
-            </p>
-            <h3 className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1] mb-1">
-              {INDICATED_NAME}
-            </h3>
-            <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
+        <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4">
+          Análise de Nome Social — Certificado Cabalístico
+        </p>
+
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#76746a] mb-1">
+                Nome de nascimento
+              </p>
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-1">
+                {BIRTH_NAME}
+              </h3>
+              <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
+            </div>
+            <div className="w-full sm:w-44 shrink-0">
+              <ScoreDisplay score={DEMO_SCORE_BIRTH} size="lg" />
+            </div>
           </div>
-          <div className="w-full sm:w-44 shrink-0">
-            <ScoreDisplay score={DEMO_SCORE} size="lg" />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between pt-5 border-t border-white/10">
+            <div className="min-w-0 flex-1">
+              <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#D4AF37]/70 mb-1">
+                Nome harmonizado
+              </p>
+              <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-1">
+                {INDICATED_NAME}
+              </h3>
+            </div>
+            <div className="w-full sm:w-44 shrink-0">
+              <ScoreDisplay score={DEMO_SCORE_HARMONIZED} size="lg" />
+            </div>
           </div>
         </div>
       </section>
