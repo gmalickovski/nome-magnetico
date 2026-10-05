@@ -3,17 +3,46 @@ import type { AITask } from '../config/models';
 import { getModel } from '../config/models';
 import { getTaskConfig } from '../config/temperatures';
 
+function getErrorStatus(err: unknown): number | undefined {
+  return (err as { status?: number; response?: { status?: number } } | null)?.status
+    ?? (err as { status?: number; response?: { status?: number } } | null)?.response?.status;
+}
+
+function getErrorMessage(err: unknown): string {
+  return (err instanceof Error ? err.message : String(err)).toLowerCase();
+}
+
 function isRateLimit(err: unknown): boolean {
   // Não confia só em `instanceof Groq.APIError` — em builds com múltiplas cópias
   // do pacote no node_modules (comum em monorepo/hoisting), a checagem de classe
   // pode falhar mesmo sendo o mesmo erro. Checa a propriedade `status` direto
   // e cai para análise de mensagem (incluindo String(err), não só Error.message).
-  const status = (err as { status?: number; response?: { status?: number } } | null)?.status
-    ?? (err as { status?: number; response?: { status?: number } } | null)?.response?.status;
-  if (status === 429) return true;
+  if (getErrorStatus(err) === 429) return true;
 
-  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  const msg = getErrorMessage(err);
   return msg.includes('429') || msg.includes('rate_limit') || msg.includes('rate limit') || msg.includes('quota');
+}
+
+/** Modelo descontinuado, 404, auth ou indisponibilidade permanente do Groq. */
+function isGroqUnavailable(err: unknown): boolean {
+  const status = getErrorStatus(err);
+  if (status === 404 || status === 401 || status === 403) return true;
+
+  const msg = getErrorMessage(err);
+  return (
+    msg.includes('model_not_found') ||
+    msg.includes('does not exist') ||
+    msg.includes('decommissioned') ||
+    msg.includes('not have access') ||
+    msg.includes('invalid api key') ||
+    msg.includes('incorrect api key')
+  );
+}
+
+function mapGroqError(err: unknown): never {
+  if (isRateLimit(err)) throw new Error('GROQ_RATE_LIMITED');
+  if (isGroqUnavailable(err)) throw new Error('GROQ_UNAVAILABLE');
+  throw err;
 }
 
 let groqClient: Groq | null = null;
@@ -56,8 +85,7 @@ export async function callGroq(
       stream: false,
     });
   } catch (err) {
-    if (isRateLimit(err)) throw new Error('GROQ_RATE_LIMITED');
-    throw err;
+    mapGroqError(err);
   }
 
   const choice = completion.choices[0];
@@ -94,8 +122,7 @@ export async function* streamGroq(
       stream: true,
     });
   } catch (err) {
-    if (isRateLimit(err)) throw new Error('GROQ_RATE_LIMITED');
-    throw err;
+    mapGroqError(err);
   }
 
   for await (const chunk of stream) {

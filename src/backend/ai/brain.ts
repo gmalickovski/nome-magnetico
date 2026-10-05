@@ -63,22 +63,27 @@ async function runWithGuard(
         ?? (err as { status?: number; response?: { status?: number } } | null)?.response?.status;
       const lowerMessage = message.toLowerCase();
 
-      // Groq atingiu limite diário (TPD) → fallback automático para OpenAI.
-      // Antes dependia só de `message === 'GROQ_RATE_LIMITED'` (conversão feita em
-      // providers/groq.ts) ou de string-matching frágil — se qualquer uma dessas
-      // camadas falhasse (ex: instanceof quebrado por dependência duplicada), caía
-      // no retry genérico contra o próprio Groq 3x, inútil pra um limite diário, e
-      // a análise nunca terminava. Agora checa `status` 429 direto também.
-      const isGroqRateLimit = provider === 'groq' && (
+      // Groq indisponível → fallback imediato para OpenAI (não gastar 3 retries).
+      // Cobre: rate limit (429/TPD), modelo descontinuado (404/model_not_found),
+      // auth inválida e sinais explícitos de providers/groq.ts.
+      const isGroqFallback = provider === 'groq' && (
         message === 'GROQ_RATE_LIMITED' ||
+        message === 'GROQ_UNAVAILABLE' ||
         status === 429 ||
+        status === 404 ||
+        status === 401 ||
+        status === 403 ||
         lowerMessage.includes('429') ||
         lowerMessage.includes('rate_limit') ||
         lowerMessage.includes('rate limit') ||
-        lowerMessage.includes('quota')
+        lowerMessage.includes('quota') ||
+        lowerMessage.includes('model_not_found') ||
+        lowerMessage.includes('does not exist') ||
+        lowerMessage.includes('decommissioned') ||
+        lowerMessage.includes('not have access')
       );
 
-      if (isGroqRateLimit) {
+      if (isGroqFallback) {
         console.warn(`[Brain] Groq indisponível (${message.slice(0, 160)}) — fallback automático para OpenAI`);
         try {
           const userPrompt = buildPrompt();
@@ -96,8 +101,14 @@ async function runWithGuard(
             similarToPrevious: false,
           });
           return fallback.content;
-        } catch {
-          throw new Error('QUOTA_EXCEEDED');
+        } catch (fallbackErr) {
+          const fallbackMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+          console.error(`[Brain] Fallback OpenAI também falhou: ${fallbackMsg.slice(0, 200)}`);
+          // Mantém QUOTA_EXCEEDED para rate-limit; demais casos preservam contexto.
+          if (message === 'GROQ_RATE_LIMITED' || status === 429) {
+            throw new Error('QUOTA_EXCEEDED');
+          }
+          throw new Error(`Groq e OpenAI falharam: ${fallbackMsg}`);
         }
       }
 
