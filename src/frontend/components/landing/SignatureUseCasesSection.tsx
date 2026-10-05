@@ -349,8 +349,8 @@ export function SignatureUseCasesSection() {
                 className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform w-full text-center ${textTransform}`}
                 aria-hidden={!isActive}
               >
-                {/* Título com o mesmo padrão e tamanho do título principal das outras seções */}
-                <h3 className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
+                {/* Título padronizado com o mesmo tamanho (text-3xl) do título principal de todas as outras seções */}
+                <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
                   {item.title}
                 </h3>
 
