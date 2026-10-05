@@ -5,15 +5,17 @@ Home sections below the hero share spacing with `HeroSection`:
 - **Layout:** `landingSectionShellClass` (`max-w-[1440px]`, `px-6 md:px-10 lg:px-12`, `min-w-0`).
 - **Headings:** `LandingSectionIntro` — gold label (`#f2ca50`), Cinzel title (min `text-2xl` on phone), Inter body. No forced all-caps on labels.
 - **Como funciona:** four cards in one row. Each card has one locked line figure in `#D4AF37`, then the short title and the one published sentence: Frequência / Bloqueios / Ranking / Assinatura. Dark ground `#131313`, kit border `#D4AF37` at 35% opacity, `rounded-2xl`. A static arrow `#B8960E` sits between cards. Ranking lives only on card 3. No person, no fifth figure, no light card, no giant step name. On a phone the cards stack and the arrow points down.
-- **Produto:** left copy stays: large title “Sua assinatura de nome social.”, the smaller line “Do nome de nascimento à assinatura que você usa no dia a dia.”, and the published calculation sentence. The right side is a static first-result frame (`ProductResultFrame`): “A Transformação”, “A Harmonização”, the two stars, the birth-name / indicated-name caption, and the “O Escudo Magnético” block. Outer star `#D4AF37`, inner star `#76746a`. Indicated name `#D4AF37`. No score ring, no invented number, no app red/green/purple. Product border stays static `#D4AF37`. No device frame. Phone: the pair stacks.
+- **Produto:** left copy sticky (`lg:sticky lg:top-28`). Right mock animates certificate → scores → soft crossfade to **Nossas Sugestões** (3 cards) + **Suas Sugestões** (2 cards), then loops back with the same fade. Panels are grid-stacked; inactive panel is opacity-only (`pointer-events-none`), no abrupt `invisible` swap. Mobile: text then card; suggestion cards stack to 1 column, system 3-col / user 2-col from `sm`.
 - **Preço:** one centered block on `#111111`, the same ground as the neighboring sections. Inside, only this order: small “Nome Social.”; the amount alone in large Cinzel `#D4AF37`; small “pagamento único, sem mensalidade.”; the five-item list (ranking com score; nome mais indicado; antes e depois nos 4 triângulos; bloqueios, débitos, lições e tendências; PDF com guia de 30 dias e folha de treino da assinatura); “Acesso na hora.” and “Sete dias de garantia.” on their own lines; the button, full width of the block. The only motion is the border, shifting `#D4AF37` → `#E8C84A`. `prefers-reduced-motion` holds the border at `#D4AF37`. Vertical padding is tighter than the other sections so the block sits with the page. FAQ unchanged.
 - **Header:** the desktop row stays hidden until the logo and the links fit. Below that width the existing hamburger is used, so the wordmark stays whole and the items do not collide.
 
 ## Motion
 
-`useLandingSectionReveal` fades and rises once on enter: 600ms ease-out, 12px (`translate-y-3`). No bounce, parallax, stagger, or loop. `prefers-reduced-motion: reduce` shows the section still (no transition class).
+`useLandingSectionReveal` fades and rises once on enter: 600ms ease-out, 12px (`translate-y-3`). `prefers-reduced-motion: reduce` shows the section still (no transition class).
 
-The purchase border is the only looping motion. Product border, result frame, and step arrows do not move.
+**Produto (`ProductResultFrame`):** sequence on viewport enter — harmony → score count-up → soft crossfade (1.1s) to suggestions → hold → same soft crossfade back to harmony (loop). Scores stay painted during outbound fade; remount/count-up only after return fade settles. Left copy sticky with `top-28` (header clearance), confined to the product grid row.
+
+The purchase border remains the only continuous border loop. Step arrows do not move.
 
 ## Mobile
 
@@ -21,4 +23,4 @@ The purchase border is the only looping motion. Product border, result frame, an
 - Product copy and result frame stack. Cards stack. Price block stays one column; the button stays full width.
 - Sections use `overflow-x-hidden`; decorative blurs are width-capped on small screens.
 
-Components: `LandingSectionIntro.tsx`, `useLandingSectionReveal.ts`, `ProductsSection`, `HowItWorksSection`, `HowItWorksFigures`, `ProductResultFrame`, `PricingSection`, `HeroScoreAnimation` (hero only).
+Components: `LandingSectionIntro.tsx`, `useLandingSectionReveal.ts`, `ProductsSection`, `HowItWorksSection`, `HowItWorksFigures`, `ProductResultFrame`, `ProductAnimatedScore`, `PricingSection`, `HeroScoreAnimation` (hero only).
