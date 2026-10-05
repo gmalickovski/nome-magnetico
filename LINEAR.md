@@ -10,6 +10,15 @@ Um time Linear: **Desenvolvimento** (`DEV-*`). FE/BE = labels `area:frontend` / 
 - API/auth/DB/migrations/LGPD/segurança: [Playbook Backend](https://linear.app/studio-mlk/document/playbook-backend-seguranca-api-lgpd-400dc095d4f4). <!-- pragma: allowlist secret -->
 - Guia Linear: https://linear.app/studio-mlk/document/guia-linear-regras-e-suporte-b9d5bfb39654 <!-- pragma: allowlist secret -->
 
+## Workflow de Branches e PRs (obrigatório)
+
+- **Nunca trabalhar diretamente na `main` local**.
+- Sempre criar a issue correspondente no Linear antes de codificar.
+- Criar branch dedicada no padrão `linear/dev-<numero>-<slug>` (ex: `linear/dev-108-landing-hero-redesign`).
+- Todo trabalho é entregue via Pull Request (PR) com referência à issue (`DEV-XXX`), descrição dos critérios atendidos e validações técnicas executadas (`npx astro check`, `npm run build`).
+- Merge na `main` somente após revisão e aprovação do PR.
+- Deploy de produção segue condicionado a tag semver (`v*.*.*`), nunca push direto.
+
 ## Bot Suporte — FAQ read-only
 
 O bot Suporte de cada SaaS lê a FAQ ativa e consulta o status mínimo de um contato por e-mail. O resto do banco fica negado: conteúdo de análise, pagamentos detalhados, leads além da presença, auth e HQ.

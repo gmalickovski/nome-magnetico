@@ -8,7 +8,7 @@ Orientacao para agentes IA que trabalham neste repositorio. Este arquivo e a bas
 - Tipo: SaaS de numerologia cabalistica.
 - Stack: Astro 5 SSR, React islands, Tailwind CSS, Supabase Cloud e Stripe/Asaas.
 - Regra de marca: "Astro" e apenas o framework tecnico. Nunca usar "Astro" em copy, branding, nomes de produto ou interface.
-- Fluxo atual do usuario: trabalhar direto na `main`, sem PR por enquanto. Mudancas devem ser testadas antes de commit/push/deploy.
+- Fluxo de trabalho: SEMPRE trabalhar em branch com PR, NUNCA diretamente na `main` local. Criar branch a partir da issue Linear (`linear/dev-XXX-...`), abrir PR para review e merge. Mudanças devem ser validadas tecnicamente (`npx astro check`, `npm run build`) antes de abrir ou mesclar PR.
 
 ## Playbooks Studio MLK (obrigatório) <!-- pragma: allowlist secret -->
 
@@ -187,5 +187,5 @@ Consulte tambem:
 - Preferir mudancas pequenas e alinhadas aos padroes existentes.
 - Antes de criar componente, verificar `src/frontend/components/ui/` e `src/frontend/components/app/`.
 - Antes de alterar regra de negocio numerologica, checar docs em `docs/architecture/` e referencias em `docs/PDF/` quando relevante.
-- Quando a tarefa for grande ou arriscada, avisar que branch/PR pode ser melhor, mas o padrao deste projeto por enquanto e trabalhar sem PR.
+- O padrao deste projeto e SEMPRE trabalhar via branch e PR (`linear/dev-XXX-...`). Nunca commitar ou dar push direto na `main`.
 - Ao finalizar mudancas, relatar arquivos alterados e validacoes executadas.
