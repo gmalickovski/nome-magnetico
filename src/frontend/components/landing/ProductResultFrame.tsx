@@ -134,10 +134,10 @@ function HarmonyPanel({
 }) {
   return (
     <div
-      className={`w-full transition-[opacity,transform] duration-[800ms] ease-out ${
+      className={`col-start-1 row-start-1 w-full transition-[opacity,transform] duration-[800ms] ease-out ${
         visible
-          ? 'opacity-100 translate-y-0 relative'
-          : 'opacity-0 translate-y-3 pointer-events-none absolute inset-0'
+          ? 'opacity-100 translate-y-0 relative z-10'
+          : 'opacity-0 translate-y-3 pointer-events-none z-0'
       }`}
       aria-hidden={!visible}
     >
@@ -301,10 +301,10 @@ function SuggestionsPanel({
 }) {
   return (
     <div
-      className={`w-full transition-[opacity,transform] duration-[800ms] ease-out ${
+      className={`col-start-1 row-start-1 w-full transition-[opacity,transform] duration-[800ms] ease-out ${
         visible
-          ? 'opacity-100 translate-y-0 relative'
-          : 'opacity-0 translate-y-3 pointer-events-none absolute inset-0'
+          ? 'opacity-100 translate-y-0 relative z-10'
+          : 'opacity-0 translate-y-3 pointer-events-none z-0'
       }`}
       aria-hidden={!visible}
     >
@@ -396,11 +396,12 @@ export function ProductResultFrame() {
 
       setPhase('harmony');
       schedule(() => setPhase('scores'), 700);
-      schedule(() => setPhase('suggestions'), 3200);
+      // Hold the harmonization card long enough to read (~5.5s after scores start).
+      schedule(() => setPhase('suggestions'), 7200);
       schedule(() => {
         setPhase('idle');
-        schedule(runSequence, 500);
-      }, 10000);
+        schedule(runSequence, 600);
+      }, 16000);
     };
 
     const observer = new IntersectionObserver(
@@ -430,7 +431,7 @@ export function ProductResultFrame() {
       ref={rootRef}
       className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden"
     >
-      <div className="relative min-h-[34rem] sm:min-h-[36rem]">
+      <div className="relative grid">
         <HarmonyPanel visible={harmonyVisible} scoresPlay={scoresPlay} />
         <SuggestionsPanel visible={suggestionsVisible} stagger={suggestionsVisible} />
       </div>

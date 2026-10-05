@@ -31,7 +31,8 @@ interface ProductAnimatedScoreProps {
 }
 
 /**
- * Landing-only score bar with count-up + growing fill (800ms meditative default).
+ * Landing-only score bar with count-up + growing fill.
+ * Fixed geometry so label/number animation never shifts the layout.
  */
 export function ProductAnimatedScore({
   score,
@@ -41,6 +42,7 @@ export function ProductAnimatedScore({
   delayMs = 0,
 }: ProductAnimatedScoreProps) {
   const target = Math.max(0, Math.min(100, score));
+  const finalLevel = getScoreLevel(target);
   const [displayed, setDisplayed] = useState(0);
   const [started, setStarted] = useState(false);
   const rafRef = useRef<number | null>(null);
@@ -89,28 +91,33 @@ export function ProductAnimatedScore({
     };
   }, [play, target, durationMs, delayMs]);
 
-  const level = getScoreLevel(started ? displayed : 0);
+  // Color follows the animated value; label stays on the final tier to avoid width jumps.
+  const liveLevel = getScoreLevel(started ? displayed : 0);
   const heights = size === 'sm' ? 'h-1.5' : 'h-3';
   const textSizes = size === 'sm' ? 'text-xs' : 'text-base';
   const numSizes = size === 'sm' ? 'text-lg' : 'text-3xl';
+  const rowMinH = size === 'sm' ? 'min-h-[1.75rem]' : 'min-h-[2.5rem]';
   const fill = started ? displayed : 0;
 
   return (
-    <div className="w-full">
-      <div className="flex items-end justify-between mb-1.5">
-        <span className={`font-cinzel font-bold ${numSizes} ${level.text}`}>
-          {fill}
+    <div className="w-full shrink-0">
+      <div className={`flex items-end justify-between gap-2 mb-1.5 ${rowMinH}`}>
+        <span
+          className={`font-cinzel font-bold tabular-nums ${numSizes} ${liveLevel.text} inline-flex items-baseline`}
+        >
+          <span className="inline-block min-w-[2ch] text-right">{fill}</span>
           <span className={`${textSizes} font-inter font-normal text-gray-500 ml-0.5`}>/100</span>
         </span>
-        <span className={`${textSizes} font-medium ${level.text}`}>{level.label}</span>
+        <span
+          className={`${textSizes} font-medium ${finalLevel.text} text-right whitespace-nowrap min-w-[7.5rem]`}
+        >
+          {finalLevel.label}
+        </span>
       </div>
       <div className={`w-full bg-white/10 rounded-full ${heights} overflow-hidden`}>
         <div
-          className={`${heights} rounded-full bg-gradient-to-r ${level.bar}`}
-          style={{
-            width: `${fill}%`,
-            transition: play ? 'none' : 'width 700ms ease-out',
-          }}
+          className={`${heights} rounded-full bg-gradient-to-r ${liveLevel.bar}`}
+          style={{ width: `${fill}%` }}
         />
       </div>
     </div>
