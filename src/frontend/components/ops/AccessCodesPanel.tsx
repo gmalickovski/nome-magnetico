@@ -26,6 +26,7 @@ type AccessCode = {
   expires_at: string | null;
   note: string | null;
   is_active: boolean;
+  max_uses: number | null;
   state: RegistryState;
   redemptions: number | null;
 };
@@ -45,7 +46,14 @@ const EMPTY_FORM = {
   discountValue: '',
   expiresAt: '',
   note: '',
+  maxUses: '',
 };
+
+function usesLabel(row: AccessCode): string {
+  const used = row.redemptions ?? 0;
+  if (row.max_uses == null) return `${used} / ∞`;
+  return `${used} / ${row.max_uses}`;
+}
 
 function benefit(row: AccessCode): string {
   if (row.kind === 'coupon') return formatDiscount(row.discount_type, row.discount_value);
@@ -121,6 +129,15 @@ export function AccessCodesPanel() {
         return;
       }
       body.trial_days = days;
+    }
+
+    if (form.maxUses.trim()) {
+      const maxUses = parseInt(form.maxUses, 10);
+      if (!maxUses || maxUses < 1) {
+        setFormError('Limite de usos deve ser um número inteiro a partir de 1, ou vazio para ilimitado.');
+        return;
+      }
+      body.max_uses = maxUses;
     }
 
     if (form.expiresAt) {
@@ -294,6 +311,17 @@ export function AccessCodesPanel() {
               className={`${fieldClass} mt-2`}
             />
           </label>
+          <label className="block text-sm text-[#76746a]">
+            Limite de usos (opcional)
+            <input
+              type="number"
+              min={1}
+              value={form.maxUses}
+              onChange={(event) => setForm({ ...form, maxUses: event.target.value })}
+              placeholder="Ilimitado"
+              className={`${fieldClass} mt-2`}
+            />
+          </label>
 
           <div className="md:col-span-2">
             <p className="mb-2 text-sm text-[#76746a]">Produtos</p>
@@ -337,7 +365,7 @@ export function AccessCodesPanel() {
               <th className="px-5 py-4 font-medium">Tipo</th>
               <th className="px-5 py-4 font-medium">Benefício</th>
               <th className="px-5 py-4 font-medium">Validade</th>
-              <th className="px-5 py-4 font-medium">Resgates</th>
+              <th className="px-5 py-4 font-medium">Usos</th>
               <th className="px-5 py-4 font-medium">Situação</th>
               <th className="px-5 py-4 text-right font-medium">Ação</th>
             </tr>
@@ -359,7 +387,7 @@ export function AccessCodesPanel() {
                 <td className="px-5 py-4 text-[#e5e2e1]">{KIND_LABELS[row.kind] ?? row.kind}</td>
                 <td className="px-5 py-4 text-[#e5e2e1]">{benefit(row)}</td>
                 <td className="px-5 py-4 text-[#76746a]">{row.expires_at ? formatDateTime(row.expires_at) : 'Sem validade'}</td>
-                <td className="px-5 py-4 text-[#76746a]">{row.redemptions === null ? '—' : row.redemptions}</td>
+                <td className="px-5 py-4 text-[#76746a]">{usesLabel(row)}</td>
                 <td className="px-5 py-4">
                   <span className={`rounded-full px-3 py-1 text-xs ${STATE_CLASSES[row.state]}`}>{STATE_LABELS[row.state]}</span>
                 </td>

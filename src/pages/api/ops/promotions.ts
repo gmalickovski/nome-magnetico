@@ -23,6 +23,13 @@ const createSchema = discountSchema
     product_types: productTypesSchema,
     starts_at: z.string().datetime({ offset: true }).nullable().optional(),
     ends_at: z.string().datetime({ offset: true }),
+    banner_text: z
+      .string()
+      .trim()
+      .max(280)
+      .nullable()
+      .optional()
+      .transform((value) => value || null),
   })
   .strict()
   .superRefine((body, ctx) => {
@@ -89,6 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       discountValue: parsed.data.discount_value,
       startsAt: parsed.data.starts_at ?? null,
       endsAt: parsed.data.ends_at,
+      bannerText: parsed.data.banner_text ?? null,
       actorId: gate.profile.id,
     });
     return opsJson({ promotion }, 201);

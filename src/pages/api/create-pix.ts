@@ -3,10 +3,11 @@ import { z } from 'zod';
 import { supabase } from '../../backend/db/supabase';
 import { createPixCharge } from '../../backend/payments/asaas';
 import {
-  getHqPricesAndPromo,
+  applyPromotionDiscount,
+  getPricesAndPromo,
   promotionAppliesToProduct,
   resolveHqCouponDiscount,
-  validateHqAccessCoupon,
+  validateAccessCoupon,
 } from '../../backend/payments/prices';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import type { ProductType } from '../../backend/payments/stripe';
@@ -92,14 +93,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    // ── Busca preço canônico do HQ e verifica cupom
+    // ── Preço canônico do Stripe + promoção/cupom do banco local
     let value = FALLBACK_PRICES[product_type as ProductType];
     let originalCents = Math.round(value * 100);
     let finalCents = originalCents;
     const cleanCoupon = coupon_code?.trim();
 
     try {
-      const { prices, promotion } = await getHqPricesAndPromo();
+      const { prices, promotion } = await getPricesAndPromo();
       const priceInfo = prices[product_type];
       if (priceInfo?.cents) {
         value = priceInfo.cents / 100;
@@ -109,7 +110,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       let couponHandled = false;
       if (cleanCoupon) {
-        const hqCoupon = await validateHqAccessCoupon({
+        const hqCoupon = await validateAccessCoupon({
           couponCode: cleanCoupon,
           productType: product_type,
           userId: user.id,
@@ -133,19 +134,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       }
 
-      // Aplica desconto se cupom ou promoção ativa for válida
       if (promotion && !couponHandled) {
         const appliesToThis = promotionAppliesToProduct(promotion, product_type);
         const couponMatch = cleanCoupon &&
           promotion.stripePromoCode?.toLowerCase() === cleanCoupon.toLowerCase();
-        const autoPromo = !coupon_code; // promoção automática sem cupom
+        const autoPromo = !coupon_code;
 
         if (appliesToThis && (couponMatch || autoPromo)) {
-          if (promotion.discountType === 'percent') {
-            finalCents = Math.round(originalCents * (1 - promotion.discountValue / 100));
-          } else {
-            finalCents = Math.max(0, originalCents - Math.round(promotion.discountValue * 100));
-          }
+          finalCents = applyPromotionDiscount(originalCents, promotion);
           value = finalCents / 100;
           couponHandled = true;
         }
@@ -159,13 +155,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     } catch (err) {
       if (cleanCoupon) {
-        console.error('[create-pix] Erro ao validar cupom no HQ:', err);
+        console.error('[create-pix] Erro ao validar cupom:', err);
         return new Response(
           JSON.stringify({ error: 'Erro ao validar cupom para PIX. Tente novamente.' }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
-      // HQ indisponível — usa fallback sem desconto apenas quando não há cupom
+      // Banco/Stripe indisponível — usa fallback sem desconto apenas quando não há cupom
       finalCents = Math.round(value * 100);
     }
 

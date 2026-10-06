@@ -14,7 +14,7 @@ import FreeUsedModal from '../../frontend/components/app/FreeUsedModal';
 import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoGenerator';
 import { MailWarning } from '../../frontend/components/app/MailWarning';
 import { DashboardCheckoutButton } from '../../frontend/components/app/DashboardCheckoutButton';
-import { getHqPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
+import { getPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
 import { InitialAnalysisModal } from '../../frontend/components/app/InitialAnalysisModal';
 
 // Funções de numerologia locais para cálculo instantâneo da análise gratuita do lead
@@ -220,7 +220,7 @@ try {
 const isExpired = !isAdmin && !hasAnyAccess && await hasAnySubscription(user.id);
 
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
-const { prices, promotion } = await getHqPricesAndPromo().catch(() => ({ prices: {}, promotion: null }));
+const { prices, promotion } = await getPricesAndPromo().catch(() => ({ prices: {}, promotion: null }));
 const priceMap = prices as Record<string, PriceInfo>;
 
 function getScoreTheme(scoreValue: number | null | undefined) {

@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { CheckoutFlow } from '../frontend/components/purchase/CheckoutFlow';
 import { hasActiveSubscription } from '../backend/db/subscriptions';
 import { createUserClient } from '../backend/db/supabase';
-import { getHqPricesAndPromo } from '../backend/payments/prices';
+import { getPricesAndPromo } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 
 const user = Astro.locals.user;
@@ -32,15 +32,15 @@ if (user) {
   isOwned = await hasActiveSubscription(user.id, productType);
 }
 
-// Preços e promoção via HQ
+// Preços e promoção do banco local (fallback Stripe sem promoção)
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getHqPricesAndPromo();
+  const result = await getPricesAndPromo();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {
-  console.warn('[comprar] Falha ao carregar preços/promoção do HQ — usando fallback:', err);
+  console.warn('[comprar] Falha ao carregar preços/promoção — usando fallback:', err);
 }
 
 const paymentLinks = {

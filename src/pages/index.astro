@@ -11,7 +11,7 @@ import { FAQSection } from '../frontend/components/landing/FAQSection';
 import type { FaqItemProps } from '../frontend/components/landing/FAQSection';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { getSupabaseFaqs } from '../backend/faqs/getSupabaseFaqs';
-import { getHqPricesAndPromo } from '../backend/payments/prices';
+import { getPricesAndPromo } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 
 let faqItems: FaqItemProps[] = [];
@@ -24,11 +24,11 @@ try {
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getHqPricesAndPromo();
+  const result = await getPricesAndPromo();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {
-  console.warn('[index] Falha ao carregar preços/promoção do HQ — usando fallback:', err);
+  console.warn('[index] Falha ao carregar preços/promoção — usando fallback:', err);
 }
 
 const user = Astro.locals.user;

@@ -3,7 +3,7 @@ import LandingLayout from '../layouts/LandingLayout.astro';
 import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { LandingCheckout } from '../frontend/components/purchase/LandingCheckout';
-import { getHqPricesAndPromo } from '../backend/payments/prices';
+import { getPricesAndPromo, promotionAppliesToProduct } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 
 const user = Astro.locals.user;
@@ -11,11 +11,11 @@ const user = Astro.locals.user;
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getHqPricesAndPromo();
+  const result = await getPricesAndPromo();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {
-  console.warn('[precos] Falha ao carregar preços do HQ:', err);
+  console.warn('[precos] Falha ao carregar preços:', err);
 }
 
 const FALLBACK: Record<string, PriceInfo> = {
@@ -30,7 +30,10 @@ function getPrice(id: string) {
 
 function showDiscount(id: string): boolean {
   const p = getPrice(id);
-  const applies = !promotion?.productType || promotion.productType === id;
+  const applies =
+    id === 'nome_social' || id === 'nome_bebe' || id === 'nome_empresa'
+      ? promotionAppliesToProduct(promotion, id)
+      : !promotion?.productType;
   return !!(promotion && applies && p.hasDiscount && p.discountedFormatted);
 }
 

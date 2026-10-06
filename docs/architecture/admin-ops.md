@@ -69,29 +69,32 @@ Situação ativa: `refunded_at` nulo e `ends_at` no futuro.
 
 ### Promoções e códigos de acesso
 
-Tela `/promocoes` com duas abas. Tudo passa por `/api/ops/*`: o browser só faz `fetch`, nunca grava no banco. As tabelas `promotions` e `access_codes` (migration `034_ops_promotions_access_codes.sql`) têm RLS ligado, sem grant para `anon` nem `authenticated`; só a `service_role` do servidor lê e grava.
+Tela `/promocoes` com duas abas. Tudo passa por `/api/ops/*`: o browser só faz `fetch`, nunca grava no banco. As tabelas `promotions`, `access_codes` e `access_code_uses` (migrations `035_ops_promotions_access_codes.sql` e `036_promotions_access_codes_parity.sql`) têm RLS ligado, sem grant para `anon` nem `authenticated`; só a `service_role` do servidor lê e grava.
+
+O checkout, a landing e `/acesso/resgatar` leem esse registro. Falha no banco devolve preço Stripe sem promoção. `HQ_API_URL` não é mais lido.
 
 | Rota | Método | Efeito |
 |------|--------|--------|
 | `/api/ops/promotions` | GET | Lista. Filtros: `state` (`active` \| `scheduled` \| `expired` \| `inactive`), `page`, `per_page` (máx. 50) |
-| `/api/ops/promotions` | POST | Cria: `name`, `product_types`, `discount_type`, `discount_value`, `starts_at` (opcional), `ends_at` |
+| `/api/ops/promotions` | POST | Cria: `name`, `product_types`, `discount_type`, `discount_value`, `starts_at` (opcional), `ends_at`, `banner_text` (opcional) |
 | `/api/ops/promotions/:id` | PATCH | `{ "is_active": boolean }` desativa ou reativa |
 | `/api/ops/access-codes` | GET | Lista. Filtros: `q` (código ou nota), `kind` (`trial` \| `gift` \| `coupon`), `state` (`active` \| `expired` \| `inactive`), `page`, `per_page` |
-| `/api/ops/access-codes` | POST | Cria: `code`, `kind`, `product_types`, `trial_days` (trial/gift) ou `discount_type` + `discount_value` (coupon), `expires_at`, `note` |
+| `/api/ops/access-codes` | POST | Cria: `code`, `kind`, `product_types`, `trial_days` (trial/gift) ou `discount_type` + `discount_value` (coupon), `expires_at`, `max_uses` (opcional, vazio = ilimitado), `note` |
 | `/api/ops/access-codes/:id` | PATCH | `{ "is_active": boolean }` |
 
 Regras:
 
 - Desativar é lógico (`is_active = false` e `deactivated_at`). Não há DELETE, então um código desativado continua ocupando o valor; reative em vez de recriar.
 - `product_types` vazio vale para todos os produtos.
-- Desconto percentual vai de 1 a 100. Valor fixo é guardado em centavos de BRL, até R$ 1.000,00.
-- Código: 3 a 40 caracteres `A-Z 0-9 - _`, gravado em maiúsculas e único. Duplicado responde 409.
+- Desconto percentual vai de 1 a 100. Valor fixo é guardado em **centavos** de BRL, até R$ 1.000,00. O contrato público da promoção (`ActivePromotion.discountValue` de tipo `fixed`) continua em reais, como o HQ.
+- Código: 3 a 40 caracteres `A-Z 0-9 - _`, gravado em maiúsculas e único. Lookup ignora hífen e caixa. Duplicado responde 409.
 - Trial e presente exigem 1 a 365 dias e não aceitam desconto. Cupom exige desconto e não aceita dias.
 - Nas mutações o servidor exige host admin, staff, mesma origem (`Origin`) e `Content-Type: application/json` (`src/backend/security/opsGate.ts`). O log registra só ids e campos, sem email.
-- A coluna "Resgates" conta `trial_redemptions` para trial e presente. Cupom não é contado aqui.
-- Se a migration ainda não foi aplicada, a API responde 503 com aviso em vez de 500.
+- A coluna "Usos" conta `access_code_uses` (cupom, trial e presente) e mostra o limite (`max_uses`; vazio = ilimitado).
+- Resgate de trial valida o código em `access_codes` e usa `trial_days` / `product_types` do banco, não da URL. Código inexistente não concede acesso. `trial_redemptions` continua registrando o resgate.
+- Se a migration 035/036 ainda não foi aplicada, a API responde 503 com aviso em vez de 500.
 
-**Fora desta fatia, de propósito:** este registro ainda não é lido pelo checkout (`validate-coupon`, `create-checkout`, `create-pix`), pela landing nem por `/acesso/resgatar`. Eles continuam usando o HQ e o Stripe como antes. Ligar o checkout e o resgate ao registro, e trazer os dados que hoje estão no HQ, é uma fatia à parte e precisa de aval porque toca em pagamento.
+Importação HQ → NM: [`docs/devops/import-hq-promotions.md`](../devops/import-hq-promotions.md). A 036 precisa ser aplicada antes do deploy.
 
 ## Como testar local
 
@@ -120,9 +123,9 @@ O que conferir nesta fatia:
 - Na ficha, trocar papel e ligar/desligar teste persiste depois de recarregar.
 - A própria conta não oferece troca de papel. Rebaixar o último admin responde 409.
 - `/subscriptions` filtra por produto, situação, provedor e tipo. Não há botão de reembolso.
-- `/promocoes` cria, filtra e desativa/reativa promoções e códigos. Com a conta sem papel admin a API responde 403.
+- `/promocoes` cria, filtra e desativa/reativa promoções e códigos. Banner, limite de usos e contagem real aparecem na lista. Com a conta sem papel admin a API responde 403.
 - No host público, `/api/ops/*` continua 403.
 
 ## Fora desta fatia
 
-Banimento, billing, reembolso, ligação do checkout e do resgate ao registro de códigos (e importação do que está no HQ), blog, campanhas e DNS/TLS. O bloco Nginx está em `docs/devops/admin-host-nginx.md` para a Infra; `scripts/nginx.conf` ainda não inclui o host admin.
+Banimento, billing, reembolso, blog, campanhas e DNS/TLS. O bloco Nginx está em `docs/devops/admin-host-nginx.md` para a Infra; `scripts/nginx.conf` ainda não inclui o host admin. Importação dos dados do HQ: `docs/devops/import-hq-promotions.md`.

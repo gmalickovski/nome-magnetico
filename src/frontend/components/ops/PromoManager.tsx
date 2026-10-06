@@ -15,8 +15,8 @@ export function PromoManager() {
   return (
     <div className="space-y-8">
       <p className="max-w-2xl text-sm leading-relaxed text-[#76746a]">
-        Registro da equipe. Criar, listar e desativar acontece só aqui, pelo servidor. Esta tela não altera o checkout,
-        a landing nem a cobrança.
+        Registro da equipe. Criar, listar e desativar acontece só aqui, pelo servidor. Promoções ativas
+        e cupons passam a valer na landing e no checkout.
       </p>
 
       <div role="tablist" aria-label="Promoções e códigos" className="flex gap-2">
