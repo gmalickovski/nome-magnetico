@@ -1,4 +1,8 @@
 ---
-import OpsStub from '../../layouts/OpsStub.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { PromoManager } from '../../frontend/components/ops/PromoManager';
 ---
-<OpsStub title="Promoções" />
+
+<AdminLayout title="Promoções" description="Promoções e códigos de acesso do Nome Magnético.">
+  <PromoManager client:load />
+</AdminLayout>
