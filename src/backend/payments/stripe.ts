@@ -34,15 +34,15 @@ export interface CreateCheckoutParams {
   userId: string;
   userEmail: string;
   productType: ProductType;
-  /** Preço em centavos (vem do HQ em tempo real) */
+  /** Preço em centavos (Stripe + promoção local) */
   unitAmount: number;
   successUrl: string;
   cancelUrl: string;
-  /** Cupom sazonal automático (ID do coupon Stripe, vindo do HQ) */
+  /** Cupom sazonal automático (ID do coupon Stripe, se a promoção local tiver) */
   couponId?: string;
   /** Código de promoção manual do usuário (promotion_code ID do Stripe) */
   promotionCodeId?: string;
-  /** Código digitado para registrar uso no HQ após o pagamento. */
+  /** Código digitado para registrar uso após o pagamento. */
   couponCode?: string;
   /** Client ID do GA4 capturado do cookie _ga para atribuição server-side. */
   gaClientId?: string;
@@ -60,7 +60,7 @@ export async function createCheckoutSession(
     throw new Error(`Product ID não configurado para o produto: ${params.productType}`);
   }
 
-  // ── Desconto: coupon sazonal (HQ) > código manual no modal.
+  // ── Desconto: cupom sazonal local > código manual no modal.
   // O campo nativo de cupom do Stripe fica oculto para evitar duplicidade no checkout.
   let discountOptions: Record<string, unknown> = {};
 

@@ -33,6 +33,7 @@ const createSchema = z
     discount_type: z.enum(['percent', 'fixed']).nullable().optional(),
     discount_value: z.number().int().positive().nullable().optional(),
     expires_at: z.string().datetime({ offset: true }).nullable().optional(),
+    max_uses: z.number().int().min(1).max(100000).nullable().optional(),
     note: z
       .string()
       .trim()
@@ -120,6 +121,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       discountValue: data.kind === 'coupon' ? (data.discount_value ?? null) : null,
       expiresAt: data.expires_at ?? null,
       note: data.note ?? null,
+      maxUses: data.max_uses ?? null,
       actorId: gate.profile.id,
     });
     return opsJson({ access_code: accessCode }, 201);

@@ -21,6 +21,7 @@ type Promotion = {
   starts_at: string;
   ends_at: string;
   is_active: boolean;
+  banner_text: string | null;
   state: RegistryState;
 };
 
@@ -33,6 +34,7 @@ const EMPTY_FORM = {
   discountValue: '',
   startsAt: '',
   endsAt: '',
+  bannerText: '',
 };
 
 export function PromotionsPanel() {
@@ -96,6 +98,7 @@ export function PromotionsPanel() {
         discount_value: discountValue,
         starts_at: startsAt,
         ends_at: endsAt,
+        banner_text: form.bannerText.trim() || null,
       },
     });
     setSaving(false);
@@ -169,6 +172,16 @@ export function PromotionsPanel() {
               maxLength={80}
               required
               placeholder="Ex.: Lua Cheia de outubro"
+              className={`${fieldClass} mt-2`}
+            />
+          </label>
+          <label className="block text-sm text-[#76746a] md:col-span-2">
+            Texto do banner (opcional)
+            <input
+              value={form.bannerText}
+              onChange={(event) => setForm({ ...form, bannerText: event.target.value })}
+              maxLength={280}
+              placeholder="Ex.: Lua Cheia — 20% até domingo"
               className={`${fieldClass} mt-2`}
             />
           </label>
@@ -264,6 +277,11 @@ export function PromotionsPanel() {
                 <td className="px-5 py-4">
                   <p className="text-[#e5e2e1]">{row.name}</p>
                   <p className="mt-1 text-xs text-[#76746a]">{formatProducts(row.product_types)}</p>
+                  {row.banner_text && (
+                    <p className="mt-1 max-w-[280px] truncate text-xs text-[#d7c6ff]" title={row.banner_text}>
+                      {row.banner_text}
+                    </p>
+                  )}
                 </td>
                 <td className="px-5 py-4 text-[#e5e2e1]">{formatDiscount(row.discount_type, row.discount_value)}</td>
                 <td className="px-5 py-4 text-[#76746a]">

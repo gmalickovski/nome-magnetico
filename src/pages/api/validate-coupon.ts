@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import {
-  getHqPricesAndPromo,
+  applyPromotionDiscount,
+  getPricesAndPromo,
   promotionAppliesToProduct,
   resolveHqCouponDiscount,
-  validateHqAccessCoupon,
+  validateAccessCoupon,
 } from '../../backend/payments/prices';
 import { stripe } from '../../backend/payments/stripe';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
@@ -44,11 +45,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const code = coupon_code.trim().toUpperCase();
 
   try {
-    const { prices, promotion } = await getHqPricesAndPromo();
+    const { prices, promotion } = await getPricesAndPromo();
     const originalCents = prices[product_type]?.cents ?? FALLBACK_CENTS[product_type] ?? 9800;
 
     try {
-      const hqCoupon = await validateHqAccessCoupon({
+      const hqCoupon = await validateAccessCoupon({
         couponCode: code,
         productType: product_type,
         userId: user.id,
@@ -82,25 +83,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
       }
     } catch {
-      // HQ indisponível: mantém fallback de promoção pública/Stripe abaixo.
+      // Banco indisponível: mantém fallback de promoção pública/Stripe abaixo.
     }
 
-    // Verifica se cupom bate com a promoção ativa no HQ
     if (promotion && promotion.stripePromoCode?.toUpperCase() === code) {
       const appliesToThis = promotionAppliesToProduct(promotion, product_type);
       if (!appliesToThis) {
         return json({ valid: false, error: 'Cupom não se aplica a este produto' });
       }
 
-      let discountedCents: number;
-      let discountLabel: string;
-      if (promotion.discountType === 'percent') {
-        discountedCents = Math.round(originalCents * (1 - promotion.discountValue / 100));
-        discountLabel = `${promotion.discountValue}% OFF`;
-      } else {
-        discountedCents = Math.max(0, originalCents - promotion.discountValue * 100);
-        discountLabel = `−${formatBRL(promotion.discountValue * 100)}`;
-      }
+      const discountedCents = applyPromotionDiscount(originalCents, promotion);
+      const discountLabel =
+        promotion.discountType === 'percent'
+          ? `${promotion.discountValue}% OFF`
+          : `−${formatBRL(Math.round(promotion.discountValue * 100))}`;
 
       return json({
         valid: true,

@@ -7,7 +7,7 @@ import {
 } from './registry';
 
 const COLUMNS =
-  'id, name, product_types, discount_type, discount_value, starts_at, ends_at, is_active, deactivated_at, created_at';
+  'id, name, product_types, discount_type, discount_value, starts_at, ends_at, is_active, deactivated_at, created_at, banner_text, stripe_coupon_id, stripe_promo_code';
 
 export interface OpsPromotionRow {
   id: string;
@@ -20,13 +20,23 @@ export interface OpsPromotionRow {
   is_active: boolean;
   deactivated_at: string | null;
   created_at: string;
+  banner_text: string | null;
+  stripe_coupon_id: string | null;
+  stripe_promo_code: string | null;
   state: RegistryState;
 }
 
 type PromotionDbRow = Omit<OpsPromotionRow, 'state'>;
 
 function toRow(row: PromotionDbRow): OpsPromotionRow {
-  return { ...row, product_types: row.product_types ?? [], state: registryState(row) };
+  return {
+    ...row,
+    product_types: row.product_types ?? [],
+    banner_text: row.banner_text ?? null,
+    stripe_coupon_id: row.stripe_coupon_id ?? null,
+    stripe_promo_code: row.stripe_promo_code ?? null,
+    state: registryState(row),
+  };
 }
 
 export interface ListPromotionsParams {
@@ -82,6 +92,7 @@ export interface CreatePromotionInput {
   discountValue: number;
   startsAt: string | null;
   endsAt: string;
+  bannerText: string | null;
   actorId: string;
 }
 
@@ -95,6 +106,7 @@ export async function createPromotion(input: CreatePromotionInput): Promise<OpsP
       discount_value: input.discountValue,
       ...(input.startsAt ? { starts_at: input.startsAt } : {}),
       ends_at: input.endsAt,
+      banner_text: input.bannerText,
       created_by: input.actorId,
     })
     .select(COLUMNS)

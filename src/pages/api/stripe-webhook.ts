@@ -8,7 +8,7 @@ import {
 } from '../../backend/db/subscriptions';
 import { getProfile } from '../../backend/db/users';
 import { notify } from '../../backend/notifications/notify';
-import { recordHqAccessCouponUse } from '../../backend/payments/prices';
+import { recordAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
 import { trackPurchaseConfirmed } from '../../backend/analytics/ga4';
@@ -68,12 +68,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
     await confirmEmailAfterPayment(userId);
 
-    await recordHqAccessCouponUse({
+    await recordAccessCouponUse({
       couponCode: session.metadata?.coupon_code,
       userId,
       userEmail: session.customer_email,
       productType,
-    }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom no HQ:', err));
+    }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom:', err));
 
     await trackPurchaseConfirmed({
       userId,

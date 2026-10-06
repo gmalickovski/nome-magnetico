@@ -1,4 +1,4 @@
--- Migration 034: promoções e códigos de acesso do painel ops (DEV-40)
+-- Migration 035: promoções e códigos de acesso do painel ops (DEV-40)
 -- Registro gerenciado pela equipe no host admin. Só o servidor (service_role) lê e grava.
 -- Esta migration não altera checkout, Stripe, Asaas nem o resgate de trial.
 

@@ -2,6 +2,7 @@ import { supabase } from '../db/supabase';
 import { quoteFilter, searchToken } from './search';
 import {
   assertRegistryReady,
+  isMissingTable,
   isUniqueViolation,
   OpsRegistryError,
   registryState,
@@ -9,7 +10,7 @@ import {
 } from './registry';
 
 const COLUMNS =
-  'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, note, is_active, deactivated_at, created_at';
+  'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, note, is_active, deactivated_at, created_at, max_uses, stripe_coupon_id, stripe_promo_code_id';
 
 export type AccessCodeKind = 'trial' | 'gift' | 'coupon';
 
@@ -26,8 +27,11 @@ export interface OpsAccessCodeRow {
   is_active: boolean;
   deactivated_at: string | null;
   created_at: string;
+  max_uses: number | null;
+  stripe_coupon_id: string | null;
+  stripe_promo_code_id: string | null;
   state: RegistryState;
-  /** Resgates de trial/gift já gravados em `trial_redemptions`. Cupom não é contado aqui. */
+  /** Usos reais em `access_code_uses` (cupom, trial e presente). */
   redemptions: number | null;
 }
 
@@ -37,19 +41,28 @@ function toRow(row: AccessCodeDbRow, redemptions: number | null): OpsAccessCodeR
   return {
     ...row,
     product_types: row.product_types ?? [],
+    max_uses: row.max_uses ?? null,
+    stripe_coupon_id: row.stripe_coupon_id ?? null,
+    stripe_promo_code_id: row.stripe_promo_code_id ?? null,
     state: registryState({ is_active: row.is_active, ends_at: row.expires_at }),
     redemptions,
   };
 }
 
 async function redemptionCount(row: AccessCodeDbRow): Promise<number | null> {
-  if (row.kind === 'coupon') return null;
   const { count, error } = await supabase
+    .from('access_code_uses')
+    .select('id', { count: 'exact', head: true })
+    .eq('code_id', row.id);
+  if (!error) return count ?? 0;
+
+  if (!isMissingTable(error) || row.kind === 'coupon') return null;
+  const fallback = await supabase
     .from('trial_redemptions')
     .select('id', { count: 'exact', head: true })
     .eq('trial_code', row.code);
-  if (error) return null;
-  return count ?? 0;
+  if (fallback.error) return null;
+  return fallback.count ?? 0;
 }
 
 export interface ListAccessCodesParams {
@@ -118,6 +131,7 @@ export interface CreateAccessCodeInput {
   discountValue: number | null;
   expiresAt: string | null;
   note: string | null;
+  maxUses: number | null;
   actorId: string;
 }
 
@@ -133,6 +147,7 @@ export async function createAccessCode(input: CreateAccessCodeInput): Promise<Op
       discount_value: input.discountValue,
       expires_at: input.expiresAt,
       note: input.note,
+      max_uses: input.maxUses,
       created_by: input.actorId,
     })
     .select(COLUMNS)

@@ -1,30 +1,55 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { lookupAccessTrial } from '../backend/payments/prices';
+import { TRIAL_NOT_FOUND } from '../backend/payments/promo-math';
+import { PRODUCT_LABELS } from '../shared/product-labels';
 
 const code = Astro.url.searchParams.get('code');
 const days = Astro.url.searchParams.get('days') ?? '7';
 const product = Astro.url.searchParams.get('product') ?? 'all';
-const kind = Astro.url.searchParams.get('kind') ?? 'trial';
+const kindParam = Astro.url.searchParams.get('kind') ?? 'trial';
 
 if (!code) {
   return Astro.redirect('/');
 }
 
+let trialError = '';
+let trialDays = 7;
+let isGift = kindParam === 'gift';
+let productLabel = 'Nome Social';
+
+try {
+  const trial = await lookupAccessTrial(code);
+  if (!trial.valid || !trial.trialDays) {
+    trialError = trial.error === 'Código de acesso inválido ou expirado' ? TRIAL_NOT_FOUND : (trial.error ?? TRIAL_NOT_FOUND);
+  } else {
+    trialDays = trial.trialDays;
+    isGift = trial.kind === 'gift';
+    const labels = (trial.productTypes ?? []).map((item) => PRODUCT_LABELS[item] ?? item);
+    productLabel = labels.length > 0 ? labels.join(', ') : 'Nome Social';
+  }
+} catch (err) {
+  console.error('[acesso] Falha ao consultar código:', err);
+  trialError = 'Não foi possível validar o código agora. Tente de novo em instantes.';
+}
+
 const user = Astro.locals.user;
-if (user) {
-  const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kind)}`;
+if (user && !trialError) {
+  const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kindParam)}`;
   return Astro.redirect(resgatarUrl);
 }
 
-const productLabel = 'Nome Social';
-const daysLabel = days === '0' ? 'sem data de expiracao' : `${days} dias de acesso`;
-const isGift = kind === 'gift';
-const pageTitle = isGift
-  ? `Acesso presente para ${productLabel}`
-  : `Acesso especial para ${productLabel}`;
-const pageDescription = `Voce recebeu ${daysLabel} ao Nome Magnetico: ${productLabel}. Ative seu acesso e experimente a analise numerologica cabalistica na hora, direto no sistema.`;
+const daysLabel = `${trialDays} ${trialDays === 1 ? 'dia' : 'dias'} de acesso`;
+const pageTitle = trialError
+  ? 'Código de acesso inválido'
+  : isGift
+    ? `Acesso presente para ${productLabel}`
+    : `Acesso especial para ${productLabel}`;
+const pageDescription = trialError
+  ? 'Este código de acesso não pôde ser ativado.'
+  : `Você recebeu ${daysLabel} ao Nome Magnético: ${productLabel}. Ative seu acesso e experimente a análise numerológica cabalística na hora, direto no sistema.`;
 
-const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kind)}`;
+const resgatarUrl = `/acesso/resgatar?code=${encodeURIComponent(code)}&days=${days}&product=${encodeURIComponent(product)}&kind=${encodeURIComponent(kindParam)}`;
 const cadastroUrl = `/auth/cadastro?redirect=${encodeURIComponent(resgatarUrl)}`;
 const loginUrl = `/auth/login?redirect=${encodeURIComponent(resgatarUrl)}`;
 ---
@@ -38,51 +63,68 @@ const loginUrl = `/auth/login?redirect=${encodeURIComponent(resgatarUrl)}`;
     <div class="max-w-md w-full">
       <div class="text-center mb-8">
         <a href="/" class="font-cinzel text-2xl font-bold text-[#D4AF37] tracking-wider">
-          NOME MAGNETICO
+          NOME MAGNÉTICO
         </a>
       </div>
 
       <div class="bg-[#1a1a1a] rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
-        <div class="text-center mb-6">
-          <div class="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7m16 0H4m16 0h-7m-9 0h7m2 0v9m-2-9v9M7.5 8.5A2.5 2.5 0 0 1 12 7a2.5 2.5 0 1 1 4.5 1.5C16.5 10.5 12 12 12 12S7.5 10.5 7.5 8.5Z" />
-            </svg>
+        {trialError ? (
+          <div class="text-center">
+            <h1 class="font-cinzel text-2xl font-bold text-[#e5e2e1] mb-3">Não foi possível ativar</h1>
+            <p class="text-[#76746a] text-sm leading-relaxed mb-8">{trialError}</p>
+            <a
+              href="/"
+              class="inline-block rounded-full bg-[#f2ca50] px-8 py-3 text-sm font-medium text-[#131313] shadow-[0_0_24px_rgba(242,202,80,0.18)]"
+            >
+              Voltar ao início
+            </a>
           </div>
-          <h1 class="font-cinzel text-2xl font-bold text-[#e5e2e1] mb-2">
-            {isGift ? 'Voce recebeu um acesso presente' : 'Voce recebeu um acesso especial'}
-          </h1>
-          <p class="text-gray-400 text-sm">
-            {daysLabel} ao <strong class="text-[#e5e2e1]">{productLabel}</strong>
-          </p>
-        </div>
+        ) : (
+          <>
+            <div class="text-center mb-6">
+              <div class="w-16 h-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7m16 0H4m16 0h-7m-9 0h7m2 0v9m-2-9v9M7.5 8.5A2.5 2.5 0 0 1 12 7a2.5 2.5 0 1 1 4.5 1.5C16.5 10.5 12 12 12 12S7.5 10.5 7.5 8.5Z" />
+                </svg>
+              </div>
+              <h1 class="font-cinzel text-2xl font-bold text-[#e5e2e1] mb-2">
+                {isGift ? 'Você recebeu um acesso presente' : 'Você recebeu um acesso especial'}
+              </h1>
+              <p class="text-gray-400 text-sm">
+                {daysLabel} ao <strong class="text-[#e5e2e1]">{productLabel}</strong>
+              </p>
+            </div>
 
-        <div class="bg-[#D4AF37]/5 rounded-xl px-4 py-4 mb-6 text-center">
-          <p class="text-xs text-[#76746a] font-medium uppercase tracking-widest mb-1">Ativacao automatica</p>
-          <p class="text-sm text-gray-400">
-            Crie sua conta ou entre para liberar o acesso. Voce nao precisa digitar nenhum codigo.
-          </p>
-        </div>
+            <div class="bg-[#D4AF37]/5 rounded-xl px-4 py-4 mb-6 text-center">
+              <p class="text-xs text-[#76746a] font-medium uppercase tracking-widest mb-1">Ativação automática</p>
+              <p class="text-sm text-gray-400">
+                Crie sua conta ou entre para liberar o acesso. Você não precisa digitar nenhum código.
+              </p>
+            </div>
 
-        <div class="space-y-3">
-          <a
-            href={cadastroUrl}
-            class="block w-full text-center bg-[#D4AF37] text-black font-bold py-3.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 shadow-lg shadow-yellow-500/20"
-          >
-            Criar conta e ativar acesso
-          </a>
-          <a
-            href={loginUrl}
-            class="block w-full text-center border border-[#D4AF37]/30 text-[#D4AF37] font-medium py-3.5 rounded-full hover:bg-[#D4AF37]/10 transition-all duration-300 text-sm"
-          >
-            Ja tenho conta - Entrar
-          </a>
-        </div>
+            <div class="space-y-3">
+              <a
+                href={cadastroUrl}
+                class="block w-full text-center bg-[#D4AF37] text-black font-bold py-3.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 shadow-lg shadow-yellow-500/20"
+              >
+                Criar conta e ativar acesso
+              </a>
+              <a
+                href={loginUrl}
+                class="block w-full text-center border border-[#D4AF37]/30 text-[#D4AF37] font-medium py-3.5 rounded-full hover:bg-[#D4AF37]/10 transition-all duration-300 text-sm"
+              >
+                Já tenho conta - Entrar
+              </a>
+            </div>
+          </>
+        )}
       </div>
 
-      <p class="text-center text-[#76746a] text-xs mt-6">
-        O acesso sera ativado automaticamente apos o login.
-      </p>
+      {!trialError && (
+        <p class="text-center text-[#76746a] text-xs mt-6">
+          O acesso será ativado automaticamente após o login.
+        </p>
+      )}
     </div>
   </div>
 </BaseLayout>

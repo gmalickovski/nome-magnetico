@@ -115,7 +115,7 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
     };
   }, []);
 
-  // Promoção automática do HQ (sem digitar cupom)
+  // Promoção automática (sem digitar cupom)
   useEffect(() => {
     if (!promotion) return;
     if (promotionAppliesToProduct(promotion, productType) && promotion.stripePromoCode) {

@@ -1,24 +1,10 @@
 ---
-import { supabase } from '../../backend/db/supabase';
-import { recordHqAccessTrialUse } from '../../backend/payments/prices';
-import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
-
-const VALID_PRODUCTS = SELLABLE_PRODUCT_TYPES;
-type TrialProduct = typeof VALID_PRODUCTS[number];
-
-function resolveProducts(product?: string): TrialProduct[] {
-  const requested = (product ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item): item is TrialProduct => VALID_PRODUCTS.includes(item as TrialProduct));
-
-  if (requested.length > 0) return Array.from(new Set(requested));
-
-  return [...VALID_PRODUCTS];
-}
+import { redeemAccessTrial } from '../../backend/payments/trial-redeem';
+import { TRIAL_NOT_FOUND } from '../../backend/payments/promo-math';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const code = Astro.url.searchParams.get('code');
-const days = parseInt(Astro.url.searchParams.get('days') ?? '7', 10);
+const days = Astro.url.searchParams.get('days') ?? '7';
 const product = Astro.url.searchParams.get('product') ?? 'all';
 const kind = Astro.url.searchParams.get('kind') ?? 'trial';
 
@@ -33,81 +19,45 @@ if (!code) {
   return Astro.redirect('/app');
 }
 
-const products = resolveProducts(product);
+const result = await redeemAccessTrial({
+  trialCode: code,
+  userId: user.id,
+  userEmail: user.email,
+});
 
-async function recordTrialUseInHq() {
-  await recordHqAccessTrialUse({
-    trialCode: code,
-    productType: product,
-    userId: user!.id,
-    userEmail: user!.email,
-  }).catch((err) => console.error('[acesso/resgatar] Falha ao registrar trial no HQ:', err));
+if (result.ok) {
+  return Astro.redirect('/app?trial=ativado');
 }
 
-const { data: existing } = await supabase
-  .from('trial_redemptions')
-  .select('id')
-  .eq('user_id', user.id)
-  .eq('trial_code', code)
-  .single();
-
-if (!existing) {
-  const now = new Date();
-  const { data: activeSubscriptions } = await supabase
-    .from('subscriptions')
-    .select('product_type, ends_at')
-    .eq('user_id', user.id)
-    .in('product_type', products)
-    .gt('ends_at', now.toISOString());
-
-  const activeProducts = new Set((activeSubscriptions ?? []).map((subscription) => subscription.product_type));
-  const productsToCreate = products.filter((pt) => !activeProducts.has(pt));
-
-  if (productsToCreate.length === 0) {
-    await recordTrialUseInHq();
-    return Astro.redirect('/app?trial=ja_ativo');
-  }
-
-  const endsAt =
-    days === 0
-      ? null
-      : new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-
-  const subscriptionEndsAt =
-    endsAt ?? new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
-
-  if (productsToCreate.length === VALID_PRODUCTS.length) {
-    await supabase
-      .from('profiles')
-      .update({ is_test: true, test_ends_at: endsAt })
-      .eq('id', user.id);
-  }
-
-  for (const pt of productsToCreate) {
-    await supabase.from('subscriptions').insert({
-      user_id: user.id,
-      product_type: pt,
-      starts_at: now.toISOString(),
-      ends_at: subscriptionEndsAt,
-      stripe_session_id: `trial_${code}`,
-      amount_paid: 0,
-      metadata: { source: kind === 'gift' ? 'gift_access_link' : 'hq_trial_code', code },
-    });
-  }
-
-  await supabase.from('trial_redemptions').insert({
-    user_id: user.id,
-    trial_code: code,
-    trial_days: days,
-    product_type: products.length === VALID_PRODUCTS.length ? 'all' : products.join(','),
-    source: kind === 'gift' ? 'gift' : 'link',
-  });
-
-  await recordTrialUseInHq();
-} else {
-  await recordTrialUseInHq();
+if (result.alreadyRedeemed || result.alreadyActive) {
   return Astro.redirect('/app?trial=ja_ativo');
 }
 
-return Astro.redirect('/app?trial=ativado');
+const message = result.error ?? TRIAL_NOT_FOUND;
 ---
+
+<BaseLayout
+  title="Código de acesso inválido"
+  description="Este código de acesso não pôde ser ativado."
+  noIndex={true}
+>
+  <div class="min-h-screen bg-[#131313] flex items-center justify-center px-4 py-16">
+    <div class="max-w-md w-full">
+      <div class="text-center mb-8">
+        <a href="/" class="font-cinzel text-2xl font-bold text-[#D4AF37] tracking-wider">
+          NOME MAGNÉTICO
+        </a>
+      </div>
+      <div class="bg-[#1a1a1a] rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-center">
+        <h1 class="font-cinzel text-2xl font-bold text-[#e5e2e1] mb-3">Não foi possível ativar</h1>
+        <p class="text-[#76746a] text-sm leading-relaxed mb-8">{message}</p>
+        <a
+          href="/"
+          class="inline-block rounded-full bg-[#f2ca50] px-8 py-3 text-sm font-medium text-[#131313] shadow-[0_0_24px_rgba(242,202,80,0.18)]"
+        >
+          Voltar ao início
+        </a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

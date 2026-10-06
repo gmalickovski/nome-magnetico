@@ -3,10 +3,11 @@ import { z } from 'zod';
 import { createCheckoutSession, stripe, type ProductType } from '../../backend/payments/stripe';
 import { supabase } from '../../backend/db/supabase';
 import {
-  getHqPricesAndPromo,
+  applyPromotionDiscount,
+  getPricesAndPromo,
   promotionAppliesToProduct,
   resolveHqCouponDiscount,
-  validateHqAccessCoupon,
+  validateAccessCoupon,
 } from '../../backend/payments/prices';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
@@ -80,7 +81,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   }
 
   try {
-    // ── Busca preço canônico do HQ (fonte de verdade)
+    // ── Preço canônico do Stripe + promoção/cupom do banco local
     let unitAmount: number;
     let couponId: string | undefined;
     let promotionCodeId: string | undefined;
@@ -88,12 +89,12 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     const PRICE_FALLBACK: Record<string, number> = { nome_social: 9800, nome_bebe: 8000, nome_empresa: 12500 };
 
     try {
-      const { prices, promotion } = await getHqPricesAndPromo();
+      const { prices, promotion } = await getPricesAndPromo();
       const priceInfo = prices[product_type];
       unitAmount = priceInfo?.cents ?? PRICE_FALLBACK[product_type] ?? 9800;
 
       if (couponCode) {
-        const hqCoupon = await validateHqAccessCoupon({
+        const hqCoupon = await validateAccessCoupon({
           couponCode,
           productType: product_type,
           userId: user.id,
@@ -121,12 +122,14 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
         }
       }
 
-      if (!couponCode && promotion?.stripeCouponId) {
-        const appliesToThis = promotionAppliesToProduct(promotion, product_type);
-        if (appliesToThis) couponId = promotion.stripeCouponId;
+      if (!couponCode && promotion && promotionAppliesToProduct(promotion, product_type)) {
+        if (promotion.stripeCouponId) {
+          couponId = promotion.stripeCouponId;
+        } else {
+          unitAmount = applyPromotionDiscount(unitAmount, promotion);
+        }
       }
     } catch {
-      // HQ indisponível — fallback para preços hardcoded
       unitAmount = PRICE_FALLBACK[product_type] ?? 9800;
     }
 

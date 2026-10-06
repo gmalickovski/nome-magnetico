@@ -10,9 +10,14 @@ export class OpsRegistryError extends Error {
 
 type PostgrestLikeError = { code?: string; message?: string } | null | undefined;
 
-/** Tabela ainda não criada no banco (migration 034 pendente). */
+/** Tabela ou coluna ainda não criada (migrations 035/036). */
 export function isMissingTable(error: PostgrestLikeError): boolean {
-  return error?.code === 'PGRST205' || error?.code === '42P01';
+  return (
+    error?.code === 'PGRST205' ||
+    error?.code === '42P01' ||
+    error?.code === '42703' ||
+    Boolean(error?.message?.includes('does not exist'))
+  );
 }
 
 export function isUniqueViolation(error: PostgrestLikeError): boolean {
@@ -21,7 +26,7 @@ export function isUniqueViolation(error: PostgrestLikeError): boolean {
 
 export function assertRegistryReady(error: PostgrestLikeError): void {
   if (isMissingTable(error)) {
-    throw new OpsRegistryError(503, 'Registro ainda não disponível no banco. Aplique a migration 034.');
+    throw new OpsRegistryError(503, 'Registro ainda não disponível no banco. Aplique as migrations 035 e 036.');
   }
 }
 

@@ -281,19 +281,19 @@ Regra de acesso: se `is_test=true` E (`test_ends_at IS NULL` OU `test_ends_at > 
 HQ → Usuários → ícone Experimento → "Marcar como teste" → o HQ atualiza `is_test` diretamente no Supabase.
 
 ### Fluxo 2 — Novo usuário via link
-Link gerado pelo HQ: `https://nomemagnetico.com.br/acesso?code=CODE&days=7&product=nome_social`
-1. Usuário acessa o link → `/acesso.astro`
+Link gerado pelo HQ: `https://nomemagnetico.com.br/acesso?code=CODE`
+1. Usuário acessa o link → `/acesso.astro` valida o código em `access_codes`
 2. Se não logado: redireciona para cadastro/login com redirect para `/acesso/resgatar?code=...`
-3. Após auth: `/acesso/resgatar.astro` aplica o trial e redireciona para `/app?trial=ativado`
+3. Após auth: `/acesso/resgatar.astro` aplica `trial_days` e `product_types` do banco (não da URL) e redireciona para `/app?trial=ativado`
+4. Código inexistente, inativo ou expirado: mensagem amigável, sem conceder acesso
 
 ### Checkout com cupom
 O `CheckoutFlow.tsx` possui campo de código promocional opcional.
-O endpoint `/api/create-checkout.ts` resolve o ID do promotion_code no Stripe antes de criar a sessão.
-Admins e usuários teste recebem bypass total (assinatura criada diretamente no Supabase, sem Stripe).
+`/api/create-checkout` e `/api/validate-coupon` leem `promotions` e `access_codes` no banco do NM (service role). Falha no banco → preço Stripe sem promoção. Fallback Stripe de `promotion_code` manual permanece. `HQ_API_URL` não é lido.
 
 ### Trial Redemptions
-Tabela `trial_redemptions` registra cada resgate com `user_id`, `trial_code`, `source` ('link' | 'manual').
-Garante que um mesmo código não seja resgatado duas vezes pelo mesmo usuário.
+Tabela `trial_redemptions` registra cada resgate com `user_id`, `trial_code`, `source` ('link' | 'manual' | 'gift').
+`access_code_uses` conta o uso real para limite (`max_uses`). Um mesmo código não é resgatado duas vezes pelo mesmo usuário.
 
 ### Plano de implementação do lado HQ
 As mudanças necessárias no projeto `C:\Dev\hq-studiomlk-refine` estão documentadas em:
