@@ -55,24 +55,6 @@ const expressaoEmpresa = melhorNome?.expressao ?? analysis.numero_expressao;
 const outrosNumerosEmpresa = cincoNumerosEmpresa.filter(n => n.label !== 'Expressão');
 const nomesCandidatos: any[] = rankingEmpresa?.nomesCandidatos ?? [];
 const identidadeVisual = expressaoEmpresa ? getIdentidadeVisual(expressaoEmpresa) : null;
-
-// Data de nascimento do sócio formatada DD/MM/YYYY para o payload da API
-const dataNascSocioFormatted: string = (() => {
-  const d = analysis.data_nascimento;
-  if (!d) return '';
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
-  const parts = d.split('-');
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
-})();
-
-// Data de fundação formatada (pode ser null)
-const dataFundacaoFormatted: string = (() => {
-  const d = rankingEmpresa?.dataFundacao;
-  if (!d) return '';
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
-  const parts = d.split('-');
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
-})();
 ---
 
 {/* ── SEÇÃO 1: A ESTRELA DE 5 PONTAS — EXPRESSÃO EM DESTAQUE ───────────── */}
@@ -198,17 +180,11 @@ const dataFundacaoFormatted: string = (() => {
     <div class="mb-3 px-1">
       <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Análise Comparativa</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Estudo dos Nomes Candidatos</h2>
-      <p class="text-sm text-gray-400 mt-1">Clique em qualquer nome para gerar o relatório completo daquele candidato.</p>
     </div>
     <div class="space-y-4">
       {nomesCandidatos.map((c: any, idx: number) => (
-        <button
-          type="button"
-          class={`analisar-nome-empresa-card w-full text-left rounded-2xl p-3 sm:p-5 md:p-6 hover:opacity-90 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-[#4A7FC1]/50 ${idx === 0 ? 'bg-[#4A7FC1]/5 border border-[#4A7FC1]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
-          data-nome-empresa={c.nomeEmpresa}
-          data-nome-socio={rankingEmpresa?.nomeSocioPrincipal ?? analysis.nome_completo}
-          data-data-nasc={dataNascSocioFormatted}
-          data-data-fundacao={dataFundacaoFormatted}
+        <div
+          class={`w-full text-left rounded-2xl p-3 sm:p-5 md:p-6 relative group focus:outline-none focus:ring-2 focus:ring-[#4A7FC1]/50 ${idx === 0 ? 'bg-[#4A7FC1]/5 border border-[#4A7FC1]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
         >
           <div class="flex items-start justify-between gap-4 mb-3">
             <div>
@@ -252,13 +228,7 @@ const dataFundacaoFormatted: string = (() => {
               {c.disponibilidade.instagram === false && <span class="bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full">✗ @Instagram ocupado</span>}
             </div>
           )}
-          <span class="text-xs text-[#4A7FC1]/60 group-hover:text-[#4A7FC1] transition-colors">
-            Gerar relatório completo
-          </span>
-          <div class="card-loading hidden absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center">
-            <span class="w-6 h-6 border-2 border-[#4A7FC1]/30 border-t-[#4A7FC1] rounded-full animate-spin"></span>
-          </div>
-        </button>
+        </div>
       ))}
     </div>
   </section>
@@ -383,42 +353,3 @@ const dataFundacaoFormatted: string = (() => {
     </div>
   </section>
 )}
-
-<script is:inline>
-  document.querySelectorAll('.analisar-nome-empresa-card').forEach(function(card) {
-    card.addEventListener('click', async function() {
-      var nomeEmpresa  = card.getAttribute('data-nome-empresa');
-      var nomeSocio    = card.getAttribute('data-nome-socio');
-      var dataNasc     = card.getAttribute('data-data-nasc');
-      var dataFundacao = card.getAttribute('data-data-fundacao');
-      if (!nomeEmpresa || !nomeSocio || !dataNasc) return;
-
-      var loadingEl = card.querySelector('.card-loading');
-      if (loadingEl) loadingEl.classList.remove('hidden');
-      card.style.pointerEvents = 'none';
-
-      try {
-        var body = {
-          product_type: 'nome_empresa',
-          nome_completo: nomeSocio,
-          data_nascimento: dataNasc,
-          nomes_candidatos: [nomeEmpresa],
-        };
-        if (dataFundacao) body.data_fundacao = dataFundacao;
-
-        var res = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        var data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erro ao iniciar análise');
-        window.location.href = '/app/resultado/' + data.analysisId;
-      } catch (err) {
-        if (loadingEl) loadingEl.classList.add('hidden');
-        card.style.pointerEvents = '';
-        alert('Erro ao gerar análise: ' + (err instanceof Error ? err.message : String(err)));
-      }
-    });
-  });
-</script>

@@ -2,8 +2,9 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { supabase } from '../../backend/db/supabase';
 import { recordHqAccessTrialUse } from '../../backend/payments/prices';
+import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 
-const VALID_PRODUCTS = ['nome_social', 'nome_bebe', 'nome_empresa'] as const;
+const VALID_PRODUCTS = SELLABLE_PRODUCT_TYPES;
 type TrialProduct = typeof VALID_PRODUCTS[number];
 
 const schema = z.object({

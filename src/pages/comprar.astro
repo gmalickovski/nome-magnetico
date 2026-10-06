@@ -20,20 +20,15 @@ if (user) {
 
 const produto = Astro.url.searchParams.get('produto') ?? '';
 const autoOpenCheckout = Astro.url.searchParams.get('checkout') === '1';
-const produtosValidos = ['nome_social', 'nome_bebe', 'nome_empresa'] as const;
-type ProductType = typeof produtosValidos[number];
-const productType: ProductType | null = (produtosValidos as readonly string[]).includes(produto)
-  ? (produto as ProductType)
-  : null;
+const productType = 'nome_social' as const;
 
-// Não-logados com produto específico → enviar para cadastro/login
-if (!user && productType) {
+// Não-logados com produto explícito → enviar para cadastro/login
+if (!user && produto === productType) {
   return Astro.redirect(`/auth/cadastro?produto=${productType}`);
 }
 
-// isOwned só é relevante quando há produto específico
 let isOwned = false;
-if (user && productType) {
+if (user) {
   isOwned = await hasActiveSubscription(user.id, productType);
 }
 
@@ -50,8 +45,6 @@ try {
 
 const paymentLinks = {
   nome_social: '/auth/login?redirect=/comprar?produto=nome_social',
-  nome_bebe:      '/auth/login?redirect=/comprar?produto=nome_bebe',
-  nome_empresa:   '/auth/login?redirect=/comprar?produto=nome_empresa',
 };
 // BreadcrumbList para /comprar — melhora navegação no Google e AI Overviews
 const schemaBreadcrumb = {
@@ -76,7 +69,7 @@ const schemaBreadcrumb = {
 
 <BaseLayout
   title="Planos de Análise Numerológica — Nome Magnético"
-  description="Escolha sua análise de numerologia cabalística: Nome Social, Nome para Bebê ou Nome Empresarial. Pagamento único, acesso imediato por 30 dias, PDF para download e garantia de 7 dias."
+  description="Harmonize sua assinatura a partir do nome de nascimento com o Nome Social. Pagamento único, acesso imediato por 30 dias, PDF para download e garantia de 7 dias."
   keywords="comprar numerologia cabalística, planos numerologia, preço mapa numerológico, análise nome cabalística preço, numerologia nome completo comprar, mapa numerológico online, análise bloqueios energéticos nome"
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaBreadcrumb)} />

@@ -19,8 +19,6 @@ export const GET: APIRoute = async () => {
     { url: '/sobre', changefreq: 'monthly', priority: '0.6', lastmod: currentDate },
     { url: '/glossario', changefreq: 'monthly', priority: '0.5', lastmod: currentDate },
     { url: '/nome-social', changefreq: 'weekly', priority: '0.9', lastmod: currentDate },
-    { url: '/nome-bebe', changefreq: 'weekly', priority: '0.9', lastmod: currentDate },
-    { url: '/nome-empresarial', changefreq: 'weekly', priority: '0.9', lastmod: currentDate },
     { url: '/precos', changefreq: 'monthly', priority: '0.8', lastmod: currentDate },
     { url: '/comprar', changefreq: 'weekly', priority: '0.8', lastmod: currentDate },
     { url: '/analise-gratuita', changefreq: 'monthly', priority: '0.8', lastmod: currentDate },

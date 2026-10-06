@@ -3,9 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
-  const productsRef = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState<boolean | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLAnchorElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
@@ -18,17 +20,41 @@ export function LandingHeader() {
   }, []);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (productsRef.current && !productsRef.current.contains(e.target as Node)) {
-        setProductsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const row = rowRef.current;
+    const logo = logoRef.current;
+    const nav = navRef.current;
+    if (!row || !logo || !nav) return;
+
+    const measure = () => {
+      const previous = nav.className;
+      nav.className =
+        'flex items-center gap-4 xl:gap-6 whitespace-nowrap absolute w-max invisible pointer-events-none';
+      const navWidth = nav.scrollWidth;
+      nav.className = previous;
+      const styles = getComputedStyle(row);
+      const pad = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const available = row.clientWidth - pad;
+      const logoWidth = logo.getBoundingClientRect().width;
+      const fits = logoWidth + navWidth + 24 <= available;
+      setCompact(!fits);
+      if (fits) setMenuOpen(false);
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    measure();
+    return () => observer.disconnect();
   }, []);
 
-  const PRODUCT_PATHS = ['/nome-social', '/nome-bebe', '/nome-empresarial'];
-  const isProductsActive = PRODUCT_PATHS.some(p => currentPath === p || currentPath.startsWith(p + '/'));
+  const desktopNavClass =
+    compact === null
+      ? 'hidden min-[1200px]:flex items-center gap-4 xl:gap-6 whitespace-nowrap'
+      : compact
+        ? 'absolute w-max invisible pointer-events-none flex items-center gap-4 xl:gap-6 whitespace-nowrap'
+        : 'flex items-center gap-4 xl:gap-6 whitespace-nowrap';
+
+  const menuButtonClass =
+    compact === null ? 'min-[1200px]:hidden' : compact ? '' : 'hidden';
 
   function navLink(href: string): string {
     const active = currentPath === href || (href !== '/' && currentPath.startsWith(href + '/'));
@@ -47,104 +73,47 @@ export function LandingHeader() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
         scrolled
-          ? `bg-[#111111]/90 backdrop-blur-md ${menuOpen ? 'border-transparent' : 'border-[#D4AF37]/20'}`
+          ? `bg-[#111111] backdrop-blur-md ${menuOpen ? 'border-transparent' : 'border-[#D4AF37]/20'}`
           : 'bg-transparent border-transparent'
       }`}
     >
-      <div className={`max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between ${scrolled ? 'py-3' : 'py-5'}`}>
+      <div ref={rowRef} className={`max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between ${scrolled ? 'py-3' : 'py-5'}`}>
         {/* Logo */}
-        <a href="/" className="hover:opacity-80 transition-opacity flex-shrink-0">
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="h-9 sm:h-10 md:h-11 w-auto" />
+        <a ref={logoRef} href="/" className="hover:opacity-80 transition-opacity shrink-0">
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-9 w-auto max-w-none aspect-[2447/500] sm:h-10 md:h-11" />
         </a>
 
-        {/* Nav desktop */}
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
-          <a href="/#como-funciona" className={navLink('/#como-funciona')}>
+        {/* Nav desktop — hidden until the logo and the links both fit */}
+        <nav ref={navRef} className={desktopNavClass} aria-hidden={compact === true}>
+          <a href="/#como-funciona" className={`${navLink('/#como-funciona')} whitespace-nowrap shrink-0`}>
             Como Funciona
           </a>
-          <a href="/analise-gratuita" className={navLink('/analise-gratuita')}>
+          <a href="/analise-gratuita" className={`${navLink('/analise-gratuita')} whitespace-nowrap shrink-0`}>
             Análise Gratuita
           </a>
 
-          {/* Dropdown Produtos */}
-          <div
-            ref={productsRef}
-            className="relative py-2 -my-2"
-            onMouseEnter={() => setProductsOpen(true)}
-            onMouseLeave={() => setProductsOpen(false)}
-          >
-            <button
-              className={`relative flex items-center gap-1 transition-colors text-sm ${
-                productsOpen ? 'text-[#D4AF37]' : 'text-gray-400 hover:text-[#D4AF37]'
-              } after:absolute after:bottom-0 after:left-0 after:h-px after:bg-[#D4AF37] after:transition-all after:duration-300 ${
-                productsOpen ? 'after:w-full' : 'after:w-0 hover:after:w-full'
-              }`}
-              onClick={() => setProductsOpen(v => !v)}
-              aria-expanded={productsOpen}
-            >
-              Produtos
-              <svg
-                className={`w-3 h-3 transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+          <a href="/nome-social" className={`${navLink('/nome-social')} whitespace-nowrap shrink-0`}>
+            Nome Social
+          </a>
 
-            {productsOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-56 z-50">
-                {/* bridge invisível para o mouse não sair da área hover */}
-                <div className="absolute -top-3 left-0 right-0 h-3" />
-                <div className="bg-[#1a1a1a] border border-[#D4AF37]/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] overflow-hidden py-2">
-                  <a
-                    href="/nome-social"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-[#D4AF37] hover:bg-white/5 transition-all text-sm"
-                    onClick={() => setProductsOpen(false)}
-                  >
-                    <span className="text-[#D4AF37] text-base leading-none">✦</span>
-                    <span>Nome Social</span>
-                  </a>
-                  <a
-                    href="/nome-bebe"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-[#D4AF37] hover:bg-white/5 transition-all text-sm"
-                    onClick={() => setProductsOpen(false)}
-                  >
-                    <span className="text-base leading-none">👶</span>
-                    <span>Nome para Bebê</span>
-                  </a>
-                  <a
-                    href="/nome-empresarial"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-[#D4AF37] hover:bg-white/5 transition-all text-sm"
-                    onClick={() => setProductsOpen(false)}
-                  >
-                    <span className="text-base leading-none">🏢</span>
-                    <span>Nome Empresarial</span>
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <a href="/precos" className={navLink('/precos')}>
+          <a href="/precos" className={`${navLink('/precos')} whitespace-nowrap shrink-0`}>
             Preços
           </a>
-          <a href="/blog" className={navLink('/blog')}>
+          <a href="/blog" className={`${navLink('/blog')} whitespace-nowrap shrink-0`}>
             Blog
           </a>
-          <a href="/perguntas-frequentes" className={navLink('/perguntas-frequentes')}>
+          <a href="/perguntas-frequentes" className={`${navLink('/perguntas-frequentes')} whitespace-nowrap shrink-0`}>
             FAQ
           </a>
-          <a href="/sobre" className={navLink('/sobre')}>
+          <a href="/sobre" className={`${navLink('/sobre')} whitespace-nowrap shrink-0`}>
             Sobre
           </a>
-          <a href="/auth/login" className="bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-sm px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300 shadow-md shadow-[#D4AF37]/10">
+          <a href="/auth/login" className="shrink-0 whitespace-nowrap bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-sm px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300 shadow-md shadow-[#D4AF37]/10">
             Entrar
           </a>
           <a
             href="/auth/cadastro"
-            className="bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
+            className="shrink-0 whitespace-nowrap bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
           >
             Começar Agora
           </a>
@@ -153,7 +122,7 @@ export function LandingHeader() {
         {/* Menu mobile toggle */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="lg:hidden text-[#D4AF37] hover:text-[#f2ca50] transition-colors"
+          className={`${menuButtonClass} text-[#D4AF37] hover:text-[#f2ca50] transition-colors`}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {menuOpen ? (
@@ -167,26 +136,14 @@ export function LandingHeader() {
 
       {/* Menu mobile aberto */}
       {menuOpen && (
-        <div className="lg:hidden bg-[#111111] border-t border-[#D4AF37]/20 px-4 py-6 space-y-1">
+        <div className={`${menuButtonClass} bg-[#111111] border-t border-[#D4AF37]/20 px-4 py-6 space-y-1`}>
           <a href="/#como-funciona" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Como Funciona</a>
           <a href="/analise-gratuita" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Análise Gratuita</a>
+          <a href="/nome-social" className={mobileLink('/nome-social')} onClick={() => setMenuOpen(false)}>Nome Social</a>
           <a href="/precos" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Preços</a>
           <a href="/blog" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Blog</a>
           <a href="/perguntas-frequentes" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Perguntas Frequentes</a>
           <a href="/sobre" className={mobileLink('/sobre')} onClick={() => setMenuOpen(false)}>Sobre</a>
-
-          <div className="border-t border-white/8 pt-3 mt-3 space-y-1">
-            <p className="text-gray-600 text-xs uppercase tracking-widest px-1 pb-1">Produtos</p>
-            <a href="/nome-social" className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] py-2 text-sm" onClick={() => setMenuOpen(false)}>
-              <span className="text-[#D4AF37] text-xs">✦</span> Nome Social
-            </a>
-            <a href="/nome-bebe" className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] py-2 text-sm" onClick={() => setMenuOpen(false)}>
-              <span>👶</span> Nome para Bebê
-            </a>
-            <a href="/nome-empresarial" className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] py-2 text-sm" onClick={() => setMenuOpen(false)}>
-              <span>🏢</span> Nome Empresarial
-            </a>
-          </div>
 
           <div className="pt-3 space-y-3">
             <a href="/auth/login" className="block bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-center py-2.5 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300" onClick={() => setMenuOpen(false)}>Entrar</a>

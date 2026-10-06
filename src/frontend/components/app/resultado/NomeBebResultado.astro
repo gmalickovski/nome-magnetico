@@ -37,17 +37,6 @@ const destinoBebe = rankingBebe?.destino ?? analysis.numero_destino;
 const melhorNome = rankingBebe?.melhorNome;
 const nomesCandidatos: any[] = rankingBebe?.nomesCandidatos ?? [];
 
-// Data de nascimento do bebê formatada DD/MM/YYYY para o payload da API
-const dataNascBebeFormatted: string = (() => {
-  const d = rankingBebe?.dataNascimento;
-  if (!d) return '';
-  // Se já está no formato DD/MM/YYYY, usar diretamente
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
-  // Se está no formato ISO YYYY-MM-DD, converter
-  const parts = d.split('-');
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
-})();
-
 // 4 números secundários do melhor nome (Destino é o destaque)
 const numSecundarios = [
   { label: 'Expressão', sublabel: 'O Dom', value: melhorNome?.expressao ?? analysis.numero_expressao, icon: '✦' },
@@ -137,16 +126,11 @@ const numSecundarios = [
     <div class="mb-3 px-1">
       <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Tabela Comparativa</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Ranking dos Nomes Candidatos</h2>
-      <p class="text-sm text-gray-400 mt-1">Clique em qualquer nome para gerar o relatório completo daquele candidato.</p>
     </div>
     <div class="space-y-4">
       {nomesCandidatos.map((c: any, idx: number) => (
-        <button
-          type="button"
-          class={`analisar-nome-bebe-card w-full text-left rounded-2xl p-3 sm:p-5 md:p-6 hover:opacity-90 hover:scale-[1.01] transition-all duration-200 cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-[#C97B63]/50 ${idx === 0 ? 'bg-[#C97B63]/5 border border-[#C97B63]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
-          data-primeiro-nome={c.primeiroNome}
-          data-nome-completo={c.nomeCompleto}
-          data-data-nasc={dataNascBebeFormatted}
+        <div
+          class={`w-full text-left rounded-2xl p-3 sm:p-5 md:p-6 relative group focus:outline-none focus:ring-2 focus:ring-[#C97B63]/50 ${idx === 0 ? 'bg-[#C97B63]/5 border border-[#C97B63]/20' : 'bg-white/5 hover:bg-white/[0.08]'}`}
         >
           <div class="flex items-start justify-between gap-4 mb-3">
             <div>
@@ -173,13 +157,7 @@ const numSecundarios = [
               {(c.justificativa as string[]).slice(0, 2).map((j: string) => <p class="leading-relaxed">{j}</p>)}
             </div>
           )}
-          <span class="text-xs text-[#C97B63]/60 group-hover:text-[#C97B63] transition-colors">
-            Gerar relatório completo
-          </span>
-          <div class="card-loading hidden absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center">
-            <span class="w-6 h-6 border-2 border-[#C97B63]/30 border-t-[#C97B63] rounded-full animate-spin"></span>
-          </div>
-        </button>
+        </div>
       ))}
     </div>
   </section>
@@ -230,49 +208,6 @@ const numSecundarios = [
     </div>
     <ArquetipoCard client:visible arquetipo={arquetipoData} mode="bebe" />
   </section>
-)}
-
-{/* ── SCRIPT: handler dos cards clicáveis de nome bebê ───────────────── */}
-{nomesCandidatos.length > 0 && (
-  <script>
-    document.querySelectorAll('.analisar-nome-bebe-card').forEach(function(card) {
-      card.addEventListener('click', async function() {
-        var htmlCard = card as HTMLElement;
-        var primeiroNome = htmlCard.getAttribute('data-primeiro-nome');
-        var nomeCompleto = htmlCard.getAttribute('data-nome-completo');
-        var dataNasc     = htmlCard.getAttribute('data-data-nasc');
-        if (!primeiroNome || !nomeCompleto || !dataNasc) return;
-
-        var sobrenome = primeiroNome
-          ? nomeCompleto.slice(primeiroNome.length).trim()
-          : '';
-
-        var loadingEl = htmlCard.querySelector('.card-loading');
-        if (loadingEl) loadingEl.classList.remove('hidden');
-        htmlCard.style.pointerEvents = 'none';
-
-        try {
-          var res = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              product_type: 'nome_bebe',
-              nome_completo: sobrenome ? ('(bebê) ' + sobrenome) : nomeCompleto,
-              data_nascimento: dataNasc,
-              nomes_candidatos: [primeiroNome],
-            }),
-          });
-          var data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Erro ao iniciar análise');
-          window.location.href = '/app/resultado/' + data.analysisId;
-        } catch (err) {
-          if (loadingEl) loadingEl.classList.add('hidden');
-          htmlCard.style.pointerEvents = '';
-          alert('Erro ao gerar análise: ' + (err instanceof Error ? err.message : String(err)));
-        }
-      });
-    });
-  </script>
 )}
 
 {/* ── SEÇÃO 5: ANÁLISE COMPLETA DA IA ─────────────────────────────────── */}

@@ -25,6 +25,24 @@ import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmi
 import { calcularCincoNumeros } from '../../../../backend/numerology/numbers';
 import { calcularTodosTriangulos, detectarBloqueios } from '../../../../backend/numerology/triangle';
 import { NUMERO_NOMES, NUMERO_PALAVRAS_CHAVE } from '../../../../backend/numerology/interpretations';
+import {
+  HARMONY_STAR_CX,
+  HARMONY_STAR_CY,
+  HARMONY_STAR_GOLD_NUM_RADIUS,
+  HARMONY_STAR_INNER_INNER,
+  HARMONY_STAR_INNER_R,
+  HARMONY_STAR_LABEL_DX,
+  HARMONY_STAR_LABEL_DY,
+  HARMONY_STAR_LABEL_RADIUS,
+  HARMONY_STAR_LABEL_ANCHORS,
+  HARMONY_STAR_OUTER_INNER,
+  HARMONY_STAR_OUTER_R,
+  HARMONY_STAR_RED_NUM_RADIUS,
+  HARMONY_STAR_TIP_LABELS,
+  HARMONY_STAR_VIEWBOX,
+  harmonyStarPts,
+  harmonyStarTipXY,
+} from '../harmonizationStarGeometry';
 
 interface Props {
   analysis: any;
@@ -154,29 +172,20 @@ const tendenciasMantidas   = (nascTendencias ?? []).filter((tn: any) =>  (harmTe
 const tendenciasNovas      = (harmTendencias  ?? []).filter((th: any) => !(nascTendencias ?? []).some((tn: any) => tn.numero === th.numero));
 
 // ── Estrela SVG dupla — pré-cálculo ──────────────────────────────────────────
-function starPts(cx: number, cy: number, R: number, r: number): string {
-  const pts: string[] = [];
-  for (let i = 0; i < 5; i++) {
-    const a1 = ((-90 + i * 72) * Math.PI) / 180;
-    pts.push(`${(cx + R * Math.cos(a1)).toFixed(1)},${(cy + R * Math.sin(a1)).toFixed(1)}`);
-    const a2 = ((-90 + 36 + i * 72) * Math.PI) / 180;
-    pts.push(`${(cx + r * Math.cos(a2)).toFixed(1)},${(cy + r * Math.sin(a2)).toFixed(1)}`);
-  }
-  return pts.join(' ');
-}
-function tipXY(cx: number, cy: number, r: number, i: number) {
-  const a = ((-90 + i * 72) * Math.PI) / 180;
-  return { x: +(cx + r * Math.cos(a)).toFixed(1), y: +(cy + r * Math.sin(a)).toFixed(1) };
-}
+const svgOuterPts = harmonyStarPts(
+  HARMONY_STAR_CX,
+  HARMONY_STAR_CY,
+  HARMONY_STAR_OUTER_R,
+  HARMONY_STAR_OUTER_INNER,
+);
+const svgInnerPts = harmonyStarPts(
+  HARMONY_STAR_CX,
+  HARMONY_STAR_CY,
+  HARMONY_STAR_INNER_R,
+  HARMONY_STAR_INNER_INNER,
+);
 
-const SVG_CX = 330, SVG_CY = 260;
-const SVG_oR = 160, SVG_oInner = 62;
-const SVG_iR = 88,  SVG_iInner = 34;
-const svgOuterPts = starPts(SVG_CX, SVG_CY, SVG_oR, SVG_oInner);
-const svgInnerPts = starPts(SVG_CX, SVG_CY, SVG_iR, SVG_iInner);
-
-const SVG_TIP_KEYS   = ['destino', 'expressao', 'motivacao', 'missao', 'impressao'] as const;
-const SVG_TIP_LABELS = ['Destino', 'Expressão', 'Motivação', 'Missão', 'Impressão'];
+const SVG_TIP_KEYS = ['destino', 'expressao', 'motivacao', 'missao', 'impressao'] as const;
 type TipKey = typeof SVG_TIP_KEYS[number];
 
 const nascNums: Record<TipKey, number | null> = {
@@ -194,25 +203,20 @@ const harmNums: Record<TipKey, number | null> = {
   impressao: harmCalcNums?.impressao ?? null,
 };
 
-const svgTips = SVG_TIP_KEYS.map((key, i) => {
-  const anchors = ['middle', 'start', 'start', 'end', 'end'] as const;
-  const dxArr   = [0, 5, 5, -5, -5];
-  const dyArr   = [-5, 0, 8, 8, 0];
-  return {
-    key,
-    label:     SVG_TIP_LABELS[i],
-    nNasc:     nascNums[key],
-    nHarm:     harmNums[key],
-    same:      nascNums[key] === harmNums[key],
-    isDestino: key === 'destino',
-    outerTip:  tipXY(SVG_CX, SVG_CY, SVG_oR + 20, i),
-    innerTip:  tipXY(SVG_CX, SVG_CY, SVG_iR + 18, i),
-    labelPos:  tipXY(SVG_CX, SVG_CY, SVG_oR + 50, i),
-    anchor:    anchors[i],
-    dx:        dxArr[i],
-    dy:        dyArr[i],
-  };
-});
+const svgTips = SVG_TIP_KEYS.map((key, i) => ({
+  key,
+  label: HARMONY_STAR_TIP_LABELS[i],
+  nNasc: nascNums[key],
+  nHarm: harmNums[key],
+  same: nascNums[key] === harmNums[key],
+  isDestino: key === 'destino',
+  outerTip: harmonyStarTipXY(HARMONY_STAR_CX, HARMONY_STAR_CY, HARMONY_STAR_GOLD_NUM_RADIUS, i),
+  innerTip: harmonyStarTipXY(HARMONY_STAR_CX, HARMONY_STAR_CY, HARMONY_STAR_RED_NUM_RADIUS, i),
+  labelPos: harmonyStarTipXY(HARMONY_STAR_CX, HARMONY_STAR_CY, HARMONY_STAR_LABEL_RADIUS, i),
+  anchor: HARMONY_STAR_LABEL_ANCHORS[i],
+  dx: HARMONY_STAR_LABEL_DX[i],
+  dy: HARMONY_STAR_LABEL_DY[i],
+}));
 
 const dimSublabels: Record<TipKey, string> = {
   destino:   'Data de Nascimento',
@@ -231,9 +235,15 @@ const dimSublabels: Record<TipKey, string> = {
       <h2 class="font-cinzel text-2xl font-bold text-white">A Harmonização</h2>
     </div>
 
-    {/* Estrela SVG dupla — viewBox ampliado para não cortar labels */}
-    <div class="flex justify-center mb-5">
-      <svg viewBox="0 0 660 520" width="100%" style="max-width:660px;" xmlns="http://www.w3.org/2000/svg">
+    {/* Estrela SVG dupla — viewBox ampliado + tipografia responsiva via CSS */}
+    <div class="harmony-star-wrap mb-5">
+      <svg
+        class="harmony-star-svg"
+        viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
+        width="100%"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Comparativo das cinco dimensões numerológicas entre nome de nascimento e harmonizado"
+      >
         <polygon
           points={svgOuterPts}
           fill="#D4AF37"
@@ -251,32 +261,24 @@ const dimSublabels: Record<TipKey, string> = {
         {svgTips.map(t => (
           <g>
             <text
+              class="harmony-star-label"
               x={t.labelPos.x + t.dx}
               y={t.labelPos.y + t.dy}
-              fill="#9CA3AF"
-              font-size="12"
-              font-family="sans-serif"
               text-anchor={t.anchor}
             >{t.label}</text>
             {t.nHarm != null && (
               <text
+                class="harmony-star-num-gold"
                 x={t.outerTip.x}
                 y={t.outerTip.y + 6}
-                fill="#D4AF37"
-                font-size="18"
-                font-family="sans-serif"
-                font-weight="bold"
                 text-anchor="middle"
               >{t.nHarm}</text>
             )}
             {t.nNasc != null && (
               <text
+                class="harmony-star-num-red"
                 x={t.innerTip.x}
                 y={t.innerTip.y + 5}
-                fill="#DC2626"
-                font-size="15"
-                font-family="sans-serif"
-                font-weight="bold"
                 text-anchor="middle"
               >{t.nNasc}</text>
             )}
@@ -324,7 +326,7 @@ const dimSublabels: Record<TipKey, string> = {
         const nH = harmNums[key];
         const isImutavel = key === 'destino';
         const changed = !isImutavel && nN !== nH;
-        const label = SVG_TIP_LABELS[i];
+        const label = HARMONY_STAR_TIP_LABELS[i];
         const sublabel = dimSublabels[key];
         const badgeText = isImutavel ? 'IMUTÁVEL' : changed ? 'VIBRAÇÃO ALTERADA' : 'MANTIDA';
         const badgeCls = isImutavel
@@ -1195,3 +1197,57 @@ const dimSublabels: Record<TipKey, string> = {
     </p>
   </div>
 </section>
+
+<style>
+  .harmony-star-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding-inline: 0.125rem;
+  }
+
+  .harmony-star-svg {
+    max-width: 660px;
+  }
+
+  @media (max-width: 639px) {
+    .harmony-star-wrap {
+      transform: scale(1.05);
+      transform-origin: center top;
+    }
+  }
+
+  .harmony-star-label {
+    fill: #b0b7c3;
+    font-family: Inter, sans-serif;
+    font-size: 15px;
+  }
+
+  .harmony-star-num-gold {
+    fill: #d4af37;
+    font-family: Inter, sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  .harmony-star-num-red {
+    fill: #dc2626;
+    font-family: Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  @media (min-width: 640px) {
+    .harmony-star-label {
+      font-size: 13px;
+    }
+
+    .harmony-star-num-gold {
+      font-size: 18px;
+    }
+
+    .harmony-star-num-red {
+      font-size: 15px;
+    }
+  }
+</style>

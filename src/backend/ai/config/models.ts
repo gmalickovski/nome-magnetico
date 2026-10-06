@@ -3,11 +3,13 @@ import type { AIProvider } from './providers';
 export type AITask = 'analysis' | 'suggestions' | 'guide' | 'support_polish';
 
 export const MODELS: Record<AIProvider, Record<AITask, string>> = {
+  // Groq retirou llama-3.3-70b-versatile e llama-3.1-8b-instant em 16/08/2026
+  // (free/developer). Substitutos oficiais: gpt-oss-120b / gpt-oss-20b.
   groq: {
-    analysis: 'llama-3.3-70b-versatile',
-    suggestions: 'llama-3.3-70b-versatile',
-    guide: 'llama-3.3-70b-versatile',
-    support_polish: 'llama-3.1-8b-instant',
+    analysis: 'openai/gpt-oss-120b',
+    suggestions: 'openai/gpt-oss-120b',
+    guide: 'openai/gpt-oss-120b',
+    support_polish: 'openai/gpt-oss-20b',
   },
   claude: {
     analysis: 'claude-sonnet-4-6',

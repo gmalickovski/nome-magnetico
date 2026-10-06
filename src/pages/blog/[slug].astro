@@ -72,24 +72,20 @@ const { data: related } = await supabase
   .order('published_at', { ascending: false })
   .limit(3);
 
+const RETIRED_CATEGORIES = ['nome-bebe', 'nome-empresa'];
+
 const PRODUTO_HREF: Record<string, string> = {
   nome_social:  '/nome-social',
-  nome_bebe:    '/nome-bebe',
-  nome_empresa: '/nome-empresarial',
 };
 
 const PRODUTO_LABEL: Record<string, string> = {
   nome_social:  'Nome Social',
-  nome_bebe:    'Nome Bebê',
-  nome_empresa: 'Nome Empresarial',
 };
 
 const CATEGORIA_LABEL: Record<string, string> = {
   numerologia:    'Numerologia',
   bloqueios:      'Bloqueios',
   'nome-social':  'Nome Social',
-  'nome-bebe':    'Nome Bebê',
-  'nome-empresa': 'Nome Empresarial',
   desenvolvimento:'Desenvolvimento',
   espiritualidade:'Espiritualidade',
 };
@@ -98,14 +94,12 @@ const CATEGORY_COLOR: Record<string, string> = {
   numerologia:    'bg-[#D4AF37]/15 text-[#D4AF37]',
   bloqueios:      'bg-amber-500/15 text-amber-400',
   'nome-social':  'bg-[#D4AF37]/15 text-[#D4AF37]',
-  'nome-bebe':    'bg-purple-500/15 text-purple-300',
-  'nome-empresa': 'bg-sky-500/15 text-sky-300',
   desenvolvimento:'bg-emerald-500/15 text-emerald-400',
   espiritualidade:'bg-violet-500/15 text-violet-300',
 };
 
 function catLabel(p: { category?: string | null; produto_relacionado?: string | null }): string | null {
-  if (p.category) return CATEGORIA_LABEL[p.category] ?? p.category;
+  if (p.category && !RETIRED_CATEGORIES.includes(p.category)) return CATEGORIA_LABEL[p.category] ?? p.category;
   if (p.produto_relacionado) return PRODUTO_LABEL[p.produto_relacionado] ?? null;
   return null;
 }
@@ -174,7 +168,7 @@ const wasUpdated = Boolean(
             <a href="/" class="hover:text-[#D4AF37] transition-colors">Início</a>
             <span aria-hidden="true">›</span>
             <a href="/blog" class="hover:text-[#D4AF37] transition-colors">Blog</a>
-            {categorySlug && (
+            {categorySlug && !RETIRED_CATEGORIES.includes(categorySlug) && (
               <>
                 <span aria-hidden="true">›</span>
                 <a href={`/blog?categoria=${categorySlug}`} class="hover:text-[#D4AF37] transition-colors">
@@ -338,7 +332,7 @@ const wasUpdated = Boolean(
           </div>
 
           {/* ── CTA PRODUTO RELACIONADO ── */}
-          {post.produto_relacionado && (
+          {post.produto_relacionado === 'nome_social' && (
             <div class="blog-cta-outer blog-card mt-10 sm:mt-12 relative rounded-2xl sm:rounded-3xl overflow-hidden p-px"
               style="background: linear-gradient(135deg, rgba(212,175,55,0.5) 0%, rgba(212,175,55,0.08) 100%);">
               <div class="blog-cta-inner blog-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center"
@@ -352,10 +346,10 @@ const wasUpdated = Boolean(
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
-                    href={PRODUTO_HREF[post.produto_relacionado] ?? '/precos'}
+                    href={PRODUTO_HREF[post.produto_relacionado]}
                     class="inline-block bg-[#D4AF37] text-[#1A1A1A] font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] shadow-lg shadow-[#D4AF37]/20 text-sm"
                   >
-                    Ver Análise de {PRODUTO_LABEL[post.produto_relacionado] ?? 'Nome'}
+                    Ver Análise de {PRODUTO_LABEL[post.produto_relacionado]}
                   </a>
                   <a
                     href="/analise-gratuita"

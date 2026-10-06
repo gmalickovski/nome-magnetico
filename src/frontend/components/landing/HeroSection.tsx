@@ -6,7 +6,7 @@ export function HeroSection() {
   return (
     <section
       id="inicio"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-28 md:pt-28 md:pb-20"
+      className="relative min-h-svh flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-28 md:pt-28 md:pb-20"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
@@ -24,10 +24,6 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-10 gap-12 items-center text-center lg:text-left">
           {/* Left Column: Headlines */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start">
-            <p className="text-[#D4AF37] text-xs md:text-sm font-bold tracking-[0.2em] uppercase mb-6">
-              Harmonização de Assinatura com Fundamento Vibracional
-            </p>
-
             <h1 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
               Sua Assinatura Tem<br />
               <span

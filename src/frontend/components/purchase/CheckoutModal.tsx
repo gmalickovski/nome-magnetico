@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { track } from '../../lib/analytics';
+import type { SellableProductType } from '../../../shared/product-labels';
 
-type ProductType = 'nome_social' | 'nome_bebe' | 'nome_empresa';
+type ProductType = SellableProductType;
 type Step = 'method' | 'card-loading' | 'pix-loading' | 'pix-qr' | 'pix-success';
 
 interface PixData {
@@ -41,34 +42,6 @@ const PRODUCT_META: Record<ProductType, { name: string; eyebrow: string; icon: s
       '4 triângulos cabalísticos: Vida, Pessoal, Social e Destino.',
       'Bloqueios, débitos, lições kármicas e tendências ocultas.',
       'Relatório PDF premium para baixar e consultar.',
-    ],
-  },
-  nome_bebe: {
-    name: 'Nome de Bebê',
-    eyebrow: 'Nome do bebê',
-    icon: '👶',
-    summary: 'Ranking de candidatos com compatibilidade e mapa numerológico.',
-    highlights: [
-      'Compare candidatos de nome com sobrenome e data do bebê.',
-      'Ranking com score 0-100 para cada opção.',
-      'Compatibilidade entre nome, data e frequência familiar.',
-      '4 triângulos cabalísticos para leitura completa.',
-      'Alertas de bloqueios, tendências e pontos de atenção.',
-      'PDF premium para guardar e comparar com calma.',
-    ],
-  },
-  nome_empresa: {
-    name: 'Nome Empresarial',
-    eyebrow: 'Branding vibracional',
-    icon: '🏢',
-    summary: 'Análise do nome da marca com score, riscos ocultos e posicionamento.',
-    highlights: [
-      'Avalie nomes de marca, empresa ou projeto antes de lançar.',
-      'Ranking com score 0-100 e recomendação objetiva.',
-      'Leitura do impacto do nome no posicionamento da marca.',
-      '4 triângulos cabalísticos aplicados ao contexto empresarial.',
-      'Identificação de tensões, bloqueios e tendências ocultas.',
-      'Relatório PDF premium para decisão e consulta.',
     ],
   },
 };
