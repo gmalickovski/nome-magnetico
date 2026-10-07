@@ -18,7 +18,7 @@ function checkAuth(request: Request): boolean {
   const auth = request.headers.get('authorization') ?? '';
   const token = auth.replace('Bearer ', '').trim();
   return token === (readServerEnv('INTERNAL_API_SECRET') ?? '');
-
+}
 
 const createSchema = z.object({
   slug: z.string().optional(),
