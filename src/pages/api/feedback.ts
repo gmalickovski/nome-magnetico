@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { getSupabaseAdmin } from '@/backend/db/supabase';
 
 const schema = z.object({
   analysis_id:  z.string().uuid().optional(),
@@ -9,13 +9,6 @@ const schema = z.object({
   rating:       z.number().int().min(1).max(5).optional(),
   comment:      z.string().max(1000).optional(),
 });
-
-function getServiceClient() {
-  return createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_KEY,
-  );
-}
 
 export const POST: APIRoute = async ({ request, locals }) => {
   let body: unknown;
@@ -33,7 +26,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const { analysis_id, product_type, is_free, rating, comment } = parsed.data;
   const user_id = locals.user?.id ?? null;
 
-  const supabase = getServiceClient();
+  const supabase = getSupabaseAdmin();
   const { error } = await supabase.from('analysis_feedback').insert({
     user_id,
     analysis_id: analysis_id ?? null,

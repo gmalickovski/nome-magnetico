@@ -1,16 +1,12 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/backend/db/supabase';
+import { readServerEnv } from '@/backend/env/runtime';
 
 function checkAuth(request: Request): boolean {
   const auth = request.headers.get('authorization') ?? '';
   const token = auth.replace('Bearer ', '').trim();
-  return token === process.env.INTERNAL_API_SECRET;
+  return token === (readServerEnv('INTERNAL_API_SECRET') ?? '');
 }
 
 const updateSchema = z.object({
@@ -31,6 +27,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401 });
   }
 
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('blog_posts')
     .select('*')
@@ -49,6 +46,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
     return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401 });
   }
 
+  const supabase = getSupabaseAdmin();
   let body: unknown;
   try {
     body = await request.json();
@@ -92,6 +90,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
     return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401 });
   }
 
+  const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from('blog_posts')
     .delete()
