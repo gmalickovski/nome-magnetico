@@ -169,7 +169,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                 className="group flex items-center gap-2 text-sm transition-colors text-gray-400 hover:text-[#D4AF37] relative pb-0.5 after:absolute after:bottom-0 after:left-0 after:h-px after:bg-[#D4AF37] after:transition-all after:duration-300 after:w-0 hover:after:w-full"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                <span>Voltar para Meus Produtos</span>
+                <span>Voltar ao Dashboard</span>
               </a>
             </div>
             </>
