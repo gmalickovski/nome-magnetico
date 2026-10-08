@@ -1,6 +1,6 @@
 ---
 import AppLayout from '../../layouts/AppLayout.astro';
-import { hasActiveSubscription, hasAnySubscription } from '../../backend/db/subscriptions';
+import { getActiveSubscription, hasActiveSubscription, hasAnySubscription } from '../../backend/db/subscriptions';
 import { createUserClient, supabase } from '../../backend/db/supabase';
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
@@ -219,6 +219,28 @@ try {
 // Detectar estado expirado (jÃ¡ comprou antes, mas nenhuma ativa)
 const isExpired = !isAdmin && !hasAnyAccess && await hasAnySubscription(user.id);
 
+let nomeSocialEndsAt: string | null = null;
+if (hasNomeSocial && !isAdmin) {
+  const activeSocial = await getActiveSubscription(user.id, 'nome_social');
+  nomeSocialEndsAt = activeSocial?.ends_at
+    ?? (profileData?.is_test ? profileData.test_ends_at ?? null : null);
+}
+
+function formatAccessDate(iso: string | null) {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Sao_Paulo',
+  }).format(date);
+}
+
+const accessEndLabel = formatAccessDate(nomeSocialEndsAt);
+const nomeSocialCheckoutClass = 'inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]';
+
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
 const { prices, promotion } = await getPricesAndPromo().catch(() => ({ prices: {}, promotion: null }));
 const priceMap = prices as Record<string, PriceInfo>;
@@ -295,31 +317,9 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
 const featuredTheme = getScoreTheme(featuredAnalysis?.score);
 const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
 
-const products = [
-  {
-    id: 'nome_social',
-    iconSvg: `<svg viewBox="0 0 24 24" aria-hidden="true" class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.9L18.5 9.5l-4.9 1.6L12 16l-1.6-4.9-4.9-1.6 4.9-1.6L12 3Z"/><path d="M5 14l.8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14Z"/><path d="M19 13l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6L19 13Z"/></svg>`,
-    name: 'Nome Social',
-    description: 'Harmonize sua assinatura: descubra por que sua assinatura tem mais poder do que você imagina e qual Nome Social flui melhor.',
-    href: '/app/analise/nome-social',
-    infoHref: '/nome-social',
-    hasAccess: hasNomeSocial,
-    theme: {
-      primary: '#D4AF37',
-      accent: '#f2ca50',
-      border: 'rgba(212,175,55,0.22)',
-      borderHover: 'rgba(212,175,55,0.42)',
-      bg: 'linear-gradient(145deg, rgba(212,175,55,0.10), rgba(255,255,255,0.035) 52%, rgba(0,0,0,0.12))',
-      bgHover: 'linear-gradient(145deg, rgba(212,175,55,0.15), rgba(255,255,255,0.050) 52%, rgba(0,0,0,0.10))',
-      shadow: 'rgba(212,175,55,0.16)',
-      checkoutClass: 'inline-flex items-center justify-center rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-sm font-bold px-4 py-2.5 hover:bg-[#D4AF37]/20 transition-all',
-      infoClass: 'inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2.5 text-sm font-bold text-gray-400 transition hover:border-[#D4AF37]/40 hover:text-[#D4AF37]',
-    },
-  },
-];
 ---
 
-<AppLayout title="Meu Painel">
+<AppLayout title="Dashboard">
   {needsEmailConfirmation && user.email && (
     <MailWarning client:load email={user.email} />
   )}
@@ -338,7 +338,7 @@ const products = [
           <div>
             <h3 class="font-cinzel text-base font-bold text-[#D4AF37] mb-0.5">Pagamento confirmado!</h3>
             <p class="text-[#e5e2e1] text-sm leading-relaxed">
-              Bem-vindo ao Nome Magnético. Seu acesso está liberado - abra o Nome Social abaixo para começar.
+              Bem-vindo ao Nome Magnético. Seu acesso ao Nome Social está liberado. Você já pode harmonizar seu nome.
             </p>
           </div>
         </div>
@@ -608,138 +608,75 @@ const products = [
       </div>
     )}
 
-    <!-- Produtos -->
-    <div>
-      <h2 class="font-cinzel text-xl font-bold text-gray-100 mb-4">Seu Produto</h2>
-      <div class="grid md:grid-cols-2 gap-6">
-        {products.map(product => {
-          return product.hasAccess ? (
-            <a
-              data-product-id={product.id}
-              href={product.href}
-              class="product-card product-card-themed block group rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              style={`--product-primary:${product.theme.primary}; --product-accent:${product.theme.accent}; --product-border:${product.theme.border}; --product-border-hover:${product.theme.borderHover}; --product-bg:${product.theme.bg}; --product-bg-hover:${product.theme.bgHover}; --product-shadow:${product.theme.shadow};`}
-            >
-              <div class="product-card-themed__icon mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl transition-colors" set:html={product.iconSvg}></div>
-              <h3 class="product-card-themed__title font-cinzel text-xl font-bold text-white mb-2 transition-colors">
-                {product.name}
-              </h3>
-              <p class="text-gray-400 text-sm">{product.description}</p>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-sm font-medium" style={`color:${product.theme.primary};`}>Iniciar análise</span>
-                <span class:list={[
-                  'rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em]',
-                  isAdmin
-                    ? 'bg-purple-500/15 text-purple-300 ring-1 ring-purple-500/30'
-                    : 'bg-emerald-500/12 text-emerald-300 ring-1 ring-emerald-500/25'
-                ]}>
-                  {isAdmin ? 'Admin' : 'Ativo'}
-                </span>
-              </div>
+    <section
+      class="rounded-3xl bg-white/[0.03] p-6 md:p-8"
+      style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 18px 55px rgba(0,0,0,0.28);"
+    >
+      <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div class="min-w-0">
+          <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">Nome Social</p>
+          <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1]">Harmonização do nome</h2>
+          <p class="mt-2 max-w-xl text-sm leading-relaxed text-gray-400">
+            Harmonize sua assinatura e veja qual variação do nome flui melhor com a sua Expressão e o seu Destino.
+          </p>
+          <p class="mt-4 text-sm text-[#e5e2e1]">
+            {isAdmin
+              ? 'Acesso de administrador.'
+              : hasNomeSocial
+                ? (accessEndLabel ? `Acesso ativo até ${accessEndLabel}.` : 'Acesso ativo.')
+                : isExpired
+                  ? 'Seu acesso ao Nome Social expirou.'
+                  : 'Você ainda não tem acesso ao Nome Social.'}
+          </p>
+        </div>
+        <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <span class:list={[
+            'rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]',
+            isAdmin
+              ? 'bg-[#bea5ff]/15 text-[#d7c6ff]'
+              : hasNomeSocial
+                ? 'bg-emerald-500/12 text-emerald-300'
+                : isExpired
+                  ? 'bg-red-500/12 text-red-300'
+                  : 'bg-white/[0.06] text-gray-400'
+          ]}>
+            {isAdmin ? 'Admin' : hasNomeSocial ? 'Ativo' : isExpired ? 'Expirado' : 'Disponível'}
+          </span>
+          {hasNomeSocial ? (
+            <a href="/app/analise/nome-social" class={nomeSocialCheckoutClass}>
+              Iniciar harmonização
             </a>
-          ) : isExpired ? (
-            <div
-              class="product-card-themed block group rounded-2xl border p-6 relative transition-all duration-300 hover:scale-[1.02]"
-              style={`--product-primary:${product.theme.primary}; --product-accent:${product.theme.accent}; --product-border:rgba(255,255,255,0.10); --product-border-hover:${product.theme.borderHover}; --product-bg:rgba(255,255,255,0.03); --product-bg-hover:${product.theme.bg}; --product-shadow:${product.theme.shadow};`}
-            >
-              <div class="product-card-themed__lock absolute top-3 right-3 text-gray-600 transition-colors" aria-hidden="true">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-              </div>
-              <div class="product-card-themed__icon mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl opacity-70 transition-opacity group-hover:opacity-90" set:html={product.iconSvg}></div>
-              <h3 class="product-card-themed__title font-cinzel text-xl font-bold text-gray-500 mb-2 transition-colors">
-                {product.name}
-              </h3>
-              <p class="text-gray-600 text-sm">{product.description}</p>
-              <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-                <DashboardCheckoutButton client:load product={product.id as any} priceInfo={priceMap[product.id] ?? PRICE_UNAVAILABLE} promotion={promotion} label="Renovar" className={product.theme.checkoutClass} />
-                <a href={product.infoHref} class={product.theme.infoClass}>Mais informações</a>
-              </div>
-            </div>
           ) : (
-            <div
-              class="product-card-themed block group rounded-2xl border p-6 relative transition-all duration-300 hover:scale-[1.02]"
-              style={`--product-primary:${product.theme.primary}; --product-accent:${product.theme.accent}; --product-border:rgba(255,255,255,0.10); --product-border-hover:${product.theme.borderHover}; --product-bg:rgba(255,255,255,0.03); --product-bg-hover:${product.theme.bg}; --product-shadow:${product.theme.shadow};`}
-            >
-              <div class="product-card-themed__lock absolute top-3 right-3 text-gray-600 transition-colors" aria-hidden="true">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-              </div>
-              <div class="product-card-themed__icon mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl opacity-70 transition-opacity group-hover:opacity-90" set:html={product.iconSvg}></div>
-              <h3 class="product-card-themed__title font-cinzel text-xl font-bold text-gray-500 mb-2 transition-colors">
-                {product.name}
-              </h3>
-              <p class="text-gray-600 text-sm">{product.description}</p>
-              <p class="text-gray-500 text-xs mt-2 group-hover:text-gray-400 transition-colors">Ainda não adquirido</p>
-              <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-                <DashboardCheckoutButton client:load product={product.id as any} priceInfo={priceMap[product.id] ?? PRICE_UNAVAILABLE} promotion={promotion} label="Adquirir" className={product.theme.checkoutClass} />
-                <a href={product.infoHref} class={product.theme.infoClass}>Mais informações</a>
-              </div>
-            </div>
-          )
-        })}
-        {isAdmin && (
-          <a
-            href="/app/admin-analise"
-            class="product-card product-card-themed block group rounded-2xl border p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-            style="--product-primary:#bea5ff; --product-accent:#d7c6ff; --product-border:rgba(190,165,255,0.15); --product-border-hover:rgba(190,165,255,0.4); --product-bg:rgba(190,165,255,0.02); --product-bg-hover:rgba(190,165,255,0.06); --product-shadow:rgba(190,165,255,0.1);"
-          >
-            <div class="product-card-themed__icon mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl transition-colors">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-            <h3 class="product-card-themed__title font-cinzel text-xl font-bold text-white mb-2 transition-colors">
-              Área do Analista
-            </h3>
-            <p class="text-gray-400 text-sm">Crie análises personalizadas em tempo real e emita PDFs na hora.</p>
-            <div class="mt-4 flex items-center justify-between">
-              <span class="text-sm font-medium text-[#bea5ff]">Acessar painel</span>
-              <span class="rounded-full px-2.5 py-1 text-[11px] font-bold uppercase bg-purple-500/15 text-purple-300 ring-1 ring-purple-500/30">
-                Exclusivo Admin
-              </span>
-            </div>
-          </a>
-        )}
+            <DashboardCheckoutButton
+              client:load
+              product="nome_social"
+              priceInfo={socialPrice ?? PRICE_UNAVAILABLE}
+              promotion={promotion}
+              label={isExpired ? 'Renovar' : 'Adquirir'}
+              className={nomeSocialCheckoutClass}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </section>
+
+    {isAdmin && (
+      <a
+        href="/app/admin-analise"
+        class="block rounded-3xl bg-[#bea5ff]/[0.06] p-6 transition hover:bg-[#bea5ff]/10"
+        style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 55px rgba(0,0,0,0.28);"
+      >
+        <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#d7c6ff]">Exclusivo admin</p>
+        <h2 class="font-cinzel text-xl font-bold text-[#e5e2e1]">Área do Analista</h2>
+        <p class="mt-2 text-sm text-gray-400">Crie análises personalizadas em tempo real e emita PDFs na hora.</p>
+      </a>
+    )}
 
   </div>
   
   {showFreeUsedModal && <FreeUsedModal client:only="react" />}
   {showOnboardingModal && <InitialAnalysisModal client:only="react" />}
 
-  <style>
-    .product-card-themed {
-      border-color: var(--product-border);
-      background: var(--product-bg);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 18px 55px rgba(0,0,0,0.28);
-    }
-
-    .product-card-themed:hover {
-      border-color: var(--product-border-hover);
-      background: var(--product-bg-hover);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.055), 0 24px 70px var(--product-shadow);
-    }
-
-    .product-card-themed__icon {
-      color: var(--product-primary);
-      border: 1px solid var(--product-border);
-      background: color-mix(in srgb, var(--product-primary) 13%, transparent);
-    }
-
-    .product-card-themed:hover .product-card-themed__icon {
-      color: var(--product-accent);
-      border-color: var(--product-border-hover);
-      background: color-mix(in srgb, var(--product-primary) 18%, transparent);
-    }
-
-    .product-card-themed:hover .product-card-themed__title {
-      color: var(--product-accent);
-    }
-
-    .product-card-themed:hover .product-card-themed__lock {
-      color: var(--product-accent);
-    }
-  </style>
 
   <script define:vars={{ isAdmin }}>
     (function () {
