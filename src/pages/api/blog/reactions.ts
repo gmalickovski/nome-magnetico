@@ -1,16 +1,8 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { getSupabaseAdmin } from '@/backend/db/supabase';
 
 const VALID_REACTIONS = ['heart', 'fire', 'think', 'star'] as const;
-
-// Cliente server-side com service key para bypass no RLS de mutations
-function getAdminClient() {
-  return createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_KEY,
-  );
-}
 
 // ── GET /api/blog/reactions?slug=meu-artigo ──────────────────────────────────
 export const GET: APIRoute = async ({ url }) => {
@@ -19,7 +11,7 @@ export const GET: APIRoute = async ({ url }) => {
     return new Response(JSON.stringify({ error: 'slug obrigatório' }), { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('blog_reactions')
     .select('reaction')
@@ -64,7 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const { slug, reaction, session_id } = parsed.data;
-  const supabase = getAdminClient();
+  const supabase = getSupabaseAdmin();
 
   // Verifica se já existe essa reação desta sessão neste artigo
   const { data: existing } = await supabase

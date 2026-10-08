@@ -4,7 +4,7 @@ Esta pasta é o repositório centralizado de todo o conhecimento técnico e oper
 
 ## 📂 Estrutura de Diretórios
 
-- `architecture/` - Documentações robustas sobre como as diferentes engrenagens do projeto se encaixam (ex: integração de suporte, regras de negócio numerológicas, arquitetura do Supabase). Painel operacional: [`architecture/admin-ops.md`](architecture/admin-ops.md).
+- `architecture/` - Documentações robustas sobre como as diferentes engrenagens do projeto se encaixam (ex: integração de suporte, regras de negócio numerológicas, arquitetura do Supabase). Painel operacional: [`architecture/admin-ops.md`](architecture/admin-ops.md). Service role em runtime: [`architecture/supabase-server-runtime-env.md`](architecture/supabase-server-runtime-env.md).
 - `business/` - Visão macro do produto, roadmap estratégico, pitches, apresentações e contexto comercial (ex: pitch para investidores).
 - `sops/` - *Standard Operating Procedures* (Procedimentos Operacionais Padrão). Guias passo-a-passo detalhados para executar tarefas repetitivas ou complexas sem depender de intuição.
 - `snippets/` - Trechos de código fundamentais e repetitivos (Componentes React, padrões Astro, hooks) isolados e testados para acelerar o desenvolvimento de novas features e páginas.

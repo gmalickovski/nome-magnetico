@@ -1,11 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/backend/db/supabase';
+import { readServerEnv } from '@/backend/env/runtime';
 
 function slugify(text: string): string {
   return text
@@ -21,7 +17,7 @@ function slugify(text: string): string {
 function checkAuth(request: Request): boolean {
   const auth = request.headers.get('authorization') ?? '';
   const token = auth.replace('Bearer ', '').trim();
-  return token === process.env.INTERNAL_API_SECRET;
+  return token === (readServerEnv('INTERNAL_API_SECRET') ?? '');
 }
 
 const createSchema = z.object({
@@ -40,6 +36,7 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401 });
   }
 
+  const supabase = getSupabaseAdmin();
   const url = new URL(request.url);
   const includeUnpublished = url.searchParams.get('all') === 'true';
 
@@ -68,6 +65,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401 });
   }
 
+  const supabase = getSupabaseAdmin();
   let body: unknown;
   try {
     body = await request.json();
