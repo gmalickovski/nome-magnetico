@@ -35,9 +35,19 @@ secretkey-*.tx
 # TypeScript
 *.tsbuildinfo
 
-# Claude e Agentes (Evitar loop de IA lendo IA)
-.claude/
-.agents/
+# Config local de agentes fica fora do Git.
+# A skill slate entra no repositório: .agents/skills para Grok, Cursor, Codex,
+# Gemini CLI, Antigravity e Copilot; .claude/skills para o Claude Code.
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/slate/
+
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/slate/
+
 .codex/
 .impeccable/
 
