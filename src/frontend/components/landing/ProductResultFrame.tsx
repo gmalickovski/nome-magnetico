@@ -122,23 +122,9 @@ const DEMO_USER_SUGGESTIONS: DemoSuggestion[] = [
   },
 ];
 
-/** Soft crossfade shared by Harmonização ↔ Sugestões (both directions). */
-const PANEL_FADE_MS = 1100;
-// Static class string so Tailwind JIT emits the duration utility.
-const PANEL_EASE = 'duration-[1100ms] ease-[cubic-bezier(0.33,1,0.32,1)]';
-
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function panelShellClass(active: boolean) {
-  const z = active ? 'z-20' : 'z-10';
-  // Subtle lift only — mostly opacity so the swap feels fluid, not jumpy.
-  const motion = active
-    ? 'opacity-100 translate-y-0 scale-100'
-    : 'opacity-0 translate-y-1.5 scale-[0.992] pointer-events-none';
-  return `col-start-1 row-start-1 w-full min-w-0 transition-[opacity,transform] ${PANEL_EASE} motion-reduce:transition-none ${z} ${motion}`;
 }
 
 function SuggestionCard({
@@ -193,19 +179,41 @@ function SuggestionCard({
   );
 }
 
-function HarmonyPanel({
-  active,
-  scoresPlay,
-  cycle,
-}: {
-  active: boolean;
-  scoresPlay: boolean;
-  cycle: number;
-}) {
+/**
+ * Card Fixo da Seção "A Harmonização"
+ * Exibe o certificado cabalístico, a evolução de score e a estrela de harmonização comparativa.
+ */
+export function ProductHarmonyFrame() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [scoresPlay, setScoresPlay] = useState(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    if (prefersReducedMotion()) {
+      setScoresPlay(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          window.setTimeout(() => setScoresPlay(true), 250);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
-      className={panelShellClass(active)}
-      aria-hidden={!active}
+      ref={rootRef}
+      className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden w-full"
     >
       <section className="rounded-2xl bg-white/5 p-3 sm:p-5 mb-5 overflow-hidden min-w-0">
         <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4 break-words">
@@ -225,7 +233,6 @@ function HarmonyPanel({
             </div>
             <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
               <ProductAnimatedScore
-                key={`birth-${cycle}`}
                 score={DEMO_SCORE_BIRTH}
                 play={scoresPlay}
                 size="lg"
@@ -245,11 +252,10 @@ function HarmonyPanel({
             </div>
             <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
               <ProductAnimatedScore
-                key={`harm-${cycle}`}
                 score={DEMO_SCORE_HARMONIZED}
                 play={scoresPlay}
                 size="lg"
-                delayMs={450}
+                delayMs={400}
               />
             </div>
           </div>
@@ -361,177 +367,6 @@ function HarmonyPanel({
           <span className="truncate font-medium text-[#D4AF37]">{INDICATED_NAME}</span>
         </span>
       </div>
-    </div>
-  );
-}
-
-function SuggestionsPanel({
-  active,
-  stagger,
-  cycle,
-}: {
-  active: boolean;
-  stagger: boolean;
-  cycle: number;
-}) {
-  return (
-    <div
-      className={panelShellClass(active)}
-      aria-hidden={!active}
-    >
-      <div className="flex flex-col gap-5 sm:gap-6 min-w-0 h-full">
-        <div className="min-w-0">
-          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
-            Selecionadas para Você
-          </p>
-          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
-            Nossas Sugestões
-          </h4>
-          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
-            Criadas para o seu perfil numerológico.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-            {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard
-                key={`${c.nome}-${cycle}`}
-                c={c}
-                stagger={stagger}
-                delayIndex={index}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
-            Seus Candidatos
-          </p>
-          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
-            Suas Sugestões
-          </h4>
-          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
-            Nomes que você indicou, analisados numerologicamente.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-            {DEMO_USER_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard
-                key={`${c.nome}-${cycle}`}
-                c={c}
-                stagger={stagger}
-                delayIndex={DEMO_SYSTEM_SUGGESTIONS.length + index}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Animated preview: certificate → scores → soft crossfade to suggestions → loop back with the same fade.
- */
-export function ProductResultFrame() {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [panel, setPanel] = useState<'harmony' | 'suggestions'>('harmony');
-  const [scoresPlay, setScoresPlay] = useState(false);
-  const [suggestionsStagger, setSuggestionsStagger] = useState(false);
-  const [cycle, setCycle] = useState(0);
-  const timersRef = useRef<number[]>([]);
-  const startedRef = useRef(false);
-
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-
-    const clearTimers = () => {
-      timersRef.current.forEach((id) => window.clearTimeout(id));
-      timersRef.current = [];
-    };
-
-    const schedule = (fn: () => void, ms: number) => {
-      timersRef.current.push(window.setTimeout(fn, ms));
-    };
-
-    const SCORE_AT = 520;
-    const TO_SUGGESTIONS_AT = 7200;
-    const HOLD_SUGGESTIONS_MS = 8800;
-    const STAGGER_AFTER_FADE = 180;
-    const LOOP_MS = TO_SUGGESTIONS_AT + PANEL_FADE_MS + HOLD_SUGGESTIONS_MS;
-
-    const playHarmonyCycle = (nextCycle: number) => {
-      clearTimers();
-      setCycle(nextCycle);
-      setPanel('harmony');
-      setScoresPlay(false);
-
-      schedule(() => setScoresPlay(true), SCORE_AT);
-
-      schedule(() => {
-        // Soft outbound: final scores stay painted while the panel fades.
-        setPanel('suggestions');
-        schedule(() => setSuggestionsStagger(true), STAGGER_AFTER_FADE);
-      }, TO_SUGGESTIONS_AT);
-
-      schedule(() => {
-        // Soft return — same easing. Reset scores while harmony is still
-        // hidden; keep suggestion keys stable so cards don't remount mid-fade.
-        setScoresPlay(false);
-        setPanel('harmony');
-        schedule(() => {
-          setSuggestionsStagger(false);
-          playHarmonyCycle(nextCycle + 1);
-        }, PANEL_FADE_MS);
-      }, LOOP_MS);
-    };
-
-    const runSequence = () => {
-      clearTimers();
-
-      if (prefersReducedMotion()) {
-        setPanel('suggestions');
-        setSuggestionsStagger(true);
-        setScoresPlay(true);
-        return;
-      }
-
-      playHarmonyCycle(0);
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !startedRef.current) {
-          startedRef.current = true;
-          runSequence();
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.28 },
-    );
-
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      clearTimers();
-    };
-  }, []);
-
-  const harmonyActive = panel === 'harmony';
-  const suggestionsActive = panel === 'suggestions';
-
-  return (
-    <div
-      ref={rootRef}
-      className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden"
-    >
-      <div className="relative grid min-w-0">
-        <HarmonyPanel active={harmonyActive} scoresPlay={scoresPlay} cycle={cycle} />
-        <SuggestionsPanel
-          active={suggestionsActive}
-          stagger={suggestionsStagger}
-          cycle={cycle}
-        />
-      </div>
 
       <style>{`
         .harmony-star-wrap {
@@ -572,4 +407,96 @@ export function ProductResultFrame() {
       `}</style>
     </div>
   );
+}
+
+/**
+ * Card Fixo da Seção "As Sugestões"
+ * Exibe as sugestões do sistema (Nossas Sugestões) e candidatos do usuário (Suas Sugestões).
+ */
+export function ProductSuggestionsFrame() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [stagger, setStagger] = useState(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    if (prefersReducedMotion()) {
+      setStagger(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          window.setTimeout(() => setStagger(true), 150);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={rootRef}
+      className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden w-full"
+    >
+      <div className="flex flex-col gap-5 sm:gap-6 min-w-0 h-full">
+        <div className="min-w-0">
+          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
+            Selecionadas para Você
+          </p>
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+            Nossas Sugestões
+          </h4>
+          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
+            Criadas para o seu perfil numerológico.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+            {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
+              <SuggestionCard
+                key={c.nome}
+                c={c}
+                stagger={stagger}
+                delayIndex={index}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
+            Seus Candidatos
+          </p>
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+            Suas Sugestões
+          </h4>
+          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
+            Nomes que você indicou, analisados numerologicamente.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+            {DEMO_USER_SUGGESTIONS.map((c, index) => (
+              <SuggestionCard
+                key={c.nome}
+                c={c}
+                stagger={stagger}
+                delayIndex={DEMO_SYSTEM_SUGGESTIONS.length + index}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Compatibilidade legada caso algum outro componente ainda faça referência a ProductResultFrame.
+ */
+export function ProductResultFrame() {
+  return <ProductHarmonyFrame />;
 }
