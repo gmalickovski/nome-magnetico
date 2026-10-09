@@ -166,10 +166,35 @@ export function SignatureUseCasesSection() {
             - Lado Direito: Itens/mockups FLUTUANDO LIVREMENTE sem container de borda dourada
           */}
           <div className={`grid grid-cols-1 lg:grid-cols-2 ${landingSectionStackGapClass} items-center justify-items-center w-full max-w-6xl mx-auto`}>
-            {/* ── LADO ESQUERDO: Marcadores Verticais + Título Grande + Explicações Objetivas ── */}
-            <aside className="w-full max-w-xl mx-auto min-w-0 order-1 flex items-center">
+            {/* ── LADO ESQUERDO: ITENS FLUTUANDO LIVREMENTE (SEM CONTAINER DE BORDA DOURADA) ────── */}
+            <div className="w-full max-w-xl mx-auto min-w-0 order-1 flex items-center justify-center relative min-h-[460px]">
+              {USE_CASES.map((item, idx) => {
+                const Mockup = item.MockupComponent;
+                const isActive = idx === activeIndex;
+                const isPast = idx < activeIndex;
+
+                const mockupTransform = isActive
+                  ? 'opacity-100 scale-100 pointer-events-auto relative z-10'
+                  : isPast
+                  ? 'opacity-0 scale-95 -translate-y-6 pointer-events-none absolute inset-0 z-0'
+                  : 'opacity-0 scale-95 translate-y-6 pointer-events-none absolute inset-0 z-0';
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full flex justify-center items-center ${mockupTransform}`}
+                    aria-hidden={!isActive}
+                  >
+                    <Mockup />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── LADO DIREITO: Marcadores Verticais + Título Grande + Explicações Objetivas ── */}
+            <aside className="w-full max-w-xl mx-auto min-w-0 order-2 flex items-center">
               <div className="flex items-center gap-6 sm:gap-8 w-full">
-                {/* Marcadores verticais no lado esquerdo no sentido da rolagem */}
+                {/* Marcadores verticais no lado esquerdo do bloco de texto */}
                 <div
                   className="flex flex-col items-center justify-center gap-3 shrink-0"
                   role="tablist"
@@ -241,31 +266,6 @@ export function SignatureUseCasesSection() {
                 </div>
               </div>
             </aside>
-
-            {/* ── LADO DIREITO: ITENS FLUTUANDO LIVREMENTE (SEM CONTAINER DE BORDA DOURADA) ────── */}
-            <div className="w-full max-w-xl mx-auto min-w-0 order-2 flex items-center justify-center relative min-h-[460px]">
-              {USE_CASES.map((item, idx) => {
-                const Mockup = item.MockupComponent;
-                const isActive = idx === activeIndex;
-                const isPast = idx < activeIndex;
-
-                const mockupTransform = isActive
-                  ? 'opacity-100 scale-100 pointer-events-auto relative z-10'
-                  : isPast
-                  ? 'opacity-0 scale-95 -translate-y-6 pointer-events-none absolute inset-0 z-0'
-                  : 'opacity-0 scale-95 translate-y-6 pointer-events-none absolute inset-0 z-0';
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full flex justify-center items-center ${mockupTransform}`}
-                    aria-hidden={!isActive}
-                  >
-                    <Mockup />
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
