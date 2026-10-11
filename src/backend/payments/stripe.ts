@@ -49,7 +49,9 @@ export interface CreateCheckoutParams {
 }
 
 /**
- * Cria uma sessão de checkout no Stripe.
+ * Cria uma sessão de Checkout hospedado no Stripe.
+ * Cartão e PIX vêm do Dashboard (dynamic payment methods) — sem listar
+ * payment_method_types manualmente.
  */
 export async function createCheckoutSession(
   params: CreateCheckoutParams
@@ -76,7 +78,7 @@ export async function createCheckoutSession(
 
   return stripe.checkout.sessions.create({
     mode: 'payment',
-    payment_method_types: ['card'],
+    // Sem payment_method_types: Stripe usa o Dashboard (card + PIX já habilitados).
     line_items: [
       {
         price_data: {
@@ -99,6 +101,12 @@ export async function createCheckoutSession(
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
     locale: 'pt-BR',
+    payment_method_options: {
+      pix: {
+        // 30 minutos — alinhado à expectativa de pagamento imediato do produto
+        expires_after_seconds: 1800,
+      },
+    },
     ...discountOptions,
     payment_intent_data: {
       metadata: {
@@ -109,89 +117,6 @@ export async function createCheckoutSession(
       },
     },
   });
-}
-
-export interface PixChargeResult {
-  chargeId: string;
-  pixCopiaECola: string;
-  qrCodeImage: string;
-  expirationDate: string;
-}
-
-export interface CreatePixPaymentParams {
-  userId: string;
-  userEmail: string;
-  productType: ProductType;
-  /** Preço final em centavos */
-  unitAmount: number;
-  description: string;
-  couponCode?: string | null;
-  gaClientId?: string | null;
-  /** Expiração do QR PIX em segundos (60–1209600). Default: 30 min. */
-  expiresAfterSeconds?: number;
-}
-
-/**
- * Cria e confirma um PaymentIntent PIX no Stripe.
- * Retorna o código copia-e-cola e a URL da imagem do QR para o modal.
- */
-export async function createPixPayment(
-  params: CreatePixPaymentParams
-): Promise<PixChargeResult> {
-  const productId = PRODUCT_IDS[params.productType];
-
-  if (!productId) {
-    throw new Error(`Product ID não configurado para o produto: ${params.productType}`);
-  }
-
-  if (!params.unitAmount || params.unitAmount <= 0) {
-    throw new Error(`unit_amount inválido para PIX ${params.productType}: ${params.unitAmount}`);
-  }
-
-  const expiresAfterSeconds = Math.min(
-    Math.max(params.expiresAfterSeconds ?? 1800, 60),
-    1_209_600
-  );
-
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: params.unitAmount,
-    currency: 'brl',
-    payment_method_types: ['pix'],
-    description: params.description,
-    receipt_email: params.userEmail || undefined,
-    metadata: {
-      user_id: params.userId,
-      product_type: params.productType,
-      access_duration_days: '30',
-      coupon_code: params.couponCode ?? '',
-      ga_client_id: params.gaClientId ?? '',
-      payment_method: 'pix',
-      stripe_product_id: productId,
-    },
-    payment_method_data: {
-      type: 'pix',
-    },
-    payment_method_options: {
-      pix: {
-        expires_after_seconds: expiresAfterSeconds,
-      },
-    },
-    confirm: true,
-  });
-
-  const qr = paymentIntent.next_action?.pix_display_qr_code;
-  if (!qr?.data) {
-    throw new Error(`Stripe não retornou QR Code PIX (status=${paymentIntent.status})`);
-  }
-
-  const expiresAtUnix = qr.expires_at ?? Math.floor(Date.now() / 1000) + expiresAfterSeconds;
-
-  return {
-    chargeId: paymentIntent.id,
-    pixCopiaECola: qr.data,
-    qrCodeImage: qr.image_url_png ?? qr.image_url_svg ?? '',
-    expirationDate: new Date(expiresAtUnix * 1000).toISOString(),
-  };
 }
 
 /**

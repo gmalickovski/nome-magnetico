@@ -41,8 +41,6 @@ type AnalyticsEvent =
   | 'checkout_redirect_start'
   | 'checkout_failed'
   | 'coupon_applied'
-  | 'pix_start'
-  | 'pix_failed'
 
   // --- Pricing e visualizações ---
   | 'pricing_view'

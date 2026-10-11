@@ -2,74 +2,73 @@
 
 ## Resumo
 
-Nome Magnético cobra acesso de 30 dias (pagamento único, não recorrente) via **Stripe**:
+Nome Magnético cobra acesso de 30 dias (pagamento único, não recorrente) via **Stripe Checkout hospedado**.
 
-| Método | API | UX |
+| Método | Onde o cliente escolhe | Confirmação |
 | --- | --- | --- |
-| Cartão | Checkout Session (`mode: payment`, `payment_method_types: ['card']`) | Redirect para Stripe Checkout |
-| PIX | PaymentIntent confirmado com `payment_method_types: ['pix']` | Modal in-app com QR + copia e cola |
+| Cartão | Stripe Checkout | `checkout.session.completed` (`payment_status=paid`) |
+| PIX | Stripe Checkout | `checkout.session.async_payment_succeeded` |
 
-O Asaas foi removido do fluxo ativo (DEV-127). Registros históricos podem ainda ter `payment_provider = 'asaas'`.
+Não há modal PIX custom nem integração Asaas no fluxo ativo. O modal do app só resume o produto/cupom e redireciona para o Checkout Stripe.
 
-## Conta
+## Conta e Dashboard
 
-Usar sempre a conta Stripe **Nome Magnético**. PIX e cartão devem estar ativos em [Payment methods](https://dashboard.stripe.com/settings/payment_methods).
+Usar sempre a conta Stripe **Nome Magnético**.
+
+Formas de pagamento gerenciadas no Dashboard ([Payment methods](https://dashboard.stripe.com/settings/payment_methods)):
+
+- Cartão: ativo
+- PIX: ativo
+
+O código **não** lista `payment_method_types` manualmente. Assim o Stripe usa [dynamic payment methods](https://docs.stripe.com/payments/payment-methods/dynamic-payment-methods) e mostra cartão/PIX conforme elegibilidade (moeda BRL, localização, etc.).
 
 Se o Dashboard mostrar produtos de outro negócio (ex.: “Sincro Sinergia”), a chave `.env` está errada.
 
-## Fluxos
+## Fluxo
 
-### Cartão
+1. Frontend abre `CheckoutModal` (resumo + cupom opcional).
+2. Usuário clica **Continuar para o pagamento**.
+3. Backend cria Checkout Session em `POST /api/create-checkout` (`src/backend/payments/stripe.ts`).
+4. Browser redireciona para o Stripe Checkout.
+5. Cliente escolhe cartão ou PIX na UI do Stripe.
+6. Webhook em `src/pages/api/stripe-webhook.ts` libera a subscription.
 
-1. Frontend chama `POST /api/create-checkout`.
-2. Backend cria Checkout Session (`src/backend/payments/stripe.ts`).
-3. Usuário paga no hosted Checkout.
-4. Webhook `checkout.session.completed` com `payment_status = paid` libera a subscription.
+### PIX assíncrono
 
-### PIX
+Quando o cliente escolhe PIX:
 
-1. Frontend (`CheckoutModal`) chama `POST /api/create-pix`.
-2. Backend cria/confirma PaymentIntent PIX e devolve:
-   - `chargeId` = `pi_...`
-   - `pixCopiaECola` = `next_action.pix_display_qr_code.data`
-   - `qrCodeImage` = URL PNG do QR Stripe
-   - `expiresAt`
-3. Modal faz polling em `GET /api/check-pix-status?chargeId=pi_...`.
-4. Webhook `payment_intent.succeeded` com `metadata.payment_method = 'pix'` cria a subscription e notifica.
-
-O filtro `metadata.payment_method = 'pix'` evita liberar duas vezes o cartão (que também emite `payment_intent.succeeded`, mas é cumprido em `checkout.session.completed`).
+1. `checkout.session.completed` pode chegar com `payment_status = unpaid` → **não liberar acesso**.
+2. Após o pagamento no banco: `checkout.session.async_payment_succeeded` → liberar.
+3. Expiração/falha: `checkout.session.async_payment_failed` → notificar.
 
 ## Endpoints
 
-- `POST /api/create-checkout` — cartão
-- `POST /api/create-pix` — PIX Stripe
-- `GET /api/check-pix-status` — polling pós-PIX
+- `POST /api/create-checkout` — cria sessão Stripe (único caminho de cobrança)
 - `POST /api/stripe-webhook` — fulfillment
 - `POST /api/asaas-webhook` — **410 Gone** (legado)
 
-## Metadados obrigatórios no PIX
+## Opções PIX na sessão
 
-```text
-user_id
-product_type
-access_duration_days=30
-coupon_code
-ga_client_id
-payment_method=pix
+```ts
+payment_method_options: {
+  pix: { expires_after_seconds: 1800 }, // 30 min
+}
 ```
 
 ## Cupons
 
-O desconto do PIX é aplicado **antes** de criar o PaymentIntent (centavos finais). O cartão pode usar coupon/promotion_code nativo do Stripe Checkout.
+Aplicados antes de criar a sessão (desconto local / coupon / promotion_code Stripe). O campo nativo de cupom do Checkout fica oculto para evitar duplicidade.
+
+## Eventos de webhook recomendados
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `payment_intent.payment_failed`
+- `charge.refunded`
 
 ## Operação
 
-- Remover `ASAAS_*` do ambiente de produção quando não houver cobranças Asaas pendentes.
+- Remover `ASAAS_*` do ambiente quando não houver cobranças Asaas pendentes.
 - Manter `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` e `STRIPE_PRODUCT_*`.
-- No Dashboard Stripe, garantir eventos:
-  - `checkout.session.completed`
-  - `checkout.session.async_payment_succeeded`
-  - `checkout.session.async_payment_failed`
-  - `payment_intent.succeeded`
-  - `payment_intent.payment_failed`
-  - `charge.refunded`
+- Ligar/desligar PIX/cartão pelo Dashboard, sem deploy.

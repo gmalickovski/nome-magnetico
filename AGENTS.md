@@ -130,8 +130,9 @@ await notify('payment.confirmed', { email, firstName, accessUrl })
 
 ## Pagamentos
 
-- Provider unico de cobranca: Stripe (cartao via Checkout Session; PIX via PaymentIntent).
-- Webhook Stripe: `src/pages/api/stripe-webhook.ts` (inclui PIX assincrono).
+- Provider unico: Stripe Checkout hospedado (cartao + PIX na mesma sessao).
+- Formas de pagamento vêm do Dashboard (dynamic payment methods); nao listar `payment_method_types` no codigo.
+- Webhook Stripe: `src/pages/api/stripe-webhook.ts` (PIX assincrono via `checkout.session.async_payment_succeeded`).
 - Endpoint legado `src/pages/api/asaas-webhook.ts` responde 410 e nao libera acesso.
 - Sempre usar a conta Stripe do Nome Magnetico, a partir do `.env` do projeto.
 - Se aparecerem produtos "Sincro Sinergia" ou "Sincro Desperta", a chave Stripe esta errada.
