@@ -18,7 +18,7 @@ function centsToUnit(cents?: number | null) {
 
 /**
  * Receita confirmada no PostHog. Mesmo momento do GA4 Measurement Protocol:
- * webhook Stripe/Asaas, depois da subscription criada.
+ * webhook Stripe, depois da subscription criada.
  * Sem chave, não envia (local e VPS antes do env ficam seguros).
  */
 export async function capturePostHogPurchase(params: {

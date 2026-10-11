@@ -49,7 +49,9 @@ export interface CreateCheckoutParams {
 }
 
 /**
- * Cria uma sessão de checkout no Stripe.
+ * Cria uma sessão de Checkout hospedado no Stripe.
+ * Cartão e PIX vêm do Dashboard (dynamic payment methods) — sem listar
+ * payment_method_types manualmente.
  */
 export async function createCheckoutSession(
   params: CreateCheckoutParams
@@ -76,7 +78,7 @@ export async function createCheckoutSession(
 
   return stripe.checkout.sessions.create({
     mode: 'payment',
-    payment_method_types: ['card'],
+    // Sem payment_method_types: Stripe usa o Dashboard (card + PIX já habilitados).
     line_items: [
       {
         price_data: {
@@ -99,6 +101,12 @@ export async function createCheckoutSession(
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
     locale: 'pt-BR',
+    payment_method_options: {
+      pix: {
+        // 30 minutos — alinhado à expectativa de pagamento imediato do produto
+        expires_after_seconds: 1800,
+      },
+    },
     ...discountOptions,
     payment_intent_data: {
       metadata: {

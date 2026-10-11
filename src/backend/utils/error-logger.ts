@@ -6,7 +6,7 @@
  *   'ai_loop'          — Loop Guard ativado (respostas similares ou máx. tentativas)
  *   'ai_timeout'       — IA não respondeu a tempo
  *   'checkout_stripe'  — erro crítico no checkout Stripe
- *   'checkout_pix'     — erro crítico na criação de cobrança PIX (ASAAS)
+ *   'checkout_pix'     — legado (PIX custom removido; cobrança só via Checkout Stripe)
  *   'other'            — demais erros
  */
 
