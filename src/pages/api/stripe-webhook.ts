@@ -187,9 +187,103 @@ export const POST: APIRoute = async ({ request }) => {
         break;
       }
 
+      // PIX confirmado via PaymentIntent (modal in-app) → liberar acesso.
+      // Cartão continua sendo liberado em checkout.session.completed para evitar duplicata.
+      case 'payment_intent.succeeded': {
+        const pi = event.data.object as {
+          id: string;
+          amount?: number;
+          amount_received?: number | null;
+          currency?: string;
+          receipt_email?: string | null;
+          metadata?: {
+            user_id?: string;
+            product_type?: string;
+            coupon_code?: string;
+            ga_client_id?: string;
+            payment_method?: string;
+          };
+        };
+
+        if (pi.metadata?.payment_method !== 'pix') {
+          break;
+        }
+
+        const userId = pi.metadata.user_id;
+        const productType = pi.metadata.product_type as ProductType | undefined;
+        if (!userId || !productType) {
+          console.error('[stripe-webhook] Metadados ausentes no PaymentIntent PIX', pi.id);
+          break;
+        }
+
+        const amountPaid = pi.amount_received ?? pi.amount ?? undefined;
+
+        try {
+          await createSubscription({
+            userId,
+            productType,
+            stripeSessionId: pi.id,
+            stripePaymentIntentId: pi.id,
+            paymentProvider: 'stripe',
+            amountPaid,
+            currency: pi.currency ?? 'brl',
+          });
+        } catch (err: unknown) {
+          if (
+            err &&
+            typeof err === 'object' &&
+            'code' in err &&
+            (err as { code: string }).code === '23505'
+          ) {
+            break;
+          }
+          throw err;
+        }
+
+        await confirmEmailAfterPayment(userId);
+
+        await recordAccessCouponUse({
+          couponCode: pi.metadata.coupon_code,
+          userId,
+          userEmail: pi.receipt_email ?? undefined,
+          productType,
+        }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom PIX:', err));
+
+        await trackPurchaseConfirmed({
+          userId,
+          productType,
+          transactionId: pi.id,
+          amountCents: amountPaid,
+          currency: pi.currency,
+          paymentProvider: 'stripe',
+          couponCode: pi.metadata.coupon_code,
+          gaClientId: pi.metadata.ga_client_id,
+        });
+
+        const profile = await getProfile(userId);
+        if (profile) {
+          await notify('payment.confirmed', {
+            email: profile.email,
+            firstName: profile.nome ?? profile.email.split('@')[0],
+            accessUrl: `${process.env.APP_URL}/app`,
+            productType,
+            productName: PRODUCT_NAMES[productType],
+          });
+        }
+
+        await notify('admin.new_payment', {
+          userId,
+          productType,
+          amount: amountPaid,
+          currency: pi.currency ?? 'brl',
+          paymentMethod: 'pix',
+        });
+        break;
+      }
+
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as {
-          metadata?: { user_id?: string; product_type?: string };
+          metadata?: { user_id?: string; product_type?: string; payment_method?: string };
         };
         const userId = pi.metadata?.user_id;
         const failedProductType = (pi.metadata?.product_type ?? 'nome_social') as ProductType;

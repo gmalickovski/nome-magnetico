@@ -58,7 +58,7 @@ Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso
 | `$pageview` | SDK, no init (defaults `2026-05-30` usam `capture_pageview: history_change`) | automáticas |
 | `analise_gratis_submit` | `track()` — lead do form público `/analise-gratuita` (`PublicAnalysisForm`) e o mesmo evento já existente na análise gratuita logada (`FreeAnalysisForm`) | — |
 | `begin_checkout` | `track()` nos inícios de checkout (pricing, landing, modal e botão do app) | `product_type` (`nome_social` \| `nome_bebe` \| `nome_empresa`), `value`, `currency=BRL` |
-| `purchase` | `capturePostHogPurchase` dentro de `trackPurchaseConfirmed` (webhooks Stripe e Asaas) | `product_type`, `value`, `currency=BRL`, mais `transaction_id`, `payment_provider` e `$insert_id` para deduplicar retry |
+| `purchase` | `capturePostHogPurchase` dentro de `trackPurchaseConfirmed` (webhook Stripe; Asaas legado) | `product_type`, `value`, `currency=BRL`, mais `transaction_id`, `payment_provider` e `$insert_id` para deduplicar retry |
 
 O wrapper `track()` continua mandando todos os eventos atuais para o GA4. Para o PostHog, só replica `analise_gratis_submit` e `begin_checkout`, traduzindo `produto`/`valor` para `product_type`/`value`. `purchase_complete` no retorno visual do app segue só no GA4; a receita no PostHog é o `purchase` do webhook.
 
@@ -98,11 +98,11 @@ Para evitar poluir os dados do Google Analytics com visualizações e testes fei
 
 Para receita e conversão de pagamento confirmado, a fonte da verdade é o backend:
 ```text
-Webhook Stripe/Asaas -> createSubscription -> trackPurchaseConfirmed -> GA4 purchase
+Webhook Stripe -> createSubscription -> trackPurchaseConfirmed -> GA4 purchase
 ```
 
 1. **Captura no Checkout:** Ao iniciar o checkout, o backend tenta ler o `client_id` do cookie `_ga` via `getGaClientIdFromRequest` e armazena nos metadados do Stripe ou Asaas.
-2. **Confirmação no Webhook:** Quando o pagamento é confirmado, os webhooks em `/api/stripe-webhook` ou `/api/asaas-webhook` extraem esse `client_id` e chamam `trackPurchaseConfirmed` (`src/backend/analytics/ga4.ts`).
+2. **Confirmação no Webhook:** Quando o pagamento é confirmado, `/api/stripe-webhook` extrai esse `client_id` e chama `trackPurchaseConfirmed` (`src/backend/analytics/ga4.ts`).
 3. **Disparo GA4 Measurement Protocol:** É enviado um POST HTTPS com o evento recomendado `purchase` direto para os servidores do Google, garantindo 100% de registro das vendas mesmo que o usuário feche o navegador após pagar.
 
 ---
@@ -179,7 +179,7 @@ Para ver os parâmetros dos eventos de blog nos relatórios:
 *(Não implementado — planejado para quando campanhas pagas forem ativadas)*
 
 Fluxo via n8n (`N8N_WEBHOOK_TRANSACIONAL`):
-1. Após confirmação de pagamento Stripe/Asaas, n8n envia evento `Purchase` para a Graph API do Facebook.
+1. Após confirmação de pagamento Stripe, n8n envia evento `Purchase` para a Graph API do Facebook.
 2. Usar `event_id = transaction_id` para deduplicação automática com o pixel do browser.
 3. Hash SHA-256 de `email` e `telefone` no campo `user_data`.
 4. Endpoint: `POST https://graph.facebook.com/v19.0/{PIXEL_ID}/events`

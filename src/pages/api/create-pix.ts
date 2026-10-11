@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { supabase } from '../../backend/db/supabase';
-import { createPixCharge } from '../../backend/payments/asaas';
 import {
   applyPromotionDiscount,
   getPricesAndPromo,
@@ -10,7 +9,7 @@ import {
   validateAccessCoupon,
 } from '../../backend/payments/prices';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
-import type { ProductType } from '../../backend/payments/stripe';
+import { createPixPayment, type ProductType } from '../../backend/payments/stripe';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
 
@@ -19,10 +18,10 @@ const schema = z.object({
   coupon_code:  z.string().optional(),
 });
 
-const FALLBACK_PRICES: Record<ProductType, number> = {
-  nome_social:   98.00,
-  nome_bebe:     80.00,
-  nome_empresa: 125.00,
+const FALLBACK_CENTS: Record<ProductType, number> = {
+  nome_social:  9800,
+  nome_bebe:    8000,
+  nome_empresa: 12500,
 };
 
 const PRODUCT_DESCRIPTIONS: Record<ProductType, string> = {
@@ -65,6 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const { product_type, coupon_code } = parsed.data;
+  const productType = product_type as ProductType;
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -93,9 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    // ── Preço canônico do Stripe + promoção/cupom do banco local
-    let value = FALLBACK_PRICES[product_type as ProductType];
-    let originalCents = Math.round(value * 100);
+    let originalCents = FALLBACK_CENTS[productType];
     let finalCents = originalCents;
     const cleanCoupon = coupon_code?.trim();
 
@@ -103,10 +101,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const { prices, promotion } = await getPricesAndPromo();
       const priceInfo = prices[product_type];
       if (priceInfo?.cents) {
-        value = priceInfo.cents / 100;
+        originalCents = priceInfo.cents;
+        finalCents = originalCents;
       }
-      originalCents = Math.round(value * 100);
-      finalCents = originalCents;
 
       let couponHandled = false;
       if (cleanCoupon) {
@@ -128,7 +125,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
           const discountedCents = resolveHqCouponDiscount(hqCoupon, originalCents);
           if (discountedCents !== null) {
             finalCents = discountedCents;
-            value = finalCents / 100;
             couponHandled = true;
           }
         }
@@ -142,7 +138,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         if (appliesToThis && (couponMatch || autoPromo)) {
           finalCents = applyPromotionDiscount(originalCents, promotion);
-          value = finalCents / 100;
           couponHandled = true;
         }
       }
@@ -162,15 +157,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
         );
       }
       // Banco/Stripe indisponível — usa fallback sem desconto apenas quando não há cupom
-      finalCents = Math.round(value * 100);
+      finalCents = originalCents;
     }
 
-    const result = await createPixCharge({
+    const result = await createPixPayment({
       userId: user.id,
-      productType: product_type,
-      value,
-      description: PRODUCT_DESCRIPTIONS[product_type as ProductType],
-      couponCode: coupon_code?.trim(),
+      userEmail: user.email ?? '',
+      productType,
+      unitAmount: finalCents,
+      description: PRODUCT_DESCRIPTIONS[productType],
+      couponCode: cleanCoupon,
       gaClientId: getGaClientIdFromRequest(request),
     });
 
@@ -191,17 +187,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const detail = err instanceof Error ? err.message : String(err);
     console.error('[create-pix] Erro:', detail);
 
-    // Registra erro crítico de checkout PIX no monitor
     await logError({
       type: 'checkout_pix',
       severity: 'critical',
       userId: user?.id,
       message: detail,
-      details: { provider: 'asaas' },
+      details: { provider: 'stripe' },
     });
 
     return new Response(
-      JSON.stringify({ error: 'Erro ao gerar cobrança PIX. Tente novamente.', detail }),
+      JSON.stringify({ error: 'Erro ao gerar cobrança PIX. Tente novamente.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

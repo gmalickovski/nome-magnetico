@@ -569,7 +569,11 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
               <div className="flex justify-center">
                 <div className="rounded-xl overflow-hidden bg-white p-2.5 shadow-lg shadow-black/30">
                   <img
-                    src={`data:image/png;base64,${pixData.qrCodeImage}`}
+                    src={
+                      pixData.qrCodeImage.startsWith('http') || pixData.qrCodeImage.startsWith('data:')
+                        ? pixData.qrCodeImage
+                        : `data:image/png;base64,${pixData.qrCodeImage}`
+                    }
                     alt="QR Code PIX"
                     className="w-44 h-44 block"
                   />

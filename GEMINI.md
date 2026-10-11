@@ -262,8 +262,9 @@ O n8n recebe o evento via webhook e processa o envio. Webhooks configurados:
 
 ## Pagamentos (Stripe & Asaas)
 
-- O sistema suporta múltiplos provedores (`payment_provider` na tabela `subscriptions`).
-- Webhook do Asaas em: `src/pages/api/asaas-webhook.ts`
+- Provider ativo de cobrança: Stripe (`payment_provider` pode ainda conter `asaas` em registros históricos).
+- Webhook Stripe: `src/pages/api/stripe-webhook.ts`. Endpoint Asaas legado responde 410.
+- Detalhe: `docs/architecture/pagamentos-stripe-pix.md`.
 - O MCP Stripe atua diretamente conectando-se ao seu ambiente local
 - **SEMPRE** usar a chave da conta **Nome Magnético** (não Sincro): `STRIPE_SECRET_KEY` do arquivo `.env` do projeto
 - Chave test: `sk_test_51TDUrBL...` (conta `TDUrBL66SzSlet1`)

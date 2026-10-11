@@ -18,11 +18,19 @@ export const GET: APIRoute = async ({ url, locals }) => {
     );
   }
 
+  // Stripe PaymentIntent id (pi_...) — fluxo atual.
+  // Prefixo asaas_ permanece apenas para cobranças legadas ainda em polling.
   const { data } = await supabase
     .from('subscriptions')
     .select('id')
     .eq('user_id', user.id)
-    .eq('stripe_session_id', `asaas_${chargeId}`)
+    .or(
+      [
+        `stripe_payment_intent_id.eq.${chargeId}`,
+        `stripe_session_id.eq.${chargeId}`,
+        `stripe_session_id.eq.asaas_${chargeId}`,
+      ].join(',')
+    )
     .limit(1);
 
   const paid = (data?.length ?? 0) > 0;

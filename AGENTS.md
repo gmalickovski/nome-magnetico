@@ -6,7 +6,7 @@ Orientacao para agentes IA que trabalham neste repositorio. Este arquivo e a bas
 
 - Produto: Nome Magnetico.
 - Tipo: SaaS de numerologia cabalistica.
-- Stack: Astro 5 SSR, React islands, Tailwind CSS, Supabase Cloud e Stripe/Asaas.
+- Stack: Astro 5 SSR, React islands, Tailwind CSS, Supabase Cloud e Stripe.
 - Regra de marca: "Astro" e apenas o framework tecnico. Nunca usar "Astro" em copy, branding, nomes de produto ou interface.
 - Fluxo de trabalho: SEMPRE trabalhar em branch com PR, NUNCA diretamente na `main` local. Criar branch a partir da issue Linear (`linear/dev-XXX-...`), abrir PR para review e merge. Mudanças devem ser validadas tecnicamente (`npx astro check`, `npm run build`) antes de abrir ou mesclar PR.
 
@@ -130,10 +130,12 @@ await notify('payment.confirmed', { email, firstName, accessUrl })
 
 ## Pagamentos
 
-- O sistema suporta Stripe e Asaas.
-- Webhook Asaas: `src/pages/api/asaas-webhook.ts`.
+- Provider unico de cobranca: Stripe (cartao via Checkout Session; PIX via PaymentIntent).
+- Webhook Stripe: `src/pages/api/stripe-webhook.ts` (inclui PIX assincrono).
+- Endpoint legado `src/pages/api/asaas-webhook.ts` responde 410 e nao libera acesso.
 - Sempre usar a conta Stripe do Nome Magnetico, a partir do `.env` do projeto.
 - Se aparecerem produtos "Sincro Sinergia" ou "Sincro Desperta", a chave Stripe esta errada.
+- Detalhe: `docs/architecture/pagamentos-stripe-pix.md`.
 
 ## Sentry
 

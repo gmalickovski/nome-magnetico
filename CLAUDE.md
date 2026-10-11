@@ -368,8 +368,9 @@ Guia: `docs/devops/sentry.md`.
 
 ## Pagamentos (Stripe & Asaas)
 
-- O sistema suporta múltiplos provedores (`payment_provider` na tabela `subscriptions`).
-- Webhook do Asaas em: `src/pages/api/asaas-webhook.ts`
+- Provider ativo de cobrança: Stripe (`payment_provider` pode ainda conter `asaas` em registros históricos).
+- Webhook Stripe: `src/pages/api/stripe-webhook.ts`. Endpoint Asaas legado responde 410.
+- Detalhe: `docs/architecture/pagamentos-stripe-pix.md`.
 - O MCP Stripe está configurado em `C:\Users\gmali\.claude\settings.local.json`
 - **SEMPRE** usar a chave da conta **Nome Magnético** (não Sincro): `STRIPE_SECRET_KEY` do arquivo `.env` do projeto
 - Chave test: `sk_test_51TDUrBL...` (conta `TDUrBL66SzSlet1`)
