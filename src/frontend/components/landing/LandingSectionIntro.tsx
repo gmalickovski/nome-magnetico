@@ -75,10 +75,11 @@ export const landingMockupCardClass = landingMockupFloatClass;
 /** Inject once near product mockups — multi-layer box-shadow needs raw CSS. */
 export const landingMockupFloatStyle = `
   .landing-mockup-float {
+    /* Light from top-left → cast down-right; silhouette ≈ card (neg. spread). */
     box-shadow:
-      2px 4px 6px -1px rgba(0, 0, 0, 0.55),
-      6px 12px 20px -4px rgba(0, 0, 0, 0.5),
-      12px 28px 48px -8px rgba(0, 0, 0, 0.45);
+      3px 6px 8px -2px rgba(0, 0, 0, 0.65),
+      8px 16px 24px -6px rgba(0, 0, 0, 0.55),
+      14px 32px 52px -10px rgba(0, 0, 0, 0.5);
   }
 `;
 
