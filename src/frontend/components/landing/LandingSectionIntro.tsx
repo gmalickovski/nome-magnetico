@@ -53,9 +53,28 @@ export function LandingSectionIntro({
   );
 }
 
-/** Hero-style floating panel — depth via tone + ring, not gold outline boxes. */
+/**
+ * Hero floating panel (REFERENCE — do not change Hero to match mockups).
+ * Technique: soft glass surface + hairline ring + Tailwind `shadow-2xl`.
+ */
 export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
+
+/**
+ * Floating mockup card — same *technique* as the Hero panel (ring + one box-shadow),
+ * but softer falloff: larger blur + lower opacity so the cast dissolves into
+ * the page ground instead of a hard silhouette edge.
+ *
+ * **One token for every breakpoint** (phone / tablet stack / desktop side-by-side).
+ * Layout may stack or grid; the shadow recipe never changes. When desktop fit
+ * applies CSS `zoom`, the cast scales with the card.
+ * Hero stays on `shadow-2xl shadow-black/80` (reference — do not change it).
+ */
+export const landingMockupFloatClass =
+  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-[0_24px_72px_-6px_rgba(0,0,0,0.2)]';
+
+/** @deprecated Use landingMockupFloatClass + surface bg. */
+export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;
 
 /** Primary tap target on landing (matches hero CTA height). */
 export const landingTouchTargetClass =

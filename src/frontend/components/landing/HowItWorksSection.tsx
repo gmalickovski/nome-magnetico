@@ -1,5 +1,9 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { LandingSectionIntro, landingSectionShellClass } from './LandingSectionIntro';
+import {
+  LandingSectionIntro,
+  landingMockupFloatClass,
+  landingSectionShellClass,
+} from './LandingSectionIntro';
 import { useScrollProgress } from './useScrollProgress';
 import {
   FormFigure,
@@ -119,7 +123,7 @@ function MobileStepItem({
           : 'opacity-0 translate-y-8 scale-95'
       }`}
     >
-      <article className="w-full max-w-md mx-auto rounded-2xl bg-[#161616]/95 border border-[#D4AF37]/35 hover:border-[#D4AF37]/60 p-6 shadow-2xl shadow-black/70 transition-all duration-500">
+      <article className={`w-full max-w-md mx-auto ${landingMockupFloatClass} bg-[#161616]/95 border border-[#D4AF37]/35 hover:border-[#D4AF37]/60 p-6 transition-all duration-500`}>
         <div className="flex items-center justify-between mb-4">
           <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full border border-[#f2ca50]/20">
             PASSO {step.stepNumber}
@@ -227,13 +231,15 @@ export function HowItWorksSection() {
       id="como-funciona"
       ref={ref}
       className={`relative bg-[#111111] scroll-mt-28 lg:scroll-mt-32 ${
-        reduceMotion ? 'py-20 lg:py-28' : 'lg:h-[340vh] pt-24 pb-20 lg:py-0'
+        reduceMotion
+          ? 'py-14 md:py-16 lg:py-28'
+          : 'lg:h-[340vh] pt-14 pb-20 md:pt-16 lg:py-0'
       }`}
       aria-label="Como funciona"
     >
       {/* ── DESKTOP PINNED EXPERIENCE (lg: 1024px+) ────────────────────── */}
       <div
-        className={`hidden lg:flex flex-col justify-center pt-24 xl:pt-28 pb-8 ${
+        className={`hidden lg:flex flex-col justify-center pt-14 xl:pt-16 pb-8 ${
           reduceMotion ? '' : 'sticky top-0 h-screen'
         } w-full overflow-x-clip`}
       >
@@ -271,7 +277,7 @@ export function HowItWorksSection() {
                         : 'translateY(24px) scale(0.95)',
                     }}
                   >
-                    <article className="h-full rounded-2xl bg-[#161616]/80 backdrop-blur-md border border-[#D4AF37]/30 hover:border-[#D4AF37]/60 p-6 xl:p-7 shadow-2xl shadow-black/60 transition-all duration-500 flex flex-col justify-between group">
+                    <article className={`h-full ${landingMockupFloatClass} bg-[#161616]/80 backdrop-blur-md border border-[#D4AF37]/30 hover:border-[#D4AF37]/60 p-6 xl:p-7 transition-all duration-500 flex flex-col justify-between group`}>
                       <div>
                         {/* Header do Card: Número do Passo & SVG */}
                         <div className="flex items-center justify-between mb-5">

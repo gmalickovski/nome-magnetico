@@ -94,48 +94,40 @@ export function FormFigure({ active = true }: FigureProps) {
 }
 
 /**
- * Passo 2: Gerar Harmonização
- * Botão central de ativação com o triângulo cabalístico e feixes de energia.
+ * Passo 2: Gerar Análise
+ * Quatro triângulos cabalísticos empilhados em perspectiva (Vida / Pessoal /
+ * Social / Destino). Escala e stroke alinhados aos outros ícones do rail.
  */
 export function GenerateFigure({ active = true }: FigureProps) {
+  // Front largest → back smallest (subtle). Scale around the triangle center.
+  const triangle = 'M36 9 L51 39 L21 39 Z';
+  const cx = 36;
+  const cy = 27;
+  const layers = [
+    { dx: -14, dy: -8, opacity: 0.22, scale: 0.78 },
+    { dx: -9.5, dy: -5.5, opacity: 0.4, scale: 0.86 },
+    { dx: -5, dy: -2.75, opacity: 0.65, scale: 0.93 },
+    { dx: 0, dy: 0, opacity: 1, scale: 1 },
+  ] as const;
+
   return (
-    <FigureFrame label="Ativação do cálculo de numerologia" className={active ? 'opacity-100 scale-100' : 'opacity-40 scale-95'}>
-      {/* Botão em pílula */}
-      <rect
-        x="10"
-        y="12"
-        width="52"
-        height="28"
-        rx="14"
-        stroke={GOLD}
-        strokeWidth="1.5"
-        className="transition-all duration-700"
-      />
-      {/* Triângulo cabalístico no centro */}
-      <path
-        d="M36 18 L44 32 L28 32 Z"
-        stroke="#f2ca50"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      {/* Ponto central místico */}
-      <circle cx="36" cy="27" r="1.5" fill="#f2ca50" />
-      {/* Ondas / Feixes de irradiação */}
-      <path
-        d="M22 26h-4M50 26h4M36 10v-3"
-        stroke={GOLD}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeOpacity="0.75"
-      />
-      {/* Feixes diagonais sutis */}
-      <path
-        d="M25 15l-2-2M47 15l2-2"
-        stroke={GOLD}
-        strokeWidth="1.25"
-        strokeLinecap="round"
-        strokeOpacity="0.5"
-      />
+    <FigureFrame
+      label="Os quatro triângulos cabalísticos"
+      className={active ? 'opacity-100 scale-100' : 'opacity-40 scale-95'}
+    >
+      {layers.map((layer) => (
+        <path
+          key={`${layer.dx}-${layer.dy}`}
+          d={triangle}
+          stroke="#f2ca50"
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeOpacity={layer.opacity}
+          transform={`translate(${layer.dx} ${layer.dy}) translate(${cx} ${cy}) scale(${layer.scale}) translate(${-cx} ${-cy})`}
+          className="transition-all duration-700"
+        />
+      ))}
     </FigureFrame>
   );
 }

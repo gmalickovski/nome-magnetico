@@ -278,7 +278,46 @@ export function SignatureUseCasesSection() {
           reduceMotion ? 'py-16 min-h-screen' : 'sticky top-0 h-[100dvh]'
         } pt-14 xs:pt-16 pb-4 px-3 sm:px-4 overflow-hidden select-none`}
       >
-        {/* PARTE SUPERIOR: MOCKUPS (Transição Horizontal da esquerda para a direita) */}
+        {/* TEXTO EM CIMA — depois card + seletor (mobile / tablet). */}
+        <div className="shrink-0 relative w-full max-w-[480px] mx-auto min-h-[185px] xs:min-h-[200px] overflow-hidden flex items-center">
+          {USE_CASES.map((item, idx) => {
+            const isActive = idx === activeIndex;
+            const isPast = idx < activeIndex;
+
+            const textTransform = isActive
+              ? 'opacity-100 translate-x-0 pointer-events-auto relative z-10'
+              : isPast
+              ? 'opacity-0 -translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0'
+              : 'opacity-0 translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0';
+
+            return (
+              <div
+                key={item.id}
+                className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform w-full text-center ${textTransform}`}
+                aria-hidden={!isActive}
+              >
+                <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
+                  {item.title}
+                </h3>
+
+                <p className="text-gray-300 text-xs leading-relaxed mb-2.5 max-w-sm mx-auto line-clamp-3 xs:line-clamp-none">
+                  {item.description}
+                </p>
+
+                <div className="space-y-1 max-w-xs mx-auto text-left">
+                  {item.bulletPoints.map((bullet, bIdx) => (
+                    <div key={bIdx} className="flex items-start gap-2 text-[11px] text-gray-300">
+                      <span className="text-[#f2ca50] text-xs shrink-0 leading-none">✦</span>
+                      <span className="line-clamp-1 xs:line-clamp-none">{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CARD (mockup) */}
         <div className="flex-1 min-h-0 flex items-center justify-center relative w-full max-w-[480px] mx-auto overflow-hidden">
           {USE_CASES.map((item, idx) => {
             const Mockup = item.MockupComponent;
@@ -305,7 +344,7 @@ export function SignatureUseCasesSection() {
           })}
         </div>
 
-        {/* MARCADORES HORIZONTAIS NO SENTIDO DA ROLAGEM */}
+        {/* SELETOR abaixo do card */}
         <div
           className="flex items-center justify-center gap-2 py-2 shrink-0"
           role="tablist"
@@ -327,46 +366,6 @@ export function SignatureUseCasesSection() {
                     : 'w-2 h-1.5 bg-white/20 hover:bg-white/40'
                 }`}
               />
-            );
-          })}
-        </div>
-
-        {/* PARTE INFERIOR: TEXTOS CORRESPONDENTES (Transição Horizontal) */}
-        <div className="shrink-0 relative w-full max-w-[480px] mx-auto min-h-[185px] xs:min-h-[200px] overflow-hidden flex items-center">
-          {USE_CASES.map((item, idx) => {
-            const isActive = idx === activeIndex;
-            const isPast = idx < activeIndex;
-
-            const textTransform = isActive
-              ? 'opacity-100 translate-x-0 pointer-events-auto relative z-10'
-              : isPast
-              ? 'opacity-0 -translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0'
-              : 'opacity-0 translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0';
-
-            return (
-              <div
-                key={item.id}
-                className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform w-full text-center ${textTransform}`}
-                aria-hidden={!isActive}
-              >
-                {/* Título padronizado com o mesmo tamanho (text-3xl) do título principal de todas as outras seções */}
-                <h3 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
-                  {item.title}
-                </h3>
-
-                <p className="text-gray-300 text-xs leading-relaxed mb-2.5 max-w-sm mx-auto line-clamp-3 xs:line-clamp-none">
-                  {item.description}
-                </p>
-
-                <div className="space-y-1 max-w-xs mx-auto text-left">
-                  {item.bulletPoints.map((bullet, bIdx) => (
-                    <div key={bIdx} className="flex items-start gap-2 text-[11px] text-gray-300">
-                      <span className="text-[#f2ca50] text-xs shrink-0 leading-none">✦</span>
-                      <span className="line-clamp-1 xs:line-clamp-none">{bullet}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             );
           })}
         </div>
