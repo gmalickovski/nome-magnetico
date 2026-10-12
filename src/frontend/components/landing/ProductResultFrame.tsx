@@ -135,7 +135,8 @@ function prefersReducedMotion(): boolean {
  */
 const desktopFitClass = 'product-mockup-fit w-full min-w-0';
 
-const desktopStackClass = 'w-full min-w-0 flex flex-col gap-3';
+/** Stack gap leaves room for the shared float shadow between cards (all breakpoints). */
+const desktopStackClass = 'w-full min-w-0 flex flex-col gap-5 sm:gap-6';
 
 /**
  * Same card body as before / real app (`analisar-nome-card`):
@@ -471,8 +472,9 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Criadas para o seu perfil numerológico.
           </p>
-          {/* Same layout as before / app result: 3-up from sm, 1-up on mobile. */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+          {/* Same layout as before / app result: 3-up from sm, 1-up on mobile.
+              Gap keeps the shared float shadow readable when stacked or gridded. */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-3">
             {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}
@@ -495,7 +497,7 @@ export function ProductSuggestionsFrame() {
             Nomes que você indicou, analisados numerologicamente.
           </p>
           {/* 2-up from sm (two candidates), 1-up on mobile — matches prior mockup. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             {DEMO_USER_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}

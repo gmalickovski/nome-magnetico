@@ -64,6 +64,10 @@ export const landingPanelClass =
  * Floating mockup card — same *technique* as the Hero panel (ring + one box-shadow),
  * but softer falloff: larger blur + lower opacity so the cast dissolves into
  * the page ground instead of a hard silhouette edge.
+ *
+ * **One token for every breakpoint** (phone / tablet stack / desktop side-by-side).
+ * Layout may stack or grid; the shadow recipe never changes. When desktop fit
+ * applies CSS `zoom`, the cast scales with the card.
  * Hero stays on `shadow-2xl shadow-black/80` (reference — do not change it).
  */
 export const landingMockupFloatClass =
