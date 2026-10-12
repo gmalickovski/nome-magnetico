@@ -57,6 +57,13 @@ export function LandingSectionIntro({
 export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
+/**
+ * Product mockup floating card — ambient bottom shadow (NO-LINE; no gold sectioning border).
+ * Pair with `@container` on the same node for fold / half-width reflow.
+ */
+export const landingMockupCardClass =
+  'rounded-2xl bg-[#161616]/95 backdrop-blur-md ring-1 ring-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] min-w-0 w-full max-w-full';
+
 /** Primary tap target on landing (matches hero CTA height). */
 export const landingTouchTargetClass =
   'min-h-12 flex items-center justify-center touch-manipulation';

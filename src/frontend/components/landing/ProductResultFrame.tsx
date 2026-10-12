@@ -18,6 +18,7 @@ import {
   harmonyStarPts,
   harmonyStarTipXY,
 } from '../app/harmonizationStarGeometry';
+import { landingMockupCardClass } from './LandingSectionIntro';
 import { ProductAnimatedScore } from './ProductAnimatedScore';
 
 const GOLD = '#D4AF37';
@@ -138,12 +139,12 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl bg-white/5 p-2.5 sm:p-3 flex flex-col gap-1.5 sm:gap-2 min-w-0 transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
+      className={`rounded-2xl bg-[#1a1a1a]/90 p-3 sm:p-3.5 flex flex-col gap-2 min-w-0 ring-1 ring-white/5 shadow-[0_12px_28px_rgba(0,0,0,0.45)] transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
         stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1.5'
       }`}
       style={{ transitionDelay: stagger ? `${delayIndex * 70}ms` : '0ms' }}
     >
-      <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] break-words leading-tight">
+      <div className="font-cinzel text-sm sm:text-[15px] font-bold text-[#e5e2e1] break-words leading-tight">
         {c.nome}
       </div>
       <ProductAnimatedScore
@@ -153,7 +154,7 @@ function SuggestionCard({
         delayMs={stagger ? delayIndex * 80 : 0}
       />
       <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
-      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] sm:text-[11px] text-gray-500">
+      <div className="flex flex-wrap gap-x-2.5 gap-y-1 text-[11px] text-gray-500">
         <span>
           Expr: <span className="text-gray-300">{c.expressao}</span>
         </span>
@@ -213,25 +214,25 @@ export function ProductHarmonyFrame() {
   return (
     <div
       ref={rootRef}
-      className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden w-full"
+      className={`@container/harmony ${landingMockupCardClass} px-3 py-5 sm:px-5 sm:py-7 relative`}
     >
-      <section className="rounded-2xl bg-white/5 p-3 sm:p-5 mb-5 overflow-hidden min-w-0">
+      <section className="rounded-2xl bg-white/[0.04] p-3 sm:p-5 mb-5 min-w-0 ring-1 ring-white/5 shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
         <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4 break-words">
           Análise de Nome Social — Certificado Cabalístico
         </p>
 
         <div className="flex flex-col gap-5 min-w-0">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between min-w-0">
+          <div className="flex flex-col gap-3 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between min-w-0">
             <div className="min-w-0 flex-1">
               <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#76746a] mb-1">
                 Nome de nascimento
               </p>
-              <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
+              <h3 className="font-cinzel text-lg sm:text-xl @[520px]/harmony:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
                 {BIRTH_NAME}
               </h3>
               <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
             </div>
-            <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
+            <div className="w-full @[420px]/harmony:w-40 @[560px]/harmony:w-44 @[420px]/harmony:shrink-0 min-w-0">
               <ProductAnimatedScore
                 score={DEMO_SCORE_BIRTH}
                 play={scoresPlay}
@@ -241,16 +242,16 @@ export function ProductHarmonyFrame() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between pt-5 border-t border-white/10 min-w-0">
+          <div className="flex flex-col gap-3 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between pt-5 border-t border-white/10 min-w-0">
             <div className="min-w-0 flex-1">
               <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#D4AF37]/70 mb-1">
                 Nome harmonizado
               </p>
-              <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
+              <h3 className="font-cinzel text-lg sm:text-xl @[520px]/harmony:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
                 {INDICATED_NAME}
               </h3>
             </div>
-            <div className="w-full md:w-40 lg:w-44 md:shrink-0 min-w-0">
+            <div className="w-full @[420px]/harmony:w-40 @[560px]/harmony:w-44 @[420px]/harmony:shrink-0 min-w-0">
               <ProductAnimatedScore
                 score={DEMO_SCORE_HARMONIZED}
                 play={scoresPlay}
@@ -379,21 +380,24 @@ export function ProductHarmonyFrame() {
         }
         .harmony-star-svg {
           width: 100%;
-          max-width: 660px;
+          max-width: min(100%, 560px);
           height: auto;
           display: block;
         }
         .harmony-star-label {
           fill: #b0b7c3;
-          font-size: 13px;
+          font-size: 12px;
         }
         .harmony-star-num-gold {
-          font-size: 17px;
+          font-size: 16px;
         }
         .harmony-star-num-red {
-          font-size: 14px;
+          font-size: 13px;
         }
-        @media (min-width: 640px) {
+        @container harmony (min-width: 480px) {
+          .harmony-star-svg {
+            max-width: min(100%, 620px);
+          }
           .harmony-star-label {
             font-size: 13px;
           }
@@ -443,7 +447,7 @@ export function ProductSuggestionsFrame() {
   return (
     <div
       ref={rootRef}
-      className="rounded-2xl bg-[#131313] px-3 py-5 sm:px-5 sm:py-7 min-w-0 relative overflow-hidden w-full"
+      className={`@container/suggestions ${landingMockupCardClass} px-3 py-5 sm:px-5 sm:py-7 relative`}
     >
       <div className="flex flex-col gap-5 sm:gap-6 min-w-0 h-full">
         <div className="min-w-0">
@@ -456,7 +460,11 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
             Criadas para o seu perfil numerológico.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+          {/*
+            Columns follow available mockup width (fold / side panel), not only viewport:
+            1 → 2 (~420) → 3 (~640) so 14" two-column stays legible.
+          */}
+          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 @[640px]/suggestions:grid-cols-3 gap-3">
             {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}
@@ -478,7 +486,7 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
             Nomes que você indicou, analisados numerologicamente.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 gap-3">
             {DEMO_USER_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}

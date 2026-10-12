@@ -5,7 +5,7 @@ Home sections below the hero share spacing with `HeroSection`:
 - **Layout:** `landingSectionShellClass` (`max-w-[1440px]`, `px-6 md:px-10 lg:px-12`, `min-w-0`).
 - **Headings:** `LandingSectionIntro` — gold label (`#f2ca50`), Cinzel title (min `text-2xl` on phone), Inter body. No forced all-caps on labels.
 - **Como funciona:** four cards in one row. Each card has one locked line figure in `#D4AF37`, then the short title and the one published sentence: Frequência / Bloqueios / Ranking / Assinatura. Dark ground `#131313`, kit border `#D4AF37` at 35% opacity, `rounded-2xl`. A static arrow `#B8960E` sits between cards. Ranking lives only on card 3. No person, no fifth figure, no light card, no giant step name. On a phone the cards stack and the arrow points down.
-- **Produto:** left copy sticky (`lg:sticky lg:top-28`). Right mock animates certificate → scores → soft crossfade to **Nossas Sugestões** (3 cards) + **Suas Sugestões** (2 cards), then loops back with the same fade. Panels are grid-stacked; inactive panel is opacity-only (`pointer-events-none`), no abrupt `invisible` swap. Mobile: text then card; suggestion cards stack to 1 column, system 3-col / user 2-col from `sm`.
+- **Produto (duas seções):** `#produtos` (Harmonização) e `#sugestoes` (Sugestões Inteligentes). Layout em 2 colunas a partir de **840px** (Expanded); abaixo disso empilha (texto → mockup). Mockups usam `landingMockupCardClass` — card flutuante com sombra ambient `0 20px 50px rgba(0,0,0,0.6)`, `ring-1 ring-white/5`, **sem borda dourada** (NO-LINE). Grids internos dos mockups usam **container queries** (`@container/harmony`, `@container/suggestions`) para reflow em half-width / fold / notebook 14″, em vez de depender só do viewport. Cards de sugestão internos também flutuam (`shadow` + ring sutil).
 - **Preço:** one centered block on `#111111`, the same ground as the neighboring sections. Inside, only this order: small “Nome Social.”; the amount alone in large Cinzel `#D4AF37`; small “pagamento único, sem mensalidade.”; the five-item list (ranking com score; nome mais indicado; antes e depois nos 4 triângulos; bloqueios, débitos, lições e tendências; PDF com guia de 30 dias e folha de treino da assinatura); “Acesso na hora.” and “Sete dias de garantia.” on their own lines; the button, full width of the block. The only motion is the border, shifting `#D4AF37` → `#E8C84A`. `prefers-reduced-motion` holds the border at `#D4AF37`. Vertical padding is tighter than the other sections so the block sits with the page. FAQ unchanged.
 - **Header:** the desktop row stays hidden until the logo and the links fit. Below that width the existing hamburger is used, so the wordmark stays whole and the items do not collide.
 
@@ -13,14 +13,14 @@ Home sections below the hero share spacing with `HeroSection`:
 
 `useLandingSectionReveal` fades and rises once on enter: 600ms ease-out, 12px (`translate-y-3`). `prefers-reduced-motion: reduce` shows the section still (no transition class).
 
-**Produto (`ProductResultFrame`):** sequence on viewport enter — harmony → score count-up → soft crossfade (1.1s) to suggestions → hold → same soft crossfade back to harmony (loop). Scores stay painted during outbound fade; remount/count-up only after return fade settles. Left copy sticky with `top-28` (header clearance), confined to the product grid row.
+**Produto:** `ProductHarmonyFrame` anima scores no enter (IntersectionObserver). `ProductSuggestionsFrame` staggered reveal dos cards. Sem loop crossfade entre as duas seções (são blocos separados).
 
 The purchase border remains the only continuous border loop. Step arrows do not move.
 
 ## Mobile
 
 - `landingSectionStackGapClass`: `gap-8` → `gap-16` like the hero grid.
-- Product copy and result frame stack. Cards stack. Price block stays one column; the button stays full width.
+- Product copy and mockup frames stack below 840px (phone, tablet portrait, fold closed). Suggestion grids: 1 col → 2 @ container 420px → 3 @ 640px. Price block stays one column; the button stays full width.
 - Sections use `overflow-x-hidden`; decorative blurs are width-capped on small screens.
 
 Components: `LandingSectionIntro.tsx`, `useLandingSectionReveal.ts`, `ProductsSection`, `HowItWorksSection`, `HowItWorksFigures`, `ProductResultFrame`, `ProductAnimatedScore`, `PricingSection`, `HeroScoreAnimation` (hero only).
