@@ -76,7 +76,7 @@ export function ProductsSection() {
                   </p>
                 </TextBlock>
 
-                <div className={productCopyProseClass}>
+                <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
                   <TextBlock revealed={reveal1.revealed} delayMs={40}>
                     <div>
                       <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
@@ -133,7 +133,7 @@ export function ProductsSection() {
                   </p>
                 </TextBlock>
 
-                <div className={productCopyProseClass}>
+                <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
                   <TextBlock revealed={reveal2.revealed} delayMs={40}>
                     <div>
                       <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
