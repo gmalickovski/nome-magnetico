@@ -96,15 +96,16 @@ export function FormFigure({ active = true }: FigureProps) {
 /**
  * Passo 2: Gerar Análise
  * Quatro triângulos cabalísticos empilhados em perspectiva (Vida / Pessoal /
- * Social / Destino) — o da frente opaco, os de trás com opacidade menor.
+ * Social / Destino). Escala e stroke alinhados aos outros ícones do rail.
  */
 export function GenerateFigure({ active = true }: FigureProps) {
-  // Same outline, shifted up-left so each body peeks behind the next.
-  const triangle = 'M36 15 L48 37 L24 37 Z';
+  // Larger footprint (~FormFigure 48×40); round caps/joins soften the tips.
+  // Slightly wider stack offsets so each body peeks without losing the stack.
+  const triangle = 'M36 8 L52 40 L20 40 Z';
   const layers = [
-    { dx: -9, dy: -5, opacity: 0.22 },
-    { dx: -6, dy: -3.5, opacity: 0.4 },
-    { dx: -3, dy: -1.75, opacity: 0.65 },
+    { dx: -11, dy: -6, opacity: 0.22 },
+    { dx: -7.5, dy: -4, opacity: 0.4 },
+    { dx: -4, dy: -2, opacity: 0.65 },
     { dx: 0, dy: 0, opacity: 1 },
   ] as const;
 
@@ -118,7 +119,8 @@ export function GenerateFigure({ active = true }: FigureProps) {
           key={`${layer.dx}-${layer.dy}`}
           d={triangle}
           stroke="#f2ca50"
-          strokeWidth="1.5"
+          strokeWidth="1.75"
+          strokeLinecap="round"
           strokeLinejoin="round"
           strokeOpacity={layer.opacity}
           transform={`translate(${layer.dx} ${layer.dy})`}
