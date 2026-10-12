@@ -18,8 +18,9 @@ import {
   harmonyStarPts,
   harmonyStarTipXY,
 } from '../app/harmonizationStarGeometry';
-import { landingMockupCardClass } from './LandingSectionIntro';
+import { landingMockupFloatClass } from './LandingSectionIntro';
 import { ProductAnimatedScore } from './ProductAnimatedScore';
+import { useDesktopMockupFit } from './useDesktopMockupFit';
 
 const GOLD = '#D4AF37';
 
@@ -128,6 +129,15 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * Desktop/widescreen only: compact stack so the full composition fits in the
+ * section viewport (~14" / short laptop heights). Mobile stacks — no zoom.
+ * Zoom is height-gated (not width) so ultrawide tall screens stay at 1:1.
+ */
+const desktopFitClass = 'product-mockup-fit w-full min-w-0';
+
+const desktopStackClass = 'w-full min-w-0 flex flex-col gap-3';
+
 function SuggestionCard({
   c,
   stagger,
@@ -139,22 +149,22 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl bg-[#1a1a1a]/90 p-3 sm:p-3.5 flex flex-col gap-2 min-w-0 ring-1 ring-white/5 shadow-[0_12px_28px_rgba(0,0,0,0.45)] transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
-        stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1.5'
+      className={`${landingMockupFloatClass} p-2.5 sm:p-3 flex flex-col gap-1.5 min-w-0 transition-[opacity,transform] duration-[500ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
+        stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
       }`}
-      style={{ transitionDelay: stagger ? `${delayIndex * 70}ms` : '0ms' }}
+      style={{ transitionDelay: stagger ? `${delayIndex * 40}ms` : '0ms' }}
     >
-      <div className="font-cinzel text-sm sm:text-[15px] font-bold text-[#e5e2e1] break-words leading-tight">
+      <div className="font-cinzel text-sm font-bold text-[#e5e2e1] break-words leading-tight">
         {c.nome}
       </div>
       <ProductAnimatedScore
         score={c.score}
         play={stagger}
         size="sm"
-        delayMs={stagger ? delayIndex * 80 : 0}
+        delayMs={stagger ? delayIndex * 40 : 0}
       />
       <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
-      <div className="flex flex-wrap gap-x-2.5 gap-y-1 text-[11px] text-gray-500">
+      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-gray-500">
         <span>
           Expr: <span className="text-gray-300">{c.expressao}</span>
         </span>
@@ -182,11 +192,12 @@ function SuggestionCard({
 
 /**
  * Card Fixo da Seção "A Harmonização"
- * Exibe o certificado cabalístico, a evolução de score e a estrela de harmonização comparativa.
+ * Individual floating cards (no dark tray wrapper). Desktop scales to fit viewport.
  */
 export function ProductHarmonyFrame() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [scoresPlay, setScoresPlay] = useState(false);
+  useDesktopMockupFit(rootRef);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -200,11 +211,11 @@ export function ProductHarmonyFrame() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          window.setTimeout(() => setScoresPlay(true), 250);
+          window.setTimeout(() => setScoresPlay(true), 80);
           observer.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0, rootMargin: '120px 0px 0px 0px' },
     );
 
     observer.observe(el);
@@ -212,161 +223,164 @@ export function ProductHarmonyFrame() {
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className={`@container/harmony ${landingMockupCardClass} px-3 py-5 sm:px-5 sm:py-7 relative`}
-    >
-      <section className="rounded-2xl bg-white/[0.04] p-3 sm:p-5 mb-5 min-w-0 ring-1 ring-white/5 shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
-        <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4 break-words">
-          Análise de Nome Social — Certificado Cabalístico
-        </p>
+    <div ref={rootRef} className={`@container/harmony ${desktopFitClass}`}>
+      <div className={desktopStackClass}>
+        {/* Certificate — floats alone on the page ground */}
+        <section className={`${landingMockupFloatClass} p-3 sm:p-4`}>
+          <p className="font-cinzel text-[10px] uppercase tracking-[0.18em] text-[#76746a] mb-3 break-words">
+            Análise de Nome Social — Certificado Cabalístico
+          </p>
 
-        <div className="flex flex-col gap-5 min-w-0">
-          <div className="flex flex-col gap-3 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between min-w-0">
-            <div className="min-w-0 flex-1">
-              <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#76746a] mb-1">
-                Nome de nascimento
-              </p>
-              <h3 className="font-cinzel text-lg sm:text-xl @[520px]/harmony:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
-                {BIRTH_NAME}
-              </h3>
-              <p className="text-gray-500 text-xs mt-1">{BIRTH_DATE}</p>
+          <div className="flex flex-col gap-3.5 min-w-0">
+            <div className="flex flex-col gap-2 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between min-w-0">
+              <div className="min-w-0 flex-1">
+                <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#76746a] mb-0.5">
+                  Nome de nascimento
+                </p>
+                <h3 className="font-cinzel text-base sm:text-lg @[520px]/harmony:text-xl font-bold text-[#e5e2e1] break-words leading-snug">
+                  {BIRTH_NAME}
+                </h3>
+                <p className="text-gray-500 text-[11px] mt-0.5">{BIRTH_DATE}</p>
+              </div>
+              <div className="w-full @[420px]/harmony:w-36 @[560px]/harmony:w-40 @[420px]/harmony:shrink-0 min-w-0">
+                <ProductAnimatedScore
+                  score={DEMO_SCORE_BIRTH}
+                  play={scoresPlay}
+                  size="lg"
+                  delayMs={0}
+                />
+              </div>
             </div>
-            <div className="w-full @[420px]/harmony:w-40 @[560px]/harmony:w-44 @[420px]/harmony:shrink-0 min-w-0">
-              <ProductAnimatedScore
-                score={DEMO_SCORE_BIRTH}
-                play={scoresPlay}
-                size="lg"
-                delayMs={0}
-              />
+
+            <div className="flex flex-col gap-2 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between pt-3.5 border-t border-white/10 min-w-0">
+              <div className="min-w-0 flex-1">
+                <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#D4AF37]/70 mb-0.5">
+                  Nome harmonizado
+                </p>
+                <h3 className="font-cinzel text-base sm:text-lg @[520px]/harmony:text-xl font-bold text-[#e5e2e1] break-words leading-snug">
+                  {INDICATED_NAME}
+                </h3>
+              </div>
+              <div className="w-full @[420px]/harmony:w-36 @[560px]/harmony:w-40 @[420px]/harmony:shrink-0 min-w-0">
+                <ProductAnimatedScore
+                  score={DEMO_SCORE_HARMONIZED}
+                  play={scoresPlay}
+                  size="lg"
+                  delayMs={280}
+                />
+              </div>
             </div>
           </div>
+        </section>
 
-          <div className="flex flex-col gap-3 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between pt-5 border-t border-white/10 min-w-0">
-            <div className="min-w-0 flex-1">
-              <p className="font-cinzel text-[10px] uppercase tracking-[0.14em] text-[#D4AF37]/70 mb-1">
-                Nome harmonizado
-              </p>
-              <h3 className="font-cinzel text-lg sm:text-xl @[520px]/harmony:text-2xl font-bold text-[#e5e2e1] mb-1 break-words">
-                {INDICATED_NAME}
-              </h3>
-            </div>
-            <div className="w-full @[420px]/harmony:w-40 @[560px]/harmony:w-44 @[420px]/harmony:shrink-0 min-w-0">
-              <ProductAnimatedScore
-                score={DEMO_SCORE_HARMONIZED}
-                play={scoresPlay}
-                size="lg"
-                delayMs={400}
+        {/* Star comparison — second floating surface, no outer tray */}
+        <section className={`${landingMockupFloatClass} p-3 sm:p-4`}>
+          <p className="font-cinzel text-[10px] uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
+            A Transformação
+          </p>
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-2">
+            A Harmonização
+          </h4>
+
+          <div className="harmony-star-wrap mb-2.5">
+            <svg
+              className="harmony-star-svg w-full"
+              viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
+              role="img"
+              aria-label="Estrela comparativa entre nome de nascimento e nome harmonizado"
+            >
+              <polygon
+                points={OUTER_PTS}
+                fill={GOLD}
+                fillOpacity={0.1}
+                stroke={GOLD}
+                strokeWidth={2}
               />
-            </div>
+              <polygon
+                points={INNER_PTS}
+                fill="#DC2626"
+                fillOpacity={0.12}
+                stroke="#DC2626"
+                strokeWidth={1.5}
+              />
+              {HARMONY_STAR_TIP_LABELS.map((label, i) => {
+                const labelPos = harmonyStarTipXY(
+                  HARMONY_STAR_CX,
+                  HARMONY_STAR_CY,
+                  HARMONY_STAR_LABEL_RADIUS,
+                  i,
+                );
+                const goldPos = harmonyStarTipXY(
+                  HARMONY_STAR_CX,
+                  HARMONY_STAR_CY,
+                  HARMONY_STAR_GOLD_NUM_RADIUS,
+                  i,
+                );
+                const redPos = harmonyStarTipXY(
+                  HARMONY_STAR_CX,
+                  HARMONY_STAR_CY,
+                  HARMONY_STAR_RED_NUM_RADIUS,
+                  i,
+                );
+                return (
+                  <g key={label}>
+                    <text
+                      className="harmony-star-label"
+                      x={labelPos.x + HARMONY_STAR_LABEL_DX[i]}
+                      y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
+                      fill="#b0b7c3"
+                      fontFamily="Inter, sans-serif"
+                      textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
+                    >
+                      {label}
+                    </text>
+                    <text
+                      className="harmony-star-num-gold"
+                      x={goldPos.x}
+                      y={goldPos.y + 6}
+                      fill={GOLD}
+                      fontFamily="Inter, sans-serif"
+                      fontWeight={700}
+                      textAnchor="middle"
+                    >
+                      {DEMO_GOLD_NUMS[i]}
+                    </text>
+                    <text
+                      className="harmony-star-num-red"
+                      x={redPos.x}
+                      y={redPos.y + 5}
+                      fill="#DC2626"
+                      fontFamily="Inter, sans-serif"
+                      fontWeight={700}
+                      textAnchor="middle"
+                    >
+                      {DEMO_RED_NUMS[i]}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
           </div>
-        </div>
-      </section>
 
-      <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2 px-0.5">
-        A Transformação
-      </p>
-      <h4 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] px-0.5 mb-3">
-        A Harmonização
-      </h4>
-
-      <div className="harmony-star-wrap mb-4">
-        <svg
-          className="harmony-star-svg w-full"
-          viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
-          role="img"
-          aria-label="Estrela comparativa entre nome de nascimento e nome harmonizado"
-        >
-          <polygon
-            points={OUTER_PTS}
-            fill={GOLD}
-            fillOpacity={0.1}
-            stroke={GOLD}
-            strokeWidth={2}
-          />
-          <polygon
-            points={INNER_PTS}
-            fill="#DC2626"
-            fillOpacity={0.12}
-            stroke="#DC2626"
-            strokeWidth={1.5}
-          />
-          {HARMONY_STAR_TIP_LABELS.map((label, i) => {
-            const labelPos = harmonyStarTipXY(
-              HARMONY_STAR_CX,
-              HARMONY_STAR_CY,
-              HARMONY_STAR_LABEL_RADIUS,
-              i,
-            );
-            const goldPos = harmonyStarTipXY(
-              HARMONY_STAR_CX,
-              HARMONY_STAR_CY,
-              HARMONY_STAR_GOLD_NUM_RADIUS,
-              i,
-            );
-            const redPos = harmonyStarTipXY(
-              HARMONY_STAR_CX,
-              HARMONY_STAR_CY,
-              HARMONY_STAR_RED_NUM_RADIUS,
-              i,
-            );
-            return (
-              <g key={label}>
-                <text
-                  className="harmony-star-label"
-                  x={labelPos.x + HARMONY_STAR_LABEL_DX[i]}
-                  y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
-                  fill="#b0b7c3"
-                  fontFamily="Inter, sans-serif"
-                  textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
-                >
-                  {label}
-                </text>
-                <text
-                  className="harmony-star-num-gold"
-                  x={goldPos.x}
-                  y={goldPos.y + 6}
-                  fill={GOLD}
-                  fontFamily="Inter, sans-serif"
-                  fontWeight={700}
-                  textAnchor="middle"
-                >
-                  {DEMO_GOLD_NUMS[i]}
-                </text>
-                <text
-                  className="harmony-star-num-red"
-                  x={redPos.x}
-                  y={redPos.y + 5}
-                  fill="#DC2626"
-                  fontFamily="Inter, sans-serif"
-                  fontWeight={700}
-                  textAnchor="middle"
-                >
-                  {DEMO_RED_NUMS[i]}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-8 text-xs text-gray-400 px-0.5">
-        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
-          <span
-            className="inline-block w-3 h-3 rounded-full shrink-0 border border-red-500"
-            style={{ background: 'rgba(220,38,38,0.25)' }}
-            aria-hidden="true"
-          />
-          <span className="truncate">{BIRTH_NAME}</span>
-        </span>
-        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
-          <span
-            className="inline-block w-3 h-3 rounded-full shrink-0 border border-[#D4AF37]"
-            style={{ background: 'rgba(212,175,55,0.2)' }}
-            aria-hidden="true"
-          />
-          <span className="truncate font-medium text-[#D4AF37]">{INDICATED_NAME}</span>
-        </span>
+          <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-6 text-[11px] text-gray-400 px-0.5">
+            <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full shrink-0 border border-red-500"
+                style={{ background: 'rgba(220,38,38,0.25)' }}
+                aria-hidden="true"
+              />
+              <span className="truncate">{BIRTH_NAME}</span>
+            </span>
+            <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-full shrink-0 border border-[#D4AF37]"
+                style={{ background: 'rgba(212,175,55,0.2)' }}
+                aria-hidden="true"
+              />
+              <span className="truncate font-medium text-[#D4AF37]">{INDICATED_NAME}</span>
+            </span>
+          </div>
+        </section>
       </div>
 
       <style>{`
@@ -380,32 +394,32 @@ export function ProductHarmonyFrame() {
         }
         .harmony-star-svg {
           width: 100%;
-          max-width: min(100%, 560px);
+          max-width: min(100%, 420px);
           height: auto;
           display: block;
         }
         .harmony-star-label {
           fill: #b0b7c3;
-          font-size: 12px;
+          font-size: 11px;
         }
         .harmony-star-num-gold {
-          font-size: 16px;
+          font-size: 15px;
         }
         .harmony-star-num-red {
-          font-size: 13px;
+          font-size: 12px;
         }
         @container harmony (min-width: 480px) {
           .harmony-star-svg {
-            max-width: min(100%, 620px);
+            max-width: min(100%, 460px);
           }
           .harmony-star-label {
-            font-size: 13px;
+            font-size: 12px;
           }
           .harmony-star-num-gold {
-            font-size: 18px;
+            font-size: 16px;
           }
           .harmony-star-num-red {
-            font-size: 15px;
+            font-size: 13px;
           }
         }
       `}</style>
@@ -415,11 +429,12 @@ export function ProductHarmonyFrame() {
 
 /**
  * Card Fixo da Seção "As Sugestões"
- * Exibe as sugestões do sistema (Nossas Sugestões) e candidatos do usuário (Suas Sugestões).
+ * No outer dark tray — headings sit on page ground; suggestion tiles float.
  */
 export function ProductSuggestionsFrame() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [stagger, setStagger] = useState(false);
+  useDesktopMockupFit(rootRef);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -433,11 +448,11 @@ export function ProductSuggestionsFrame() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          window.setTimeout(() => setStagger(true), 150);
+          window.setTimeout(() => setStagger(true), 40);
           observer.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0, rootMargin: '120px 0px 0px 0px' },
     );
 
     observer.observe(el);
@@ -445,26 +460,19 @@ export function ProductSuggestionsFrame() {
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className={`@container/suggestions ${landingMockupCardClass} px-3 py-5 sm:px-5 sm:py-7 relative`}
-    >
-      <div className="flex flex-col gap-5 sm:gap-6 min-w-0 h-full">
+    <div ref={rootRef} className={`@container/suggestions ${desktopFitClass}`}>
+      <div className={`${desktopStackClass} gap-4`}>
         <div className="min-w-0">
           <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
             Selecionadas para Você
           </p>
-          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-0.5">
             Nossas Sugestões
           </h4>
-          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
+          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Criadas para o seu perfil numerológico.
           </p>
-          {/*
-            Columns follow available mockup width (fold / side panel), not only viewport:
-            1 → 2 (~420) → 3 (~640) so 14" two-column stays legible.
-          */}
-          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 @[640px]/suggestions:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 @[640px]/suggestions:grid-cols-3 gap-2.5">
             {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}
@@ -480,13 +488,13 @@ export function ProductSuggestionsFrame() {
           <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
             Seus Candidatos
           </p>
-          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-1">
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-0.5">
             Suas Sugestões
           </h4>
-          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-3 leading-relaxed">
+          <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Nomes que você indicou, analisados numerologicamente.
           </p>
-          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 gap-2.5">
             {DEMO_USER_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}

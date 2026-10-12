@@ -5,8 +5,20 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** One-time fade + light rise when a landing section enters the viewport. */
-export function useLandingSectionReveal(threshold = 0.12) {
+/** True when any part of the element is in (or near) the viewport. */
+function isInOrNearViewport(el: HTMLElement): boolean {
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight || 0;
+  // 120px lead so text starts revealing just before the section hits the fold.
+  return rect.top < vh + 120 && rect.bottom > -40;
+}
+
+/**
+ * One-time fade + light rise when a landing section enters the viewport.
+ * Sync check on mount + permissive IO so tall product sections never sit blank
+ * for seconds while the user scrolls into them.
+ */
+export function useLandingSectionReveal(_threshold = 0.12) {
   const ref = useRef<HTMLElement>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
   const [revealed, setRevealed] = useState(() => prefersReducedMotion());
@@ -17,6 +29,11 @@ export function useLandingSectionReveal(threshold = 0.12) {
     const el = ref.current;
     if (!el) return;
 
+    if (isInOrNearViewport(el)) {
+      setRevealed(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -24,12 +41,14 @@ export function useLandingSectionReveal(threshold = 0.12) {
           observer.disconnect();
         }
       },
-      { threshold },
+      // Expand the root upward so reveal starts as the section approaches,
+      // not after a % of a tall section is already on screen.
+      { threshold: 0, rootMargin: '120px 0px 0px 0px' },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [threshold, reduceMotion]);
+  }, [reduceMotion]);
 
   if (reduceMotion) {
     return {
@@ -42,11 +61,11 @@ export function useLandingSectionReveal(threshold = 0.12) {
 
   const motionClass = revealed
     ? 'opacity-100 translate-y-0'
-    : 'opacity-0 translate-y-3';
+    : 'opacity-0 translate-y-2';
 
   return {
     ref,
-    className: `transition-[opacity,transform] duration-[600ms] ease-out motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${motionClass}`,
+    className: `transition-[opacity,transform] duration-[350ms] ease-out motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${motionClass}`,
     revealed,
     reduceMotion: false,
   };

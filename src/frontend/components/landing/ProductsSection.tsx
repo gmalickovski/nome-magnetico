@@ -16,7 +16,7 @@ const productSectionGridClass =
 const productCopyAlignClass = 'text-center min-[840px]:text-left';
 const productCopyProseClass = 'max-w-prose mx-auto min-[840px]:mx-0';
 
-/** Layout shell only — floating chrome lives on the mockup frames. */
+/** Layout shell only — floating chrome lives on individual mockup cards. */
 const mockupSlotClass = 'min-w-0 w-full max-w-full';
 
 function TextBlock({
@@ -28,10 +28,12 @@ function TextBlock({
   delayMs: number;
   children: React.ReactNode;
 }) {
+  // Keep copy readable immediately — never blank-out with opacity-0 while the
+  // section scrolls into view. Only a light settle motion on reveal.
   return (
     <div
-      className={`transition-[opacity,transform] duration-[800ms] ease-out motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${
-        revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+      className={`transition-transform duration-300 ease-out motion-reduce:transition-none motion-reduce:!translate-y-0 ${
+        revealed ? 'translate-y-0' : 'translate-y-1.5'
       }`}
       style={{ transitionDelay: revealed ? `${delayMs}ms` : '0ms' }}
     >
@@ -41,8 +43,8 @@ function TextBlock({
 }
 
 export function ProductsSection() {
-  const reveal1 = useLandingSectionReveal(0.08);
-  const reveal2 = useLandingSectionReveal(0.08);
+  const reveal1 = useLandingSectionReveal();
+  const reveal2 = useLandingSectionReveal();
 
   return (
     <>
@@ -53,7 +55,7 @@ export function ProductsSection() {
       <section
         id="produtos"
         ref={reveal1.ref}
-        className="relative py-20 md:py-24 bg-[#111111] scroll-mt-28 overflow-x-clip"
+        className="relative py-14 md:py-16 min-[840px]:py-12 xl:py-16 bg-[#111111] scroll-mt-28 overflow-x-clip"
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -68,19 +70,19 @@ export function ProductsSection() {
               <div>
                 <TextBlock revealed={reveal1.revealed} delayMs={0}>
                   <p
-                    className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-4 ${productCopyAlignClass}`}
+                    className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-3 ${productCopyAlignClass}`}
                   >
                     Produto
                   </p>
                 </TextBlock>
 
                 <div className={productCopyProseClass}>
-                  <TextBlock revealed={reveal1.revealed} delayMs={120}>
+                  <TextBlock revealed={reveal1.revealed} delayMs={40}>
                     <div>
                       <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
                         A Harmonização
                       </p>
-                      <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance">
+                      <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
                         Seu nome pode estar travando o que você quer realizar.
                       </h3>
                       <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
@@ -109,7 +111,7 @@ export function ProductsSection() {
       <section
         id="sugestoes"
         ref={reveal2.ref}
-        className="relative py-20 md:py-24 bg-[#111111] scroll-mt-28 overflow-x-clip"
+        className="relative py-14 md:py-16 min-[840px]:py-12 xl:py-16 bg-[#111111] scroll-mt-28 overflow-x-clip"
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -128,19 +130,19 @@ export function ProductsSection() {
               <div>
                 <TextBlock revealed={reveal2.revealed} delayMs={0}>
                   <p
-                    className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-4 ${productCopyAlignClass}`}
+                    className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-3 ${productCopyAlignClass}`}
                   >
                     Sugestões Inteligentes
                   </p>
                 </TextBlock>
 
                 <div className={productCopyProseClass}>
-                  <TextBlock revealed={reveal2.revealed} delayMs={120}>
+                  <TextBlock revealed={reveal2.revealed} delayMs={40}>
                     <div>
                       <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
                         As Sugestões
                       </p>
-                      <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance">
+                      <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
                         Não é um nome imposto. É um ranking para você escolher.
                       </h3>
                       <p className="text-gray-300 text-sm sm:text-base leading-relaxed">

@@ -58,11 +58,14 @@ export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
 /**
- * Product mockup floating card — ambient bottom shadow (NO-LINE; no gold sectioning border).
- * Pair with `@container` on the same node for fold / half-width reflow.
+ * Subtle floating surface for product mockup cards (NO-LINE).
+ * Soft bottom shadow only — no heavy outer shell / dark tray behind the stack.
  */
-export const landingMockupCardClass =
-  'rounded-2xl bg-[#161616]/95 backdrop-blur-md ring-1 ring-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] min-w-0 w-full max-w-full';
+export const landingMockupFloatClass =
+  'rounded-2xl bg-[#1a1a1a]/80 ring-1 ring-white/[0.04] shadow-[0_10px_28px_rgba(0,0,0,0.35)] min-w-0 w-full max-w-full';
+
+/** @deprecated Use landingMockupFloatClass — kept for any residual imports. */
+export const landingMockupCardClass = landingMockupFloatClass;
 
 /** Primary tap target on landing (matches hero CTA height). */
 export const landingTouchTargetClass =
