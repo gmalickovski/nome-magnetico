@@ -1,4 +1,5 @@
 import React from 'react';
+import { landingMockupFloatClass } from './LandingSectionIntro';
 
 const GOLD = '#D4AF37';
 const GOLD_LIGHT = '#f2ca50';
@@ -90,7 +91,7 @@ export function CleanSignatureSvg({
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[500px] mx-auto rounded-2xl bg-[#141414]/95 p-4 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[500px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 p-4 sm:p-6 overflow-hidden ${className}`}
     >
       {/* Padrão geométrico de fundo estilo cédula de segurança */}
       <div
@@ -222,7 +223,7 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
 export function SocialProfileMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto rounded-2xl bg-[#141414]/95 p-4 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 p-4 sm:p-6 overflow-hidden ${className}`}
     >
       {/* Brilho de fundo místico roxo e dourado */}
       <div
@@ -348,7 +349,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 export function ContractMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto rounded-2xl bg-[#141414]/95 p-5 sm:p-6 ring-1 ring-white/10 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 p-5 sm:p-6 overflow-hidden ${className}`}
     >
       {/* Brilho dourado central sutil */}
       <div
@@ -433,7 +434,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[440px] mx-auto rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#121212] border border-[#f2ca50]/40 p-6 sm:p-7 shadow-2xl shadow-black/80 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[440px] mx-auto ${landingMockupFloatClass} bg-gradient-to-br from-[#1a1a1a] to-[#121212] p-6 sm:p-7 overflow-hidden ${className}`}
     >
       {/* Topo do cartão: Monograma 'JS' + Identidade */}
       <div className="flex items-center justify-between mb-5">

@@ -27,7 +27,6 @@ const GOLD = '#D4AF37';
 /** Demo pairing validated against analisarNomeSocial("Maria da Silva Santos", "26/05/1971"). */
 const BIRTH_NAME = 'MARIA DA SILVA SANTOS';
 const INDICATED_NAME = 'MARIÃ SILVA';
-const BIRTH_DATE = '26 de maio de 1971';
 const DEMO_SCORE_BIRTH = 0;
 const DEMO_SCORE_HARMONIZED = 83;
 
@@ -139,8 +138,9 @@ const desktopFitClass = 'product-mockup-fit w-full min-w-0';
 const desktopStackClass = 'w-full min-w-0 flex flex-col gap-3';
 
 /**
- * Mirrors real app cards (`analisar-nome-card` in NomeSocialResultado):
- * `bg-white/5`, square tile, 3-up on desktop — plus subtle float cast.
+ * Same card body as before / real app (`analisar-nome-card`):
+ * `bg-white/5`, content-sized tile (near-square), no gold border —
+ * plus the shared float cast.
  */
 function SuggestionCard({
   c,
@@ -153,7 +153,7 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`${landingMockupFloatClass} aspect-square bg-white/5 p-3 sm:p-4 flex flex-col justify-between gap-2 min-w-0 transition-[opacity,transform] duration-[500ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
+      className={`${landingMockupFloatClass} bg-white/5 p-2.5 sm:p-3 flex flex-col gap-1.5 sm:gap-2 min-w-0 h-full transition-[opacity,transform] duration-[500ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
         stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
       }`}
       style={{ transitionDelay: stagger ? `${delayIndex * 40}ms` : '0ms' }}
@@ -230,11 +230,7 @@ export function ProductHarmonyFrame() {
     <div ref={rootRef} className={`@container/harmony ${desktopFitClass}`}>
       <div className={desktopStackClass}>
         {/* Certificate — floats alone on the page ground */}
-        <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-3 sm:p-4`}>
-          <p className="font-cinzel text-[10px] uppercase tracking-[0.18em] text-[#76746a] mb-3 break-words">
-            Análise de Nome Social — Certificado Cabalístico
-          </p>
-
+        <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-4 sm:p-5`}>
           <div className="flex flex-col gap-3.5 min-w-0">
             <div className="flex flex-col gap-2 @[420px]/harmony:flex-row @[420px]/harmony:items-start @[420px]/harmony:justify-between min-w-0">
               <div className="min-w-0 flex-1">
@@ -244,7 +240,6 @@ export function ProductHarmonyFrame() {
                 <h3 className="font-cinzel text-base sm:text-lg @[520px]/harmony:text-xl font-bold text-[#e5e2e1] break-words leading-snug">
                   {BIRTH_NAME}
                 </h3>
-                <p className="text-gray-500 text-[11px] mt-0.5">{BIRTH_DATE}</p>
               </div>
               <div className="w-full @[420px]/harmony:w-36 @[560px]/harmony:w-40 @[420px]/harmony:shrink-0 min-w-0">
                 <ProductAnimatedScore
@@ -278,11 +273,8 @@ export function ProductHarmonyFrame() {
         </section>
 
         {/* Star comparison — second floating surface, no outer tray */}
-        <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-3 sm:p-4`}>
-          <p className="font-cinzel text-[10px] uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
-            A Transformação
-          </p>
-          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] px-0.5 mb-2">
+        <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-4 sm:p-5`}>
+          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-3">
             A Harmonização
           </h4>
 
@@ -483,9 +475,8 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Criadas para o seu perfil numerológico.
           </p>
-          {/* Desktop/widescreen: 3 square tiles side-by-side (like app result).
-              Mobile: 1 per row. */}
-          <div className="grid grid-cols-1 min-[840px]:grid-cols-3 gap-3">
+          {/* Same layout as before / app result: 3-up from sm, 1-up on mobile. */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}
@@ -507,7 +498,8 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Nomes que você indicou, analisados numerologicamente.
           </p>
-          <div className="grid grid-cols-1 min-[840px]:grid-cols-3 gap-3">
+          {/* 2-up from sm (two candidates), 1-up on mobile — matches prior mockup. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             {DEMO_USER_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}

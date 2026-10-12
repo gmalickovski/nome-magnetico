@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   LandingSectionIntro,
   landingMockupFloatClass,
-  landingMockupFloatStyle,
   landingSectionShellClass,
 } from './LandingSectionIntro';
 import { useScrollProgress } from './useScrollProgress';
@@ -236,7 +235,6 @@ export function HowItWorksSection() {
       }`}
       aria-label="Como funciona"
     >
-      <style>{landingMockupFloatStyle}</style>
       {/* ── DESKTOP PINNED EXPERIENCE (lg: 1024px+) ────────────────────── */}
       <div
         className={`hidden lg:flex flex-col justify-center pt-24 xl:pt-28 pb-8 ${

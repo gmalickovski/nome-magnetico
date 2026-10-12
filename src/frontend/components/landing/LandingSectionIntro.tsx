@@ -58,27 +58,16 @@ export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
 /**
- * Subtle floating card (NO-LINE).
- *
- * Cast must hug the card: short blur + **negative spread** so the soft edge
- * does not bloom past the corners. Offset at a light angle (down-right).
- * Surface color is applied separately (`bg-[#1c1c1c]` or `bg-white/5`).
+ * Floating card (NO-LINE) — **one** technique only:
+ * a single Tailwind `box-shadow` (offset + soft blur + negative spread).
+ * No ::after trays, no multi-layer stacks, no injected `<style>`.
+ * Surface color is applied by the consumer (`bg-[#1c1c1c]` / `bg-white/5`).
  */
 export const landingMockupFloatClass =
-  'landing-mockup-float rounded-2xl min-w-0 w-full max-w-full';
+  'rounded-2xl min-w-0 w-full max-w-full shadow-[3px_6px_10px_-2px_rgba(0,0,0,0.42)]';
 
-/** @deprecated Use landingMockupFloatClass — kept for any residual imports. */
+/** @deprecated Use landingMockupFloatClass + surface bg. */
 export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;
-
-/** Inject once near sections that use floating cards. */
-export const landingMockupFloatStyle = `
-  .landing-mockup-float {
-    /* Neg. spread cancels blur bloom → silhouette ≈ card, just displaced. */
-    box-shadow:
-      2px 4px 5px -1px rgba(0, 0, 0, 0.4),
-      4px 8px 8px -2px rgba(0, 0, 0, 0.22);
-  }
-`;
 
 /** Primary tap target on landing (matches hero CTA height). */
 export const landingTouchTargetClass =

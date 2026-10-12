@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  landingMockupFloatStyle,
   landingSectionShellClass,
   landingSectionStackGapClass,
 } from './LandingSectionIntro';
@@ -49,8 +48,6 @@ export function ProductsSection() {
 
   return (
     <>
-      <style>{landingMockupFloatStyle}</style>
-
       {/* ── SEÇÃO 1: A HARMONIZAÇÃO ──────────────────────────────────────
           Expanded+: Texto à esquerda, mockup flutuante à direita.
           Compact/Medium (phone, tablet portrait, fold fechado): empilha texto → mockup.
