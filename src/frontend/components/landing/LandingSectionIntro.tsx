@@ -67,7 +67,7 @@ export const landingPanelClass =
  * Hero stays on `shadow-2xl shadow-black/80` (reference — do not change it).
  */
 export const landingMockupFloatClass =
-  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-[0_22px_56px_-8px_rgba(0,0,0,0.34)]';
+  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-[0_22px_56px_-8px_rgba(0,0,0,0.22)]';
 
 /** @deprecated Use landingMockupFloatClass + surface bg. */
 export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;
