@@ -72,7 +72,7 @@ export function ProductsSection() {
                   <p
                     className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-3 ${productCopyAlignClass}`}
                   >
-                    Produto
+                    Harmonização
                   </p>
                 </TextBlock>
 
