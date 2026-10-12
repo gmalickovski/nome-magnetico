@@ -61,13 +61,13 @@ export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
 /**
- * Floating mockup card — **same elevation technique as the Hero panel**:
- * `ring-1 ring-white/5` + `shadow-2xl shadow-black/80` (one box-shadow stack).
- * Surface color / blur stay on the consumer (`bg-[#1c1c1c]`, `bg-white/5`, etc.).
- * Do not add a second shadow, ::after tray, or gold outline.
+ * Floating mockup card — same *technique* as the Hero panel (ring + one box-shadow),
+ * but softer falloff: larger blur + lower opacity so the cast dissolves into
+ * the page ground instead of a hard silhouette edge.
+ * Hero stays on `shadow-2xl shadow-black/80` (reference — do not change it).
  */
 export const landingMockupFloatClass =
-  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-2xl shadow-black/80';
+  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-[0_22px_56px_-8px_rgba(0,0,0,0.34)]';
 
 /** @deprecated Use landingMockupFloatClass + surface bg. */
 export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;
