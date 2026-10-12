@@ -58,28 +58,25 @@ export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
 /**
- * Realistic floating card (NO-LINE) — layered shadows with a shared light angle.
+ * Subtle floating card (NO-LINE).
  *
- * Technique (Josh Comeau / Material elevation):
- * - Same light source: Y offset ≈ 2× X (shadow cast down-right)
- * - Layer 1 contact (tight, darker) + layer 2/3 ambient (softer, farther)
- * - Slight negative spread keeps the cast silhouette ≈ card size, just offset
- * - Not a centered glow — that reads flat, not elevated
+ * Cast must hug the card: short blur + **negative spread** so the soft edge
+ * does not bloom past the corners. Offset at a light angle (down-right).
+ * Surface color is applied separately (`bg-[#1c1c1c]` or `bg-white/5`).
  */
 export const landingMockupFloatClass =
-  'landing-mockup-float rounded-2xl bg-[#1c1c1c] min-w-0 w-full max-w-full';
+  'landing-mockup-float rounded-2xl min-w-0 w-full max-w-full';
 
 /** @deprecated Use landingMockupFloatClass — kept for any residual imports. */
-export const landingMockupCardClass = landingMockupFloatClass;
+export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;
 
-/** Inject once near product mockups — multi-layer box-shadow needs raw CSS. */
+/** Inject once near sections that use floating cards. */
 export const landingMockupFloatStyle = `
   .landing-mockup-float {
-    /* Light from top-left → cast down-right; silhouette ≈ card (neg. spread). */
+    /* Neg. spread cancels blur bloom → silhouette ≈ card, just displaced. */
     box-shadow:
-      3px 6px 8px -2px rgba(0, 0, 0, 0.65),
-      8px 16px 24px -6px rgba(0, 0, 0, 0.55),
-      14px 32px 52px -10px rgba(0, 0, 0, 0.5);
+      2px 4px 5px -1px rgba(0, 0, 0, 0.4),
+      4px 8px 8px -2px rgba(0, 0, 0, 0.22);
   }
 `;
 

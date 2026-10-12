@@ -138,6 +138,10 @@ const desktopFitClass = 'product-mockup-fit w-full min-w-0';
 
 const desktopStackClass = 'w-full min-w-0 flex flex-col gap-3';
 
+/**
+ * Mirrors real app cards (`analisar-nome-card` in NomeSocialResultado):
+ * `bg-white/5`, square tile, 3-up on desktop — plus subtle float cast.
+ */
 function SuggestionCard({
   c,
   stagger,
@@ -149,12 +153,12 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`${landingMockupFloatClass} p-2.5 sm:p-3 flex flex-col gap-1.5 min-w-0 transition-[opacity,transform] duration-[500ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
+      className={`${landingMockupFloatClass} aspect-square bg-white/5 p-3 sm:p-4 flex flex-col justify-between gap-2 min-w-0 transition-[opacity,transform] duration-[500ms] ease-[cubic-bezier(0.33,1,0.32,1)] ${
         stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
       }`}
       style={{ transitionDelay: stagger ? `${delayIndex * 40}ms` : '0ms' }}
     >
-      <div className="font-cinzel text-sm font-bold text-[#e5e2e1] break-words leading-tight">
+      <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] break-words leading-tight">
         {c.nome}
       </div>
       <ProductAnimatedScore
@@ -164,7 +168,7 @@ function SuggestionCard({
         delayMs={stagger ? delayIndex * 40 : 0}
       />
       <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
-      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-gray-500">
+      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] sm:text-[11px] text-gray-500">
         <span>
           Expr: <span className="text-gray-300">{c.expressao}</span>
         </span>
@@ -226,7 +230,7 @@ export function ProductHarmonyFrame() {
     <div ref={rootRef} className={`@container/harmony ${desktopFitClass}`}>
       <div className={desktopStackClass}>
         {/* Certificate — floats alone on the page ground */}
-        <section className={`${landingMockupFloatClass} p-3 sm:p-4`}>
+        <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-3 sm:p-4`}>
           <p className="font-cinzel text-[10px] uppercase tracking-[0.18em] text-[#76746a] mb-3 break-words">
             Análise de Nome Social — Certificado Cabalístico
           </p>
@@ -274,7 +278,7 @@ export function ProductHarmonyFrame() {
         </section>
 
         {/* Star comparison — second floating surface, no outer tray */}
-        <section className={`${landingMockupFloatClass} p-3 sm:p-4`}>
+        <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-3 sm:p-4`}>
           <p className="font-cinzel text-[10px] uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1 px-0.5">
             A Transformação
           </p>
@@ -328,8 +332,10 @@ export function ProductHarmonyFrame() {
                       className="harmony-star-label"
                       x={labelPos.x + HARMONY_STAR_LABEL_DX[i]}
                       y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
-                      fill="#b0b7c3"
+                      fill="#d0d5de"
                       fontFamily="Inter, sans-serif"
+                      fontSize={19}
+                      fontWeight={600}
                       textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
                     >
                       {label}
@@ -340,6 +346,7 @@ export function ProductHarmonyFrame() {
                       y={goldPos.y + 6}
                       fill={GOLD}
                       fontFamily="Inter, sans-serif"
+                      fontSize={24}
                       fontWeight={700}
                       textAnchor="middle"
                     >
@@ -351,6 +358,7 @@ export function ProductHarmonyFrame() {
                       y={redPos.y + 5}
                       fill="#DC2626"
                       fontFamily="Inter, sans-serif"
+                      fontSize={14}
                       fontWeight={700}
                       textAnchor="middle"
                     >
@@ -398,28 +406,31 @@ export function ProductHarmonyFrame() {
           height: auto;
           display: block;
         }
+        /* Sized up so tip words stay legible after desktop mockup zoom. */
         .harmony-star-label {
-          fill: #b0b7c3;
-          font-size: 11px;
+          fill: #d0d5de;
+          font-size: 17px;
+          font-weight: 600;
         }
         .harmony-star-num-gold {
-          font-size: 20px;
+          font-size: 22px;
         }
         .harmony-star-num-red {
-          font-size: 12px;
+          font-size: 13px;
         }
         @container harmony (min-width: 480px) {
           .harmony-star-svg {
             max-width: min(100%, 460px);
           }
           .harmony-star-label {
-            font-size: 12px;
+            font-size: 19px;
+            font-weight: 600;
           }
           .harmony-star-num-gold {
-            font-size: 22px;
+            font-size: 24px;
           }
           .harmony-star-num-red {
-            font-size: 13px;
+            font-size: 14px;
           }
         }
       `}</style>
@@ -472,7 +483,9 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Criadas para o seu perfil numerológico.
           </p>
-          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 @[640px]/suggestions:grid-cols-3 gap-2.5">
+          {/* Desktop/widescreen: 3 square tiles side-by-side (like app result).
+              Mobile: 1 per row. */}
+          <div className="grid grid-cols-1 min-[840px]:grid-cols-3 gap-3">
             {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}
@@ -494,7 +507,7 @@ export function ProductSuggestionsFrame() {
           <p className="text-[11px] sm:text-xs text-gray-400 px-0.5 mb-2.5 leading-relaxed">
             Nomes que você indicou, analisados numerologicamente.
           </p>
-          <div className="grid grid-cols-1 @[420px]/suggestions:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 min-[840px]:grid-cols-3 gap-3">
             {DEMO_USER_SUGGESTIONS.map((c, index) => (
               <SuggestionCard
                 key={c.nome}
