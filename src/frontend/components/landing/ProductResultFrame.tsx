@@ -403,7 +403,7 @@ export function ProductHarmonyFrame() {
           font-size: 11px;
         }
         .harmony-star-num-gold {
-          font-size: 15px;
+          font-size: 20px;
         }
         .harmony-star-num-red {
           font-size: 12px;
@@ -416,7 +416,7 @@ export function ProductHarmonyFrame() {
             font-size: 12px;
           }
           .harmony-star-num-gold {
-            font-size: 16px;
+            font-size: 22px;
           }
           .harmony-star-num-red {
             font-size: 13px;

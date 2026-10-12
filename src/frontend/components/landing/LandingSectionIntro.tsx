@@ -58,14 +58,29 @@ export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
 /**
- * Subtle floating surface for product mockup cards (NO-LINE).
- * Soft bottom shadow only — no heavy outer shell / dark tray behind the stack.
+ * Realistic floating card (NO-LINE) — layered shadows with a shared light angle.
+ *
+ * Technique (Josh Comeau / Material elevation):
+ * - Same light source: Y offset ≈ 2× X (shadow cast down-right)
+ * - Layer 1 contact (tight, darker) + layer 2/3 ambient (softer, farther)
+ * - Slight negative spread keeps the cast silhouette ≈ card size, just offset
+ * - Not a centered glow — that reads flat, not elevated
  */
 export const landingMockupFloatClass =
-  'rounded-2xl bg-[#1a1a1a]/80 ring-1 ring-white/[0.04] shadow-[0_10px_28px_rgba(0,0,0,0.35)] min-w-0 w-full max-w-full';
+  'landing-mockup-float rounded-2xl bg-[#1c1c1c] min-w-0 w-full max-w-full';
 
 /** @deprecated Use landingMockupFloatClass — kept for any residual imports. */
 export const landingMockupCardClass = landingMockupFloatClass;
+
+/** Inject once near product mockups — multi-layer box-shadow needs raw CSS. */
+export const landingMockupFloatStyle = `
+  .landing-mockup-float {
+    box-shadow:
+      2px 4px 6px -1px rgba(0, 0, 0, 0.55),
+      6px 12px 20px -4px rgba(0, 0, 0, 0.5),
+      12px 28px 48px -8px rgba(0, 0, 0, 0.45);
+  }
+`;
 
 /** Primary tap target on landing (matches hero CTA height). */
 export const landingTouchTargetClass =
