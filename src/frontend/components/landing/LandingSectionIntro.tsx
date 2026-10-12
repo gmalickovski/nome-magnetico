@@ -53,18 +53,21 @@ export function LandingSectionIntro({
   );
 }
 
-/** Hero-style floating panel — depth via tone + ring, not gold outline boxes. */
+/**
+ * Hero floating panel (REFERENCE — do not change Hero to match mockups).
+ * Technique: soft glass surface + hairline ring + Tailwind `shadow-2xl`.
+ */
 export const landingPanelClass =
   'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
 
 /**
- * Floating card (NO-LINE) — **one** technique only:
- * a single Tailwind `box-shadow` (offset + soft blur + negative spread).
- * No ::after trays, no multi-layer stacks, no injected `<style>`.
- * Surface color is applied by the consumer (`bg-[#1c1c1c]` / `bg-white/5`).
+ * Floating mockup card — **same elevation technique as the Hero panel**:
+ * `ring-1 ring-white/5` + `shadow-2xl shadow-black/80` (one box-shadow stack).
+ * Surface color / blur stay on the consumer (`bg-[#1c1c1c]`, `bg-white/5`, etc.).
+ * Do not add a second shadow, ::after tray, or gold outline.
  */
 export const landingMockupFloatClass =
-  'rounded-2xl min-w-0 w-full max-w-full shadow-[3px_6px_10px_-2px_rgba(0,0,0,0.42)]';
+  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-2xl shadow-black/80';
 
 /** @deprecated Use landingMockupFloatClass + surface bg. */
 export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;

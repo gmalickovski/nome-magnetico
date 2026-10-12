@@ -91,8 +91,10 @@ export function CleanSignatureSvg({
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[500px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 p-4 sm:p-6 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[500px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 ${className}`}
     >
+      {/* Clip decor only — keep overflow off the float shell so hero shadow is not cut. */}
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6">
       {/* Padrão geométrico de fundo estilo cédula de segurança */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.06]"
@@ -212,6 +214,7 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
           <CleanSignatureSvg name="Mariã Silva" className="w-full h-12 sm:h-14" />
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -223,8 +226,9 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
 export function SocialProfileMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 p-4 sm:p-6 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 ${className}`}
     >
+      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6">
       {/* Brilho de fundo místico roxo e dourado */}
       <div
         className="absolute -top-12 -left-12 w-48 h-48 bg-[#d7c6ff]/10 rounded-full blur-3xl pointer-events-none"
@@ -338,6 +342,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
           </div>
         ))}
       </div>
+      </div>
     </div>
   );
 }
@@ -349,8 +354,9 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 export function ContractMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 p-5 sm:p-6 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 ${className}`}
     >
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6">
       {/* Brilho dourado central sutil */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#f2ca50]/5 rounded-full blur-3xl pointer-events-none"
@@ -423,6 +429,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -434,8 +441,9 @@ export function ContractMockup({ className = '' }: MockupProps) {
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[440px] mx-auto ${landingMockupFloatClass} bg-gradient-to-br from-[#1a1a1a] to-[#121212] p-6 sm:p-7 overflow-hidden ${className}`}
+      className={`relative w-full max-w-[440px] mx-auto ${landingMockupFloatClass} bg-gradient-to-br from-[#1a1a1a] to-[#121212] ${className}`}
     >
+      <div className="relative overflow-hidden rounded-2xl p-6 sm:p-7">
       {/* Topo do cartão: Monograma 'JS' + Identidade */}
       <div className="flex items-center justify-between mb-5">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f2ca50]/20 to-[#d4af37]/5 border border-[#f2ca50]/40 flex items-center justify-center shadow-inner">
@@ -478,6 +486,7 @@ export function BrandingCardMockup({ className = '' }: MockupProps) {
           <p className="text-[8px] uppercase tracking-wider text-gray-500">Presença & Mídia</p>
           <p className="text-[#f2ca50] font-mono">@joaosilva.oficial</p>
         </div>
+      </div>
       </div>
     </div>
   );
