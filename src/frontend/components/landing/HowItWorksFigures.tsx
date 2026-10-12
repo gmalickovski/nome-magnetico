@@ -99,13 +99,12 @@ export function FormFigure({ active = true }: FigureProps) {
  * Social / Destino). Escala e stroke alinhados aos outros ícones do rail.
  */
 export function GenerateFigure({ active = true }: FigureProps) {
-  // Larger footprint (~FormFigure 48×40); round caps/joins soften the tips.
-  // Slightly wider stack offsets so each body peeks without losing the stack.
-  const triangle = 'M36 8 L52 40 L20 40 Z';
+  // Larger footprint; wider stack gaps; thicker round stroke softens tips more.
+  const triangle = 'M36 9 L51 39 L21 39 Z';
   const layers = [
-    { dx: -11, dy: -6, opacity: 0.22 },
-    { dx: -7.5, dy: -4, opacity: 0.4 },
-    { dx: -4, dy: -2, opacity: 0.65 },
+    { dx: -14, dy: -8, opacity: 0.22 },
+    { dx: -9.5, dy: -5.5, opacity: 0.4 },
+    { dx: -5, dy: -2.75, opacity: 0.65 },
     { dx: 0, dy: 0, opacity: 1 },
   ] as const;
 
@@ -119,7 +118,7 @@ export function GenerateFigure({ active = true }: FigureProps) {
           key={`${layer.dx}-${layer.dy}`}
           d={triangle}
           stroke="#f2ca50"
-          strokeWidth="1.75"
+          strokeWidth="2.25"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeOpacity={layer.opacity}
