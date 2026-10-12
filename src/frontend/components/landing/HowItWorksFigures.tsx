@@ -99,13 +99,15 @@ export function FormFigure({ active = true }: FigureProps) {
  * Social / Destino). Escala e stroke alinhados aos outros ícones do rail.
  */
 export function GenerateFigure({ active = true }: FigureProps) {
-  // Larger footprint; wider stack gaps; thicker round stroke softens tips more.
+  // Front largest → back smallest (subtle). Scale around the triangle center.
   const triangle = 'M36 9 L51 39 L21 39 Z';
+  const cx = 36;
+  const cy = 27;
   const layers = [
-    { dx: -14, dy: -8, opacity: 0.22 },
-    { dx: -9.5, dy: -5.5, opacity: 0.4 },
-    { dx: -5, dy: -2.75, opacity: 0.65 },
-    { dx: 0, dy: 0, opacity: 1 },
+    { dx: -14, dy: -8, opacity: 0.22, scale: 0.78 },
+    { dx: -9.5, dy: -5.5, opacity: 0.4, scale: 0.86 },
+    { dx: -5, dy: -2.75, opacity: 0.65, scale: 0.93 },
+    { dx: 0, dy: 0, opacity: 1, scale: 1 },
   ] as const;
 
   return (
@@ -122,7 +124,7 @@ export function GenerateFigure({ active = true }: FigureProps) {
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeOpacity={layer.opacity}
-          transform={`translate(${layer.dx} ${layer.dy})`}
+          transform={`translate(${layer.dx} ${layer.dy}) translate(${cx} ${cy}) scale(${layer.scale}) translate(${-cx} ${-cy})`}
           className="transition-all duration-700"
         />
       ))}
