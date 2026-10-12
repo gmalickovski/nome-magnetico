@@ -274,10 +274,6 @@ export function ProductHarmonyFrame() {
 
         {/* Star comparison — second floating surface, no outer tray */}
         <section className={`${landingMockupFloatClass} bg-[#1c1c1c] p-4 sm:p-5`}>
-          <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] mb-3">
-            A Harmonização
-          </h4>
-
           <div className="harmony-star-wrap mb-2.5">
             <svg
               className="harmony-star-svg w-full"

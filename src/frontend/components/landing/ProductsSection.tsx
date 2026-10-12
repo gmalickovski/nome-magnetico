@@ -79,9 +79,6 @@ export function ProductsSection() {
                 <div className={productCopyProseClass}>
                   <TextBlock revealed={reveal1.revealed} delayMs={40}>
                     <div>
-                      <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
-                        A Harmonização
-                      </p>
                       <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
                         Seu nome pode estar travando o que você quer realizar.
                       </h3>
@@ -139,9 +136,6 @@ export function ProductsSection() {
                 <div className={productCopyProseClass}>
                   <TextBlock revealed={reveal2.revealed} delayMs={40}>
                     <div>
-                      <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-2">
-                        As Sugestões
-                      </p>
                       <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
                         Não é um nome imposto. É um ranking para você escolher.
                       </h3>
