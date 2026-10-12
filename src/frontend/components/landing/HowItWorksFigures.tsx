@@ -94,48 +94,37 @@ export function FormFigure({ active = true }: FigureProps) {
 }
 
 /**
- * Passo 2: Gerar Harmonização
- * Botão central de ativação com o triângulo cabalístico e feixes de energia.
+ * Passo 2: Gerar Análise
+ * Quatro triângulos cabalísticos empilhados em perspectiva (Vida / Pessoal /
+ * Social / Destino) — o da frente opaco, os de trás com opacidade menor.
  */
 export function GenerateFigure({ active = true }: FigureProps) {
+  // Same outline, shifted up-left so each body peeks behind the next.
+  const triangle = 'M36 15 L48 37 L24 37 Z';
+  const layers = [
+    { dx: -9, dy: -5, opacity: 0.22 },
+    { dx: -6, dy: -3.5, opacity: 0.4 },
+    { dx: -3, dy: -1.75, opacity: 0.65 },
+    { dx: 0, dy: 0, opacity: 1 },
+  ] as const;
+
   return (
-    <FigureFrame label="Ativação do cálculo de numerologia" className={active ? 'opacity-100 scale-100' : 'opacity-40 scale-95'}>
-      {/* Botão em pílula */}
-      <rect
-        x="10"
-        y="12"
-        width="52"
-        height="28"
-        rx="14"
-        stroke={GOLD}
-        strokeWidth="1.5"
-        className="transition-all duration-700"
-      />
-      {/* Triângulo cabalístico no centro */}
-      <path
-        d="M36 18 L44 32 L28 32 Z"
-        stroke="#f2ca50"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      {/* Ponto central místico */}
-      <circle cx="36" cy="27" r="1.5" fill="#f2ca50" />
-      {/* Ondas / Feixes de irradiação */}
-      <path
-        d="M22 26h-4M50 26h4M36 10v-3"
-        stroke={GOLD}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeOpacity="0.75"
-      />
-      {/* Feixes diagonais sutis */}
-      <path
-        d="M25 15l-2-2M47 15l2-2"
-        stroke={GOLD}
-        strokeWidth="1.25"
-        strokeLinecap="round"
-        strokeOpacity="0.5"
-      />
+    <FigureFrame
+      label="Os quatro triângulos cabalísticos"
+      className={active ? 'opacity-100 scale-100' : 'opacity-40 scale-95'}
+    >
+      {layers.map((layer) => (
+        <path
+          key={`${layer.dx}-${layer.dy}`}
+          d={triangle}
+          stroke="#f2ca50"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+          strokeOpacity={layer.opacity}
+          transform={`translate(${layer.dx} ${layer.dy})`}
+          className="transition-all duration-700"
+        />
+      ))}
     </FigureFrame>
   );
 }
