@@ -96,4 +96,37 @@ describe('buildFreeAnalysisMarketingPayload', () => {
     assert.equal(payload.opt_in, true);
     assert.equal(payload.opt_in_data, null);
   });
+
+  it('acrescenta analysisUrl, offerUrl e checkoutUrl sem alterar o contrato do n8n', () => {
+    const input = {
+      email: '  Ana@Example.COM ',
+      nomeCompleto: '  Maria   da   Silva Santos  ',
+      concluidaEm: '2026-10-15T02:30:00.000Z',
+      analiseId: '  7c1a9b2e-4d55-4a1e-9c0a-111111111111  ',
+      score: 72,
+      optIn: true as const,
+      optInEm: '2026-10-14T18:04:05.000Z',
+      utmSource: ' instagram ',
+      utmMedium: 'cpc',
+      utmCampaign: 'analise-gratis',
+    };
+    const semLinks = buildFreeAnalysisMarketingPayload(input);
+    const analysisUrl = 'https://nomemagnetico.com.br/app/resultado/uuid?utm_source=brevo&utm_medium=email&utm_campaign=nmfreeanalysis';
+    const offerUrl = 'https://nomemagnetico.com.br/nome-social?utm_source=brevo&utm_medium=email&utm_campaign=nmfreeanalysis';
+    const checkoutUrl = 'https://nomemagnetico.com.br/auth/cadastro?produto=nome_social&utm_source=brevo&utm_medium=email&utm_campaign=nmfreeanalysis';
+    const comLinks = buildFreeAnalysisMarketingPayload({
+      ...input,
+      analysisUrl: `  ${analysisUrl}  `,
+      offerUrl,
+      checkoutUrl,
+    });
+
+    const { analysisUrl: gotAnalysis, offerUrl: gotOffer, checkoutUrl: gotCheckout, ...resto } = comLinks;
+    assert.deepEqual(resto, semLinks);
+    assert.deepEqual(Object.keys(semLinks), [...PAYLOAD_KEYS]);
+    assert.equal(gotAnalysis, analysisUrl);
+    assert.equal(gotOffer, offerUrl);
+    assert.equal(gotCheckout, checkoutUrl);
+    assert.deepEqual(Object.keys(comLinks), [...PAYLOAD_KEYS, 'analysisUrl', 'offerUrl', 'checkoutUrl']);
+  });
 });
