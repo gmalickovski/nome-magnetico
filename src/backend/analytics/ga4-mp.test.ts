@@ -56,6 +56,40 @@ test('sendGa4Purchase envia transaction_id e não propaga erro de rede', async (
   assert.match(body, /"currency":"BRL"/);
 });
 
+test('sendGa4Purchase inclui purchase_kind no evento purchase', async () => {
+  process.env.GA4_MEASUREMENT_ID = 'G-TEST';
+  process.env.GA4_API_SECRET = 'secret';
+
+  let body = '';
+  globalThis.fetch = async (_input, init) => {
+    body = String(init?.body ?? '');
+    return new Response('', { status: 200 });
+  };
+
+  await sendGa4Purchase({
+    clientId: '111.222',
+    transactionId: 'cs_renew',
+    value: 98,
+    currency: 'BRL',
+    items: [{ item_id: 'nome_social', item_name: 'Nome Social' }],
+    purchaseKind: 'renewal',
+  });
+
+  assert.match(body, /"purchase_kind":"renewal"/);
+
+  body = '';
+  await sendGa4Purchase({
+    clientId: '111.222',
+    transactionId: 'cs_new',
+    value: 98,
+    currency: 'BRL',
+    items: [{ item_id: 'nome_social', item_name: 'Nome Social' }],
+    purchaseKind: 'new',
+  });
+
+  assert.match(body, /"purchase_kind":"new"/);
+});
+
 test('resolveGaClientId prefere metadata e deriva do session id se vazio', () => {
   assert.equal(resolveGaClientId('cs_abc', ' 999.888 '), '999.888');
   const fallback = resolveGaClientId('cs_abc', '  ');
