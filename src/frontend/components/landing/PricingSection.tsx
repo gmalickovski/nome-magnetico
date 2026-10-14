@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { track, trackBeginCheckout } from '../../lib/analytics';
+import { captureBeginCheckout, getPostHogDistinctId, track } from '../../lib/analytics';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
@@ -153,15 +153,15 @@ export function PricingSection({
         codigo_cupom: couponCode,
         origem: 'pricing_section',
       });
-      trackBeginCheckout({
-        value: Number((info.cents / 100).toFixed(2)),
-        currency: 'BRL',
-        payment_method: 'stripe',
-      });
+      captureBeginCheckout('card', (resolvedPrices[type] ?? PRICE_UNAVAILABLE).cents / 100);
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_type: type, couponCode }),
+        body: JSON.stringify({
+          product_type: type,
+          couponCode,
+          ph_distinct_id: getPostHogDistinctId(),
+        }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Erro ao criar checkout');
@@ -229,6 +229,8 @@ export function PricingSection({
             <button
               type="button"
               onClick={handleBuy}
+              data-cta-id="pricing_nome_social"
+              data-cta-position="precos"
               disabled={priceUnavailableOnHq}
               className={`mt-6 w-full ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
                 priceUnavailableOnHq
