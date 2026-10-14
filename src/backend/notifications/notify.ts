@@ -9,11 +9,8 @@
  * Erros do sistema → tabela Supabase `error_logs` via error-logger.ts
  */
 
-<<<<<<< HEAD
 import { captureFluxoException, type Fluxo } from '../../sentry/fluxo';
-=======
 import { readServerEnv } from '../env/runtime';
->>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
 
 type NotificationEvent =
   | 'user.welcome'
@@ -72,7 +69,6 @@ interface MarketingPayload {
   source: string;
 }
 
-<<<<<<< HEAD
 /** Opt-in de marketing e avisos de expiração. O payload não vai no evento do Sentry. */
 const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>> = {
   'marketing.free_analysis_completed': 'leads',
@@ -86,10 +82,7 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
   captureFluxoException(fluxo, error);
 }
 
-async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<void> {
-=======
 async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<boolean> {
->>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -103,21 +96,15 @@ async function sendToWebhook(url: string, event: NotificationEvent | MarketingEv
 
     if (!response.ok) {
       console.error(`[notify] Falha ao enviar evento ${event}: ${response.status}`);
-<<<<<<< HEAD
       reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
-=======
       return false;
->>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
     }
     return true;
   } catch (err) {
     console.error(`[notify] Erro ao enviar evento ${event}:`, err);
-<<<<<<< HEAD
     // Mensagem genérica: o erro do fetch pode trazer a URL do webhook.
     reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
-=======
     return false;
->>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
   }
 }
 
