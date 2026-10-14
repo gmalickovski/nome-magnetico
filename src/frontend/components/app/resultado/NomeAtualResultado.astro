@@ -225,6 +225,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
     <div class="flex flex-col items-stretch gap-3 md:items-center">
       <a
         href="/comprar?produto=nome_social"
+        data-cta-id="resultado_upsell_contextual"
+        data-cta-position="resultado"
         data-ga4-event="cta_resultado_gratis_upsell_contextual"
         class="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-7 py-3 text-sm font-bold text-[#131313] transition-all duration-300 hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98]"
       >
@@ -233,6 +235,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
       <p class="text-center text-xs text-gray-500">Pagamento único · Acesso imediato</p>
       <a
         href="/nome-social"
+        data-cta-id="resultado_detalhes_nome_social"
+        data-cta-position="resultado"
         data-ga4-event="cta_resultado_gratis_detalhes_nome_social"
         class="text-center text-xs text-gray-500 underline underline-offset-4 transition-colors hover:text-[#D4AF37]"
       >
@@ -243,6 +247,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 </section>
 
 <script>
+  import { captureViewOffer } from '../../../lib/analytics';
+
   (() => {
     const section = document.querySelector('[data-upsell-view="resultado_gratis_contextual"]');
     if (!section || !('IntersectionObserver' in window)) return;
@@ -252,6 +258,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         if (!entry.isIntersecting || fired) return;
         fired = true;
         observer.disconnect();
+        captureViewOffer();
         if (typeof window.gtag === 'function') {
           window.gtag('event', 'upsell_view', { produto: 'nome_social', origem: 'resultado_gratis_contextual' });
         }
@@ -485,6 +492,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         </p>
         <a
           href="/comprar?produto=nome_social"
+          data-cta-id="resultado_upsell_excelente"
+          data-cta-position="resultado"
           data-ga4-event="cta_resultado_gratis_upsell_excelente"
           class="inline-flex items-center gap-2 bg-[#D4AF37] text-black font-bold px-10 py-4 rounded-full text-base hover:bg-[#f2ca50] transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/20"
         >
@@ -554,6 +563,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         </p>
         <a
           href="/comprar?produto=nome_social"
+          data-cta-id="resultado_upsell_excelente_melhorias"
+          data-cta-position="resultado"
           data-ga4-event="cta_resultado_gratis_upsell_excelente_melhorias"
           class="inline-flex items-center gap-2 bg-[#D4AF37] text-black font-bold px-10 py-4 rounded-full text-base hover:bg-[#f2ca50] transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/20"
         >
@@ -623,6 +634,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         </p>
         <a
           href="/comprar?produto=nome_social"
+          data-cta-id="resultado_upsell_aceitavel"
+          data-cta-position="resultado"
           data-ga4-event="cta_resultado_gratis_upsell_aceitavel"
           class="inline-flex items-center gap-2 bg-[#D4AF37] text-black font-bold px-10 py-4 rounded-full text-base hover:bg-[#f2ca50] transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/20"
         >
@@ -683,6 +696,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         )}
         <a
           href="/comprar?produto=nome_social"
+          data-cta-id="resultado_upsell"
+          data-cta-position="resultado"
           data-ga4-event="cta_resultado_gratis_upsell"
           class="inline-flex items-center gap-2 bg-[#D4AF37] text-black font-bold px-10 py-4 rounded-full text-base hover:bg-[#f2ca50] transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/20"
         >

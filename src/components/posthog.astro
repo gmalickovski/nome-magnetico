@@ -7,6 +7,97 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
 ---
 <!-- PostHog: só depois do consentimento de cookies, igual ao GA4. -->
 <script is:inline define:vars={{ posthogKey, posthogHost }}>
+  var NM_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  var NM_UTM_STORAGE_KEY = 'nm-utm-first-touch';
+
+  function nmReadStoredUtm() {
+    try {
+      var raw = localStorage.getItem(NM_UTM_STORAGE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function nmPersistUtmFirstTouch() {
+    try {
+      if (localStorage.getItem(NM_UTM_STORAGE_KEY)) return;
+      var params = new URLSearchParams(window.location.search);
+      var stored = {};
+      var found = false;
+      for (var i = 0; i < NM_UTM_KEYS.length; i++) {
+        var key = NM_UTM_KEYS[i];
+        var value = (params.get(key) || '').trim().slice(0, 200);
+        if (!value) continue;
+        stored[key] = value;
+        found = true;
+      }
+      if (found) localStorage.setItem(NM_UTM_STORAGE_KEY, JSON.stringify(stored));
+    } catch (e) {}
+  }
+
+  function nmUtmSetOnce() {
+    var stored = nmReadStoredUtm();
+    if (!stored) return null;
+    var once = {};
+    var found = false;
+    for (var i = 0; i < NM_UTM_KEYS.length; i++) {
+      var key = NM_UTM_KEYS[i];
+      if (typeof stored[key] !== 'string' || !stored[key]) continue;
+      once['initial_' + key] = stored[key];
+      found = true;
+    }
+    return found ? once : null;
+  }
+
+  function nmNormalizeResultadoPath(pathname) {
+    if (typeof pathname !== 'string') return pathname;
+    var path = pathname.length > 1 && pathname.charAt(pathname.length - 1) === '/'
+      ? pathname.slice(0, -1)
+      : pathname;
+    if (/^\/app\/resultado\/[^/]+$/.test(path)) return '/app/resultado/:id';
+    return pathname;
+  }
+
+  function nmSanitizePostHogEvent(event) {
+    if (!event || !event.properties) return event;
+    var props = event.properties;
+    if (typeof props.$pathname === 'string') {
+      props.$pathname = nmNormalizeResultadoPath(props.$pathname);
+    }
+    if (typeof props.$current_url === 'string') {
+      try {
+        var url = new URL(props.$current_url);
+        var normalized = nmNormalizeResultadoPath(url.pathname);
+        if (normalized !== url.pathname) {
+          url.pathname = normalized;
+          props.$current_url = url.toString();
+        }
+      } catch (e) {}
+    }
+    return event;
+  }
+
+  function nmFlushIdentify() {
+    var pending = window.__nm_pending_identify;
+    if (!pending || !pending.userId) return;
+    if (!window.__nm_posthog_ready || typeof window.posthog?.identify !== 'function') return;
+    var setProps = {};
+    if (pending.email) setProps.email = pending.email;
+    var once = nmUtmSetOnce();
+    if (once) window.posthog.identify(pending.userId, setProps, once);
+    else window.posthog.identify(pending.userId, setProps);
+  }
+
+  window.nmIdentifyPostHog = function (userId, email) {
+    if (!userId) return;
+    window.__nm_pending_identify = { userId: String(userId), email: email ? String(email) : '' };
+    nmFlushIdentify();
+  };
+
   function loadPostHog() {
     try {
       if (!posthogKey) return;
@@ -14,17 +105,99 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
       if (window.__nm_posthog_ready) return;
       window.__nm_posthog_ready = true;
 
-      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep startSessionRecording stopSessionRecording".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
       posthog.init(posthogKey, {
         api_host: posthogHost || 'https://us.i.posthog.com',
         defaults: '2026-05-30',
+        disable_session_recording: false,
+        session_recording: {
+          maskAllInputs: true,
+        },
+        before_send: nmSanitizePostHogEvent,
       });
+      if (typeof posthog.startSessionRecording === 'function') {
+        posthog.startSessionRecording();
+      }
+      nmFlushIdentify();
       window.dispatchEvent(new Event('nm-posthog-ready'));
-    } catch {
+    } catch (e) {
       window.__nm_posthog_ready = false;
     }
   }
 
+  nmPersistUtmFirstTouch();
   loadPostHog();
-  window.addEventListener('consentGranted', loadPostHog);
+  window.addEventListener('consentGranted', function () {
+    nmPersistUtmFirstTouch();
+    loadPostHog();
+  });
+</script>
+
+<script is:inline>
+  (function () {
+    if (window.__nm_posthog_events) return;
+    window.__nm_posthog_events = true;
+
+    function isAdmin() {
+      try {
+        return localStorage.getItem('nm-user-role') === 'admin';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function capture(event, properties) {
+      if (isAdmin()) return false;
+      if (typeof window.posthog?.capture !== 'function') return false;
+      window.posthog.capture(event, properties);
+      return true;
+    }
+
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!target || !target.closest) return;
+      var el = target.closest('[data-cta-id]');
+      if (!el) return;
+      var ctaId = el.getAttribute('data-cta-id');
+      if (!ctaId) return;
+      capture('cta_click', {
+        cta_id: ctaId,
+        position: el.getAttribute('data-cta-position') || '',
+      });
+    });
+
+    function pagePath() {
+      var path = window.location.pathname || '/';
+      if (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
+      return path;
+    }
+
+    var path = pagePath();
+    if (path === '/' || path === '/nome-social') {
+      var fired = { 25: false, 50: false, 75: false, 100: false };
+      var marks = [25, 50, 75, 100];
+
+      function scrollPercent() {
+        var doc = document.documentElement;
+        var scrollTop = window.scrollY || doc.scrollTop || 0;
+        var height = (doc.scrollHeight || 0) - window.innerHeight;
+        if (height <= 0) return 100;
+        return Math.min(100, (scrollTop / height) * 100);
+      }
+
+      function onScroll() {
+        var pct = scrollPercent();
+        for (var i = 0; i < marks.length; i++) {
+          var mark = marks[i];
+          if (fired[mark] || pct < mark) continue;
+          if (capture('scroll_depth', { percent: mark, path: pagePath() })) fired[mark] = true;
+        }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('nm-posthog-ready', onScroll);
+      if (document.readyState === 'complete') onScroll();
+      else window.addEventListener('load', onScroll);
+    }
+  })();
 </script>

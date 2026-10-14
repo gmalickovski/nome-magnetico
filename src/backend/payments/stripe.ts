@@ -46,6 +46,8 @@ export interface CreateCheckoutParams {
   couponCode?: string;
   /** Client ID do GA4 capturado do cookie _ga para atribuição server-side. */
   gaClientId?: string;
+  /** distinct_id do PostHog no browser, para o purchase server-side. */
+  phDistinctId?: string;
 }
 
 /**
@@ -96,6 +98,7 @@ export async function createCheckoutSession(
       access_duration_days: '30',
       coupon_code: params.couponCode ?? '',
       ga_client_id: params.gaClientId ?? '',
+      ph_distinct_id: params.phDistinctId ?? '',
     },
     custom_text: PRODUCT_CUSTOM_TEXT[params.productType],
     success_url: params.successUrl,
@@ -114,6 +117,7 @@ export async function createCheckoutSession(
         product_type: params.productType,
         coupon_code: params.couponCode ?? '',
         ga_client_id: params.gaClientId ?? '',
+        ph_distinct_id: params.phDistinctId ?? '',
       },
     },
   });

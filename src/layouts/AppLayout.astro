@@ -67,12 +67,14 @@ const navSuporteActive = isActive('/app/suporte');
 ---
 
 <BaseLayout title={title} description={description} noIndex={true} hasBottomNav={true}>
-  <script is:inline define:vars={{ analyticsUserId: isAdmin ? '' : user.id }}>
+  <script is:inline define:vars={{ analyticsUserId: isAdmin ? '' : user.id, analyticsEmail: isAdmin ? '' : (user.email ?? '') }}>
     function identifyNmUser() {
-      if (!analyticsUserId || !window.__nm_posthog_ready) return;
-      if (typeof window.posthog?.identify === 'function') {
-        window.posthog.identify(analyticsUserId);
+      if (!analyticsUserId) return;
+      if (typeof window.nmIdentifyPostHog === 'function') {
+        window.nmIdentifyPostHog(analyticsUserId, analyticsEmail);
+        return;
       }
+      window.__nm_pending_identify = { userId: analyticsUserId, email: analyticsEmail || '' };
     }
     identifyNmUser();
     window.addEventListener('nm-posthog-ready', identifyNmUser);

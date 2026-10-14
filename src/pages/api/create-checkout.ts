@@ -10,12 +10,17 @@ import {
   validateAccessCoupon,
 } from '../../backend/payments/prices';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
+import {
+  readPostHogDistinctIdFromCookie,
+  sanitizeDistinctId,
+} from '../../backend/analytics/posthog-server';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
 
 const schema = z.object({
   product_type: z.enum(SELLABLE_PRODUCT_TYPES),
   couponCode: z.string().optional(),
+  ph_distinct_id: z.string().optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals, url }) => {
@@ -48,6 +53,9 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   }
 
   const { product_type, couponCode } = parsed.data;
+  const phDistinctId =
+    sanitizeDistinctId(parsed.data.ph_distinct_id) ??
+    readPostHogDistinctIdFromCookie(request.headers.get('cookie'));
   const baseUrl = process.env.APP_URL || url.origin;
 
   // Verificar se é admin ou usuário teste → bypass do Stripe
@@ -170,6 +178,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       couponCode: couponCode?.trim(),
       // Cookie _ga vira metadata.ga_client_id (client_id do Measurement Protocol).
       gaClientId: getGaClientIdFromRequest(request),
+      phDistinctId,
     });
 
     return new Response(

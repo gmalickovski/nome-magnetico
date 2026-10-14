@@ -1,15 +1,5 @@
 import type { ProductType } from '../payments/stripe';
-
-const DEFAULT_HOST = 'https://us.i.posthog.com';
-
-function posthogCaptureUrl(): string | null {
-  const apiKey = process.env.PUBLIC_POSTHOG_KEY?.trim();
-  if (!apiKey) return null;
-
-  const host = (process.env.PUBLIC_POSTHOG_HOST?.trim() || DEFAULT_HOST).replace(/\/$/, '');
-  if (!host.startsWith('https://')) return null;
-  return `${host}/i/v0/e/`;
-}
+import { captureServerEvent, posthogEventUuid } from './posthog-server';
 
 function centsToUnit(cents?: number | null) {
   if (!cents || cents <= 0) return 0;
@@ -17,9 +7,9 @@ function centsToUnit(cents?: number | null) {
 }
 
 /**
- * Receita confirmada no PostHog. Mesmo momento do GA4 Measurement Protocol:
- * webhook Stripe, depois da subscription criada.
- * Sem chave, não envia (local e VPS antes do env ficam seguros).
+ * Compatibilidade. O purchase canônico sai do webhook Stripe via posthog-server,
+ * com ph_distinct_id e payment_method. O uuid é o mesmo (purchase + session id),
+ * então uma segunda chamada para a mesma sessão não duplica a receita.
  */
 export async function capturePostHogPurchase(params: {
   userId: string;
@@ -30,39 +20,24 @@ export async function capturePostHogPurchase(params: {
   paymentProvider: 'stripe' | 'asaas';
   couponCode?: string | null;
 }): Promise<void> {
-  const apiKey = process.env.PUBLIC_POSTHOG_KEY?.trim();
-  const url = posthogCaptureUrl();
-
-  if (!apiKey || !url) return;
+  const distinctId = params.userId?.trim();
+  const sessionId = params.transactionId?.trim();
+  if (!distinctId || !sessionId) return;
 
   const coupon = params.couponCode?.trim() || undefined;
-  const body = {
-    api_key: apiKey,
+  await captureServerEvent({
+    distinctId,
     event: 'purchase',
-    distinct_id: params.userId,
-    timestamp: new Date().toISOString(),
+    uuid: posthogEventUuid('purchase', sessionId),
     properties: {
+      product: params.productType,
       product_type: params.productType,
       value: centsToUnit(params.amountCents),
-      currency: 'BRL',
-      transaction_id: params.transactionId,
+      currency: (params.currency || 'brl').toUpperCase(),
       payment_provider: params.paymentProvider,
+      session_id: sessionId,
+      transaction_id: sessionId,
       ...(coupon ? { coupon } : {}),
-      $insert_id: params.transactionId,
     },
-  };
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      console.error('[posthog] Falha ao enviar purchase:', res.status);
-    }
-  } catch (err) {
-    console.error('[posthog] Erro ao enviar purchase:', err);
-  }
+  });
 }
