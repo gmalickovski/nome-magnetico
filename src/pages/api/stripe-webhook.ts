@@ -12,6 +12,12 @@ import { recordAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
 import { trackPurchaseConfirmed } from '../../backend/analytics/ga4';
+import {
+  captureServerEvent,
+  posthogEventUuid,
+  resolveCheckoutDistinctId,
+} from '../../backend/analytics/posthog-server';
+import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -31,20 +37,78 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Tipo base para sessões de checkout
   type CheckoutSession = {
-    metadata?: { user_id?: string; product_type?: string; coupon_code?: string; ga_client_id?: string };
+    metadata?: {
+      user_id?: string;
+      product_type?: string;
+      coupon_code?: string;
+      ga_client_id?: string;
+      ph_distinct_id?: string;
+    };
     id: string;
     payment_intent?: string | { id: string } | null;
     amount_total?: number | null;
     currency?: string;
     customer_email?: string;
+    customer_details?: { email?: string | null } | null;
     payment_status?: string;
   };
+
+  /**
+   * PostHog do checkout. Não lança e não altera a liberação de acesso.
+   * purchase só entra pelos ramos pagos; o uuid é determinístico por evento + sessão.
+   */
+  async function captureCheckoutPostHog(
+    eventName: 'purchase' | 'checkout_error' | 'checkout_abandoned',
+    session: CheckoutSession,
+    paymentMethod?: string,
+  ): Promise<void> {
+    try {
+      const distinctId = resolveCheckoutDistinctId({
+        phDistinctId: session.metadata?.ph_distinct_id,
+        userId: session.metadata?.user_id,
+        email: session.customer_email || session.customer_details?.email,
+      });
+
+      if (!distinctId) {
+        console.warn('[stripe-webhook] PostHog sem distinct_id:', eventName, session.id);
+        return;
+      }
+
+      const product = session.metadata?.product_type?.trim() || undefined;
+      const plan =
+        product && product in PRODUCT_NAMES ? PRODUCT_NAMES[product as ProductType] : product;
+      const cents = typeof session.amount_total === 'number' ? session.amount_total : 0;
+      const properties: Record<string, string | number> = {
+        value: Number((cents / 100).toFixed(2)),
+        currency: (session.currency || 'brl').toUpperCase(),
+        session_id: session.id,
+      };
+      if (paymentMethod) properties.payment_method = paymentMethod;
+      if (product) {
+        properties.product = product;
+        properties.product_type = product;
+      }
+      if (plan) properties.plan = plan;
+
+      await captureServerEvent({
+        distinctId,
+        event: eventName,
+        properties,
+        uuid: posthogEventUuid(eventName, session.id),
+      });
+    } catch (err) {
+      console.error('[stripe-webhook] Falha ao enviar PostHog:', eventName, err);
+    }
+  }
 
   /**
    * Processa pagamento confirmado: cria subscription, notifica usuário e sistemas.
    * Reutilizado por checkout.session.completed (cartão) e async_payment_succeeded (PIX).
    */
-  async function processPaymentSuccess(session: CheckoutSession): Promise<void> {
+  async function processPaymentSuccess(
+    session: CheckoutSession,
+    paymentMethod: 'card' | 'pix' | null,
+  ): Promise<void> {
     const userId = session.metadata?.user_id;
     const productType = session.metadata?.product_type as ProductType;
 
@@ -84,6 +148,37 @@ export const POST: APIRoute = async ({ request }) => {
       paymentProvider: 'stripe',
       couponCode: session.metadata?.coupon_code,
       gaClientId: session.metadata?.ga_client_id,
+    });
+
+    if (paymentMethod) {
+      await captureCheckoutPostHog('purchase', session, paymentMethod);
+    }
+
+    const purchaseValue =
+      !session.amount_total || session.amount_total <= 0
+        ? 0
+        : Number((session.amount_total / 100).toFixed(2));
+    const coupon = session.metadata?.coupon_code?.trim() || undefined;
+    await sendGa4Purchase({
+      clientId: resolveGaClientId(session.id, session.metadata?.ga_client_id),
+      transactionId: session.id,
+      value: purchaseValue,
+      currency: (session.currency || 'brl').toUpperCase(),
+      items: [
+        {
+          item_id: productType,
+          item_name: PRODUCT_NAMES[productType] ?? productType,
+          item_brand: 'Nome Magnetico',
+          item_category: 'Numerologia cabalistica',
+          price: purchaseValue,
+          quantity: 1,
+          coupon,
+        },
+      ],
+      userId,
+      coupon,
+      paymentProvider: 'stripe',
+      productType,
     });
 
     const n8nUrl = process.env.N8N_WEBHOOK_TRANSACIONAL;
@@ -134,8 +229,10 @@ export const POST: APIRoute = async ({ request }) => {
           break;
         }
 
-        // Cartão: payment_status = 'paid' → liberar acesso imediatamente
-        await processPaymentSuccess(session);
+        // Cartão: payment_status = 'paid' → liberar acesso imediatamente.
+        // Outros status síncronos (ex.: no_payment_required) seguem liberando acesso,
+        // mas o purchase só sai quando o pagamento está paid.
+        await processPaymentSuccess(session, session.payment_status === 'paid' ? 'card' : null);
         break;
       }
 
@@ -143,7 +240,7 @@ export const POST: APIRoute = async ({ request }) => {
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as CheckoutSession;
         console.log('[stripe-webhook] PIX confirmado:', session.id);
-        await processPaymentSuccess(session);
+        await processPaymentSuccess(session, 'pix');
         break;
       }
 
@@ -163,6 +260,14 @@ export const POST: APIRoute = async ({ request }) => {
             });
           }
         }
+        await captureCheckoutPostHog('checkout_error', session, 'pix');
+        break;
+      }
+
+      // Sessão expirou sem pagamento (cliente abandonou o Checkout).
+      case 'checkout.session.expired': {
+        const session = event.data.object as CheckoutSession;
+        await captureCheckoutPostHog('checkout_abandoned', session);
         break;
       }
 

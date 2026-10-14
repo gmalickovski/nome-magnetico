@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { track } from '../../lib/analytics';
+import { captureBeginCheckout, captureViewOffer, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -102,6 +102,10 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
 
   const prices = hqPrices ?? FALLBACK_PRICES;
 
+  useEffect(() => {
+    if (!isOwned) captureViewOffer();
+  }, [isOwned]);
+
   async function triggerCheckout(type: ProductType, couponCode?: string) {
     setLoading(type);
     setErrorMsg('');
@@ -117,12 +121,19 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         origem: 'comprar',
       });
 
+      captureBeginCheckout('card', (prices[type] ?? FALLBACK_PRICES[type]).cents / 100);
+      trackBeginCheckout({
+        value: Number((priceInfo.cents / 100).toFixed(2)),
+        currency: 'BRL',
+        payment_method: 'stripe',
+      });
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           product_type: type,
           couponCode: effectiveCoupon ?? undefined,
+          ph_distinct_id: getPostHogDistinctId(),
         }),
       });
       const data = await res.json();
@@ -254,6 +265,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                 setModalProduct(type);
               }
             }}
+            data-cta-id="checkout_nome_social"
+            data-cta-position="comprar"
             className={`block text-center w-full font-bold py-3.5 rounded-xl transition-all duration-300 bg-[#D4AF37] text-black hover:bg-yellow-300 hover:scale-105 shadow-lg shadow-yellow-500/20 ${isLoadingThis ? 'pointer-events-none opacity-60 cursor-not-allowed' : ''}`}
           >
             {isLoadingThis ? 'Aguarde...' : p.cta}
@@ -261,6 +274,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         ) : (
           <a
             href={paymentLinks[type]}
+            data-cta-id="checkout_nome_social"
+            data-cta-position="comprar_publico"
             onClick={() => track('checkout_redirect_start', {
               produto: type,
               preco: priceInfo.cents / 100,

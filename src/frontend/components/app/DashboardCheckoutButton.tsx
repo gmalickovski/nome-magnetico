@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ActivePromotion, PriceInfo } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { track } from '../../lib/analytics';
+import { captureBeginCheckout, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -13,6 +13,8 @@ interface Props {
   label?: string;
   variant?: 'primary' | 'outline';
   className?: string;
+  ctaId?: string;
+  ctaPosition?: string;
 }
 
 export function DashboardCheckoutButton({
@@ -22,6 +24,8 @@ export function DashboardCheckoutButton({
   label = 'Adquirir',
   variant = 'primary',
   className,
+  ctaId = 'dashboard_checkout',
+  ctaPosition = 'dashboard',
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -33,10 +37,20 @@ export function DashboardCheckoutButton({
       codigo_cupom: couponCode,
       origem: 'dashboard',
     });
+    captureBeginCheckout('card', priceInfo.cents / 100);
+    trackBeginCheckout({
+      value: Number((priceInfo.cents / 100).toFixed(2)),
+      currency: 'BRL',
+      payment_method: 'stripe',
+    });
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_type: type, couponCode }),
+      body: JSON.stringify({
+        product_type: type,
+        couponCode,
+        ph_distinct_id: getPostHogDistinctId(),
+      }),
     });
     const data = await res.json();
     if (res.ok && data.url) {
@@ -59,6 +73,8 @@ export function DashboardCheckoutButton({
     <>
       <button
         type="button"
+        data-cta-id={ctaId}
+        data-cta-position={ctaPosition}
         onClick={() => {
           track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
           track('checkout_start', {
