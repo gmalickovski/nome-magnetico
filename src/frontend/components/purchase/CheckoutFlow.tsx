@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { captureBeginCheckout, captureViewOffer, getPostHogDistinctId, track } from '../../lib/analytics';
+import { captureBeginCheckout, captureViewOffer, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -122,6 +122,11 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
       });
 
       captureBeginCheckout('card', (prices[type] ?? FALLBACK_PRICES[type]).cents / 100);
+      trackBeginCheckout({
+        value: Number((priceInfo.cents / 100).toFixed(2)),
+        currency: 'BRL',
+        payment_method: 'stripe',
+      });
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from './CheckoutModal';
-import { captureBeginCheckout, getPostHogDistinctId, track } from '../../lib/analytics';
+import { captureBeginCheckout, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -81,6 +81,11 @@ export function LandingCheckout({
         origem: 'landing',
       });
       captureBeginCheckout('card', priceInfo.cents / 100);
+      trackBeginCheckout({
+        value: Number((priceInfo.cents / 100).toFixed(2)),
+        currency: 'BRL',
+        payment_method: 'stripe',
+      });
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
