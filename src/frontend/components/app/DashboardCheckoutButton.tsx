@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ActivePromotion, PriceInfo } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { track } from '../../lib/analytics';
+import { getPostHogDistinctId, track } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -36,7 +36,11 @@ export function DashboardCheckoutButton({
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_type: type, couponCode }),
+      body: JSON.stringify({
+        product_type: type,
+        couponCode,
+        ph_distinct_id: getPostHogDistinctId(),
+      }),
     });
     const data = await res.json();
     if (res.ok && data.url) {
