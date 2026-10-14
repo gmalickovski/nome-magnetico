@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { track } from '../../lib/analytics';
+import { track, trackBeginCheckout } from '../../lib/analytics';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -117,6 +117,11 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         origem: 'comprar',
       });
 
+      trackBeginCheckout({
+        value: Number((priceInfo.cents / 100).toFixed(2)),
+        currency: 'BRL',
+        payment_method: 'stripe',
+      });
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

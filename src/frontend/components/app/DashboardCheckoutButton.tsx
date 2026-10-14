@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ActivePromotion, PriceInfo } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { track } from '../../lib/analytics';
+import { track, trackBeginCheckout } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -32,6 +32,11 @@ export function DashboardCheckoutButton({
       promocao: promotion?.name ?? null,
       codigo_cupom: couponCode,
       origem: 'dashboard',
+    });
+    trackBeginCheckout({
+      value: Number((priceInfo.cents / 100).toFixed(2)),
+      currency: 'BRL',
+      payment_method: 'stripe',
     });
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
