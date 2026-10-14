@@ -123,18 +123,21 @@ export function track(event: AnalyticsEvent, data?: EventData): void {
 }
 
 /** Liga o navegador anônimo ao id do Supabase, o mesmo distinct_id do purchase server-side. */
-export function identifyUser(userId: string): void {
+export function identifyUser(userId: string, email?: string | null): void {
   if (typeof window === 'undefined' || !userId || isAdminBrowser()) return;
   try {
-    if (window.__nm_posthog_ready && typeof window.posthog?.identify === 'function') {
-      window.posthog.identify(userId);
+    if (typeof window.nmIdentifyPostHog === 'function') {
+      window.nmIdentifyPostHog(userId, email ?? undefined);
+      return;
     }
+    window.__nm_pending_identify = { userId, email: email ?? '' };
   } catch {}
 }
 
 export function resetAnalytics(): void {
   if (typeof window === 'undefined') return;
   try {
+    window.__nm_pending_identify = undefined;
     window.posthog?.reset?.();
   } catch {}
 }
@@ -144,10 +147,17 @@ declare global {
     gtag?: (command: string, action: string | Date, params?: Record<string, unknown>) => void;
     dataLayer?: unknown[];
     __nm_posthog_ready?: boolean;
+    __nm_pending_identify?: { userId: string; email?: string };
+    nmIdentifyPostHog?: (userId: string, email?: string) => void;
     posthog?: {
       capture: (event: string, properties?: Record<string, unknown>) => void;
-      identify: (distinctId: string) => void;
+      identify: (
+        distinctId: string,
+        properties?: Record<string, unknown>,
+        propertiesSetOnce?: Record<string, unknown>,
+      ) => void;
       reset: () => void;
+      startSessionRecording?: () => void;
     };
   }
 }

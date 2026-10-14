@@ -243,6 +243,11 @@ async function handle(context: APIContext, next: MiddlewareNext): Promise<Respon
     return next();
   }
 
+  // Health check não autentica e não consulta Supabase.
+  if (pathname === '/api/health' || pathname === '/api/health/') {
+    return next();
+  }
+
   if (isAdminHost(requestHostname(context.request))) {
     return handleAdminHost(context, next);
   }

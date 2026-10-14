@@ -146,6 +146,7 @@ export const POST: APIRoute = async ({ request }) => {
   return json({
     success: true,
     session: null,
+    user: { id: createdUser.id, email: createdUser.email ?? normalizedEmail },
   }, 200);
 };
 
