@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { LandingHeader } from '../frontend/components/landing/LandingHeader';
+import { LandingFooter } from '../frontend/components/landing/LandingFooter';
+---
+
+<BaseLayout
+  title="E-mail confirmado"
+  description="Seu e-mail foi confirmado. A análise e as próximas novidades do Nome Magnético chegam na caixa que você validou."
+  noIndex={true}
+>
+  <LandingHeader client:load />
+
+  <main class="bg-[#111111] min-h-screen pt-24 sm:pt-32 pb-20">
+    <section class="relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="max-w-2xl mx-auto px-6 relative z-10 text-center">
+        <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-4">Nome Magnético</p>
+        <h1 class="font-cinzel text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+          E-mail confirmado. Bem-vindo(a) ao Nome Magnético.
+        </h1>
+        <p class="text-[#e5e2e1]/70 text-base sm:text-lg leading-relaxed mb-10">
+          Pronto, está tudo certo. Sua análise e as próximas novidades vão chegar no e-mail que você confirmou. Se não encontrar, olhe também a aba Promoções ou o spam e marque a gente como contato.
+        </p>
+
+        <div class="rounded-2xl bg-white/[0.04] p-6 sm:p-8 mb-8 text-left sm:text-center">
+          <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Quer ir além do diagnóstico?</p>
+          <p class="text-gray-400 text-sm sm:text-base leading-relaxed">
+            O Nome Social mostra as assinaturas com score alto e sem bloqueios para você usar no dia a dia.
+          </p>
+        </div>
+
+        <a
+          href="/nome-social"
+          class="inline-block w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#D4AF37]/20"
+        >
+          Conhecer o Nome Social
+        </a>
+
+        <p class="mt-8">
+          <a href="/" class="text-gray-500 text-sm hover:text-[#D4AF37] transition-colors">
+            Voltar para o início
+          </a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <LandingFooter client:visible />
+</BaseLayout>
