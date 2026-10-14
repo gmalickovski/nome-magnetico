@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { track } from '../../lib/analytics';
+import { captureViewOffer, track } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -73,7 +73,10 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
   const couponValidationRef = useRef(0);
 
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    captureViewOffer();
+  }, []);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
