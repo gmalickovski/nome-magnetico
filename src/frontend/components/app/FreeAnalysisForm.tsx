@@ -6,10 +6,13 @@
 import { useState, useEffect } from 'react';
 import { DateInput } from '../ui/DateInput';
 import { track } from '../../lib/analytics';
+import { marketingBodyFields } from '../../lib/utm';
+import { MarketingOptInField } from './MarketingOptInField';
 
 export default function FreeAnalysisForm() {
   const [nome, setNome] = useState('');
   const [data, setData] = useState('');
+  const [optIn, setOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -50,6 +53,7 @@ export default function FreeAnalysisForm() {
           nome_completo: nome.trim(),
           data_nascimento: data,
           nome_ja_escolhido: true,
+          ...marketingBodyFields(optIn),
         }),
       });
 
@@ -118,6 +122,13 @@ export default function FreeAnalysisForm() {
           </div>
         </div>
       </div>
+
+      <MarketingOptInField
+        id="free-analysis-opt-in"
+        checked={optIn}
+        onChange={setOptIn}
+        disabled={loading}
+      />
 
       {error && (
         <div className="rounded-xl p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-sm">

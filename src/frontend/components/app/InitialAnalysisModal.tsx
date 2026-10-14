@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { DateInput } from '../ui/DateInput';
+import { marketingBodyFields } from '../../lib/utm';
+import { MarketingOptInField } from './MarketingOptInField';
 
 export function InitialAnalysisModal() {
   const [open, setOpen] = useState(true);
   const [nome, setNome] = useState('');
   const [dataNascimento, setDataNascimento] = useState('');
   const [gender, setGender] = useState<string>('');
+  const [optIn, setOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +47,7 @@ export function InitialAnalysisModal() {
           data_nascimento: dataNascimento,
           nome_ja_escolhido: true,
           gender,
+          ...marketingBodyFields(optIn),
         }),
       });
 
@@ -116,6 +120,13 @@ export function InitialAnalysisModal() {
             </select>
           </div>
         </div>
+
+        <MarketingOptInField
+          id="onboarding-opt-in"
+          checked={optIn}
+          onChange={setOptIn}
+          disabled={loading}
+        />
 
         {error && (
           <div className="text-red-400 text-xs p-3 bg-red-500/10 rounded-xl border border-red-500/20 leading-relaxed">

@@ -15,7 +15,15 @@ import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerolog
 import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { notify } from '../../backend/notifications/notify';
+import { buildFreeAnalysisMarketingPayload } from '../../backend/notifications/free-analysis-payload';
 import { logError } from '../../backend/utils/error-logger';
+
+const utmSchema = z
+  .string()
+  .trim()
+  .max(200)
+  .nullish()
+  .transform((value) => (value ? value : null));
 
 const schema = z.object({
   nome_completo: z.string().min(2).max(150),
@@ -36,6 +44,11 @@ const schema = z.object({
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
   gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
+  // Opt-in de marketing. Desmarcado no formulário: ausência vale false.
+  opt_in: z.boolean().optional().default(false),
+  utm_source: utmSchema,
+  utm_medium: utmSchema,
+  utm_campaign: utmSchema,
 });
 
 const AI_TIMEOUT_MS = 75_000;
@@ -134,6 +147,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     nome_ja_escolhido,
     is_free,
     gender: inputGender,
+    opt_in,
+    utm_source,
+    utm_medium,
+    utm_campaign,
   } = parsed.data;
 
   const { data: profile } = await supabase
@@ -204,12 +221,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       ? nome_social_principal.trim()
       : nome_completo;
 
+  const optIn = isGratuita && opt_in === true;
+  const optInData = optIn ? new Date().toISOString() : null;
+
   const analysis = await createAnalysis({
     userId: user.id,
     productType: product_type as AnalysisProductType,
     nomeCompleto: analysisDisplayName,
     dataNascimento: data_nascimento,
     isFree: isGratuita,
+    ...(isGratuita ? { optIn, optInData } : {}),
   });
 
   // Processar em background (não bloqueia a resposta)
@@ -419,32 +440,52 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       // Salva o texto da IA e marca como completo — aplica a TODOS os produtos
+      const completedAt = new Date();
       await updateAnalysis(analysis.id, {
         analise_texto: analiseTexto,
         status: 'complete',
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt.toISOString(),
+        ...(isGratuita ? { score: marketingStats.score } : {}),
       });
 
-      if (isGratuita) {
-        const appUrl = process.env.APP_URL ?? 'https://nomemagnetico.com.br';
-        const firstName = (profile?.nome || nome_completo || user.email || 'Cliente').split(' ')[0];
-        await notify('marketing.free_analysis_completed', {
-          firstName,
-          userId: user.id,
-          analysisId: analysis.id,
-          analysisUrl: `${appUrl}/app/resultado/${analysis.id}`,
-          productType: 'nome_social',
-          productName: 'Nome Social',
-          offerUrl: `${appUrl}/nome-social`,
-          checkoutUrl: `${appUrl}/auth/cadastro?produto=nome_social`,
-          score: marketingStats.score,
-          nomeCompleto: nome_completo,
-          bloqueios: marketingStats.bloqueios,
-          licoesCarmicas: marketingStats.licoesCarmicas,
-          tendenciasOcultas: marketingStats.tendenciasOcultas,
-          debitosCarmicos: marketingStats.debitosCarmicos,
-          source: 'free_analysis_completed',
-        });
+      // Marketing só com opt-in. Falha aqui não altera a análise nem a resposta HTTP.
+      if (isGratuita && optIn) {
+        try {
+          const email = (user.email || profile?.email || '').trim();
+          const score = marketingStats.score;
+          if (!email || typeof score !== 'number' || !Number.isFinite(score)) {
+            console.warn('[analyze] opt-in de marketing sem e-mail ou score — evento ignorado');
+          } else {
+            const payload = buildFreeAnalysisMarketingPayload({
+              email,
+              nomeCompleto: nome_completo,
+              concluidaEm: completedAt,
+              analiseId: analysis.id,
+              score,
+              optIn: true,
+              optInEm: optInData,
+              utmSource: utm_source,
+              utmMedium: utm_medium,
+              utmCampaign: utm_campaign,
+            });
+            await notify('marketing.free_analysis_completed', {
+              email: payload.email,
+              nome: payload.nome,
+              sobrenome: payload.sobrenome,
+              analise_data: payload.analise_data,
+              analise_id: payload.analise_id,
+              score: payload.score,
+              origem: payload.origem,
+              opt_in: payload.opt_in,
+              opt_in_data: payload.opt_in_data,
+              utm_source: payload.utm_source,
+              utm_medium: payload.utm_medium,
+              utm_campaign: payload.utm_campaign,
+            });
+          }
+        } catch (marketingErr) {
+          console.error('[analyze] falha ao notificar marketing da análise grátis:', marketingErr);
+        }
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
