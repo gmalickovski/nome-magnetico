@@ -57,10 +57,14 @@ Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso
 | :--- | :--- | :--- |
 | `$pageview` | SDK, no init (defaults `2026-05-30` usam `capture_pageview: history_change`) | automáticas |
 | `analise_gratis_submit` | `track()` — lead do form público `/analise-gratuita` (`PublicAnalysisForm`) e o mesmo evento já existente na análise gratuita logada (`FreeAnalysisForm`) | — |
-| `begin_checkout` | `track()` nos inícios de checkout (pricing, landing, modal e botão do app) | `product_type` (`nome_social` \| `nome_bebe` \| `nome_empresa`), `value`, `currency=BRL` |
+| `begin_checkout` | `captureBeginCheckout` no POST `/api/create-checkout` (landing, preços, comprar e dashboard) | `payment_method` (`card` \| `pix`), `value`, `currency=BRL` |
+| `cta_click` | listener delegado em `posthog.astro` nos elementos com `data-cta-id` | `cta_id`, `position` (`data-cta-position`) |
+| `scroll_depth` | `posthog.astro`, só `/` e `/nome-social`, cada marco uma vez por pageview | `percent` (`25` \| `50` \| `75` \| `100`), `path` |
+| `resultado_view` | `/app/resultado/[id]` quando a análise completa é exibida | `analise_id`, `score` |
+| `view_offer` | preço no checkout (`CheckoutFlow` / `CheckoutModal`) e upsell do resultado | — |
 | `purchase` | `capturePostHogPurchase` dentro de `trackPurchaseConfirmed` (webhook Stripe; Asaas legado) | `product_type`, `value`, `currency=BRL`, mais `transaction_id`, `payment_provider` e `$insert_id` para deduplicar retry |
 
-O wrapper `track()` continua mandando todos os eventos atuais para o GA4. Para o PostHog, só replica `analise_gratis_submit` e `begin_checkout`, traduzindo `produto`/`valor` para `product_type`/`value`. `purchase_complete` no retorno visual do app segue só no GA4; a receita no PostHog é o `purchase` do webhook.
+O wrapper `track()` continua mandando todos os eventos atuais para o GA4. Para o PostHog, `track()` replica `analise_gratis_submit`. `begin_checkout` no PostHog sai só no momento do POST `/api/create-checkout`, com `payment_method`. O caminho atual do front inicia a sessão Stripe (cartão e PIX escolhidos no Checkout hospedado) e envia `payment_method: 'card'`. `purchase_complete` no retorno visual do app segue só no GA4; a receita no PostHog é o `purchase` do webhook.
 
 ### 2. Eventos Client-side Implementados
 
