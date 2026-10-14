@@ -48,6 +48,8 @@ export async function trackPurchaseConfirmed(params: {
   couponCode?: string | null;
   gaClientId?: string | null;
 }): Promise<void> {
+  // Só GA4. O purchase do PostHog sai uma vez no webhook Stripe
+  // (uuid v5 + $insert_id). Não chamar capturePostHogPurchase daqui.
   const measurementId = process.env.GA4_MEASUREMENT_ID;
   const apiSecret = process.env.GA4_API_SECRET;
 
