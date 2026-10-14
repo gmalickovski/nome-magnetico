@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { identifyUser } from '../../lib/analytics';
 
 interface Props {
   produto?: string;
@@ -61,6 +62,10 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
       setError(data.error ?? 'Erro ao criar conta. Tente novamente.');
       setLoading(false);
       return;
+    }
+
+    if (data.user?.id) {
+      identifyUser(data.user.id, data.user.email || email);
     }
 
     if (data.session?.access_token && data.session?.refresh_token) {
