@@ -7,7 +7,7 @@ import {
   getSubscriptionByPaymentIntent,
 } from '../../backend/db/subscriptions';
 import { getProfile } from '../../backend/db/users';
-import { notify } from '../../backend/notifications/notify';
+import { notify, publishAccessAttributes } from '../../backend/notifications/notify';
 import { recordAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
@@ -129,7 +129,7 @@ export const POST: APIRoute = async ({ request }) => {
         : session.payment_intent?.id;
 
     const purchaseKind = parsePurchaseKind(session.metadata?.purchase_kind);
-    const { created } = await createSubscription({
+    const { subscription, created } = await createSubscription({
       userId,
       productType,
       stripeSessionId: session.id,
@@ -143,6 +143,20 @@ export const POST: APIRoute = async ({ request }) => {
       console.log('[stripe-webhook] Sessão já processada:', session.id);
       return;
     }
+
+    // Atributos do Brevo logo após a linha nova. Falha aqui não interrompe o resto.
+    try {
+      await publishAccessAttributes({
+        event: 'marketing.payment_confirmed',
+        origem: 'compra',
+        userId,
+        productType,
+        subscription,
+      });
+    } catch (err) {
+      console.error('[stripe-webhook] Falha ao enviar atributos de acesso:', err);
+    }
+
     await confirmEmailAfterPayment(userId);
 
     await recordAccessCouponUse({
@@ -304,6 +318,17 @@ export const POST: APIRoute = async ({ request }) => {
             const stripeRefundId = charge.refunds?.data?.[0]?.id ?? null;
             await refundSubscription(subscription.id, stripeRefundId, 'Reembolso via Stripe Dashboard');
             console.log('[stripe-webhook] Acesso revogado por reembolso manual:', subscription.id);
+            try {
+              await publishAccessAttributes({
+                event: 'marketing.access_refunded',
+                origem: 'reembolso',
+                userId: subscription.user_id,
+                productType: subscription.product_type,
+                subscription,
+              });
+            } catch (err) {
+              console.error('[stripe-webhook] Falha ao enviar atributos de acesso:', err);
+            }
           }
         }
         break;

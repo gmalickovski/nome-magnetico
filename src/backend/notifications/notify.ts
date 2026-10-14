@@ -10,7 +10,13 @@
  */
 
 import { captureFluxoException, type Fluxo } from '../../sentry/fluxo';
+import { getAccessAttributesSnapshot } from '../db/access-attributes';
 import { readServerEnv } from '../env/runtime';
+import {
+  buildAccessAttributesPayload,
+  type AccessAttributesPayload,
+  type AccessAttributeOrigin,
+} from './access-attributes-payload';
 
 type NotificationEvent =
   | 'user.welcome'
@@ -30,7 +36,8 @@ type NotificationEvent =
 
 type MarketingEvent =
   | 'marketing.free_analysis_completed'
-  | 'marketing.payment_confirmed';
+  | 'marketing.payment_confirmed'
+  | 'marketing.access_refunded';
 
 interface NotificationPayload {
   email?: string;
@@ -69,6 +76,7 @@ interface MarketingPayload {
   source: string;
 }
 
+<<<<<<< HEAD
 /** Opt-in de marketing e avisos de expiração. O payload não vai no evento do Sentry. */
 const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>> = {
   'marketing.free_analysis_completed': 'leads',
@@ -83,6 +91,13 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
 }
 
 async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<boolean> {
+=======
+async function sendToWebhook(
+  url: string,
+  event: NotificationEvent | MarketingEvent,
+  payload: NotificationPayload | MarketingPayload | AccessAttributesPayload,
+): Promise<boolean> {
+>>>>>>> 63ac0fc (DEV-154: atributos de acesso no Brevo (2/2))
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -149,5 +164,69 @@ export async function notifyMarketing(
   }
 
   return sendToWebhook(url, event, payload);
+}
+
+export type AccessAttributesEvent = 'marketing.payment_confirmed' | 'marketing.access_refunded';
+
+/**
+ * Atributos de acesso do contato (Brevo via n8n).
+ * Mesmo envelope de `notify`: `{ event, payload, timestamp }` em N8N_WEBHOOK_MARKETING.
+ */
+export async function notifyAccessAttributes(
+  event: AccessAttributesEvent,
+  payload: AccessAttributesPayload,
+): Promise<boolean> {
+  const { url } = webhookFor(event);
+
+  if (!url) {
+    console.warn('[notifyAccessAttributes] N8N_WEBHOOK_MARKETING não configurado — evento ignorado');
+    return false;
+  }
+
+  return sendToWebhook(url, event, payload);
+}
+
+export interface PublishAccessAttributesInput {
+  event: AccessAttributesEvent;
+  origem: AccessAttributeOrigin;
+  userId: string;
+  productType: string;
+  subscription: {
+    id: string;
+    purchase_kind?: string | null;
+    amount_paid?: number | null;
+    starts_at: string;
+    ends_at: string;
+  };
+}
+
+/**
+ * Monta o snapshot e envia os atributos. Quem chama envolve em try/catch:
+ * falha de leitura ou de rede não pode desfazer o pagamento nem o reembolso.
+ */
+export async function publishAccessAttributes(input: PublishAccessAttributesInput): Promise<void> {
+  const snapshot = await getAccessAttributesSnapshot(input.userId, input.productType);
+  if (!snapshot) {
+    console.warn(`[notifyAccessAttributes] Sem e-mail para ${input.userId} — ${input.event} ignorado`);
+    return;
+  }
+
+  const payload = buildAccessAttributesPayload({
+    email: snapshot.email,
+    nomeCompleto: snapshot.nomeCompleto,
+    userId: snapshot.userId,
+    origem: input.origem,
+    productType: snapshot.productType || input.productType,
+    purchaseKind: input.subscription.purchase_kind,
+    amountPaidCents: input.subscription.amount_paid,
+    subscriptionId: input.subscription.id,
+    subscriptionStartsAt: input.subscription.starts_at,
+    subscriptionEndsAt: input.subscription.ends_at,
+    now: new Date(),
+    subscriptions: snapshot.subscriptions,
+    optIn: snapshot.optIn,
+  });
+
+  await notifyAccessAttributes(input.event, payload);
 }
 
