@@ -57,10 +57,10 @@ Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso
 | :--- | :--- | :--- |
 | `$pageview` | SDK, no init (defaults `2026-05-30` usam `capture_pageview: history_change`) | automáticas |
 | `analise_gratis_submit` | `track()` — lead do form público `/analise-gratuita` (`PublicAnalysisForm`) e o mesmo evento já existente na análise gratuita logada (`FreeAnalysisForm`) | — |
-| `begin_checkout` | `track()` nos inícios de checkout (pricing, landing, modal e botão do app) | `product_type` (`nome_social` \| `nome_bebe` \| `nome_empresa`), `value`, `currency=BRL` |
-| `purchase` | `capturePostHogPurchase` dentro de `trackPurchaseConfirmed` (webhook Stripe; Asaas legado) | `product_type`, `value`, `currency=BRL`, mais `transaction_id`, `payment_provider` e `$insert_id` para deduplicar retry |
+| `begin_checkout` | PostHog: `track()` ao abrir o checkout. GA4: `trackBeginCheckout` no POST `/api/create-checkout` | GA4: `value`, `currency=BRL`, `payment_method`. PostHog: `product_type`, `value`, `currency=BRL` |
+| `purchase` | PostHog: `capturePostHogPurchase` dentro de `trackPurchaseConfirmed`. GA4: `sendGa4Purchase` no webhook Stripe | `product_type`, `value`, `currency=BRL`, mais `transaction_id` (session id Stripe) |
 
-O wrapper `track()` continua mandando todos os eventos atuais para o GA4. Para o PostHog, só replica `analise_gratis_submit` e `begin_checkout`, traduzindo `produto`/`valor` para `product_type`/`value`. `purchase_complete` no retorno visual do app segue só no GA4; a receita no PostHog é o `purchase` do webhook.
+O wrapper `track()` continua mandando os eventos atuais para o GA4, exceto `begin_checkout`: esse evento de e-commerce sai por `trackBeginCheckout`. Para o PostHog, `track()` replica `analise_gratis_submit` e `begin_checkout`, traduzindo `produto`/`valor` para `product_type`/`value`. `purchase_complete` no retorno visual do app segue só no GA4; a receita no PostHog é o `purchase` do webhook.
 
 ### 2. Eventos Client-side Implementados
 
@@ -68,7 +68,7 @@ O wrapper `track()` continua mandando todos os eventos atuais para o GA4. Para o
 | :--- | :--- | :--- | :--- |
 | `analise_gratis_submit` | Custom | **Lead capturado**: formulário email-first submetido com sucesso em `/analise-gratuita`. PDF enviado por e-mail sem cadastro. | — |
 | `pdf_downloaded` | Custom | Disparado após o download de um PDF ser bem-sucedido na plataforma (área logada). | `produto`: `'analise_gratuita' \| 'nome_social' \| 'nome_bebe' \| 'nome_empresa'` |
-| `begin_checkout` | Padrão GA4 | Disparado no início do checkout. Auxilia nos algoritmos de Smart Bidding do Google Ads. Disparado simultaneamente com `checkout_start`. | `produto`, `valor` |
+| `begin_checkout` | Padrão GA4 | `trackBeginCheckout` no POST `/api/create-checkout` (cartão ou PIX no Stripe). Smart Bidding. O `checkout_start` continua no clique que abre o modal. | `value`, `currency=BRL`, `payment_method` |
 | `checkout_start` | Custom | Evento interno de início de checkout (mantido para série histórica). Use `begin_checkout` para relatórios GA4. | `produto`, `preco`, `promocao`, `origem` |
 | `blog_view` | Custom | Disparado ao acessar a home do blog `/blog`. | `categoria`: `'todos' \| slug_da_categoria` |
 | `blog_article_view` | Custom | Disparado ao ler um artigo individual `/blog/slug`. | `article_title`, `article_slug` |
@@ -98,12 +98,14 @@ Para evitar poluir os dados do Google Analytics com visualizações e testes fei
 
 Para receita e conversão de pagamento confirmado, a fonte da verdade é o backend:
 ```text
-Webhook Stripe -> createSubscription -> trackPurchaseConfirmed -> GA4 purchase
+Webhook Stripe -> createSubscription -> sendGa4Purchase -> GA4 purchase
 ```
 
-1. **Captura no Checkout:** Ao iniciar o checkout, o backend tenta ler o `client_id` do cookie `_ga` via `getGaClientIdFromRequest` e armazena nos metadados do Stripe ou Asaas.
-2. **Confirmação no Webhook:** Quando o pagamento é confirmado, `/api/stripe-webhook` extrai esse `client_id` e chama `trackPurchaseConfirmed` (`src/backend/analytics/ga4.ts`).
-3. **Disparo GA4 Measurement Protocol:** É enviado um POST HTTPS com o evento recomendado `purchase` direto para os servidores do Google, garantindo 100% de registro das vendas mesmo que o usuário feche o navegador após pagar.
+1. **Captura no Checkout:** Ao iniciar o checkout, o backend lê o cookie `_ga` via `getGaClientIdFromRequest` e grava o client id em `metadata.ga_client_id` da sessão Stripe.
+2. **Confirmação no Webhook:** Com `checkout.session.completed` (`payment_status=paid`) ou `checkout.session.async_payment_succeeded`, `/api/stripe-webhook` chama `sendGa4Purchase` (`src/backend/analytics/ga4-mp.ts`). Sem `ga_client_id`, o client id é um fallback derivado do session id. `trackPurchaseConfirmed` segue só para o PostHog.
+3. **Disparo GA4 Measurement Protocol:** POST para `https://www.google-analytics.com/mp/collect` com `transaction_id` = id da sessão Stripe. Sem `GA4_MEASUREMENT_ID` ou `GA4_API_SECRET`, o envio é no-op e não lança erro.
+
+O `begin_checkout` de e-commerce (`value`, `currency=BRL`, `payment_method`) sai de `trackBeginCheckout` no clique que chama `POST /api/create-checkout`, com o mesmo consentimento do GA4 (`nm-cookie-consent=all`) e o filtro de admin.
 
 ---
 
