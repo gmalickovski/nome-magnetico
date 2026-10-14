@@ -47,6 +47,8 @@ export function HeroSection() {
               <a
                 href="/analise-gratuita"
                 id="cta-hero-principal-desktop"
+                data-cta-id="analise_gratis"
+                data-cta-position="hero_desktop"
                 className="inline-block w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
                 aria-label="Descobrir a frequência do meu nome gratuitamente"
                 onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero_desktop' })}
@@ -67,6 +69,8 @@ export function HeroSection() {
           <a
             href="/analise-gratuita"
             id="cta-hero-principal-mobile"
+            data-cta-id="analise_gratis"
+            data-cta-position="hero_mobile"
             className="w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
             aria-label="Descobrir a frequência do meu nome gratuitamente"
             onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero_mobile' })}
