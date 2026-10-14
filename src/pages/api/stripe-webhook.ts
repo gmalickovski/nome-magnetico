@@ -18,6 +18,7 @@ import {
   resolveCheckoutDistinctId,
 } from '../../backend/analytics/posthog-server';
 import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
+import { parsePurchaseKind } from '../../backend/payments/renewal';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -43,6 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
       coupon_code?: string;
       ga_client_id?: string;
       ph_distinct_id?: string;
+      purchase_kind?: string;
     };
     id: string;
     payment_intent?: string | { id: string } | null;
@@ -89,6 +91,9 @@ export const POST: APIRoute = async ({ request }) => {
         properties.product_type = product;
       }
       if (plan) properties.plan = plan;
+      if (eventName === 'purchase') {
+        properties.purchase_kind = parsePurchaseKind(session.metadata?.purchase_kind);
+      }
 
       await captureServerEvent({
         distinctId,
@@ -122,14 +127,21 @@ export const POST: APIRoute = async ({ request }) => {
         ? session.payment_intent
         : session.payment_intent?.id;
 
-    await createSubscription({
+    const purchaseKind = parsePurchaseKind(session.metadata?.purchase_kind);
+    const { created } = await createSubscription({
       userId,
       productType,
       stripeSessionId: session.id,
       stripePaymentIntentId: paymentIntentId,
       amountPaid: session.amount_total ?? undefined,
       currency: session.currency ?? 'brl',
+      purchaseKind,
     });
+    // stripe_session_id é único. Retry do cartão ou do Pix não repete acesso nem purchase.
+    if (!created) {
+      console.log('[stripe-webhook] Sessão já processada:', session.id);
+      return;
+    }
     await confirmEmailAfterPayment(userId);
 
     await recordAccessCouponUse({
@@ -179,6 +191,7 @@ export const POST: APIRoute = async ({ request }) => {
       coupon,
       paymentProvider: 'stripe',
       productType,
+      purchaseKind,
     });
 
     const n8nUrl = process.env.N8N_WEBHOOK_TRANSACIONAL;
