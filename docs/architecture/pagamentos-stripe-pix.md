@@ -40,6 +40,7 @@ Quando o cliente escolhe PIX:
 1. `checkout.session.completed` pode chegar com `payment_status = unpaid` → **não liberar acesso**.
 2. Após o pagamento no banco: `checkout.session.async_payment_succeeded` → liberar.
 3. Expiração/falha: `checkout.session.async_payment_failed` → notificar.
+4. Sessão expirada sem pagamento: `checkout.session.expired` → evento `checkout_abandoned` no PostHog. Não altera acesso.
 
 ## Endpoints
 
@@ -64,6 +65,7 @@ Aplicados antes de criar a sessão (desconto local / coupon / promotion_code Str
 - `checkout.session.completed`
 - `checkout.session.async_payment_succeeded`
 - `checkout.session.async_payment_failed`
+- `checkout.session.expired`
 - `payment_intent.payment_failed`
 - `charge.refunded`
 

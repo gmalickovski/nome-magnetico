@@ -1,6 +1,5 @@
 import { createHmac } from 'node:crypto';
 import type { ProductType } from '../payments/stripe';
-import { capturePostHogPurchase } from './posthog';
 
 const GA4_COLLECT_URL = 'https://www.google-analytics.com/mp/collect';
 
@@ -49,12 +48,8 @@ export async function trackPurchaseConfirmed(params: {
   couponCode?: string | null;
   gaClientId?: string | null;
 }): Promise<void> {
-  try {
-    await capturePostHogPurchase(params);
-  } catch (err) {
-    console.error('[posthog] Erro ao enviar purchase:', err);
-  }
-
+  // Só GA4. O purchase do PostHog sai uma vez no webhook Stripe
+  // (uuid v5 + $insert_id). Não chamar capturePostHogPurchase daqui.
   const measurementId = process.env.GA4_MEASUREMENT_ID;
   const apiSecret = process.env.GA4_API_SECRET;
 
