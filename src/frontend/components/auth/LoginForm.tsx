@@ -93,7 +93,9 @@ export function LoginForm() {
         return;
       }
 
-      if (signInData.user?.id) identifyUser(signInData.user.id);
+      if (signInData.user?.id) {
+        identifyUser(signInData.user.id, signInData.user.email ?? email);
+      }
 
       // Setar cookies para que o middleware SSR encontre o token
       if (session) {

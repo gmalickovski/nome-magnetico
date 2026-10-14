@@ -16,6 +16,7 @@ import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { notify } from '../../backend/notifications/notify';
 import { logError } from '../../backend/utils/error-logger';
+import { EMAIL_CAMPAIGN_FREE_ANALYSIS, withEmailUtm } from '../../utils/utm';
 
 const schema = z.object({
   nome_completo: z.string().min(2).max(150),
@@ -432,11 +433,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
           firstName,
           userId: user.id,
           analysisId: analysis.id,
-          analysisUrl: `${appUrl}/app/resultado/${analysis.id}`,
+          analysisUrl: withEmailUtm(`${appUrl}/app/resultado/${analysis.id}`, EMAIL_CAMPAIGN_FREE_ANALYSIS),
           productType: 'nome_social',
           productName: 'Nome Social',
-          offerUrl: `${appUrl}/nome-social`,
-          checkoutUrl: `${appUrl}/auth/cadastro?produto=nome_social`,
+          offerUrl: withEmailUtm(`${appUrl}/nome-social`, EMAIL_CAMPAIGN_FREE_ANALYSIS),
+          checkoutUrl: withEmailUtm(`${appUrl}/auth/cadastro?produto=nome_social`, EMAIL_CAMPAIGN_FREE_ANALYSIS),
           score: marketingStats.score,
           nomeCompleto: nome_completo,
           bloqueios: marketingStats.bloqueios,
