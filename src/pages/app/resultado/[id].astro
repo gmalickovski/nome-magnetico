@@ -300,6 +300,22 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
     ══════════════════════════════════════════════════════════════ */}
     {!isProcessing && !isError && (
       <>
+        <script is:inline define:vars={{ analiseId: analysis.id, score: scoreGeral ?? null }}>
+          (function () {
+            var fired = false;
+            function send() {
+              if (fired) return;
+              try {
+                if (localStorage.getItem('nm-user-role') === 'admin') return;
+              } catch (e) {}
+              if (typeof window.posthog?.capture !== 'function') return;
+              fired = true;
+              window.posthog.capture('resultado_view', { analise_id: analiseId, score: score });
+            }
+            send();
+            window.addEventListener('nm-posthog-ready', send);
+          })();
+        </script>
 
         {/* ── SEÇÃO 1: HEADER / CERTIFICADO ── */}
         <section class="rounded-2xl bg-white/5 p-6 md:p-8 mb-6">
