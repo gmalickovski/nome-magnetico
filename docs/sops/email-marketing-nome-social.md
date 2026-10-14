@@ -150,3 +150,16 @@ Quando quiser preencher `{{couponBlock}}`, usar algo neste formato:
 ## Anti-abuso
 
 O cadastro bloqueia dominios descartaveis comuns em `src/backend/security/disposableEmail.ts`, incluindo `temp-mail.org`.
+
+## Sync direta com a Brevo (DEV-148)
+
+Depois que a analise gratis fica `complete`, `src/pages/api/analyze.ts` chama `syncFreeAnalysisToBrevo` (`src/backend/brevo/sync-free-analysis.ts`). O upsert e `POST https://api.brevo.com/v3/contacts` com `updateEnabled: true` (idempotente por e-mail). Atributos: `NOME`, `ANALISE_DATA` (`YYYY-MM-DD`), `SCORE`, `ANALISE_ID`. A lista e `BREVO_FREE_LIST_ID`.
+
+O score gravado no contato e o mesmo ja persistido em `public.analyses.score` no momento do calculo. A coluna e integer nullable (migration `008`, reforcada de forma idempotente em `037_analyses_score_nullable.sql`).
+
+Consentimento LGPD: o formulario da analise gratis e `POST /api/save-lead` (`analise_leads`) nao tem campo de marketing. A sync so ocorre quando o body de `POST /api/analyze` traz `marketing_consent === true`. Sem esse booleano, ou sem `BREVO_API_KEY` / `BREVO_FREE_LIST_ID`, a chamada e no-op. Timeout curto; erro da Brevo nao altera o status da analise.
+
+```bash
+BREVO_API_KEY=
+BREVO_FREE_LIST_ID=
+```
