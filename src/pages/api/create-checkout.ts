@@ -168,6 +168,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       couponId,
       promotionCodeId,
       couponCode: couponCode?.trim(),
+      // Cookie _ga vira metadata.ga_client_id (client_id do Measurement Protocol).
       gaClientId: getGaClientIdFromRequest(request),
     });
 
