@@ -10,7 +10,8 @@
  *
  * PostHog (em paralelo, taxonomia Growth): $pageview via SDK, analise_gratis_submit,
  * begin_checkout (payment_method, value, currency) no POST /api/create-checkout,
- * cta_click, scroll_depth, resultado_view, view_offer e purchase server-side.
+ * cta_click, scroll_depth, resultado_view, view_offer e purchase uma vez no webhook Stripe
+ * (uuid v5 + $insert_id). O distinct_id do browser vai no body do create-checkout.
  * O GA4 não muda.
  *
  * NOTA: preliminary_analysis_submit foi removido do fluxo principal em jun/2026.
@@ -148,7 +149,20 @@ export function track(event: AnalyticsEvent, data?: EventData): void {
   } catch {}
 }
 
-/** Liga o navegador anônimo ao id do Supabase, o mesmo distinct_id do purchase server-side. */
+/** distinct_id atual do PostHog, enviado ao criar a sessão Stripe. */
+export function getPostHogDistinctId(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const raw = window.posthog?.get_distinct_id?.();
+    if (typeof raw !== 'string') return undefined;
+    const trimmed = raw.trim();
+    return trimmed ? trimmed.slice(0, 200) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Liga o navegador anônimo ao id do Supabase. O purchase do webhook usa o distinct_id gravado no checkout. */
 export function identifyUser(userId: string, email?: string | null): void {
   if (typeof window === 'undefined' || !userId || isAdminBrowser()) return;
   try {
@@ -186,6 +200,7 @@ declare global {
       ) => void;
       reset: () => void;
       startSessionRecording?: () => void;
+      get_distinct_id?: () => string;
     };
   }
 }
