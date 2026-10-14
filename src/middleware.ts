@@ -87,6 +87,11 @@ function redirectToPublic(context: APIContext): Response {
   return Response.redirect(target.toString(), 302);
 }
 
+function appLoginRedirect(context: APIContext): Response {
+  const nextPath = context.url.pathname + context.url.search;
+  return context.redirect('/auth/login?redirect=' + encodeURIComponent(nextPath));
+}
+
 function loginRedirect(context: APIContext, publicPath: string): Response {
   const url = new URL('/login', context.url);
   const next = safeOpsRedirect(publicPath);
@@ -196,7 +201,7 @@ async function handlePublicHost(context: APIContext, next: MiddlewareNext): Prom
 
   if (!accessToken) {
     if (pathname.startsWith('/app')) {
-      return context.redirect('/auth/login?redirect=' + encodeURIComponent(pathname));
+      return appLoginRedirect(context);
     }
     return next();
   }
@@ -207,7 +212,7 @@ async function handlePublicHost(context: APIContext, next: MiddlewareNext): Prom
     if (error || !user) {
       clearAuthCookies(context);
       if (pathname.startsWith('/app')) {
-        return context.redirect('/auth/login');
+        return appLoginRedirect(context);
       }
       return next();
     }
@@ -225,7 +230,7 @@ async function handlePublicHost(context: APIContext, next: MiddlewareNext): Prom
     context.locals.accessToken = accessToken;
   } catch {
     if (pathname.startsWith('/app')) {
-      return context.redirect('/auth/login');
+      return appLoginRedirect(context);
     }
   }
 
