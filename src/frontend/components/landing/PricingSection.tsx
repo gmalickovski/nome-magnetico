@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { track } from '../../lib/analytics';
+import { getPostHogDistinctId, track } from '../../lib/analytics';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
@@ -156,7 +156,11 @@ export function PricingSection({
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_type: type, couponCode }),
+        body: JSON.stringify({
+          product_type: type,
+          couponCode,
+          ph_distinct_id: getPostHogDistinctId(),
+        }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Erro ao criar checkout');

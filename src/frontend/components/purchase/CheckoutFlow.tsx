@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { track } from '../../lib/analytics';
+import { getPostHogDistinctId, track } from '../../lib/analytics';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -123,6 +123,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         body: JSON.stringify({
           product_type: type,
           couponCode: effectiveCoupon ?? undefined,
+          ph_distinct_id: getPostHogDistinctId(),
         }),
       });
       const data = await res.json();
