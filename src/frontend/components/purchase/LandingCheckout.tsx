@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from './CheckoutModal';
-import { getPostHogDistinctId, track } from '../../lib/analytics';
+import { captureBeginCheckout, track } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -14,6 +14,8 @@ interface Props {
   label?: string;
   variant?: 'primary' | 'secondary';
   className?: string;
+  ctaId?: string;
+  ctaPosition?: string;
 }
 
 export function LandingCheckout({
@@ -24,6 +26,8 @@ export function LandingCheckout({
   label,
   variant = 'primary',
   className,
+  ctaId,
+  ctaPosition,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -76,14 +80,11 @@ export function LandingCheckout({
         codigo_cupom: couponCode,
         origem: 'landing',
       });
+      captureBeginCheckout('card', priceInfo.cents / 100);
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product_type: type,
-          couponCode,
-          ph_distinct_id: getPostHogDistinctId(),
-        }),
+        body: JSON.stringify({ product_type: type, couponCode }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? 'Erro ao criar checkout');
@@ -105,7 +106,13 @@ export function LandingCheckout({
 
   return (
     <>
-      <button onClick={handleClick} className={className ?? defaultCls}>
+      <button
+        type="button"
+        onClick={handleClick}
+        className={className ?? defaultCls}
+        data-cta-id={ctaId ?? `checkout_${product}`}
+        data-cta-position={ctaPosition ?? 'checkout'}
+      >
         {label ?? 'Comprar Agora'}
       </button>
 
