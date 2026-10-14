@@ -61,26 +61,24 @@ comprou_nome_social
 
 O app envia o evento:
 
+O app so dispara este evento quando `opt_in` e true.
+
 ```json
 {
   "event": "marketing.free_analysis_completed",
   "payload": {
     "email": "cliente@email.com",
-    "firstName": "Cliente",
-    "userId": "uuid",
-    "analysisId": "uuid",
-    "analysisUrl": "https://nomemagnetico.com.br/app/resultado/uuid",
-    "productType": "nome_social",
-    "productName": "Nome Social",
-    "offerUrl": "https://nomemagnetico.com.br/nome-social",
-    "checkoutUrl": "https://nomemagnetico.com.br/auth/cadastro?produto=nome_social",
+    "nome": "Cliente",
+    "sobrenome": "da Silva",
+    "analise_data": "2026-10-14",
+    "analise_id": "uuid",
     "score": 72,
-    "nomeCompleto": "Nome do Cliente",
-    "bloqueios": 2,
-    "licoesCarmicas": 1,
-    "tendenciasOcultas": 3,
-    "debitosCarmicos": 1,
-    "source": "free_analysis_completed"
+    "origem": "analise_gratis",
+    "opt_in": true,
+    "opt_in_data": "2026-10-14T18:04:05.000Z",
+    "utm_source": "instagram",
+    "utm_medium": "cpc",
+    "utm_campaign": "analise-gratis"
   }
 }
 ```
@@ -95,9 +93,8 @@ O app envia o evento:
    - Continuar apenas se `event == marketing.free_analysis_completed`.
 
 3. Normalizar payload
-   - Mapear `payload.firstName` para `first_name`.
-   - Mapear `payload.nomeCompleto` para `nome_completo`.
-   - Mapear URLs, score e contadores numerologicos.
+   - Mapear `payload.nome` para `first_name` e `payload.sobrenome` para o sobrenome.
+   - Mapear `payload.score`, `payload.analise_id`, `payload.analise_data` e os UTMs.
 
 4. Criar ou atualizar subscriber no MailerLite
    - Email: `payload.email`

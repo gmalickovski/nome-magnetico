@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts"
+    "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts src/backend/notifications/free-analysis-payload.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

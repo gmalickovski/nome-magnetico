@@ -30,6 +30,8 @@ export interface Analysis {
   frequencias_numeros: unknown | null;
   analise_texto: string | null;
   score: number | null;
+  opt_in: boolean;
+  opt_in_data: string | null;
   status: AnalysisStatus;
   is_free: boolean;
   is_analyst_generated: boolean;
@@ -91,18 +93,29 @@ export async function createAnalysis(params: {
   nomeCompleto: string;
   dataNascimento: string;
   isFree?: boolean;
+  /** Consentimento de marketing. Só grave na análise grátis. */
+  optIn?: boolean;
+  /** ISO do consentimento. Obrigatório quando optIn é true; null caso contrário. */
+  optInData?: string | null;
 }): Promise<Analysis> {
+  const row: Record<string, unknown> = {
+    user_id: params.userId,
+    product_type: params.productType,
+    nome_completo: params.nomeCompleto,
+    data_nascimento: toISODate(params.dataNascimento),
+    status: 'pending',
+    is_free: params.isFree ?? false,
+  };
+
+  if (typeof params.optIn === 'boolean') {
+    row.opt_in = params.optIn;
+    row.opt_in_data = params.optIn ? params.optInData ?? new Date().toISOString() : null;
+  }
+
   const { data, error } = await supabase
 
     .from('analyses')
-    .insert({
-      user_id: params.userId,
-      product_type: params.productType,
-      nome_completo: params.nomeCompleto,
-      data_nascimento: toISODate(params.dataNascimento),
-      status: 'pending',
-      is_free: params.isFree ?? false,
-    })
+    .insert(row)
     .select()
     .single();
 

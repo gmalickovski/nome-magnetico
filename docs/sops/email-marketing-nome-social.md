@@ -6,26 +6,24 @@ Converter usuarios que concluiram a analise gratuita para o produto Nome Social 
 
 ## Evento do app
 
-Quando uma analise gratuita termina com sucesso, `src/pages/api/analyze.ts` dispara:
+Quando uma analise gratuita termina com sucesso e a pessoa marcou o opt-in (`opt_in === true`), `src/pages/api/analyze.ts` dispara o evento abaixo. Sem opt-in o webhook nao e chamado. A falha do webhook nao altera a resposta nem o status da analise. O n8n mapeia `payload.nome` para o primeiro nome dos templates.
 
 ```json
 {
   "event": "marketing.free_analysis_completed",
   "payload": {
     "email": "cliente@email.com",
-    "firstName": "Cliente",
-    "analysisId": "uuid",
-    "analysisUrl": "https://nomemagnetico.com.br/app/resultado/uuid",
-    "productType": "nome_social",
-    "productName": "Nome Social",
-    "offerUrl": "https://nomemagnetico.com.br/nome-social",
-    "checkoutUrl": "https://nomemagnetico.com.br/auth/cadastro?produto=nome_social",
+    "nome": "Cliente",
+    "sobrenome": "da Silva",
+    "analise_data": "2026-10-14",
+    "analise_id": "uuid",
     "score": 72,
-    "bloqueios": 2,
-    "licoesCarmicas": 1,
-    "tendenciasOcultas": 3,
-    "debitosCarmicos": 1,
-    "source": "free_analysis_completed"
+    "origem": "analise_gratis",
+    "opt_in": true,
+    "opt_in_data": "2026-10-14T18:04:05.000Z",
+    "utm_source": "instagram",
+    "utm_medium": "cpc",
+    "utm_campaign": "analise-gratis"
   }
 }
 ```
@@ -50,7 +48,7 @@ O workflow base para importar/adaptar esta em `n8n_workflows/workflow-email-mark
 
 Substituicoes minimas:
 
-- `{{firstName}}` -> `payload.firstName`
+- `{{firstName}}` -> `payload.nome`
 - `{{analysisUrl}}` -> `payload.analysisUrl`
 - `{{checkoutUrl}}` -> `payload.checkoutUrl`
 - `{{score}}` -> `payload.score`
@@ -113,7 +111,7 @@ Para checar compra antes dos passos 2 e 3, o n8n deve consultar `subscriptions` 
    - Condicao: `event == marketing.free_analysis_completed`
 
 3. Normalizar payload
-   - Extrair `payload.email`, `payload.firstName`, `payload.userId`, `payload.analysisUrl`, `payload.checkoutUrl`, diagnostico e produto.
+   - Extrair `payload.email`, `payload.nome`, `payload.sobrenome`, `payload.analise_id`, `payload.score`, `payload.origem` e os UTMs.
    - Criar `unsubscribeUrl` se houver sistema de descadastro.
    - Criar `couponBlock` vazio no primeiro envio, ou preenchido se o HQ ja devolver cupom.
 
