@@ -9,9 +9,7 @@
  *   → purchase               (server-side Measurement Protocol — fonte de verdade de receita)
  *
  * PostHog (em paralelo, taxonomia Growth): $pageview via SDK, analise_gratis_submit,
- * begin_checkout (payment_method, value, currency) no POST /api/create-checkout,
- * cta_click, scroll_depth, resultado_view, view_offer e purchase server-side.
- * O GA4 não muda.
+ * begin_checkout (product_type, value, currency) e purchase server-side. O GA4 não muda.
  *
  * NOTA: preliminary_analysis_submit foi removido do fluxo principal em jun/2026.
  * O antigo fluxo de "preview + criação de conta" foi substituído pelo fluxo email-first.
@@ -76,9 +74,7 @@ interface EventData {
   [key: string]: unknown;
 }
 
-const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>(['analise_gratis_submit']);
-
-export type CheckoutPaymentMethod = 'card' | 'pix';
+const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>(['analise_gratis_submit', 'begin_checkout']);
 
 function isAdminBrowser(): boolean {
   try {
@@ -88,49 +84,27 @@ function isAdminBrowser(): boolean {
   }
 }
 
-function capturePostHog(event: AnalyticsEvent): void {
+function posthogCheckoutProps(data?: EventData): Record<string, unknown> {
+  const produto = data?.produto;
+  const productType =
+    produto === 'nome_social' ? produto : undefined;
+
+  const props: Record<string, unknown> = { currency: 'BRL' };
+  if (productType) props.product_type = productType;
+  if (typeof data?.valor === 'number') props.value = data.valor;
+  return props;
+}
+
+function capturePostHog(event: AnalyticsEvent, data?: EventData): void {
   if (!POSTHOG_CLIENT_EVENTS.has(event)) return;
-  capturePostHogEvent(event);
-}
+  if (!window.__nm_posthog_ready || typeof window.posthog?.capture !== 'function') return;
 
-/** Envia evento ao PostHog só se o SDK (ou o stub pós-consentimento) existir. */
-export function capturePostHogEvent(event: string, properties?: Record<string, unknown>): void {
-  if (typeof window === 'undefined' || isAdminBrowser()) return;
-  try {
-    window.posthog?.capture?.(event, properties);
-  } catch {
-    // analytics não pode quebrar a UI
+  if (event === 'begin_checkout') {
+    window.posthog.capture(event, posthogCheckoutProps(data));
+    return;
   }
-}
 
-/** Início real do checkout, no POST /api/create-checkout. */
-export function captureBeginCheckout(paymentMethod: CheckoutPaymentMethod, value: number): void {
-  capturePostHogEvent('begin_checkout', {
-    payment_method: paymentMethod,
-    value,
-    currency: 'BRL',
-  });
-}
-
-/** Oferta/preço exibido. Uma vez por pageview. */
-export function captureViewOffer(): void {
-  if (typeof window === 'undefined' || window.__nm_view_offer_fired || isAdminBrowser()) return;
-
-  const send = () => {
-    if (window.__nm_view_offer_fired || isAdminBrowser()) return;
-    if (typeof window.posthog?.capture !== 'function') return;
-    window.__nm_view_offer_fired = true;
-    try {
-      window.posthog.capture('view_offer');
-    } catch {
-      window.__nm_view_offer_fired = false;
-    }
-  };
-
-  send();
-  if (!window.__nm_view_offer_fired) {
-    window.addEventListener('nm-posthog-ready', send, { once: true });
-  }
+  window.posthog.capture(event);
 }
 
 export function track(event: AnalyticsEvent, data?: EventData): void {
@@ -144,23 +118,26 @@ export function track(event: AnalyticsEvent, data?: EventData): void {
   } catch {}
 
   try {
-    capturePostHog(event);
+    capturePostHog(event, data);
   } catch {}
 }
 
 /** Liga o navegador anônimo ao id do Supabase, o mesmo distinct_id do purchase server-side. */
-export function identifyUser(userId: string): void {
+export function identifyUser(userId: string, email?: string | null): void {
   if (typeof window === 'undefined' || !userId || isAdminBrowser()) return;
   try {
-    if (window.__nm_posthog_ready && typeof window.posthog?.identify === 'function') {
-      window.posthog.identify(userId);
+    if (typeof window.nmIdentifyPostHog === 'function') {
+      window.nmIdentifyPostHog(userId, email ?? undefined);
+      return;
     }
+    window.__nm_pending_identify = { userId, email: email ?? '' };
   } catch {}
 }
 
 export function resetAnalytics(): void {
   if (typeof window === 'undefined') return;
   try {
+    window.__nm_pending_identify = undefined;
     window.posthog?.reset?.();
   } catch {}
 }
@@ -170,12 +147,17 @@ declare global {
     gtag?: (command: string, action: string | Date, params?: Record<string, unknown>) => void;
     dataLayer?: unknown[];
     __nm_posthog_ready?: boolean;
-    __nm_posthog_events?: boolean;
-    __nm_view_offer_fired?: boolean;
+    __nm_pending_identify?: { userId: string; email?: string };
+    nmIdentifyPostHog?: (userId: string, email?: string) => void;
     posthog?: {
-      capture?: (event: string, properties?: Record<string, unknown>) => void;
-      identify?: (distinctId: string) => void;
-      reset?: () => void;
+      capture: (event: string, properties?: Record<string, unknown>) => void;
+      identify: (
+        distinctId: string,
+        properties?: Record<string, unknown>,
+        propertiesSetOnce?: Record<string, unknown>,
+      ) => void;
+      reset: () => void;
+      startSessionRecording?: () => void;
     };
   }
 }
