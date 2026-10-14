@@ -49,7 +49,10 @@ Fonte de funil para Growth. O GA4 continua para Ads, Search Console e remarketin
 - **Liga só com** `PUBLIC_POSTHOG_KEY`. Host: `PUBLIC_POSTHOG_HOST` (padrão `https://us.i.posthog.com`). As duas variáveis são lidas em runtime (`process.env`), no mesmo padrão do GA4, para a VPS injetar o `.env` sem rebuild.
 - **Consentimento:** o mesmo banner (`nm-cookie-consent=all`). Sem aceite, o SDK não inicializa.
 - **Projeto:** `639826` (US Cloud). `defaults: '2026-05-30'`.
-- **Pessoa:** no login e nas páginas `/app` de quem não é admin, `posthog.identify(userId)` usa o id do Supabase. O `purchase` server-side usa o mesmo `distinct_id`. Logout chama `posthog.reset()`.
+- **Pessoa:** no login, no cadastro bem-sucedido e na sessão das páginas `/app` de quem não é admin, `posthog.identify(user.id, { email })` usa o id do Supabase. O `purchase` server-side usa o mesmo `distinct_id`. Logout chama `posthog.reset()`.
+- **UTM first-touch:** `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` e `utm_term` da primeira URL ficam em `localStorage` (`nm-utm-first-touch`) só se a chave ainda não existir. No `identify`, vão como `$set_once` com prefixo `initial_` (`initial_utm_source`, etc.). O envio continua atrás do consentimento.
+- **Pathname:** `before_send` reescreve `/app/resultado/<id>` para `/app/resultado/:id` em `$pathname` (e no path de `$current_url`) para agrupar os relatórios.
+- **Session replay:** `disable_session_recording` fica `false`. Depois de `nm-cookie-consent=all`, o init chama `posthog.startSessionRecording()` com `session_recording.maskAllInputs: true`. Sem consentimento o SDK não sobe.
 
 Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso continua sendo só a tabela):
 
