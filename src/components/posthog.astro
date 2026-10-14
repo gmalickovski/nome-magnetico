@@ -132,3 +132,72 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
     loadPostHog();
   });
 </script>
+
+<script is:inline>
+  (function () {
+    if (window.__nm_posthog_events) return;
+    window.__nm_posthog_events = true;
+
+    function isAdmin() {
+      try {
+        return localStorage.getItem('nm-user-role') === 'admin';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function capture(event, properties) {
+      if (isAdmin()) return false;
+      if (typeof window.posthog?.capture !== 'function') return false;
+      window.posthog.capture(event, properties);
+      return true;
+    }
+
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!target || !target.closest) return;
+      var el = target.closest('[data-cta-id]');
+      if (!el) return;
+      var ctaId = el.getAttribute('data-cta-id');
+      if (!ctaId) return;
+      capture('cta_click', {
+        cta_id: ctaId,
+        position: el.getAttribute('data-cta-position') || '',
+      });
+    });
+
+    function pagePath() {
+      var path = window.location.pathname || '/';
+      if (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
+      return path;
+    }
+
+    var path = pagePath();
+    if (path === '/' || path === '/nome-social') {
+      var fired = { 25: false, 50: false, 75: false, 100: false };
+      var marks = [25, 50, 75, 100];
+
+      function scrollPercent() {
+        var doc = document.documentElement;
+        var scrollTop = window.scrollY || doc.scrollTop || 0;
+        var height = (doc.scrollHeight || 0) - window.innerHeight;
+        if (height <= 0) return 100;
+        return Math.min(100, (scrollTop / height) * 100);
+      }
+
+      function onScroll() {
+        var pct = scrollPercent();
+        for (var i = 0; i < marks.length; i++) {
+          var mark = marks[i];
+          if (fired[mark] || pct < mark) continue;
+          if (capture('scroll_depth', { percent: mark, path: pagePath() })) fired[mark] = true;
+        }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('nm-posthog-ready', onScroll);
+      if (document.readyState === 'complete') onScroll();
+      else window.addEventListener('load', onScroll);
+    }
+  })();
+</script>
