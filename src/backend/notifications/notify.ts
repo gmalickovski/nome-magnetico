@@ -4,12 +4,16 @@
  *
  * Roteamento:
  *   marketing.* → N8N_WEBHOOK_MARKETING
- *   demais eventos → N8N_WEBHOOK_TRANSACIONAL
+ *   demais eventos (incluindo access.lifecycle) → N8N_WEBHOOK_TRANSACIONAL
  *
  * Erros do sistema → tabela Supabase `error_logs` via error-logger.ts
  */
 
+<<<<<<< HEAD
 import { captureFluxoException, type Fluxo } from '../../sentry/fluxo';
+=======
+import { readServerEnv } from '../env/runtime';
+>>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
 
 type NotificationEvent =
   | 'user.welcome'
@@ -20,6 +24,7 @@ type NotificationEvent =
   | 'payment.failed'
   | 'subscription.expiring_soon'
   | 'subscription.expired'
+  | 'access.lifecycle'
   | 'admin.new_user'
   | 'admin.new_payment'
   | 'payment.refunded'
@@ -67,6 +72,7 @@ interface MarketingPayload {
   source: string;
 }
 
+<<<<<<< HEAD
 /** Opt-in de marketing e avisos de expiração. O payload não vai no evento do Sentry. */
 const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>> = {
   'marketing.free_analysis_completed': 'leads',
@@ -81,6 +87,9 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
 }
 
 async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<void> {
+=======
+async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<boolean> {
+>>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -94,34 +103,46 @@ async function sendToWebhook(url: string, event: NotificationEvent | MarketingEv
 
     if (!response.ok) {
       console.error(`[notify] Falha ao enviar evento ${event}: ${response.status}`);
+<<<<<<< HEAD
       reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
+=======
+      return false;
+>>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
     }
+    return true;
   } catch (err) {
     console.error(`[notify] Erro ao enviar evento ${event}:`, err);
+<<<<<<< HEAD
     // Mensagem genérica: o erro do fetch pode trazer a URL do webhook.
     reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
+=======
+    return false;
+>>>>>>> bb2de32 (DEV-152: rota lifecycle e segredo interno em runtime (2/3))
   }
+}
+
+function webhookFor(event: string): { url: string | undefined; envName: string } {
+  const isMarketing = event.startsWith('marketing.');
+  const envName = isMarketing ? 'N8N_WEBHOOK_MARKETING' : 'N8N_WEBHOOK_TRANSACIONAL';
+  return { url: readServerEnv(envName), envName };
 }
 
 /**
  * Envia um evento transacional para o n8n (emails de sistema).
  */
+/** true só quando o webhook aceitou o evento. Sem URL ou com falha de rede, false. */
 export async function notify(
   event: NotificationEvent,
   payload: NotificationPayload
-): Promise<void> {
-  const isMarketing = event.startsWith('marketing.');
-  const webhookUrl = isMarketing
-    ? process.env.N8N_WEBHOOK_MARKETING
-    : process.env.N8N_WEBHOOK_TRANSACIONAL;
+): Promise<boolean> {
+  const { url, envName } = webhookFor(event);
 
-  if (!webhookUrl) {
-    const envName = isMarketing ? 'N8N_WEBHOOK_MARKETING' : 'N8N_WEBHOOK_TRANSACIONAL';
+  if (!url) {
     console.warn(`[notify] ${envName} não configurado — notificação ignorada`);
-    return;
+    return false;
   }
 
-  await sendToWebhook(webhookUrl, event, payload);
+  return sendToWebhook(url, event, payload);
 }
 
 /**
@@ -132,14 +153,14 @@ export async function notify(
 export async function notifyMarketing(
   event: MarketingEvent,
   payload: MarketingPayload
-): Promise<void> {
-  const webhookUrl = process.env.N8N_WEBHOOK_MARKETING;
+): Promise<boolean> {
+  const { url } = webhookFor(event);
 
-  if (!webhookUrl) {
+  if (!url) {
     console.warn('[notifyMarketing] N8N_WEBHOOK_MARKETING não configurado — evento ignorado');
-    return;
+    return false;
   }
 
-  await sendToWebhook(webhookUrl, event, payload);
+  return sendToWebhook(url, event, payload);
 }
 

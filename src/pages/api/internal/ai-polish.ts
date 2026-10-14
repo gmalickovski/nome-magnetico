@@ -10,6 +10,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { generateSupportPolish } from '../../../backend/ai/brain';
+import { authorizeInternalRequest } from '../../../backend/env/internal-auth';
 
 const schema = z.object({
   mensagem: z.string().min(1).max(4000),
@@ -17,9 +18,9 @@ const schema = z.object({
 });
 
 export const POST: APIRoute = async ({ request }) => {
-  const secret = process.env.INTERNAL_API_SECRET;
-  if (!secret || request.headers.get('X-Internal-Secret') !== secret) {
-    return json({ error: 'Unauthorized' }, 401);
+  const auth = authorizeInternalRequest(request.headers.get('X-Internal-Secret'));
+  if (!auth.ok) {
+    return json({ error: auth.error }, auth.status);
   }
 
   let body: unknown;
