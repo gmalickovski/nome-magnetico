@@ -16,6 +16,7 @@ import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { notify } from '../../backend/notifications/notify';
 import { logError } from '../../backend/utils/error-logger';
+import { syncFreeAnalysisToBrevo } from '../../backend/brevo/sync-free-analysis';
 
 const schema = z.object({
   nome_completo: z.string().min(2).max(150),
@@ -36,6 +37,8 @@ const schema = z.object({
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
   gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
+  // LGPD: não há opt-in no formulário nem em save-lead. A sync Brevo só roda se isto for true.
+  marketing_consent: z.boolean().optional(),
 });
 
 const AI_TIMEOUT_MS = 75_000;
@@ -134,6 +137,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     nome_ja_escolhido,
     is_free,
     gender: inputGender,
+    marketing_consent,
   } = parsed.data;
 
   const { data: profile } = await supabase
@@ -445,6 +449,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
           debitosCarmicos: marketingStats.debitosCarmicos,
           source: 'free_analysis_completed',
         });
+
+        // Fora do notify: falha da Brevo não pode marcar a análise como erro.
+        try {
+          await syncFreeAnalysisToBrevo({
+            email: profile?.email || user.email || '',
+            nome: profile?.nome || nome_completo,
+            analiseData: new Date(),
+            score: marketingStats.score,
+            analiseId: analysis.id,
+            marketingConsent: marketing_consent === true,
+          });
+        } catch (syncError) {
+          console.warn(
+            '[analyze] sync Brevo ignorada:',
+            syncError instanceof Error ? syncError.message : syncError,
+          );
+        }
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
