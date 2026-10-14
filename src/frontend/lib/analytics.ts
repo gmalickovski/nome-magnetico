@@ -5,7 +5,7 @@
  *   sessão
  *   → analise_gratis_submit  (form /analise-gratuita: nome + data + email → envia PDF por e-mail, sem cadastro)
  *   → pdf_downloaded         (usuário baixa PDF pela área logada, se criar conta depois)
- *   → begin_checkout         (padrão GA4 e-commerce — alimenta Smart Bidding)
+ *   → begin_checkout         (trackBeginCheckout no POST /api/create-checkout — Smart Bidding)
  *   → purchase               (server-side Measurement Protocol — fonte de verdade de receita)
  *
  * PostHog (em paralelo, taxonomia Growth): $pageview via SDK, analise_gratis_submit,
@@ -134,12 +134,42 @@ export function captureViewOffer(): void {
   }
 }
 
+function hasGa4Consent(): boolean {
+  try {
+    return window.localStorage?.getItem('nm-cookie-consent') === 'all';
+  } catch {
+    return false;
+  }
+}
+
+/** begin_checkout padrão GA4 (value, currency, payment_method). Consentimento igual ao gtag do layout. */
+export function trackBeginCheckout(params: {
+  value: number;
+  currency?: 'BRL';
+  payment_method: string;
+}): void {
+  if (typeof window === 'undefined') return;
+  if (isAdminBrowser()) return;
+  if (!hasGa4Consent()) return;
+
+  try {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'begin_checkout', {
+        value: params.value,
+        currency: params.currency ?? 'BRL',
+        payment_method: params.payment_method,
+      });
+    }
+  } catch {}
+}
+
 export function track(event: AnalyticsEvent, data?: EventData): void {
   if (typeof window === 'undefined') return;
   if (isAdminBrowser()) return;
 
   try {
-    if (typeof window.gtag === 'function') {
+    // O begin_checkout de e-commerce sai só por trackBeginCheckout, no POST /api/create-checkout.
+    if (event !== 'begin_checkout' && typeof window.gtag === 'function') {
       window.gtag('event', event, data);
     }
   } catch {}

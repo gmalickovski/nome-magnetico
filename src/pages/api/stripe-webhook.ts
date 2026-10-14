@@ -17,6 +17,7 @@ import {
   posthogEventUuid,
   resolveCheckoutDistinctId,
 } from '../../backend/analytics/posthog-server';
+import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -152,6 +153,33 @@ export const POST: APIRoute = async ({ request }) => {
     if (paymentMethod) {
       await captureCheckoutPostHog('purchase', session, paymentMethod);
     }
+
+    const purchaseValue =
+      !session.amount_total || session.amount_total <= 0
+        ? 0
+        : Number((session.amount_total / 100).toFixed(2));
+    const coupon = session.metadata?.coupon_code?.trim() || undefined;
+    await sendGa4Purchase({
+      clientId: resolveGaClientId(session.id, session.metadata?.ga_client_id),
+      transactionId: session.id,
+      value: purchaseValue,
+      currency: (session.currency || 'brl').toUpperCase(),
+      items: [
+        {
+          item_id: productType,
+          item_name: PRODUCT_NAMES[productType] ?? productType,
+          item_brand: 'Nome Magnetico',
+          item_category: 'Numerologia cabalistica',
+          price: purchaseValue,
+          quantity: 1,
+          coupon,
+        },
+      ],
+      userId,
+      coupon,
+      paymentProvider: 'stripe',
+      productType,
+    });
 
     const n8nUrl = process.env.N8N_WEBHOOK_TRANSACIONAL;
     if (n8nUrl) {
