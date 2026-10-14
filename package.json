@@ -8,7 +8,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+<<<<<<< HEAD
     "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts src/backend/payments/renewal.test.ts src/utils/utm.test.ts src/utils/public-url.test.ts src/backend/analytics/posthog-server.test.ts src/backend/analytics/ga4-mp.test.ts src/backend/notifications/free-analysis-payload.test.ts src/backend/marketing/free-analysis-completed.test.ts src/backend/marketing/public-free-analysis-route.test.ts src/sentry/filters.test.ts src/sentry/fluxo.test.ts src/backend/public-free-analysis/guards.test.ts src/backend/public-free-analysis/rate-limit.test.ts src/backend/public-free-analysis/email-lead-guard.test.ts src/backend/public-free-analysis/preflight.test.ts"
+=======
+    "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts src/backend/payments/renewal.test.ts src/utils/utm.test.ts src/utils/public-url.test.ts src/backend/analytics/posthog-server.test.ts src/backend/analytics/ga4-mp.test.ts src/backend/notifications/free-analysis-payload.test.ts src/sentry/filters.test.ts src/sentry/fluxo.test.ts src/backend/public-free-analysis/guards.test.ts src/backend/public-free-analysis/rate-limit.test.ts src/backend/public-free-analysis/email-lead-guard.test.ts src/backend/public-free-analysis/preflight.test.ts src/backend/lifecycle/access-lifecycle.test.ts src/backend/env/internal-auth.test.ts"
+>>>>>>> 742f82d (DEV-152: rota lifecycle e segredo interno em runtime (1/3))
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
