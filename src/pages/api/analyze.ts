@@ -18,6 +18,7 @@ import { notify } from '../../backend/notifications/notify';
 import { buildFreeAnalysisMarketingPayload } from '../../backend/notifications/free-analysis-payload';
 import { logError } from '../../backend/utils/error-logger';
 import { EMAIL_CAMPAIGN_FREE_ANALYSIS, withEmailUtm } from '../../utils/utm';
+import { captureFluxoException } from '../../sentry/fluxo';
 
 const utmSchema = z
   .string()
@@ -493,6 +494,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           }
         } catch (marketingErr) {
           console.error('[analyze] falha ao notificar marketing da análise grátis:', marketingErr);
+          captureFluxoException('leads', marketingErr);
         }
       }
     } catch (err) {
@@ -500,6 +502,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const isQuota = errMsg.includes('QUOTA_EXCEEDED');
       const isTimeout = errMsg.includes('AI_TIMEOUT');
       console.error('[analyze] Erro ao processar:', isQuota ? 'QUOTA_EXCEEDED (Groq + OpenAI)' : err);
+      if (isGratuita) captureFluxoException('resultado_gratis', err);
 
       const friendlyMessage = isQuota || isTimeout
         ? 'Nosso sistema de análise está com alta demanda agora. Por favor, tente novamente em alguns minutos. 🙏'
