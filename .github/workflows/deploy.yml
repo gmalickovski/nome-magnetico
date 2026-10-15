@@ -22,6 +22,8 @@ jobs:
         env:
           # Source maps só sobem se o secret existir. Sem token o build segue e o SDK
           # continua reportando erros (stack minificada até o token ser criado).
+          # A tag do deploy (vX.Y.Z) vira o nome do release no upload, quando houver token.
+          SENTRY_RELEASE: ${{ github.ref_name }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: studio-mlk
           SENTRY_PROJECT: nome-magnetico
@@ -58,5 +60,8 @@ jobs:
             # Restart completo — reinicia todos os workers de uma vez (1-2s downtime).
             # Garante que TODOS os workers carregam o novo código.
             # Fallback para start se o processo ainda não existir (primeiro deploy).
+            # dotenv no start.mjs não sobrescreve variável já definida.
+            # O export vale para o restart (--update-env) e para o pm2 start de fallback.
+            export SENTRY_RELEASE="${{ github.ref_name }}"
             pm2 restart ecosystem.config.cjs --update-env 2>/dev/null || pm2 start ecosystem.config.cjs
             pm2 save
