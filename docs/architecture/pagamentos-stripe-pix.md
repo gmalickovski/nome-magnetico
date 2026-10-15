@@ -74,3 +74,21 @@ Aplicados antes de criar a sessão (desconto local / coupon / promotion_code Str
 - Remover `ASAAS_*` do ambiente quando não houver cobranças Asaas pendentes.
 - Manter `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` e `STRIPE_PRODUCT_*`.
 - Ligar/desligar PIX/cartão pelo Dashboard, sem deploy.
+
+## PIX Automático (recorrência) — não disponível nesta conta
+
+A conta Stripe **Nome Magnético** é `country = BR` com settlement em BRL.
+
+Segundo a [documentação Stripe de Pix](https://docs.stripe.com/payments/pix):
+
+> Contas Stripe no Brasil aceitam PIX **one-time** com settlement BRL. **PIX Automático não está disponível no Brasil.**
+
+Implicações (DEV-150):
+
+| Caminho | Status |
+| --- | --- |
+| PIX único no Checkout (`mode: payment`) | Em produção |
+| PIX Automático / Checkout `subscription` + mandate | **Bloqueado** na conta BR |
+| Stripe Billing recorrente só cartão | Possível, mas muda o modelo comercial (hoje é 30 dias avulso) |
+
+Não implementar `mandate_options` / `mode: 'subscription'` para PIX enquanto a conta for BR — a API/Dashboard não oferecem o produto.

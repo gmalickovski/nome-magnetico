@@ -4,6 +4,7 @@ import { getProfile } from '../../../backend/db/users';
 import { notify } from '../../../backend/notifications/notify';
 import { PRODUCT_NAMES } from '../../../backend/payments/stripe';
 import type { ProductType } from '../../../backend/payments/stripe';
+import { captureFluxoException } from '../../../sentry/fluxo';
 
 /**
  * POST /api/internal/notify-expiring
@@ -92,7 +93,10 @@ export const POST: APIRoute = async ({ request }) => {
     results.expired++;
   }
 
-  await Promise.allSettled(tasks);
+  const settled = await Promise.allSettled(tasks);
+  for (const result of settled) {
+    if (result.status === 'rejected') captureFluxoException('notify_expiring', result.reason);
+  }
 
   const sent = results.expiring7d + results.expiring1d + results.expired;
   return json({ sent, groups: results }, 200);

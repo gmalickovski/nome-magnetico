@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { track } from '../../lib/analytics';
+import { TurnstileWidget } from './TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const HONEYPOT_FIELD = 'website_url';
 
 interface FormErrors {
   nome?: string;
@@ -20,6 +24,11 @@ export function PublicAnalysisForm() {
   const [apiError, setApiError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const handleTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   function handleDataInput(e: React.ChangeEvent<HTMLInputElement>) {
     let value = e.target.value.replace(/[^\d/]/g, '');
@@ -51,15 +60,27 @@ export function PublicAnalysisForm() {
     setLoading(true);
     setApiError('');
 
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setApiError('Confirme a verificação de segurança antes de continuar.');
+      setLoading(false);
+      return;
+    }
+
     try {
+      const payload: Record<string, string> = {
+        nome_completo: nome.trim(),
+        data_nascimento: data,
+        email: email.trim().toLowerCase(),
+        [HONEYPOT_FIELD]: honeypot,
+      };
+      if (TURNSTILE_SITE_KEY && turnstileToken) {
+        payload['cf-turnstile-response'] = turnstileToken;
+      }
+
       const response = await fetch('/api/teste-bloqueio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome_completo: nome.trim(),
-          data_nascimento: data,
-          email: email.trim().toLowerCase(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data_result = await response.json();
@@ -67,6 +88,8 @@ export function PublicAnalysisForm() {
       if (!response.ok) {
         if (response.status === 409 || data_result.error === 'already_requested') {
           setShowDuplicateModal(true);
+        } else if (response.status === 429) {
+          setApiError(data_result.error ?? 'Limite de solicitações atingido. Tente mais tarde.');
         } else {
           setApiError(data_result.error ?? 'Erro ao solicitar análise');
         }
@@ -146,6 +169,30 @@ export function PublicAnalysisForm() {
             {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
           </div>
         </div>
+
+        <div
+          className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden"
+          aria-hidden="true"
+        >
+          <label htmlFor="pub-website">Website</label>
+          <input
+            id="pub-website"
+            type="text"
+            name={HONEYPOT_FIELD}
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
+        </div>
+
+        {TURNSTILE_SITE_KEY ? (
+          <TurnstileWidget
+            siteKey={TURNSTILE_SITE_KEY}
+            onToken={handleTurnstileToken}
+            onExpire={() => setTurnstileToken('')}
+          />
+        ) : null}
 
         {apiError && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">

@@ -137,6 +137,7 @@ await notify('payment.confirmed', { email, firstName, accessUrl })
 - Sempre usar a conta Stripe do Nome Magnetico, a partir do `.env` do projeto.
 - Se aparecerem produtos "Sincro Sinergia" ou "Sincro Desperta", a chave Stripe esta errada.
 - Detalhe: `docs/architecture/pagamentos-stripe-pix.md`.
+- PIX Automático (recorrente) **não** está disponível em conta Stripe BR; o produto usa PIX one-time. Ver DEV-150.
 
 ## Sentry
 

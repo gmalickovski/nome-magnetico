@@ -6,7 +6,6 @@ import { renewalProductType } from '../../backend/payments/renewal';
 import { createCheckoutResponse } from '../api/create-checkout';
 
 const user = Astro.locals.user;
-Astro.response.headers.set('Cache-Control', 'no-store');
 
 let redirectTo = '';
 let errorMessage = '';
@@ -53,6 +52,8 @@ if (!user) {
 if (redirectTo) {
   return Astro.redirect(redirectTo);
 }
+
+Astro.response.headers.set('Cache-Control', 'no-store');
 ---
 
 <AppLayout title="Renovar acesso">

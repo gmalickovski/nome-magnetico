@@ -22,6 +22,8 @@ import {
 } from '../../backend/analytics/posthog-server';
 import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
+import { captureFluxoException } from '../../sentry/fluxo';
+import { getPublicBaseUrl } from '../../utils/public-url';
 
 const PRICE_FALLBACK: Record<string, number> = { nome_social: 9800, nome_bebe: 8000, nome_empresa: 12500 };
 
@@ -123,7 +125,7 @@ export async function createCheckoutResponse(args: {
   const phDistinctId =
     sanitizeDistinctId(parsed.data.ph_distinct_id) ??
     readPostHogDistinctIdFromCookie(request.headers.get('cookie'));
-  const baseUrl = process.env.APP_URL || url.origin;
+  const baseUrl = getPublicBaseUrl();
 
   // Verificar se é admin ou usuário teste → bypass do Stripe
   const { data: profile } = await supabase
@@ -281,6 +283,12 @@ export async function createCheckoutResponse(args: {
         );
       }
     }
+
+    // Cupom inválido (400) já retornou acima. Aqui é falha inesperada do Stripe.
+    captureFluxoException('checkout', err, {
+      status_http: stripeErr.statusCode ?? null,
+      codigo_erro: stripeErr.code ?? null,
+    });
 
     // Registra erro crítico de checkout Stripe no monitor
     await logError({

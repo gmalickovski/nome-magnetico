@@ -7,6 +7,7 @@ import { calcularExpressao, calcularDestino, calcularMotivacao, calcularImpressa
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '@/backend/numerology/karmic';
 import { avaliarCompatibilidade } from '@/backend/numerology/harmonization';
 import { calcularScore } from '@/backend/numerology/score';
+import { captureFluxoException } from '@/sentry/fluxo';
 
 const RequestSchema = z.object({
   nome_candidato: z.string().min(2),
@@ -149,6 +150,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     });
   } catch (error) {
     console.error('[api/analyze-live] Erro:', error);
+    captureFluxoException('resultado_gratis', error);
     return json({ error: 'Erro de calculo interno' }, 500);
   }
 };

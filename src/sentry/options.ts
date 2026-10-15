@@ -1,4 +1,5 @@
 import type { BrowserOptions } from '@sentry/astro';
+import { EMAIL_LINK_CHECKER_ERROR, isLocalDevEvent } from './filters';
 import { scrubSentryEvent } from './scrub';
 
 /**
@@ -18,6 +19,7 @@ export function sentryInitOptions(input: {
     environment: input.environment,
     release: input.release,
     tracesSampleRate: 0,
+    ignoreErrors: [EMAIL_LINK_CHECKER_ERROR],
     dataCollection: {
       userInfo: false,
       cookies: false,
@@ -29,6 +31,9 @@ export function sentryInitOptions(input: {
       queues: false,
     },
     beforeSend(event) {
+      // Cliente: hostname da página. Servidor: host de event.request.url.
+      const hostname = typeof window !== 'undefined' ? window.location?.hostname : undefined;
+      if (isLocalDevEvent(event, hostname)) return null;
       return scrubSentryEvent(event);
     },
   };

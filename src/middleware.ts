@@ -16,6 +16,7 @@ import {
   LEGACY_ACCESS_COOKIE,
   LEGACY_REFRESH_COOKIE,
 } from './shared/auth-cookies';
+import { captureFluxoException, fluxoForPath } from './sentry/fluxo';
 import '../sentry.server.config';
 
 const COOKIE_CLEAR = { path: '/' };
@@ -264,7 +265,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   try {
     return await handle(context, next);
   } catch (error) {
-    Sentry.captureException(error);
+    const fluxo = fluxoForPath(context.url.pathname);
+    if (fluxo) captureFluxoException(fluxo, error);
+    else Sentry.captureException(error);
     throw error;
   }
 });
