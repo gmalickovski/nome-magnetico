@@ -24,6 +24,11 @@ import { getPublicBaseUrl } from '../../utils/public-url';
 import { toDbDate } from '../../backend/public-free-analysis/guards';
 import { recordPublicFreeAnalysisIpHit } from '../../backend/public-free-analysis/rate-limit';
 import { runFreeAnalysisPreflight } from '../../backend/public-free-analysis/preflight';
+import {
+  buildDefaultFreeAnalysisMarketingUrls,
+  fireFreeAnalysisMarketingEvent,
+  resolvePublicFreeAnalysisMarketingConsent,
+} from '../../backend/marketing/free-analysis-completed';
 
 function json(body: object, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -38,7 +43,16 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json(preflight.body, preflight.status);
   }
 
-  const { dedupEmail, nome_completo, data_nascimento, ipHash } = preflight;
+  const {
+    dedupEmail,
+    nome_completo,
+    data_nascimento,
+    ipHash,
+    opt_in,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+  } = preflight;
 
   try {
     const { data: lead, error: insertError } = await supabase
@@ -147,6 +161,28 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           fullName: nome_completo,
           downloadUrl: `${getPublicBaseUrl()}/api/download-pdf?id=${lead.id}`,
         });
+
+        const marketingConsent = resolvePublicFreeAnalysisMarketingConsent(opt_in);
+        if (marketingConsent.send) {
+          const completedAt = new Date().toISOString();
+          const appUrl = process.env.APP_URL ?? getPublicBaseUrl();
+          const urls = buildDefaultFreeAnalysisMarketingUrls(appUrl, lead.id, {
+            downloadPath: `/api/download-pdf?id=${lead.id}`,
+          });
+          fireFreeAnalysisMarketingEvent({
+            email: dedupEmail,
+            nomeCompleto: nome_completo,
+            concluidaEm: completedAt,
+            analiseId: lead.id,
+            score,
+            optIn: marketingConsent.optIn,
+            optInEm: marketingConsent.optInEm,
+            utmSource: utm_source,
+            utmMedium: utm_medium,
+            utmCampaign: utm_campaign,
+            ...urls,
+          });
+        }
 
         await supabase
           .from('free_analyses_leads')
