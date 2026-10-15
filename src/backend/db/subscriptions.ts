@@ -14,6 +14,8 @@ export interface Subscription {
   starts_at: string;
   ends_at: string;
   created_at: string;
+  purchase_kind: 'new' | 'renewal';
+  renewed_from: string | null;
   refunded_at?: string | null;
   refund_stripe_refund_id?: string | null;
   refund_reason?: string | null;
