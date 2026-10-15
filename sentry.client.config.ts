@@ -13,7 +13,8 @@ if (dsn && !Sentry.getClient()) {
   Sentry.init(
     sentryInitOptions({
       dsn,
-      environment: meta('nm-sentry-environment') ?? 'production',
+      // Sem a meta (HTML fora do BaseLayout), nunca assumir production.
+      environment: meta('nm-sentry-environment') ?? 'development',
       release: meta('nm-sentry-release'),
     }),
   );
