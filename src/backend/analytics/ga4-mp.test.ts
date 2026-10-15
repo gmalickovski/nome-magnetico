@@ -1,13 +1,8 @@
 import assert from 'node:assert/strict';
-import { afterEach, beforeEach, test } from 'node:test';
+import { afterEach, test } from 'node:test';
 import { resolveGaClientId, sendGa4Purchase } from './ga4-mp';
 
 const originalFetch = globalThis.fetch;
-
-beforeEach(() => {
-  delete process.env.GA4_MEASUREMENT_ID;
-  delete process.env.GA4_API_SECRET;
-});
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
