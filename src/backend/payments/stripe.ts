@@ -48,6 +48,12 @@ export interface CreateCheckoutParams {
   gaClientId?: string;
   /** distinct_id do PostHog no browser, para o purchase server-side. */
   phDistinctId?: string;
+  /** 'renewal' estende o acesso; omissão grava 'new'. product_type não muda. */
+  purchaseKind?: 'new' | 'renewal';
+  /** Campanha Brevo da etapa (nmrenovd7, nmrenovdp7, ...). */
+  utmCampaign?: string;
+  utmSource?: string;
+  utmMedium?: string;
 }
 
 /**
@@ -78,6 +84,21 @@ export async function createCheckoutSession(
     throw new Error(`unit_amount inválido para ${params.productType}: ${params.unitAmount}`);
   }
 
+  const metadata: Record<string, string> = {
+    user_id: params.userId,
+    product_type: params.productType,
+    access_duration_days: '30',
+    coupon_code: params.couponCode ?? '',
+    ga_client_id: params.gaClientId ?? '',
+    ph_distinct_id: params.phDistinctId ?? '',
+    purchase_kind: params.purchaseKind === 'renewal' ? 'renewal' : 'new',
+  };
+  if (params.utmCampaign) {
+    metadata.utm_campaign = params.utmCampaign;
+    metadata.utm_source = params.utmSource || 'brevo';
+    metadata.utm_medium = params.utmMedium || 'email';
+  }
+
   return stripe.checkout.sessions.create({
     mode: 'payment',
     // Sem payment_method_types: Stripe usa o Dashboard (card + PIX já habilitados).
@@ -92,14 +113,7 @@ export async function createCheckoutSession(
       },
     ],
     customer_email: params.userEmail,
-    metadata: {
-      user_id: params.userId,
-      product_type: params.productType,
-      access_duration_days: '30',
-      coupon_code: params.couponCode ?? '',
-      ga_client_id: params.gaClientId ?? '',
-      ph_distinct_id: params.phDistinctId ?? '',
-    },
+    metadata,
     custom_text: PRODUCT_CUSTOM_TEXT[params.productType],
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
@@ -112,13 +126,7 @@ export async function createCheckoutSession(
     },
     ...discountOptions,
     payment_intent_data: {
-      metadata: {
-        user_id: params.userId,
-        product_type: params.productType,
-        coupon_code: params.couponCode ?? '',
-        ga_client_id: params.gaClientId ?? '',
-        ph_distinct_id: params.phDistinctId ?? '',
-      },
+      metadata,
     },
   });
 }

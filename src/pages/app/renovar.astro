@@ -1,0 +1,65 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import { RenovarComprarButton } from '../../frontend/components/app/RenovarComprarButton';
+import { getLatestSubscription } from '../../backend/db/subscriptions';
+import { renewalProductType } from '../../backend/payments/renewal';
+import { createCheckoutResponse } from '../api/create-checkout';
+
+const user = Astro.locals.user;
+
+let redirectTo = '';
+let errorMessage = '';
+
+if (!user) {
+  const nextPath = Astro.url.pathname + Astro.url.search;
+  redirectTo = '/auth/login?redirect=' + encodeURIComponent(nextPath);
+} else {
+  try {
+    const latest = await getLatestSubscription(user.id);
+    if (!latest) {
+      redirectTo = '/comprar';
+    } else {
+      const response = await createCheckoutResponse({
+        request: Astro.request,
+        user,
+        url: Astro.url,
+        renewal: true,
+        etapa: Astro.url.searchParams.get('etapa'),
+        productType: renewalProductType(latest.product_type),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        url?: string | null;
+        bypass?: boolean;
+        redirectUrl?: string;
+        error?: string;
+      } | null;
+
+      if (response.ok && data?.bypass && data.redirectUrl) {
+        redirectTo = data.redirectUrl;
+      } else if (response.ok && data?.url) {
+        redirectTo = data.url;
+      } else {
+        errorMessage = data?.error || 'Não foi possível iniciar a renovação.';
+      }
+    }
+  } catch (err) {
+    console.error('[renovar] Falha ao iniciar checkout:', err);
+    errorMessage = 'Não foi possível iniciar a renovação. Tente de novo em instantes.';
+  }
+}
+
+if (redirectTo) {
+  return Astro.redirect(redirectTo);
+}
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+---
+
+<AppLayout title="Renovar acesso">
+  <div class="max-w-lg mx-auto mt-16 text-center space-y-6 pb-16 flex flex-col items-center">
+    <h1 class="font-cinzel text-2xl text-white">Não foi possível renovar</h1>
+    <p class="text-gray-400">{errorMessage}</p>
+    <RenovarComprarButton client:load />
+  </div>
+</AppLayout>

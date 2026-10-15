@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { ProductType } from '../payments/stripe';
+import { computeRenewalWindow, type PurchaseKind } from '../payments/renewal';
 
 export interface Subscription {
   id: string;
@@ -93,7 +94,52 @@ export async function getActiveSubscription(
 }
 
 /**
- * Cria uma nova subscription após pagamento confirmado.
+ * Assinatura mais recente do usuário, inclusive expirada ou reembolsada.
+ * A página de renovação usa o product_type desta linha.
+ */
+export async function getLatestSubscription(userId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .order('ends_at', { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+  return (data?.[0] as Subscription | undefined) ?? null;
+}
+
+type SessionConflict = { code?: string; message?: string } | null | undefined;
+
+function isStripeSessionConflict(error: SessionConflict): boolean {
+  if (!error) return false;
+  if (error.code === '23505') return true;
+  return Boolean(error.message?.includes('stripe_session_id'));
+}
+
+async function findSubscriptionBySession(stripeSessionId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('stripe_session_id', stripeSessionId)
+    .limit(1);
+
+  if (error) throw error;
+  return (data?.[0] as Subscription | undefined) ?? null;
+}
+
+export interface CreateSubscriptionResult {
+  subscription: Subscription;
+  /** false quando o stripe_session_id já tinha linha — o webhook não repete efeitos. */
+  created: boolean;
+}
+
+/**
+ * Cria uma subscription após pagamento confirmado.
+ * Idempotente por stripe_session_id (único). Compra com acesso vigente do
+ * mesmo product_type começa no ends_at atual; renewal sem vigência ainda
+ * aponta renewed_from para a assinatura mais recente.
  */
 export async function createSubscription(params: {
   userId: string;
@@ -104,9 +150,38 @@ export async function createSubscription(params: {
   asaasPaymentId?: string;
   amountPaid?: number;
   currency?: string;
-}): Promise<Subscription> {
-  const { data, error } = await supabase
+  purchaseKind?: PurchaseKind;
+}): Promise<CreateSubscriptionResult> {
+  const existing = await findSubscriptionBySession(params.stripeSessionId);
+  if (existing) return { subscription: existing, created: false };
 
+  const now = new Date();
+  const { data: anchors, error: anchorError } = await supabase
+    .from('subscriptions')
+    .select('id, ends_at, refunded_at, created_at')
+    .eq('user_id', params.userId)
+    .eq('product_type', params.productType);
+
+  if (anchorError) throw anchorError;
+
+  const rows = (anchors ?? []) as Array<{
+    id: string;
+    ends_at: string;
+    refunded_at: string | null;
+    created_at: string;
+  }>;
+  const window = computeRenewalWindow({
+    now,
+    purchaseKind: params.purchaseKind === 'renewal' ? 'renewal' : 'new',
+    subscriptions: rows.map((row) => ({
+      id: row.id,
+      endsAt: row.ends_at,
+      createdAt: row.created_at,
+      refundedAt: row.refunded_at,
+    })),
+  });
+
+  const { data, error } = await supabase
     .from('subscriptions')
     .insert({
       user_id: params.userId,
@@ -117,14 +192,23 @@ export async function createSubscription(params: {
       asaas_payment_id: params.asaasPaymentId ?? null,
       amount_paid: params.amountPaid ?? null,
       currency: params.currency ?? 'brl',
-      starts_at: new Date().toISOString(),
-      ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      starts_at: window.startsAt.toISOString(),
+      ends_at: window.endsAt.toISOString(),
+      purchase_kind: window.purchaseKind,
+      renewed_from: window.renewedFrom,
     })
     .select()
     .single();
 
-  if (error) throw error;
-  return data as Subscription;
+  if (error) {
+    if (isStripeSessionConflict(error)) {
+      const raced = await findSubscriptionBySession(params.stripeSessionId);
+      if (raced) return { subscription: raced, created: false };
+    }
+    throw error;
+  }
+
+  return { subscription: data as Subscription, created: true };
 }
 
 /**
