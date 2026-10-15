@@ -28,7 +28,8 @@ Código (notify.ts) → n8n webhook → n8n workflow → Amazon SES → usuário
 | `welcome.html` | `user.welcome` | `{{firstName}}` |
 | `supabase-email-verification.html` | Supabase Auth `Magic Link` | `{{ .SiteURL }}`, `{{ .TokenHash }}` |
 | `password-reset.html` | `user.password_reset` | `{{resetUrl}}` |
-| `payment-confirmed.html` | `payment.confirmed` | `{{firstName}}`, `{{productName}}`, `{{accessUrl}}` |
+| `payment-confirmed.html` | `payment.confirmed` | `{{firstName}}`, `{{productName}}`, `{{accessUrl}}`, `{{amount_formatted}}` (opcional; `amount` continua em centavos) |
+| `payment-refunded.html` | `payment.refunded` | `{{firstName}}`, `{{productName}}`, `{{amount_formatted}}` — **não** usar `amount` cru no card (centavos Stripe) |
 | `payment-failed.html` | `payment.failed` | `{{firstName}}` |
 | `subscription-expiring.html` | `subscription.expiring_soon` | `{{firstName}}`, `{{daysLeft}}`, `{{renewUrl}}` |
 | `subscription-expired.html` | `subscription.expired` | `{{firstName}}`, `{{renewUrl}}` |

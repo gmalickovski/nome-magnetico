@@ -10,6 +10,7 @@
  */
 
 import { captureFluxoException, type Fluxo } from '../../sentry/fluxo';
+import { enrichNotificationPayload } from './enrich-payload';
 
 type NotificationEvent =
   | 'user.welcome'
@@ -39,6 +40,8 @@ interface NotificationPayload {
   analysisId?: string;
   analysisUrl?: string;
   amount?: number;
+  /** Valor BRL já formatado (centavos → moeda). Preenchido por enrichNotificationPayload. */
+  amount_formatted?: string;
   productName?: string;
   daysLeft?: number;
   renewUrl?: string;
@@ -81,13 +84,18 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
 }
 
 async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<void> {
+  const payloadToSend =
+    'amount' in payload && typeof (payload as NotificationPayload).amount === 'number'
+      ? enrichNotificationPayload(payload as NotificationPayload)
+      : payload;
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event,
-        payload,
+        payload: payloadToSend,
         timestamp: new Date().toISOString(),
       }),
     });
