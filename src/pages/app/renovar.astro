@@ -52,9 +52,10 @@ if (!user) {
 
 if (redirectTo) {
   const isRelative = redirectTo.startsWith('/') && !redirectTo.startsWith('//');
-  const response = isRelative ? Astro.redirect(redirectTo) : Response.redirect(redirectTo, 302);
-  response.headers.set('Cache-Control', 'no-store');
-  return response;
+  if (isRelative) {
+    return Astro.redirect(redirectTo);
+  }
+  return Response.redirect(redirectTo, 302);
 }
 ---
 
