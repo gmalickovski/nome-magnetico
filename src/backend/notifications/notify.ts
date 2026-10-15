@@ -9,6 +9,8 @@
  * Erros do sistema → tabela Supabase `error_logs` via error-logger.ts
  */
 
+import { captureFluxoException, type Fluxo } from '../../sentry/fluxo';
+
 type NotificationEvent =
   | 'user.welcome'
   | 'user.password_reset'
@@ -65,6 +67,19 @@ interface MarketingPayload {
   source: string;
 }
 
+/** Opt-in de marketing e avisos de expiração. O payload não vai no evento do Sentry. */
+const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>> = {
+  'marketing.free_analysis_completed': 'leads',
+  'subscription.expiring_soon': 'notify_expiring',
+  'subscription.expired': 'notify_expiring',
+};
+
+function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: unknown): void {
+  const fluxo = FLUXO_DO_EVENTO[event];
+  if (!fluxo) return;
+  captureFluxoException(fluxo, error);
+}
+
 async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<void> {
   try {
     const response = await fetch(url, {
@@ -79,9 +94,12 @@ async function sendToWebhook(url: string, event: NotificationEvent | MarketingEv
 
     if (!response.ok) {
       console.error(`[notify] Falha ao enviar evento ${event}: ${response.status}`);
+      reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
     }
   } catch (err) {
     console.error(`[notify] Erro ao enviar evento ${event}:`, err);
+    // Mensagem genérica: o erro do fetch pode trazer a URL do webhook.
+    reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
   }
 }
 

@@ -6,6 +6,8 @@ O app é Astro 5 com adapter Node na VPS, não Next.js. O SDK é `@sentry/astro`
 
 Issue: [DEV-97](https://linear.app/studio-mlk/issue/DEV-97/integrar-sentry-no-nome-magnetico-erros-em-producao).
 
+Ruído local, release e a tag `fluxo`: [observabilidade.md](../observabilidade.md).
+
 ## Quando o SDK envia
 
 O SDK só inicia se houver DSN **e** o ambiente resolvido for `production`.
@@ -29,7 +31,7 @@ Colocar na VPS (`/var/www/webapp/nome-magnetico/.env`, lido pelo `start.mjs`) e 
 | `PUBLIC_SENTRY_DSN` | alias | VPS + Cursor Cloud | Aceito se `SENTRY_DSN` estiver vazio. Prefixo público do Astro. |
 | `NEXT_PUBLIC_SENTRY_DSN` | alias | VPS + Cursor Cloud | Nome citado no DEV-97. Aceito no servidor como alias. O Vite não expõe `NEXT_PUBLIC_` ao bundle; o HTML é montado em runtime. |
 | `SENTRY_ENVIRONMENT` | não | VPS | Força a tag de ambiente (`production`, `preview`). |
-| `SENTRY_RELEASE` | não | VPS | Tag de release. Sem isso o evento segue sem release. |
+| `SENTRY_RELEASE` | não | build (Actions) + runtime (VPS) | Nome do release, igual à tag do deploy (`github.ref_name`). O workflow exporta antes do `pm2 restart --update-env`. Sem a variável o evento segue sem release. Com `SENTRY_AUTH_TOKEN`, o upload de source maps usa o mesmo nome. |
 | `SENTRY_ENABLED` | não | local | `true` liga um smoke fora de production. |
 | `SENTRY_ORG` | no build, se houver token | GitHub Actions | Default no código: `studio-mlk`. |
 | `SENTRY_PROJECT` | no build, se houver token | GitHub Actions | Default no código: `nome-magnetico`. |

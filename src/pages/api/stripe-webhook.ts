@@ -18,6 +18,7 @@ import {
   resolveCheckoutDistinctId,
 } from '../../backend/analytics/posthog-server';
 import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
+import { captureFluxoException } from '../../sentry/fluxo';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -195,7 +196,10 @@ export const POST: APIRoute = async ({ request }) => {
           currency: session.currency,
           stripeSessionId: session.id,
         }),
-      }).catch(err => console.error('[stripe-webhook] Falha ao notificar n8n:', err));
+      }).catch(err => {
+        console.error('[stripe-webhook] Falha ao notificar n8n:', err);
+        captureFluxoException('stripe_webhook', new Error('Falha ao notificar n8n'));
+      });
     }
 
     const profile = await getProfile(userId);
@@ -314,6 +318,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
   } catch (err) {
     console.error('[stripe-webhook] Erro ao processar evento:', event.type, err);
+    // Assinatura inválida já devolveu 400 acima. Aqui é falha de Stripe/Supabase/n8n.
+    captureFluxoException('stripe_webhook', err, { tipo_evento: event.type });
     // Retornar 200 para o Stripe não reenviar — logar o erro internamente
   }
 

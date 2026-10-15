@@ -16,6 +16,7 @@ import {
 } from '../../backend/analytics/posthog-server';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
+import { captureFluxoException } from '../../sentry/fluxo';
 
 const schema = z.object({
   product_type: z.enum(SELLABLE_PRODUCT_TYPES),
@@ -210,6 +211,12 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
         );
       }
     }
+
+    // Cupom inválido (400) já retornou acima. Aqui é falha inesperada do Stripe.
+    captureFluxoException('checkout', err, {
+      status_http: stripeErr.statusCode ?? null,
+      codigo_erro: stripeErr.code ?? null,
+    });
 
     // Registra erro crítico de checkout Stripe no monitor
     await logError({
