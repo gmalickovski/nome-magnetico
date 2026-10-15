@@ -13,6 +13,7 @@ describe('fluxoForPath', () => {
     assert.equal(fluxoForPath('/api/analyze-live'), 'resultado_gratis');
     assert.equal(fluxoForPath('/app/resultado'), 'resultado_gratis');
     assert.equal(fluxoForPath('/app/resultado/abc-123'), 'resultado_gratis');
+    assert.equal(fluxoForPath('/api/support/contact'), 'suporte_contato');
   });
 
   it('aceita barra final e ignora o resto do site', () => {

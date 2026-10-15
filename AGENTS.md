@@ -120,13 +120,15 @@ O bot Suporte le a FAQ ativa e o status minimo de um contato por e-mail. O resto
 
 - Emails de auth sao nativos do Supabase Auth com Amazon SES.
 - Nao criar envio custom para confirmacao de cadastro ou reset de senha.
-- Emails transacionais de pagamento/suporte devem ir via n8n:
+- Emails transacionais de pagamento continuam via n8n:
 
 ```ts
 import { notify } from '@/backend/notifications/notify'
 
 await notify('payment.confirmed', { email, firstName, accessUrl })
 ```
+
+- O formulário de contato grava o ticket no Supabase e manda o aviso interno por SMTP (`src/backend/notifications/smtp.ts`). Esse aviso não passa pelo n8n. Se o e-mail falha, o ticket permanece gravado.
 
 ## Pagamentos
 

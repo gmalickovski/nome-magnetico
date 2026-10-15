@@ -317,8 +317,8 @@ Resumo do que o HQ ainda precisa fazer:
 - `auth.signUp()` → dispara email de confirmação via SES automaticamente
 - `auth.resetPasswordForEmail()` → dispara email de recuperação via SES automaticamente
 
-### Emails transacionais (n8n) — pagamentos e suporte
-NUNCA enviar emails de pagamento/suporte diretamente do código. Sempre usar:
+### Emails transacionais (n8n) — pagamentos
+NUNCA enviar emails de pagamento diretamente do código. Sempre usar:
 ```typescript
 import { notify } from '@/backend/notifications/notify'
 await notify('payment.confirmed', { email, firstName, accessUrl })
@@ -326,7 +326,10 @@ await notify('payment.confirmed', { email, firstName, accessUrl })
 
 O n8n recebe o evento via webhook e processa o envio. Webhooks configurados:
 - `N8N_WEBHOOK_TRANSACIONAL` — eventos de pagamento
-- `N8N_WEBHOOK_SUPORTE` — tickets de suporte
+- `N8N_WEBHOOK_MARKETING` — opt-in da análise grátis
+
+### Aviso do formulário de contato
+`POST /api/support/contact` grava `support_tickets` (`source = form`) e `support_messages` com a service role e envia o aviso interno por SMTP Amazon SES (`src/backend/notifications/smtp.ts`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`). Se o e-mail falha, o ticket continua gravado e a pessoa recebe sucesso. O erro vai ao Sentry com a tag `fluxo=suporte_contato`.
 
 ---
 

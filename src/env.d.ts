@@ -37,10 +37,14 @@ interface ImportMetaEnv {
   readonly OPENAI_API_KEY: string;
   readonly N8N_WEBHOOK_URL: string;
   readonly N8N_WEBHOOK_SECRET: string;
-  readonly N8N_WEBHOOK_FAQ_SYNC: string;
   readonly N8N_WEBHOOK_TRANSACIONAL: string;
-  readonly N8N_WEBHOOK_SUPORTE: string;
   readonly N8N_WEBHOOK_MARKETING: string;
+  readonly SMTP_HOST: string;
+  readonly SMTP_PORT: string;
+  readonly SMTP_USER: string;
+  readonly SMTP_PASS: string;
+  readonly SMTP_FROM: string;
+  readonly SUPPORT_INBOX_EMAIL: string;
   readonly RATE_LIMIT_TESTE_BLOQUEIO: string;
   readonly PRODUCT_SLUG: string;
   readonly INTERNAL_API_SECRET: string;
