@@ -14,11 +14,12 @@ import { verificarDisponibilidadeNomes } from '../../backend/utils/availability'
 import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerology/products/nome-social';
 import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
-import { notify } from '../../backend/notifications/notify';
-import { buildFreeAnalysisMarketingPayload } from '../../backend/notifications/free-analysis-payload';
 import { logError } from '../../backend/utils/error-logger';
-import { EMAIL_CAMPAIGN_FREE_ANALYSIS, withEmailUtm } from '../../utils/utm';
 import { captureFluxoException } from '../../sentry/fluxo';
+import {
+  buildDefaultFreeAnalysisMarketingUrls,
+  fireFreeAnalysisMarketingEvent,
+} from '../../backend/marketing/free-analysis-completed';
 
 const utmSchema = z
   .string()
@@ -452,49 +453,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       // Marketing só com opt-in. Falha aqui não altera a análise nem a resposta HTTP.
       if (isGratuita && optIn) {
-        try {
-          const email = (user.email || profile?.email || '').trim();
-          const score = marketingStats.score;
-          if (!email || typeof score !== 'number' || !Number.isFinite(score)) {
-            console.warn('[analyze] opt-in de marketing sem e-mail ou score — evento ignorado');
-          } else {
-            const appUrl = process.env.APP_URL ?? 'https://nomemagnetico.com.br';
-            const payload = buildFreeAnalysisMarketingPayload({
-              email,
-              nomeCompleto: nome_completo,
-              concluidaEm: completedAt,
-              analiseId: analysis.id,
-              score,
-              optIn: true,
-              optInEm: optInData,
-              utmSource: utm_source,
-              utmMedium: utm_medium,
-              utmCampaign: utm_campaign,
-              analysisUrl: withEmailUtm(`${appUrl}/app/resultado/${analysis.id}`, EMAIL_CAMPAIGN_FREE_ANALYSIS),
-              offerUrl: withEmailUtm(`${appUrl}/nome-social`, EMAIL_CAMPAIGN_FREE_ANALYSIS),
-              checkoutUrl: withEmailUtm(`${appUrl}/auth/cadastro?produto=nome_social`, EMAIL_CAMPAIGN_FREE_ANALYSIS),
-            });
-            await notify('marketing.free_analysis_completed', {
-              email: payload.email,
-              nome: payload.nome,
-              sobrenome: payload.sobrenome,
-              analise_data: payload.analise_data,
-              analise_id: payload.analise_id,
-              score: payload.score,
-              origem: payload.origem,
-              opt_in: payload.opt_in,
-              opt_in_data: payload.opt_in_data,
-              utm_source: payload.utm_source,
-              utm_medium: payload.utm_medium,
-              utm_campaign: payload.utm_campaign,
-              analysisUrl: payload.analysisUrl,
-              offerUrl: payload.offerUrl,
-              checkoutUrl: payload.checkoutUrl,
-            });
-          }
-        } catch (marketingErr) {
-          console.error('[analyze] falha ao notificar marketing da análise grátis:', marketingErr);
-          captureFluxoException('leads', marketingErr);
+        const email = (user.email || profile?.email || '').trim();
+        const score = marketingStats.score;
+        if (email && typeof score === 'number' && Number.isFinite(score)) {
+          const appUrl = process.env.APP_URL ?? 'https://nomemagnetico.com.br';
+          const urls = buildDefaultFreeAnalysisMarketingUrls(appUrl, analysis.id);
+          fireFreeAnalysisMarketingEvent({
+            email,
+            nomeCompleto: nome_completo,
+            concluidaEm: completedAt,
+            analiseId: analysis.id,
+            score,
+            optIn: true,
+            optInEm: optInData,
+            utmSource: utm_source,
+            utmMedium: utm_medium,
+            utmCampaign: utm_campaign,
+            ...urls,
+          });
+        } else {
+          console.warn('[analyze] opt-in de marketing sem e-mail ou score — evento ignorado');
         }
       }
     } catch (err) {
