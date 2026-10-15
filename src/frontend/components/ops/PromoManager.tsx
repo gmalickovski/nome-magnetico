@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { AccessCodesPanel } from './AccessCodesPanel';
 import { PromotionsPanel } from './PromotionsPanel';
+import { ProductPricesPanel } from './ProductPricesPanel';
 
-type TabId = 'promotions' | 'codes';
+type TabId = 'prices' | 'promotions' | 'codes';
 
 const TABS: Array<{ id: TabId; label: string }> = [
+  { id: 'prices', label: 'Preços base' },
   { id: 'promotions', label: 'Promoções' },
   { id: 'codes', label: 'Códigos de acesso' },
 ];
 
 export function PromoManager() {
-  const [tab, setTab] = useState<TabId>('promotions');
+  const [tab, setTab] = useState<TabId>('prices');
 
   return (
     <div className="space-y-8">
@@ -36,7 +38,13 @@ export function PromoManager() {
         ))}
       </div>
 
-      {tab === 'promotions' ? <PromotionsPanel /> : <AccessCodesPanel />}
+      {tab === 'prices' ? (
+        <ProductPricesPanel />
+      ) : tab === 'promotions' ? (
+        <PromotionsPanel />
+      ) : (
+        <AccessCodesPanel />
+      )}
     </div>
   );
 }

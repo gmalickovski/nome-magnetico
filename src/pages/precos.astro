@@ -3,29 +3,31 @@ import LandingLayout from '../layouts/LandingLayout.astro';
 import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { LandingCheckout } from '../frontend/components/purchase/LandingCheckout';
-import { getPricesAndPromo, promotionAppliesToProduct } from '../backend/payments/prices';
+import { promotionAppliesToProduct } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
+import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
+import { Price } from '../frontend/components/ui/Price';
+
+applyPricingPageCache(Astro);
 
 const user = Astro.locals.user;
 
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getPricesAndPromo();
+  const result = await loadPagePricing();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {
   console.warn('[precos] Falha ao carregar preços:', err);
 }
 
-const FALLBACK: Record<string, PriceInfo> = {
-  nome_social:  { cents: 9700,  formatted: 'R$ 97',  hasDiscount: false },
-};
+const prices = hqPrices ?? {};
 
-const prices = hqPrices ?? FALLBACK;
+const EMPTY: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
 
 function getPrice(id: string) {
-  return prices[id] ?? FALLBACK[id];
+  return prices[id] ?? EMPTY;
 }
 
 function showDiscount(id: string): boolean {
@@ -37,24 +39,25 @@ function showDiscount(id: string): boolean {
   return !!(promotion && applies && p.hasDiscount && p.discountedFormatted);
 }
 
-function displayPrice(id: string): string {
-  const p = getPrice(id);
-  if (showDiscount(id)) return p.discountedFormatted!;
-  return p.formatted;
-}
+const socialPrice = getPrice('nome_social');
+const socialPriceProps = {
+  product: 'nome_social' as const,
+  baseFormatted: socialPrice.baseFormatted ?? socialPrice.formatted,
+  finalFormatted: socialPrice.discountedFormatted ?? socialPrice.formatted,
+  hasDiscount: showDiscount('nome_social'),
+  validUntilLabel: socialPrice.validUntilLabel ?? null,
+};
 
-function originalPrice(id: string): string {
-  return getPrice(id).formatted;
-}
+const schemaPrice = socialPrice.cents > 0 ? (socialPrice.cents / 100).toFixed(2) : undefined;
 ---
 
 <LandingLayout
   title="Preços e Planos — Nome Magnético"
   description="Harmonização de assinatura pelo Nome Social, a partir do seu nome de nascimento. Pagamento único, sem recorrência. Acesso por 30 dias."
   keywords="preços numerologia cabalística, harmonização de assinatura preço, assinatura numerológica, análise nome preço, nome social preço, planos nome magnético"
+  schemaOfferPrice={schemaPrice}
+  schemaEstimatedCost={schemaPrice}
 >
-
-
   <LandingHeader client:load />
 
   <main class="min-h-screen bg-[#111111] pt-24 pb-20">
@@ -108,14 +111,7 @@ function originalPrice(id: string): string {
 
               {/* Preço */}
               <div class="mb-6">
-                {showDiscount('nome_social') ? (
-                  <div class="flex items-baseline gap-3">
-                    <span class="font-cinzel text-2xl font-bold text-gray-500 line-through opacity-60">{originalPrice('nome_social')}</span>
-                    <span class="font-cinzel text-5xl font-bold text-[#D4AF37]">{displayPrice('nome_social')}</span>
-                  </div>
-                ) : (
-                  <span class="font-cinzel text-5xl font-bold text-[#D4AF37]">{displayPrice('nome_social')}</span>
-                )}
+                <Price client:visible {...socialPriceProps} size="card" />
                 <p class="text-gray-600 text-xs mt-1">pagamento único · acesso por 30 dias</p>
               </div>
 

@@ -1,3 +1,4 @@
+import { formatBRLFromCents } from '../../shared/format-brl-cents';
 import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES, type ProductType } from '../../shared/product-labels';
 
 export const COUPON_INVALID = 'Cupom inválido ou expirado';
@@ -14,14 +15,22 @@ export const TRIAL_NOT_FOUND = 'Este código de acesso não é válido ou já ex
 export { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES };
 
 export interface PriceInfo {
+  /** Preço efetivo cobrado (centavos). */
   cents: number;
   formatted: string;
   priceId?: string;
   productId?: string;
   productName?: string;
+  baseCents?: number;
+  baseFormatted?: string;
   discountedCents?: number;
   discountedFormatted?: string;
   hasDiscount: boolean;
+  promoEndsAt?: string | null;
+  validUntilLabel?: string | null;
+  discountSource?: 'none' | 'promotion' | 'coupon';
+  promoId?: string | null;
+  minCents?: number;
 }
 
 export interface ActivePromotion {
@@ -119,7 +128,7 @@ export interface TrialValidation {
 
 export function formatBRL(unitAmount: number | null | undefined): string {
   if (unitAmount == null) return '';
-  return `R$ ${(unitAmount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatBRLFromCents(unitAmount);
 }
 
 export function isProductType(value: string | null | undefined): value is ProductType {

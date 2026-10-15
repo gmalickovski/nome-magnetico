@@ -34,8 +34,11 @@ export interface CreateCheckoutParams {
   userId: string;
   userEmail: string;
   productType: ProductType;
-  /** Preço em centavos (Stripe + promoção local) */
+  /** Preço final em centavos (recalculado no servidor) */
   unitAmount: number;
+  baseCents?: number;
+  promoId?: string | null;
+  discountSource?: 'none' | 'promotion' | 'coupon';
   successUrl: string;
   cancelUrl: string;
   /** Cupom sazonal automático (ID do coupon Stripe, se a promoção local tiver) */
@@ -89,6 +92,10 @@ export async function createCheckoutSession(
     product_type: params.productType,
     access_duration_days: '30',
     coupon_code: params.couponCode ?? '',
+    base_cents: String(params.baseCents ?? params.unitAmount),
+    final_cents: String(params.unitAmount),
+    promo_id: params.promoId ?? '',
+    discount_source: params.discountSource ?? 'none',
     ga_client_id: params.gaClientId ?? '',
     ph_distinct_id: params.phDistinctId ?? '',
     purchase_kind: params.purchaseKind === 'renewal' ? 'renewal' : 'new',

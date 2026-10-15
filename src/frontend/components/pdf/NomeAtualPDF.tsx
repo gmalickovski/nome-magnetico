@@ -289,7 +289,13 @@ function normalizeScore(value: unknown): number | null {
   return null;
 }
 
-export function NomeAtualPDF({ analysis, magneticNames: _magneticNames, userName: _userName }: ProductPDFProps) {
+export function NomeAtualPDF({
+  analysis,
+  magneticNames: _magneticNames,
+  userName: _userName,
+  upgradeOfferLabel,
+}: ProductPDFProps) {
+  const upgradePrice = upgradeOfferLabel ?? 'nomemagnetico.com.br/precos';
   const logoSrc = loadLogoSrc();
   const freqData = analysis.frequencias_numeros as any;
   const nomeParaExibir = analysis.nome_completo;
@@ -1028,7 +1034,7 @@ export function NomeAtualPDF({ analysis, magneticNames: _magneticNames, userName
           {bloqueios.length > 0
             ? `Quanto custa mais um ano com ${bloqueios.length} bloqueio${bloqueios.length > 1 ? 's' : ''} na sua assinatura repelindo resultados?`
             : 'Quanto custa mais um ano com uma frequência que pode ser muito mais poderosa?'}{'\n'}
-          Harmonização de Assinatura por R$ 98 — a assinatura muda. A frequência muda. Os resultados mudam.
+          Harmonização de Assinatura ({upgradePrice}) — a assinatura muda. A frequência muda. Os resultados mudam.
         </Text>
 
         {/* CTA Button */}
@@ -1044,7 +1050,7 @@ export function NomeAtualPDF({ analysis, magneticNames: _magneticNames, userName
           <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
             <Text style={{ fontSize: 8, color: '#6B7280' }}>Acesso imediato após confirmação</Text>
             <Text style={{ fontSize: 8, color: '#9CA3AF' }}>|</Text>
-            <Text style={{ fontSize: 8, color: '#6B7280' }}>R$ 98</Text>
+            <Text style={{ fontSize: 8, color: '#6B7280' }}>{upgradePrice}</Text>
           </View>
         </View>
 

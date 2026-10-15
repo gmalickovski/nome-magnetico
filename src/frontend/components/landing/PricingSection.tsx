@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { captureBeginCheckout, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
+import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
+import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from '../purchase/CheckoutModal';
+import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
 import type { SellableProductType } from '../../../shared/product-labels';
 import {
   landingSectionShellClass,
@@ -16,12 +18,6 @@ export interface StripePrices {
 type ProductType = SellableProductType;
 
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
-
-const PRICE_FALLBACK: PriceInfo = {
-  cents: 9800,
-  formatted: 'R$ 98',
-  hasDiscount: false,
-};
 
 const NOME_SOCIAL_DELIVERABLES = [
   'ranking com score',
@@ -52,10 +48,6 @@ function displayPrice(
     return priceInfo.discountedFormatted;
   }
   return priceInfo.formatted;
-}
-
-function prominentPrice(label: string): string {
-  return label.replace(/,00$/, '');
 }
 
 interface PricingSectionProps {
@@ -123,9 +115,15 @@ export function PricingSection({
   );
 
   const planId: ProductType = 'nome_social';
-  const priceInfo = resolvedPrices[planId] ?? PRICE_FALLBACK;
-  const priceUnavailableOnHq = Boolean(hqPrices) && !resolvedPrices[planId];
-  const priceLabel = displayPrice(priceInfo, promotion, planId);
+  const priceInfo = resolvedPrices[planId] ?? PRICE_UNAVAILABLE;
+  const priceUnavailableOnHq = !resolvedPrices[planId]?.cents;
+  const priceProps = priceInfoToPriceProps(planId, {
+    formatted: displayPrice(priceInfo, promotion, planId),
+    discountedFormatted: priceInfo.discountedFormatted,
+    hasDiscount: Boolean(promotion && promotionAppliesToProduct(promotion, planId) && priceInfo.hasDiscount),
+    validUntilLabel: priceInfo.validUntilLabel,
+    baseFormatted: priceInfo.baseFormatted,
+  });
 
   function handleBuy() {
     if (isLoggedIn) {
@@ -159,18 +157,23 @@ export function PricingSection({
         currency: 'BRL',
         payment_method: 'stripe',
       });
-      const res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await postCreateCheckoutWithPriceConfirm(
+        {
           product_type: type,
           couponCode,
-          ph_distinct_id: getPostHogDistinctId(),
-        }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Erro ao criar checkout');
-      window.location.href = data.url;
+          expected_final_cents: info.cents,
+        },
+        (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
+      );
+      if (!result.ok) {
+        if ('priceChanged' in result && result.priceChanged) return;
+        throw new Error(checkoutFailureMessage(result));
+      }
+      if ('bypass' in result && result.bypass) {
+        window.location.href = result.redirectUrl;
+        return;
+      }
+      if ('url' in result) window.location.href = result.url;
     } catch (err) {
       track('checkout_failed', {
         produto: type,
@@ -212,9 +215,9 @@ export function PricingSection({
               Nome Social.
             </p>
 
-            <p className="mt-3 font-cinzel text-6xl md:text-8xl font-bold leading-none text-[#D4AF37]">
-              {prominentPrice(priceLabel)}
-            </p>
+            <div className="mt-3 flex justify-center">
+              <Price {...priceProps} size="hero" className="text-center items-center" />
+            </div>
 
             <ul className="mt-3 space-y-0.5 text-xs leading-relaxed text-[#76746a] list-none p-0 m-0">
               {NOME_SOCIAL_DELIVERABLES.map((item) => (
@@ -252,7 +255,7 @@ export function PricingSection({
       {checkoutProduct && (
         <CheckoutModal
           productType={checkoutProduct}
-          priceInfo={resolvedPrices[checkoutProduct] ?? PRICE_FALLBACK}
+          priceInfo={resolvedPrices[checkoutProduct] ?? PRICE_UNAVAILABLE}
           promotion={promotion}
           onClose={() => setCheckoutProduct(null)}
           onTriggerCard={handleTriggerCard}

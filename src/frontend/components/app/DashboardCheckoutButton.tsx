@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { ActivePromotion, PriceInfo } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { captureBeginCheckout, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
+import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
+import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -43,24 +44,26 @@ export function DashboardCheckoutButton({
       currency: 'BRL',
       payment_method: 'stripe',
     });
-    const res = await fetch('/api/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const result = await postCreateCheckoutWithPriceConfirm(
+      {
         product_type: type,
         couponCode,
-        ph_distinct_id: getPostHogDistinctId(),
-      }),
-    });
-    const data = await res.json();
-    if (res.ok && data.url) {
-      window.location.href = data.url;
+        expected_final_cents: priceInfo.cents,
+      },
+      (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
+    );
+    if (result.ok) {
+      if ('bypass' in result && result.bypass) {
+        window.location.href = result.redirectUrl;
+      } else if ('url' in result) {
+        window.location.href = result.url;
+      }
       return;
     }
 
     track('checkout_failed', {
       produto: type,
-      erro: data.error ?? 'Erro ao criar checkout',
+      erro: checkoutFailureMessage(result),
       origem: 'dashboard',
     });
   }

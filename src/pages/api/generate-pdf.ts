@@ -7,6 +7,7 @@ import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
 import { NomeBebePDF } from '../../frontend/components/pdf/NomeBebePDF';
 import { NomeEmpresaPDF } from '../../frontend/components/pdf/NomeEmpresaPDF';
 import { logError } from '../../backend/utils/error-logger';
+import { getEffectivePrice } from '../../backend/payments/prices';
 
 // Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile)
 const pdfCache = new Map<string, { buffer: Buffer; expiresAt: number }>();
@@ -114,6 +115,16 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const cached = pdfCache.get(cacheKey);
   let pdfBuffer: Buffer;
 
+  let upgradeOfferLabel: string | undefined;
+  if (isGratuita) {
+    try {
+      const effective = await getEffectivePrice({ productType: 'nome_social' });
+      upgradeOfferLabel = effective.formatted;
+    } catch {
+      upgradeOfferLabel = undefined;
+    }
+  }
+
   if (cached && cached.expiresAt > agora) {
     pdfBuffer = cached.buffer;
   } else {
@@ -123,6 +134,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
           analysis: analysis as any,
           magneticNames,
           userName: firstName,
+          upgradeOfferLabel,
         }) as any
       );
       

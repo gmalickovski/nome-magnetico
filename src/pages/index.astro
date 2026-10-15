@@ -11,8 +11,10 @@ import { FAQSection } from '../frontend/components/landing/FAQSection';
 import type { FaqItemProps } from '../frontend/components/landing/FAQSection';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { getSupabaseFaqs } from '../backend/faqs/getSupabaseFaqs';
-import { getPricesAndPromo } from '../backend/payments/prices';
+import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
+
+applyPricingPageCache(Astro);
 
 let faqItems: FaqItemProps[] = [];
 try {
@@ -24,7 +26,7 @@ try {
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getPricesAndPromo();
+  const result = await loadPagePricing();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {
@@ -32,12 +34,16 @@ try {
 }
 
 const user = Astro.locals.user;
+const nomeSocialPrice = hqPrices?.nome_social?.cents ?? 0;
+const schemaPrice = nomeSocialPrice > 0 ? (nomeSocialPrice / 100).toFixed(2) : undefined;
 ---
 
 <LandingLayout
   title="Numerologia Cabalística do Seu Nome — Detecte Bloqueios e Encontre Seu Nome Magnético"
   description="Seu nome de nascimento carrega frequências que podem estar bloqueando sua carreira, relacionamentos e prosperidade. Faça a análise cabalística completa: mapa de 5 números, 4 triângulos e variações de nome harmonizado."
   keywords="numerologia cabalística, análise do nome numerologia, bloqueios energéticos nome, numerologia nome completo, mapa numerológico completo, nome social numerologia, mudar nome numerologia, nome sem bloqueios, análise vibracional gratuita nome, arquétipo junguiano nome"
+  schemaOfferPrice={schemaPrice}
+  schemaEstimatedCost={schemaPrice}
 >
   {promotion && <PromoBanner promotion={promotion} client:load />}
   <LandingHeader client:load />

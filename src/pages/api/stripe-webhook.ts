@@ -43,6 +43,9 @@ export const POST: APIRoute = async ({ request }) => {
       user_id?: string;
       product_type?: string;
       coupon_code?: string;
+      base_cents?: string;
+      final_cents?: string;
+      promo_id?: string;
       ga_client_id?: string;
       ph_distinct_id?: string;
       purchase_kind?: string;
@@ -61,7 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
    * purchase só entra pelos ramos pagos; o uuid é determinístico por evento + sessão.
    */
   async function captureCheckoutPostHog(
-    eventName: 'purchase' | 'checkout_error' | 'checkout_abandoned',
+    eventName: 'purchase' | 'payment_confirmed' | 'checkout_error' | 'checkout_abandoned',
     session: CheckoutSession,
     paymentMethod?: string,
   ): Promise<void> {
@@ -81,10 +84,16 @@ export const POST: APIRoute = async ({ request }) => {
       const plan =
         product && product in PRODUCT_NAMES ? PRODUCT_NAMES[product as ProductType] : product;
       const cents = typeof session.amount_total === 'number' ? session.amount_total : 0;
+      const metaBase = session.metadata?.base_cents ? Number(session.metadata.base_cents) : null;
+      const metaFinal = session.metadata?.final_cents ? Number(session.metadata.final_cents) : null;
       const properties: Record<string, string | number> = {
         value: Number((cents / 100).toFixed(2)),
         currency: (session.currency || 'brl').toUpperCase(),
         session_id: session.id,
+        base_cents: metaBase ?? cents,
+        final_cents: metaFinal ?? cents,
+        promo_id: session.metadata?.promo_id ?? '',
+        promo_code: session.metadata?.coupon_code ?? '',
       };
       if (paymentMethod) properties.payment_method = paymentMethod;
       if (product) {
@@ -178,6 +187,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     if (paymentMethod) {
+      await captureCheckoutPostHog('payment_confirmed', session, paymentMethod);
       await captureCheckoutPostHog('purchase', session, paymentMethod);
     }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { captureBeginCheckout, captureViewOffer, getPostHogDistinctId, track, trackBeginCheckout } from '../../lib/analytics';
+import { captureBeginCheckout, captureViewOffer, track, trackBeginCheckout } from '../../lib/analytics';
+import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -53,42 +55,18 @@ const PRODUCT_STATIC: Record<ProductType, {
   },
 };
 
-const FALLBACK_PRICES: Record<string, PriceInfo> = {
-  nome_social:  { cents:  9800, formatted: 'R$ 98,00',  hasDiscount: false },
-};
+const EMPTY_PRICE: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
 
 function PriceDisplay({ priceInfo, promotion, productId }: { priceInfo: PriceInfo; promotion?: ActivePromotion | null; productId: string }) {
   const appliesToThis = promotionAppliesToProduct(promotion, productId as ProductType);
-  const showDiscount = promotion && appliesToThis && priceInfo.hasDiscount && priceInfo.discountedFormatted;
-
-  if (showDiscount) {
-    return (
-      <div>
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <span className="font-cinzel text-2xl font-bold text-gray-500 line-through opacity-60">
-            {priceInfo.formatted}
-          </span>
-          <span className="font-cinzel text-4xl font-bold text-[#D4AF37]">
-            {priceInfo.discountedFormatted}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="bg-[#D4AF37] text-black text-xs font-bold px-2 py-0.5 rounded-full">
-            {promotion!.discountType === 'percent'
-              ? `−${promotion!.discountValue}%`
-              : `−R$ ${promotion!.discountValue}`}
-          </span>
-          <span className="text-[#D4AF37] text-xs font-medium">{promotion!.name}</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-baseline gap-2">
-      <span className="font-cinzel text-4xl font-bold text-[#D4AF37]">{priceInfo.formatted}</span>
-    </div>
-  );
+  const props = priceInfoToPriceProps(productId as ProductType, {
+    formatted: priceInfo.formatted,
+    discountedFormatted: priceInfo.discountedFormatted,
+    hasDiscount: Boolean(appliesToThis && priceInfo.hasDiscount),
+    validUntilLabel: priceInfo.validUntilLabel,
+    baseFormatted: priceInfo.baseFormatted,
+  });
+  return <Price {...props} size="card" showValidity />;
 }
 
 export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false }: Props) {
@@ -100,7 +78,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
     autoOpenCheckout && isLoggedIn && !isOwned ? productType : null
   );
 
-  const prices = hqPrices ?? FALLBACK_PRICES;
+  const prices = hqPrices ?? {};
 
   useEffect(() => {
     if (!isOwned) captureViewOffer();
@@ -113,7 +91,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
       const appliesToThis = promotionAppliesToProduct(promotion, type);
       const effectiveCoupon = couponCode || (promotion && appliesToThis ? promotion.stripePromoCode : null) || undefined;
 
-      const priceInfo = prices[type] ?? FALLBACK_PRICES[type];
+      const priceInfo = prices[type] ?? EMPTY_PRICE;
+      if (!priceInfo.cents) throw new Error('Preço indisponível no momento. Atualize a página.');
       track('checkout_redirect_start', {
         produto: type,
         preco: priceInfo.cents / 100,
@@ -121,28 +100,32 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         origem: 'comprar',
       });
 
-      captureBeginCheckout('card', (prices[type] ?? FALLBACK_PRICES[type]).cents / 100);
+      captureBeginCheckout('card', priceInfo.cents / 100);
       trackBeginCheckout({
         value: Number((priceInfo.cents / 100).toFixed(2)),
         currency: 'BRL',
         payment_method: 'stripe',
       });
-      const res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await postCreateCheckoutWithPriceConfirm(
+        {
           product_type: type,
           couponCode: effectiveCoupon ?? undefined,
-          ph_distinct_id: getPostHogDistinctId(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao criar sessão');
-      if (data.bypass) {
-        window.location.href = data.redirectUrl;
-      } else {
-        if (!data.url) throw new Error('URL de pagamento não retornada');
-        window.location.href = data.url;
+          expected_final_cents: priceInfo.cents,
+        },
+        (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
+      );
+      if (!result.ok) {
+        if ('priceChanged' in result && result.priceChanged) {
+          setErrorMsg('O valor mudou — confirme novamente na página atualizada.');
+          setLoading(null);
+          return;
+        }
+        throw new Error(checkoutFailureMessage(result));
+      }
+      if ('bypass' in result && result.bypass) {
+        window.location.href = result.redirectUrl;
+      } else if ('url' in result) {
+        window.location.href = result.url;
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Erro ao criar sessão de pagamento';
@@ -220,7 +203,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
 
   function ProductCard({ type, showPayButton }: { type: ProductType; showPayButton: boolean }) {
     const p = PRODUCT_STATIC[type];
-    const priceInfo = prices[type] ?? FALLBACK_PRICES[type];
+    const priceInfo = prices[type] ?? EMPTY_PRICE;
     const isLoadingThis = loading === type;
 
     return (
@@ -389,7 +372,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
       {modalProduct && (
         <CheckoutModal
           productType={modalProduct}
-          priceInfo={prices[modalProduct] ?? FALLBACK_PRICES[modalProduct]}
+          priceInfo={prices[modalProduct] ?? EMPTY_PRICE}
           promotion={promotion}
           onClose={() => setModalProduct(null)}
           onTriggerCard={triggerCheckout}

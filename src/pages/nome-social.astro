@@ -5,8 +5,12 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { getSupabaseFaqs } from '../backend/faqs/getSupabaseFaqs';
 import type { FaqItemProps } from '../frontend/components/landing/FAQSection';
 import { FAQSection } from '../frontend/components/landing/FAQSection';
-import { getPricesAndPromo } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
+import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
+import { Price } from '../frontend/components/ui/Price';
+import { promotionAppliesToProduct } from '../backend/payments/prices';
+
+applyPricingPageCache(Astro);
 import { LandingCheckout } from '../frontend/components/purchase/LandingCheckout';
 import { HeroNomeSocial } from '../frontend/components/landing/HeroNomeSocial';
 
@@ -22,18 +26,30 @@ try {
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getPricesAndPromo();
+  const result = await loadPagePricing();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {
   console.warn('[nome-social] Falha ao carregar preços:', err);
 }
 
-const FALLBACK_PRICES: Record<string, PriceInfo> = {
-  nome_social: { cents: 9700, formatted: 'R$ 97', hasDiscount: false },
+const EMPTY: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
+const prices = hqPrices ?? {};
+function getPrice(id: string) { return prices[id] ?? EMPTY; }
+
+function showDiscount(id: 'nome_social' | 'nome_bebe' | 'nome_empresa') {
+  const p = getPrice(id);
+  return !!(promotion && promotionAppliesToProduct(promotion, id) && p.hasDiscount && p.discountedFormatted);
+}
+
+const social = getPrice('nome_social');
+const socialPriceProps = {
+  product: 'nome_social' as const,
+  baseFormatted: social.baseFormatted ?? social.formatted,
+  finalFormatted: social.discountedFormatted ?? social.formatted,
+  hasDiscount: showDiscount('nome_social'),
+  validUntilLabel: social.validUntilLabel ?? null,
 };
-const prices = hqPrices ?? FALLBACK_PRICES;
-function getPrice(id: string) { return prices[id] ?? FALLBACK_PRICES[id]; }
 
 const schemaProduct = {
   '@context': 'https://schema.org',
@@ -50,12 +66,17 @@ const schemaProduct = {
     url: 'https://www.nomemagnetico.com.br/comprar?produto=nome_social',
   },
 };
+
+const schemaPrice = social.cents > 0 ? (social.cents / 100).toFixed(2) : undefined;
+const displayFinal = social.discountedFormatted ?? social.formatted;
 ---
 
 <LandingLayout
   title="Harmonização de Assinatura e Nome Social | Nome Magnético"
   description="Compare seu nome de nascimento e variações de nome social para escolher uma assinatura harmonizada: ranking, score 0–100, numerologia cabalística, 4 triângulos, arcanos, bloqueios e PDF."
   keywords="harmonização de assinatura, assinatura numerológica, numerologia do nome social, numerologia do nome completo, mudar nome numerologia, assinatura harmonizada, nome sem bloqueios energéticos, análise vibracional nome, nome magnético numerologia, numerologia cabalística nome"
+  schemaOfferPrice={schemaPrice}
+  schemaEstimatedCost={schemaPrice}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaProduct)} />
 
@@ -76,7 +97,7 @@ const schemaProduct = {
           <div class="lg:col-span-7 flex flex-col items-center lg:items-start">
             <div class="inline-flex items-center gap-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-full px-4 py-1.5 mb-6">
               <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
-              <span class="text-[#D4AF37] text-sm font-medium">Harmonização de Assinatura · {getPrice('nome_social').formatted}</span>
+              <span class="text-[#D4AF37] text-sm font-medium">Harmonização de Assinatura · {displayFinal}</span>
               <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
             </div>
 
@@ -106,7 +127,7 @@ const schemaProduct = {
             </div>
 
             <div class="flex items-center justify-center lg:justify-start gap-6 flex-wrap">
-              <p class="text-gray-600 text-sm">Pagamento único · {getPrice('nome_social').formatted} · Acesso imediato</p>
+              <p class="text-gray-600 text-sm">Pagamento único · {displayFinal} · Acesso imediato</p>
               <div class="flex items-center gap-2">
                 <span class="text-[#D4AF37] text-xs">✦</span>
                 <p class="text-gray-600 text-sm">PDF completo com ranking e recomendação</p>
@@ -389,7 +410,9 @@ const schemaProduct = {
       <div class="max-w-xl mx-auto px-4 text-center">
         <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Investimento</p>
         <h2 class="font-cinzel text-3xl font-bold text-white mb-4">Harmonize Sua Assinatura</h2>
-        <div class="font-cinzel text-5xl font-bold text-[#D4AF37] mb-2">{getPrice('nome_social').formatted}</div>
+        <div class="mb-2 flex justify-center">
+          <Price client:visible {...socialPriceProps} size="card" />
+        </div>
         <p class="text-gray-500 text-sm mb-8">Pagamento único · Acesso por 30 dias · Resultados na hora</p>
         <LandingCheckout
           client:load
