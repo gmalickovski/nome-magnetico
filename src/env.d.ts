@@ -42,6 +42,8 @@ interface ImportMetaEnv {
   readonly N8N_WEBHOOK_SUPORTE: string;
   readonly N8N_WEBHOOK_MARKETING: string;
   readonly RATE_LIMIT_TESTE_BLOQUEIO: string;
+  readonly TURNSTILE_SECRET_KEY: string;
+  readonly PUBLIC_TURNSTILE_SITE_KEY: string;
   readonly PRODUCT_SLUG: string;
   readonly INTERNAL_API_SECRET: string;
   readonly SENTRY_DSN: string;
