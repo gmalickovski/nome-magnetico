@@ -17,6 +17,7 @@ import {
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
 import { captureFluxoException } from '../../sentry/fluxo';
+import { getPublicBaseUrl } from '../../utils/public-url';
 
 const schema = z.object({
   product_type: z.enum(SELLABLE_PRODUCT_TYPES),
@@ -24,7 +25,7 @@ const schema = z.object({
   ph_distinct_id: z.string().optional(),
 });
 
-export const POST: APIRoute = async ({ request, locals, url }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const user = locals.user;
   const accessToken = locals.accessToken;
 
@@ -57,7 +58,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   const phDistinctId =
     sanitizeDistinctId(parsed.data.ph_distinct_id) ??
     readPostHogDistinctIdFromCookie(request.headers.get('cookie'));
-  const baseUrl = process.env.APP_URL || url.origin;
+  const baseUrl = getPublicBaseUrl();
 
   // Verificar se é admin ou usuário teste → bypass do Stripe
   const { data: profile } = await supabase

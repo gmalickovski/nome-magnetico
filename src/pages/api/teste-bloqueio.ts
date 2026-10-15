@@ -21,6 +21,7 @@ import { calcularScore } from '../../backend/numerology/score';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
+import { getPublicBaseUrl } from '../../utils/public-url';
 
 const schema = z.object({
   nome_completo: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
@@ -36,7 +37,7 @@ function toDbDate(date: string): string {
   return date;
 }
 
-export const POST: APIRoute = async ({ request, url }) => {
+export const POST: APIRoute = async ({ request }) => {
   let body: unknown;
   try {
     body = await request.json();
@@ -176,7 +177,7 @@ export const POST: APIRoute = async ({ request, url }) => {
           email: normalizedEmail,
           firstName: nome_completo.split(' ')[0] || nome_completo,
           fullName: nome_completo,
-          downloadUrl: `${url.origin}/api/download-pdf?id=${lead.id}`
+          downloadUrl: `${getPublicBaseUrl()}/api/download-pdf?id=${lead.id}`
         });
 
         // Atualizar o status do lead para concluído

@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts src/utils/utm.test.ts src/backend/analytics/posthog-server.test.ts src/backend/analytics/ga4-mp.test.ts src/backend/notifications/free-analysis-payload.test.ts src/sentry/filters.test.ts src/sentry/fluxo.test.ts"
+    "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts src/utils/utm.test.ts src/utils/public-url.test.ts src/backend/analytics/posthog-server.test.ts src/backend/analytics/ga4-mp.test.ts src/backend/notifications/free-analysis-payload.test.ts src/sentry/filters.test.ts src/sentry/fluxo.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
