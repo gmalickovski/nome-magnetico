@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { TurnstileWidget } from './TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const HONEYPOT_FIELD = 'website_url';
 
 interface TesteResult {
   nome: string;
@@ -15,11 +19,18 @@ interface TesteResult {
 interface FormErrors {
   nome?: string;
   data?: string;
+  email?: string;
 }
 
 export function TesteBloqueio() {
   const [nome, setNome] = useState('');
   const [data, setData] = useState('');
+  const [email, setEmail] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const handleTurnstileToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TesteResult | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -41,6 +52,9 @@ export function TesteBloqueio() {
     if (!data || !/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
       errs.data = 'Data no formato DD/MM/AAAA';
     }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = 'Informe um e-mail válido';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -53,11 +67,27 @@ export function TesteBloqueio() {
     setResult(null);
     setApiError('');
 
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setApiError('Confirme a verificação de segurança antes de continuar.');
+      setLoading(false);
+      return;
+    }
+
     try {
+      const payload: Record<string, string> = {
+        nome_completo: nome.trim(),
+        data_nascimento: data,
+        email: email.trim().toLowerCase(),
+        [HONEYPOT_FIELD]: honeypot,
+      };
+      if (TURNSTILE_SITE_KEY && turnstileToken) {
+        payload['cf-turnstile-response'] = turnstileToken;
+      }
+
       const response = await fetch('/api/teste-bloqueio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome_completo: nome, data_nascimento: data }),
+        body: JSON.stringify(payload),
       });
 
       const data_result = await response.json();
@@ -67,7 +97,14 @@ export function TesteBloqueio() {
         return;
       }
 
-      setResult(data_result);
+      if (data_result.success) {
+        setResult(null);
+        setApiError(
+          'Análise solicitada! Verifique seu e-mail em alguns minutos para receber o PDF.',
+        );
+      } else {
+        setResult(data_result);
+      }
     } catch {
       setApiError('Não foi possível conectar ao servidor. Tente novamente.');
     } finally {
@@ -115,6 +152,39 @@ export function TesteBloqueio() {
               hint="Digite apenas os números"
               required
             />
+            <Input
+              label="E-mail"
+              placeholder="seu@email.com"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={errors.email}
+              required
+            />
+
+            <div
+              className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden"
+              aria-hidden="true"
+            >
+              <label htmlFor="teste-website">Website</label>
+              <input
+                id="teste-website"
+                type="text"
+                name={HONEYPOT_FIELD}
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
+            {TURNSTILE_SITE_KEY ? (
+              <TurnstileWidget
+                siteKey={TURNSTILE_SITE_KEY}
+                onToken={handleTurnstileToken}
+                onExpire={() => setTurnstileToken('')}
+              />
+            ) : null}
 
             {apiError && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-400 text-sm">
