@@ -79,6 +79,11 @@ function supportInbox(): string {
   return readServerEnv('SUPPORT_INBOX_EMAIL') ?? DEFAULT_SUPPORT_INBOX;
 }
 
+function contactAlertSubject(assunto: string, nome: string): string {
+  const base = `[Contato NM] ${assunto}`;
+  return nome ? `${base} — ${nome}` : base;
+}
+
 function formatSaoPaulo(date: Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
     timeZone: 'America/Sao_Paulo',
@@ -192,7 +197,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     await sendSmtpMail({
       to: supportInbox(),
       replyTo: email || undefined,
-      subject: `[Contato NM] ${parsed.data.assunto} — ${nome}`,
+      subject: contactAlertSubject(parsed.data.assunto, nome),
       text: alertText({
         ticketNumber,
         ticketId,

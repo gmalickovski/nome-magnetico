@@ -13,6 +13,7 @@ const captured: { fluxo: string; error: unknown }[] = [];
 
 let failEmail = false;
 let rateCount = 0;
+let profileNome: string | null = 'Ana Silva';
 
 function from(table: string) {
   let payload: unknown;
@@ -21,7 +22,7 @@ function from(table: string) {
       return payload === undefined ? { count: rateCount, error: null } : { error: null };
     }
     if (table === 'profiles') {
-      return { data: { nome: 'Ana Silva' }, error: null };
+      return { data: { nome: profileNome }, error: null };
     }
     if (table === 'support_tickets' && payload !== undefined) {
       return { data: { id: 'ticket-1', ticket_number: 4821 }, error: null };
@@ -133,6 +134,7 @@ describe('POST /api/support/contact', { concurrency: false }, () => {
     captured.length = 0;
     failEmail = false;
     rateCount = 0;
+    profileNome = 'Ana Silva';
     process.env.SMTP_HOST = 'email-smtp.example.com';
     process.env.SMTP_PORT = '465';
     process.env.SMTP_USER = 'smtp-user';
@@ -192,6 +194,22 @@ describe('POST /api/support/contact', { concurrency: false }, () => {
     assert.equal(sent[0]?.to, 'fila@example.com');
     assert.equal(sent[0]?.replyTo, 'ana@example.com');
     assert.equal(sent[0]?.subject, '[Contato NM] Dúvida sobre os planos — Ana');
+  });
+
+  it('omite o sufixo do nome no assunto quando o perfil não tem nome', async () => {
+    profileNome = '   ';
+    const response = await call(
+      {
+        nome: 'Outra Pessoa',
+        email: 'outra@example.com',
+        assunto: 'Bug',
+        mensagem: 'O botão de entrar não responde no celular.',
+      },
+      { user: { id: 'user-1', email: 'ana@example.com' } },
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(sent[0]?.subject, '[Contato NM] Bug');
   });
 
   it('usa a conta logada e ignora nome e e-mail do corpo', async () => {
