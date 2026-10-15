@@ -7,6 +7,13 @@ export const HONEYPOT_FIELD = 'website_url';
 
 const NAME_REGEX = /^[\p{L}\s'.-]+$/u;
 
+const utmField = z
+  .string()
+  .trim()
+  .max(200)
+  .optional()
+  .transform((value) => (value ? value : null));
+
 export const FreeAnalysisRequestSchema = z
   .object({
     nome_completo: z
@@ -19,6 +26,10 @@ export const FreeAnalysisRequestSchema = z
       .string()
       .regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Formato: DD/MM/AAAA'),
     email: z.string().trim().email('E-mail inválido').max(254),
+    opt_in: z.boolean().optional(),
+    utm_source: utmField,
+    utm_medium: utmField,
+    utm_campaign: utmField,
     [HONEYPOT_FIELD]: z.string().optional(),
     'cf-turnstile-response': z.string().optional(),
   })

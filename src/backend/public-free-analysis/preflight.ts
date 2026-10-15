@@ -22,6 +22,10 @@ export type PreflightSuccess = {
   nome_completo: string;
   data_nascimento: string;
   ipHash: string;
+  opt_in: boolean | undefined;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
 };
 
 export type PreflightResult = PreflightJsonResponse | PreflightSuccess;
@@ -68,7 +72,15 @@ export async function runFreeAnalysisPreflight(
     });
   }
 
-  const { nome_completo, data_nascimento, email } = parsed.data;
+  const {
+    nome_completo,
+    data_nascimento,
+    email,
+    opt_in,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+  } = parsed.data;
   if (!isPlausibleBirthDate(data_nascimento, options?.now ? new Date(options.now) : undefined)) {
     return reject(400, { error: 'Data de nascimento inválida' });
   }
@@ -114,5 +126,9 @@ export async function runFreeAnalysisPreflight(
     nome_completo,
     data_nascimento,
     ipHash,
+    opt_in,
+    utm_source,
+    utm_medium,
+    utm_campaign,
   };
 }
