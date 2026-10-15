@@ -101,8 +101,16 @@ export async function createCheckoutResponse(args: {
   const etapaInput = parsed.data.etapa?.trim() ?? '';
   const etapa = etapaInput ? parseRenewalEtapa(etapaInput) : null;
   if (isRenewal && etapaInput && !etapa) {
+    console.error('[create-checkout] Etapa de renovação inválida:', {
+      etapa: etapaInput,
+      allowed: RENEWAL_ETAPAS,
+      userId: user.id,
+    });
     return json(
-      { error: `Etapa de renovação inválida. Use ${RENEWAL_ETAPAS.join(', ')}.` },
+      {
+        error:
+          'Este link de renovação expirou ou não é válido. Você pode renovar seu acesso direto pela página de compra.',
+      },
       400,
     );
   }
