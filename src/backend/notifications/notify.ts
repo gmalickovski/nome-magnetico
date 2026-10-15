@@ -76,7 +76,6 @@ interface MarketingPayload {
   source: string;
 }
 
-<<<<<<< HEAD
 /** Opt-in de marketing e avisos de expiração. O payload não vai no evento do Sentry. */
 const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>> = {
   'marketing.free_analysis_completed': 'leads',
@@ -90,14 +89,11 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
   captureFluxoException(fluxo, error);
 }
 
-async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<boolean> {
-=======
 async function sendToWebhook(
   url: string,
   event: NotificationEvent | MarketingEvent,
   payload: NotificationPayload | MarketingPayload | AccessAttributesPayload,
 ): Promise<boolean> {
->>>>>>> 63ac0fc (DEV-154: atributos de acesso no Brevo (2/2))
   try {
     const response = await fetch(url, {
       method: 'POST',

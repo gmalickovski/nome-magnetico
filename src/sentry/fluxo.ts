@@ -4,7 +4,13 @@
  */
 import * as Sentry from '@sentry/astro';
 
-export type Fluxo = 'checkout' | 'stripe_webhook' | 'resultado_gratis' | 'notify_expiring' | 'leads';
+export type Fluxo =
+  | 'checkout'
+  | 'stripe_webhook'
+  | 'resultado_gratis'
+  | 'notify_expiring'
+  | 'leads'
+  | 'suporte_contato';
 
 /** Valores escalares. Não colocar e-mail, nome, token ou corpo de análise. */
 export type FluxoExtra = Record<string, string | number | boolean | null>;
@@ -29,6 +35,7 @@ export function fluxoForPath(pathname: string): Fluxo | undefined {
   if (path === '/api/save-lead' || path === '/obrigado') return 'leads';
   if (path === '/api/analyze' || path === '/api/analyze-live') return 'resultado_gratis';
   if (path === '/app/resultado' || path.startsWith('/app/resultado/')) return 'resultado_gratis';
+  if (path === '/api/support/contact') return 'suporte_contato';
 
   return undefined;
 }

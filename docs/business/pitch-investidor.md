@@ -183,7 +183,7 @@ O Nome Magnético oferece — pela primeira vez — a identificação do arquét
 - **IA:** Claude (Anthropic) em produção, Groq (Llama) em desenvolvimento — troca por configuração sem redeploy
 - **Pagamentos:** Stripe (pagamento único por ciclo de 30 dias, 3 planos)
 - **Infraestrutura:** VPS própria com PM2 + GitHub Actions para CI/CD (deploy zero-downtime)
-- **Suporte:** Chatwoot self-hosted com dual inbox de prioridade (clientes com plano ativo → fila prioritária)
+- **Suporte:** tickets no Supabase, com aviso por e-mail para a equipe
 
 ### Por que isso escala
 
@@ -230,7 +230,7 @@ O sistema foi construído para multi-SaaS desde o início: sem valores hardcoded
 - ✅ Análise Nome Empresa (sinergias, riscos, branding estratégico)
 - ✅ Geração de PDF premium por análise
 - ✅ Arquétipos Junguianos integrados nos 3 produtos (relatório + PDF)
-- ✅ Sistema de suporte Chatwoot com dual inbox de prioridade
+- ✅ Formulário de suporte gravado no Supabase, com aviso por e-mail
 - ✅ Autenticação completa (Supabase Auth + Amazon SES)
 - ✅ Pagamentos Stripe (3 produtos, 3 price IDs)
 - ✅ CI/CD via GitHub Actions, deploy zero-downtime
