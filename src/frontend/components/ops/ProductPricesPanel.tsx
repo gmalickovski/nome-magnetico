@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { opsFetch } from '../../ops/opsFetch';
 
-function formatBRL(cents: number) {
-  return `R$ ${(cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+import { formatBRLFromCents } from '../../../shared/format-brl-cents';
 
 interface PriceRow {
   product_type: string;

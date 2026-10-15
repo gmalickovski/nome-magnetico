@@ -11,7 +11,12 @@ import { supabase } from '../db/supabase';
 import { isUniqueViolation } from '../ops/registry';
 import type { ProductType } from './stripe';
 import { fetchProductPriceMap, fallbackRow } from '../pricing/product-prices-db';
-import { getCatalogPricing, getEffectivePriceCore, effectiveResultToPriceInfo } from '../pricing/service';
+import {
+  getCatalogPricing,
+  getEffectivePriceCore,
+  getStaticFallbackCatalogPricing,
+  effectiveResultToPriceInfo,
+} from '../pricing/service';
 import type { EffectivePriceResult } from '../pricing/service';
 import {
   codeAppliesToProduct,
@@ -59,7 +64,7 @@ export async function getPricesAndPromo(): Promise<HqPricesResponse> {
     return await getCatalogPricing();
   } catch (err) {
     console.warn('[prices] Falha ao carregar catálogo de preços — fallback estático:', err);
-    return getCatalogPricing(new Date());
+    return getStaticFallbackCatalogPricing();
   }
 }
 

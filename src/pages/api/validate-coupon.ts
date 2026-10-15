@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { getEffectivePrice, getPricesAndPromo } from '../../backend/payments/prices';
+import { getEffectivePrice, getPricesAndPromo, formatBRL } from '../../backend/payments/prices';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 
 const schema = z.object({
@@ -13,10 +13,6 @@ const FALLBACK_CENTS: Record<string, number> = {
   nome_bebe:     8000,
   nome_empresa: 12500,
 };
-
-function formatBRL(cents: number) {
-  return `R$ ${(cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const user = locals.user;

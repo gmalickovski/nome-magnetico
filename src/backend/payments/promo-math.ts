@@ -1,3 +1,4 @@
+import { formatBRLFromCents } from '../../shared/format-brl-cents';
 import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES, type ProductType } from '../../shared/product-labels';
 
 export const COUPON_INVALID = 'Cupom inválido ou expirado';
@@ -127,7 +128,7 @@ export interface TrialValidation {
 
 export function formatBRL(unitAmount: number | null | undefined): string {
   if (unitAmount == null) return '';
-  return `R$ ${(unitAmount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatBRLFromCents(unitAmount);
 }
 
 export function isProductType(value: string | null | undefined): value is ProductType {

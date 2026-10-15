@@ -247,6 +247,7 @@ export const POST: APIRoute = async ({ request }) => {
         accessUrl: `${process.env.APP_URL}/app`,
         productType,
         productName: PRODUCT_NAMES[productType],
+        amount: session.amount_total ?? undefined,
       });
     }
 

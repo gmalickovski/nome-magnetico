@@ -11,13 +11,27 @@ import { OpsRegistryError } from '../ops/registry';
 
 const COLUMNS = 'product_type, base_cents, min_cents, label, is_active, updated_at, updated_by';
 
+/** Erros de leitura em que tratamos como catálogo vazio (fallback 98/80/125). */
+function isBenignProductPricesReadError(error: { code?: string; message?: string }): boolean {
+  const code = error.code ?? '';
+  if (code === '42P01' || code === 'PGRST205' || code === 'PGRST116') return true;
+  const msg = (error.message ?? '').toLowerCase();
+  return msg.includes('product_prices') && (msg.includes('does not exist') || msg.includes('could not find'));
+}
+
 export async function fetchProductPriceRows(): Promise<ProductPriceRow[]> {
-  const { data, error } = await supabase.from('product_prices').select(COLUMNS).eq('is_active', true);
-  if (error) {
-    if (error.code === '42P01') return [];
-    throw error;
+  try {
+    const { data, error } = await supabase.from('product_prices').select(COLUMNS).eq('is_active', true);
+    if (error) {
+      if (isBenignProductPricesReadError(error)) return [];
+      console.warn('[product_prices] leitura falhou — usando fallback estático:', error.message ?? error.code);
+      return [];
+    }
+    return (data ?? []) as ProductPriceRow[];
+  } catch (err) {
+    console.warn('[product_prices] leitura falhou — usando fallback estático:', err);
+    return [];
   }
-  return (data ?? []) as ProductPriceRow[];
 }
 
 export async function fetchProductPriceMap(): Promise<Map<ProductType, ProductPriceRow>> {

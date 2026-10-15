@@ -17,6 +17,7 @@ import {
   type AccessAttributesPayload,
   type AccessAttributeOrigin,
 } from './access-attributes-payload';
+import { enrichNotificationPayload } from './enrich-payload';
 
 type NotificationEvent =
   | 'user.welcome'
@@ -48,6 +49,8 @@ interface NotificationPayload {
   analysisId?: string;
   analysisUrl?: string;
   amount?: number;
+  /** Valor BRL já formatado (centavos → moeda). Preenchido por enrichNotificationPayload. */
+  amount_formatted?: string;
   productName?: string;
   daysLeft?: number;
   renewUrl?: string;
@@ -89,18 +92,29 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
   captureFluxoException(fluxo, error);
 }
 
+function prepareWebhookPayload(
+  payload: NotificationPayload | MarketingPayload | AccessAttributesPayload,
+): NotificationPayload | MarketingPayload | AccessAttributesPayload {
+  if ('amount' in payload && typeof (payload as NotificationPayload).amount === 'number') {
+    return enrichNotificationPayload(payload as NotificationPayload);
+  }
+  return payload;
+}
+
 async function sendToWebhook(
   url: string,
   event: NotificationEvent | MarketingEvent,
   payload: NotificationPayload | MarketingPayload | AccessAttributesPayload,
 ): Promise<boolean> {
+  const payloadToSend = prepareWebhookPayload(payload);
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event,
-        payload,
+        payload: payloadToSend,
         timestamp: new Date().toISOString(),
       }),
     });
@@ -225,4 +239,3 @@ export async function publishAccessAttributes(input: PublishAccessAttributesInpu
 
   await notifyAccessAttributes(input.event, payload);
 }
-

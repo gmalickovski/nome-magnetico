@@ -66,6 +66,21 @@ export async function getEffectivePriceCore(params: {
   });
 }
 
+/** Catálogo só com FALLBACK_PRODUCT_PRICES (migration ausente ou DB indisponível). */
+export function getStaticFallbackCatalogPricing(now = new Date()): HqPricesResponse {
+  const prices: Record<string, PriceInfo> = {};
+  for (const productType of SELLABLE_PRODUCT_TYPES) {
+    const effective = computeEffectivePricePure({
+      productType,
+      now,
+      productRow: fallbackRow(productType),
+      promotion: null,
+    });
+    prices[productType] = effectiveToPriceInfo(effective);
+  }
+  return { prices, promotion: null };
+}
+
 export async function getCatalogPricing(now = new Date()): Promise<HqPricesResponse> {
   const priceMap = await fetchProductPriceMap();
   let promotion: ActivePromotion | null = null;

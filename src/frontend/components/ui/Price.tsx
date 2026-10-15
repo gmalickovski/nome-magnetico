@@ -1,3 +1,4 @@
+import { formatBRLDisplayFromCents } from '../../../shared/format-brl-cents';
 import type { PricingDisplay } from '../../../shared/pricing-display';
 import type { ProductType } from '../../../shared/product-labels';
 
@@ -34,7 +35,7 @@ export function Price({
   className = '',
   showValidity = true,
 }: PriceProps) {
-  const displayFinal = finalFormatted.replace(/,00$/, '');
+  const displayFinal = stripPriceDisplayZeros(finalFormatted);
 
   if (!hasDiscount) {
     return (
@@ -54,7 +55,7 @@ export function Price({
           className={`font-cinzel font-bold text-gray-500 line-through opacity-60 ${strikeSize}`}
           data-price-base
         >
-          {baseFormatted.replace(/,00$/, '')}
+          {stripPriceDisplayZeros(baseFormatted)}
         </span>
         <span className={sizeClasses[size]} data-price-final>
           {displayFinal}
@@ -69,6 +70,10 @@ export function Price({
   );
 }
 
+function stripPriceDisplayZeros(formatted: string): string {
+  return formatted.replace(/,00$/, '');
+}
+
 /** Converte PriceInfo do servidor para props do componente. */
 export function priceInfoToPriceProps(
   product: ProductType,
@@ -78,10 +83,18 @@ export function priceInfoToPriceProps(
     hasDiscount: boolean;
     validUntilLabel?: string | null;
     baseFormatted?: string;
+    baseCents?: number;
+    discountedCents?: number;
+    cents?: number;
   },
 ): PriceProps {
-  const finalFormatted = info.discountedFormatted ?? info.formatted;
-  const baseFormatted = info.baseFormatted ?? info.formatted;
+  const finalCents = info.discountedCents ?? info.cents;
+  const finalFormatted =
+    info.discountedFormatted ??
+    (finalCents != null ? formatBRLDisplayFromCents(finalCents) : info.formatted);
+  const baseFormatted =
+    info.baseFormatted ??
+    (info.baseCents != null ? formatBRLDisplayFromCents(info.baseCents) : info.formatted);
   return {
     product,
     baseFormatted,
