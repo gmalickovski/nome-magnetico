@@ -7,7 +7,7 @@ export function RenovarComprarButton() {
       type="button"
       variant="primary"
       size="md"
-      className="rounded-full text-[#111111] hover:text-[#111111]"
+      className="mt-6 rounded-full text-[#111111] hover:text-[#111111]"
       onClick={() => {
         window.location.assign('/comprar');
       }}
