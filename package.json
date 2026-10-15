@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "npx --yes tsx --test src/backend/payments/promo-math.test.ts src/utils/utm.test.ts src/utils/public-url.test.ts src/backend/analytics/posthog-server.test.ts src/backend/analytics/ga4-mp.test.ts src/backend/notifications/free-analysis-payload.test.ts src/backend/marketing/free-analysis-completed.test.ts src/backend/marketing/public-free-analysis-route.test.ts src/sentry/filters.test.ts src/sentry/fluxo.test.ts src/backend/public-free-analysis/guards.test.ts src/backend/public-free-analysis/rate-limit.test.ts src/backend/public-free-analysis/email-lead-guard.test.ts src/backend/public-free-analysis/preflight.test.ts"
+    "test": "npx --yes tsx --experimental-test-module-mocks --test src/backend/payments/promo-math.test.ts src/utils/utm.test.ts src/utils/public-url.test.ts src/backend/analytics/posthog-server.test.ts src/backend/analytics/ga4-mp.test.ts src/backend/notifications/free-analysis-payload.test.ts src/backend/marketing/free-analysis-completed.test.ts src/backend/marketing/public-free-analysis-route.test.ts src/sentry/filters.test.ts src/sentry/fluxo.test.ts src/pages/api/support/contact.test.ts src/backend/public-free-analysis/guards.test.ts src/backend/public-free-analysis/rate-limit.test.ts src/backend/public-free-analysis/email-lead-guard.test.ts src/backend/public-free-analysis/preflight.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -24,6 +24,7 @@
     "dotenv": "^17.3.1",
     "groq-sdk": "^0.9.1",
     "marked": "^15.0.12",
+    "nodemailer": "^10.1.1",
     "openai": "^4.77.3",
     "pdf-parse": "^2.4.5",
     "posthog-node": "^5.56.1",
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
     "@types/marked": "^5.0.2",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "tailwindcss": "^3.4.17"

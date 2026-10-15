@@ -32,5 +32,6 @@ Erros não tratados no middleware ganham a tag quando o pathname está na tabela
 | `resultado_gratis` | `GET /app/resultado/*`, `POST /api/analyze` (gera a análise gratuita; a mesma rota também atende Nome Social), `POST /api/analyze-live` |
 | `notify_expiring` | `POST /api/internal/notify-expiring` (falha ao consultar ou ao enviar o aviso) |
 | `leads` | `POST /api/save-lead`, `GET /obrigado`, opt-in da análise grátis (`marketing.free_analysis_completed` para o n8n) |
+| `suporte_contato` | `POST /api/support/contact` (falha ao gravar o ticket ou ao enviar o aviso interno por e-mail). Se só o e-mail falha, o ticket permanece gravado e a pessoa recebe sucesso |
 
 O `extra` dessa tag não leva e-mail, nome, token nem texto de análise.
