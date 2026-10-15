@@ -6,7 +6,7 @@ import {
 } from '../../backend/db/subscriptions';
 import { createRefund, PRODUCT_NAMES } from '../../backend/payments/stripe';
 import { getProfile } from '../../backend/db/users';
-import { notify } from '../../backend/notifications/notify';
+import { notify, publishAccessAttributes } from '../../backend/notifications/notify';
 import type { ProductType } from '../../backend/payments/stripe';
 
 const schema = z.object({
@@ -83,6 +83,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
       productName: PRODUCT_NAMES[subscription.product_type as ProductType],
       amount: subscription.amount_paid ?? undefined,
     });
+  }
+
+  try {
+    await publishAccessAttributes({
+      event: 'marketing.access_refunded',
+      origem: 'reembolso',
+      userId: user.id,
+      productType: subscription.product_type,
+      subscription,
+    });
+  } catch (err) {
+    console.error('[request-refund] Falha ao enviar atributos de acesso:', err);
   }
 
   return new Response(JSON.stringify({ success: true }), {

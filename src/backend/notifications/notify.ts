@@ -4,12 +4,19 @@
  *
  * Roteamento:
  *   marketing.* → N8N_WEBHOOK_MARKETING
- *   demais eventos → N8N_WEBHOOK_TRANSACIONAL
+ *   demais eventos (incluindo access.lifecycle) → N8N_WEBHOOK_TRANSACIONAL
  *
  * Erros do sistema → tabela Supabase `error_logs` via error-logger.ts
  */
 
 import { captureFluxoException, type Fluxo } from '../../sentry/fluxo';
+import { getAccessAttributesSnapshot } from '../db/access-attributes';
+import { readServerEnv } from '../env/runtime';
+import {
+  buildAccessAttributesPayload,
+  type AccessAttributesPayload,
+  type AccessAttributeOrigin,
+} from './access-attributes-payload';
 
 type NotificationEvent =
   | 'user.welcome'
@@ -20,6 +27,7 @@ type NotificationEvent =
   | 'payment.failed'
   | 'subscription.expiring_soon'
   | 'subscription.expired'
+  | 'access.lifecycle'
   | 'admin.new_user'
   | 'admin.new_payment'
   | 'payment.refunded'
@@ -28,7 +36,8 @@ type NotificationEvent =
 
 type MarketingEvent =
   | 'marketing.free_analysis_completed'
-  | 'marketing.payment_confirmed';
+  | 'marketing.payment_confirmed'
+  | 'marketing.access_refunded';
 
 interface NotificationPayload {
   email?: string;
@@ -67,6 +76,7 @@ interface MarketingPayload {
   source: string;
 }
 
+<<<<<<< HEAD
 /** Opt-in de marketing e avisos de expiração. O payload não vai no evento do Sentry. */
 const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>> = {
   'marketing.free_analysis_completed': 'leads',
@@ -80,7 +90,14 @@ function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: u
   captureFluxoException(fluxo, error);
 }
 
-async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<void> {
+async function sendToWebhook(url: string, event: NotificationEvent | MarketingEvent, payload: NotificationPayload | MarketingPayload): Promise<boolean> {
+=======
+async function sendToWebhook(
+  url: string,
+  event: NotificationEvent | MarketingEvent,
+  payload: NotificationPayload | MarketingPayload | AccessAttributesPayload,
+): Promise<boolean> {
+>>>>>>> 63ac0fc (DEV-154: atributos de acesso no Brevo (2/2))
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -95,33 +112,39 @@ async function sendToWebhook(url: string, event: NotificationEvent | MarketingEv
     if (!response.ok) {
       console.error(`[notify] Falha ao enviar evento ${event}: ${response.status}`);
       reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
+      return false;
     }
+    return true;
   } catch (err) {
     console.error(`[notify] Erro ao enviar evento ${event}:`, err);
     // Mensagem genérica: o erro do fetch pode trazer a URL do webhook.
     reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
+    return false;
   }
+}
+
+function webhookFor(event: string): { url: string | undefined; envName: string } {
+  const isMarketing = event.startsWith('marketing.');
+  const envName = isMarketing ? 'N8N_WEBHOOK_MARKETING' : 'N8N_WEBHOOK_TRANSACIONAL';
+  return { url: readServerEnv(envName), envName };
 }
 
 /**
  * Envia um evento transacional para o n8n (emails de sistema).
  */
+/** true só quando o webhook aceitou o evento. Sem URL ou com falha de rede, false. */
 export async function notify(
   event: NotificationEvent,
   payload: NotificationPayload
-): Promise<void> {
-  const isMarketing = event.startsWith('marketing.');
-  const webhookUrl = isMarketing
-    ? process.env.N8N_WEBHOOK_MARKETING
-    : process.env.N8N_WEBHOOK_TRANSACIONAL;
+): Promise<boolean> {
+  const { url, envName } = webhookFor(event);
 
-  if (!webhookUrl) {
-    const envName = isMarketing ? 'N8N_WEBHOOK_MARKETING' : 'N8N_WEBHOOK_TRANSACIONAL';
+  if (!url) {
     console.warn(`[notify] ${envName} não configurado — notificação ignorada`);
-    return;
+    return false;
   }
 
-  await sendToWebhook(webhookUrl, event, payload);
+  return sendToWebhook(url, event, payload);
 }
 
 /**
@@ -132,14 +155,78 @@ export async function notify(
 export async function notifyMarketing(
   event: MarketingEvent,
   payload: MarketingPayload
-): Promise<void> {
-  const webhookUrl = process.env.N8N_WEBHOOK_MARKETING;
+): Promise<boolean> {
+  const { url } = webhookFor(event);
 
-  if (!webhookUrl) {
+  if (!url) {
     console.warn('[notifyMarketing] N8N_WEBHOOK_MARKETING não configurado — evento ignorado');
+    return false;
+  }
+
+  return sendToWebhook(url, event, payload);
+}
+
+export type AccessAttributesEvent = 'marketing.payment_confirmed' | 'marketing.access_refunded';
+
+/**
+ * Atributos de acesso do contato (Brevo via n8n).
+ * Mesmo envelope de `notify`: `{ event, payload, timestamp }` em N8N_WEBHOOK_MARKETING.
+ */
+export async function notifyAccessAttributes(
+  event: AccessAttributesEvent,
+  payload: AccessAttributesPayload,
+): Promise<boolean> {
+  const { url } = webhookFor(event);
+
+  if (!url) {
+    console.warn('[notifyAccessAttributes] N8N_WEBHOOK_MARKETING não configurado — evento ignorado');
+    return false;
+  }
+
+  return sendToWebhook(url, event, payload);
+}
+
+export interface PublishAccessAttributesInput {
+  event: AccessAttributesEvent;
+  origem: AccessAttributeOrigin;
+  userId: string;
+  productType: string;
+  subscription: {
+    id: string;
+    purchase_kind?: string | null;
+    amount_paid?: number | null;
+    starts_at: string;
+    ends_at: string;
+  };
+}
+
+/**
+ * Monta o snapshot e envia os atributos. Quem chama envolve em try/catch:
+ * falha de leitura ou de rede não pode desfazer o pagamento nem o reembolso.
+ */
+export async function publishAccessAttributes(input: PublishAccessAttributesInput): Promise<void> {
+  const snapshot = await getAccessAttributesSnapshot(input.userId, input.productType);
+  if (!snapshot) {
+    console.warn(`[notifyAccessAttributes] Sem e-mail para ${input.userId} — ${input.event} ignorado`);
     return;
   }
 
-  await sendToWebhook(webhookUrl, event, payload);
+  const payload = buildAccessAttributesPayload({
+    email: snapshot.email,
+    nomeCompleto: snapshot.nomeCompleto,
+    userId: snapshot.userId,
+    origem: input.origem,
+    productType: snapshot.productType || input.productType,
+    purchaseKind: input.subscription.purchase_kind,
+    amountPaidCents: input.subscription.amount_paid,
+    subscriptionId: input.subscription.id,
+    subscriptionStartsAt: input.subscription.starts_at,
+    subscriptionEndsAt: input.subscription.ends_at,
+    now: new Date(),
+    subscriptions: snapshot.subscriptions,
+    optIn: snapshot.optIn,
+  });
+
+  await notifyAccessAttributes(input.event, payload);
 }
 
