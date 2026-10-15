@@ -51,11 +51,7 @@ if (!user) {
 }
 
 if (redirectTo) {
-  const isRelative = redirectTo.startsWith('/') && !redirectTo.startsWith('//');
-  if (isRelative) {
-    return Astro.redirect(redirectTo);
-  }
-  return Response.redirect(redirectTo, 302);
+  return Astro.redirect(redirectTo);
 }
 ---
 
