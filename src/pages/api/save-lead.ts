@@ -6,6 +6,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { supabase } from '../../backend/db/supabase';
+import { captureFluxoException } from '../../sentry/fluxo';
 
 const schema = z.object({
   email:           z.string().email().max(200),
@@ -19,14 +20,22 @@ export const POST: APIRoute = async ({ request }) => {
     const body  = await request.json();
     const input = schema.parse(body);
 
-    await supabase.from('analise_leads').insert({
+    const { error } = await supabase.from('analise_leads').insert({
       email:           input.email.toLowerCase().trim(),
       nome_completo:   input.nome_completo.trim(),
       data_nascimento: input.data_nascimento,
       source:          input.source,
     });
-  } catch {
-    // Fail silently — não bloquear o fluxo do usuário
+
+    if (error) {
+      console.error('[save-lead] falha ao gravar lead');
+      captureFluxoException('leads', new Error('Falha ao gravar lead'));
+    }
+  } catch (err) {
+    // JSON inválido e Zod são input esperado. Falha de rede/Supabase entra no Sentry.
+    if (!(err instanceof z.ZodError) && !(err instanceof SyntaxError)) {
+      captureFluxoException('leads', err);
+    }
   }
 
   // Sempre retornar 200 para não expor erros internos

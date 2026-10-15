@@ -6,6 +6,7 @@ import node from '@astrojs/node';
 import sentry from '@sentry/astro';
 
 const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const sentryRelease = process.env.SENTRY_RELEASE?.trim();
 
 export default defineConfig({
   site: 'https://www.nomemagnetico.com.br',
@@ -23,6 +24,8 @@ export default defineConfig({
       project: process.env.SENTRY_PROJECT || 'nome-magnetico',
       authToken: sentryAuthToken,
       sentryUrl: process.env.SENTRY_URL || 'https://de.sentry.io',
+      // Nome do release no upload de source maps. Sem token o plugin nem sobe o mapa.
+      ...(sentryRelease ? { release: { name: sentryRelease } } : {}),
       // Sem token o upload falharia no CI. O DSN em si entra só em runtime na VPS.
       sourcemaps: {
         disable: !sentryAuthToken,
