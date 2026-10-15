@@ -6,6 +6,9 @@ export interface Props {
   description?: string;
   keywords?: string;
   ogImage?: string;
+  /** Preço schema.org (ex.: "98.00") — carregado via SSR, não fixo no build */
+  schemaOfferPrice?: string;
+  schemaEstimatedCost?: string;
 }
 
 const {
@@ -13,7 +16,12 @@ const {
   description = 'Descubra se seu nome tem bloqueios energéticos que sabotam carreira e relacionamentos. Numerologia cabalística com mapa completo dos 4 triângulos, 5 números e sugestões de nome harmonizado.',
   keywords = 'numerologia cabalística, numerologia do nome, mapa numerológico, bloqueios energéticos nome, análise vibracional nome, nome magnético, significado do nome numerologia, cabala numerologia, como meu nome afeta minha vida, nome sem bloqueios, mudar nome numerologia, numerologia nome social, análise vibracional gratuita nome, mapa numerológico completo, arquétipo junguiano nome',
   ogImage = '/og-image.jpg',
+  schemaOfferPrice,
+  schemaEstimatedCost,
 } = Astro.props;
+
+const offerPrice = schemaOfferPrice ?? '0.00';
+const estimatedCost = schemaEstimatedCost ?? offerPrice;
 
 // Schema.org — WebSite principal
 const schemaWebSite = {
@@ -52,7 +60,7 @@ const schemaService = {
       '@type': 'Offer',
       name: 'Nome Social',
       description: 'Análise cabalística do nome social com mapa numerológico completo, 4 triângulos e variações de nome harmonizado.',
-      price: '98.00',
+      price: offerPrice,
       priceCurrency: 'BRL',
       availability: 'https://schema.org/InStock',
       url: 'https://www.nomemagnetico.com.br/comprar?produto=nome_social',
@@ -117,7 +125,7 @@ const schemaHowTo = {
   estimatedCost: {
     '@type': 'MonetaryAmount',
     currency: 'BRL',
-    value: '98',
+    value: estimatedCost,
   },
   step: [
     {

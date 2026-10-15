@@ -1,5 +1,10 @@
 import { supabase } from '../db/supabase';
 import {
+  assertPromotionRespectsFloors,
+  fetchProductPriceMap,
+} from '../pricing/product-prices-db';
+import type { ProductType } from '../payments/stripe';
+import {
   assertRegistryReady,
   OpsRegistryError,
   registryState,
@@ -97,6 +102,13 @@ export interface CreatePromotionInput {
 }
 
 export async function createPromotion(input: CreatePromotionInput): Promise<OpsPromotionRow> {
+  const priceMap = await fetchProductPriceMap();
+  const targets =
+    input.productTypes.length > 0
+      ? (input.productTypes as ProductType[])
+      : (['nome_social', 'nome_bebe', 'nome_empresa'] as ProductType[]);
+  assertPromotionRespectsFloors(targets, priceMap, input.discountType, input.discountValue);
+
   const { data, error } = await supabase
     .from('promotions')
     .insert({

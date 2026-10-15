@@ -3,8 +3,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { CheckoutFlow } from '../frontend/components/purchase/CheckoutFlow';
 import { hasActiveSubscription } from '../backend/db/subscriptions';
 import { createUserClient } from '../backend/db/supabase';
-import { getPricesAndPromo } from '../backend/payments/prices';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
+import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
+
+applyPricingPageCache(Astro);
 
 const user = Astro.locals.user;
 
@@ -36,7 +38,7 @@ if (user) {
 let hqPrices: Record<string, PriceInfo> | undefined;
 let promotion: ActivePromotion | null = null;
 try {
-  const result = await getPricesAndPromo();
+  const result = await loadPagePricing();
   hqPrices = result.prices;
   promotion = result.promotion;
 } catch (err) {

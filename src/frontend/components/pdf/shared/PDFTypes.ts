@@ -91,4 +91,6 @@ export interface ProductPDFProps {
   analysis: AnalysisRecord;
   magneticNames: MagneticName[];
   userName?: string;
+  /** Preço efetivo do Nome Social no momento da geração (DEV-178). */
+  upgradeOfferLabel?: string;
 }

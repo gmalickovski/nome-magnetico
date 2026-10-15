@@ -14,14 +14,22 @@ export const TRIAL_NOT_FOUND = 'Este código de acesso não é válido ou já ex
 export { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES };
 
 export interface PriceInfo {
+  /** Preço efetivo cobrado (centavos). */
   cents: number;
   formatted: string;
   priceId?: string;
   productId?: string;
   productName?: string;
+  baseCents?: number;
+  baseFormatted?: string;
   discountedCents?: number;
   discountedFormatted?: string;
   hasDiscount: boolean;
+  promoEndsAt?: string | null;
+  validUntilLabel?: string | null;
+  discountSource?: 'none' | 'promotion' | 'coupon';
+  promoId?: string | null;
+  minCents?: number;
 }
 
 export interface ActivePromotion {

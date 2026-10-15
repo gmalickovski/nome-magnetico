@@ -1,6 +1,6 @@
 /**
  * Preços, promoções, cupons e trials no banco do Nome Magnético.
- * Service role só no servidor. Falha no banco → preço Stripe sem promoção.
+ * Preço base: tabela `product_prices` (DEV-178). Service role só no servidor.
  *
  * `discount_value` de tipo `fixed` no banco é CENTAVOS de BRL.
  * No contrato público `ActivePromotion.discountValue` de `fixed` é BRL
@@ -9,24 +9,19 @@
 
 import { supabase } from '../db/supabase';
 import { isUniqueViolation } from '../ops/registry';
-import { stripe, type ProductType } from './stripe';
+import type { ProductType } from './stripe';
+import { fetchProductPriceMap, fallbackRow } from '../pricing/product-prices-db';
+import { getCatalogPricing, getEffectivePriceCore, effectiveResultToPriceInfo } from '../pricing/service';
+import type { EffectivePriceResult } from '../pricing/service';
 import {
-  applyPromotionToPrices,
   codeAppliesToProduct,
   evaluateCoupon,
   evaluateTrial,
-  formatBRL,
-  isProductType,
   normalizeAccessCode,
-  pricesWithoutPromotion,
   storedAccessCode,
-  toActivePromotion,
   type AccessCodeRow,
-  type ActivePromotion,
   type HqCouponValidation,
   type HqPricesResponse,
-  type PriceInfo,
-  type PromotionRow,
   type TrialValidation,
 } from './promo-math';
 
@@ -55,181 +50,51 @@ export interface StripePrices {
   nome_empresa: string;
 }
 
-const PRICE_IDS: Record<ProductType, string> = {
-  nome_social: process.env.STRIPE_PRICE_NOME_SOCIAL ?? process.env.STRIPE_PRICE_NOME_MAGNETICO ?? '',
-  nome_bebe: process.env.STRIPE_PRICE_NOME_BEBE ?? '',
-  nome_empresa: process.env.STRIPE_PRICE_NOME_EMPRESA ?? '',
-};
-
-const PRODUCT_IDS: Record<ProductType, string> = {
-  nome_social: process.env.STRIPE_PRODUCT_NOME_SOCIAL ?? '',
-  nome_bebe: process.env.STRIPE_PRODUCT_NOME_BEBE ?? '',
-  nome_empresa: process.env.STRIPE_PRODUCT_NOME_EMPRESA ?? '',
-};
-
-const PROMOTION_COLUMNS =
-  'id, name, product_types, discount_type, discount_value, starts_at, ends_at, is_active, banner_text, stripe_coupon_id, stripe_promo_code, created_at';
-
 const ACCESS_COLUMNS =
   'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, is_active, max_uses, stripe_coupon_id, stripe_promo_code_id, note';
 
-function productTypeFromStripe(price: {
-  product: unknown;
-  metadata?: Record<string, string> | null;
-}): ProductType | null {
-  const metaType = price.metadata?.product_type;
-  if (isProductType(metaType)) return metaType;
-
-  const product = price.product;
-  if (typeof product === 'string') {
-    for (const [type, id] of Object.entries(PRODUCT_IDS)) {
-      if (id && product === id) return type as ProductType;
-    }
-    return null;
-  }
-  if (!product || typeof product !== 'object') return null;
-
-  const obj = product as { id?: string; name?: string | null; metadata?: Record<string, string> | null };
-  const fromProductMeta = obj.metadata?.product_type;
-  if (isProductType(fromProductMeta)) return fromProductMeta;
-  for (const [type, id] of Object.entries(PRODUCT_IDS)) {
-    if (id && obj.id === id) return type as ProductType;
-  }
-  const name = (obj.name ?? '').toLowerCase();
-  if (name.includes('social')) return 'nome_social';
-  if (name.includes('beb') || name.includes('baby')) return 'nome_bebe';
-  if (name.includes('empresa') || name.includes('company')) return 'nome_empresa';
-  return null;
-}
-
-async function retrieveConfiguredPrices(): Promise<Record<string, PriceInfo>> {
-  const prices: Record<string, PriceInfo> = {};
-  const [nm, nb, ne] = await Promise.all([
-    PRICE_IDS.nome_social ? stripe.prices.retrieve(PRICE_IDS.nome_social) : null,
-    PRICE_IDS.nome_bebe ? stripe.prices.retrieve(PRICE_IDS.nome_bebe) : null,
-    PRICE_IDS.nome_empresa ? stripe.prices.retrieve(PRICE_IDS.nome_empresa) : null,
-  ]);
-  if (nm) {
-    prices.nome_social = {
-      cents: nm.unit_amount ?? 0,
-      formatted: formatBRL(nm.unit_amount),
-      priceId: nm.id,
-      productId: typeof nm.product === 'string' ? nm.product : nm.product?.id,
-      hasDiscount: false,
-    };
-  }
-  if (nb) {
-    prices.nome_bebe = {
-      cents: nb.unit_amount ?? 0,
-      formatted: formatBRL(nb.unit_amount),
-      priceId: nb.id,
-      productId: typeof nb.product === 'string' ? nb.product : nb.product?.id,
-      hasDiscount: false,
-    };
-  }
-  if (ne) {
-    prices.nome_empresa = {
-      cents: ne.unit_amount ?? 0,
-      formatted: formatBRL(ne.unit_amount),
-      priceId: ne.id,
-      productId: typeof ne.product === 'string' ? ne.product : ne.product?.id,
-      hasDiscount: false,
-    };
-  }
-  return prices;
-}
-
-async function fetchStripeCatalog(): Promise<Record<string, PriceInfo>> {
-  const grouped = new Map<ProductType, { created: number; info: PriceInfo }>();
-
-  try {
-    const listed = await stripe.prices.list({
-      active: true,
-      limit: 100,
-      expand: ['data.product'],
-    });
-    for (const price of listed.data) {
-      if (!price.unit_amount || price.currency !== 'brl') continue;
-      const type = productTypeFromStripe(price);
-      if (!type) continue;
-      const product = price.product;
-      const productId = typeof product === 'string' ? product : product?.id;
-      const productName =
-        typeof product === 'object' && product && 'name' in product ? (product.name ?? undefined) : undefined;
-      const current = grouped.get(type);
-      if (!current || price.created > current.created) {
-        grouped.set(type, {
-          created: price.created,
-          info: {
-            cents: price.unit_amount,
-            formatted: formatBRL(price.unit_amount),
-            priceId: price.id,
-            productId,
-            productName,
-            hasDiscount: false,
-          },
-        });
-      }
-    }
-  } catch (err) {
-    console.warn('[prices] Falha ao listar preços no Stripe — tentando IDs configurados:', err);
-  }
-
-  const fromList: Record<string, PriceInfo> = {};
-  for (const [type, entry] of grouped) fromList[type] = entry.info;
-  if (Object.keys(fromList).length === 0) {
-    return retrieveConfiguredPrices();
-  }
-
-  const missing = (['nome_social', 'nome_bebe', 'nome_empresa'] as ProductType[]).filter((type) => !fromList[type]);
-  if (missing.length > 0) {
-    try {
-      const fallback = await retrieveConfiguredPrices();
-      for (const type of missing) {
-        if (fallback[type]) fromList[type] = fallback[type];
-      }
-    } catch {
-      // mantém o que veio da listagem
-    }
-  }
-  return fromList;
-}
-
-async function fetchActivePromotionRow(): Promise<PromotionRow | null> {
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('promotions')
-    .select(PROMOTION_COLUMNS)
-    .eq('is_active', true)
-    .lte('starts_at', now)
-    .gte('ends_at', now)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data as PromotionRow | null) ?? null;
-}
-
-/** Preços + promoção ativa no banco local (fallback Stripe sem promoção). */
+/** Preços + promoção ativa (fonte: product_prices + promotions). */
 export async function getPricesAndPromo(): Promise<HqPricesResponse> {
-  let prices: Record<string, PriceInfo> = {};
   try {
-    prices = await fetchStripeCatalog();
+    return await getCatalogPricing();
   } catch (err) {
-    console.warn('[prices] Falha ao buscar preços no Stripe:', err);
-  }
-
-  try {
-    const row = await fetchActivePromotionRow();
-    if (!row) return { prices, promotion: null };
-    const promotion = toActivePromotion(row);
-    return { prices: applyPromotionToPrices(prices, promotion), promotion };
-  } catch (err) {
-    console.warn('[prices] Falha ao ler promoção no banco — preço Stripe sem promoção:', err);
-    return pricesWithoutPromotion(prices);
+    console.warn('[prices] Falha ao carregar catálogo de preços — fallback estático:', err);
+    return getCatalogPricing(new Date());
   }
 }
+
+export async function getEffectivePrice(params: {
+  productType: ProductType;
+  now?: Date;
+  couponCode?: string;
+  userId?: string | null;
+  userEmail?: string | null;
+  renewalTablePrice?: boolean;
+}): Promise<EffectivePriceResult> {
+  let couponValidation = null;
+  const code = params.couponCode?.trim();
+  const priceMap = await fetchProductPriceMap();
+  const row = priceMap.get(params.productType) ?? fallbackRow(params.productType);
+  if (code && !params.renewalTablePrice) {
+    couponValidation = await validateAccessCoupon({
+      couponCode: code,
+      productType: params.productType,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      originalCents: row.base_cents,
+    });
+  }
+
+  return getEffectivePriceCore({
+    productType: params.productType,
+    now: params.now,
+    couponValidation,
+    renewalTablePrice: params.renewalTablePrice,
+    priceMap,
+  });
+}
+
+export { effectiveResultToPriceInfo };
 
 /** @deprecated use getPricesAndPromo */
 export async function getHqPricesAndPromo(_saasId?: string): Promise<HqPricesResponse> {
@@ -237,17 +102,14 @@ export async function getHqPricesAndPromo(_saasId?: string): Promise<HqPricesRes
 }
 
 export async function getStripePrices(): Promise<StripePrices> {
-  const FALLBACK: StripePrices = { nome_social: 'R$ 98,00', nome_bebe: 'R$ 80,00', nome_empresa: 'R$ 125,00' };
-  try {
-    const { prices } = await getPricesAndPromo();
-    return {
-      nome_social: prices.nome_social?.formatted || FALLBACK.nome_social,
-      nome_bebe: prices.nome_bebe?.formatted || FALLBACK.nome_bebe,
-      nome_empresa: prices.nome_empresa?.formatted || FALLBACK.nome_empresa,
-    };
-  } catch {
-    return FALLBACK;
-  }
+  const { prices } = await getPricesAndPromo();
+  const pick = (type: ProductType, fallback: string) =>
+    prices[type]?.discountedFormatted ?? prices[type]?.formatted ?? fallback;
+  return {
+    nome_social: pick('nome_social', 'R$ 98,00'),
+    nome_bebe: pick('nome_bebe', 'R$ 80,00'),
+    nome_empresa: pick('nome_empresa', 'R$ 125,00'),
+  };
 }
 
 async function findAccessCode(raw: string): Promise<AccessCodeRow | null> {

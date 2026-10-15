@@ -3,13 +3,9 @@ import { z } from 'zod';
 import { createCheckoutSession, stripe, type ProductType } from '../../backend/payments/stripe';
 import { supabase } from '../../backend/db/supabase';
 import { createSubscription } from '../../backend/db/subscriptions';
-import {
-  applyPromotionDiscount,
-  getPricesAndPromo,
-  promotionAppliesToProduct,
-  resolveHqCouponDiscount,
-  validateAccessCoupon,
-} from '../../backend/payments/prices';
+import { effectiveResultToPriceInfo, validateAccessCoupon } from '../../backend/payments/prices';
+import { getEffectivePriceCore } from '../../backend/pricing/service';
+import { effectiveFinalBelowFloor } from '../../backend/pricing/effective-price';
 import {
   parseRenewalEtapa,
   RENEWAL_ETAPAS,
@@ -17,6 +13,7 @@ import {
 } from '../../backend/payments/renewal';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import {
+  captureServerEvent,
   readPostHogDistinctIdFromCookie,
   sanitizeDistinctId,
 } from '../../backend/analytics/posthog-server';
@@ -25,14 +22,14 @@ import { logError } from '../../backend/utils/error-logger';
 import { captureFluxoException } from '../../sentry/fluxo';
 import { getPublicBaseUrl } from '../../utils/public-url';
 
-const PRICE_FALLBACK: Record<string, number> = { nome_social: 9800, nome_bebe: 8000, nome_empresa: 12500 };
-
 const schema = z.object({
   product_type: z.enum(PRODUCT_TYPES),
   couponCode: z.string().optional(),
   ph_distinct_id: z.string().optional(),
   renewal: z.union([z.literal(1), z.literal('1'), z.literal(true)]).optional(),
   etapa: z.string().max(32).optional(),
+  /** Centavos exibidos na página — se divergir, devolve price_changed antes do Stripe */
+  expected_final_cents: z.number().int().positive().optional(),
 });
 
 const jsonHeaders = { 'Content-Type': 'application/json' };
@@ -45,7 +42,6 @@ export async function createCheckoutResponse(args: {
   request: Request;
   user: { id: string; email?: string | null } | null;
   url: URL;
-  /** Atalho da página /app/renovar. O POST também aceita ?renewal=1&etapa=. */
   renewal?: boolean;
   etapa?: string | null;
   productType?: ProductType;
@@ -59,8 +55,6 @@ export async function createCheckoutResponse(args: {
   }
 
   let payload: unknown = {};
-  // A página /app/renovar chama com productType e o request GET original (cookies).
-  // O POST público continua exigindo JSON, como antes.
   if (!args.productType) {
     try {
       payload = await request.json();
@@ -88,7 +82,7 @@ export async function createCheckoutResponse(args: {
     return json({ error: 'Produto inválido' }, 400);
   }
 
-  const { product_type, couponCode } = parsed.data;
+  const { product_type, couponCode, expected_final_cents: expectedFinalCents } = parsed.data;
   const isRenewal =
     args.renewal === true ||
     queryRenewal ||
@@ -117,7 +111,6 @@ export async function createCheckoutResponse(args: {
     );
   }
 
-  // Renovação cobra o preço de tabela (nome_social = R$ 98) e não aceita cupom nem promoção.
   if (isRenewal && couponCode?.trim()) {
     return json({ error: 'Cupom não se aplica à renovação.' }, 400);
   }
@@ -127,7 +120,6 @@ export async function createCheckoutResponse(args: {
     readPostHogDistinctIdFromCookie(request.headers.get('cookie'));
   const baseUrl = getPublicBaseUrl();
 
-  // Verificar se é admin ou usuário teste → bypass do Stripe
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, is_test, test_ends_at')
@@ -137,8 +129,7 @@ export async function createCheckoutResponse(args: {
   const isAdmin = profile?.role === 'admin';
   const isTest =
     profile?.is_test === true &&
-    (profile.test_ends_at === null ||
-      new Date(profile.test_ends_at) > new Date());
+    (profile.test_ends_at === null || new Date(profile.test_ends_at) > new Date());
 
   if (isAdmin || isTest) {
     await createSubscription({
@@ -153,94 +144,113 @@ export async function createCheckoutResponse(args: {
   }
 
   try {
-    // ── Preço canônico do Stripe + promoção/cupom do banco local
-    let unitAmount: number = PRICE_FALLBACK[product_type] ?? 9800;
-    let couponId: string | undefined;
-    let promotionCodeId: string | undefined;
-    let couponHandled = false;
-
-    if (isRenewal) {
-      try {
-        const { prices } = await getPricesAndPromo();
-        const cents = prices[product_type]?.cents;
-        if (cents && cents > 0) unitAmount = cents;
-      } catch {
-        unitAmount = PRICE_FALLBACK[product_type] ?? 9800;
-      }
-    } else {
-      try {
-        const { prices, promotion } = await getPricesAndPromo();
-        const priceInfo = prices[product_type];
-        unitAmount = priceInfo?.cents ?? PRICE_FALLBACK[product_type] ?? 9800;
-
-        if (couponCode) {
-          const hqCoupon = await validateAccessCoupon({
-            couponCode,
-            productType: product_type,
-            userId: user.id,
-            userEmail: user.email,
-            originalCents: unitAmount,
-          });
-
-          if (hqCoupon?.valid) {
-            const discountedCents = resolveHqCouponDiscount(hqCoupon, unitAmount);
-            if (discountedCents !== null) {
-              unitAmount = discountedCents;
-              couponHandled = true;
-            } else if (hqCoupon.stripePromoCodeId) {
-              promotionCodeId = hqCoupon.stripePromoCodeId;
-              couponHandled = true;
-            } else if (hqCoupon.stripeCouponId) {
-              couponId = hqCoupon.stripeCouponId;
-              couponHandled = true;
-            }
-          } else if (hqCoupon && hqCoupon.error !== 'Cupom inválido ou expirado') {
-            return json({ error: hqCoupon.error ?? 'Cupom inválido ou expirado' }, 400);
-          }
+    let couponValidation = null;
+    if (couponCode?.trim() && !isRenewal) {
+      couponValidation = await validateAccessCoupon({
+        couponCode,
+        productType: product_type,
+        userId: user.id,
+        userEmail: user.email,
+      });
+      if (couponValidation && !couponValidation.valid) {
+        if (couponValidation.error !== 'Cupom inválido ou expirado') {
+          return json({ error: couponValidation.error ?? 'Cupom inválido ou expirado' }, 400);
         }
-
-        if (!couponCode && promotion && promotionAppliesToProduct(promotion, product_type)) {
-          if (promotion.stripeCouponId) {
-            couponId = promotion.stripeCouponId;
-          } else {
-            unitAmount = applyPromotionDiscount(unitAmount, promotion);
-          }
-        }
-      } catch {
-        unitAmount = PRICE_FALLBACK[product_type] ?? 9800;
-      }
-
-      // ── Código de promoção manual (só usado se não há cupom sazonal ativo)
-      if (!couponHandled && !couponId && !promotionCodeId && couponCode) {
-        try {
-          const promos = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
-          if (promos.data.length > 0) {
-            const promo = promos.data[0];
-            const appliesToProducts = promo.coupon.applies_to?.products ?? [];
-            const productId = process.env[`STRIPE_PRODUCT_${product_type.toUpperCase()}`];
-            if (appliesToProducts.length === 0 || (productId && appliesToProducts.includes(productId))) {
-              promotionCodeId = promo.id;
-              couponHandled = true;
-            }
-          }
-        } catch {
-          // Falha silenciosa ao resolver código manual
-        }
-      }
-
-      if (couponCode && !couponHandled && !couponId && !promotionCodeId) {
         return json({ error: 'Cupom inválido ou expirado' }, 400);
       }
     }
 
+    let effective;
+    try {
+      effective = await getEffectivePriceCore({
+        productType: product_type,
+        couponValidation,
+        renewalTablePrice: isRenewal,
+      });
+    } catch (err) {
+      console.error('[create-checkout] Falha ao calcular preço:', err);
+      return json({ error: 'Não foi possível calcular o preço. Tente novamente.' }, 503);
+    }
+
+    if (effectiveFinalBelowFloor(effective.final_cents, effective.min_cents)) {
+      return json({ error: 'Preço abaixo do mínimo permitido para este produto.' }, 400);
+    }
+
+    if (
+      typeof expectedFinalCents === 'number' &&
+      expectedFinalCents !== effective.final_cents
+    ) {
+      return json(
+        {
+          price_changed: true,
+          message: 'O valor foi atualizado desde que você abriu a página.',
+          pricing: effectiveResultToPriceInfo(effective),
+          effective,
+        },
+        200,
+      );
+    }
+
+    const unitAmount = effective.final_cents;
+    let couponHandled = effective.discountSource === 'coupon';
+    let couponId: string | undefined;
+    let promotionCodeId: string | undefined;
+
+    if (!isRenewal && couponCode && effective.discountSource === 'none') {
+      return json({ error: 'Cupom inválido ou expirado' }, 400);
+    }
+
+    if (!isRenewal && !couponHandled && couponCode) {
+      try {
+        const promos = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
+        if (promos.data.length > 0) {
+          const promo = promos.data[0];
+          const appliesToProducts = promo.coupon.applies_to?.products ?? [];
+          const productId = process.env[`STRIPE_PRODUCT_${product_type.toUpperCase()}`];
+          if (appliesToProducts.length === 0 || (productId && appliesToProducts.includes(productId))) {
+            promotionCodeId = promo.id;
+            couponHandled = true;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (couponCode && !couponHandled && !couponId && !promotionCodeId && effective.discountSource !== 'promotion') {
+      return json({ error: 'Cupom inválido ou expirado' }, 400);
+    }
+
     const campaign = isRenewal && etapa ? renewalUtmCampaign(etapa) : undefined;
     const renewalQuery = etapa ? `?etapa=${encodeURIComponent(etapa)}` : '';
+
+    const distinctId =
+      phDistinctId ??
+      user.id;
+
+    await captureServerEvent({
+      distinctId,
+      event: 'checkout_started',
+      properties: {
+        product_type,
+        base_cents: effective.base_cents,
+        final_cents: effective.final_cents,
+        promo_id: effective.promo_id ?? '',
+        promo_code: effective.promoCode ?? couponCode?.trim() ?? '',
+        discount_source: effective.discountSource,
+        currency: 'BRL',
+        value: Number((effective.final_cents / 100).toFixed(2)),
+      },
+    }).catch((err) => console.error('[create-checkout] PostHog checkout_started:', err));
 
     const session = await createCheckoutSession({
       userId: user.id,
       userEmail: user.email ?? '',
       productType: product_type,
       unitAmount,
+      baseCents: effective.base_cents,
+      promoId: effective.promo_id,
+      discountSource: effective.discountSource,
       successUrl: `${baseUrl}/app?checkout=success&produto=${product_type}`,
       cancelUrl: isRenewal
         ? `${baseUrl}/app/renovar${renewalQuery}`
@@ -248,7 +258,6 @@ export async function createCheckoutResponse(args: {
       couponId,
       promotionCodeId,
       couponCode: isRenewal ? undefined : couponCode?.trim(),
-      // Cookie _ga vira metadata.ga_client_id (client_id do Measurement Protocol).
       gaClientId: getGaClientIdFromRequest(request),
       phDistinctId,
       purchaseKind: isRenewal ? 'renewal' : 'new',
@@ -257,7 +266,7 @@ export async function createCheckoutResponse(args: {
       utmMedium: campaign ? 'email' : undefined,
     });
 
-    return json({ url: session.url }, 200);
+    return json({ url: session.url, final_cents: unitAmount, base_cents: effective.base_cents }, 200);
   } catch (err: unknown) {
     const stripeErr = err as { statusCode?: number; code?: string; type?: string; message?: string; param?: string };
     console.error('[create-checkout] Erro:', {
@@ -284,13 +293,11 @@ export async function createCheckoutResponse(args: {
       }
     }
 
-    // Cupom inválido (400) já retornou acima. Aqui é falha inesperada do Stripe.
     captureFluxoException('checkout', err, {
       status_http: stripeErr.statusCode ?? null,
       codigo_erro: stripeErr.code ?? null,
     });
 
-    // Registra erro crítico de checkout Stripe no monitor
     await logError({
       type: 'checkout_stripe',
       severity: 'critical',
