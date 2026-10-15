@@ -22,7 +22,7 @@ A service role existente não muda. A migration não cria senha, JWT nem chave d
 | Objeto | Função |
 | --- | --- |
 | Schema `support_faq` | Fora dos Exposed schemas do Data API. `PUBLIC` não tem `USAGE`. |
-| View `support_faq.support_faq_v` | Categorias e itens com `is_active`. Sem embeddings, sem id do Chatwoot, sem meta SEO. |
+| View `support_faq.support_faq_v` | Categorias e itens com `is_active`. Sem embeddings, sem meta SEO. |
 | Função `support_faq.support_lookup_contact(email)` | Uma linha com o status mínimo do contato. `SECURITY DEFINER`, dono `postgres`. |
 | Role `support_bot` | `NOLOGIN`, `NOINHERIT`, `search_path = support_faq`. |
 

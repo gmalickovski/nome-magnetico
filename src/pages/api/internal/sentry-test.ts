@@ -6,6 +6,7 @@
  * Acesso:
  *   - header `X-Internal-Secret` igual a INTERNAL_API_SECRET, ou
  *   - sessão de um perfil com role admin
+ * Sem INTERNAL_API_SECRET e sem admin, responde 503.
  *
  * Sem DSN, ou fora de production (sem SENTRY_ENABLED=true), responde 503
  * e não envia evento.
@@ -13,21 +14,21 @@
 import type { APIRoute } from 'astro';
 import * as Sentry from '@sentry/astro';
 import { isAdmin } from '../../../backend/db/users';
+import { authorizeInternalRequest } from '../../../backend/env/internal-auth';
 import { isSentryEnabled } from '../../../sentry/env';
 
 const SMOKE_MESSAGE = 'Sentry smoke test — Nome Magnético (server)';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const secret = process.env.INTERNAL_API_SECRET;
-  const headerOk = Boolean(secret && request.headers.get('X-Internal-Secret') === secret);
+  const auth = authorizeInternalRequest(request.headers.get('X-Internal-Secret'));
 
   let adminOk = false;
-  if (!headerOk && locals.user) {
+  if (!auth.ok && locals.user) {
     adminOk = await isAdmin(locals.user.id);
   }
 
-  if (!headerOk && !adminOk) {
-    return json({ error: 'Unauthorized' }, 401);
+  if (!auth.ok && !adminOk) {
+    return json({ error: auth.error }, auth.status);
   }
 
   if (!isSentryEnabled()) {

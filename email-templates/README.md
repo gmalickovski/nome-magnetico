@@ -8,8 +8,10 @@ Templates HTML para emails transacionais. O envio atual deve usar Amazon SES.
 Código (notify.ts) → n8n webhook → n8n workflow → Amazon SES → usuário
 ```
 
-- **Webhook transacional**: `N8N_WEBHOOK_TRANSACIONAL` — todos os eventos exceto `support.*`
-- **Webhook suporte**: `N8N_WEBHOOK_SUPORTE` — apenas eventos `support.*`
+- **Webhook transacional**: `N8N_WEBHOOK_TRANSACIONAL` — eventos de pagamento e os demais eventos de `notify.ts`
+- **Webhook marketing**: `N8N_WEBHOOK_MARKETING` — opt-in da análise grátis
+
+O formulário de contato não usa estes webhooks. Ele grava o ticket no Supabase e envia o aviso interno pela aplicação, via SMTP.
 
 ## Payload recebido pelo n8n
 
@@ -106,6 +108,6 @@ Configurar no n8n:
 
 ```bash
 N8N_WEBHOOK_TRANSACIONAL=https://n8n.seudominio.com.br/events-nm
-N8N_WEBHOOK_SUPORTE=https://n8n.seudominio.com.br/suport-nm
+N8N_WEBHOOK_MARKETING=https://n8n.seudominio.com.br/webhook/nm-email-marketing
 INTERNAL_API_SECRET=<uuid-aleatorio>
 ```

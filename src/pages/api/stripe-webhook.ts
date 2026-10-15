@@ -7,7 +7,7 @@ import {
   getSubscriptionByPaymentIntent,
 } from '../../backend/db/subscriptions';
 import { getProfile } from '../../backend/db/users';
-import { notify } from '../../backend/notifications/notify';
+import { notify, publishAccessAttributes } from '../../backend/notifications/notify';
 import { recordAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
@@ -18,6 +18,7 @@ import {
   resolveCheckoutDistinctId,
 } from '../../backend/analytics/posthog-server';
 import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
+import { parsePurchaseKind } from '../../backend/payments/renewal';
 import { captureFluxoException } from '../../sentry/fluxo';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -44,6 +45,7 @@ export const POST: APIRoute = async ({ request }) => {
       coupon_code?: string;
       ga_client_id?: string;
       ph_distinct_id?: string;
+      purchase_kind?: string;
     };
     id: string;
     payment_intent?: string | { id: string } | null;
@@ -90,6 +92,9 @@ export const POST: APIRoute = async ({ request }) => {
         properties.product_type = product;
       }
       if (plan) properties.plan = plan;
+      if (eventName === 'purchase') {
+        properties.purchase_kind = parsePurchaseKind(session.metadata?.purchase_kind);
+      }
 
       await captureServerEvent({
         distinctId,
@@ -123,14 +128,35 @@ export const POST: APIRoute = async ({ request }) => {
         ? session.payment_intent
         : session.payment_intent?.id;
 
-    await createSubscription({
+    const purchaseKind = parsePurchaseKind(session.metadata?.purchase_kind);
+    const { subscription, created } = await createSubscription({
       userId,
       productType,
       stripeSessionId: session.id,
       stripePaymentIntentId: paymentIntentId,
       amountPaid: session.amount_total ?? undefined,
       currency: session.currency ?? 'brl',
+      purchaseKind,
     });
+    // stripe_session_id é único. Retry do cartão ou do Pix não repete acesso nem purchase.
+    if (!created) {
+      console.log('[stripe-webhook] Sessão já processada:', session.id);
+      return;
+    }
+
+    // Atributos do Brevo logo após a linha nova. Falha aqui não interrompe o resto.
+    try {
+      await publishAccessAttributes({
+        event: 'marketing.payment_confirmed',
+        origem: 'compra',
+        userId,
+        productType,
+        subscription,
+      });
+    } catch (err) {
+      console.error('[stripe-webhook] Falha ao enviar atributos de acesso:', err);
+    }
+
     await confirmEmailAfterPayment(userId);
 
     await recordAccessCouponUse({
@@ -180,6 +206,7 @@ export const POST: APIRoute = async ({ request }) => {
       coupon,
       paymentProvider: 'stripe',
       productType,
+      purchaseKind,
     });
 
     const n8nUrl = process.env.N8N_WEBHOOK_TRANSACIONAL;
@@ -292,6 +319,17 @@ export const POST: APIRoute = async ({ request }) => {
             const stripeRefundId = charge.refunds?.data?.[0]?.id ?? null;
             await refundSubscription(subscription.id, stripeRefundId, 'Reembolso via Stripe Dashboard');
             console.log('[stripe-webhook] Acesso revogado por reembolso manual:', subscription.id);
+            try {
+              await publishAccessAttributes({
+                event: 'marketing.access_refunded',
+                origem: 'reembolso',
+                userId: subscription.user_id,
+                productType: subscription.product_type,
+                subscription,
+              });
+            } catch (err) {
+              console.error('[stripe-webhook] Falha ao enviar atributos de acesso:', err);
+            }
           }
         }
         break;

@@ -8,7 +8,7 @@ export interface FaqItemProps {
   answer_html?: string | null;
 }
 
-// Failsafe mínimo — exibido apenas se Supabase e Chatwoot estiverem indisponíveis
+// Failsafe mínimo — exibido apenas se o Supabase estiver indisponível
 const fallbackItems = [
   {
     id: '1',

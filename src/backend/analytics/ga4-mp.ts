@@ -22,6 +22,7 @@ export type SendGa4PurchaseParams = {
   coupon?: string;
   paymentProvider?: string;
   productType?: string;
+  purchaseKind?: 'new' | 'renewal';
 };
 
 /** client_id estável quando a sessão Stripe não traz metadata.ga_client_id. */
@@ -71,6 +72,7 @@ export async function sendGa4Purchase(params: SendGa4PurchaseParams): Promise<vo
             ...(coupon ? { coupon } : {}),
             ...(params.paymentProvider ? { payment_provider: params.paymentProvider } : {}),
             ...(params.productType ? { product_type: params.productType } : {}),
+            ...(params.purchaseKind ? { purchase_kind: params.purchaseKind } : {}),
             items: params.items.map((item) => ({
               item_id: item.item_id,
               item_name: item.item_name,
