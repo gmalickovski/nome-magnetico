@@ -60,7 +60,7 @@ export const INTERPRETACOES_TRIANGULOS: Record<string, Record<string, string>> =
   },
   '999': {
     vida: 'No Triângulo da Vida, a dificuldade em encerrar ciclos gera uma fadiga crônica, retardando a regeneração física.',
-    pessoal: 'No Triângulo Pessoal, o apego ao passado impede a cura de feridas antigas, repetindo padrões tóxicos.',
+    pessoal: 'No Triângulo Pessoal, o apego ao passado impede a superação de padrões antigos, repetindo ciclos tóxicos.',
     social: 'No Triângulo Social, a persistência em caminhos profissionais obsoletos bloqueia qualquer chance de renovação.',
     destino: 'No Triângulo do Destino, a incapacidade de soltar o passado paralisa sua evolução para o próximo nível.'
   }

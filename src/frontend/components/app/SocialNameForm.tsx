@@ -334,7 +334,7 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
           <textarea
             value={form.vibracoes_desejadas}
             onChange={e => set('vibracoes_desejadas', e.target.value)}
-            placeholder="Ex: autoridade, expansão, cura, liderança..."
+            placeholder="Ex: autoridade, expansão, liderança, clareza..."
             rows={2}
             maxLength={300}
             className="input-dark w-full resize-none"

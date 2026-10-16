@@ -916,7 +916,7 @@ export function NomeAtualPDF({
               </View>
             )}
             <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
-              Nota: Este é apenas um curativo vibracional provisório para contenção de danos. A única forma de eliminar este bloqueio de forma definitiva é através da Harmonização de Assinatura, que construirá um escudo protetor permanente no seu destino.
+              Nota: Este é apenas um exercício simbólico provisório de autoconhecimento. Para integrar este padrão de forma mais profunda na sua assinatura, a Harmonização de Assinatura reorganiza a vibração do nome e sustenta uma proteção energética alinhada ao seu destino.
             </Text>
           </View>
         ) : (
