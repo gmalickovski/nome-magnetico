@@ -141,4 +141,39 @@ describe('marketing da rota pública /api/teste-bloqueio (preflight)', () => {
     const consent = resolvePublicFreeAnalysisMarketingConsent(result.opt_in);
     assert.deepEqual(consent, { send: true, optIn: false, optInEm: null });
   });
+
+  it('opt_in false no preflight não dispara marketing', async () => {
+    const result = await runFreeAnalysisPreflight(
+      buildRequest({
+        nome_completo: 'Maria Silva',
+        data_nascimento: '01/01/1990',
+        email: 'maria@test.com',
+        opt_in: false,
+      }),
+      mockSupabase(),
+      { allowLocalhostOrigins: false, now: Date.UTC(2020, 0, 15) },
+    );
+    assert.ok('ok' in result && result.ok);
+    assert.deepEqual(resolvePublicFreeAnalysisMarketingConsent(result.opt_in), { send: false });
+  });
+
+  it('opt_in true no preflight dispara marketing com consentimento explícito', async () => {
+    const result = await runFreeAnalysisPreflight(
+      buildRequest({
+        nome_completo: 'Maria Silva',
+        data_nascimento: '01/01/1990',
+        email: 'maria@test.com',
+        opt_in: true,
+      }),
+      mockSupabase(),
+      { allowLocalhostOrigins: false, now: Date.UTC(2020, 0, 15) },
+    );
+    assert.ok('ok' in result && result.ok);
+    const consent = resolvePublicFreeAnalysisMarketingConsent(result.opt_in);
+    assert.equal(consent.send, true);
+    if (consent.send) {
+      assert.equal(consent.optIn, true);
+      assert.ok(consent.optInEm);
+    }
+  });
 });

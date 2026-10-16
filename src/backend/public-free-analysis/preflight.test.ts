@@ -171,4 +171,37 @@ describe('runFreeAnalysisPreflight', () => {
     );
     assert.equal('status' in result && result.status, 409);
   });
+
+  it('repassa opt_in true quando enviado', async () => {
+    const result = await runFreeAnalysisPreflight(
+      buildRequest({ ...validBody, opt_in: true }),
+      mockSupabase(),
+      { allowLocalhostOrigins: false },
+    );
+    assert.ok('ok' in result && result.ok);
+    if ('ok' in result && result.ok) {
+      assert.equal(result.opt_in, true);
+    }
+  });
+
+  it('repassa opt_in false quando enviado', async () => {
+    const result = await runFreeAnalysisPreflight(
+      buildRequest({ ...validBody, opt_in: false }),
+      mockSupabase(),
+      { allowLocalhostOrigins: false },
+    );
+    assert.ok('ok' in result && result.ok);
+    if ('ok' in result && result.ok) {
+      assert.equal(result.opt_in, false);
+    }
+  });
+
+  it('rejeita opt_in não booleano', async () => {
+    const result = await runFreeAnalysisPreflight(
+      buildRequest({ ...validBody, opt_in: 'sim' }),
+      mockSupabase(),
+      { allowLocalhostOrigins: false },
+    );
+    assert.equal('status' in result && result.status, 400);
+  });
 });
