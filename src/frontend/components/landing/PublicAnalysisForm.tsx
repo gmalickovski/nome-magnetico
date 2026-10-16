@@ -24,6 +24,7 @@ export function PublicAnalysisForm() {
   const [apiError, setApiError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [optIn, setOptIn] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const handleTurnstileToken = useCallback((token: string) => {
@@ -67,10 +68,11 @@ export function PublicAnalysisForm() {
     }
 
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, string | boolean> = {
         nome_completo: nome.trim(),
         data_nascimento: data,
         email: email.trim().toLowerCase(),
+        opt_in: optIn,
         [HONEYPOT_FIELD]: honeypot,
       };
       if (TURNSTILE_SITE_KEY && turnstileToken) {
@@ -103,6 +105,7 @@ export function PublicAnalysisForm() {
       setNome('');
       setData('');
       setEmail('');
+      setOptIn(false);
     } catch {
       setApiError('Não foi possível conectar ao servidor. Tente novamente.');
     } finally {
@@ -169,6 +172,24 @@ export function PublicAnalysisForm() {
             {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
           </div>
         </div>
+
+        <label
+          htmlFor="pub-opt-in"
+          className="flex items-start gap-3 cursor-pointer py-1 min-h-[44px]"
+        >
+          <input
+            id="pub-opt-in"
+            name="opt_in"
+            type="checkbox"
+            checked={optIn}
+            disabled={loading}
+            onChange={(e) => setOptIn(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[#d4af37] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#bea5ff]/50"
+          />
+          <span className="text-sm leading-relaxed text-[#e5e2e1]">
+            Quero receber dicas e novidades do Nome Magnético por e-mail
+          </span>
+        </label>
 
         <div
           className="absolute left-[-9999px] top-auto h-0 w-0 overflow-hidden"
