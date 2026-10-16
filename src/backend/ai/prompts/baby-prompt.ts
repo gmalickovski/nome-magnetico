@@ -1,5 +1,6 @@
 import type { AnaliseNomeBebe, ResultadoNomeBebe } from '../../numerology/products/nome-bebe';
 import type { Arquetipo } from '../../numerology/archetypes';
+import { INSTRUCAO_IA_SEM_LINGUAGEM_CLINICA } from '../../../shared/legal';
 
 export interface BabyPromptParams {
   resultado: ResultadoNomeBebe;
@@ -64,7 +65,7 @@ ${tendenciaInfo}
 ${debitoInfo}
 
 ${nome.bloqueios.length > 0 ? `### Detalhes dos Bloqueios
-${nome.bloqueios.map(b => `- **${b.codigo} — ${b.titulo}:** ${b.descricao}${b.aspectoSaude ? ` | Saúde: ${b.aspectoSaude}` : ''}`).join('\n')}` : ''}
+${nome.bloqueios.map(b => `- **${b.codigo} — ${b.titulo}:** ${b.descricao}`).join('\n')}` : ''}
 
 ---
 
@@ -107,7 +108,7 @@ ${nome.bloqueios.map((b, i) => `### ${i + 1}. Bloqueio ${b.codigo} — ${b.titul
 Escreva 3 parágrafos sobre este bloqueio específico para os pais:
 - Como este bloqueio pode se manifestar na prática no dia a dia e no comportamento desta criança (seja MUITO específico, não genérico)
 - O **antídoto vibratório:** que práticas, ambientes, atividades e posturas dos pais neutralizam e transformam esse padrão — com exemplos práticos aplicáveis desde o primeiro ano de vida
-${b.aspectoSaude ? `- A dimensão de saúde associada (${b.aspectoSaude}): como os pais devem prestar atenção e quais sinais observar, sem alarmismo mas com consciência`  : '- Como este bloqueio pode ser um portal de força extraordinária quando conscientemente trabalhado'}`).join('\n\n')}
+- Como este bloqueio pode ser um portal de força extraordinária quando conscientemente trabalhado`).join('\n\n')}
 
 ---` : `## 🌟 3. A Leveza do Caminho
 
@@ -304,9 +305,9 @@ Ao explicar a escolha, conecte obrigatoriamente:
 ## 🎨 3. Harmonização Ambiental — O Ninho da Alma
 
 O ambiente onde o bebê dorme, brinca e aprende tem impacto direto no desenvolvimento do seu campo energético. Com base na **Expressão ${melhorNome?.expressao ?? '—'}** e no **Destino ${destino}**, escreva 3 parágrafos sobre:
-- **Paleta de cores e decoração:** As cores terapêuticas específicas para as paredes, enxoval e brinquedos — e o porquê de cada escolha vibratória
+- **Paleta de cores e decoração:** As cores sugeridas para as paredes, enxoval e brinquedos — e o porquê de cada escolha vibratória
 - **Atmosfera sensorial:** Como configurar a iluminação, o nível de estímulo sonoro, a textura dos materiais e o ritmo das rotinas para que o ambiente ressoe com a alma desta criança
-- **Objetos e rituais:** Elementos que favorecem o enraizamento, o sono tranquilo e o desenvolvimento saudável da identidade de acordo com este magnetismo numerológico
+- **Objetos e rituais:** Elementos que favorecem o enraizamento, o sono tranquilo e o florescimento da identidade de acordo com este magnetismo numerológico
 
 ---
 
@@ -400,5 +401,6 @@ REGRAS ESTRITAS DE FORMATAÇÃO:
 4. SEMPRE duplo espaçamento entre parágrafos — texto arejado e escaneável.
 5. Parágrafos com no máximo 4 linhas.
 6. Escreva com calor humano, leveza e profundidade — os pais estão diante de uma das decisões mais importantes da vida do filho.
-7. Seja específico: cada recomendação deve ser concreta e aplicável, não apenas poética.`;
+7. Seja específico: cada recomendação deve ser concreta e aplicável, não apenas poética.
+8. ${INSTRUCAO_IA_SEM_LINGUAGEM_CLINICA}`;
 }

@@ -4,7 +4,6 @@ interface Bloqueio {
   codigo: string;
   titulo: string;
   descricao: string;
-  aspectoSaude?: string;
   triangulos?: string[];
   antidoto?: string;
 }
@@ -37,16 +36,6 @@ export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: Blo
 
       <div className="px-5 py-5 space-y-4">
           <p className="text-gray-300 text-sm leading-relaxed">{bloqueio.descricao}</p>
-
-          {bloqueio.aspectoSaude && (
-            <div className="flex items-start gap-2">
-              <span className="text-purple-400 text-sm mt-0.5 shrink-0">◈</span>
-              <div>
-                <span className="text-xs uppercase tracking-wider text-purple-400 font-medium">Aspecto de Saúde</span>
-                <p className="text-gray-400 text-sm mt-0.5">{bloqueio.aspectoSaude}</p>
-              </div>
-            </div>
-          )}
 
           {bloqueio.triangulos && bloqueio.triangulos.length > 0 && (
             <div className="space-y-1.5">

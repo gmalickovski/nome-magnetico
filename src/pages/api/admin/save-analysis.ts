@@ -101,7 +101,7 @@ O relatório completo de análise de nome para bebê foi elaborado com extremo c
 [/INTRO_NUMEROS]
 
 [INTRO_BLOQUEIOS]
-Analisamos todos os 4 triângulos numerológicos dos nomes sugeridos para seu bebê. A triagem minuciosa de bloqueios garante uma escolha limpa e harmônica, permitindo que a criança cresça com caminhos de comunicação, saúde e afetividade plenamente abertos.
+Analisamos todos os 4 triângulos numerológicos dos nomes sugeridos para seu bebê. A triagem minuciosa de bloqueios garante uma escolha limpa e harmônica, permitindo que a criança cresça com caminhos de comunicação e afetividade plenamente abertos.
 [/INTRO_BLOQUEIOS]
 
 [INTRO_ARCANOS]

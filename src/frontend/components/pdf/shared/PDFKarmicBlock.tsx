@@ -44,12 +44,6 @@ const styles = StyleSheet.create({
     color: GRAY,
     lineHeight: 1.4,
   },
-  bloqueioSaude: {
-    fontSize: 9,
-    color: '#7f1d1d',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
   bloqueioTriangulos: {
     fontSize: 9,
     color: '#991b1b',
@@ -328,7 +322,6 @@ export interface BloqueioData {
   codigo: string;
   titulo: string;
   descricao: string;
-  aspectoSaude?: string;
   triangulos?: string[];
   repeticoesPortriangulo?: Partial<Record<string, number>>;
   totalOcorrencias?: number;
@@ -360,14 +353,12 @@ export interface TendenciaData {
 export function BloqueiosBlock({
   bloqueios,
   showAntidoto = true,
-  hideSaude = false,
   hideTriangulos = false,
   isNomeSocial = false,
   triangulo,
 }: {
   bloqueios: BloqueioData[];
   showAntidoto?: boolean;
-  hideSaude?: boolean;
   hideTriangulos?: boolean;
   isNomeSocial?: boolean;
   triangulo?: 'vida' | 'pessoal' | 'social' | 'destino';
@@ -406,9 +397,6 @@ export function BloqueiosBlock({
           </View>
           <Text style={[styles.bloqueioDesc, ...(isNomeSocial ? [{ fontSize: 10 }] : [])]}>{displayDesc}</Text>
 
-          {(!hideSaude && b.aspectoSaude) ? (
-            <Text style={[styles.bloqueioSaude, ...(isNomeSocial ? [{ fontSize: 9 }] : [])]}>Aspecto de saúde: {b.aspectoSaude}</Text>
-          ) : null}
           {(!hideTriangulos && b.triangulos && b.triangulos.length > 0) ? (
             <Text style={[styles.bloqueioTriangulos, ...(isNomeSocial ? [{ fontSize: 9 }] : [])]}>
               Ativo nos triângulos: {b.triangulos.map((t: string) => {

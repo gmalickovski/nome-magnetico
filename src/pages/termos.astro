@@ -1,5 +1,6 @@
 ---
 import LegalLayout from '../layouts/LegalLayout.astro';
+import { AVISO_AUTOCONHECIMENTO } from '../shared/legal';
 ---
 
 <LegalLayout
@@ -7,7 +8,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
   description="Leia os termos e condições de uso do Nome Magnético, serviço de numerologia cabalística. Conforme CDC e Marco Civil da Internet."
 >
   <h1 class="font-cinzel text-3xl font-bold text-[#D4AF37] mb-2">Termos de Uso</h1>
-  <p class="text-sm text-gray-500 mb-10">Última atualização: 15 de maio de 2026</p>
+  <p class="text-sm text-gray-500 mb-10">Última atualização: 16 de outubro de 2026</p>
 
   <h2 class="text-xl font-semibold text-white mt-10 mb-3">1. Partes</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
@@ -28,7 +29,18 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     <strong class="text-gray-300">Os resultados não constituem aconselhamento profissional de nenhuma natureza</strong>, incluindo, sem limitação, aconselhamento médico, psicológico, jurídico ou financeiro. O Usuário é o único responsável pelas decisões tomadas com base nos resultados obtidos.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">3. Cadastro e Conta</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">3. Natureza do serviço</h2>
+  <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    O Nome Magnético oferece um serviço de <strong class="text-gray-300">autoconhecimento e entretenimento</strong> baseado na tradição da numerologia cabalística. Não há garantia de resultado específico; as leituras indicam tendências simbólicas, não acontecimentos certos.
+  </p>
+  <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    O nome harmonizado sugerido pela plataforma <strong class="text-gray-300">não altera documentos oficiais nem o registro civil</strong>. Eventuais mudanças de assinatura ou nome social são de responsabilidade exclusiva do Usuário, conforme a legislação aplicável.
+  </p>
+  <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    {AVISO_AUTOCONHECIMENTO}
+  </p>
+
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">4. Cadastro e Conta</h2>
   <ul class="list-disc list-inside text-gray-400 text-sm space-y-1 mb-4">
     <li>O Usuário deve ter pelo menos 18 anos de idade para criar uma conta. Menores de 18 anos somente podem utilizar o serviço com a autorização expressa de um responsável legal.</li>
     <li>O Usuário é responsável pela veracidade das informações fornecidas no cadastro.</li>
@@ -36,7 +48,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     <li>É proibida a criação de múltiplas contas para contornar restrições do serviço.</li>
   </ul>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">4. Planos e Pagamento</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">5. Planos e Pagamento</h2>
   <ul class="list-disc list-inside text-gray-400 text-sm space-y-1 mb-4">
     <li>O serviço é oferecido mediante pagamento único por ciclo de 30 dias, não recorrente.</li>
     <li>Os preços são exibidos em Reais (BRL), já incluindo os tributos aplicáveis.</li>
@@ -45,7 +57,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     <li>Em caso de falha no processamento do pagamento, o acesso ao serviço não é liberado até a confirmação.</li>
   </ul>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">5. Direito de Arrependimento (CDC, art. 49)</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">6. Direito de Arrependimento (CDC, art. 49)</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     Conforme o art. 49 do Código de Defesa do Consumidor (Lei 8.078/1990), o Usuário que realizar a compra pela internet tem o direito de desistir da contratação no prazo de <strong class="text-gray-300">7 (sete) dias corridos</strong> contados da data da compra, com direito ao reembolso integral do valor pago, sem necessidade de justificativa.
   </p>
@@ -53,7 +65,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     Após o prazo de 7 dias, o serviço é considerado integralmente entregue (análise gerada e disponível na plataforma) e não haverá reembolso proporcional. Veja nossa <a href="/reembolso" class="text-[#D4AF37] hover:underline">Política de Reembolso</a> para detalhes sobre o processo.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">6. Propriedade Intelectual</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">7. Propriedade Intelectual</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     O sistema, algoritmos, metodologia, textos, design e identidade visual do Nome Magnético são de propriedade exclusiva de Studio MLK, protegidos pela Lei de Direitos Autorais (Lei 9.610/1998).
   </p>
@@ -61,7 +73,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     Ao Usuário é concedida uma licença pessoal, intransferível e não exclusiva para utilização dos resultados de suas análises para fins pessoais e não comerciais.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">7. Uso Aceitável</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">8. Uso Aceitável</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">É expressamente proibido:</p>
   <ul class="list-disc list-inside text-gray-400 text-sm space-y-1 mb-4">
     <li>Realizar engenharia reversa, descompilar ou tentar extrair o código-fonte do serviço;</li>
@@ -71,7 +83,7 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     <li>Utilizar o serviço para fins ilegais ou que violem direitos de terceiros.</li>
   </ul>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">8. Limitação de Responsabilidade</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">9. Limitação de Responsabilidade</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     O Nome Magnético não se responsabiliza por decisões tomadas pelo Usuário com base nos resultados das análises. Os conteúdos são fornecidos para fins informativos e de autoconhecimento, sem garantia de resultados específicos.
   </p>
@@ -79,12 +91,12 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     Não nos responsabilizamos por danos decorrentes de caso fortuito, força maior, falhas de conexão à internet, indisponibilidade de serviços de terceiros (Stripe, Supabase) ou uso indevido do serviço pelo Usuário.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">9. Disponibilidade do Serviço</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">10. Disponibilidade do Serviço</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     Nos comprometemos a manter o serviço disponível com o melhor esforço. Manutenções programadas serão avisadas com pelo menos 24 horas de antecedência. Em caso de indisponibilidade não programada superior a 24 horas consecutivas, o Usuário terá direito a crédito proporcional ao período afetado.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">10. Privacidade, Analytics e Retenção</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">11. Privacidade, Analytics e Retenção</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     O uso de cookies analíticos do Google Analytics 4 e do PostHog depende de consentimento prévio no banner de cookies. O GA4 é usado para medir tráfego, conversão e desempenho de campanhas; ele não registra nem armazena IPs individuais, e os dados em nível de usuário e eventos principais podem ser retidos por até 14 meses conforme a configuração da propriedade. O PostHog mede o funil de produto (páginas, lead gratuito, checkout e compra confirmada) somente depois desse aceite.
   </p>
@@ -92,12 +104,12 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     Perfis de análise permanecem disponíveis enquanto a conta existir ou enquanto houver obrigação legal aplicável. O Usuário pode solicitar exclusão de dados pessoais e análises associadas pelo e-mail <strong class="text-gray-300">privacidade@nomemagnetico.com.br</strong>, observadas as retenções obrigatórias previstas em lei.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">11. Lei Aplicável e Foro</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">12. Lei Aplicável e Foro</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da Comarca de Porto Alegre, Estado do Rio Grande do Sul, para dirimir quaisquer controvérsias decorrentes deste instrumento, com renúncia a qualquer outro, por mais privilegiado que seja.
   </p>
 
-  <h2 class="text-xl font-semibold text-white mt-10 mb-3">12. Alterações</h2>
+  <h2 class="text-xl font-semibold text-white mt-10 mb-3">13. Alterações</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     Podemos atualizar estes Termos a qualquer tempo. Alterações serão comunicadas por e-mail com pelo menos 15 dias de antecedência. O uso continuado do serviço após esse prazo indica aceitação das novas condições.
   </p>

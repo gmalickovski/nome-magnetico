@@ -5,6 +5,7 @@ import { hasActiveSubscription } from '../backend/db/subscriptions';
 import { createUserClient } from '../backend/db/supabase';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
+import { AVISO_AUTOCONHECIMENTO } from '../shared/legal';
 
 applyPricingPageCache(Astro);
 
@@ -84,5 +85,6 @@ const schemaBreadcrumb = {
     hqPrices={hqPrices}
     promotion={promotion}
     autoOpenCheckout={autoOpenCheckout}
+    autoconhecimentoAviso={AVISO_AUTOCONHECIMENTO}
   />
 </BaseLayout>

@@ -8,10 +8,11 @@ import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmi
 import { avaliarCompatibilidade } from '@/backend/numerology/harmonization';
 import { calcularScore } from '@/backend/numerology/score';
 import { captureFluxoException } from '@/sentry/fluxo';
+import { isoBirthDateToPtBr, parseIsoBirthDate } from '@/backend/public-free-analysis/birth-date';
 
 const RequestSchema = z.object({
   nome_candidato: z.string().min(2),
-  data_nascimento_db: z.string().optional().or(z.literal('')),
+  data_nascimento_db: z.string(),
 });
 
 function json(body: object, status = 200) {
@@ -33,7 +34,7 @@ function getClientIp(request: Request, clientAddress?: string) {
 }
 
 function hashIp(ip: string) {
-  const salt = process.env.RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || 'nome-magnetico';
+  const salt = process.env.RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || '[REDACTED]';
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex');
 }
 
@@ -43,6 +44,11 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     body = RequestSchema.parse(await request.json());
   } catch {
     return json({ error: 'Dados invalidos' }, 400);
+  }
+
+  const birth = parseIsoBirthDate(body.data_nascimento_db);
+  if (!birth.ok) {
+    return json({ error: 'Informe sua data de nascimento.' }, 400);
   }
 
   const user = (locals as any).user;
@@ -103,11 +109,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   }
 
   try {
-    let bdDataStr = '';
-    if (body.data_nascimento_db && body.data_nascimento_db.includes('-')) {
-      const partes = body.data_nascimento_db.split('-');
-      bdDataStr = `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
+    const bdDataStr = isoBirthDateToPtBr(birth.isoDate);
 
     const triangulos = calcularTodosTriangulos(body.nome_candidato, bdDataStr);
     const bloqueios = detectarBloqueios(triangulos);

@@ -114,7 +114,7 @@ export const ARCANOS: Record<number, Arcano> = {
     numero: 13,
     nome: 'A Morte',
     palavraChave: 'Transformação e Renovação',
-    descricao: 'Aponta para o processo constante de morte e renascimento que a vida nos propõe, no sentido metafísico e no sentido real, transformando a consciência para o seu despertar psíquico. No sentido metafísico implica mudar a atitude diante da vida; uma morte do ego e a aceitação da experiência transformadora, que tanto pode vir na forma de um novo aprendizado, de um acidente ou de uma doença séria. No seu sentido real é quando acontece a partida para o outro lado da vida, literalmente. Nos lembra que todos os dias nós morremos um pouco e renascemos.',
+    descricao: 'Aponta para o processo constante de morte e renascimento que a vida nos propõe, no sentido metafísico e no sentido real, transformando a consciência para o seu despertar psíquico. No sentido metafísico implica mudar a atitude diante da vida; uma morte do ego e a aceitação da experiência transformadora, que tanto pode vir na forma de um novo aprendizado ou de uma experiência difícil. No seu sentido real é quando acontece a partida para o outro lado da vida, literalmente. Nos lembra que todos os dias nós morremos um pouco e renascemos.',
     desafio: 'Adverte para o sono psíquico da consciência adormecida nas ilusões da materialidade; nos propõe o renascimento para uma vida mais espiritualizada.',
   },
   14: {
@@ -377,7 +377,7 @@ export const ARCANOS: Record<number, Arcano> = {
     numero: 50,
     nome: 'Ás de Copas',
     palavraChave: 'Potencial de Amor',
-    descricao: 'Aponta para todos os potenciais do coração ainda por desabrochar como amor; grande disposição para viver com alegria, saúde, prazer; novas oportunidades surgem nas áreas das relações humanas, das comunicações, do sentimento; religar-se consigo mesmo, com o outro, com o divino.',
+    descricao: 'Aponta para todos os potenciais do coração ainda por desabrochar como amor; grande disposição para viver com alegria, vitalidade e prazer; novas oportunidades surgem nas áreas das relações humanas, das comunicações, do sentimento; religar-se consigo mesmo, com o outro, com o divino.',
     desafio: 'Em seus aspectos negativos pode manifestar ciúme, rancor, insatisfação afetiva.',
   },
   51: {
@@ -516,8 +516,8 @@ export const ARCANOS: Record<number, Arcano> = {
   70: {
     numero: 70,
     nome: 'Nove de Ouros',
-    palavraChave: 'Novos Conceitos e Saúde',
-    descricao: 'Aponta para o nascimento de um novo conceito emergente do meio de outros conceitos; a iminente chegada de novas condições materiais; um novo trabalho, uma nova oportunidade, uma herança, a recuperação da saúde.',
+    palavraChave: 'Novos Conceitos e Renovação',
+    descricao: 'Aponta para o nascimento de um novo conceito emergente do meio de outros conceitos; a iminente chegada de novas condições materiais; um novo trabalho, uma nova oportunidade, uma herança ou a retomada de recursos e novos começos.',
     desafio: 'As precauções são imprescindíveis, sob o risco de se perder as oportunidades que surgem por precipitação.',
   },
   71: {
@@ -552,7 +552,7 @@ export const ARCANOS: Record<number, Arcano> = {
     numero: 75,
     nome: 'Quatro de Ouros',
     palavraChave: 'Impermanência e Economia',
-    descricao: 'Aponta para o centro que parece ser imutável, mas que há nele constante impermanência; aquele que tem a segurança e a saúde deve permanecer constantemente consciente do caráter efêmero de todos os bens materiais; a vida cotidiana material assegurada como a base para a vida espiritual; investir para fazer a riqueza se multiplicar gerando prosperidade na corrente da vida.',
+    descricao: 'Aponta para o centro que parece ser imutável, mas que há nele constante impermanência; aquele que tem segurança e estabilidade deve permanecer constantemente consciente do caráter efêmero de todos os bens materiais; a vida cotidiana material assegurada como a base para a vida espiritual; investir para fazer a riqueza se multiplicar gerando prosperidade na corrente da vida.',
     desafio: 'Em seus aspectos negativos, desperta a ganância, a avareza e o medo da escassez.',
   },
   76: {

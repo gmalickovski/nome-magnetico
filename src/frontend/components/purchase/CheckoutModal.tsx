@@ -58,13 +58,14 @@ interface Props {
   onClose: () => void;
   /** Redireciona para o Stripe Checkout hospedado (cartão + PIX). */
   onTriggerCard: (type: ProductType, couponCode?: string) => void;
+  autoconhecimentoAviso?: string;
 }
 
 /**
  * Modal de pré-checkout: resumo do produto + cupom.
  * A escolha cartão/PIX acontece no Stripe Checkout padrão.
  */
-export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTriggerCard }: Props) {
+export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTriggerCard, autoconhecimentoAviso }: Props) {
   const [step, setStep] = useState<Step>('review');
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -330,6 +331,10 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
                   <p className="mt-2 text-center text-xs text-red-400">{couponError}</p>
                 )}
               </div>
+
+              {autoconhecimentoAviso ? (
+                <p className="text-gray-500 text-[11px] leading-relaxed mb-4 text-center px-1">{autoconhecimentoAviso}</p>
+              ) : null}
 
               <button
                 onClick={() => void handlePay()}

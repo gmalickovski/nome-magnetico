@@ -598,7 +598,7 @@ export function NomeAtualPDF({
                 O Triângulo da Vida (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Saúde, Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação física e energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa a saúde do seu corpo físico, sua imunidade energética e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa sua energia de base e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
               </Text>
               <TrianguloPiramideInline data={tVida} label="TRIÂNGULO DA VIDA" cellSize={triCellSize} letras={letrasNomeBatismo} />
               {tVida.arcanoRegente != null && (() => {
@@ -620,7 +620,7 @@ export function NomeAtualPDF({
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo da Vida
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('vida'))}hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
                     * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
                   </Text>
@@ -658,7 +658,7 @@ export function NomeAtualPDF({
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Pessoal
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
                     * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
                   </Text>
@@ -696,7 +696,7 @@ export function NomeAtualPDF({
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Social
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="social" />
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
                     * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
                   </Text>
@@ -734,7 +734,7 @@ export function NomeAtualPDF({
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo do Destino
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
+                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
                     * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
                   </Text>

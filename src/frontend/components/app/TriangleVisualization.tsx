@@ -11,7 +11,6 @@ interface Bloqueio {
   codigo: string;
   titulo: string;
   descricao: string;
-  aspectoSaude: string;
   triangulos: string[];
   repeticoesPortriangulo?: Partial<Record<string, number>>;
   totalOcorrencias?: number;
@@ -455,10 +454,6 @@ function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloquei
               <p className="text-gray-300 text-sm leading-relaxed pt-3">{displayDesc}</p>
             );
           })()}
-          <div className="rounded-lg p-3 bg-yellow-500/10 border border-yellow-500/20">
-            <p className="text-xs text-yellow-400 uppercase tracking-wider mb-1">Aspecto de Saúde</p>
-            <p className="text-yellow-200 text-sm">{bloqueio.aspectoSaude}</p>
-          </div>
         </div>
       )}
     </div>

@@ -806,7 +806,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo da Vida (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Saúde, Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação física e energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa a saúde do seu corpo físico, sua imunidade energética e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa sua energia de base e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
               </Text>
               <TrianguloPiramideInline data={tVidaNasc} label="TRIÂNGULO DA VIDA" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
               {tVidaNasc.arcanoRegente != null && (() => {
@@ -828,7 +828,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo da Vida
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('vida'))}hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                 </View>
               )}
             </View>
@@ -863,7 +863,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Pessoal
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                 </View>
               )}
             </View>
@@ -898,7 +898,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Social
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="social" />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                 </View>
               )}
             </View>
@@ -933,7 +933,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo do Destino
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                 </View>
               )}
             </View>
@@ -1863,7 +1863,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo da Vida (Harmonizado)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Saúde, Vitalidade e Prosperidade Material]</Text> — A fundação física e energética mais profunda do seu ser, agora recalculada e harmonizada pelo seu novo nome. Esta nova configuração atua como um escudo que protege a sua saúde física e redireciona os seus canais de atração financeira. Ao sintonizar as frequências do seu corpo físico com uma vibração livre de resistências, o Triângulo da Vida Harmonizado abre espaço para que a vitalidade e a prosperidade fluam de forma leve e natural. Compare esta pirâmide com a de nascimento para contemplar a dissolução dos antigos bloqueios.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — A fundação energética mais profunda do seu ser, agora recalculada e harmonizada pelo seu novo nome. Esta nova configuração atua como um escudo vibracional e redireciona os seus canais de atração financeira. Ao sintonizar as frequências de base com uma vibração livre de resistências, o Triângulo da Vida Harmonizado abre espaço para que a vitalidade e a prosperidade fluam de forma leve e natural. Compare esta pirâmide com a de nascimento para contemplar a dissolução dos antigos bloqueios.
               </Text>
               <TrianguloPiramideInline data={triangulosSocial.vida} label="TRIÂNGULO DA VIDA" cellSize={triCellSizeHarm} letras={letrasNome} />
               {triangulosSocial.vida.arcanoRegente != null && (() => {
@@ -1885,7 +1885,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo da Vida
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('vida'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('vida'))}hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                 </View>
               )}
             </View>
@@ -1920,7 +1920,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Pessoal
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('pessoal'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                 </View>
               )}
             </View>
@@ -1955,7 +1955,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo Social
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('social'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="social" />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                 </View>
               )}
             </View>
@@ -1990,7 +1990,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
                     Bloqueios do Triângulo do Destino
                   </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('destino'))} hideSaude={true} hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
+                  <BloqueiosBlock bloqueios={bloqueiosSocial.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                 </View>
               )}
             </View>

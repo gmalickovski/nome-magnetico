@@ -6,7 +6,6 @@ export interface BloqueioRecord {
   codigo: string;
   titulo: string;
   descricao: string;
-  aspectoSaude?: string;
   triangulos?: string[];
   antidoto?: string;
 }

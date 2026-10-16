@@ -3,6 +3,7 @@
  */
 import { View, Text, StyleSheet } from '@react-pdf/renderer';
 import { PDF_COLORS } from './PDFTheme';
+import { AVISO_AUTOCONHECIMENTO } from '../../../../shared/legal';
 
 const styles = StyleSheet.create({
   footer: {
@@ -10,12 +11,23 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 48,
     right: 48,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     borderTopWidth: 1,
     borderTopColor: PDF_COLORS.lightGray,
     paddingTop: 8,
+  },
+  legal: {
+    fontSize: 6,
+    color: PDF_COLORS.gray,
+    lineHeight: 1.35,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   email: {
     fontSize: 8,
@@ -59,12 +71,15 @@ export function PDFFooter({
       ]}
       fixed
     >
-      <Text style={styles.email}>{email}</Text>
-      <Text style={styles.site}>{site}</Text>
-      <Text
-        style={styles.page}
-        render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
-      />
+      <Text style={styles.legal}>{AVISO_AUTOCONHECIMENTO}</Text>
+      <View style={styles.row}>
+        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.site}>{site}</Text>
+        <Text
+          style={styles.page}
+          render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
+        />
+      </View>
     </View>
   );
 }

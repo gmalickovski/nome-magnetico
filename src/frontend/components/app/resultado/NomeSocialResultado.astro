@@ -19,6 +19,7 @@ import KarmicLessons from '../KarmicLessons';
 import KarmicDebts from '../KarmicDebts';
 import HiddenTendencies from '../HiddenTendencies';
 import ScoreDisplay from '../ScoreDisplay';
+import { AVISO_AUTOCONHECIMENTO } from '../../../../shared/legal';
 import CompatibilityBadge from '../CompatibilityBadge';
 import { ARCANOS } from '../../../../backend/numerology/arcanos';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../../../../backend/numerology/karmic';
@@ -112,7 +113,7 @@ const arcanosMap = Object.fromEntries(arcanoIds.map(id => [id, ARCANOS[id]])) as
 // Descrições detalhadas dos triângulos (exato do NomeAtualResultado)
 const primeiroNomeTri = nomeExibido.split(' ')[0] ?? nomeExibido;
 const TRIANGULO_DESC: Record<string, string> = {
-  vida: `Calculado a partir do valor puro de cada letra do nome, sem modificadores externos. Revela os padrões fundamentais de existência — os temas que se repetem nas diferentes fases da vida, independentemente das circunstâncias. É a vibração base que permeia toda a trajetória de ${primeiroNomeTri}, moldando a relação com o corpo, a vitalidade, o dinheiro e a resiliência diante dos desafios. Os bloqueios neste triângulo afetam a saúde geral e os ciclos de prosperidade.`,
+  vida: `Calculado a partir do valor puro de cada letra do nome, sem modificadores externos. Revela os padrões fundamentais de existência — os temas que se repetem nas diferentes fases da vida, independentemente das circunstâncias. É a vibração base que permeia toda a trajetória de ${primeiroNomeTri}, moldando a vitalidade, o dinheiro e a resiliência diante dos desafios. Os bloqueios neste triângulo afetam a energia de base e os ciclos de prosperidade.`,
   pessoal: `Calculado adicionando ao valor de cada letra o número do dia de nascimento. Mapeia a dimensão íntima e emocional — as reações internas, os mecanismos de defesa e os padrões afetivos que raramente são visíveis para o mundo externo. Revela como ${primeiroNomeTri} processa as experiências por dentro, o que realmente move suas escolhas e os ciclos emocionais que se repetem nos relacionamentos mais próximos.`,
   social: `Calculado adicionando ao valor de cada letra o número do mês de nascimento. Revela como o mundo externo percebe e responde a ${primeiroNomeTri} — a impressão que o nome irradia nas interações sociais, profissionais e públicas. Governa o magnetismo pessoal, as oportunidades de networking e a reputação. É aqui que se concentram os bloqueios que sabotam visibilidade, vendas e conexões estratégicas.`,
   destino: `Calculado adicionando ao valor de cada letra a soma já reduzida do dia e mês de nascimento. É o triângulo mais revelador: mapeia os resultados que tendem a se materializar ao longo da vida, a missão maior e os frutos que a frequência vibratória do nome produz. Quando há bloqueios aqui, eles se manifestam como ciclos de esforço que raramente chegam à colheita — o trabalho não se converte em resultado.`,
@@ -1196,6 +1197,9 @@ const dimSublabels: Record<TipKey, string> = {
       O que você viu aqui é um panorama da sua harmonização vibracional. O relatório completo em PDF reúne a análise profunda dos seus <strong class="text-[#e5e2e1]">4 Triângulos Cabalísticos</strong>, <strong class="text-[#e5e2e1]">Débitos Kármicos</strong>, <strong class="text-[#e5e2e1]">Lições Kármicas</strong>, <strong class="text-[#e5e2e1]">Tendências Ocultas</strong>, <strong class="text-[#e5e2e1]">Arcanos Regentes</strong>, <strong class="text-[#e5e2e1]">Arcanos de Trânsito</strong>, guia de ativação de 30 dias e folha de treino de assinatura.
     </p>
   </div>
+  <p class="text-gray-500 text-xs leading-relaxed mt-10 pt-8 border-t border-white/[0.06] max-w-3xl mx-auto text-left">
+    {AVISO_AUTOCONHECIMENTO}
+  </p>
 </section>
 
 <style>

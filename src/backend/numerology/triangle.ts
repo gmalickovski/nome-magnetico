@@ -53,7 +53,6 @@ export interface Bloqueio {
   codigo: string;
   titulo: string;
   descricao: string;
-  aspectoSaude: string;
   triangulos: Array<'vida' | 'pessoal' | 'social' | 'destino'>;
   /** Número de ocorrências deste bloqueio em cada triângulo. */
   repeticoesPortriangulo: Partial<Record<'vida' | 'pessoal' | 'social' | 'destino', number>>;
@@ -66,52 +65,43 @@ export interface Bloqueio {
 // ================================================================
 export const BLOQUEIOS_MAP: Record<
   string,
-  { titulo: string; descricao: string; aspectoSaude: string }
+  { titulo: string; descricao: string }
 > = {
   '111': {
     titulo: 'Bloqueio de Iniciação (111)',
     descricao: 'Limitação profunda da força de vontade, perda de coragem e inatividade crônica. A presença deste bloqueio gera uma forte tendência à dependência de terceiros e cria bloqueios sistêmicos ao tentar iniciar projetos, defender ideias próprias ou afirmar a sua individualidade autêntica. O grande antídoto kármico para transcender essa energia é desenvolver ativamente a coragem, fortalecer a autonomia pessoal e recuperar a confiança absoluta no próprio potencial de liderança inato.',
-    aspectoSaude: 'Tendência para desenvolver alguns distúrbios ou doenças cardíacas.',
   },
   '222': {
     titulo: 'Bloqueio de Associação (222)',
     descricao: 'Timidez extrema, indecisão constante e uma perigosa tendência a ser subjugado e apagado pelos outros. Este bloqueio manifesta dificuldades severas em manter parcerias, sociedades e relacionamentos saudáveis, muitas vezes resultando em drástica perda de autoestima e anulação da própria vontade. O antídoto fundamental é cultivar a diplomacia, a paciência e estabelecer limites claros para manter o equilíbrio inegociável entre o que você oferece e o que você recebe.',
-    aspectoSaude: 'Pode, eventualmente, surgir alguma doença que provoque dependência.',
   },
   '333': {
     titulo: 'Bloqueio de Expressão (333)',
     descricao: 'Dificuldade profunda no diálogo e barreiras persistentes ao tentar se comunicar com clareza. Este bloqueio gera a constante sensação de ser incompreendido e uma forte dificuldade em se impor e expressar seus sentimentos verdadeiros nas relações pessoais e profissionais. Para transcender esse obstáculo, o antídoto exige focar na expressão criativa, treinar a comunicação autêntica e transparente, e sustentar o otimismo mesmo diante das barreiras sociais.',
-    aspectoSaude: 'Indica possibilidade de doenças respiratórias ou de articulações.',
   },
   '444': {
     titulo: 'Bloqueio de Estruturação (444)',
     descricao: 'Bloqueio severo na realização profissional e financeira. Indica uma forte tendência a não receber o reconhecimento merecido pelo seu esforço, além de dificuldade crônica em manter estabilidade. Pode gerar excesso de rigidez, pessimismo ou, pelo contrário, extrema desorganização. O antídoto para destravar este fluxo exige o cultivo diário da disciplina, estabelecimento de métodos claros de ação, e uma resiliência inabalável para construir bases sólidas.',
-    aspectoSaude: 'Indica possibilidade de doenças reumáticas ou arteriais.',
   },
   '555': {
     titulo: 'Bloqueio de Liberdade (555)',
     descricao: 'Dificuldade crônica em aceitar e lidar com mudanças, acompanhada de instabilidade contínua. Este bloqueio provoca insatisfação constante, agitação interna e uma perigosa atração pela rebeldia ou vícios como válvula de escape. A liberdade pessoal frequentemente se torna uma fonte de caos em vez de paz. O antídoto principal é aprender a aceitar o fluxo natural da vida, desenvolver flexibilidade mental, adaptar-se sem resistência e usar a liberdade com profunda responsabilidade.',
-    aspectoSaude: 'Desenvolver alguma doença de pele.',
   },
   '666': {
     titulo: 'Bloqueio de Harmonia (666)',
     descricao: 'Conflitos persistentes e instabilidade na vida familiar e afetiva. Este bloqueio gera decepções frequentes nos relacionamentos íntimos, ciúmes, possessividade e uma tendência ao isolamento emocional. Muitas vezes, você atrai parceiros incompatíveis ou se sente sobrecarregado por responsabilidades domésticas. O antídoto essencial é desenvolver o amor-próprio antes de buscar afeto externo, aprender a perdoar e cultivar a compreensão de que as relações devem ser fontes de equilíbrio, não de peso.',
-    aspectoSaude: 'Algum tipo de doença cardíaca pode aparecer nesse estado.',
   },
   '777': {
     titulo: 'Bloqueio de Conexão Espiritual (777)',
     descricao: 'Desconexão dolorosa do plano espiritual e do propósito maior de vida. Este bloqueio gera desânimo, melancolia, confusão mental frequente, medos infundados e uma sensação de vazio interno que o sucesso material não preenche. A energia fica dispersa e a mente nebulosa. O antídoto fundamental para esta vibração é a interiorização diária, o estudo profundos de temas existenciais, a meditação e o desenvolvimento ativo da sua intuição e sabedoria oculta.',
-    aspectoSaude: 'Doenças nervosas, dependências e, eventualmente, algum tipo de câncer.',
   },
   '888': {
     titulo: 'Bloqueio de Poder e Abundância (888)',
     descricao: 'Bloqueio crítico no fluxo da abundância financeira e na relação com o mundo material. Manifesta-se através de perdas financeiras súbitas, dificuldades extremas em acumular ou reter riquezas, e um constante sentimento de estagnação na carreira. Pode indicar ambição desmedida ou total aversão ao poder. O antídoto central requer a harmonização da sua relação com o dinheiro, compreendendo-o como energia de troca justa, agindo com máxima ética, justiça e reequilibrando a balança entre a matéria e o espírito.',
-    aspectoSaude: 'Como consequência desse estresse extremo, poderá desenvolver alguma doença.',
   },
   '999': {
     titulo: 'Bloqueio de Compaixão Universal (999)',
     descricao: 'Prolongamento exaustivo de ciclos que já deveriam ter se encerrado. Este bloqueio cria forte apego ao passado, ressentimentos duradouros e dificuldades crônicas em perdoar e soltar o que não serve mais. Pode gerar desilusões frequentes, perdas emocionais e uma sensação de sacrifício contínuo pelos outros. O antídoto kármico definitivo é o desenvolvimento da compaixão universal, a prática ativa do desapego, o perdão incondicional (a si mesmo e aos outros) e a aceitação pacífica das conclusões.',
-    aspectoSaude: 'Tudo isto pode afetar diretamente o sistema nervoso e o coração.',
   },
 };
 
@@ -352,7 +342,6 @@ export function detectarBloqueios(
           codigo,
           titulo: dados.titulo,
           descricao: dados.descricao,
-          aspectoSaude: dados.aspectoSaude,
           triangulos: [tipo],
           repeticoesPortriangulo: { [tipo]: count },
           totalOcorrencias: count,
