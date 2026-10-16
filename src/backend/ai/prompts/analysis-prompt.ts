@@ -274,11 +274,11 @@ ${tendenciasOcultas.length > 0
   ? isFreeAnalysis
     ? `Tendências ocultas presentes (números em excesso). Para CADA tendência, explique (mínimo de 3 parágrafos longos com 5 a 6 linhas cada):
 - Parágrafo 1: O "superpoder excessivo": como o acúmulo dessa vibração gera um talento fantástico que frequentemente engole as outras qualidades da pessoa.
-- Parágrafo 2: A fronteira do exagero: em que situações esse superpoder vira teimosia, exaustão ou obsessão, e como essa frequência em excesso cria ciclos repetitivos que se retroalimentam.
+- Parágrafo 2: A fronteira do exagero: em que situações esse superpoder vira teimosia, desgaste ou obsessão, e como essa frequência em excesso cria ciclos repetitivos que se retroalimentam.
 - Parágrafo 3: A armadilha da inércia — esse desequilíbrio está inscrito na estrutura do nome atual. Esforço consciente pode amenizar os efeitos, mas não muda a frequência emitida. Apenas a redistribuição vibracional promovida pelo Nome Social Harmonizado pode reequilibrar essa tendência na raiz.`
     : `Tendências ocultas presentes (números em excesso). Para CADA tendência, explique (mínimo de 3 parágrafos longos com 5 a 6 linhas cada):
 - Parágrafo 1: O "superpoder excessivo": como o acúmulo dessa vibração gera um talento fantástico que frequentemente engole as outras qualidades da pessoa.
-- Parágrafo 2: A fronteira do exagero: em que situações esse superpoder vira teimosia, exaustão ou obsessão, e repetição de ciclos.
+- Parágrafo 2: A fronteira do exagero: em que situações esse superpoder vira teimosia, desgaste ou obsessão, e repetição de ciclos.
 - Parágrafo 3: A "arte do equilíbrio": como domar esse instinto brilhante para que atue a favor de ${primeiroNome} e não contra.`
   : ''
 }

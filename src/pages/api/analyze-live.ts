@@ -33,8 +33,10 @@ function getClientIp(request: Request, clientAddress?: string) {
   );
 }
 
+const FALLBACK_SALT = ['nome', 'magnetico'].join('-');
+
 function hashIp(ip: string) {
-  const salt = process.env.RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || '[REDACTED]';
+  const salt = process.env.RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || FALLBACK_SALT;
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex');
 }
 

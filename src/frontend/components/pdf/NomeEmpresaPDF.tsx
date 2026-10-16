@@ -268,7 +268,7 @@ export function NomeEmpresaPDF({ analysis, magneticNames }: ProductPDFProps) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>O Nome como Ativo Estratégico</Text>
           <Text style={styles.bodyText}>
-            No mundo dos negócios, um nome é muito mais do que uma marca: é um organismo vibratório que dita o ritmo do crescimento, a facilidade de vendas e a resiliência da operação. Desde as grandes corporações até os novos empreendimentos, a frequência sonora e numérica de uma marca atua como um campo de atração para clientes, parceiros e talentos. A Numerologia Cabalística Aplicada ao Business revela se o nome escolhido está "trabalhando" a favor do lucro ou se carrega bloqueios que geram estagnação. Este relatório é o seu mapa tático para alinhar a alma do negócio com o destino de sucesso dos sócios, criando uma marca magnética que não apenas ocupa espaço no mercado, mas domina a sua categoria.
+            No mundo dos negócios, um nome é muito mais do que uma marca: é um ecossistema vibratório que dita o ritmo do crescimento, a facilidade de vendas e a resiliência da operação. Desde as grandes corporações até os novos empreendimentos, a frequência sonora e numérica de uma marca atua como um campo de atração para clientes, parceiros e talentos. A Numerologia Cabalística Aplicada ao Business revela se o nome escolhido está "trabalhando" a favor do lucro ou se carrega bloqueios que geram estagnação. Este relatório é o seu mapa tático para alinhar a alma do negócio com o destino de sucesso dos sócios, criando uma marca magnética que não apenas ocupa espaço no mercado, mas domina a sua categoria.
           </Text>
         </View>
 

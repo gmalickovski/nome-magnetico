@@ -434,7 +434,7 @@ export function NomeBebePDF({ analysis, magneticNames }: ProductPDFProps) {
                     Débitos Kármicos
                   </Text>
                   <Text style={{ ...styles.bodyText, marginBottom: 6 }}>
-                    Na ótica reencarnacionista da Cabala, um Bebê não é uma "página em branco", mas um espírito sábio e antigo assumindo um novo corpo para evoluir. Os Débitos Kármicos revelam excessos cometidos em aprendizados passados e mostram aos pais exatamente onde precisarão agir com mais doçura, limite e direcionamento, evitando que a criança repita os mesmos padrões de autossabotagem no futuro.
+                    Na ótica reencarnacionista da Cabala, um Bebê não é uma "página em branco", mas um espírito sábio e antigo assumindo uma nova encarnação para evoluir. Os Débitos Kármicos revelam excessos cometidos em aprendizados passados e mostram aos pais exatamente onde precisarão agir com mais doçura, limite e direcionamento, evitando que a criança repita os mesmos padrões de autossabotagem no futuro.
                   </Text>
                   <DebitosBlock debitos={debitos} />
                 </View>
@@ -472,7 +472,7 @@ export function NomeBebePDF({ analysis, magneticNames }: ProductPDFProps) {
                 Os Quatro Triângulos Numerológicos formam a anatomia vibratória e a estrutura geométrica do nome. Na Numerologia Cabalística, o nome funciona como um campo de força contínuo: cada vez que é pronunciado ou escrito, ele irradia uma frequência específica. Para compreender a real profundidade e as nuances dessa frequência, dividimos o estudo do nome em quatro "Pirâmides de Fluxo", onde cada camada mapeia um aspecto diferente da jornada da sua criança.
               </Text>
               <Text style={{ ...styles.bodyText, marginBottom: 16 }}>
-                A leitura desses triângulos funciona de forma orgânica e reveladora. Eles desdobram as influências desde a fundação física e vital, passando pelo universo íntimo e emocional, pela forma como o mundo externo perceberá a criança, até culminar no propósito maior que o destino inevitavelmente atrairá. A seguir, detalharemos cada uma dessas quatro dimensões essenciais.
+                A leitura desses triângulos funciona de forma orgânica e reveladora. Eles desdobram as influências desde a fundação energética e vital, passando pelo universo íntimo e emocional, pela forma como o mundo externo perceberá a criança, até culminar no propósito maior que o destino inevitavelmente atrairá. A seguir, detalharemos cada uma dessas quatro dimensões essenciais.
               </Text>
 
               {([
