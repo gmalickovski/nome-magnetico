@@ -17,7 +17,8 @@ import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } 
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularMissao, calcularImpressao } from '../numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../karmic';
 import { avaliarCompatibilidade } from '../harmonization';
-import { calcularScore, calcularScoreTeto } from '../score';
+import { calcularScore, calcularScoreTeto, pontuacaoNomeCompleta } from '../score';
+import { getScoreVersion } from '../score-version';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic';
 import type { Bloqueio } from '../triangle';
 import type { DisponibilidadeNome } from '../../utils/availability';
@@ -341,15 +342,18 @@ export function analisarNomeEmpresa(
     : null;
 
   const debitosFixosCount = debitos.filter(d => d.fixo).length;
-  const score = calcularScore({
-    bloqueios: bloqueios.length,
-    licoesCarmicas: licoes.length,
-    tendenciasOcultas: tendencias.length,
-    debitosCarmicos: debitos.length,
-    debitosCarmicoFixos: debitosFixosCount,
-    compatibilidade: compatibilidadeSocio,
-    compatibilidadeSecundaria: compatibilidadeEmpresa ?? undefined,
-  });
+  const score =
+    getScoreVersion() === 'v3'
+      ? pontuacaoNomeCompleta(nomeEmpresa, dataParaTriangulos).scoreExibido
+      : calcularScore({
+          bloqueios: bloqueios.length,
+          licoesCarmicas: licoes.length,
+          tendenciasOcultas: tendencias.length,
+          debitosCarmicos: debitos.length,
+          debitosCarmicoFixos: debitosFixosCount,
+          compatibilidade: compatibilidadeSocio,
+          compatibilidadeSecundaria: compatibilidadeEmpresa ?? undefined,
+        });
   const scoreTeto = calcularScoreTeto(debitosFixosCount);
 
   const justificativa: string[] = [];

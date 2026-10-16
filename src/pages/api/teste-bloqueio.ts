@@ -16,7 +16,7 @@ import {
   calcularDebitosCarmicos,
 } from '../../backend/numerology/karmic';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
-import { calcularScore } from '../../backend/numerology/score';
+import { persistenciaScoreFields, pontuacaoNomeCompleta } from '../../backend/numerology/score';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
@@ -99,14 +99,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           expressao,
         );
         const frequencias = mapearFrequencias(nome_completo);
-        const score = calcularScore({
-          bloqueios: bloqueios.length,
-          licoesCarmicas: licoesCarmicas.length,
-          tendenciasOcultas: tendenciasOcultas.length,
-          debitosCarmicos: debitosCarmicos.length,
-          debitosCarmicoFixos: debitosCarmicos.filter((d) => d.fixo).length,
-          compatibilidade: avaliarCompatibilidade(expressao, destino),
-        });
+        const scoreFields = persistenciaScoreFields(nome_completo, data_nascimento);
+        const { scoreExibido: score } = pontuacaoNomeCompleta(nome_completo, data_nascimento);
 
         const analysisObj = {
           nome_completo: nome_completo.trim(),

@@ -6,7 +6,7 @@ import { calcularTodosTriangulos, detectarBloqueios } from '@/backend/numerology
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularImpressao, calcularMissao } from '@/backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '@/backend/numerology/karmic';
 import { avaliarCompatibilidade } from '@/backend/numerology/harmonization';
-import { calcularScore } from '@/backend/numerology/score';
+import { pontuacaoNomeCompleta } from '@/backend/numerology/score';
 import { captureFluxoException } from '@/sentry/fluxo';
 import { isoBirthDateToPtBr, parseIsoBirthDate } from '@/backend/public-free-analysis/birth-date';
 
@@ -127,14 +127,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     const debitosCarmicos = calcularDebitosCarmicos(bdDataStr, destino, motivacao, expressao);
 
     const compatibilidade = avaliarCompatibilidade(expressao, destino);
-    const score = calcularScore({
-      bloqueios: bloqueios.length,
-      licoesCarmicas: licoesCarmicas.length,
-      tendenciasOcultas: tendenciasOcultas.length,
-      debitosCarmicos: debitosCarmicos.length,
-      debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
-      compatibilidade,
-    });
+    const { scoreExibido: score } = pontuacaoNomeCompleta(body.nome_candidato, bdDataStr);
 
     return json({
       triangulos,

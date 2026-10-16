@@ -18,7 +18,7 @@ import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } 
 import { calcularExpressao, calcularDestino, calcularMotivacao } from './numbers';
 import { reduzirNumero, calcularValor, extrairLetras } from './core';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from './karmic';
-import { calcularScore, calcularScoreTeto } from './score';
+import { calcularScore, calcularScoreTeto } from './score'; // legado v1 — aposentar na F2+
 import type { Bloqueio } from './triangle';
 
 export interface AvaliacaoNome {
@@ -132,9 +132,10 @@ export function avaliarCompatibilidade(
 // ================================================================
 
 /**
- * Calcula o score de uma variação de nome (0–100).
+ * Calcula o score de uma variação de nome (0–100) com fórmula v1.
+ * @deprecated Legado — preferir `avaliarNome` de `score.ts` quando SCORE_VERSION=v3.
  */
-export function avaliarNome(
+export function avaliarNomeHarmonizacaoLegado(
   nomeCompleto: string,
   dataNascimento: string
 ): AvaliacaoNome {
@@ -216,7 +217,8 @@ export function avaliarNome(
  * - Variações do primeiro nome mantendo os sobrenomes
  * - Abreviações e hipocorísticos
  */
-function gerarCandidatos(nomeCompleto: string): string[] {
+/** Candidatos do gerador atual (potencial v3). */
+export function gerarCandidatosHarmonizacao(nomeCompleto: string): string[] {
   const partes = nomeCompleto.trim().split(/\s+/);
   const primeiroNome = partes[0]!;
   const sobrenomes = partes.slice(1).join(' ');
@@ -302,10 +304,10 @@ export function harmonizarNome(
   const expressaoOriginal = calcularExpressao(nomeCompleto);
   const destino = calcularDestino(dataNascimento);
 
-  const candidatos = gerarCandidatos(nomeCompleto);
+  const candidatos = gerarCandidatosHarmonizacao(nomeCompleto);
 
   const sugestoes = candidatos
-    .map(c => avaliarNome(c, dataNascimento))
+    .map(c => avaliarNomeHarmonizacaoLegado(c, dataNascimento))
     .filter(a => !a.temBloqueio) // priorizar sem bloqueios
     .sort((a, b) => b.score - a.score)
     .slice(0, quantidadeSugestoes);
@@ -313,7 +315,7 @@ export function harmonizarNome(
   // Se não houver sugestões sem bloqueio, incluir as melhores com menos bloqueios
   if (sugestoes.length < quantidadeSugestoes) {
     const comBloqueio = candidatos
-      .map(c => avaliarNome(c, dataNascimento))
+      .map(c => avaliarNomeHarmonizacaoLegado(c, dataNascimento))
       .filter(a => a.temBloqueio)
       .sort((a, b) => b.score - a.score)
       .slice(0, quantidadeSugestoes - sugestoes.length);

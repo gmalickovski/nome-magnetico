@@ -8,7 +8,7 @@ import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
 import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
 import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
-import { calcularScore, calcularScoreTeto } from '../../backend/numerology/score';
+import { calcularScoreTeto, persistenciaScoreFields, pontuacaoNomeCompleta } from '../../backend/numerology/score';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
 import { verificarDisponibilidadeNomes } from '../../backend/utils/availability';
 import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerology/products/nome-social';
@@ -281,6 +281,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const melhor = resultado.melhorNome;
+        const scoreFieldsSocial = melhor
+          ? persistenciaScoreFields(melhor.nomeCompleto, data_nascimento)
+          : { score: null as number | null };
         marketingStats = {
           score: melhor?.score ?? null,
           bloqueios: melhor?.bloqueios?.length ?? 0,
@@ -312,7 +315,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           licoes_carmicas:     (melhor?.licoesCarmicas    ?? []) as unknown[],
           tendencias_ocultas:  (melhor?.tendenciasOcultas ?? []) as unknown[],
           debitos_carmicos:    (melhor?.debitosCarmicos   ?? []) as unknown[],
-          score: melhor?.score ?? null,
+          ...scoreFieldsSocial,
         });
 
         // Salvar inputs do formulário para histórico
@@ -374,17 +377,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const arcanoRegente = todosTriangulos.vida.arcanoRegente;
 
         const compatibilidade = avaliarCompatibilidade(cincoNumeros.expressao, cincoNumeros.destino);
-        const score = calcularScore({
-          bloqueios: bloqueios.length,
-          licoesCarmicas: licoesCarmicas.length,
-          tendenciasOcultas: tendenciasOcultas.length,
-          debitosCarmicos: debitosCarmicos.length,
-          debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
-          compatibilidade,
-        });
+        const scoreFields = persistenciaScoreFields(nome_completo, data_nascimento);
+        const score = scoreFields.score;
+        const { scoreExibido } = pontuacaoNomeCompleta(nome_completo, data_nascimento);
 
         marketingStats = {
-          score,
+          score: scoreExibido,
           bloqueios: bloqueios.length,
           licoesCarmicas: licoesCarmicas.length,
           tendenciasOcultas: tendenciasOcultas.length,
@@ -413,7 +411,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               dataNascimento: data_nascimento,
             },
           } as unknown,
-          score,
+          ...scoreFields,
         });
 
         if (isGratuita) {

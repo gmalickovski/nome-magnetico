@@ -33,7 +33,7 @@ import {
   calcularDebitosCarmicos,
 } from '../../backend/numerology/karmic';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
-import { calcularScore } from '../../backend/numerology/score';
+import { persistenciaScoreFields, pontuacaoNomeCompleta } from '../../backend/numerology/score';
 
 // Verifica parÃ¢metros de URL
 const showFreeUsedModal   = Astro.url.searchParams.get('free_used') === 'true';
@@ -117,14 +117,8 @@ if (!freeAnalysisId && user.email) {
       const tendenciasOcultas = detectarTendenciasOcultas(lead.nome_completo);
       const debitosCarmicos = calcularDebitosCarmicos(formattedBirthDate, destino, motivacao, expressao);
       const frequencias = mapearFrequencias(lead.nome_completo);
-      const score = calcularScore({
-        bloqueios: bloqueios.length,
-        licoesCarmicas: licoesCarmicas.length,
-        tendenciasOcultas: tendenciasOcultas.length,
-        debitosCarmicos: debitosCarmicos.length,
-        debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
-        compatibilidade: avaliarCompatibilidade(expressao, destino),
-      });
+      const scoreFields = persistenciaScoreFields(lead.nome_completo, formattedBirthDate);
+      const { scoreExibido: score } = pontuacaoNomeCompleta(lead.nome_completo, formattedBirthDate);
 
       // 2. Criar a análise no banco como concluída (complete)
       const { data: newAnalysis, error: analysisError } = await supabase
@@ -156,7 +150,7 @@ if (!freeAnalysisId && user.email) {
               dataNascimento: lead.data_nascimento,
             },
           },
-          score,
+          ...scoreFields,
           is_free: true,
           status: 'complete',
           completed_at: new Date().toISOString(),
