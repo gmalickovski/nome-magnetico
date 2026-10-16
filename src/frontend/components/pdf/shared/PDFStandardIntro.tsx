@@ -62,7 +62,7 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
         return 'A escolha do nome de um bebê é o primeiro e mais importante presente que os pais oferecem para a criança. Baseado em tradições milenares, sabemos que o nome escolhido não é apenas um som bonito, mas uma verdadeira "roupa de energia" que vai vestir a criança por toda a vida. Um nome bem escolhido facilita muito os caminhos, atrai melhores amizades, ajuda na profissão futura e traz proteção. Ao conhecer as vibrações das letras, os pais entregam um escudo invisível e amoroso para proteger o filho durante toda a sua existência.';
       case 'nome_social':
       default:
-        return 'O nome que você usa e assina todos os dias não é apenas uma forma de ser chamado; ele funciona como um ímã constante na sua vida material e afetiva. Se você sente que se esforça demais e as coisas parecem "travar" na hora de dar certo, a causa pode estar nas repetições das letras da sua assinatura principal. A Numerologia Cabalística carrega conhecimentos antigos para organizar suas letras da melhor forma possível, removendo essas pequenas falhas que não vemos e ajudando você a atrair bons relacionamentos, saúde e muita prosperidade.';
+        return 'O nome que você usa e assina todos os dias não é apenas uma forma de ser chamado; ele funciona como um ímã constante na sua vida material e afetiva. Se você sente que se esforça demais e as coisas parecem "travar" na hora de dar certo, a causa pode estar nas repetições das letras da sua assinatura principal. A Numerologia Cabalística carrega conhecimentos antigos para organizar suas letras da melhor forma possível, removendo essas pequenas falhas que não vemos e ajudando você a atrair bons relacionamentos e prosperidade.';
     }
   };
 
@@ -87,7 +87,7 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
             <>
               <Text style={[styles.subHead, { color: textColor }]}>O Princípio</Text>
               <Text style={[styles.bodyText, { color: textColor }]}>
-                Tudo é energia e frequência. Cada letra do nome que você assina emite um som e um valor que atraem resultados específicos — em finanças, relacionamentos e saúde. Isso não é metáfora: é a geometria invisível que organiza o que você atrai antes mesmo de agir.
+                Tudo é energia e frequência. Cada letra do nome que você assina emite um som e um valor que atraem resultados específicos — em finanças e relacionamentos. Isso não é metáfora: é a geometria invisível que organiza o que você atrai antes mesmo de agir.
               </Text>
 
               <Text style={[styles.subHead, { color: textColor }]}>A Dor</Text>

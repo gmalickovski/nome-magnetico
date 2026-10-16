@@ -59,6 +59,12 @@ export function LiveNameTester({ birthName, birthDate }: Props) {
       return;
     }
 
+    if (!dbDateString?.trim()) {
+      setResult(null);
+      setError('Informe sua data de nascimento.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -92,7 +98,7 @@ export function LiveNameTester({ birthName, birthDate }: Props) {
       testName(candidateName);
     }, 600);
     return () => clearTimeout(timer);
-  }, [candidateName]);
+  }, [candidateName, dbDateString]);
 
   return (
     <div className="space-y-8 animate-fade-in">

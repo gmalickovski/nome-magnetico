@@ -13,6 +13,7 @@ import NomeBebResultado from '../../../frontend/components/app/resultado/NomeBeb
 import NomeEmpresaResultado from '../../../frontend/components/app/resultado/NomeEmpresaResultado.astro';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
+import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
@@ -46,7 +47,6 @@ type BloqueioCard = {
   codigo: string;
   titulo: string;
   descricao: string;
-  aspectoSaude?: string;
   triangulos?: string[];
   antidoto?: string;
 };
@@ -507,6 +507,12 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
         )}
 
       </>
+    )}
+
+    {!isProcessing && !isError && (
+      <p class="text-gray-500 text-xs leading-relaxed mt-12 pt-8 border-t border-white/[0.06] max-w-3xl">
+        {AVISO_AUTOCONHECIMENTO}
+      </p>
     )}
   </div>
 </ResultadoLayout>

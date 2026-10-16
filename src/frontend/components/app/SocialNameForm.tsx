@@ -37,7 +37,6 @@ const VIBRACOES_SUGESTOES = [
   'Criatividade',
   'Espiritualidade',
   'Prosperidade',
-  'Cura',
   'Liderança',
   'Conexão',
   'Intuição',

@@ -3,7 +3,7 @@
  * 
  * Maps each of the 9 blockage sequences (111 to 999) to its precise spiritual,
  * physical, and practical consequences across all 4 life triangles:
- * - Vida (Saúde, Vitalidade e Prosperidade Material)
+ * - Vida (Vitalidade e Prosperidade Material)
  * - Pessoal (Mundo Íntimo, Emoções e Relacionamentos Próximos)
  * - Social (Carreira, Visibilidade Pública e Magnetismo Social)
  * - Destino (Propósito, Realização Concreta e Legado Eterno)
@@ -23,13 +23,13 @@ export const INTERPRETACOES_TRIANGULOS: Record<string, Record<string, string>> =
     destino: 'No Triângulo do Destino, a dependência excessiva desvia o rumo das suas maiores realizações.'
   },
   '333': {
-    vida: 'No Triângulo da Vida, essa repressão da fala afeta a vitalidade e pode somatizar tensões corporais.',
+    vida: 'No Triângulo da Vida, essa repressão da fala afeta a vitalidade e pode gerar tensão persistente no dia a dia.',
     pessoal: 'No Triângulo Pessoal, a dificuldade no diálogo cria barreiras e silêncios pesados nas relações íntimas.',
     social: 'No Triângulo Social, a falha na comunicação obscurece sua imagem pública e seu prestígio profissional.',
     destino: 'No Triângulo do Destino, o silenciamento impede que sua criatividade deixe a marca que deveria no mundo.'
   },
   '444': {
-    vida: 'No Triângulo da Vida, as dificuldades profissionais somatizam na forma de cansaço estrutural e desgaste físico.',
+    vida: 'No Triângulo da Vida, as dificuldades profissionais se manifestam como cansaço estrutural e desgaste no ritmo de vida.',
     pessoal: 'No Triângulo Pessoal, a rigidez e a frustração profissional tornam as relações íntimas frias e baseadas em cobranças.',
     social: 'No Triângulo Social, o esforço extremo não encontra reconhecimento, estagnando o avanço na carreira.',
     destino: 'No Triângulo do Destino, a falta de estabilidade adia a materialização dos seus grandes objetivos.'

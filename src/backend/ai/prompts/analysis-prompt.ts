@@ -2,6 +2,7 @@ import type { CincoNumeros } from '../../numerology/numbers';
 import type { Bloqueio, TodosTriangulos } from '../../numerology/triangle';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../../numerology/karmic';
 import type { Arquetipo } from '../../numerology/archetypes';
+import { INSTRUCAO_IA_SEM_LINGUAGEM_CLINICA } from '../../../shared/legal';
 
 export interface AnalysisPromptParams {
   nomeCompleto: string;
@@ -57,8 +58,7 @@ export function buildAnalysisPrompt(params: AnalysisPromptParams): string {
             }
             return (
               `- **${b.titulo}** (${b.codigo})${ocorrStr} — aparece em: ${detTriangulos}\n` +
-              `  ${descLimpa}\n` +
-              `  *Aspecto saúde:* ${b.aspectoSaude}`
+              `  ${descLimpa}`
             );
           })
           .join('\n')
@@ -146,7 +146,7 @@ Elabore um relatório numerológico cabalístico completo e profundamente person
 O sistema indicou que a pessoa se identifica com o gênero: **${gender}**. Adapte pronomes, adjetivos e tom para refletir esse gênero ao longo de todo o texto.
 
 ${isFreeAnalysis
-  ? `MODO DIAGNÓSTICO: Máximo 2 parágrafos curtos por seção (≤120 palavras cada). Estilo: médico diagnosticador, não terapeuta. NÃO descreva virtudes de forma isolada — sempre conecte a qualidade ao conflito com outro número que a sabota ou ao problema que ela não resolve sozinha. O objetivo é o usuário reconhecer um problema urgente, não sentir-se bem consigo mesmo.`
+  ? `MODO DIAGNÓSTICO: Máximo 2 parágrafos curtos por seção (≤120 palavras cada). Estilo: autoconhecimento reflexivo e direto, não clínico. NÃO descreva virtudes de forma isolada — sempre conecte a qualidade ao conflito com outro número que a sabota ou ao problema que ela não resolve sozinha. O objetivo é o usuário reconhecer um padrão relevante, não sentir-se bem consigo mesmo.`
   : `Escreva cada seção com pelo menos 3 parágrafos densos e específicos. Evite generalidades — cada afirmação deve estar ancorada nos números concretos desta pessoa. Este relatório vale R$150+ e deve justificar esse valor com revelações que a pessoa nunca ouviu sobre si mesma.`}
 
 Siga EXATAMENTE esta estrutura de seções, nesta ordem:
@@ -219,16 +219,13 @@ ${bloqueios.length > 0
   ? isFreeAnalysis
     ? `**Para cada bloqueio detectado, escreva uma análise aprofundada de 2-3 parágrafos:**
 - O impacto específico e concreto deste bloqueio na vida de ${primeiroNome} (em que situações ele aparece, como sabota)
-- Em quais áreas da vida (carreira, saúde, relacionamentos, finanças) ele se manifesta com mais força
-- O aspecto de saúde associado: a tensão emocional-somática que este padrão pode gerar no corpo (com sensibilidade)
+- Em quais áreas da vida (carreira, relacionamentos, finanças, realização pessoal) ele se manifesta com mais força
 
 #### ⚠ Custo da Inércia para cada bloqueio:
-Para CADA bloqueio, escreva um subitem "**Custo da Inércia:**" descrevendo como esse bloqueio específico continua limitando ${primeiroNome} enquanto o nome não for harmonizado — o que está sendo impactado em termos de resultados financeiros, relacionamentos, saúde ou realização pessoal. Seja concreto e específico, sem dar ações práticas. Termine com: "Esta frequência continua sendo emitida pelo nome 24 horas por dia — apenas a harmonização vibracional do Nome Social pode neutralizá-la."`
+Para CADA bloqueio, escreva um subitem "**Custo da Inércia:**" descrevendo como esse bloqueio específico continua limitando ${primeiroNome} enquanto o nome não for harmonizado — o que está sendo impactado em termos de resultados financeiros, relacionamentos ou realização pessoal. Seja concreto e específico, sem dar ações práticas. Termine com: "Esta frequência continua sendo emitida pelo nome 24 horas por dia — apenas a harmonização vibracional do Nome Social pode neutralizá-la."`
     : `**Para cada bloqueio detectado, escreva uma análise aprofundada e explicativa de 2-3 parágrafos:**
 - Um texto altamente explicativo e detalhado para que qualquer usuário possa compreender facilmente em quais partes/áreas de sua vida (como carreira, finanças, relacionamentos e realização pessoal) aquele bloqueio interfere no seu dia a dia e como limita seus resultados.
 - Adicione, obrigatoriamente, um parágrafo integrado logo abaixo criando uma relação totalmente personalizada do bloqueio com o triângulo específico no qual o bloqueio foi detectado (seja no Triângulo da Vida, Pessoal, Social ou do Destino) — descrevendo como a energia desse setor específico direciona e amplifica as dificuldades daquele bloqueio na vida do usuário.
-- O aspecto de saúde associado: a somatização e a tensão emocional-somática que este padrão pode gerar no corpo (com sensibilidade).
-
 **ATENÇÃO CRÍTICA:** Não mencione, não sugira e não inclua QUALQUER referência a "antídoto", ações práticas paliativas ou soluções temporárias para os bloqueios nesta seção, uma vez que este relatório já visa à Harmonização definitiva do Nome Social, sendo esta a única solução real e permanente.`
   : `**Celebre a ausência de bloqueios:** Escreva 2 parágrafos sobre o que significa ter os 4 triângulos limpos. Que tipo de fluidez, resiliência e facilidade isso cria na vida de ${primeiroNome}.`
 }
@@ -242,7 +239,7 @@ Baseado no bloqueio primário detectado (**${bloqueios[0].titulo}**), escreva um
 Significado numerológico deste bloqueio: "${bloqueios[0].descricao}".
 Seja específico e detalhado! Baseando-se no significado acima, cite as áreas práticas da vida que estão sendo impactadas.
 Em seguida, dê o Antídoto: ações específicas de contenção de danos para as próximas 72 horas baseadas neste bloqueio.
-O objetivo é fornecer uma verdadeira orientação terapêutica paliativa de alto valor, baseada na numerologia cabalística, explicando por que essa atitude segura a "perda de energia" temporariamente. Lembre-o de que a solução definitiva exige a Harmonização do Nome.` : ''}
+O objetivo é fornecer orientação prática de contenção simbólica de alto valor, baseada na numerologia cabalística, explicando por que essa atitude segura a "perda de energia" temporariamente. Lembre-o de que a solução definitiva exige a Harmonização do Nome.` : ''}
 ---
 
 ## ⚖️ 4. O Peso do Passado — Karma, Lições e Tendências
@@ -251,11 +248,11 @@ ${debitosCarmicos.length > 0
   ? isFreeAnalysis
     ? `${primeiroNome} carrega ${debitosCarmicos.length} débito(s) kármico(s) especificados nos dados (veja no painel acima). Para CADA débito, escreva uma análise extensa (mínimo de 3 parágrafos densos com 5 a 6 linhas cada):
 - Parágrafo 1: O contexto espiritual-histórico deste débito (qual padrão comportamental ou erro de encarnações passadas ele representa).
-- Parágrafo 2: Como ele se manifesta especificamente na vida atual (dinâmicas tóxicas em relacionamentos, autossabotagem na carreira, finanças ou saúde) — seja concreto e detalhado sobre as consequências que ${primeiroNome} continua enfrentando.
+- Parágrafo 2: Como ele se manifesta especificamente na vida atual (dinâmicas tóxicas em relacionamentos, autossabotagem na carreira ou finanças) — seja concreto e detalhado sobre as consequências que ${primeiroNome} continua enfrentando.
 - Parágrafo 3: O custo de não agir — o que essa energia continua atraindo enquanto o padrão não for trabalhado. Para débitos variáveis (que vêm da Motivação ou Expressão), mencione que a harmonização do Nome Social pode reduzir ou eliminar esse peso. Para débitos fixos (ligados à data de nascimento), aprofunde o convite à consciência e ao trabalho espiritual.`
     : `${primeiroNome} carrega ${debitosCarmicos.length} débito(s) kármico(s) especificados nos dados (veja no painel acima). Para CADA débito, escreva uma análise extensa (mínimo de 3 parágrafos densos com 5 a 6 linhas cada):
 - Parágrafo 1: O contexto espiritual-histórico deste débito (qual padrão comportamental ou erro de encarnações passadas ele representa).
-- Parágrafo 2: Como ele se manifesta especificamente na vida atual (dinâmicas tóxicas em relacionamentos, autossabotagem na carreira, finanças ou saúde).
+- Parágrafo 2: Como ele se manifesta especificamente na vida atual (dinâmicas tóxicas em relacionamentos, autossabotagem na carreira ou finanças).
 - Parágrafo 3: A "lei de compensação" que o universo exige para quitar este débito e 3 ações práticas transformadoras que podem ser iniciadas hoje.`
   : `Ausência de débitos: ${primeiroNome} não possui débitos kármicos. Escreva no mínimo 2 parágrafos longos celebrando essa raridade, o que ela revela sobre a maturidade desta alma e como aproveitar essa "folha em branco" kármica.`
 }
@@ -351,8 +348,8 @@ ${isCurrentNameAnalysis ? '- **Prática Diária:** Como escrever o próprio nome
 ## 🌟 ${isFreeAnalysis ? '7' : (arquetipo ? '9' : '8')}. Síntese e Mensagem Final
 
 ${isFreeAnalysis
-  ? `Escreva uma síntese final no estilo de laudo médico — 2 parágrafos curtos (máx 120 palavras cada):
-- Parágrafo 1: Comece com "O diagnóstico confirma [N] padrões ativos no nome de ${primeiroNome}:" e liste concretamente os bloqueios, débitos e lições detectados. Afirme que esses padrões operam 24 horas por dia, independente de esforço, terapia ou força de vontade.
+  ? `Escreva uma síntese final em estilo de síntese objetiva — 2 parágrafos curtos (máx 120 palavras cada):
+- Parágrafo 1: Comece com "A leitura confirma [N] padrões ativos no nome de ${primeiroNome}:" e liste concretamente os bloqueios, débitos e lições detectados. Afirme que esses padrões operam 24 horas por dia, independente de esforço consciente ou força de vontade.
 - Parágrafo 2: Afirme que a única variável não tratada é a origem — o nome. Comportamento e intenção não alteram o campo vibracional emitido pelo nome a cada momento. Encerre com uma única pergunta retórica direta: quanto custa mais um ano com essa frequência operando em silêncio? NÃO mencione "vida equilibrada", "harmoniosa" ou "plena". NÃO ofereça conforto. O diagnóstico está feito — aponte a harmonização como a única solução objetiva.`
   : `Escreva uma conclusão profunda e poderosa (4 parágrafos) que:
 - Conecte todos os elementos — números, bloqueios, karma, arcano e arquétipo — em uma narrativa de propósito único para ${primeiroNome}
@@ -371,5 +368,6 @@ REGRAS ESTRITAS DE FORMATAÇÃO:
 5. Parágrafos com no máximo 4 linhas.
 6. Escreva em segunda pessoa de forma natural e direta.
 7. ${primeiroNome} pode aparecer no máximo 1 vez por seção ##.
-8. Escreva com profundidade real, especificidade e poder transformador — cada parágrafo deve revelar algo que esta pessoa nunca viu assim sobre si mesma.`;
+8. Escreva com profundidade real, especificidade e poder transformador — cada parágrafo deve revelar algo que esta pessoa nunca viu assim sobre si mesma.
+9. ${INSTRUCAO_IA_SEM_LINGUAGEM_CLINICA}`;
 }

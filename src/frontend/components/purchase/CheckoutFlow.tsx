@@ -25,6 +25,7 @@ interface Props {
   hqPrices?: Record<string, PriceInfo>;
   promotion?: ActivePromotion | null;
   autoOpenCheckout?: boolean;
+  autoconhecimentoAviso?: string;
 }
 
 const PRODUCT_STATIC: Record<ProductType, {
@@ -69,7 +70,7 @@ function PriceDisplay({ priceInfo, promotion, productId }: { priceInfo: PriceInf
   return <Price {...props} size="card" showValidity />;
 }
 
-export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false }: Props) {
+export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false, autoconhecimentoAviso }: Props) {
   const [loading, setLoading]   = useState<ProductType | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -231,6 +232,10 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
           ))}
         </ul>
 
+        {autoconhecimentoAviso ? (
+          <p className="text-gray-500 text-[11px] leading-relaxed mb-4">{autoconhecimentoAviso}</p>
+        ) : null}
+
         {showPayButton ? (
           <a
             href={`/comprar?produto=${type}&checkout=1`}
@@ -374,6 +379,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
           productType={modalProduct}
           priceInfo={prices[modalProduct] ?? EMPTY_PRICE}
           promotion={promotion}
+          autoconhecimentoAviso={autoconhecimentoAviso}
           onClose={() => setModalProduct(null)}
           onTriggerCard={triggerCheckout}
         />

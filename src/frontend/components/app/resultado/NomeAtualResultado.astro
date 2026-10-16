@@ -18,6 +18,7 @@ import KarmicLessons from '../KarmicLessons';
 import KarmicDebts from '../KarmicDebts';
 import HiddenTendencies from '../HiddenTendencies';
 import { ARCANOS } from '../../../../backend/numerology/arcanos';
+import { AVISO_AUTOCONHECIMENTO } from '../../../../shared/legal';
 
 interface Props {
   analysis: any;
@@ -60,7 +61,7 @@ const arcanosMap = Object.fromEntries(arcanoIds.map(id => [id, ARCANOS[id]])) as
 
 const primeiroNomeTri = nomeExibido.split(' ')[0] ?? nomeExibido;
 const TRIANGULO_DESC: Record<string, string> = {
-  vida: `Calculado a partir do valor puro de cada letra do nome, sem modificadores externos. Revela os padrões fundamentais de existência — os temas que se repetem nas diferentes fases da vida, independentemente das circunstâncias. É a vibração base que permeia toda a trajetória de ${primeiroNomeTri}, moldando a relação com o corpo, a vitalidade, o dinheiro e a resiliência diante dos desafios. Os bloqueios neste triângulo afetam a saúde geral e os ciclos de prosperidade.`,
+  vida: `Calculado a partir do valor puro de cada letra do nome, sem modificadores externos. Revela os padrões fundamentais de existência — os temas que se repetem nas diferentes fases da vida, independentemente das circunstâncias. É a vibração base que permeia toda a trajetória de ${primeiroNomeTri}, moldando a vitalidade, o dinheiro e a resiliência diante dos desafios. Os bloqueios neste triângulo afetam a energia de base e os ciclos de prosperidade.`,
   pessoal: `Calculado adicionando ao valor de cada letra o número do dia de nascimento. Mapeia a dimensão íntima e emocional — as reações internas, os mecanismos de defesa e os padrões afetivos que raramente são visíveis para o mundo externo. Revela como ${primeiroNomeTri} processa as experiências por dentro, o que realmente move suas escolhas e os ciclos emocionais que se repetem nos relacionamentos mais próximos.`,
   social: `Calculado adicionando ao valor de cada letra o número do mês de nascimento. Revela como o mundo externo percebe e responde a ${primeiroNomeTri} — a impressão que o nome irradia nas interações sociais, profissionais e públicas. Governa o magnetismo pessoal, as oportunidades de networking e a reputação. É aqui que se concentram os bloqueios que sabotam visibilidade, vendas e conexões estratégicas.`,
   destino: `Calculado adicionando ao valor de cada letra a soma já reduzida do dia e mês de nascimento. É o triângulo mais revelador: mapeia os resultados que tendem a se materializar ao longo da vida, a missão maior e os frutos que a frequência vibratória do nome produz. Quando há bloqueios aqui, eles se manifestam como ciclos de esforço que raramente chegam à colheita — o trabalho não se converte em resultado.`,
@@ -323,7 +324,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         <div class="flex items-center gap-3 mb-4">
           <span class="text-2xl">✦</span>
           <h3 class="font-cinzel text-lg font-bold text-[#D4AF37]">Pontos de Otimização Identificados</h3>
-          {score !== null && <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400">Saúde Vibracional: {score}%</span>}
+          {score !== null && <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400">Harmonia do nome: {score}%</span>}
         </div>
         <p class="text-gray-300 text-sm leading-relaxed mb-5">
           Mesmo com uma vibração acima da média, sua análise identificou elementos que ainda podem ser refinados —
@@ -367,7 +368,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         <div class="flex items-center gap-3 mb-4">
           <span class="text-2xl">📊</span>
           <h3 class="font-cinzel text-lg font-bold text-amber-400">Pontos Que Ainda Limitam Seu Potencial</h3>
-          {score !== null && <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-400">Saúde Vibracional: {score}%</span>}
+          {score !== null && <span class="ml-auto text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-400">Harmonia do nome: {score}%</span>}
         </div>
         <p class="text-gray-300 text-sm leading-relaxed mb-5">
           Sua vibração está em nível aceitável — mas <strong class="text-amber-300">aceitável não é o máximo que seu nome pode entregar</strong>.
@@ -707,6 +708,10 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
       </div>
     </div>
   )}
+
+  <p class="text-gray-500 text-xs leading-relaxed mt-12 pt-8 border-t border-white/[0.06] max-w-3xl">
+    {AVISO_AUTOCONHECIMENTO}
+  </p>
 
 </section>
 
