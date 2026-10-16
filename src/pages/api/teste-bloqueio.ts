@@ -16,7 +16,12 @@ import {
   calcularDebitosCarmicos,
 } from '../../backend/numerology/karmic';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
-import { persistenciaScoreFields, pontuacaoNomeCompleta } from '../../backend/numerology/score';
+import {
+  avaliarNome,
+  calcularScoreV1SemOcorrenciasExtras,
+  persistenciaScoreFields,
+} from '../../backend/numerology/score';
+import { isScoreV3 } from '../../backend/numerology/score-version';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
@@ -99,8 +104,21 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           expressao,
         );
         const frequencias = mapearFrequencias(nome_completo);
-        const scoreFields = persistenciaScoreFields(nome_completo, data_nascimento);
-        const { scoreExibido: score } = pontuacaoNomeCompleta(nome_completo, data_nascimento);
+        const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
+          bloqueios,
+          licoesCarmicas: licoesCarmicas.length,
+          tendenciasOcultas: tendenciasOcultas.length,
+          debitosCarmicos,
+          compatibilidade: avaliarCompatibilidade(expressao, destino),
+        });
+        const score = isScoreV3()
+          ? avaliarNome(nome_completo, data_nascimento).score_v3
+          : scoreLegado;
+        const scoreFields = persistenciaScoreFields({
+          scoreLegado,
+          nomeParaV3: nome_completo,
+          dataNascimento: data_nascimento,
+        });
 
         const analysisObj = {
           nome_completo: nome_completo.trim(),

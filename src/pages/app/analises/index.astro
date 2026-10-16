@@ -3,7 +3,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 import { getUserAnalyses } from '../../../backend/db/analyses';
 import { getProfile } from '../../../backend/db/users';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
-import { pontuacaoNomeCompleta } from '../../../backend/numerology/score';
+import { avaliarNome } from '../../../backend/numerology/score';
 import { getScoreVersion } from '../../../backend/numerology/score-version';
 
 const user = Astro.locals.user;
@@ -61,7 +61,7 @@ const analysesWithMeta = paidAnalyses.map(a => {
     } else if (version === 'v3' && a.nome_completo && a.data_nascimento) {
       const parts = String(a.data_nascimento).split('-');
       const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : a.data_nascimento;
-      score = pontuacaoNomeCompleta(a.nome_completo, dataPt).scoreExibido;
+      score = avaliarNome(a.nome_completo, dataPt).score_v3;
     } else if (a.score != null) {
       score = a.score;
     }

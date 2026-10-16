@@ -25,7 +25,8 @@ import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } 
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularMissao, calcularImpressao } from '../numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../karmic';
 import { avaliarCompatibilidade } from '../harmonization';
-import { calcularScoreTeto, pontuacaoNomeCompleta } from '../score';
+import { avaliarNome, calcularScoreTeto, calcularScoreV1ComOcorrenciasExtras } from '../score';
+import { isScoreV3 } from '../score-version';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic';
 import type { Bloqueio } from '../triangle';
 
@@ -201,7 +202,16 @@ export function analisarNomeSocial(
   const debitos = calcularDebitosCarmicos(dataNascimentoUsuario, destino, motivacao, expressao);
   const compatibilidade = avaliarCompatibilidade(expressao, destino);
   const debitosFixosCount = debitos.filter(d => d.fixo).length;
-  const { scoreExibido: score } = pontuacaoNomeCompleta(nomeCompleto, dataNascimentoUsuario);
+  const scoreLegado = calcularScoreV1ComOcorrenciasExtras({
+    bloqueios,
+    licoesCarmicas: licoes.length,
+    tendenciasOcultas: tendencias.length,
+    debitosCarmicos: debitos,
+    compatibilidade,
+  });
+  const score = isScoreV3()
+    ? avaliarNome(nomeCompleto, dataNascimentoUsuario).score_v3
+    : scoreLegado;
   const scoreTeto = calcularScoreTeto(debitosFixosCount);
 
   const justificativa: string[] = [];

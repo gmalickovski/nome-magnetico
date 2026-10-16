@@ -24,8 +24,12 @@ import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDa
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
-import { pontuacaoNomeCompleta } from '../../../backend/numerology/score';
-import { getScoreVersion } from '../../../backend/numerology/score-version';
+import {
+  avaliarNome,
+  calcularScoreV1SemOcorrenciasExtras,
+} from '../../../backend/numerology/score';
+import { isScoreV3 } from '../../../backend/numerology/score-version';
+import { avaliarCompatibilidade } from '../../../backend/numerology/harmonization';
 import { calcularTodosTriangulos, detectarBloqueios } from '../../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, mapearFrequencias } from '../../../backend/numerology/karmic';
@@ -342,7 +346,6 @@ export function NomeAtualPDF({
   const triCellSize = Math.min(18, Math.max(5, Math.floor(TRIANGLE_FULL_WIDTH / baseLen) - 1));
 
   // ── Score (para a CTA final) ──────────────────────────────────────────────
-  const version = getScoreVersion();
   const storedV3 = normalizeScore((analysis as { score_v3?: number }).score_v3);
   const storedScore = normalizeScore(analysis.score);
   const birthForScore =
@@ -355,13 +358,20 @@ export function NomeAtualPDF({
         : analysis.data_nascimento
       : '';
   const computedScore =
-    analysis.nome_completo && birthForScore
-      ? pontuacaoNomeCompleta(analysis.nome_completo, birthForScore).scoreExibido
+    analysis.nome_completo && birthForScore && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
+      ? isScoreV3()
+        ? avaliarNome(analysis.nome_completo, birthForScore).score_v3
+        : calcularScoreV1SemOcorrenciasExtras({
+            bloqueios,
+            licoesCarmicas: licoes.length,
+            tendenciasOcultas: tendencias.length,
+            debitosCarmicos: debitos,
+            compatibilidade: avaliarCompatibilidade(cincoNumNasc.expressao, cincoNumNasc.destino),
+          })
       : null;
-  const rawScore =
-    version === 'v3'
-      ? (storedV3 ?? computedScore ?? storedScore)
-      : (storedScore ?? computedScore);
+  const rawScore = isScoreV3()
+    ? (storedV3 ?? computedScore ?? storedScore)
+    : (storedScore ?? computedScore);
   type ScoreNivel = 'baixo' | 'aceitavel' | 'excelente' | null;
   const scoreNivel: ScoreNivel =
     rawScore == null ? null

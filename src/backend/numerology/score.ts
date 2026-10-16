@@ -2,13 +2,13 @@
  * Score Unificado — v1 (legado) e v3 (motor NM v3 · DEV-185).
  */
 
-import { calcularTodosTriangulos, type Triangulo, type TodosTriangulos } from './triangle';
+import { calcularTodosTriangulos, type Triangulo, type Bloqueio } from './triangle';
 import { calcularExpressao, calcularDestino, calcularMotivacao } from './numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, type DebitoCarmicoInfo, type DebitoFonte } from './karmic';
 import { createRequire } from 'node:module';
 import { avaliarCompatibilidade, type TipoCompatibilidade } from './harmonization';
 import { SCORE_CONFIG_V3, SCORE_VERSION_V3 } from './score-config';
-import { getScoreVersion, type ScoreVersionFlag } from './score-version';
+import { isScoreV3 } from './score-version';
 
 const require = createRequire(import.meta.url);
 
@@ -56,6 +56,45 @@ export function calcularScoreV1(p: ScoreParams): number {
 /** Alias do score v1 — comportamento idêntico ao histórico. */
 export const calcularScore = calcularScoreV1;
 
+/** Padrão das APIs / PDF / teste-bloqueio (main): sem `ocorrenciasExtras`. */
+export function calcularScoreV1SemOcorrenciasExtras(params: {
+  bloqueios: Bloqueio[];
+  licoesCarmicas: number;
+  tendenciasOcultas: number;
+  debitosCarmicos: DebitoCarmicoInfo[];
+  compatibilidade: TipoCompatibilidade;
+}): number {
+  return calcularScoreV1({
+    bloqueios: params.bloqueios.length,
+    licoesCarmicas: params.licoesCarmicas,
+    tendenciasOcultas: params.tendenciasOcultas,
+    debitosCarmicos: params.debitosCarmicos.length,
+    debitosCarmicoFixos: params.debitosCarmicos.filter(d => d.fixo).length,
+    compatibilidade: params.compatibilidade,
+  });
+}
+
+/** Padrão nome-social (main): com `ocorrenciasExtras` por repetição de bloqueio. */
+export function calcularScoreV1ComOcorrenciasExtras(params: {
+  bloqueios: Bloqueio[];
+  licoesCarmicas: number;
+  tendenciasOcultas: number;
+  debitosCarmicos: DebitoCarmicoInfo[];
+  compatibilidade: TipoCompatibilidade;
+}): number {
+  const totalOcorrencias = params.bloqueios.reduce((sum, b) => sum + b.totalOcorrencias, 0);
+  const ocorrenciasExtras = Math.max(0, totalOcorrencias - params.bloqueios.length);
+  return calcularScoreV1({
+    bloqueios: params.bloqueios.length,
+    ocorrenciasExtras,
+    licoesCarmicas: params.licoesCarmicas,
+    tendenciasOcultas: params.tendenciasOcultas,
+    debitosCarmicos: params.debitosCarmicos.length,
+    debitosCarmicoFixos: params.debitosCarmicos.filter(d => d.fixo).length,
+    compatibilidade: params.compatibilidade,
+  });
+}
+
 export function calcularScoreTeto(debitosFixos: number): number {
   return Math.max(0, 100 - debitosFixos * 12);
 }
@@ -86,11 +125,10 @@ export interface ReflexoSequencia {
 export interface AvaliacaoScoreNome {
   score_version: typeof SCORE_VERSION_V3;
   score_v3: number;
-  /** Score v1 para comparação e rollback. */
-  score_v1: number;
   nivel: { codigo: string; rotulo: string };
   descontos: DescontoRegra[];
   marcaDaData: MarcaDaDataItem[];
+  /** Igual a score_v3 quando potencial não foi calculado. */
   potencial: number;
   reflexos: ReflexoSequencia[];
 }
@@ -251,8 +289,7 @@ function coletarReflexos(todos: TodosTriangulos): ReflexoSequencia[] {
 function calcularScoreV3Interno(
   nomeCompleto: string,
   dataNascimento: string,
-  opts?: { incluirPotencial?: boolean },
-): AvaliacaoScoreNome {
+): Omit<AvaliacaoScoreNome, 'potencial'> & { potencial?: number } {
   const todos = calcularTodosTriangulos(nomeCompleto, dataNascimento);
   const expressao = calcularExpressao(nomeCompleto);
   const destino = calcularDestino(dataNascimento);
@@ -286,103 +323,64 @@ function calcularScoreV3Interno(
     Math.min(SCORE_CONFIG_V3.base, SCORE_CONFIG_V3.base - totalDesconto),
   );
 
-  let potencial = score_v3;
-  if (opts?.incluirPotencial !== false) {
-    const candidatos = listarCandidatosPotencial(nomeCompleto);
-    for (const c of candidatos) {
-      const alt = calcularScoreV3Interno(c, dataNascimento, { incluirPotencial: false });
-      if (alt.score_v3 > potencial) potencial = alt.score_v3;
-    }
-  }
-
-  const score_v1 = scoreV1FromTriangulos(
-    todos,
-    licoes.length,
-    tendencias.length,
-    debitos,
-    compatibilidade,
-  );
-
   return {
     score_version: SCORE_VERSION_V3,
     score_v3,
-    score_v1,
     nivel: nivelFromScore(score_v3),
     descontos,
     marcaDaData: deb.marcaDaData,
-    potencial,
     reflexos: coletarReflexos(todos),
   };
 }
 
-function scoreV1FromTriangulos(
-  todos: TodosTriangulos,
-  licoesCount: number,
-  tendenciasCount: number,
-  debitos: DebitoCarmicoInfo[],
-  compatibilidade: TipoCompatibilidade,
-): number {
-  const bloqueiosMap = new Map<string, number>();
-  for (const t of Object.values(todos)) {
-    for (const [codigo, count] of Object.entries(t.contagemSequencias ?? {})) {
-      bloqueiosMap.set(codigo, (bloqueiosMap.get(codigo) ?? 0) + count);
-    }
+/** Melhor score v3 entre variantes do gerador (chamar no máximo 1× por análise). */
+export function calcularPotencialV3(nomeNascimento: string, dataNascimento: string): number {
+  const base = calcularScoreV3Interno(nomeNascimento.trim(), dataNascimento).score_v3;
+  let potencial = base;
+  for (const candidato of listarCandidatosPotencial(nomeNascimento)) {
+    const alt = calcularScoreV3Interno(candidato, dataNascimento).score_v3;
+    if (alt > potencial) potencial = alt;
   }
-  const bloqueios = bloqueiosMap.size;
-  const totalOcorrencias = [...bloqueiosMap.values()].reduce((a, b) => a + b, 0);
-  const ocorrenciasExtras = Math.max(0, totalOcorrencias - bloqueios);
-
-  return calcularScoreV1({
-    bloqueios,
-    ocorrenciasExtras,
-    licoesCarmicas: licoesCount,
-    tendenciasOcultas: tendenciasCount,
-    debitosCarmicos: debitos.length,
-    debitosCarmicoFixos: debitos.filter(d => d.fixo).length,
-    compatibilidade,
-  });
+  return potencial;
 }
 
 /**
- * Avaliação completa v3: score, nível, descontos por regra, marca da data, potencial e reflexos.
+ * Avaliação v3 (sem potencial por padrão — use calcularPotencialV3 uma vez se precisar).
  */
-export function avaliarNome(nomeCompleto: string, dataNascimento: string): AvaliacaoScoreNome {
-  return calcularScoreV3Interno(nomeCompleto.trim(), dataNascimento);
-}
-
-/** Score exibido conforme SCORE_VERSION (v1 = legado, v3 = score_v3). */
-export function scoreExibidoParaNome(
+export function avaliarNome(
   nomeCompleto: string,
   dataNascimento: string,
-  version: ScoreVersionFlag = getScoreVersion(),
-): { score: number; avaliacaoV3?: AvaliacaoScoreNome; scoreV1: number } {
-  const avaliacao = avaliarNome(nomeCompleto, dataNascimento);
-  const scoreV1 = avaliacao.score_v1;
-  if (version === 'v3') {
-    return { score: avaliacao.score_v3, avaliacaoV3: avaliacao, scoreV1 };
-  }
-  return { score: scoreV1, scoreV1 };
-}
-
-/** Campos para gravar análise: `score` legado + colunas v3 quando SCORE_VERSION=v3. */
-export function persistenciaScoreFields(nomeCompleto: string, dataNascimento: string) {
-  const p = pontuacaoNomeCompleta(nomeCompleto, dataNascimento);
+  opts?: { potencial?: number },
+): AvaliacaoScoreNome {
+  const core = calcularScoreV3Interno(nomeCompleto.trim(), dataNascimento);
   return {
-    score: p.scoreLegado,
-    ...p.camposV3,
+    ...core,
+    potencial: opts?.potencial ?? core.score_v3,
   };
 }
 
-export function pontuacaoNomeCompleta(nomeCompleto: string, dataNascimento: string) {
-  const avaliacao = avaliarNome(nomeCompleto, dataNascimento);
-  const version = getScoreVersion();
+/**
+ * Gravação: `score` = v1 legado (parâmetros do caller); colunas v3 só com flag v3.
+ */
+export function persistenciaScoreFields(input: {
+  scoreLegado: number;
+  nomeParaV3: string;
+  dataNascimento: string;
+  /** Nome de nascimento para potencial (padrão: nomeParaV3). */
+  nomeNascimentoPotencial?: string;
+}) {
+  const { scoreLegado, nomeParaV3, dataNascimento, nomeNascimentoPotencial } = input;
+  if (!isScoreV3()) {
+    return { score: scoreLegado };
+  }
+  const avaliacao = avaliarNome(nomeParaV3, dataNascimento);
+  const potencial = calcularPotencialV3(
+    nomeNascimentoPotencial ?? nomeParaV3,
+    dataNascimento,
+  );
   return {
-    version,
-    scoreExibido: version === 'v3' ? avaliacao.score_v3 : avaliacao.score_v1,
-    /** Coluna `score` legada (sempre v1 para comparação). */
-    scoreLegado: avaliacao.score_v1,
-    camposV3: version === 'v3' ? camposScoreAnaliseV3(avaliacao) : undefined,
-    avaliacao,
+    score: scoreLegado,
+    ...camposScoreAnaliseV3({ ...avaliacao, potencial }),
   };
 }
 

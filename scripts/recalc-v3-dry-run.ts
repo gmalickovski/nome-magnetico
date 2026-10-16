@@ -1,10 +1,10 @@
 /**
  * DEV-185 · Recálculo agregado (somente leitura).
- * SELECT em free_analyses_leads, score v1 vs v3 em memória — não grava nada.
+ * SELECT em analyses (analise_gratuita), score v1 vs v3 em memória — não grava nada.
  */
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import { avaliarNome, calcularScoreV1 } from '../src/backend/numerology/score.ts';
+import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '../src/backend/numerology/score.ts';
 import { calcularTodosTriangulos, detectarBloqueios } from '../src/backend/numerology/triangle.ts';
 import {
   calcularExpressao,
@@ -35,14 +35,11 @@ function scoreV1Legado(nome: string, dataPt: string): number {
   const licoes = detectarLicoesCarmicas(nome);
   const tendencias = detectarTendenciasOcultas(nome);
   const debitos = calcularDebitosCarmicos(dataPt, destino, motivacao, expressao);
-  const totalOcorrencias = bloqueios.reduce((s, b) => s + b.totalOcorrencias, 0);
-  return calcularScoreV1({
-    bloqueios: bloqueios.length,
-    ocorrenciasExtras: Math.max(0, totalOcorrencias - bloqueios.length),
+  return calcularScoreV1SemOcorrenciasExtras({
+    bloqueios,
     licoesCarmicas: licoes.length,
     tendenciasOcultas: tendencias.length,
-    debitosCarmicos: debitos.length,
-    debitosCarmicoFixos: debitos.filter(d => d.fixo).length,
+    debitosCarmicos: debitos,
     compatibilidade: avaliarCompatibilidade(expressao, destino),
   });
 }
@@ -65,8 +62,9 @@ async function main() {
 
   const supabase = createClient(url, key);
   const { data, error } = await supabase
-    .from('free_analyses_leads')
+    .from('analyses')
     .select('nome_completo, data_nascimento')
+    .eq('product_type', 'analise_gratuita')
     .eq('status', 'complete')
     .order('created_at', { ascending: true });
 
@@ -86,8 +84,7 @@ async function main() {
     const nome = row.nome_completo.trim();
     const dataPt = dbDateToPtBr(String(row.data_nascimento));
     const v1 = scoreV1Legado(nome, dataPt);
-    const av = avaliarNome(nome, dataPt);
-    const v3 = av.score_v3;
+    const v3 = avaliarNome(nome, dataPt).score_v3;
     v3Scores.push(v3);
     niveis[nivelCodigo(v3)]! += 1;
     if (v3 > v1) sobem++;

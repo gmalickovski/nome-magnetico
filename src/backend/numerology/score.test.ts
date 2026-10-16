@@ -1,6 +1,19 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { avaliarNome, calcularScoreV1, pontuacaoNomeCompleta } from './score.ts';
+import {
+  avaliarNome,
+  calcularPotencialV3,
+  calcularScoreV1,
+  calcularScoreV1SemOcorrenciasExtras,
+} from './score.ts';
+import { calcularTodosTriangulos, detectarBloqueios } from './triangle.ts';
+import {
+  detectarLicoesCarmicas,
+  detectarTendenciasOcultas,
+  calcularDebitosCarmicos,
+} from './karmic.ts';
+import { calcularExpressao, calcularDestino, calcularMotivacao } from './numbers.ts';
+import { avaliarCompatibilidade } from './harmonization.ts';
 import { getScoreVersion } from './score-version.ts';
 
 describe('score v3 · golden (DEV-185)', () => {
@@ -9,7 +22,8 @@ describe('score v3 · golden (DEV-185)', () => {
     assert.equal(r.score_v3, 66);
     assert.equal(r.nivel.codigo, 'N3');
     assert.equal(r.nivel.rotulo, 'Equilíbrio Parcial');
-    assert.equal(r.potencial, 95);
+    assert.equal(calcularPotencialV3('Guilherme Malickovski Correa', '14/02/1990'), 95);
+    assert.equal(r.potencial, r.score_v3);
   });
 
   it('Lucas Henrique Barbosa · 27/04/1991 → 25 Em Tensão', () => {
@@ -86,24 +100,30 @@ describe('score v3 · bordas', () => {
     assert.deepEqual(a.descontos.length, b.descontos.length);
   });
 
-  it('SCORE_VERSION=v1 devolve score legado via pontuacaoNomeCompleta', () => {
+  it('SCORE_VERSION=v1 usa helper sem ocorrenciasExtras (padrão API)', () => {
     const prev = process.env.SCORE_VERSION;
     process.env.SCORE_VERSION = 'v1';
     try {
       assert.equal(getScoreVersion(), 'v1');
-      const p = pontuacaoNomeCompleta('Guilherme Malickovski Correa', '14/02/1990');
-      assert.equal(p.scoreExibido, p.scoreLegado);
-      assert.equal(p.camposV3, undefined);
-      const manual = calcularScoreV1({
-        bloqueios: 1,
-        ocorrenciasExtras: 0,
-        licoesCarmicas: 1,
-        tendenciasOcultas: 4,
-        debitosCarmicos: 2,
-        debitosCarmicoFixos: 1,
-        compatibilidade: 'favoravel',
+      const nome = 'Guilherme Malickovski Correa';
+      const data = '14/02/1990';
+      const todos = calcularTodosTriangulos(nome, data);
+      const bloqueios = detectarBloqueios(todos);
+      const expressao = calcularExpressao(nome);
+      const destino = calcularDestino(data);
+      const motivacao = calcularMotivacao(nome);
+      const licoes = detectarLicoesCarmicas(nome);
+      const tendencias = detectarTendenciasOcultas(nome);
+      const debitos = calcularDebitosCarmicos(data, destino, motivacao, expressao);
+      const score = calcularScoreV1SemOcorrenciasExtras({
+        bloqueios,
+        licoesCarmicas: licoes.length,
+        tendenciasOcultas: tendencias.length,
+        debitosCarmicos: debitos,
+        compatibilidade: avaliarCompatibilidade(expressao, destino),
       });
-      assert.ok(manual > 0);
+      assert.ok(score > 0);
+      assert.notEqual(score, 66);
     } finally {
       if (prev === undefined) delete process.env.SCORE_VERSION;
       else process.env.SCORE_VERSION = prev;

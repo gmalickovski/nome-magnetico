@@ -15,8 +15,13 @@ import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } 
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularMissao, calcularImpressao } from '../numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../karmic';
 import { avaliarCompatibilidade } from '../harmonization';
-import { calcularScore, calcularScoreTeto, pontuacaoNomeCompleta } from '../score';
-import { getScoreVersion } from '../score-version';
+import {
+  avaliarNome,
+  calcularScore,
+  calcularScoreTeto,
+  calcularScoreV1SemOcorrenciasExtras,
+} from '../score';
+import { isScoreV3 } from '../score-version';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic';
 import type { Bloqueio } from '../triangle';
 
@@ -100,17 +105,15 @@ export function analisarNomeBebe(
   const compatibilidade = avaliarCompatibilidade(expressao, destino);
 
   const debitosFixosCount = debitos.filter(d => d.fixo).length;
-  const score =
-    getScoreVersion() === 'v3'
-      ? pontuacaoNomeCompleta(nomeCompleto, dataNascimento).scoreExibido
-      : calcularScore({
-          bloqueios: bloqueios.length,
-          licoesCarmicas: licoes.length,
-          tendenciasOcultas: tendencias.length,
-          debitosCarmicos: debitos.length,
-          debitosCarmicoFixos: debitosFixosCount,
-          compatibilidade,
-        });
+  const score = isScoreV3()
+    ? avaliarNome(nomeCompleto, dataNascimento).score_v3
+    : calcularScoreV1SemOcorrenciasExtras({
+        bloqueios,
+        licoesCarmicas: licoes.length,
+        tendenciasOcultas: tendencias.length,
+        debitosCarmicos: debitos,
+        compatibilidade,
+      });
   const scoreTeto = calcularScoreTeto(debitosFixosCount);
 
   const justificativa: string[] = [];
