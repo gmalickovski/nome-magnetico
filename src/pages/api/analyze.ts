@@ -8,7 +8,7 @@ import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
 import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
 import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
-import { calcularScoreTeto, persistenciaScoreFields, pontuacaoNomeCompleta } from '../../backend/numerology/score';
+import { persistenciaScoreFields, pontuacaoNomeCompleta } from '../../backend/numerology/score';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
 import { verificarDisponibilidadeNomes } from '../../backend/utils/availability';
 import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerology/products/nome-social';
