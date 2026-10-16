@@ -8,7 +8,13 @@ import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
 import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
 import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
-import { calcularScore, calcularScoreTeto } from '../../backend/numerology/score';
+import {
+  avaliarNome,
+  calcularScoreV1ComOcorrenciasExtras,
+  calcularScoreV1SemOcorrenciasExtras,
+  persistenciaScoreFields,
+} from '../../backend/numerology/score';
+import { isScoreV3 } from '../../backend/numerology/score-version';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
 import { verificarDisponibilidadeNomes } from '../../backend/utils/availability';
 import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerology/products/nome-social';
@@ -281,6 +287,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const melhor = resultado.melhorNome;
+        const scoreFieldsSocial = melhor
+          ? persistenciaScoreFields({
+              scoreLegado: calcularScoreV1ComOcorrenciasExtras({
+                bloqueios: melhor.bloqueios,
+                licoesCarmicas: melhor.licoesCarmicas.length,
+                tendenciasOcultas: melhor.tendenciasOcultas.length,
+                debitosCarmicos: melhor.debitosCarmicos,
+                compatibilidade: melhor.compatibilidade,
+              }),
+              nomeParaV3: melhor.nomeCompleto,
+              dataNascimento: data_nascimento,
+              nomeNascimentoPotencial: nome_completo,
+            })
+          : { score: null as number | null };
         marketingStats = {
           score: melhor?.score ?? null,
           bloqueios: melhor?.bloqueios?.length ?? 0,
@@ -312,7 +332,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           licoes_carmicas:     (melhor?.licoesCarmicas    ?? []) as unknown[],
           tendencias_ocultas:  (melhor?.tendenciasOcultas ?? []) as unknown[],
           debitos_carmicos:    (melhor?.debitosCarmicos   ?? []) as unknown[],
-          score: melhor?.score ?? null,
+          ...scoreFieldsSocial,
         });
 
         // Salvar inputs do formulário para histórico
@@ -374,17 +394,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const arcanoRegente = todosTriangulos.vida.arcanoRegente;
 
         const compatibilidade = avaliarCompatibilidade(cincoNumeros.expressao, cincoNumeros.destino);
-        const score = calcularScore({
-          bloqueios: bloqueios.length,
+        const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
+          bloqueios,
           licoesCarmicas: licoesCarmicas.length,
           tendenciasOcultas: tendenciasOcultas.length,
-          debitosCarmicos: debitosCarmicos.length,
-          debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
+          debitosCarmicos,
           compatibilidade,
+        });
+        const scoreFields = persistenciaScoreFields({
+          scoreLegado,
+          nomeParaV3: nome_completo,
+          dataNascimento: data_nascimento,
         });
 
         marketingStats = {
-          score,
+          score: isScoreV3() ? avaliarNome(nome_completo, data_nascimento).score_v3 : scoreLegado,
           bloqueios: bloqueios.length,
           licoesCarmicas: licoesCarmicas.length,
           tendenciasOcultas: tendenciasOcultas.length,
@@ -413,7 +437,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               dataNascimento: data_nascimento,
             },
           } as unknown,
-          score,
+          ...scoreFields,
         });
 
         if (isGratuita) {

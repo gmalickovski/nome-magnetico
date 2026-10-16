@@ -6,7 +6,7 @@ import { calcularTrianguloDaVida } from './triangle';
 import { calcularExpressao, calcularMotivacao, calcularImpressao } from './numbers';
 import { reduzirNumero } from './core';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from './karmic';
-import { calcularScore, calcularScoreTeto } from './score';
+import { calcularScore, calcularScoreTeto } from './score'; // legado v1 — aposentar na F2+
 import { avaliarCompatibilidade } from './harmonization';
 
 export interface VariacaoNome {

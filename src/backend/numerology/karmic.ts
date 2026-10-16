@@ -230,6 +230,12 @@ export interface DebitoCarmicoInfo {
   descricao: string;
   /** Origens que geraram este débito */
   fontes: DebitoFonte[];
+  /** Dia de nascimento e/ou Destino (não entram no desconto v3; vão para marcaDaData). */
+  fontesData: DebitoFonte[];
+  /** Motivação e/ou Expressão (base do desconto v3). */
+  fontesNome: DebitoFonte[];
+  /** Mesma dívida repetida (nome+data ou Motivação+Expressão). */
+  acentuada: boolean;
   /**
    * true  → vem APENAS do dia de nascimento e/ou Destino (imutáveis).
    *         Nenhuma variação de nome pode eliminar este débito.
@@ -314,15 +320,26 @@ export function calcularDebitosCarmicos(
   const eDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroExpressao, false)];
   if (eDebito !== undefined) adicionar(eDebito, 'expressao');
 
+  const FONTES_DATA: DebitoFonte[] = ['dia_natalicio', 'destino'];
+  const FONTES_NOME: DebitoFonte[] = ['motivacao', 'expressao'];
+
   return Array.from(debitoFontes.entries())
     .sort(([a], [b]) => a - b)
     .map(([numero, fontesSet]) => {
       const fontes = Array.from(fontesSet) as DebitoFonte[];
-      const fixo = fontes.every(f => f === 'dia_natalicio' || f === 'destino');
+      const fontesData = fontes.filter(f => FONTES_DATA.includes(f));
+      const fontesNome = fontes.filter(f => FONTES_NOME.includes(f));
+      const acentuada =
+        fontesNome.length >= 2 ||
+        (fontesNome.length >= 1 && fontesData.length >= 1);
+      const fixo = fontesNome.length === 0;
       return {
         numero,
         ...DEBITOS_CARMICOS_MAP[numero]!,
         fontes,
+        fontesData,
+        fontesNome,
+        acentuada,
         fixo,
       };
     });

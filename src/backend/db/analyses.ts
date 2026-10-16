@@ -30,6 +30,11 @@ export interface Analysis {
   frequencias_numeros: unknown | null;
   analise_texto: string | null;
   score: number | null;
+  score_version?: string | null;
+  score_v3?: number | null;
+  nivel?: string | null;
+  potencial?: number | null;
+  score_detalhe?: unknown | null;
   opt_in: boolean;
   opt_in_data: string | null;
   status: AnalysisStatus;

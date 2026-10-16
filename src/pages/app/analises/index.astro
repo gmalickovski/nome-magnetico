@@ -3,8 +3,8 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 import { getUserAnalyses } from '../../../backend/db/analyses';
 import { getProfile } from '../../../backend/db/users';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
-import { calcularScore } from '../../../backend/numerology/score';
-import { avaliarCompatibilidade } from '../../../backend/numerology/harmonization';
+import { avaliarNome } from '../../../backend/numerology/score';
+import { getScoreVersion } from '../../../backend/numerology/score-version';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
@@ -55,17 +55,15 @@ const analysesWithMeta = paidAnalyses.map(a => {
 
   let score: number | null = null;
   if (a.status === 'complete') {
-    if (a.score != null) {
+    const version = getScoreVersion();
+    if (version === 'v3' && a.score_v3 != null) {
+      score = a.score_v3;
+    } else if (version === 'v3' && a.nome_completo && a.data_nascimento) {
+      const parts = String(a.data_nascimento).split('-');
+      const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : a.data_nascimento;
+      score = avaliarNome(a.nome_completo, dataPt).score_v3;
+    } else if (a.score != null) {
       score = a.score;
-    } else if (a.numero_expressao && a.numero_destino) {
-      const compat = avaliarCompatibilidade(a.numero_expressao, a.numero_destino);
-      score = calcularScore({
-        bloqueios: Array.isArray(a.bloqueios) ? a.bloqueios.length : 0,
-        licoesCarmicas: Array.isArray(a.licoes_carmicas) ? a.licoes_carmicas.length : 0,
-        tendenciasOcultas: Array.isArray(a.tendencias_ocultas) ? a.tendencias_ocultas.length : 0,
-        debitosCarmicos: Array.isArray(a.debitos_carmicos) ? a.debitos_carmicos.length : 0,
-        compatibilidade: compat,
-      });
     }
   }
 

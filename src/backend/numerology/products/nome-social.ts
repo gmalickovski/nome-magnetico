@@ -25,7 +25,8 @@ import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } 
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularMissao, calcularImpressao } from '../numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../karmic';
 import { avaliarCompatibilidade } from '../harmonization';
-import { calcularScore, calcularScoreTeto } from '../score';
+import { avaliarNome, calcularScoreTeto, calcularScoreV1ComOcorrenciasExtras } from '../score';
+import { isScoreV3 } from '../score-version';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic';
 import type { Bloqueio } from '../triangle';
 
@@ -201,13 +202,16 @@ export function analisarNomeSocial(
   const debitos = calcularDebitosCarmicos(dataNascimentoUsuario, destino, motivacao, expressao);
   const compatibilidade = avaliarCompatibilidade(expressao, destino);
   const debitosFixosCount = debitos.filter(d => d.fixo).length;
-  const totalOcorrencias = bloqueios.reduce((sum, b) => sum + b.totalOcorrencias, 0);
-  const ocorrenciasExtras = Math.max(0, totalOcorrencias - bloqueios.length);
-  const score = calcularScore({
-    bloqueios: bloqueios.length, licoesCarmicas: licoes.length,
-    tendenciasOcultas: tendencias.length, debitosCarmicos: debitos.length,
-    debitosCarmicoFixos: debitosFixosCount, ocorrenciasExtras, compatibilidade,
+  const scoreLegado = calcularScoreV1ComOcorrenciasExtras({
+    bloqueios,
+    licoesCarmicas: licoes.length,
+    tendenciasOcultas: tendencias.length,
+    debitosCarmicos: debitos,
+    compatibilidade,
   });
+  const score = isScoreV3()
+    ? avaliarNome(nomeCompleto, dataNascimentoUsuario).score_v3
+    : scoreLegado;
   const scoreTeto = calcularScoreTeto(debitosFixosCount);
 
   const justificativa: string[] = [];
@@ -238,7 +242,7 @@ export function analisarNomeSocial(
  * Gera candidatos com fases de prioridade explícitas.
  * Retorna array deduplicado, cada item com nome e nivel (fase).
  */
-function gerarCandidatosComNivel(nomeNascimento: string): { nome: string; nivel: number }[] {
+export function gerarCandidatosComNivel(nomeNascimento: string): { nome: string; nivel: number }[] {
   const partes = nomeNascimento.trim().split(/\s+/);
   const prim = partes[0]!;
   const sobs = partes.slice(1);
@@ -323,6 +327,11 @@ function gerarCandidatosComNivel(nomeNascimento: string): { nome: string; nivel:
   }
 
   return Array.from(dedup.values());
+}
+
+/** Nomes candidatos do gerador atual (potencial v3 · DEV-185). */
+export function listarNomesCandidatosGerador(nomeNascimento: string): string[] {
+  return gerarCandidatosComNivel(nomeNascimento).map(c => c.nome);
 }
 
 /**

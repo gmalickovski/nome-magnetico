@@ -6,7 +6,8 @@ import { calcularTodosTriangulos, detectarBloqueios } from '@/backend/numerology
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularImpressao, calcularMissao } from '@/backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '@/backend/numerology/karmic';
 import { avaliarCompatibilidade } from '@/backend/numerology/harmonization';
-import { calcularScore } from '@/backend/numerology/score';
+import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '@/backend/numerology/score';
+import { isScoreV3 } from '@/backend/numerology/score-version';
 import { captureFluxoException } from '@/sentry/fluxo';
 import { isoBirthDateToPtBr, parseIsoBirthDate } from '@/backend/public-free-analysis/birth-date';
 
@@ -127,14 +128,16 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     const debitosCarmicos = calcularDebitosCarmicos(bdDataStr, destino, motivacao, expressao);
 
     const compatibilidade = avaliarCompatibilidade(expressao, destino);
-    const score = calcularScore({
-      bloqueios: bloqueios.length,
+    const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
+      bloqueios,
       licoesCarmicas: licoesCarmicas.length,
       tendenciasOcultas: tendenciasOcultas.length,
-      debitosCarmicos: debitosCarmicos.length,
-      debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
+      debitosCarmicos,
       compatibilidade,
     });
+    const score = isScoreV3()
+      ? avaliarNome(body.nome_candidato, bdDataStr).score_v3
+      : scoreLegado;
 
     return json({
       triangulos,

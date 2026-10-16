@@ -15,7 +15,8 @@ import {
   calcularDebitosCarmicos,
 } from '../../backend/numerology/karmic';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
-import { calcularScore } from '../../backend/numerology/score';
+import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '../../backend/numerology/score';
+import { isScoreV3 } from '../../backend/numerology/score-version';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
@@ -80,14 +81,16 @@ export const GET: APIRoute = async ({ url }) => {
       const tendenciasOcultas = detectarTendenciasOcultas(fullName);
       const debitosCarmicos = calcularDebitosCarmicos(birthDateStr, destino, motivacao, expressao);
       const frequencias = mapearFrequencias(fullName);
-      const score = calcularScore({
-        bloqueios: bloqueios.length,
+      const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
+        bloqueios,
         licoesCarmicas: licoesCarmicas.length,
         tendenciasOcultas: tendenciasOcultas.length,
-        debitosCarmicos: debitosCarmicos.length,
-        debitosCarmicoFixos: debitosCarmicos.filter(d => d.fixo).length,
+        debitosCarmicos,
         compatibilidade: avaliarCompatibilidade(expressao, destino),
       });
+      const score = isScoreV3()
+        ? avaliarNome(fullName, birthDateStr).score_v3
+        : scoreLegado;
 
       // Montar objeto de análise compatível com NomeAtualPDF
       const analysisObj = {
