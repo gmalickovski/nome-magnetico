@@ -16,6 +16,7 @@ import {
   LEGACY_ACCESS_COOKIE,
   LEGACY_REFRESH_COOKIE,
 } from './shared/auth-cookies';
+import { buildAppLoginRedirectPath, redirectPublicAppWithoutSession } from './middleware/app-access';
 import { captureFluxoException, fluxoForPath } from './sentry/fluxo';
 import '../sentry.server.config';
 
@@ -85,12 +86,11 @@ async function staffRole(context: APIContext): Promise<'admin' | 'denied' | 'err
 
 function redirectToPublic(context: APIContext): Response {
   const target = new URL(context.url.pathname + context.url.search, publicSiteOrigin());
-  return Response.redirect(target.toString(), 302);
+  return context.redirect(target.toString());
 }
 
 function appLoginRedirect(context: APIContext): Response {
-  const nextPath = context.url.pathname + context.url.search;
-  return context.redirect('/auth/login?redirect=' + encodeURIComponent(nextPath));
+  return context.redirect(buildAppLoginRedirectPath(context.url.pathname, context.url.search));
 }
 
 function loginRedirect(context: APIContext, publicPath: string): Response {
@@ -192,8 +192,8 @@ async function handlePublicHost(context: APIContext, next: MiddlewareNext): Prom
 
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     const opsUrl = adminOpsUrl();
-    if (opsUrl) return Response.redirect(`${opsUrl}/`, 302);
-    return Response.redirect('https://hq.studiomlk.com.br', 302);
+    if (opsUrl) return context.redirect(`${opsUrl}/`);
+    return context.redirect('https://hq.studiomlk.com.br');
   }
 
   const accessToken =
@@ -201,9 +201,8 @@ async function handlePublicHost(context: APIContext, next: MiddlewareNext): Prom
     context.cookies.get(LEGACY_ACCESS_COOKIE)?.value;
 
   if (!accessToken) {
-    if (pathname.startsWith('/app')) {
-      return appLoginRedirect(context);
-    }
+    const unauthRedirect = redirectPublicAppWithoutSession(pathname, context.url.search, accessToken);
+    if (unauthRedirect) return unauthRedirect;
     return next();
   }
 

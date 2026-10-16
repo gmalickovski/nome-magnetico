@@ -29,13 +29,24 @@ export function readSentryDsn(): string | undefined {
   );
 }
 
-export function resolveSentryEnvironment(): string {
+function isViteDev(): boolean {
+  return import.meta.env?.DEV === true;
+}
+
+export function resolveSentryEnvironmentForDev(isDev: boolean): string {
+  if (isDev) {
+    return readProcessEnv('SENTRY_ENVIRONMENT') ?? 'development';
+  }
   return (
     readProcessEnv('SENTRY_ENVIRONMENT') ??
     readProcessEnv('VERCEL_ENV') ??
     readProcessEnv('APP_ENV') ??
     (readProcessEnv('NODE_ENV') === 'production' ? 'production' : 'development') // pragma: allowlist secret
   );
+}
+
+export function resolveSentryEnvironment(): string {
+  return resolveSentryEnvironmentForDev(isViteDev());
 }
 
 export function resolveSentryRelease(): string | undefined {
@@ -47,12 +58,19 @@ export function resolveSentryRelease(): string | undefined {
  * `SENTRY_ENABLED=true` libera um smoke fora de produção.
  * `SENTRY_ENABLED=false` desliga mesmo em produção.
  */
-export function isSentryEnabled(): boolean {
+export function isSentryEnabledForDev(isDev: boolean): boolean {
   if (!readSentryDsn()) return false;
   const flag = readProcessEnv('SENTRY_ENABLED')?.toLowerCase();
   if (flag === 'false' || flag === '0' || flag === 'off') return false;
+  if (isDev) {
+    return flag === 'true' || flag === '1' || flag === 'on';
+  }
   if (flag === 'true' || flag === '1' || flag === 'on') return true;
-  return resolveSentryEnvironment() === 'production';
+  return resolveSentryEnvironmentForDev(isDev) === 'production'; // pragma: allowlist secret
+}
+
+export function isSentryEnabled(): boolean {
+  return isSentryEnabledForDev(isViteDev());
 }
 
 export function getSentryRuntimeConfig(): SentryRuntimeConfig | undefined {
