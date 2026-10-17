@@ -155,8 +155,9 @@ export function ProductPricesPanel() {
                     <span className="ml-2 text-[#d7c6ff]">({preview.validUntilLabel})</span>
                   ) : null}
                   <span className="block text-xs mt-1">
-                    Base {formatBRL(preview.base_cents)} → cobrança {formatBRL(preview.final_cents)}
+                    Base {formatBRLFromCents(preview.base_cents)} → cobrança {formatBRLFromCents(preview.final_cents)}
                   </span>
+
                 </p>
               ) : null}
 
