@@ -2,7 +2,8 @@
  * Score Unificado — v1 (legado) e v3 (motor NM v3 · DEV-185).
  */
 
-import { calcularTodosTriangulos, type Triangulo, type Bloqueio } from './triangle';
+import { calcularTodosTriangulos, type Triangulo, type Bloqueio, type TodosTriangulos } from './triangle';
+
 import { calcularExpressao, calcularDestino, calcularMotivacao } from './numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, type DebitoCarmicoInfo, type DebitoFonte } from './karmic';
 import { createRequire } from 'node:module';
@@ -280,7 +281,8 @@ function coletarReflexos(todos: TodosTriangulos): ReflexoSequencia[] {
     const t = todos[tipo];
     const contagem = t.contagemSequencias ?? {};
     for (const [codigo, linhasComSequencia] of Object.entries(contagem)) {
-      reflexos.push({ codigo, triangulo: tipo, linhasComSequencia });
+      reflexos.push({ codigo, triangulo: tipo, linhasComSequencia: Number(linhasComSequencia) });
+
     }
   }
   return reflexos.sort((a, b) => a.codigo.localeCompare(b.codigo) || a.triangulo.localeCompare(b.triangulo));
