@@ -597,14 +597,17 @@ function gerarSugestoesAutoSocial(
   const todosCandidatos = gerarCandidatosComNivel(nomeNascimento);
   const liberaEtapa3Apelido = Boolean(opcoes?.aceitaEncurtarOuApelido);
 
-  // Se o usuário não marcou "Topa encurtar ou usar apelido?" (padrão false),
-  // retemos os níveis 110 (corte no meio) e 120 (diminutivo/apelido) da Etapa 3,
-  // liberando-os apenas como fallback caso etapas 1 e 2 não tenham candidatos viáveis.
-  const candidatosPrimarios = liberaEtapa3Apelido
-    ? todosCandidatos
-    : todosCandidatos.filter(c => c.nivel < 110);
+  // Etapas 1 e 2 cobrem encurtamentos sem acento e acentuações sutis (níveis 10 a 85).
+  // Etapa 3 (níveis >= 90: letras dobradas 90-105, corte no meio 110 e apelido 120) só participa
+  // como último recurso caso as Etapas 1 e 2 juntas não encontrem candidatos viáveis, ou se o usuário
+  // tiver marcado explicitamente "Topa encurtar ou usar apelido?" (onde apenas 110 e 120 são liberados).
+  const candidatosEtapas1e2 = todosCandidatos.filter(c => c.nivel <= 85);
+  const candidatosApelido = liberaEtapa3Apelido
+    ? todosCandidatos.filter(c => c.nivel >= 110)
+    : [];
 
-  const poolBase = candidatosPrimarios.length >= 3 ? candidatosPrimarios : todosCandidatos;
+  const candidatosIniciais = [...candidatosEtapas1e2, ...candidatosApelido];
+  const poolBase = candidatosIniciais.length >= 3 ? candidatosIniciais : todosCandidatos;
 
   const analisados: AnaliseNomeSocial[] = poolBase.map(({ nome, nivel }) => {
     const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
@@ -620,12 +623,15 @@ function gerarSugestoesAutoSocial(
   const comparador = criarComparadorCandidatosV3(opcoes);
   analisados.sort(comparador);
 
-  // Preferência: top candidatos com score >= 85 (N5) e sem sequência na Vida
-  const excelentes = analisados.filter(a => a.score >= 85 && a.semSequenciaVida);
-  if (excelentes.length >= 3) return excelentes.slice(0, maxSugestoes);
+  // Se já temos pelo menos 3 candidatos sem sequência na Vida nas Etapas 1 e 2
+  // (incluindo pelo menos 1 candidato N5 ou viável), retornamos imediatamente sem chamar Etapa 3 de duplicação.
+  const limpos = analisados.filter(a => a.semSequenciaVida);
+  if (limpos.length >= 3) {
+    return limpos.slice(0, maxSugestoes);
+  }
 
-  // Se não atingiu 3 excelentes sem Etapa 3 e o filtro estava ativo, tenta liberar Etapa 3 como último recurso real
-  if (!liberaEtapa3Apelido && poolBase !== todosCandidatos) {
+  // Se as etapas 1 e 2 não geraram pelo menos 3 opções limpas, recorremos à Etapa 3 completa (último recurso real)
+  if (poolBase !== todosCandidatos) {
     const analisadosComEtapa3: AnaliseNomeSocial[] = todosCandidatos.map(({ nome, nivel }) => {
       const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
       const etapa = etapaDoNivel(nivel);
@@ -637,15 +643,12 @@ function gerarSugestoesAutoSocial(
       };
     });
     analisadosComEtapa3.sort(comparador);
-    const excelentesComEtapa3 = analisadosComEtapa3.filter(a => a.score >= 85 && a.semSequenciaVida);
-    if (excelentesComEtapa3.length > excelentes.length) {
-      return excelentesComEtapa3.slice(0, maxSugestoes);
+    const limposComEtapa3 = analisadosComEtapa3.filter(a => a.semSequenciaVida);
+    if (limposComEtapa3.length >= 3) {
+      return limposComEtapa3.slice(0, maxSugestoes);
     }
+    return analisadosComEtapa3.slice(0, Math.max(maxSugestoes, 3));
   }
-
-  // Fallback para candidatos com score >= 70 sem sequência na Vida ou melhores gerais
-  const viaveis = analisados.filter(a => a.semSequenciaVida);
-  if (viaveis.length >= 3) return viaveis.slice(0, maxSugestoes);
 
   return analisados.slice(0, Math.max(maxSugestoes, 3));
 }
