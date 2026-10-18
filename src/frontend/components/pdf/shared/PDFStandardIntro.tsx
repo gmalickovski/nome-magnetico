@@ -45,9 +45,10 @@ interface IntroProps {
   productType: ProductType;
   entityName: string;
   isFreeAnalysis?: boolean;
+  isScoreV3?: boolean;
 }
 
-export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysis = false }: IntroProps) {
+export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysis = false, isScoreV3 = false }: IntroProps) {
 
   const isLightBackground = productType === 'nome_bebe';
   const textColor = isLightBackground ? '#5C2D1E' : '#e5e2e1';
@@ -165,21 +166,39 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
           <Text style={[styles.subHead, { color: textColor }]}>
             Como Funciona o Cálculo do Score? (A Nota de 0 a 100)
           </Text>
-          <Text style={[styles.bodyText, { color: textColor }]}>
-            O score mede o nível de fluidez do nome em relação ao seu destino. Funciona como um equilíbrio: começamos com <Text style={[styles.bold, { color: boldColor }]}>100 pontos</Text> e vamos descontando conforme as resistências encontradas:
-            {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Cada Bloqueio Energético</Text> (sequências que travam a vida): <Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>
-            {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Cada Débito Kármico</Text> (desafios e aprendizados de vidas passadas): <Text style={[styles.bold, { color: theme.primaryColor }]}>-12 pontos</Text>
-            {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Cada Tendência Oculta</Text> (excesso de uma mesma vibração): <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text>
-            {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Cada Lição Kármica</Text> (qualidades ausentes a desenvolver): <Text style={[styles.bold, { color: theme.primaryColor }]}>-1 ponto</Text>
-            {'\n\n'}
-            O grande motivo de raramente atingirmos 100 pontos são os <Text style={[styles.bold, { color: boldColor }]}>Dados Imutáveis</Text> (sua data de nascimento). Ela jamais pode ser alterada e dita o Destino e os Débitos Kármicos, que são fixos. A análise visa encontrar um nome que contorne essas pendências com o menor atrito possível.
-            {'\n\n'}
-            Retire dos ombros a busca pelos 100 pontos. Um score <Text style={[styles.bold, { color: boldColor }]}>acima de 70</Text> já indica um nome Bom (sólido). Acima de <Text style={[styles.bold, { color: boldColor }]}>80 pontos</Text>, um "Nome de Ouro" (máximo alinhamento com mínima alteração). Acima de <Text style={[styles.bold, { color: boldColor }]}>90 pontos</Text>, um alinhamento excepcional e raro.
-          </Text>
+          {isScoreV3 ? (
+            <Text style={[styles.bodyText, { color: textColor }]}>
+              O Score Cabalístico (Motor v3) é um modelo determinístico baseado nos critérios objetivos da Numerologia Cabalística. Começamos com <Text style={[styles.bold, { color: boldColor }]}>100 pontos</Text> e aplicamos deduções objetivas:
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Bloqueios no Triângulo da Vida:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text> por padrão distinto (111..999, teto de -45 pts). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não descontam pontos.
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Compatibilidade Expressão × Destino:</Text> Favorável (<Text style={[styles.bold, { color: theme.primaryColor }]}>0 pts</Text>), Neutro (<Text style={[styles.bold, { color: theme.primaryColor }]}>-6 pts</Text>) ou Tensão Vibracional (<Text style={[styles.bold, { color: theme.primaryColor }]}>-18 pts</Text>).
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Débitos Kármicos do Nome:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-12 pontos</Text> apenas para débitos originados no nome (Expressão/Motivação). Débitos originados na data de nascimento ou Destino são imutáveis e têm desconto zero na nota do nome.
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Tendências Ocultas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text> cada (números que aparecem 4+ vezes).
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Lições Kármicas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-1 ponto</Text> cada (números ausentes no nome).
+              {'\n\n'}
+              Escala de 5 Níveis: <Text style={[styles.bold, { color: boldColor }]}>N5 Harmonioso</Text> (85–100), <Text style={[styles.bold, { color: boldColor }]}>N4 Favorável</Text> (70–84), <Text style={[styles.bold, { color: boldColor }]}>N3 Equilíbrio Parcial</Text> (50–69), <Text style={[styles.bold, { color: boldColor }]}>N2 Pede Atenção</Text> (30–49) e <Text style={[styles.bold, { color: boldColor }]}>N1 Em Tensão</Text> (0–29). Piso de dignidade vibracional: 5 pontos.
+            </Text>
+          ) : (
+            <Text style={[styles.bodyText, { color: textColor }]}>
+              O score mede o nível de fluidez do nome em relação ao seu destino. Funciona como um equilíbrio: começamos com <Text style={[styles.bold, { color: boldColor }]}>100 pontos</Text> e vamos descontando conforme as resistências encontradas:
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Cada Bloqueio Energético</Text> (sequências que travam a vida): <Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Cada Débito Kármico</Text> (desafios e aprendizados de vidas passadas): <Text style={[styles.bold, { color: theme.primaryColor }]}>-12 pontos</Text>
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Cada Tendência Oculta</Text> (excesso de uma mesma vibração): <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text>
+              {'\n'}
+              • <Text style={[styles.bold, { color: boldColor }]}>Cada Lição Kármica</Text> (qualidades ausentes a desenvolver): <Text style={[styles.bold, { color: theme.primaryColor }]}>-1 ponto</Text>
+              {'\n\n'}
+              O grande motivo de raramente atingirmos 100 pontos são os <Text style={[styles.bold, { color: boldColor }]}>Dados Imutáveis</Text> (sua data de nascimento). Ela jamais pode ser alterada e dita o Destino e os Débitos Kármicos, que são fixos. A análise visa encontrar um nome que contorne essas pendências com o menor atrito possível.
+              {'\n\n'}
+              Retire dos ombros a busca pelos 100 pontos. Um score <Text style={[styles.bold, { color: boldColor }]}>acima de 70</Text> já indica um nome Bom (sólido). Acima de <Text style={[styles.bold, { color: boldColor }]}>80 pontos</Text>, um "Nome de Ouro" (máximo alinhamento com mínima alteração). Acima de <Text style={[styles.bold, { color: boldColor }]}>90 pontos</Text>, um alinhamento excepcional e raro.
+            </Text>
+          )}
 
           <Text style={[styles.subHead, { color: textColor }]}>
             A Tabela de Harmonização Cabalística

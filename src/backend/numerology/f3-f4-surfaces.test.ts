@@ -7,6 +7,7 @@ import {
   getScoreV3LevelBadgeClass,
   getScoreV3LevelDescription,
   formatScoreV3Points,
+  obterNivelV3,
 } from '../../shared/score-v3.ts';
 import { AVISO_AUTOCONHECIMENTO } from '../../shared/legal.ts';
 
@@ -106,5 +107,23 @@ describe('DEV-187 (F3ab) & DEV-188 (F4) · Superfícies v3 e Página Como Calcul
     // Se score_version não for v3, não força v3 se for exibição histórica
     assert.equal(legadoAnalysis.score_version ?? 'v1', 'v1');
     assert.equal(legadoAnalysis.score, 35);
+  });
+
+  it('F3d: PDF pago completo no motor v3 mapeia níveis N1-N5 e pontuações do caso de ouro', () => {
+    const avaliacaoNasc = avaliarNome('Guilherme Malickovski Correa', '14/02/1990');
+    const nivelNasc = obterNivelV3(avaliacaoNasc.score_v3);
+    assert.equal(avaliacaoNasc.score_v3, 66);
+    assert.equal(nivelNasc.codigo, 'N3');
+    assert.equal(nivelNasc.rotulo, 'Equilíbrio Parcial');
+
+    const avaliacaoSocial = avaliarNome('Guilherme Málickovski', '14/02/1990');
+    const nivelSocial = obterNivelV3(avaliacaoSocial.score_v3);
+    assert.equal(avaliacaoSocial.score_v3, 95);
+    assert.equal(nivelSocial.codigo, 'N5');
+    assert.equal(nivelSocial.rotulo, 'Harmonioso');
+
+    // Evolução de pontuação
+    const delta = avaliacaoSocial.score_v3 - avaliacaoNasc.score_v3;
+    assert.equal(delta, 29);
   });
 });
