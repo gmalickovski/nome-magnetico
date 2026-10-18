@@ -80,13 +80,13 @@ export function ProductsSection() {
                   <TextBlock revealed={reveal1.revealed} delayMs={40}>
                     <div>
                       <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
-                        Seu nome pode estar travando o que você quer realizar.
+                        Compare sua nota hoje com o potencial da sua assinatura.
                       </h3>
                       <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                        Cada letra carrega uma frequência. Quando o nome de nascimento acumula bloqueios,
-                        a vibração trava — e isso aparece no score de 0 a 100. A Harmonização cria um
-                        escudo: uma variação de nome social alinhada ao seu Destino, sem apagar quem você
-                        é. Você vê o antes e o depois lado a lado — e sente a diferença no número.
+                        Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
+                        Triângulo da Vida ou entra em tensão com o Destino, isso aparece na sua nota de 0 a 100. A
+                        Harmonização revela variações de nome social em nível N5 (Harmonioso), preservando sua
+                        identidade. Você vê o antes e o depois lado a lado — com transparência em cada critério.
                       </p>
                     </div>
                   </TextBlock>

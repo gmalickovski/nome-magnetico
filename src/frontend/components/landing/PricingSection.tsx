@@ -20,11 +20,11 @@ type ProductType = SellableProductType;
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
 
 const NOME_SOCIAL_DELIVERABLES = [
-  'ranking com score',
-  'nome mais indicado',
-  'antes e depois nos 4 triângulos',
-  'bloqueios, débitos, lições e tendências',
-  'PDF com guia de 30 dias e folha de treino da assinatura',
+  'comparativo nota hoje × potencial (escala N1 a N5)',
+  'nome mais indicado + top 3 opções explicadas (mudança mínima, encurtado e alternativa)',
+  'análise do Triângulo da Vida e leitura complementar dos demais triângulos',
+  'bloqueios, marca da data, débitos, lições e tendências ocultas',
+  'PDF completo com guia de 30 dias e folha de treino da assinatura',
 ] as const;
 
 function promotionAppliesToProduct(

@@ -1,20 +1,63 @@
 /**
- * Formulário para análise de Nome Social.
+ * Formulário para análise de Nome Social (Motor NM v3 · DEV-190 / DEV-182 F6).
  * Envia para /api/analyze com product_type: 'nome_social'.
+ *
+ * Mudanças DEV-190 §6:
+ * - Removidos `genero_preferido` (LGPD art. 6º III — minimização) e `estilo_preferido`.
+ * - Objetivo e contexto unificados em um campo só (`objetivo_apresentacao`).
+ * - Novos campos opcionais:
+ *   1. "Como você assina hoje?" (`assinatura_atual` — linha de base)
+ *   2. "Onde vai usar o novo nome?" (`onde_vai_usar` — múltipla escolha, entra no ranking)
+ *   3. "Topa encurtar ou usar apelido?" (`aceita_encurtar_apelido` — libera a etapa 3 do gerador; padrão não)
+ * - Microcopy de confiança do §6.
  */
 
 import { useState } from 'react';
 import { DateInput } from '../ui/DateInput';
 
-interface FormState {
+export interface SocialNameFormState {
   nome_completo: string;
   data_nascimento: string;
+  assinatura_atual: string;
+  onde_vai_usar: string[];
+  aceita_encurtar_apelido: boolean;
   objetivo_apresentacao: string;
   vibracoes_desejadas: string;
-  contexto_uso: string;
-  estilo_preferido: string;
-  genero: string;
   nomes_candidatos: string;
+}
+
+export function buildSocialAnalyzePayload(form: SocialNameFormState): Record<string, unknown> {
+  const nomeLimpo = form.nome_completo.trim();
+  const candidatos = form.nomes_candidatos
+    .split(/[,;\n]+/)
+    .map(n => n.trim())
+    .filter(n => n.length >= 2);
+
+  const payload: Record<string, unknown> = {
+    product_type: 'nome_social',
+    nome_completo: nomeLimpo,
+    data_nascimento: form.data_nascimento,
+    aceita_encurtar_apelido: Boolean(form.aceita_encurtar_apelido),
+    nome_ja_escolhido: false,
+  };
+
+  if (form.assinatura_atual.trim()) {
+    payload.assinatura_atual = form.assinatura_atual.trim();
+  }
+  if (form.onde_vai_usar.length > 0) {
+    payload.onde_vai_usar = form.onde_vai_usar;
+  }
+  if (form.objetivo_apresentacao.trim()) {
+    payload.objetivo_apresentacao = form.objetivo_apresentacao.trim();
+  }
+  if (form.vibracoes_desejadas.trim()) {
+    payload.vibracoes_desejadas = form.vibracoes_desejadas.trim();
+  }
+  if (candidatos.length > 0) {
+    payload.nomes_candidatos = candidatos;
+  }
+
+  return payload;
 }
 
 interface Props {
@@ -23,12 +66,12 @@ interface Props {
   onSuccess?: (analysisId: string) => void;
 }
 
-const CONTEXTOS = [
-  { value: 'profissional', label: 'Profissional' },
-  { value: 'espiritual', label: 'Espiritual' },
-  { value: 'criativo', label: 'Criativo' },
-  { value: 'redes_sociais', label: 'Redes sociais' },
-  { value: 'pessoal', label: 'Pessoal' },
+const ONDE_VAI_USAR_OPCOES = [
+  { value: 'redes_sociais', label: 'Redes sociais (@perfil e bio)' },
+  { value: 'profissional', label: ' Trabalho, e-mail e LinkedIn' },
+  { value: 'documentos', label: 'Assinatura em documentos e contratos' },
+  { value: 'artistico', label: 'Nome artístico ou marca pessoal' },
+  { value: 'assinatura_diaria', label: 'Apresentação no dia a dia' },
 ];
 
 const VIBRACOES_SUGESTOES = [
@@ -41,12 +84,6 @@ const VIBRACOES_SUGESTOES = [
   'Conexão',
   'Intuição',
   'Expansão',
-];
-
-const GENEROS = [
-  { value: 'masculino', label: 'Masculino' },
-  { value: 'feminino', label: 'Feminino' },
-  { value: 'neutro', label: 'Neutro' },
 ];
 
 function InfoHint({ text }: { text: string }) {
@@ -91,14 +128,14 @@ function SectionTitle({
 
 export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onSuccess }: Props) {
   const hasSavedBirthData = Boolean(nomeInicial && dataInicial);
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = useState<SocialNameFormState>({
     nome_completo: nomeInicial,
     data_nascimento: dataInicial,
+    assinatura_atual: '',
+    onde_vai_usar: [],
+    aceita_encurtar_apelido: false,
     objetivo_apresentacao: '',
     vibracoes_desejadas: '',
-    contexto_uso: '',
-    estilo_preferido: '',
-    genero: '',
     nomes_candidatos: '',
   });
 
@@ -106,8 +143,19 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  function set<K extends keyof FormState>(field: K, value: FormState[K]) {
+  function set<K extends keyof SocialNameFormState>(field: K, value: SocialNameFormState[K]) {
     setForm(prev => ({ ...prev, [field]: value }));
+    setError('');
+  }
+
+  function toggleOndeVaiUsar(val: string) {
+    setForm(prev => {
+      const exists = prev.onde_vai_usar.includes(val);
+      const next = exists
+        ? prev.onde_vai_usar.filter(item => item !== val)
+        : [...prev.onde_vai_usar, val];
+      return { ...prev, onde_vai_usar: next };
+    });
     setError('');
   }
 
@@ -145,28 +193,14 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
       return;
     }
 
-    const candidatos = form.nomes_candidatos
-      .split(/[,;\n]+/)
-      .map(n => n.trim())
-      .filter(n => n.length >= 2);
+    const payload = buildSocialAnalyzePayload(form);
 
     setLoading(true);
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product_type: 'nome_social',
-          nome_completo: nomeLimpo,
-          data_nascimento: form.data_nascimento,
-          objetivo_apresentacao: form.objetivo_apresentacao.trim() || undefined,
-          vibracoes_desejadas: form.vibracoes_desejadas.trim() || undefined,
-          contexto_uso: form.contexto_uso || undefined,
-          estilo_preferido: form.estilo_preferido || undefined,
-          genero_preferido: form.genero || undefined,
-          nomes_candidatos: candidatos.length > 0 ? candidatos : undefined,
-          nome_ja_escolhido: false,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -187,7 +221,7 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
   }
 
   const chipClass = (selected: boolean) =>
-    `rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+    `rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${
       selected
         ? 'bg-[#D4AF37] text-black shadow-[0_8px_24px_rgba(212,175,55,0.18)]'
         : 'bg-white/[0.04] text-gray-300 ring-1 ring-white/10 hover:bg-white/[0.07] hover:text-[#e5e2e1]'
@@ -197,9 +231,10 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
     <form onSubmit={handleSubmitCriar} className="space-y-5">
       <p className="px-1 text-sm leading-relaxed text-gray-400">
         Só a seção <strong className="text-[#D4AF37]">01</strong> é obrigatória. As demais são opcionais
-        e só personalizam o relatório.
+        e servem para ajustar o ranking ao seu uso real, sem coletar dados desnecessários.
       </p>
 
+      {/* SEÇÃO 01: DADOS DE NASCIMENTO */}
       <div className="rounded-2xl bg-[#202020]/80 p-5 ring-1 ring-[#D4AF37]/15 md:p-6">
         <div className="space-y-6">
           <SectionTitle
@@ -230,60 +265,147 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
                 </button>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-gray-500">
-                Estes dados foram salvos na sua conta e serao usados como base fixa das suas harmonizacoes.
+                Estes dados foram salvos na sua conta e serão usados como base fixa das suas harmonizações.
               </p>
             </div>
           ) : (
-          <div className="grid items-start gap-6 md:grid-cols-[1fr_0.72fr]">
-            <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-300">
-                Nome completo de nascimento *
-                <InfoHint text="O diagnóstico exige o nome de registro civil completo, com nome e sobrenomes." />
-              </label>
-              <input
-                type="text"
-                value={form.nome_completo}
-                onChange={e => set('nome_completo', e.target.value)}
-                placeholder="Ex: Maria da Silva Santos"
-                className="input-dark w-full"
-                required
-              />
-            </div>
+            <div className="grid items-start gap-6 md:grid-cols-[1fr_0.72fr]">
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-300">
+                  Nome completo de nascimento *
+                  <InfoHint text="O diagnóstico exige o nome de registro civil completo, com nome e sobrenomes." />
+                </label>
+                <input
+                  type="text"
+                  value={form.nome_completo}
+                  onChange={e => set('nome_completo', e.target.value)}
+                  placeholder="Ex: Maria da Silva Santos"
+                  className="input-dark w-full"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-300">
-                Data de nascimento *
-                <InfoHint text="A data define o número de Destino, usado para medir a compatibilidade dos nomes candidatos." />
-              </label>
-              <DateInput
-                value={form.data_nascimento}
-                onChangeValue={v => set('data_nascimento', v)}
-                className="input-dark w-full"
-                required
-              />
+              <div>
+                <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-300">
+                  Data de nascimento *
+                  <InfoHint text="A data define o número de Destino, usado para medir a compatibilidade dos nomes candidatos." />
+                </label>
+                <DateInput
+                  value={form.data_nascimento}
+                  onChangeValue={v => set('data_nascimento', v)}
+                  className="input-dark w-full"
+                  required
+                />
+              </div>
             </div>
-          </div>
           )}
         </div>
       </div>
 
+      {/* SEÇÃO 02: LINHA DE BASE E PREFERÊNCIAS DO RANKING (DEV-190 §6) */}
+      <div className="rounded-2xl bg-[#202020]/80 p-5 ring-1 ring-[#D4AF37]/15 md:p-6">
+        <div className="space-y-6">
+          <SectionTitle
+            number="02"
+            title="Sua assinatura hoje e como pretende usar"
+            optional
+            info="Essas informações calibram o gerador em 3 etapas e o desempate do ranking."
+          />
+
+          {/* Novo campo 1: Como você assina hoje? */}
+          <div>
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-300">
+              Como você assina ou se apresenta hoje?
+              <InfoHint text="Serve como linha de base para compararmos sua assinatura atual com o nome de nascimento e com as sugestões harmonizadas." />
+            </label>
+            <input
+              type="text"
+              value={form.assinatura_atual}
+              onChange={e => set('assinatura_atual', e.target.value)}
+              placeholder="Ex: Maria Santos (deixe em branco se usa o nome completo)"
+              maxLength={150}
+              className="input-dark w-full"
+            />
+            <p className="mt-1.5 text-xs text-gray-500">
+              Se preencher, calculamos a nota de como você já assina hoje para comparar com o potencial do ranking.
+            </p>
+          </div>
+
+          {/* Novo campo 2: Onde vai usar o novo nome? (múltipla escolha) */}
+          <div>
+            <label className="mb-2.5 block text-sm font-medium text-gray-300">
+              Onde vai usar o novo nome? <span className="text-xs font-normal text-gray-500">(pode marcar mais de um)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {ONDE_VAI_USAR_OPCOES.map(opt => {
+                const isSelected = form.onde_vai_usar.includes(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => toggleOndeVaiUsar(opt.value)}
+                    className={chipClass(isSelected)}
+                  >
+                    {opt.label.trim()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Novo campo 3: Topa encurtar ou usar apelido? (padrão: Não) */}
+          <div className="rounded-2xl bg-[#131313]/70 p-4 ring-1 ring-white/5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1 pr-2">
+                <p className="text-sm font-medium text-[#e5e2e1]">
+                  Topa encurtar o primeiro nome ou usar apelido?
+                </p>
+                <p className="text-xs leading-relaxed text-gray-400">
+                  Por padrão priorizamos seu nome original com ajustes mínimos (sobrenomes ou acento sutil). Marque &ldquo;Sim&rdquo; apenas se quiser liberar variações curtas ou apelidos no ranking.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  aria-pressed={!form.aceita_encurtar_apelido}
+                  onClick={() => set('aceita_encurtar_apelido', false)}
+                  className={chipClass(!form.aceita_encurtar_apelido)}
+                >
+                  Não (manter nome base)
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={form.aceita_encurtar_apelido}
+                  onClick={() => set('aceita_encurtar_apelido', true)}
+                  className={chipClass(form.aceita_encurtar_apelido)}
+                >
+                  Sim, topo avaliar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SEÇÃO 03: OBJETIVO + CONTEXTO UNIFICADOS E VIBRAÇÕES */}
       <div className="rounded-2xl bg-[#202020]/80 p-5 ring-1 ring-[#D4AF37]/15 md:p-6">
         <div className="space-y-5">
           <SectionTitle
-            number="02"
-            title="Intenção e contexto"
+            number="03"
+            title="Objetivo, contexto e vibrações"
             optional
-            info="Essas respostas orientam o texto do relatório e ajudam a interpretar o uso prático do nome."
+            info="Essas respostas orientam a leitura interpretativa do relatório sem alterar a matemática do cálculo."
           />
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-300">
-              Como você quer se apresentar neste momento?
+              Qual é o seu momento atual e o que você busca com a nova assinatura?
             </label>
             <textarea
               value={form.objetivo_apresentacao}
               onChange={e => set('objetivo_apresentacao', e.target.value)}
-              placeholder="Ex: Quero um nome com presença profissional, clareza e autoridade."
+              placeholder="Ex: Estou em transição profissional e quero uma assinatura com clareza, presença executiva e leveza para usar no trabalho e nas redes."
               rows={3}
               maxLength={500}
               className="input-dark w-full resize-none"
@@ -292,93 +414,58 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-medium text-gray-300">Contexto principal de uso</label>
-            <div className="flex flex-wrap gap-2">
-              {CONTEXTOS.map(opt => (
+            <label className="mb-2.5 block text-sm font-medium text-gray-300">
+              Vibrações que mais combinam com essa fase
+            </label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {VIBRACOES_SUGESTOES.map(v => (
                 <button
-                  key={opt.value}
+                  key={v}
                   type="button"
-                  onClick={() => set('contexto_uso', form.contexto_uso === opt.value ? '' : opt.value)}
-                  className={chipClass(form.contexto_uso === opt.value)}
+                  onClick={() => toggleVibracao(v)}
+                  className={chipClass(form.vibracoes_desejadas.toLowerCase().includes(v.toLowerCase()))}
                 >
-                  {opt.label}
+                  {v}
                 </button>
               ))}
             </div>
+
+            <textarea
+              value={form.vibracoes_desejadas}
+              onChange={e => set('vibracoes_desejadas', e.target.value)}
+              placeholder="Ex: autoridade, expansão, liderança, clareza..."
+              rows={2}
+              maxLength={300}
+              className="input-dark w-full resize-none"
+            />
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#202020]/80 p-5 ring-1 ring-[#D4AF37]/15 md:p-6">
-        <div className="space-y-5">
-          <SectionTitle
-            number="03"
-            title="Vibrações desejadas"
-            optional
-            info="Essas palavras ajudam a personalizar a narrativa do relatório. O ranking continua sendo calculado pelos critérios numerológicos."
-          />
-
-          <div className="flex flex-wrap gap-2">
-            {VIBRACOES_SUGESTOES.map(v => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => toggleVibracao(v)}
-                className={chipClass(form.vibracoes_desejadas.toLowerCase().includes(v.toLowerCase()))}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-
-          <textarea
-            value={form.vibracoes_desejadas}
-            onChange={e => set('vibracoes_desejadas', e.target.value)}
-            placeholder="Ex: autoridade, expansão, liderança, clareza..."
-            rows={2}
-            maxLength={300}
-            className="input-dark w-full resize-none"
-          />
-
-          <div>
-            <label className="mb-3 block text-sm font-medium text-gray-300">Preferência de gênero do nome</label>
-            <div className="flex flex-wrap gap-2">
-              {GENEROS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => set('genero', form.genero === opt.value ? '' : opt.value)}
-                  className={chipClass(form.genero === opt.value)}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {/* SEÇÃO 04: NOMES CANDIDATOS */}
       <div className="rounded-2xl bg-[#202020]/80 p-5 ring-1 ring-[#D4AF37]/15 md:p-6">
         <div className="space-y-5">
           <SectionTitle
             number="04"
-            title="Nomes candidatos"
+            title="Nomes candidatos que você já tem em mente"
             optional
-            info="Se você informar nomes, eles entram no ranking. Se deixar vazio, o sistema gera variações próprias com menor descaracterização possível."
+            info="Se você informar nomes, eles entram direto no ranking. Se deixar vazio, o motor calcula variações em 3 etapas com a menor mudança possível."
           />
 
           <textarea
             value={form.nomes_candidatos}
             onChange={e => set('nomes_candidatos', e.target.value)}
-            placeholder="Ex: Mari, Maria Santos, Mariana Santos..."
-            rows={4}
+            placeholder="Ex: Maria Santos, Mariã Silva, Maria S. Santos..."
+            rows={3}
             className="input-dark w-full resize-none"
           />
 
           {candidatosCount > 0 ? (
-            <p className="text-xs text-gray-500">{candidatosCount} nome(s) informado(s)</p>
+            <p className="text-xs text-gray-400">{candidatosCount} variação(ões) informada(s) para avaliar junto com as sugestões do sistema.</p>
           ) : (
-            <p className="text-xs text-[#D4AF37]/80">Sem candidatos informados: o sistema gera sugestões.</p>
+            <p className="text-xs text-[#D4AF37]/80">
+              Sem candidatos informados: o sistema gera automaticamente opções priorizando manter a identidade do seu nome.
+            </p>
           )}
         </div>
       </div>
@@ -398,14 +485,14 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <span className="h-5 w-5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-              Gerando análise...
+              Calculando nota hoje × potencial...
             </span>
           ) : (
             'Gerar Harmonização'
           )}
         </button>
         <p className="mt-3 text-center text-xs leading-relaxed text-gray-500">
-          O resultado abre na hora, com ranking de assinaturas, score 0–100 e PDF para baixar.
+          O resultado abre na hora, comparando sua nota hoje com o potencial máximo (N5), top 3 assinaturas explicadas e PDF completo.
         </p>
       </div>
     </form>

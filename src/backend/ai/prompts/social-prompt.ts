@@ -9,6 +9,9 @@ export interface SocialPromptParams {
   contextoUso?: string;
   estiloPreferido?: string;
   genero?: string;
+  assinaturaAtual?: string;
+  ondeVaiUsar?: string[];
+  aceitaEncurtarApelido?: boolean;
   arquetipo?: Arquetipo;
   arcanoAtual?: { numero: number | null, periodo: string, idadeInicio: number, idadeFim: number };
   comparacaoHarmonizacao?: {
@@ -36,6 +39,9 @@ export function buildSocialAnalysisPrompt(params: SocialPromptParams): string {
     contextoUso,
     estiloPreferido,
     genero,
+    assinaturaAtual,
+    ondeVaiUsar,
+    aceitaEncurtarApelido,
     arquetipo,
     arcanoAtual,
     comparacaoHarmonizacao: comp,
@@ -73,10 +79,12 @@ export function buildSocialAnalysisPrompt(params: SocialPromptParams): string {
 **Nome de Nascimento (âncora numerológica):** ${nomeNascimento}
 **Data de Nascimento:** ${dataNascimento}
 **Número de Destino (imutável):** ${destino}
+${assinaturaAtual ? `**Assinatura Atual (linha de base informada):** ${assinaturaAtual}` : ''}
 ${genero ? `**Gênero:** ${genero}` : ''}
-${objetivoApresentacao ? `**Como deseja se apresentar ao mundo:** ${objetivoApresentacao}` : ''}
+${objetivoApresentacao ? `**Intenção e contexto de apresentação:** ${objetivoApresentacao}` : ''}
 ${vibracoesDesejadas ? `**Vibrações/características que deseja atrair:** ${vibracoesDesejadas}` : ''}
-${contextoUso ? `**Contexto principal de uso do nome:** ${contextoUso}` : ''}
+${ondeVaiUsar && ondeVaiUsar.length > 0 ? `**Onde vai usar o novo nome:** ${ondeVaiUsar.join(', ')}` : contextoUso ? `**Contexto principal de uso do nome:** ${contextoUso}` : ''}
+${aceitaEncurtarApelido !== undefined ? `**Aceita encurtar ou usar apelido:** ${aceitaEncurtarApelido ? 'Sim' : 'Não'}` : ''}
 ${estiloPreferido ? `**Estilo preferido:** ${estiloPreferido}` : ''}
 ${arcanoAtual?.numero ? `**Arcano de Trânsito Atual (Momento de Vida):** Arcano ${arcanoAtual.numero} (período de ${arcanoAtual.periodo})` : ''}
 

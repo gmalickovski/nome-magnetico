@@ -7,6 +7,7 @@ import { ProductsSection } from '../frontend/components/landing/ProductsSection'
 import { SignatureUseCasesSection } from '../frontend/components/landing/SignatureUseCasesSection';
 import { PricingSection } from '../frontend/components/landing/PricingSection';
 import { PromoBanner } from '../frontend/components/landing/PromoBanner';
+import { ProductVotingSection } from '../frontend/components/landing/ProductVotingSection';
 import { FAQSection } from '../frontend/components/landing/FAQSection';
 import type { FaqItemProps } from '../frontend/components/landing/FAQSection';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
@@ -39,8 +40,8 @@ const schemaPrice = nomeSocialPrice > 0 ? (nomeSocialPrice / 100).toFixed(2) : u
 ---
 
 <LandingLayout
-  title="Numerologia Cabalística do Seu Nome — Detecte Bloqueios e Encontre Seu Nome Magnético"
-  description="Seu nome de nascimento carrega frequências que podem estar bloqueando sua carreira, relacionamentos e prosperidade. Faça a análise cabalística completa: mapa de 5 números, 4 triângulos e variações de nome harmonizado."
+  title="Numerologia Cabalística do Seu Nome — Veja Sua Nota Hoje e o Potencial da Sua Assinatura"
+  description="Descubra a nota atual do seu nome de nascimento (0 a 100), mapeie sequências no Triângulo da Vida e veja o potencial que sua assinatura pode alcançar com o Método Nome Magnético."
   keywords="numerologia cabalística, análise do nome numerologia, bloqueios energéticos nome, numerologia nome completo, mapa numerológico completo, nome social numerologia, mudar nome numerologia, nome sem bloqueios, análise vibracional gratuita nome, arquétipo junguiano nome"
   schemaOfferPrice={schemaPrice}
   schemaEstimatedCost={schemaPrice}
@@ -59,11 +60,10 @@ const schemaPrice = nomeSocialPrice > 0 ? (nomeSocialPrice / 100).toFixed(2) : u
           Ferramenta gratuita
         </p>
         <h2 class="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight">
-          Descubra a Frequência<br/>do Seu Nome — Grátis
+          Veja Sua Nota Hoje<br/>× Seu Potencial — Grátis
         </h2>
         <p class="text-gray-400 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-          Descubra os bloqueios energéticos, lições kármicas e tendências ocultas do seu nome de nascimento.
-          Análise completa com os 4 triângulos numerológicos — relatório em PDF incluído.
+          Calcule gratuitamente a nota atual do seu nome de nascimento (escala N1 a N5), veja as sequências no Triângulo da Vida, a Marca da sua Data e quanto sua assinatura pode subir com a harmonização — relatório em PDF incluído.
         </p>
         <a
           href="/analise-gratuita"
@@ -73,11 +73,12 @@ const schemaPrice = nomeSocialPrice > 0 ? (nomeSocialPrice / 100).toFixed(2) : u
         >
           Fazer Análise Gratuita
         </a>
-        <p class="text-gray-600 text-sm mt-4">Gratuito · Crie sua conta · Relatório completo com PDF</p>
+        <p class="text-gray-600 text-sm mt-4">Gratuito · Acesso na hora · Relatório completo com PDF</p>
       </div>
     </div>
   </section>
   <PricingSection hqPrices={hqPrices} promotion={promotion} isLoggedIn={!!user} client:visible />
+  <ProductVotingSection variant="landing" client:visible />
   <FAQSection items={faqItems} client:visible />
   <LandingFooter client:visible />
 </LandingLayout>
