@@ -13,6 +13,7 @@ import NomeBebResultado from '../../../frontend/components/app/resultado/NomeBeb
 import NomeEmpresaResultado from '../../../frontend/components/app/resultado/NomeEmpresaResultado.astro';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
+import { avaliarNome } from '../../../backend/numerology/score';
 import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 
 const user = Astro.locals.user;
@@ -164,20 +165,25 @@ const showDualCertificate =
   && !!nomeNascimentoCertificado
   && nomeNascimentoCertificado.trim().toLowerCase() !== nomeExibido.trim().toLowerCase();
 
+const isV3 = analysis.score_version === 'v3';
+
 const scoreNascimento =
   showDualCertificate && dataScoreSocial
-    ? analisarNomeSocial(nomeNascimentoCertificado, dataScoreSocial).score
+    ? (isV3
+        ? avaliarNome(nomeNascimentoCertificado, dataScoreSocial).score_v3
+        : analisarNomeSocial(nomeNascimentoCertificado, dataScoreSocial).score)
     : null;
 
 const scoreHarmonizado = (() => {
-  if (!isNomeSocial) return scoreGeral;
+  if (isV3 && analysis.score_v3 != null) return analysis.score_v3;
+  if (!isNomeSocial) return isV3 && analysis.score_v3 != null ? analysis.score_v3 : scoreGeral;
   const nomeNorm = nomeExibido.trim().toLowerCase();
   const fromCandidatos = ((rankingSocial?.nomesCandidatos ?? []) as any[]).find(
     (c) => c?.nomeCompleto?.trim().toLowerCase() === nomeNorm
   )?.score as number | undefined;
   if (typeof fromCandidatos === 'number') return fromCandidatos;
   if (typeof rankingSocial?.melhorNome?.score === 'number') return rankingSocial.melhorNome.score;
-  return scoreGeral;
+  return isV3 && analysis.score_v3 != null ? analysis.score_v3 : scoreGeral;
 })();
 
 // ── 5 Números com ícones e rótulos ───────────────────────────────────
@@ -319,12 +325,19 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 
         {/* ── SEÇÃO 1: HEADER / CERTIFICADO ── */}
         <section class="rounded-2xl bg-white/5 p-6 md:p-8 mb-6">
-          <p class="font-cinzel text-xs uppercase tracking-[0.2em] text-[#76746a] mb-4">
-            {isFree      ? 'Análise do Nome de Nascimento — Diagnóstico Cabalístico' :
-             isNomeSocial ? 'Análise de Nome Social — Certificado Cabalístico' :
-             isNomeBebe   ? 'Análise de Nome de Bebê — O Portal do Nascimento' :
-                            'Análise de Nome de Empresa — Relatório Estratégico'}
-          </p>
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <p class="font-cinzel text-xs uppercase tracking-[0.2em] text-[#76746a]">
+              {isFree      ? 'Análise do Nome de Nascimento — Diagnóstico Cabalístico' :
+               isNomeSocial ? 'Análise de Nome Social — Certificado Cabalístico' :
+               isNomeBebe   ? 'Análise de Nome de Bebê — O Portal do Nascimento' :
+                              'Análise de Nome de Empresa — Relatório Estratégico'}
+            </p>
+            {isV3 && (
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 tracking-wider uppercase">
+                Motor v3
+              </span>
+            )}
+          </div>
 
           {showDualCertificate ? (
             <div class="flex flex-col gap-5">
@@ -339,7 +352,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
                 </div>
                 <div class="shrink-0 md:w-48">
                   {scoreNascimento != null ? (
-                    <ScoreDisplay client:load score={scoreNascimento} size="lg" />
+                    <ScoreDisplay client:load score={scoreNascimento} size="lg" version={isV3 ? 'v3' : 'v1'} showLevelLink={isV3} />
                   ) : (
                     <div class="px-3 py-1.5 rounded-full text-sm font-medium bg-white/10 text-gray-400 inline-block">
                       Score indisponível
@@ -356,7 +369,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
                 </div>
                 <div class="shrink-0 md:w-48">
                   {scoreHarmonizado != null ? (
-                    <ScoreDisplay client:load score={scoreHarmonizado} size="lg" />
+                    <ScoreDisplay client:load score={scoreHarmonizado} size="lg" version={isV3 ? 'v3' : 'v1'} showLevelLink={isV3} />
                   ) : (
                     <div class="px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400 inline-block">
                       ✓ Concluída
@@ -375,7 +388,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
               </div>
               <div class="shrink-0 md:w-48">
                 {scoreGeral !== null && scoreGeral !== undefined ? (
-                  <ScoreDisplay client:load score={scoreGeral} size="lg" />
+                  <ScoreDisplay client:load score={scoreGeral} size="lg" version={isV3 ? 'v3' : 'v1'} showLevelLink={isV3} />
                 ) : (
                   <div class="px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400 inline-block">
                     ✓ Concluída

@@ -20,6 +20,8 @@ import KarmicDebts from '../KarmicDebts';
 import HiddenTendencies from '../HiddenTendencies';
 import ScoreDisplay from '../ScoreDisplay';
 import { AVISO_AUTOCONHECIMENTO } from '../../../../shared/legal';
+import { obterNivelV3 } from '../../../../shared/score-v3';
+import { avaliarNome } from '../../../../backend/numerology/score';
 import CompatibilityBadge from '../CompatibilityBadge';
 import { ARCANOS } from '../../../../backend/numerology/arcanos';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../../../../backend/numerology/karmic';
@@ -171,6 +173,32 @@ const licoesNovas      = (harmLicoes  ?? []).filter((lh: any) => !(nascLicoes ??
 const tendenciasEliminadas = (nascTendencias ?? []).filter((tn: any) => !(harmTendencias ?? []).some((th: any) => th.numero === tn.numero));
 const tendenciasMantidas   = (nascTendencias ?? []).filter((tn: any) =>  (harmTendencias ?? []).some((th: any) => th.numero === tn.numero));
 const tendenciasNovas      = (harmTendencias  ?? []).filter((th: any) => !(nascTendencias ?? []).some((tn: any) => tn.numero === th.numero));
+
+// Motor v3 & Scores Comparativos Antes × Depois
+const isV3 = analysis?.score_version === 'v3';
+
+const nascScore = (() => {
+  if (!nomeNascStr || !dataNascStr) return null;
+  if (isV3) {
+    const parts = dataNascStr.split('-');
+    const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dataNascStr;
+    return avaliarNome(nomeNascStr, dataPt).score_v3;
+  }
+  return analysis?.score ?? null;
+})();
+const nascScoreNivel = nascScore != null ? obterNivelV3(nascScore) : null;
+
+const harmScore = (() => {
+  if (isV3 && analysis?.score_v3 != null) return analysis.score_v3;
+  if (rankingSocial?.melhorNome?.score != null) return rankingSocial.melhorNome.score;
+  if (isV3 && nomeHarmCompleto && dataNascStr) {
+    const parts = dataNascStr.split('-');
+    const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dataNascStr;
+    return avaliarNome(nomeHarmCompleto, dataPt).score_v3;
+  }
+  return analysis?.score ?? null;
+})();
+const harmScoreNivel = harmScore != null ? obterNivelV3(harmScore) : null;
 
 // ── Estrela SVG dupla — pré-cálculo ──────────────────────────────────────────
 const svgOuterPts = harmonyStarPts(
@@ -421,6 +449,51 @@ const dimSublabels: Record<TipKey, string> = {
 
     <div class="space-y-4">
 
+      {/* Score Cabalístico Antes × Depois */}
+      {nascScore != null && harmScore != null && (
+        <div class="rounded-2xl bg-white/[0.03] p-4 sm:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-cinzel text-sm font-bold text-white">Score Cabalístico Antes × Depois</h4>
+            {isV3 && (
+              <div class="flex items-center gap-2">
+                <span class="rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">
+                  Motor v3
+                </span>
+                <a
+                  href="/como-funciona-o-score"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-[11px] text-gray-400 hover:text-[#D4AF37] transition-colors underline underline-offset-2"
+                >
+                  Como calculamos?
+                </a>
+              </div>
+            )}
+          </div>
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-2">
+            <div class="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-center">
+              <p class="text-[9px] text-red-400 font-bold uppercase mb-1">Nascimento</p>
+              <div class="font-cinzel text-4xl font-bold text-red-400">{nascScore}</div>
+              {nascScoreNivel && (
+                <span class={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${nascScoreNivel.corBg} ${nascScoreNivel.corTexto}`}>
+                  {nascScoreNivel.codigo} · {nascScoreNivel.rotulo}
+                </span>
+              )}
+            </div>
+            <span class="text-gray-600 text-xl font-bold">»</span>
+            <div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-center">
+              <p class="text-[9px] text-emerald-400 font-bold uppercase mb-1">Harmonizado</p>
+              <div class="font-cinzel text-4xl font-bold text-emerald-400">{harmScore}</div>
+              {harmScoreNivel && (
+                <span class={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${harmScoreNivel.corBg} ${harmScoreNivel.corTexto}`}>
+                  {harmScoreNivel.codigo} · {harmScoreNivel.rotulo}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bloqueios */}
       {bloqueios.length > 0 && (
         <div class="rounded-2xl bg-white/[0.03] p-4">
@@ -439,7 +512,7 @@ const dimSublabels: Record<TipKey, string> = {
             </div>
           </div>
           {eliminatedBloqueios.length > 0 && (
-            <div class="space-y-2">
+            <div class="space-y-2 mb-3">
               {eliminatedBloqueios.map((b: any) => (
                 <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
                   <span class="text-emerald-400 shrink-0">✓</span>
@@ -450,6 +523,9 @@ const dimSublabels: Record<TipKey, string> = {
               ))}
             </div>
           )}
+          <p class="text-xs text-gray-400/90 leading-relaxed pt-2 border-t border-white/5">
+            O <strong class="text-[#D4AF37]">Triângulo da Vida</strong> é a base matemática de dedução do Score Cabalístico. Os triângulos Pessoal, Social e do Destino representam leituras complementares de autoconhecimento (sem desconto de pontos no score).
+          </p>
         </div>
       )}
 
@@ -716,7 +792,7 @@ const dimSublabels: Record<TipKey, string> = {
         <div class="font-cinzel text-3xl md:text-4xl font-bold text-white">{rankingSocial.melhorNome.nomeCompleto}</div>
       </div>
       <div class="max-w-xs mx-auto mb-5">
-        <ScoreDisplay client:load score={rankingSocial.melhorNome.score} size="lg" />
+        <ScoreDisplay client:load score={rankingSocial.melhorNome.score} size="lg" version={isV3 ? 'v3' : 'v1'} showLevelLink={isV3} />
       </div>
       <div class="flex flex-wrap justify-center gap-4 mb-4 text-sm text-gray-500">
         <span>Expressão: <span class="text-gray-300 font-medium">{rankingSocial.melhorNome.expressao}</span></span>
@@ -763,7 +839,7 @@ const dimSublabels: Record<TipKey, string> = {
           data-can-generate={canGenerateCandidateReports ? 'true' : 'false'}
         >
           <div class="font-cinzel text-xl font-bold text-white group-hover:text-[#D4AF37] transition-colors">{c.nomeCompleto}</div>
-          <ScoreDisplay client:load score={c.score} size="sm" />
+          <ScoreDisplay client:load score={c.score} size="sm" version={isV3 ? 'v3' : 'v1'} showLevelLink={isV3} />
           <CompatibilityBadge client:load compatibilidade={c.compatibilidade} size="sm" showTooltip={true} />
           <div class="flex flex-wrap gap-3 text-xs text-gray-500">
             <span>Expr: <span class="text-gray-300">{c.expressao}</span></span>
@@ -808,7 +884,7 @@ const dimSublabels: Record<TipKey, string> = {
           data-can-generate={canGenerateCandidateReports ? 'true' : 'false'}
         >
           <div class="font-cinzel text-xl font-bold text-white group-hover:text-[#D4AF37] transition-colors">{c.nomeCompleto}</div>
-          <ScoreDisplay client:load score={c.score} size="sm" />
+          <ScoreDisplay client:load score={c.score} size="sm" version={isV3 ? 'v3' : 'v1'} showLevelLink={isV3} />
           <CompatibilityBadge client:load compatibilidade={c.compatibilidade} size="sm" showTooltip={true} />
           <div class="flex flex-wrap gap-3 text-xs text-gray-500">
             <span>Expr: <span class="text-gray-300">{c.expressao}</span></span>
@@ -930,6 +1006,9 @@ const dimSublabels: Record<TipKey, string> = {
         inevitavelmente atrairá. Quando uma sequência de números se repete três ou mais vezes em qualquer triângulo,
         ela forma um Bloqueio Energético — uma frequência de travamento que age silenciosamente sobre aquela dimensão
         da sua vida, 24 horas por dia.
+      </p>
+      <p class="text-gray-300 text-sm leading-relaxed mt-4 pt-4 border-t border-white/5">
+        <strong class="text-[#D4AF37]">Importante sobre o cálculo do Score:</strong> O Triângulo da Vida é a estrutura primária utilizada no cálculo matemático do Score Cabalístico (onde as sequências numéricas repetidas geram descontos na pontuação). Já os triângulos Pessoal, Social e do Destino constituem leituras complementares e reflexos das suas dimensões íntima, relacional e de propósito, sem gerar deduções diretas no score.
       </p>
     </div>
 

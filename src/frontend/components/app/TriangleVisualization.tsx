@@ -531,6 +531,17 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
 
       {/* Descrição da aba */}
       <div className="rounded-xl bg-white/[0.03] p-3 sm:p-5">
+        <div className="mb-2">
+          {aba === 'vida' ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/25 px-2.5 py-0.5 rounded-full">
+              ✦ Entra no cálculo do Score Cabalístico
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-300 bg-purple-500/10 border border-purple-500/25 px-2.5 py-0.5 rounded-full">
+              ◈ Leitura complementar (sem dedução de pontos no score)
+            </span>
+          )}
+        </div>
         <p className="text-sm text-gray-400 leading-relaxed">
           {descricaoDetalhada?.[aba] ?? getDescricao(aba, productType)}
         </p>
