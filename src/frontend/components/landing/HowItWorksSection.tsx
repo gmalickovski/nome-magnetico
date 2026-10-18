@@ -1,12 +1,11 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   LandingSectionIntro,
   landingInteractiveCardClass,
   landingMockupFloatClass,
   landingSectionShellClass,
-  landingSectionSpacingClass,
 } from './LandingSectionIntro';
-import { useScrollProgress } from './useScrollProgress';
+import { useLandingSectionReveal } from './useLandingSectionReveal';
 import {
   FormFigure,
   GenerateFigure,
@@ -168,147 +167,74 @@ function MobileStepItem({
 }
 
 export function HowItWorksSection() {
-  const { ref, progress, reduceMotion } = useScrollProgress<HTMLElement>();
-
-  // Progress metrics calculation for Desktop pinned scroll
-  // p: 0.00 -> 0.15: Card 1 only, centered (offset 37.5%)
-  // p: 0.15 -> 0.40: Card 2 enters, rail moves to 25.0%
-  // p: 0.40 -> 0.65: Card 3 enters, rail moves to 12.5%
-  // p: 0.65 -> 0.88: Card 4 enters, rail moves to 0.0%
-  // p: 0.88 -> 1.00: All 4 cards pinned and locked in place
-  const { railOffsetPercent, cardVisibility, arrowVisibility } = useMemo(() => {
-    if (reduceMotion) {
-      return {
-        railOffsetPercent: 0,
-        cardVisibility: [1, 1, 1, 1],
-        arrowVisibility: [true, true, true],
-      };
-    }
-
-    let offset = 37.5;
-    const cardVis = [1, 0, 0, 0];
-    const arrowVis = [false, false, false];
-
-    if (progress <= 0.15) {
-      offset = 37.5;
-      cardVis[0] = 1;
-    } else if (progress <= 0.4) {
-      const t = (progress - 0.15) / 0.25;
-      offset = 37.5 - t * 12.5;
-      cardVis[1] = Math.min(1, t * 1.5);
-      arrowVis[0] = t > 0.2;
-    } else if (progress <= 0.65) {
-      const t = (progress - 0.4) / 0.25;
-      offset = 25.0 - t * 12.5;
-      cardVis[1] = 1;
-      arrowVis[0] = true;
-      cardVis[2] = Math.min(1, t * 1.5);
-      arrowVis[1] = t > 0.2;
-    } else if (progress <= 0.88) {
-      const t = (progress - 0.65) / 0.23;
-      offset = 12.5 - t * 12.5;
-      cardVis[1] = 1;
-      cardVis[2] = 1;
-      arrowVis[0] = true;
-      arrowVis[1] = true;
-      cardVis[3] = Math.min(1, t * 1.5);
-      arrowVis[2] = t > 0.2;
-    } else {
-      offset = 0;
-      cardVis[1] = 1;
-      cardVis[2] = 1;
-      cardVis[3] = 1;
-      arrowVis[0] = true;
-      arrowVis[1] = true;
-      arrowVis[2] = true;
-    }
-
-    return {
-      railOffsetPercent: offset,
-      cardVisibility: cardVis,
-      arrowVisibility: arrowVis,
-    };
-  }, [progress, reduceMotion]);
+  const reveal = useLandingSectionReveal();
+  const reduceMotion = reveal.reduceMotion;
+  const isRevealed = reveal.revealed;
 
   return (
     <section
       id="como-funciona"
-      ref={ref}
-      className={`relative bg-[#111111] scroll-mt-24 lg:scroll-mt-28 ${
-        reduceMotion
-          ? landingSectionSpacingClass
-          : 'lg:h-[350vh] py-20 md:py-24 lg:py-0'
-      }`}
+      ref={reveal.ref}
+      className="relative bg-[#111111] scroll-mt-20 pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-20 overflow-hidden w-full flex flex-col justify-center min-h-[auto] lg:min-h-[calc(100vh-4rem)]"
       aria-label="Como funciona"
     >
-      {/* ── DESKTOP PINNED EXPERIENCE (lg: 1024px+) ────────────────────── */}
-      <div
-        className={`hidden lg:flex flex-col justify-center ${
-          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen'
-        } w-full overflow-x-clip`}
-      >
+      {/* ── DESKTOP GRID EXPERIENCE (lg: 1024px+) ────────────────────── */}
+      <div className="hidden lg:flex flex-col justify-center w-full min-w-0">
         <div className={landingSectionShellClass}>
           <LandingSectionIntro
             label="Como funciona"
             title="Quatro passos da sua nota hoje até a nova assinatura"
             description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-            titleClassName="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-5xl font-bold uppercase tracking-wide max-w-5xl mx-auto leading-tight"
-            descriptionClassName="max-w-[70ch] mx-auto text-base sm:text-lg"
-            className="mb-8 xl:mb-12 text-center"
-            revealed={true}
+            titleClassName="text-xl sm:text-2xl md:text-3xl lg:text-[2rem] xl:text-[2.25rem] font-bold uppercase tracking-wide max-w-4xl mx-auto leading-tight"
+            descriptionClassName="max-w-[66ch] mx-auto text-sm sm:text-base mt-2 mb-6 xl:mb-8 text-pretty text-gray-400"
+            className="text-center mb-6 xl:mb-8"
+            revealed={isRevealed}
             reduceMotion={reduceMotion}
           />
 
-          {/* Rail Track with dynamic horizontal offset */}
-          <div className="relative w-full overflow-visible py-4">
-            <div
-              className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch transition-transform duration-300 ease-out will-change-transform"
-              style={{
-                transform: `translateX(${railOffsetPercent}%)`,
-              }}
-            >
+          {/* 4-Card Responsive Grid with connecting arrows */}
+          <div className="relative w-full">
+            <div className="grid grid-cols-4 gap-4 xl:gap-6 items-stretch w-full">
               {steps.map((step, index) => {
                 const Figure = step.Figure;
-                const opacity = cardVisibility[index];
-                const isVisible = opacity > 0.05;
                 const hasArrow = index < steps.length - 1;
-                const isArrowActive = hasArrow && arrowVisibility[index];
+                const delayMs = reduceMotion ? 0 : index * 100;
 
                 return (
                   <div
                     key={step.stepNumber}
                     className="relative h-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
-                      opacity: opacity,
-                      transform: isVisible
-                        ? 'translateY(0px) scale(1)'
-                        : 'translateY(24px) scale(0.95)',
-                      pointerEvents: isVisible ? 'auto' : 'none',
+                      opacity: isRevealed ? 1 : 0,
+                      transform: isRevealed
+                        ? 'translateY(0px)'
+                        : 'translateY(20px)',
+                      transitionDelay: `${delayMs}ms`,
                     }}
                   >
-                    <article className={`h-full ${landingInteractiveCardClass} p-6 xl:p-7 flex flex-col justify-between group`}>
+                    <article className={`h-full ${landingInteractiveCardClass} p-5 xl:p-6 flex flex-col justify-between group`}>
                       <div>
                         {/* Header do Card: Número do Passo & SVG */}
-                        <div className="flex items-center justify-between mb-5">
-                          <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
                             PASSO {step.stepNumber}
                           </span>
                           <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500">
-                            <Figure active={isVisible} />
+                            <Figure active={isRevealed} />
                           </div>
                         </div>
 
                         {/* Título & Descrição */}
-                        <h3 className="font-cinzel text-lg xl:text-xl font-bold leading-snug text-[#e5e2e1] mb-3 text-balance">
+                        <h3 className="font-cinzel text-base xl:text-lg font-bold leading-snug text-[#e5e2e1] mb-2 text-balance">
                           {step.title}
                         </h3>
-                        <p className="text-sm leading-relaxed text-gray-400 font-normal text-pretty">
+                        <p className="text-xs xl:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
                           {step.body}
                         </p>
                       </div>
 
                       {/* Brilho decorativo sutil na base */}
-                      <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+                      <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
                         <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                       </div>
@@ -317,9 +243,9 @@ export function HowItWorksSection() {
                     {/* Seta direcional entre os cards (Desktop) */}
                     {hasArrow && (
                       <div
-                        className="absolute top-1/2 -right-3.5 xl:-right-4.5 -translate-y-1/2 z-20 pointer-events-none"
+                        className="absolute top-1/2 -right-2.5 xl:-right-3.5 -translate-y-1/2 z-20 pointer-events-none"
                       >
-                        <StepArrow direction="right" active={isArrowActive} />
+                        <StepArrow direction="right" active={isRevealed} />
                       </div>
                     )}
                   </div>
@@ -327,36 +253,19 @@ export function HowItWorksSection() {
               })}
             </div>
           </div>
-
-          {/* Indicador de progresso do scroll no desktop */}
-          {!reduceMotion && (
-            <div className="mt-8 flex justify-center items-center gap-3">
-              {steps.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    cardVisibility[idx] >= 0.8
-                      ? 'w-8 bg-[#f2ca50] shadow-[0_0_8px_rgba(242,202,80,0.6)]'
-                      : 'w-2 bg-white/20'
-                  }`}
-                  aria-hidden="true"
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
       {/* ── MOBILE & TABLET STACKED EXPERIENCE (< 1024px) ────────────── */}
-      <div className="lg:hidden">
+      <div className="lg:hidden w-full">
         <div className={landingSectionShellClass}>
           <LandingSectionIntro
             label="Como funciona"
             title="Quatro passos até a sua nova assinatura"
             description="Entenda como a análise cabalística encontra a vibração ideal para harmonizar seu nome."
-            titleClassName="text-2xl sm:text-3xl font-bold uppercase tracking-wide leading-snug"
-            className="mb-10 text-center"
-            revealed={true}
+            titleClassName="text-xl sm:text-2xl font-bold uppercase tracking-wide leading-snug"
+            className="mb-8 text-center"
+            revealed={isRevealed}
             reduceMotion={reduceMotion}
           />
 

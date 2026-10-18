@@ -146,7 +146,7 @@ export function SignatureUseCasesSection() {
       id="onde-usar"
       ref={ref}
       className={`relative bg-[#111111] scroll-mt-20 ${
-        reduceMotion ? landingSectionSpacingClass : 'lg:h-[320vh] py-0'
+        reduceMotion ? landingSectionSpacingClass : 'lg:h-[200vh] py-0'
       }`}
       aria-label="Onde e como usar sua assinatura harmonizada"
     >
@@ -162,7 +162,7 @@ export function SignatureUseCasesSection() {
       {/* ── EXPERIÊNCIA DESKTOP PINNED (lg: 1024px+) ────────────────────── */}
       <div
         className={`hidden lg:flex flex-col justify-center items-center w-full ${
-          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen'
+          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen pt-20 lg:pt-24 pb-8'
         } overflow-x-clip`}
       >
         <div className={`relative ${landingSectionShellClass} flex items-center justify-center`}>
@@ -205,7 +205,7 @@ export function SignatureUseCasesSection() {
                   </div>
 
                   {/* Bloco de Texto Ativo */}
-                  <div className="flex-1 min-w-0 relative overflow-hidden min-h-[380px] flex items-center">
+                  <div className="flex-1 min-w-0 relative overflow-hidden min-h-[340px] flex items-center">
                     {USE_CASES.map((item, idx) => {
                       const isActive = idx === activeIndex;
                       const isPast = idx < activeIndex;
@@ -222,19 +222,19 @@ export function SignatureUseCasesSection() {
                           className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform w-full ${transformClass}`}
                           aria-hidden={!isActive}
                         >
-                          <p className="text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3">
+                          <p className="text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2.5">
                             Onde Usar · Etapa {item.stepNumber}
                           </p>
 
-                          <h3 className="font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance">
+                          <h3 className="font-cinzel text-xl sm:text-2xl md:text-3xl lg:text-[2rem] xl:text-[2.25rem] font-bold text-[#e5e2e1] mb-3 leading-snug text-balance">
                             {item.title}
                           </h3>
 
-                          <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-6 max-w-[58ch] text-pretty">
+                          <p className="text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed mb-4 max-w-[54ch] text-pretty">
                             {item.description}
                           </p>
 
-                          <div className="space-y-3">
+                          <div className="space-y-2">
                             {item.bulletPoints.map((bullet, bIdx) => (
                               <div key={bIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-300 text-pretty">
                                 <span className="text-[#f2ca50] text-sm shrink-0 leading-none mt-0.5">✦</span>

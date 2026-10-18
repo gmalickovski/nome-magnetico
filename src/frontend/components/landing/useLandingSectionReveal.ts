@@ -18,10 +18,11 @@ function isInOrNearViewport(el: HTMLElement): boolean {
  * Uses a meditative 700ms cubic-bezier(0.22, 1, 0.36, 1) curve for smooth
  * text and card stagger entrances while respecting prefers-reduced-motion.
  */
-export function useLandingSectionReveal(_threshold = 0.12) {
+export function useLandingSectionReveal(_threshold = 0.05) {
   const ref = useRef<HTMLElement>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
-  const [revealed, setRevealed] = useState(() => prefersReducedMotion());
+  // Default to true on SSR and initial paint so content is never pitch black / invisible
+  const [revealed, setRevealed] = useState(true);
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -29,10 +30,17 @@ export function useLandingSectionReveal(_threshold = 0.12) {
     const el = ref.current;
     if (!el) return;
 
-    if (isInOrNearViewport(el)) {
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || 0;
+
+    // If already in or above viewport, keep revealed
+    if (rect.top < vh + 40 && rect.bottom > -40) {
       setRevealed(true);
       return;
     }
+
+    // Element is below viewport, arm scroll-triggered reveal
+    setRevealed(false);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -41,11 +49,20 @@ export function useLandingSectionReveal(_threshold = 0.12) {
           observer.disconnect();
         }
       },
-      { threshold: 0.08, rootMargin: '40px 0px -40px 0px' },
+      { threshold: 0.04, rootMargin: '140px 0px -40px 0px' },
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+
+    // Failsafe timer so elements are never permanently hidden on scroll
+    const timer = window.setTimeout(() => {
+      setRevealed(true);
+    }, 1200);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+    };
   }, [reduceMotion]);
 
   if (reduceMotion) {

@@ -37,7 +37,7 @@ export function HeroSection() {
           {/* Left Column: Headlines (5 columns on lg+) */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start min-w-0">
             <h1
-              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
+              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
               style={titleReveal.style}
             >
               Sua Assinatura Tem<br />

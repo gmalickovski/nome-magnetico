@@ -322,7 +322,7 @@ export function ProductHarmonyFrame() {
                       y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
                       fill="#d0d5de"
                       fontFamily="Inter, sans-serif"
-                      fontSize={19}
+                      fontSize={24}
                       fontWeight={600}
                       textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
                     >
@@ -331,10 +331,10 @@ export function ProductHarmonyFrame() {
                     <text
                       className="harmony-star-num-gold"
                       x={goldPos.x}
-                      y={goldPos.y + 6}
+                      y={goldPos.y + 7}
                       fill={GOLD}
                       fontFamily="Inter, sans-serif"
-                      fontSize={24}
+                      fontSize={32}
                       fontWeight={700}
                       textAnchor="middle"
                     >
@@ -343,10 +343,10 @@ export function ProductHarmonyFrame() {
                     <text
                       className="harmony-star-num-red"
                       x={redPos.x}
-                      y={redPos.y + 5}
+                      y={redPos.y + 6}
                       fill="#DC2626"
                       fontFamily="Inter, sans-serif"
-                      fontSize={14}
+                      fontSize={20}
                       fontWeight={700}
                       textAnchor="middle"
                     >
@@ -390,39 +390,41 @@ export function ProductHarmonyFrame() {
         }
         .harmony-star-svg {
           width: 100%;
-          max-width: min(100%, 280px);
+          max-width: min(100%, 460px);
           height: auto;
           display: block;
         }
         .harmony-star-label {
           fill: #d0d5de;
-          font-size: 15px;
+          font-size: 24px;
           font-weight: 600;
         }
         .harmony-star-num-gold {
-          font-size: 20px;
+          font-size: 32px;
+          font-weight: 700;
         }
         .harmony-star-num-red {
-          font-size: 13px;
+          font-size: 20px;
+          font-weight: 700;
         }
         @container harmony (min-width: 440px) {
           .harmony-star-svg {
-            max-width: min(100%, 320px);
+            max-width: min(100%, 480px);
           }
           .harmony-star-label {
-            font-size: 17px;
+            font-size: 24px;
             font-weight: 600;
           }
           .harmony-star-num-gold {
-            font-size: 22px;
+            font-size: 32px;
           }
           .harmony-star-num-red {
-            font-size: 14px;
+            font-size: 20px;
           }
         }
         @container harmony (min-width: 580px) {
           .harmony-star-svg {
-            max-width: min(100%, 360px);
+            max-width: min(100%, 500px);
           }
         }
       `}</style>
