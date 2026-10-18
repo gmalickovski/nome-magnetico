@@ -70,6 +70,7 @@ const TRIANGULO_DESC: Record<string, string> = {
 import { avaliarNome } from '../../../../backend/numerology/score';
 import { isScoreV3 } from '../../../../backend/numerology/score-version';
 import { getScoreV3Level, getScoreV3LevelBadgeClass, getScoreV3LevelDescription, formatScoreV3Points } from '../../../../shared/score-v3';
+import { BLOQUEIOS_MAP } from '../../../../backend/numerology/triangle';
 
 const destinoNum = cincoNumeros.find(n => n.label === 'Destino');
 
@@ -92,7 +93,7 @@ const avaliacaoV3 = (v3Active && birthDateStr)
   : null;
 
 const score = avaliacaoV3 ? avaliacaoV3.score_v3 : ((analysis as any).score as number | null);
-const nivelV3 = avaliacaoV3 ? avaliacaoV3.nivel : (score != null ? getScoreV3Level(score) : null);
+const nivelV3 = (avaliacaoV3?.nivel?.codigo as import('../../../../shared/score-v3').NivelCodigo | undefined) ?? (score != null ? getScoreV3Level(score) : null);
 const potencialV3 = avaliacaoV3?.potencial ?? null;
 const nivelPotencialV3 = potencialV3 != null ? getScoreV3Level(potencialV3) : null;
 const debitosFixosData = avaliacaoV3?.marcaDaData && avaliacaoV3.marcaDaData.length > 0
@@ -286,7 +287,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
               <span class="font-bold text-[#bea5ff] uppercase block mb-1">
                 Sequência {r.codigo} no Triângulo {r.triangulo}
               </span>
-              <p class="text-gray-400 leading-relaxed">{r.descricao}</p>
+              <p class="text-gray-400 leading-relaxed">{BLOQUEIOS_MAP[r.codigo]?.descricao ?? `Reflexo da sequência ${r.codigo} presente em ${r.linhasComSequencia} linha(s) do triângulo.`}</p>
             </div>
           ))}
         </div>

@@ -14,6 +14,8 @@ export interface NivelInfo {
   corTexto: string;
   corBarra: string;
   corBg: string;
+  corHex: string;
+  cor: string;
 }
 
 export const NIVEIS_SCORE_V3: Record<NivelCodigo, NivelInfo> = {
@@ -26,6 +28,8 @@ export const NIVEIS_SCORE_V3: Record<NivelCodigo, NivelInfo> = {
     corTexto: 'text-emerald-400',
     corBarra: 'from-emerald-500 to-emerald-400',
     corBg: 'bg-emerald-500/10 border-emerald-500/30',
+    corHex: '#10B981',
+    cor: '#10B981',
   },
   N4: {
     codigo: 'N4',
@@ -36,6 +40,8 @@ export const NIVEIS_SCORE_V3: Record<NivelCodigo, NivelInfo> = {
     corTexto: 'text-lime-400',
     corBarra: 'from-lime-500 to-lime-400',
     corBg: 'bg-lime-500/10 border-lime-500/30',
+    corHex: '#84CC16',
+    cor: '#84CC16',
   },
   N3: {
     codigo: 'N3',
@@ -46,6 +52,8 @@ export const NIVEIS_SCORE_V3: Record<NivelCodigo, NivelInfo> = {
     corTexto: 'text-yellow-400',
     corBarra: 'from-yellow-500 to-yellow-400',
     corBg: 'bg-yellow-500/10 border-yellow-500/30',
+    corHex: '#F59E0B',
+    cor: '#F59E0B',
   },
   N2: {
     codigo: 'N2',
@@ -56,6 +64,8 @@ export const NIVEIS_SCORE_V3: Record<NivelCodigo, NivelInfo> = {
     corTexto: 'text-orange-400',
     corBarra: 'from-orange-500 to-orange-400',
     corBg: 'bg-orange-500/10 border-orange-500/30',
+    corHex: '#F97316',
+    cor: '#F97316',
   },
   N1: {
     codigo: 'N1',
@@ -66,6 +76,8 @@ export const NIVEIS_SCORE_V3: Record<NivelCodigo, NivelInfo> = {
     corTexto: 'text-red-400',
     corBarra: 'from-red-600 to-red-500',
     corBg: 'bg-red-500/10 border-red-500/30',
+    corHex: '#EF4444',
+    cor: '#EF4444',
   },
 };
 
