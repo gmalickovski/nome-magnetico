@@ -36,9 +36,9 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
     <!-- Spacer: compensates fixed header height (~36px) -->
     <div class="hidden md:block h-9"></div>
 
-    <main class="mx-auto max-w-4xl px-2 pb-32 md:px-6 md:py-12 md:pb-24">
+    <div class="mx-auto max-w-4xl px-2 sm:px-4 pb-32 md:px-6 md:py-12 md:pb-24">
       <slot />
-    </main>
+    </div>
   </div>
 
   {showActions && (

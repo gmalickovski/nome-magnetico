@@ -118,7 +118,7 @@ export function PublicAnalysisForm() {
       {/* Formulário */}
       <form
         onSubmit={handleSubmit}
-        className="bg-[#1a1a1a] border border-[#D4AF37]/20 rounded-2xl p-6 sm:p-8 space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+        className="bg-[#1a1a1a] border border-[#D4AF37]/20 rounded-2xl p-4 sm:p-8 space-y-5 sm:space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
       >
         <div className="space-y-2">
           <label htmlFor="pub-nome" className="block text-sm font-semibold uppercase tracking-wider text-gray-400">
@@ -224,7 +224,7 @@ export function PublicAnalysisForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-[#2DD4BF] via-[#0D9488] to-[#0F766E] text-[#e5e2e1] font-bold text-lg py-4 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all duration-300 shadow-lg shadow-[#0D9488]/20 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-[#2DD4BF] via-[#0D9488] to-[#0F766E] text-[#e5e2e1] font-bold text-base sm:text-lg py-3.5 sm:py-4 px-6 rounded-full hover:brightness-110 active:scale-[0.98] transition-all duration-300 shadow-lg shadow-[#0D9488]/20 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

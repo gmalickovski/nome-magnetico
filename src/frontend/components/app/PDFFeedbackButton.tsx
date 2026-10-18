@@ -503,7 +503,7 @@ export function PDFFeedbackButton({
         <button
           ref={fabRef}
           onClick={handleDownload}
-          className="md:hidden fixed z-50 flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-sm font-bold uppercase tracking-wider py-4 px-6 rounded-full shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-[#f2ca50] hover:shadow-[0_4px_32px_rgba(212,175,55,0.55)] active:scale-95 transition-all duration-300 left-4 right-4"
+          className="md:hidden fixed z-50 flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-xs sm:text-sm font-bold uppercase tracking-wider py-3.5 sm:py-4 px-3 sm:px-6 rounded-full shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-[#f2ca50] hover:shadow-[0_4px_32px_rgba(212,175,55,0.55)] active:scale-95 transition-all duration-300 left-3 right-3 sm:left-4 sm:right-4 max-w-md mx-auto"
           style={{
             opacity: 1,
             transition: 'opacity 0.4s ease, background-color 0.3s, box-shadow 0.3s, transform 0.1s',

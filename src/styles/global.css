@@ -494,3 +494,40 @@
   display: none; /* Chrome/Safari */
 }
 
+/* =============================================
+   RESPONSIVE MULTI-DEVICE UTILITIES (DEV-195)
+   ============================================= */
+
+/* Safe area insets para foldables e notch devices */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* Tipografia fluida com clamp() para evitar encavalamento em telas estreitas */
+.text-fluid-hero {
+  font-size: clamp(1.85rem, 5vw + 0.5rem, 3.5rem);
+  line-height: 1.15;
+}
+.text-fluid-h1 {
+  font-size: clamp(1.5rem, 4vw + 0.25rem, 2.75rem);
+  line-height: 1.2;
+}
+.text-fluid-h2 {
+  font-size: clamp(1.25rem, 3vw + 0.25rem, 2rem);
+  line-height: 1.25;
+}
+.text-fluid-h3 {
+  font-size: clamp(1.1rem, 2vw + 0.25rem, 1.5rem);
+  line-height: 1.3;
+}
+
+/* Previne quebra de layout por overflow em viewports compactas (280px-344px) */
+.touch-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+

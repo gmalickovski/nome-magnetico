@@ -77,10 +77,10 @@ export function LandingHeader() {
           : 'bg-transparent border-transparent'
       }`}
     >
-      <div ref={rowRef} className={`max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 flex items-center justify-between ${scrolled ? 'py-3' : 'py-5'}`}>
+      <div ref={rowRef} className={`max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3.5 sm:px-6 md:px-10 lg:px-12 flex items-center justify-between ${scrolled ? 'py-3' : 'py-4 sm:py-5'}`}>
         {/* Logo */}
         <a ref={logoRef} href="/" className="hover:opacity-80 transition-opacity shrink-0">
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-9 w-auto max-w-none aspect-[2447/500] sm:h-10 md:h-11" />
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-8 sm:h-10 md:h-11 w-auto max-w-none aspect-[2447/500]" />
         </a>
 
         {/* Nav desktop — hidden until the logo and the links both fit */}

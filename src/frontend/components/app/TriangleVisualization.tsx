@@ -154,11 +154,11 @@ function TrianguloSVG({ triangulo, nome }: { triangulo: TrianguloData; nome: str
   const xBase = midX - textWidth / 2;
 
   return (
-    <div className="overflow-x-auto py-2 flex justify-center w-full">
+    <div className="overflow-x-auto py-2 flex justify-center w-full touch-scroll-container">
       <svg
         viewBox={viewBox}
         xmlns="http://www.w3.org/2000/svg"
-        style={{ width: '100%', height: 'auto', maxWidth: `${largura}px` }}
+        style={{ width: '100%', height: 'auto', maxWidth: `${largura}px`, minWidth: `${Math.min(largura, 280)}px` }}
         preserveAspectRatio="xMidYMid meet"
       >
         {/* ── Linha das letras ── */}
@@ -513,7 +513,7 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
               key={t}
               onClick={() => setAba(t)}
               className={`
-                flex-auto flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 min-w-[130px] whitespace-nowrap
+                flex-auto flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 min-w-[105px] sm:min-w-[130px] whitespace-nowrap
                 ${aba === t
                   ? 'bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20'
                   : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'}

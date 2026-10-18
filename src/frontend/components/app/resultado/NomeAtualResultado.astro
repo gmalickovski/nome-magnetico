@@ -212,11 +212,12 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         const p = palettes[i % palettes.length];
         return (
           <div
-            style={`border-radius:16px; border:1.5px solid ${p.border}; background:${p.bg}; padding:16px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:6px;`}
+            class="rounded-2xl p-3 sm:p-4 text-center flex flex-col items-center gap-1 sm:gap-1.5 transition-all"
+            style={`border:1.5px solid ${p.border}; background:${p.bg};`}
           >
-            <span style={`font-size:10px; font-weight:700; color:${p.color}; text-transform:uppercase; letter-spacing:0.08em;`}>{num.label}</span>
-            <div style={`font-family:'Cinzel',serif; font-size:2.5rem; font-weight:700; color:${p.color}; line-height:1;`}>{num.value ?? '?'}</div>
-            <div style={`font-size:11px; color:${p.color}; opacity:0.8;`}>{num.sublabel}</div>
+            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider" style={`color:${p.color};`}>{num.label}</span>
+            <div class="font-cinzel text-3xl sm:text-4xl font-bold leading-none my-1" style={`color:${p.color};`}>{num.value ?? '?'}</div>
+            <div class="text-[10px] sm:text-[11px] opacity-80" style={`color:${p.color};`}>{num.sublabel}</div>
           </div>
         );
       });
