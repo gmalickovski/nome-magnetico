@@ -35,6 +35,9 @@ export interface Analysis {
   nivel?: string | null;
   potencial?: number | null;
   score_detalhe?: unknown | null;
+  parent_analysis_id?: string | null;
+  recalculated_from_version?: string | null;
+  recalculated_at?: string | null;
   opt_in: boolean;
   opt_in_data: string | null;
   status: AnalysisStatus;

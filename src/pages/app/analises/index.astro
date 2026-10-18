@@ -238,6 +238,27 @@ const hasMultipleProducts = uniqueProducts.length > 1;
                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                       {analysis.dateFormatted}
                     </span>
+                    {!analysis.isV3 && (
+                      <button
+                        type="button"
+                        data-recalc-id={analysis.id}
+                        class="btn-card-recalc text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/35 whitespace-nowrap uppercase tracking-wider transition-all"
+                        title="Gerar nova versão com motor v3 (grátis)"
+                        onclick="event.preventDefault(); event.stopPropagation();"
+                      >
+                        ✦ Recalcular v3
+                      </button>
+                    )}
+                    {analysis.recalculated_from_version && (
+                      <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 whitespace-nowrap uppercase tracking-wider">
+                        Versão Atualizada
+                      </span>
+                    )}
+                    {analysis.parent_analysis_id && (
+                      <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded font-medium bg-white/5 text-gray-400 border border-white/10 whitespace-nowrap uppercase tracking-wider">
+                        v3 derivada
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -403,6 +424,39 @@ const hasMultipleProducts = uniqueProducts.length > 1;
         const id = (btn as HTMLElement).dataset.deleteId;
         const card = (btn as HTMLElement).closest('.analysis-card') as HTMLElement | null;
         if (id) openDeleteModal(id, card);
+      });
+    });
+
+    // Ações de recálculo rápido direto nos cards
+    document.querySelectorAll('.btn-card-recalc').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = button as HTMLButtonElement;
+        const analysisId = btn.dataset.recalcId;
+        if (!analysisId) return;
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Recalculando...';
+        btn.disabled = true;
+
+        try {
+          const res = await fetch('/api/recalculate-v3', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ analysisId }),
+          });
+          const data = await res.json();
+          if (res.ok && data.analysisId) {
+            window.location.href = `/app/resultado/${data.analysisId}`;
+          } else {
+            throw new Error(data.error || 'Erro ao recalcular');
+          }
+        } catch (err) {
+          alert(err instanceof Error ? err.message : 'Falha ao recalcular análise.');
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
       });
     });
   </script>
