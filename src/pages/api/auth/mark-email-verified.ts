@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../../backend/db/supabase';
+import { syncVerifiedEmailMarker } from '../../../backend/auth/confirmEmail';
 
 export const POST: APIRoute = async ({ locals, request }) => {
   let user = (locals as any).user;
@@ -17,31 +18,12 @@ export const POST: APIRoute = async ({ locals, request }) => {
     return json({ error: 'Autenticação necessária' }, 401);
   }
 
-  const verifiedAt = new Date().toISOString();
-
-  const { error: authError } = await supabase.auth.admin.updateUserById(user.id, {
-    user_metadata: {
-      ...(user.user_metadata ?? {}),
-      email_verified_at: verifiedAt,
-    },
-  });
-
-  if (authError) {
-    console.error('[mark-email-verified] auth metadata:', authError.message);
-    return json({ error: 'Não foi possível confirmar agora.' }, 500);
+  const result = await syncVerifiedEmailMarker(user.id);
+  if (!result.ok) {
+    return json({ error: result.error }, result.status);
   }
 
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .update({ email_verified_at: verifiedAt })
-    .eq('id', user.id)
-    .is('email_verified_at', null);
-
-  if (profileError) {
-    console.warn('[mark-email-verified] profile marker skipped:', profileError.message);
-  }
-
-  return json({ success: true });
+  return json({ success: true, email_verified_at: result.verifiedAt });
 };
 
 function json(body: object, status = 200) {
