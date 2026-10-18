@@ -88,9 +88,8 @@ export const GET: APIRoute = async ({ url }) => {
         debitosCarmicos,
         compatibilidade: avaliarCompatibilidade(expressao, destino),
       });
-      const score = isScoreV3()
-        ? avaliarNome(fullName, birthDateStr).score_v3
-        : scoreLegado;
+      const avaliacaoV3 = avaliarNome(fullName, birthDateStr, { calcularPotencial: true });
+      const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
 
       // Montar objeto de análise compatível com NomeAtualPDF
       const analysisObj = {
@@ -120,6 +119,11 @@ export const GET: APIRoute = async ({ url }) => {
         },
         analise_texto: null,
         score,
+        score_version: avaliacaoV3.score_version,
+        score_v3: avaliacaoV3.score_v3,
+        nivel: avaliacaoV3.nivel.codigo,
+        potencial: avaliacaoV3.potencial,
+        score_detalhe: avaliacaoV3,
         is_free: true,
         created_at: lead.created_at,
         updated_at: new Date().toISOString(),

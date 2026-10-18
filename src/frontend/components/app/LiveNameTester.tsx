@@ -171,23 +171,37 @@ export function LiveNameTester({ birthName, birthDate }: Props) {
            {/* Compatibilidade & Números */}
            <div className="grid md:grid-cols-2 gap-6">
               
-              {/* Box de Compatibilidade */}
+              {/* Box de Compatibilidade & Nível v3 */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-                 <h4 className="text-gray-400 text-sm tracking-wider uppercase mb-2">Compatibilidade</h4>
-                 <div className="text-4xl font-bold font-cinzel mb-2">
-                    {result.score >= 90 ? (
-                      <span className="text-emerald-400">{result.score}% Excelente</span>
-                    ) : result.score >= 70 ? (
-                      <span className="text-lime-400">{result.score}% Bom</span>
-                    ) : result.score >= 40 ? (
-                      <span className="text-yellow-400">{result.score}% Aceitável</span>
-                    ) : result.score >= 20 ? (
-                      <span className="text-orange-500">{result.score}% Não Recomendado</span>
-                    ) : (
-                      <span className="text-red-500">{result.score}% Tensão Vibracional</span>
-                    )}
+                 <h4 className="text-gray-400 text-sm tracking-wider uppercase mb-2">Vibração & Nível</h4>
+                 <div className="text-3xl sm:text-4xl font-bold font-cinzel mb-2">
+                    {(() => {
+                      const scoreVal = typeof result.score === 'object' && result.score !== null ? (result.score.total ?? 0) : (result.score ?? 0);
+                      const nivelCodigo = result.score?.nivel?.codigo;
+                      const nivelRotulo = result.score?.nivel?.rotulo;
+
+                      if (scoreVal >= 85) {
+                        return <span className="text-emerald-400">{scoreVal}/100 · {nivelCodigo ? `${nivelCodigo} ` : ''}{nivelRotulo || 'Harmonioso'}</span>;
+                      }
+                      if (scoreVal >= 70) {
+                        return <span className="text-lime-400">{scoreVal}/100 · {nivelCodigo ? `${nivelCodigo} ` : ''}{nivelRotulo || 'Favorável'}</span>;
+                      }
+                      if (scoreVal >= 50) {
+                        return <span className="text-yellow-400">{scoreVal}/100 · {nivelCodigo ? `${nivelCodigo} ` : ''}{nivelRotulo || 'Equilíbrio Parcial'}</span>;
+                      }
+                      if (scoreVal >= 30) {
+                        return <span className="text-orange-400">{scoreVal}/100 · {nivelCodigo ? `${nivelCodigo} ` : ''}{nivelRotulo || 'Pede Atenção'}</span>;
+                      }
+                      return <span className="text-red-400">{scoreVal}/100 · {nivelCodigo ? `${nivelCodigo} ` : ''}{nivelRotulo || 'Em Tensão'}</span>;
+                    })()}
                  </div>
                  <p className="text-gray-300 text-sm">{result.compatibilidade?.descricao || ''}</p>
+                 <a
+                   href="/como-funciona-o-score"
+                   className="mt-3 text-xs text-gray-500 hover:text-[#f2ca50] transition-colors underline decoration-dotted"
+                 >
+                   Como calculamos esta nota?
+                 </a>
               </div>
 
               {/* Box de Números Principais */}
