@@ -10,7 +10,7 @@ interface LandingSectionIntroProps {
 
 /** Matches HeroSection outer shell — full width, no horizontal bleed on small screens. */
 export const landingSectionShellClass =
-  'max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 w-full min-w-0';
+  'max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3.5 sm:px-6 md:px-10 lg:px-12 w-full min-w-0';
 
 /** Hero row rhythm: tighter on phone, opens on tablet/desktop. */
 export const landingSectionStackGapClass = 'gap-8 md:gap-12 lg:gap-16';
@@ -35,7 +35,7 @@ export function LandingSectionIntro({
       )}
       {title && (
         <h2
-          className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance"
+          className="font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance"
         >
           {title}
         </h2>

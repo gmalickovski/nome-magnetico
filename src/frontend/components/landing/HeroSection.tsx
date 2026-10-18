@@ -18,13 +18,13 @@ export function HeroSection() {
       </div>
 
       {/* CONTENT LAYERS (Z-10) */}
-      <div className="relative z-10 max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 w-full flex flex-col gap-8 md:gap-16">
+      <div className="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3.5 sm:px-6 md:px-10 lg:px-12 w-full flex flex-col gap-8 md:gap-16">
         
         {/* ROW 1: Grid Split 40/60 for Title & Live Simulation Card */}
-        <div className="grid lg:grid-cols-10 gap-12 items-center text-center lg:text-left">
+        <div className="grid lg:grid-cols-10 gap-8 lg:gap-12 items-center text-center lg:text-left">
           {/* Left Column: Headlines */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start">
-            <h1 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
               Sua Assinatura Tem<br />
               <span
                 style={{
