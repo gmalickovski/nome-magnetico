@@ -148,10 +148,10 @@ export function HeroScoreAnimation() {
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
-    <div className="w-full flex flex-col md:flex-row gap-4 items-center bg-[#181818]/40 backdrop-blur-md p-5 rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 max-w-2xl mx-auto">
+    <div className="w-full flex flex-col md:flex-row gap-4 lg:gap-6 items-center nm-floating-card p-5 sm:p-6 lg:p-7">
       
       {/* Esquerda: Lista de Opções */}
-      <div className="w-full md:w-[56%] flex flex-col gap-2 order-2 md:order-1">
+      <div className="w-full md:w-[56%] flex flex-col gap-2.5 order-2 md:order-1">
         {CANDIDATES.map((cand, idx) => {
           const isSelected = activeIndex === idx;
           return (

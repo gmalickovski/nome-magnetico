@@ -1,5 +1,11 @@
 import React from 'react';
 import { Accordion } from '../ui/Accordion';
+import {
+  LandingSectionIntro,
+  landingSectionShellClass,
+  landingSectionSpacingClass,
+} from './LandingSectionIntro';
+import { useLandingSectionReveal } from './useLandingSectionReveal';
 
 export interface FaqItemProps {
   id: string;
@@ -35,6 +41,7 @@ interface FAQSectionProps {
 }
 
 export function FAQSection({ items }: FAQSectionProps) {
+  const reveal = useLandingSectionReveal();
   const source = items && items.length > 0 ? items : fallbackItems;
 
   const accordionItems = source.map(item => ({
@@ -45,30 +52,39 @@ export function FAQSection({ items }: FAQSectionProps) {
   }));
 
   return (
-    <section id="faq" className="py-20 md:py-32 bg-[#111111]">
-      <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-          <p className="text-[#D4AF37] text-sm font-medium tracking-widest uppercase mb-3">
-            Dúvidas
-          </p>
-          <h2 className="font-cinzel text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight">
-            Perguntas Frequentes
-          </h2>
-        </div>
+    <section
+      id="faq"
+      ref={reveal.ref}
+      className={`${landingSectionSpacingClass} bg-[#131313] overflow-x-hidden ${reveal.className}`}
+    >
+      <div className={landingSectionShellClass}>
+        <div className="max-w-3xl mx-auto w-full min-w-0">
+          <LandingSectionIntro
+            label="Dúvidas"
+            title="Perguntas Frequentes"
+            align="center"
+            className="mb-10 md:mb-12"
+            revealed={reveal.revealed}
+            reduceMotion={reveal.reduceMotion}
+          />
 
-        <Accordion items={accordionItems} />
+          <Accordion
+            items={accordionItems}
+            variant="landing"
+            revealed={reveal.revealed}
+            reduceMotion={reveal.reduceMotion}
+          />
 
-        <div className="text-center mt-10">
-          <p className="text-gray-400 text-sm">
-            Ainda tem dúvidas?{' '}
-            <a href="/app/suporte" className="text-[#D4AF37] hover:underline">
-              Entre em contato
-            </a>
-          </p>
-        </div>
+          <div className="text-center mt-10">
+            <p className="text-gray-400 text-sm">
+              Ainda tem dúvidas?{' '}
+              <a href="/app/suporte" className="text-[#D4AF37] hover:underline">
+                Entre em contato
+              </a>
+            </p>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
   );
 }

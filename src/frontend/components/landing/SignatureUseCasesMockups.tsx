@@ -91,10 +91,10 @@ export function CleanSignatureSvg({
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[500px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 ${className}`}
+      className={`relative w-full ${landingMockupFloatClass} ${className}`}
     >
       {/* Clip decor only — keep overflow off the float shell so hero shadow is not cut. */}
-      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-7">
       {/* Padrão geométrico de fundo estilo cédula de segurança */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.06]"
@@ -226,9 +226,9 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
 export function SocialProfileMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 ${className}`}
+      className={`relative w-full ${landingMockupFloatClass} ${className}`}
     >
-      <div className="relative overflow-hidden rounded-2xl p-4 sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-7">
       {/* Brilho de fundo místico roxo e dourado */}
       <div
         className="absolute -top-12 -left-12 w-48 h-48 bg-[#d7c6ff]/10 rounded-full blur-3xl pointer-events-none"
@@ -354,9 +354,9 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 export function ContractMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[480px] mx-auto ${landingMockupFloatClass} bg-[#141414]/95 ${className}`}
+      className={`relative w-full ${landingMockupFloatClass} ${className}`}
     >
-      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-7">
       {/* Brilho dourado central sutil */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#f2ca50]/5 rounded-full blur-3xl pointer-events-none"
@@ -441,7 +441,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`relative w-full max-w-[440px] mx-auto ${landingMockupFloatClass} bg-gradient-to-br from-[#1a1a1a] to-[#121212] ${className}`}
+      className={`relative w-full ${landingMockupFloatClass} ${className}`}
     >
       <div className="relative overflow-hidden rounded-2xl p-6 sm:p-7">
       {/* Topo do cartão: Monograma 'JS' + Identidade */}
