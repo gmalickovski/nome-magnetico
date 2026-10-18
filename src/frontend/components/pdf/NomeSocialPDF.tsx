@@ -38,12 +38,14 @@ import {
 } from '../../../backend/numerology/interpretations';
 import { isScoreV3 } from '../../../backend/numerology/score-version';
 import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '../../../backend/numerology/score';
+import { avaliarCompatibilidade } from '../../../backend/numerology/harmonization';
 import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 import {
   obterNivelV3,
   getScoreV3Level,
   getScoreV3LevelDescription,
   SCORE_CONFIG_V3,
+  isAnaliseV3,
 } from '../../../shared/score-v3';
 
 const theme = THEMES.nome_social;
@@ -344,20 +346,17 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
   const triCellSizeNasc = Math.min(18, Math.max(5, Math.floor(430 / nascBaseLen) - 1));
   // ───────────────────────────────────────────────────────────────────────────
 
-  const isV3 = isScoreV3(analysis as any);
+  const isV3 = isAnaliseV3(analysis as any) || isScoreV3();
 
   // Score do nome de nascimento
   const scoreNasc = isV3
-    ? avaliarNome({
-        nomeCompleto: nomeNascimento,
-        dataNascimento: dataNascimentoRaw,
-        destino: cincoNumNasc.destino,
-      }).score
+    ? avaliarNome(nomeNascimento, dataNascimentoRaw).score_v3
     : calcularScoreV1SemOcorrenciasExtras({
         bloqueios: bloqueiosNasc,
-        debitos: debitosNasc,
-        licoes: licoesNasc,
-        tendencias: tendenciasNasc,
+        licoesCarmicas: licoesNasc.length,
+        tendenciasOcultas: tendenciasNasc.length,
+        debitosCarmicos: debitosNasc,
+        compatibilidade: avaliarCompatibilidade(cincoNumNasc.expressao ?? 1, cincoNumNasc.destino ?? 1),
       });
   const nivelNasc = isV3 ? obterNivelV3(scoreNasc) : null;
 
@@ -408,17 +407,14 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
 
   // Score do nome harmonizado
   const scoreSocial = isV3
-    ? avaliarNome({
-        nomeCompleto: nomeParaExibir,
-        dataNascimento: dataNascimentoRaw,
-        destino: cincoNumSocial.destino,
-      }).score
+    ? avaliarNome(nomeParaExibir, dataNascimentoRaw).score_v3
     : (isDifferentName
         ? calcularScoreV1SemOcorrenciasExtras({
             bloqueios: bloqueiosSocial,
-            debitos: debitosSocial,
-            licoes: licoesSocial,
-            tendencias: tendenciasSocial,
+            licoesCarmicas: licoesSocial.length,
+            tendenciasOcultas: tendenciasSocial.length,
+            debitosCarmicos: debitosSocial,
+            compatibilidade: avaliarCompatibilidade(cincoNumSocial.expressao ?? 1, cincoNumSocial.destino ?? 1),
           })
         : scoreNasc);
   const nivelSocial = isV3 ? obterNivelV3(scoreSocial) : null;

@@ -48,6 +48,8 @@ import {
   getScoreV3LevelDescription,
   formatScoreV3Points,
   SCORE_CONFIG_V3,
+  isAnaliseV3,
+  type NivelCodigo,
 } from '../../../shared/score-v3';
 
 const theme = THEME_NOME_ATUAL;
@@ -367,12 +369,14 @@ export function NomeAtualPDF({
         : analysis.data_nascimento
       : '';
 
+  const isV3 = isAnaliseV3(analysis as any) || isScoreV3();
+
   const avaliacaoV3 =
-    analysis.nome_completo && birthForScore && isScoreV3()
+    analysis.nome_completo && birthForScore && isV3
       ? avaliarNome(analysis.nome_completo, birthForScore, { calcularPotencial: true })
       : null;
 
-  const rawScore = isScoreV3()
+  const rawScore = isV3
     ? (avaliacaoV3?.score_v3 ?? storedV3 ?? storedScore)
     : (storedScore ?? (analysis.nome_completo && birthForScore && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
         ? calcularScoreV1SemOcorrenciasExtras({
@@ -384,8 +388,9 @@ export function NomeAtualPDF({
           })
         : null));
 
-  const nivelV3 = avaliacaoV3?.nivel ?? (rawScore != null ? getScoreV3Level(rawScore) : null);
+  const nivelV3: NivelCodigo | null = (avaliacaoV3?.nivel?.codigo as NivelCodigo | undefined) ?? (rawScore != null ? getScoreV3Level(rawScore) : null);
   const potencialV3 = avaliacaoV3?.potencial ?? null;
+  const nivelPotencialV3: NivelCodigo | null = isV3 && potencialV3 != null ? getScoreV3Level(potencialV3) : null;
   const debitosFixos = avaliacaoV3?.marcaDaData && avaliacaoV3.marcaDaData.length > 0
     ? avaliacaoV3.marcaDaData
     : debitos.filter(d => d.fixo === true);
