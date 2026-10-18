@@ -394,14 +394,8 @@ export default function AdminGeneralAnalysis() {
         setSaveSuccess('Análise salva com sucesso!');
         
         if (data.analysisId) {
-          if (activeTab === 'social' && !isFree) {
-            // Se for versão completa do nome social do analista, redireciona diretamente para o relatório HTML
-            window.location.href = `/app/resultado/${data.analysisId}`;
-            return;
-          }
-
           try {
-            // Atualiza status do modal para baixar o PDF
+            // Atualiza status do modal para baixar o PDF diretamente
             setPdfModal({
               isOpen: true,
               status: 'loading',

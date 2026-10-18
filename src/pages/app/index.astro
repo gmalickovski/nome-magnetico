@@ -584,14 +584,14 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
         </div>
         <a
           href="/comprar"
-          class="flex-shrink-0 bg-[#D4AF37] text-[#1A1A1A] font-medium px-6 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          class="flex-shrink-0 bg-[#D4AF37] text-[#1A1A1A] font-medium px-6 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
         >
           Renovar Acesso
         </a>
       </div>
     )}
 
-    <!-- Banner: Novo usuÃ¡rio (nunca comprou) -->
+    <!-- Banner: Novo usuário (nunca comprou) -->
     {false && !isAdmin && !hasAnyAccess && !isExpired && (
       <div class="bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
@@ -602,7 +602,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
         </div>
         <a
           href="/comprar"
-          class="flex-shrink-0 bg-[#D4AF37] text-[#1A1A1A] font-medium px-6 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          class="flex-shrink-0 bg-[#D4AF37] text-[#1A1A1A] font-medium px-6 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
         >
           Ver Todos os Produtos
         </a>
@@ -682,7 +682,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
                 <>
                   <a
                     href={`/app/resultado/${featuredAnalysisId}`}
-                    class="inline-flex items-center justify-center rounded-xl border border-[#D4AF37]/35 bg-[#D4AF37]/10 px-5 py-2.5 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37]/15"
+                    class="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/10 px-5 py-2.5 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37]/15"
                   >
                     Ver Harmonização
                   </a>
@@ -693,7 +693,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
                   />
                   <a
                     href="/app/analise/nome-social"
-                    class="inline-flex items-center justify-center rounded-xl bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
+                    class="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
                   >
                     Nova harmonização
                   </a>
@@ -708,7 +708,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
                   {hasNomeSocial ? (
                     <a
                       href="/app/analise/nome-social"
-                      class="inline-flex items-center justify-center rounded-xl bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
+                      class="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
                     >
                       Harmonizar meu Nome
                     </a>
@@ -719,7 +719,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
                       priceInfo={priceMap.nome_social ?? PRICE_UNAVAILABLE}
                       promotion={promotion}
                       label="Harmonizar meu Nome"
-                      className="inline-flex items-center justify-center rounded-xl bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
+                      className="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
                     />
                   )}
                 </>

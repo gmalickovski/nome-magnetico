@@ -118,7 +118,7 @@ const hasMultipleProducts = uniqueProducts.length > 1;
       {hasAnyPaidAccess && (
         <a
           href="/app"
-          class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
+          class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
         >
           + Nova Análise
         </a>
@@ -127,9 +127,9 @@ const hasMultipleProducts = uniqueProducts.length > 1;
 
     {hasMultipleProducts && (
       <div class="flex items-center gap-2 mb-2 overflow-x-auto pb-2 scrollbar-hide">
-        <button class="filter-btn flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium bg-[#D4AF37] text-[#1A1A1A] transition-colors" data-filter="all">Todos</button>
+        <button class="filter-btn flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-[#D4AF37] text-[#1A1A1A] transition-colors" data-filter="all">Todos</button>
         {uniqueProducts.map(pt => (
-          <button class="filter-btn flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors" data-filter={pt}>
+          <button class="filter-btn flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors" data-filter={pt}>
             {productLabel[pt] ?? pt}
           </button>
         ))}
@@ -143,7 +143,7 @@ const hasMultipleProducts = uniqueProducts.length > 1;
         <p class="text-gray-400 mb-6">Inicie sua primeira análise numerológica.</p>
         <a
           href="/app"
-          class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-medium px-6 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+          class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-medium px-6 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
         >
           Começar Agora
         </a>
@@ -296,8 +296,8 @@ const hasMultipleProducts = uniqueProducts.length > 1;
       <h3 class="font-cinzel text-xl font-bold text-red-400 mb-2">Excluir Análise</h3>
       <p class="text-gray-400 text-sm mb-6 leading-relaxed">Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.</p>
       <div class="flex gap-3">
-        <button id="btn-cancel-delete" class="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-[#2a2a2a] hover:bg-[#333] text-gray-300 transition-colors">Cancelar</button>
-        <button id="btn-confirm-delete" class="flex-1 px-4 py-2.5 rounded-lg text-sm font-bold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center justify-center gap-2">
+        <button id="btn-cancel-delete" class="flex-1 px-4 py-2.5 rounded-full text-sm font-medium bg-[#2a2a2a] hover:bg-[#333] text-gray-300 transition-colors">Cancelar</button>
+        <button id="btn-confirm-delete" class="flex-1 px-4 py-2.5 rounded-full text-sm font-bold bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center justify-center gap-2">
           <span>Excluir</span>
         </button>
       </div>

@@ -10,6 +10,7 @@ export const OPS_STAFF_ROUTES: Record<string, string> = {
   '/support': '/ops/support',
   '/blog': '/ops/blog',
   '/mensagens': '/ops/mensagens',
+  '/analise': '/ops/analise',
   '/settings': '/ops/settings',
 };
 
