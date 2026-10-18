@@ -1,4 +1,5 @@
 import React from 'react';
+import { getRevealItemProps } from './useLandingSectionReveal';
 
 interface LandingSectionIntroProps {
   label?: string;
@@ -6,14 +7,38 @@ interface LandingSectionIntroProps {
   description?: React.ReactNode;
   align?: 'center' | 'left';
   className?: string;
+  /** Optional scroll reveal state to animate overline -> title -> description in stagger */
+  revealed?: boolean;
+  reduceMotion?: boolean;
 }
 
-/** Matches HeroSection outer shell — full width, no horizontal bleed on small screens. */
+/**
+ * Single Master Container Shell (DEV-196.1 — Material Design 3 + Studio MLK Playbook).
+ * Guarantees Grid Line Continuity across Header, Hero, Split Sections, and 3/4-Card Grids.
+ * - Compact (<600px): 16px (px-4)
+ * - Medium (600–839px): 24px (sm:px-6)
+ * - Expanded (840–1199px): 40px (md:px-10)
+ * - Large/Extra-large (1200px+): 48px (lg:px-12), max-w-[1440px] / 2xl:max-w-[1600px]
+ */
 export const landingSectionShellClass =
-  'max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3.5 sm:px-6 md:px-10 lg:px-12 w-full min-w-0';
+  'max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0';
 
-/** Hero row rhythm: tighter on phone, opens on tablet/desktop. */
-export const landingSectionStackGapClass = 'gap-8 md:gap-12 lg:gap-16';
+/**
+ * Standardized Vertical Rhythm for standard (non-sticky) landing sections.
+ * Follows 8dp grid multiples across mobile, laptop 13"/14", and desktop.
+ */
+export const landingSectionSpacingClass = 'py-20 md:py-24 lg:py-28 xl:py-32';
+
+/**
+ * Standardized 12-Column Split Grid (M3 Layout Grid):
+ * - Copy column: `lg:col-span-5` (~42% width -> optimal 45-65ch reading measure)
+ * - Visual/Mockup column: `lg:col-span-7` (~58% width -> generous room for cards)
+ */
+export const landingSplitGridClass =
+  'grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10 lg:gap-12 xl:gap-16 items-center w-full min-w-0';
+
+/** Hero / Section row rhythm: tighter on phone, opens on tablet/desktop. */
+export const landingSectionStackGapClass = 'gap-8 md:gap-10 lg:gap-12 xl:gap-16';
 
 /** Section heading rhythm aligned with HeroSection — no bordered card chrome. */
 export function LandingSectionIntro({
@@ -22,29 +47,40 @@ export function LandingSectionIntro({
   description,
   align = 'center',
   className = '',
+  revealed = true,
+  reduceMotion = false,
 }: LandingSectionIntroProps) {
   const alignClass =
     align === 'center' ? 'text-center mx-auto' : 'text-center lg:text-left';
 
+  const labelReveal = getRevealItemProps(revealed, 0, reduceMotion);
+  const titleReveal = getRevealItemProps(revealed, 90, reduceMotion);
+  const descReveal = getRevealItemProps(revealed, 180, reduceMotion);
+
   return (
     <div className={`${alignClass} min-w-0 ${className}`}>
       {label && (
-        <p className="text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-4 md:mb-6">
+        <p
+          className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3 md:mb-4 ${labelReveal.className}`}
+          style={labelReveal.style}
+        >
           {label}
         </p>
       )}
       {title && (
         <h2
-          className="font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#e5e2e1] mb-4 leading-tight text-balance"
+          className={`font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-[2.65rem] xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance ${titleReveal.className}`}
+          style={titleReveal.style}
         >
           {title}
         </h2>
       )}
       {description && (
         <p
-          className={`text-gray-400 text-sm md:text-base leading-relaxed max-w-prose break-words ${
+          className={`text-gray-400 text-sm sm:text-base leading-relaxed max-w-[62ch] text-pretty break-words ${
             align === 'center' ? 'mx-auto' : 'lg:mx-0 mx-auto'
-          }`}
+          } ${descReveal.className}`}
+          style={descReveal.style}
         >
           {description}
         </p>
@@ -54,28 +90,31 @@ export function LandingSectionIntro({
 }
 
 /**
- * Hero floating panel (REFERENCE — do not change Hero to match mockups).
- * Technique: soft glass surface + hairline ring + Tailwind `shadow-2xl`.
+ * Hero & Primary Floating Panel (DEV-196.2).
+ * Uses multi-layer realistic 3D shadow + top specular highlight + subtle glass blur.
  */
 export const landingPanelClass =
-  'bg-[#181818]/40 backdrop-blur-md rounded-2xl ring-1 ring-white/5 shadow-2xl shadow-black/80 min-w-0';
+  'nm-floating-card min-w-0';
 
 /**
- * Floating mockup card — same *technique* as the Hero panel (ring + one box-shadow),
- * but softer falloff: larger blur + lower opacity so the cast dissolves into
- * the page ground instead of a hard silhouette edge.
- *
- * **One token for every breakpoint** (phone / tablet stack / desktop side-by-side).
- * Layout may stack or grid; the shadow recipe never changes. When desktop fit
- * applies CSS `zoom`, the cast scales with the card.
- * Hero stays on `shadow-2xl shadow-black/80` (reference — do not change it).
+ * Floating mockup card — unified multi-layer 3D elevation across every landing section
+ * (Hero, HowItWorks, Products, SignatureUseCases, Voting, FAQ).
  */
 export const landingMockupFloatClass =
-  'rounded-2xl min-w-0 w-full max-w-full ring-1 ring-white/5 shadow-[0_24px_72px_-6px_rgba(0,0,0,0.2)]';
+  'nm-floating-card min-w-0 w-full max-w-full';
 
-/** @deprecated Use landingMockupFloatClass + surface bg. */
-export const landingMockupCardClass = `${landingMockupFloatClass} bg-[#1c1c1c]`;
+/** Interactive floating card with hover lift and golden specular rim highlight. */
+export const landingInteractiveCardClass =
+  'nm-floating-card-interactive min-w-0 w-full max-w-full';
 
-/** Primary tap target on landing (matches hero CTA height). */
+/** Compact floating tile for dense multi-card grids (e.g. 3-up suggestion cards). */
+export const landingMockupTileClass =
+  'nm-floating-tile min-w-0 w-full max-w-full';
+
+/** @deprecated Use landingMockupFloatClass. */
+export const landingMockupCardClass = landingMockupFloatClass;
+
+/** Primary tap target on landing (matches hero CTA height >= 48px M3/Apple HIG). */
 export const landingTouchTargetClass =
   'min-h-12 flex items-center justify-center touch-manipulation';
+

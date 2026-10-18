@@ -217,18 +217,27 @@ const schemaFAQ = {
   <script type="application/ld+json" set:html={JSON.stringify(schemaFAQ)} />
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) return;
+
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             entry.target.classList.add('opacity-100', 'translate-y-0');
-            entry.target.classList.remove('opacity-0', 'translate-y-8');
+            entry.target.classList.remove('opacity-0', 'translate-y-6');
             observer.unobserve(entry.target);
           }
         });
-      }, { threshold: 0.1 });
+      }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
 
       document.querySelectorAll('.animate-on-scroll').forEach((el) => {
-        el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-1000', 'ease-out');
+        el.classList.add(
+          'opacity-0',
+          'translate-y-6',
+          'transition-all',
+          'duration-700',
+          'ease-[cubic-bezier(0.22,1,0.36,1)]',
+        );
         observer.observe(el);
       });
     });

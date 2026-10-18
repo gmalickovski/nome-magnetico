@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { capturePostHogEvent } from '../../lib/analytics';
-import { LandingSectionIntro } from './LandingSectionIntro';
+import {
+  LandingSectionIntro,
+  landingInteractiveCardClass,
+  landingMockupFloatClass,
+  landingSectionShellClass,
+  landingSectionSpacingClass,
+} from './LandingSectionIntro';
+import { getRevealItemProps, useLandingSectionReveal } from './useLandingSectionReveal';
 
 export type VoteOptionId = 'nome_bebe' | 'nome_empresa' | 'outro';
 
@@ -38,6 +45,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
   const [submitting, setSubmitting] = useState(false);
   const [voted, setVoted] = useState(false);
   const [error, setError] = useState('');
+  const reveal = useLandingSectionReveal();
 
   async function handleVote(optionId: VoteOptionId) {
     if (submitting || voted) return;
@@ -78,33 +86,36 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
   return (
     <section
       id="votacao-proximo-produto"
+      ref={variant === 'landing' ? reveal.ref : undefined}
       aria-label="Votação do próximo produto"
       className={
         variant === 'landing'
-          ? 'py-20 md:py-28 bg-[#111111]'
+          ? `${landingSectionSpacingClass} bg-[#111111] overflow-x-hidden ${reveal.className}`
           : 'my-8'
       }
     >
-      <div className={variant === 'landing' ? 'max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12' : ''}>
+      <div className={variant === 'landing' ? landingSectionShellClass : ''}>
         {variant === 'landing' ? (
-          <div className="w-full">
+          <div className="w-full min-w-0">
             <LandingSectionIntro
               label="Próximos Lançamentos"
               title="Qual análise você quer ver a seguir no Nome Magnético?"
               description="Toque em uma opção para votar. Votação 100% anônima e instantânea — sem cadastro e sem coleta de dados pessoais."
               align="center"
               className="mb-10 md:mb-14"
+              revealed={reveal.revealed}
+              reduceMotion={reveal.reduceMotion}
             />
 
             {voted ? (
               <div
                 role="status"
-                className="rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/30 px-6 py-5 max-w-lg mx-auto text-center shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
+                className={`${landingMockupFloatClass} bg-emerald-500/10 ring-1 ring-emerald-500/30 px-6 py-5 max-w-lg mx-auto text-center`}
               >
-                <p className="font-cinzel text-base sm:text-lg font-bold text-emerald-300 mb-1">
+                <p className="font-cinzel text-base sm:text-lg font-bold text-emerald-300 mb-1 text-balance">
                   ✦ Voto contabilizado! Obrigado por participar.
                 </p>
-                <p className="text-xs sm:text-sm text-gray-300">
+                <p className="text-xs sm:text-sm text-gray-300 text-pretty">
                   Você votou em{' '}
                   <strong className="text-[#e5e2e1]">
                     {VOTE_OPTIONS.find((o) => o.id === selected)?.label ?? selected}
@@ -113,9 +124,14 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-5xl mx-auto">
-                {VOTE_OPTIONS.map((opt) => {
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch w-full">
+                {VOTE_OPTIONS.map((opt, idx) => {
                   const isCurrent = selected === opt.id && submitting;
+                  const itemReveal = getRevealItemProps(
+                    reveal.revealed,
+                    140 + idx * 100,
+                    reveal.reduceMotion,
+                  );
                   return (
                     <button
                       key={opt.id}
@@ -123,23 +139,24 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                       disabled={submitting}
                       onClick={() => handleVote(opt.id)}
                       data-vote-option={opt.id}
-                      className="group flex flex-col justify-between rounded-2xl bg-[#181818]/90 p-6 md:p-8 text-left ring-1 ring-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition-all duration-300 hover:bg-[#1f1f1f] hover:ring-[#D4AF37]/50 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#d7c6ff] disabled:opacity-60 cursor-pointer min-h-[200px]"
+                      className={`group flex flex-col justify-between ${landingInteractiveCardClass} p-6 md:p-8 text-left focus:outline-none focus:ring-2 focus:ring-[#d7c6ff] disabled:opacity-60 cursor-pointer min-h-[210px] ${itemReveal.className}`}
+                      style={itemReveal.style}
                     >
                       <div>
                         <div className="flex items-center justify-between gap-3 mb-3">
-                          <span className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] group-hover:text-[#f2ca50] transition-colors">
+                          <span className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] group-hover:text-[#f2ca50] transition-colors text-balance">
                             {opt.label}
                           </span>
                           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10 text-xs text-[#D4AF37] ring-1 ring-[#D4AF37]/30 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
                             {isCurrent ? '…' : '→'}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-400 leading-relaxed">
+                        <p className="text-sm text-gray-400 leading-relaxed text-pretty">
                           {opt.description}
                         </p>
                       </div>
-                      <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50] transition-colors">
+                      <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50] transition-colors whitespace-nowrap">
                           {isCurrent ? 'Registrando voto...' : 'Votar nesta opção'}
                         </span>
                         <span className="text-xs text-[#bea5ff]/40 group-hover:text-[#bea5ff] transition-colors">◈</span>

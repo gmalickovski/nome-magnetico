@@ -7,9 +7,10 @@ import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../.
 import type { SellableProductType } from '../../../shared/product-labels';
 import {
   landingSectionShellClass,
+  landingSectionSpacingClass,
   landingTouchTargetClass,
 } from './LandingSectionIntro';
-import { useLandingSectionReveal } from './useLandingSectionReveal';
+import { getRevealItemProps, useLandingSectionReveal } from './useLandingSectionReveal';
 
 export interface StripePrices {
   nome_social: string;
@@ -184,11 +185,13 @@ export function PricingSection({
     }
   }
 
+  const cardReveal = getRevealItemProps(reveal.revealed, 100, reveal.reduceMotion);
+
   return (
     <section
       id="precos"
       ref={reveal.ref}
-      className={`py-16 md:py-20 bg-[#111111] overflow-x-hidden ${reveal.className}`}
+      className={`${landingSectionSpacingClass} bg-[#131313] overflow-x-hidden ${reveal.className}`}
     >
       <style>
         {`
@@ -209,9 +212,12 @@ export function PricingSection({
         `}
       </style>
       <div className={landingSectionShellClass}>
-        <div className="mx-auto w-full max-w-xl min-w-0">
-          <div className="nm-price-border rounded-2xl bg-[#111111] px-6 py-8 md:px-10 md:py-10 text-center">
-            <p className="text-[#e5e2e1] text-sm leading-relaxed">
+        <div
+          className={`mx-auto w-full max-w-xl min-w-0 ${cardReveal.className}`}
+          style={cardReveal.style}
+        >
+          <div className="nm-floating-card nm-price-border rounded-2xl px-6 py-8 md:px-10 md:py-10 text-center">
+            <p className="text-[#e5e2e1] text-sm font-medium leading-relaxed">
               Nome Social.
             </p>
 
@@ -219,17 +225,17 @@ export function PricingSection({
               <Price {...priceProps} size="hero" className="text-center items-center" />
             </div>
 
-            <ul className="mt-3 space-y-0.5 text-xs leading-relaxed text-[#76746a] list-none p-0 m-0">
+            <ul className="mt-4 space-y-1 text-xs leading-relaxed text-[#76746a] list-none p-0 m-0 text-pretty">
               {NOME_SOCIAL_DELIVERABLES.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
 
-            <p className="mt-3 text-[#e5e2e1] text-sm leading-relaxed">
+            <p className="mt-4 text-[#e5e2e1] text-sm leading-relaxed">
               pagamento único, sem mensalidade.
             </p>
 
-            <p className="mt-3 text-gray-400 text-sm leading-relaxed">
+            <p className="mt-2 text-gray-400 text-sm leading-relaxed">
               Acesso na hora.{' '}
               <span className="whitespace-nowrap">Sete dias de garantia.</span>
             </p>

@@ -1,61 +1,42 @@
 import React from 'react';
 import {
   landingSectionShellClass,
-  landingSectionStackGapClass,
+  landingSectionSpacingClass,
+  landingSplitGridClass,
 } from './LandingSectionIntro';
-import { useLandingSectionReveal } from './useLandingSectionReveal';
+import { getRevealItemProps, useLandingSectionReveal } from './useLandingSectionReveal';
 import { ProductHarmonyFrame, ProductSuggestionsFrame } from './ProductResultFrame';
 
-/**
- * Two-panel layout from Expanded (~840px) up — Compact/Medium stack.
- * Aligns with the frontend playbook (M3 breakpoints).
- */
-const productSectionGridClass =
-  'grid grid-cols-1 min-[840px]:grid-cols-2 items-start min-[840px]:items-center';
-
-const productCopyAlignClass = 'text-center min-[840px]:text-left';
-const productCopyProseClass = 'max-w-prose mx-auto min-[840px]:mx-0';
+const productCopyAlignClass = 'text-center lg:text-left';
+const productCopyProseClass = 'max-w-[58ch] mx-auto lg:mx-0';
 
 /** Layout shell only — floating chrome lives on individual mockup cards. */
 const mockupSlotClass = 'min-w-0 w-full max-w-full';
-
-function TextBlock({
-  revealed,
-  delayMs,
-  children,
-}: {
-  revealed: boolean;
-  delayMs: number;
-  children: React.ReactNode;
-}) {
-  // Keep copy readable immediately — never blank-out with opacity-0 while the
-  // section scrolls into view. Only a light settle motion on reveal.
-  return (
-    <div
-      className={`transition-transform duration-300 ease-out motion-reduce:transition-none motion-reduce:!translate-y-0 ${
-        revealed ? 'translate-y-0' : 'translate-y-1.5'
-      }`}
-      style={{ transitionDelay: revealed ? `${delayMs}ms` : '0ms' }}
-    >
-      {children}
-    </div>
-  );
-}
 
 export function ProductsSection() {
   const reveal1 = useLandingSectionReveal();
   const reveal2 = useLandingSectionReveal();
 
+  const s1Label = getRevealItemProps(reveal1.revealed, 0, reveal1.reduceMotion);
+  const s1Title = getRevealItemProps(reveal1.revealed, 90, reveal1.reduceMotion);
+  const s1Desc = getRevealItemProps(reveal1.revealed, 180, reveal1.reduceMotion);
+  const s1Mockup = getRevealItemProps(reveal1.revealed, 140, reveal1.reduceMotion);
+
+  const s2Label = getRevealItemProps(reveal2.revealed, 0, reveal2.reduceMotion);
+  const s2Title = getRevealItemProps(reveal2.revealed, 90, reveal2.reduceMotion);
+  const s2Desc = getRevealItemProps(reveal2.revealed, 180, reveal2.reduceMotion);
+  const s2Mockup = getRevealItemProps(reveal2.revealed, 140, reveal2.reduceMotion);
+
   return (
     <>
       {/* ── SEÇÃO 1: A HARMONIZAÇÃO ──────────────────────────────────────
-          Expanded+: Texto à esquerda, mockup flutuante à direita.
-          Compact/Medium (phone, tablet portrait, fold fechado): empilha texto → mockup.
+          Large+: Texto à esquerda (5 cols), mockup flutuante à direita (7 cols).
+          Compact/Medium/Expanded (<1024px): empilha texto → mockup.
       */}
       <section
         id="produtos"
         ref={reveal1.ref}
-        className="relative py-14 md:py-16 min-[840px]:py-12 xl:py-16 bg-[#111111] scroll-mt-28 overflow-x-clip"
+        className={`relative ${landingSectionSpacingClass} bg-[#111111] scroll-mt-28 overflow-x-clip`}
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -65,36 +46,39 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className={`${productSectionGridClass} ${landingSectionStackGapClass}`}>
-            <aside className="min-w-0 order-1">
-              <div>
-                <TextBlock revealed={reveal1.revealed} delayMs={0}>
-                  <p
-                    className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-3 ${productCopyAlignClass}`}
-                  >
-                    Harmonização
-                  </p>
-                </TextBlock>
+          <div className={landingSplitGridClass}>
+            <aside className="lg:col-span-5 min-w-0 order-1">
+              <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
+                <p
+                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3 md:mb-4 ${s1Label.className}`}
+                  style={s1Label.style}
+                >
+                  Harmonização
+                </p>
 
-                <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
-                  <TextBlock revealed={reveal1.revealed} delayMs={40}>
-                    <div>
-                      <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
-                        Compare sua nota hoje com o potencial da sua assinatura.
-                      </h3>
-                      <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                        Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
-                        Triângulo da Vida ou entra em tensão com o Destino, isso aparece na sua nota de 0 a 100. A
-                        Harmonização revela variações de nome social em nível N5 (Harmonioso), preservando sua
-                        identidade. Você vê o antes e o depois lado a lado — com transparência em cada critério.
-                      </p>
-                    </div>
-                  </TextBlock>
-                </div>
+                <h3
+                  className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance ${s1Title.className}`}
+                  style={s1Title.style}
+                >
+                  Compare sua nota hoje com o potencial da sua assinatura.
+                </h3>
+
+                <p
+                  className={`text-gray-300 text-sm sm:text-base leading-relaxed text-pretty ${s1Desc.className}`}
+                  style={s1Desc.style}
+                >
+                  Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
+                  Triângulo da Vida ou entra em tensão com o Destino, isso aparece na sua nota de 0 a 100. A
+                  Harmonização revela variações de nome social em nível N5 (Harmonioso), preservando sua
+                  identidade. Você vê o antes e o depois lado a lado — com transparência em cada critério.
+                </p>
               </div>
             </aside>
 
-            <div className={`${mockupSlotClass} order-2`}>
+            <div
+              className={`lg:col-span-7 ${mockupSlotClass} order-2 ${s1Mockup.className}`}
+              style={s1Mockup.style}
+            >
               <ProductHarmonyFrame />
             </div>
           </div>
@@ -102,13 +86,13 @@ export function ProductsSection() {
       </section>
 
       {/* ── SEÇÃO 2: AS SUGESTÕES ────────────────────────────────────────
-          Expanded+: mockup à esquerda, texto à direita.
-          Compact/Medium: texto → mockup (empilhado).
+          Large+: mockup à esquerda (7 cols), texto à direita (5 cols).
+          Compact/Medium/Expanded (<1024px): texto → mockup (empilhado).
       */}
       <section
         id="sugestoes"
         ref={reveal2.ref}
-        className="relative py-14 md:py-16 min-[840px]:py-12 xl:py-16 bg-[#111111] scroll-mt-28 overflow-x-clip"
+        className={`relative ${landingSectionSpacingClass} bg-[#131313] scroll-mt-28 overflow-x-clip`}
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -118,36 +102,39 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className={`${productSectionGridClass} ${landingSectionStackGapClass}`}>
-            <div className={`${mockupSlotClass} order-2 min-[840px]:order-1`}>
+          <div className={landingSplitGridClass}>
+            <div
+              className={`lg:col-span-7 ${mockupSlotClass} order-2 lg:order-1 ${s2Mockup.className}`}
+              style={s2Mockup.style}
+            >
               <ProductSuggestionsFrame />
             </div>
 
-            <aside className="min-w-0 order-1 min-[840px]:order-2">
-              <div>
-                <TextBlock revealed={reveal2.revealed} delayMs={0}>
-                  <p
-                    className={`text-[#f2ca50] text-xs md:text-sm font-bold tracking-[0.15em] mb-3 ${productCopyAlignClass}`}
-                  >
-                    Sugestões Inteligentes
-                  </p>
-                </TextBlock>
+            <aside className="lg:col-span-5 min-w-0 order-1 lg:order-2">
+              <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
+                <p
+                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3 md:mb-4 ${s2Label.className}`}
+                  style={s2Label.style}
+                >
+                  Sugestões Inteligentes
+                </p>
 
-                <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
-                  <TextBlock revealed={reveal2.revealed} delayMs={40}>
-                    <div>
-                      <h3 className="font-cinzel text-3xl md:text-4xl min-[840px]:text-[2.15rem] xl:text-5xl font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
-                        Não é um nome imposto. É um ranking para você escolher.
-                      </h3>
-                      <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
-                        O sistema gera sugestões e também analisa as variações que você indicar. Cada
-                        card mostra score, compatibilidade Expressão × Destino, os 5 números e se ainda
-                        há bloqueios. Compare, escolha a assinatura que ressoa — e rode a análise completa
-                        quando quiser. Self-service, na hora.
-                      </p>
-                    </div>
-                  </TextBlock>
-                </div>
+                <h3
+                  className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance ${s2Title.className}`}
+                  style={s2Title.style}
+                >
+                  Não é um nome imposto. É um ranking para você escolher.
+                </h3>
+
+                <p
+                  className={`text-gray-300 text-sm sm:text-base leading-relaxed text-pretty ${s2Desc.className}`}
+                  style={s2Desc.style}
+                >
+                  O sistema gera sugestões e também analisa as variações que você indicar. Cada
+                  card mostra score, compatibilidade Expressão × Destino, os 5 números e se ainda
+                  há bloqueios. Compare, escolha a assinatura que ressoa — e rode a análise completa
+                  quando quiser. Self-service, na hora.
+                </p>
               </div>
             </aside>
           </div>
@@ -156,3 +143,4 @@ export function ProductsSection() {
     </>
   );
 }
+

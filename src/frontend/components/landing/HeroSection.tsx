@@ -1,12 +1,24 @@
 import React from 'react';
 import { track } from '../../lib/analytics';
 import { HeroScoreAnimation } from './HeroScoreAnimation';
+import {
+  landingSectionShellClass,
+  landingSplitGridClass,
+} from './LandingSectionIntro';
+import { getRevealItemProps, useLandingSectionReveal } from './useLandingSectionReveal';
 
 export function HeroSection() {
+  const reveal = useLandingSectionReveal();
+  const titleReveal = getRevealItemProps(reveal.revealed, 0, reveal.reduceMotion);
+  const descReveal = getRevealItemProps(reveal.revealed, 110, reveal.reduceMotion);
+  const ctaReveal = getRevealItemProps(reveal.revealed, 220, reveal.reduceMotion);
+  const cardReveal = getRevealItemProps(reveal.revealed, 160, reveal.reduceMotion);
+
   return (
     <section
       id="inicio"
-      className="relative min-h-svh flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-28 md:pt-28 md:pb-20"
+      ref={reveal.ref}
+      className="relative min-h-svh flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-20 md:pt-28 md:pb-24"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
@@ -18,13 +30,16 @@ export function HeroSection() {
       </div>
 
       {/* CONTENT LAYERS (Z-10) */}
-      <div className="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3.5 sm:px-6 md:px-10 lg:px-12 w-full flex flex-col gap-8 md:gap-16">
+      <div className={`relative z-10 ${landingSectionShellClass} flex flex-col gap-8 md:gap-12`}>
         
-        {/* ROW 1: Grid Split 40/60 for Title & Live Simulation Card */}
-        <div className="grid lg:grid-cols-10 gap-8 lg:gap-12 items-center text-center lg:text-left">
-          {/* Left Column: Headlines */}
-          <div className="lg:col-span-4 flex flex-col items-center lg:items-start">
-            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+        {/* ROW 1: M3 12-Column Split Grid (5 cols Copy / 7 cols Live Simulation Card) */}
+        <div className={`${landingSplitGridClass} text-center lg:text-left`}>
+          {/* Left Column: Headlines (5 columns on lg+) */}
+          <div className="lg:col-span-5 flex flex-col items-center lg:items-start min-w-0">
+            <h1
+              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
+              style={titleReveal.style}
+            >
               Sua Assinatura Tem<br />
               <span
                 style={{
@@ -38,18 +53,24 @@ export function HeroSection() {
               </span>
             </h1>
 
-            <p className="text-gray-400 text-sm md:text-base mt-6 leading-relaxed max-w-md">
+            <p
+              className={`text-gray-400 text-sm sm:text-base mt-5 md:mt-6 leading-relaxed max-w-[54ch] text-pretty ${descReveal.className}`}
+              style={descReveal.style}
+            >
               Cada letra do seu nome carrega uma frequência matemática. O <strong className="text-[#D4AF37]">Método Nome Magnético</strong> calcula a nota atual do seu nome de nascimento, mapeia tensões vibracionais e mostra o potencial que sua assinatura pode alcançar (até o nível N5).
             </p>
 
             {/* Desktop Button - Hidden on mobile/tablet, shown on desktop */}
-            <div className="hidden lg:block mt-8 w-full sm:w-auto">
+            <div
+              className={`hidden lg:block mt-8 w-full sm:w-auto ${ctaReveal.className}`}
+              style={ctaReveal.style}
+            >
               <a
                 href="/analise-gratuita"
                 id="cta-hero-principal-desktop"
                 data-cta-id="analise_gratis"
                 data-cta-position="hero_desktop"
-                className="inline-block w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
+                className="inline-block w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20 whitespace-nowrap"
                 aria-label="Descobrir a frequência do meu nome gratuitamente"
                 onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero_desktop' })}
               >
@@ -58,20 +79,26 @@ export function HeroSection() {
             </div>
           </div>
           
-          {/* Right Column: Interactive Animation Card */}
-          <div className="lg:col-span-6 w-full flex justify-center">
+          {/* Right Column: Interactive Animation Card (7 columns on lg+, flush with right guide) */}
+          <div
+            className={`lg:col-span-7 w-full min-w-0 flex justify-center lg:justify-end ${cardReveal.className}`}
+            style={cardReveal.style}
+          >
             <HeroScoreAnimation />
           </div>
         </div>
 
         {/* Mobile Button - Shown only on mobile/tablet below the animated card */}
-        <div className="flex justify-center lg:hidden w-full px-4">
+        <div
+          className={`flex justify-center lg:hidden w-full ${ctaReveal.className}`}
+          style={ctaReveal.style}
+        >
           <a
             href="/analise-gratuita"
             id="cta-hero-principal-mobile"
             data-cta-id="analise_gratis"
             data-cta-position="hero_mobile"
-            className="w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
+            className="w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
             aria-label="Descobrir a frequência do meu nome gratuitamente"
             onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero_mobile' })}
           >
@@ -82,7 +109,7 @@ export function HeroSection() {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20" aria-hidden="true">
+      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20" aria-hidden="true">
         <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -90,3 +117,4 @@ export function HeroSection() {
     </section>
   );
 }
+
