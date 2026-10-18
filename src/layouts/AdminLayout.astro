@@ -15,7 +15,6 @@ if (!Astro.locals.user || !Astro.locals.isStaff) {
 }
 
 const current = Astro.locals.adminPath ?? Astro.url.pathname;
-const analystUrl = `${(process.env.APP_URL || 'https://www.nomemagnetico.com.br').replace(/\/$/, '')}/app/admin-analise`;
 ---
 
 <BaseLayout title={title} description={description} noIndex={true} opsShell={true}>
@@ -52,14 +51,6 @@ const analystUrl = `${(process.env.APP_URL || 'https://www.nomemagnetico.com.br'
       </nav>
 
       <div class="hidden space-y-2 px-3 pb-8 md:block">
-        <a
-          href={analystUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="block rounded-full px-4 py-2.5 text-sm text-[#d7c6ff] transition-colors duration-700 hover:bg-[#d7c6ff]/10"
-        >
-          Área do Analista
-        </a>
         <OpsLogoutButton client:load className="w-full text-left" />
       </div>
     </aside>

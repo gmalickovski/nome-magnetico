@@ -109,7 +109,7 @@ export function FreePDFAutoGenerator({ existingAnalysisId, leadNome, leadData, a
     }
 
     return (
-      <span className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0F766E]/10 border border-[#0F766E]/30 text-[#2DD4BF] font-medium text-sm px-5 py-2.5 rounded-lg cursor-wait select-none">
+      <span className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0F766E]/10 border border-[#0F766E]/30 text-[#2DD4BF] font-medium text-sm px-5 py-2.5 rounded-full cursor-wait select-none">
         <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
           <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -142,7 +142,7 @@ export function FreePDFAutoGenerator({ existingAnalysisId, leadNome, leadData, a
         showFab={false}
         autoDownload={!!autoRun}
         label="Baixar Análise Gratuita"
-        className={autoRun ? 'hidden' : 'flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-[#0F766E]/30 bg-[#0F766E]/10 px-5 py-2.5 text-sm font-bold text-[#2DD4BF] transition-all duration-300 hover:bg-[#0F766E]/20 cursor-pointer'}
+        className={autoRun ? 'hidden' : 'flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-full border border-[#0F766E]/30 bg-[#0F766E]/10 px-5 py-2.5 text-sm font-bold text-[#2DD4BF] transition-all duration-300 hover:bg-[#0F766E]/20 cursor-pointer'}
       />
     );
   }
@@ -151,7 +151,7 @@ export function FreePDFAutoGenerator({ existingAnalysisId, leadNome, leadData, a
   return (
     <a
       href="/analise-gratuita"
-      className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0F766E]/10 border border-[#0F766E]/30 text-[#2DD4BF] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#0F766E]/20 transition-all duration-300"
+      className="flex-shrink-0 inline-flex items-center gap-2 bg-[#0F766E]/10 border border-[#0F766E]/30 text-[#2DD4BF] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-[#0F766E]/20 transition-all duration-300"
     >
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

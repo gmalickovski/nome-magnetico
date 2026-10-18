@@ -1,0 +1,15 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminGeneralAnalysis from '../../frontend/components/app/AdminGeneralAnalysis';
+
+// Desabilitar cache para o painel de análise
+Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+Astro.response.headers.set('Pragma', 'no-cache');
+Astro.response.headers.set('Expires', '0');
+---
+
+<AdminLayout title="Área do Analista" description="Criação e emissão direta de análises operacionais e PDFs.">
+  <div class="rounded-2xl bg-[#111111] ring-1 ring-white/10 p-2 sm:p-4 md:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+    <AdminGeneralAnalysis client:only="react" />
+  </div>
+</AdminLayout>

@@ -11,6 +11,7 @@ const LABELS: Record<string, string> = {
   '/support': 'Suporte',
   '/blog': 'Blog',
   '/mensagens': 'Mensagens',
+  '/analise': 'Área do Analista',
   '/settings': 'Configurações',
 };
 

@@ -69,8 +69,8 @@ export function DashboardCheckoutButton({
   }
 
   const defaultClass = variant === 'primary'
-    ? 'inline-flex items-center justify-center rounded-xl bg-[#D4AF37] px-4 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]'
-    : 'inline-flex items-center justify-center rounded-xl border border-[#D4AF37]/50 px-4 py-2.5 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37]/10';
+    ? 'inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]'
+    : 'inline-flex items-center justify-center rounded-full border border-[#D4AF37]/50 px-5 py-2.5 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37]/10';
 
   return (
     <>
