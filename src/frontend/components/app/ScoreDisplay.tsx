@@ -6,7 +6,9 @@ interface ScoreDisplayProps {
   showLabel?: boolean;
   showTooltip?: boolean;
   scoreVersion?: string | null;
+  version?: string | null;
   showHowItWorksLink?: boolean;
+  showLevelLink?: boolean;
 }
 
 interface ScoreLevel {
@@ -67,11 +69,15 @@ export default function ScoreDisplay({
   size = 'md',
   showLabel = true,
   showTooltip = false,
-  scoreVersion = 'v3',
+  scoreVersion,
+  version,
   showHowItWorksLink = false,
+  showLevelLink = false,
 }: ScoreDisplayProps) {
   const clamped = Math.max(0, Math.min(100, Math.round(score)));
-  const isV3 = scoreVersion === 'v3';
+  const resolvedVersion = scoreVersion ?? version ?? 'v3';
+  const isV3 = resolvedVersion === 'v3';
+  const shouldShowLink = showHowItWorksLink || showLevelLink;
 
   let level: ScoreLevel;
   if (isV3) {
@@ -88,25 +94,25 @@ export default function ScoreDisplay({
   }
 
   const heights = { sm: 'h-1.5', md: 'h-2', lg: 'h-3' };
-  const textSizes = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' };
-  const numSizes = { sm: 'text-lg', md: 'text-2xl', lg: 'text-3xl' };
+  const textSizes = { sm: 'text-xs', md: 'text-xs sm:text-sm', lg: 'text-xs sm:text-sm' };
+  const numSizes = { sm: 'text-lg', md: 'text-2xl', lg: 'text-2xl sm:text-3xl' };
 
   return (
     <div className="w-full">
-      <div className="flex items-end justify-between mb-1.5">
-        <span className={`font-cinzel font-bold ${numSizes[size]} ${level.text}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-2">
+        <span className={`font-cinzel font-bold leading-none shrink-0 ${numSizes[size]} ${level.text}`}>
           {clamped}
-          <span className={`${textSizes[size]} font-inter font-normal text-gray-500 ml-0.5`}>/100</span>
+          <span className="text-xs sm:text-sm font-inter font-normal text-gray-500 ml-0.5">/100</span>
         </span>
         {showLabel && (
           showTooltip ? (
-            <span className={`relative group/score ${textSizes[size]} font-medium ${level.text} cursor-default select-none`}>
+            <span className={`relative group/score ${textSizes[size]} font-semibold ${level.text} whitespace-nowrap cursor-default select-none`}>
               {level.label}
               <span className="ml-1 text-gray-500 text-[10px]">i</span>
               <span className="
                 pointer-events-none absolute right-0 top-full mt-2 z-50
                 w-64 rounded-xl bg-[#1e1c1a] border border-white/10
-                shadow-2xl shadow-black/60 p-3 text-xs text-gray-300 leading-relaxed
+                shadow-2xl shadow-black/60 p-3 text-xs text-gray-300 leading-relaxed whitespace-normal
                 opacity-0 group-hover/score:opacity-100
                 transition-opacity duration-200
               ">
@@ -134,7 +140,7 @@ export default function ScoreDisplay({
               </span>
             </span>
           ) : (
-            <span className={`${textSizes[size]} font-medium ${level.text}`}>{level.label}</span>
+            <span className={`${textSizes[size]} font-semibold ${level.text} whitespace-nowrap`}>{level.label}</span>
           )
         )}
       </div>
@@ -144,7 +150,7 @@ export default function ScoreDisplay({
           style={{ width: `${clamped}%` }}
         />
       </div>
-      {showHowItWorksLink && (
+      {shouldShowLink && (
         <div className="mt-1.5 text-right">
           <a
             href="/como-funciona-o-score"
