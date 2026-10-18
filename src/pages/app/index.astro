@@ -38,7 +38,7 @@ import {
   calcularScoreV1SemOcorrenciasExtras,
   persistenciaScoreFields,
 } from '../../backend/numerology/score';
-import { isScoreV3 } from '../../backend/numerology/score-version';
+import { getScoreVersion } from '../../backend/numerology/score-version';
 
 // Verifica parÃ¢metros de URL
 const showFreeUsedModal   = Astro.url.searchParams.get('free_used') === 'true';
@@ -73,7 +73,7 @@ import { obterNivelV3 } from '../../shared/score-v3';
 try {
   const { data: foundFreeAnalysis } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, score_v3, score_version, bloqueios, status')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status')
     .or('is_free.eq.true,product_type.eq.analise_gratuita')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -216,7 +216,7 @@ const hasAnyAccess = hasNomeSocial || hasLegacyAccess;
 try {
   const { data: foundBestSocial } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at')
     .eq('user_id', user.id)
     .eq('product_type', 'nome_social')
     .eq('status', 'complete')
@@ -232,7 +232,7 @@ let legacyAnalysesToRecalculate: any[] = [];
 try {
   const { data: userAnalyses } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, score_version, product_type, parent_analysis_id, recalculated_from_version, created_at')
+    .select('id, nome_completo, score, score_version, product_type, is_free, parent_analysis_id, recalculated_from_version, created_at')
     .eq('user_id', user.id)
     .eq('status', 'complete')
     .order('created_at', { ascending: false });
@@ -243,10 +243,13 @@ try {
         .filter(a => a.parent_analysis_id && a.score_version === 'v3')
         .map(a => a.parent_analysis_id)
     );
-    // Qualificam apenas análises do motor antigo (v1) que não são fruto de recálculo
-    // e que ainda não têm nenhuma versão recalculada para v3
+    // Qualificam apenas análises salvas do motor antigo (v1) que o usuário realizou
+    // (produtos nome_social, nome_bebe, nome_empresa) — diagnósticos gratuitos de nascimento
+    // não devem exibir banner de atualização de motor antigo.
     legacyAnalysesToRecalculate = userAnalyses.filter(
-      a => (!a.score_version || a.score_version === 'v1') &&
+      a => a.product_type !== 'analise_gratuita' &&
+           !a.is_free &&
+           (!a.score_version || a.score_version === 'v1') &&
            !a.parent_analysis_id &&
            !a.recalculated_from_version &&
            !recalculatedParentIds.has(a.id)
@@ -416,10 +419,35 @@ function getScoreTheme(scoreValue: number | null | undefined, scoreVersion?: str
 const featuredAnalysis = bestSocialAnalysis ?? freeAnalysis;
 const featuredAnalysisId = featuredAnalysis?.id ?? null;
 const featuredIsSocial = !!bestSocialAnalysis;
-const featuredIsV3 = featuredAnalysis?.score_version === 'v3';
-const featuredScoreRaw = featuredIsV3 ? (featuredAnalysis?.score_v3 ?? featuredAnalysis?.score) : featuredAnalysis?.score;
-const featuredTheme = getScoreTheme(featuredScoreRaw, featuredAnalysis?.score_version);
+let featuredIsV3 = featuredAnalysis?.score_version === 'v3';
+let featuredScoreRaw = featuredIsV3 ? (featuredAnalysis?.score_v3 ?? featuredAnalysis?.score) : featuredAnalysis?.score;
+let featuredVersion = featuredAnalysis?.score_version;
 const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
+
+if (getScoreVersion() === 'v3') {
+  if (featuredIsV3 && featuredAnalysis?.score_v3 != null) {
+    featuredScoreRaw = featuredAnalysis.score_v3;
+  } else if (featuredAnalysis?.nome_completo) {
+    const rawBirth = featuredAnalysis.data_nascimento || profileData?.birth_date;
+    if (rawBirth) {
+      const parts = String(rawBirth).split('-');
+      const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(rawBirth);
+      const targetName = (featuredIsSocial && featuredAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto)
+        ? featuredAnalysis.frequencias_numeros.ranking.melhorNome.nomeCompleto
+        : featuredAnalysis.nome_completo;
+      try {
+        const v3Eval = avaliarNome(targetName, dataPt);
+        featuredScoreRaw = v3Eval.score_v3;
+        featuredIsV3 = true;
+        featuredVersion = 'v3';
+      } catch (e) {
+        console.warn('[index.astro] Erro ao calcular score v3 dinâmico no featured:', e);
+      }
+    }
+  }
+}
+
+const featuredTheme = getScoreTheme(featuredScoreRaw, featuredVersion);
 const featuredName =
   bestSocialAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto
     ?? bestSocialAnalysis?.nome_completo
