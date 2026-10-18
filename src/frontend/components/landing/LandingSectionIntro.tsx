@@ -75,7 +75,7 @@ export function LandingSectionIntro({
         <h2
           className={`font-cinzel ${
             titleClassName ||
-            'text-xl sm:text-2xl md:text-3xl lg:text-[2rem] xl:text-[2.25rem] font-bold leading-[1.2]'
+            'text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold leading-[1.2]'
           } text-[#e5e2e1] mb-3.5 text-balance ${titleReveal.className}`}
           style={titleReveal.style}
         >

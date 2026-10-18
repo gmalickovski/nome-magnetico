@@ -162,7 +162,7 @@ export function SignatureUseCasesSection() {
       {/* ── EXPERIÊNCIA DESKTOP PINNED (lg: 1024px+) ────────────────────── */}
       <div
         className={`hidden lg:flex flex-col justify-center items-center w-full ${
-          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen pt-20 lg:pt-24 pb-8'
+          reduceMotion ? 'py-16 lg:py-20' : 'sticky top-0 h-screen pt-16 lg:pt-20 pb-6'
         } overflow-x-clip`}
       >
         <div className={`relative ${landingSectionShellClass} flex items-center justify-center`}>
@@ -222,11 +222,11 @@ export function SignatureUseCasesSection() {
                           className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform w-full ${transformClass}`}
                           aria-hidden={!isActive}
                         >
-                          <p className="text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2.5">
+                          <p className="text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2">
                             Onde Usar · Etapa {item.stepNumber}
                           </p>
 
-                          <h3 className="font-cinzel text-xl sm:text-2xl md:text-3xl lg:text-[2rem] xl:text-[2.25rem] font-bold text-[#e5e2e1] mb-3 leading-snug text-balance">
+                          <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-2.5 leading-snug text-balance">
                             {item.title}
                           </h3>
 
@@ -309,7 +309,7 @@ export function SignatureUseCasesSection() {
                   <p className="text-[#f2ca50] text-[11px] font-bold uppercase tracking-[0.15em] mb-1.5">
                     Onde Usar · Etapa {item.stepNumber}
                   </p>
-                  <h3 className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
+                  <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
                     {item.title}
                   </h3>
 

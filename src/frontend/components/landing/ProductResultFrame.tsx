@@ -230,7 +230,7 @@ export function ProductHarmonyFrame() {
     <div ref={rootRef} className={`@container/harmony ${desktopFitClass}`}>
       <div className={desktopStackClass}>
         {/* Certificate — floats alone on the page ground */}
-        <section className={`${landingMockupFloatClass} p-4 sm:p-5`}>
+        <section className={`${landingMockupFloatClass} p-3.5 sm:p-4.5`}>
           <div className="flex flex-col gap-3 min-w-0">
             <div className="flex flex-col gap-2 @[420px]/harmony:flex-row @[420px]/harmony:items-center @[420px]/harmony:justify-between min-w-0">
               <div className="min-w-0 flex-1">
@@ -273,8 +273,8 @@ export function ProductHarmonyFrame() {
         </section>
 
         {/* Star comparison — second floating surface */}
-        <section className={`${landingMockupFloatClass} p-3.5 sm:p-4.5`}>
-          <div className="harmony-star-wrap mb-2.5">
+        <section className={`${landingMockupFloatClass} p-3 sm:p-4`}>
+          <div className="harmony-star-wrap mb-2">
             <svg
               className="harmony-star-svg w-full"
               viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
@@ -390,7 +390,7 @@ export function ProductHarmonyFrame() {
         }
         .harmony-star-svg {
           width: 100%;
-          max-width: min(100%, 460px);
+          max-width: 480px;
           height: auto;
           display: block;
         }
@@ -406,26 +406,6 @@ export function ProductHarmonyFrame() {
         .harmony-star-num-red {
           font-size: 20px;
           font-weight: 700;
-        }
-        @container harmony (min-width: 440px) {
-          .harmony-star-svg {
-            max-width: min(100%, 480px);
-          }
-          .harmony-star-label {
-            font-size: 24px;
-            font-weight: 600;
-          }
-          .harmony-star-num-gold {
-            font-size: 32px;
-          }
-          .harmony-star-num-red {
-            font-size: 20px;
-          }
-        }
-        @container harmony (min-width: 580px) {
-          .harmony-star-svg {
-            max-width: min(100%, 500px);
-          }
         }
       `}</style>
     </div>

@@ -21,7 +21,7 @@ function isInOrNearViewport(el: HTMLElement): boolean {
 export function useLandingSectionReveal(_threshold = 0.05) {
   const ref = useRef<HTMLElement>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
-  // Default to true on SSR and initial paint so content is never pitch black / invisible
+  // Inicia sempre como true no SSR e hidratação para evitar qualquer flash preto ou seção vazia
   const [revealed, setRevealed] = useState(true);
 
   useEffect(() => {
@@ -33,13 +33,13 @@ export function useLandingSectionReveal(_threshold = 0.05) {
     const rect = el.getBoundingClientRect();
     const vh = window.innerHeight || 0;
 
-    // If already in or above viewport, keep revealed
-    if (rect.top < vh + 40 && rect.bottom > -40) {
+    // Se o elemento estiver a até 300px da viewport ou já visível, mantém imediatamente revelado
+    if (rect.top <= vh + 300 && rect.bottom >= -100) {
       setRevealed(true);
       return;
     }
 
-    // Element is below viewport, arm scroll-triggered reveal
+    // Se estiver bem abaixo do viewport, arma o observer com antecedência generosa (300px)
     setRevealed(false);
 
     const observer = new IntersectionObserver(
@@ -49,15 +49,15 @@ export function useLandingSectionReveal(_threshold = 0.05) {
           observer.disconnect();
         }
       },
-      { threshold: 0.04, rootMargin: '140px 0px -40px 0px' },
+      { threshold: 0.01, rootMargin: '300px 0px 0px 0px' },
     );
 
     observer.observe(el);
 
-    // Failsafe timer so elements are never permanently hidden on scroll
+    // Failsafe timer reduzido para 500ms para garantir que o conteúdo nunca fique preso invisível
     const timer = window.setTimeout(() => {
       setRevealed(true);
-    }, 1200);
+    }, 500);
 
     return () => {
       observer.disconnect();
@@ -74,13 +74,9 @@ export function useLandingSectionReveal(_threshold = 0.05) {
     };
   }
 
-  const motionClass = revealed
-    ? 'opacity-100 translate-y-0'
-    : 'opacity-0 translate-y-6';
-
   return {
     ref,
-    className: `transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[opacity,transform] motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${motionClass}`,
+    className: '',
     revealed,
     reduceMotion: false,
   };

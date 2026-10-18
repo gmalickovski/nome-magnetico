@@ -108,8 +108,8 @@ export function HeroSection() {
 
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20" aria-hidden="true">
+      {/* Scroll indicator meditativo */}
+      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-pulse motion-reduce:animate-none z-20" aria-hidden="true">
         <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

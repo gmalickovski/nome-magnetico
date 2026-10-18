@@ -175,7 +175,7 @@ export function HowItWorksSection() {
     <section
       id="como-funciona"
       ref={reveal.ref}
-      className="relative bg-[#111111] scroll-mt-20 pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-20 overflow-hidden w-full flex flex-col justify-center min-h-[auto] lg:min-h-[calc(100vh-4rem)]"
+      className="relative bg-[#111111] scroll-mt-20 py-12 md:py-16 lg:py-20 overflow-hidden w-full flex flex-col justify-center min-h-[auto] lg:min-h-[calc(100vh-4.5rem)]"
       aria-label="Como funciona"
     >
       {/* ── DESKTOP GRID EXPERIENCE (lg: 1024px+) ────────────────────── */}
@@ -185,16 +185,16 @@ export function HowItWorksSection() {
             label="Como funciona"
             title="Quatro passos da sua nota hoje até a nova assinatura"
             description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-            titleClassName="text-xl sm:text-2xl md:text-3xl lg:text-[2rem] xl:text-[2.25rem] font-bold uppercase tracking-wide max-w-4xl mx-auto leading-tight"
-            descriptionClassName="max-w-[66ch] mx-auto text-sm sm:text-base mt-2 mb-6 xl:mb-8 text-pretty text-gray-400"
-            className="text-center mb-6 xl:mb-8"
+            titleClassName="text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold uppercase tracking-wide max-w-3xl mx-auto leading-tight"
+            descriptionClassName="max-w-[62ch] mx-auto text-xs sm:text-sm mt-1.5 mb-5 xl:mb-6 text-pretty text-gray-400"
+            className="text-center mb-5 xl:mb-6"
             revealed={isRevealed}
             reduceMotion={reduceMotion}
           />
 
           {/* 4-Card Responsive Grid with connecting arrows */}
           <div className="relative w-full">
-            <div className="grid grid-cols-4 gap-4 xl:gap-6 items-stretch w-full">
+            <div className="grid grid-cols-4 gap-3.5 xl:gap-5 items-stretch w-full">
               {steps.map((step, index) => {
                 const Figure = step.Figure;
                 const hasArrow = index < steps.length - 1;
@@ -212,11 +212,11 @@ export function HowItWorksSection() {
                       transitionDelay: `${delayMs}ms`,
                     }}
                   >
-                    <article className={`h-full ${landingInteractiveCardClass} p-5 xl:p-6 flex flex-col justify-between group`}>
+                    <article className={`h-full ${landingInteractiveCardClass} p-4.5 xl:p-5.5 flex flex-col justify-between group`}>
                       <div>
                         {/* Header do Card: Número do Passo & SVG */}
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                        <div className="flex items-center justify-between mb-3.5">
+                          <span className="font-cinzel text-[10px] sm:text-[11px] font-bold tracking-[0.16em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
                             PASSO {step.stepNumber}
                           </span>
                           <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500">
@@ -225,16 +225,16 @@ export function HowItWorksSection() {
                         </div>
 
                         {/* Título & Descrição */}
-                        <h3 className="font-cinzel text-base xl:text-lg font-bold leading-snug text-[#e5e2e1] mb-2 text-balance">
+                        <h3 className="font-cinzel text-sm sm:text-[15px] xl:text-base font-bold leading-snug text-[#e5e2e1] mb-1.5 text-balance">
                           {step.title}
                         </h3>
-                        <p className="text-xs xl:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
+                        <p className="text-xs xl:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty">
                           {step.body}
                         </p>
                       </div>
 
                       {/* Brilho decorativo sutil na base */}
-                      <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
                         <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                       </div>
