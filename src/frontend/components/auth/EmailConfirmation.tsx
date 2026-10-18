@@ -30,7 +30,7 @@ export function EmailConfirmation() {
       return data.session?.access_token;
     }
 
-    async function markVerified(accessToken?: string) {
+    async function markVerified(accessToken?: string): Promise<'ok' | 'unconfirmed'> {
       if (!accessToken) {
         throw new Error('Sessão de confirmação não encontrada.');
       }
@@ -40,9 +40,13 @@ export function EmailConfirmation() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        return 'unconfirmed';
+      }
       if (!res.ok) {
         throw new Error(data.error ?? 'Não foi possível gravar a confirmação.');
       }
+      return 'ok';
     }
 
     async function confirmEmail() {
@@ -146,7 +150,11 @@ export function EmailConfirmation() {
         const { data } = await supabaseBrowser.auth.getSession();
         if (data.session?.access_token) {
           syncSessionCookies(data.session);
-          await markVerified(data.session.access_token);
+          const status = await markVerified(data.session.access_token);
+          if (status === 'unconfirmed') {
+            if (!cancelled) setState('no-token');
+            return;
+          }
           if (!cancelled) setState('success');
           return;
         }
