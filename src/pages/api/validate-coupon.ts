@@ -2,6 +2,12 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { getEffectivePrice, getPricesAndPromo, formatBRL } from '../../backend/payments/prices';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
+import { supabase } from '../../backend/db/supabase';
+import {
+  getClientIp,
+  hashClientIp,
+  enforceApiRateLimits,
+} from '../../backend/security/apiRateLimit';
 
 const schema = z.object({
   coupon_code:  z.string().min(1),
@@ -14,10 +20,51 @@ const FALLBACK_CENTS: Record<string, number> = {
   nome_empresa: 12500,
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+// 10 requisições por 10 minutos por usuário; 30 por 10 minutos por IP
+const USER_COUPON_LIMIT = 10;
+const IP_COUPON_LIMIT = 30;
+const COUPON_WINDOW_SECONDS = 10 * 60;
+
+export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   const user = locals.user;
   if (!user) {
     return json({ valid: false, error: 'Faça login para validar o cupom' }, 401);
+  }
+
+  const clientIp = getClientIp(request, clientAddress);
+  const ipHash = hashClientIp(clientIp);
+
+  const rateLimitResult = await enforceApiRateLimits(
+    supabase,
+    [
+      {
+        key: `coupon:user:${user.id}`,
+        limit: USER_COUPON_LIMIT,
+        windowSeconds: COUPON_WINDOW_SECONDS,
+      },
+      {
+        key: `coupon:ip:${ipHash}`,
+        limit: IP_COUPON_LIMIT,
+        windowSeconds: COUPON_WINDOW_SECONDS,
+      },
+    ],
+    `coupon:${user.id}`
+  );
+
+  if (!rateLimitResult.allowed) {
+    return new Response(
+      JSON.stringify({
+        valid: false,
+        error: 'Você realizou muitas tentativas de validação de cupom. Aguarde alguns minutos antes de tentar novamente.',
+      }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rateLimitResult.retryAfterSeconds),
+        },
+      }
+    );
   }
 
   let body: unknown;
@@ -66,9 +113,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 };
 
-function json(data: unknown, status = 200) {
+function json(data: unknown, status = 200, headers: Record<string, string> = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 }
