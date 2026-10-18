@@ -20,6 +20,11 @@ import { isScoreV3 } from '../../backend/numerology/score-version';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
+import {
+  verifyDownloadPdfRequest,
+  DOWNLOAD_PDF_LEGACY_CUTOFF_MS,
+  DOWNLOAD_PDF_TTL_SECONDS,
+} from '../../backend/security/signedDownloadUrl';
 
 function toBrazilliandate(dbDate: string): string {
   // dbDate is YYYY-MM-DD
@@ -31,29 +36,88 @@ function toBrazilliandate(dbDate: string): string {
   return dbDate;
 }
 
-export const GET: APIRoute = async ({ url }) => {
+function errorResponse(status: number, message: string, acceptsJson: boolean) {
+  if (acceptsJson) {
+    return new Response(JSON.stringify({ error: message }), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Download de Análise — Nome Magnético</title>
+  <style>
+    body { background-color: #131313; color: #e5e2e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1.5rem; text-align: center; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.25); border-radius: 1rem; padding: 2.5rem; max-width: 28rem; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+    h1 { color: #f2ca50; font-size: 1.5rem; margin-bottom: 1rem; }
+    p { color: #a1a1aa; font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; }
+    .btn { display: inline-block; background: #d4af37; color: #111; font-weight: 700; padding: 0.75rem 1.75rem; border-radius: 9999px; text-decoration: none; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Link Indisponível</h1>
+    <p>${message}</p>
+    <a href="/#teste" class="btn">Fazer Nova Análise</a>
+  </div>
+</body>
+</html>`;
+
+  return new Response(html, {
+    status,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+}
+
+export const GET: APIRoute = async ({ url, request }) => {
   const id = url.searchParams.get('id');
+  const exp = url.searchParams.get('exp');
+  const sig = url.searchParams.get('sig');
+  const acceptsJson = (request.headers.get('accept') ?? '').includes('application/json');
 
   if (!id) {
-    return new Response(
-      JSON.stringify({ error: 'ID da análise é obrigatório' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(400, 'ID da análise é obrigatório.', acceptsJson);
+  }
+
+  // Se exp e sig foram fornecidos, validamos em tempo constante antes de qualquer query
+  if (exp && sig) {
+    const validation = verifyDownloadPdfRequest({ id, exp, sig });
+    if (!validation.ok) {
+      return errorResponse(validation.status, validation.reason, acceptsJson);
+    }
   }
 
   try {
     // Buscar o lead pelo ID
     const { data: lead, error } = await supabase
       .from('free_analyses_leads')
-      .select('nome_completo, data_nascimento, pdf_base64, created_at')
+      .select('id, nome_completo, data_nascimento, pdf_base64, created_at')
       .eq('id', id)
       .single();
 
     if (error || !lead) {
-      return new Response(
-        JSON.stringify({ error: 'Análise não encontrada' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
+      return errorResponse(404, 'Análise não encontrada.', acceptsJson);
+    }
+
+    // Se exp/sig não foram passados, verifica se está na janela de transição de links antigos
+    if (!exp || !sig) {
+      const createdTime = lead.created_at ? new Date(lead.created_at).getTime() : 0;
+      const now = Date.now();
+      const maxLegacyExpiry = createdTime + DOWNLOAD_PDF_TTL_SECONDS * 1000;
+      const isAllowedLegacy = createdTime < DOWNLOAD_PDF_LEGACY_CUTOFF_MS && now <= maxLegacyExpiry;
+
+      if (!isAllowedLegacy) {
+        return errorResponse(
+          403,
+          'Este link de download é antigo ou expirou. Por motivos de segurança e proteção de dados (LGPD), gere um novo link ou refaça sua análise.',
+          acceptsJson
+        );
+      }
     }
 
     // Cutoff: data do deploy do novo layout de PDF gratuito
@@ -65,7 +129,7 @@ export const GET: APIRoute = async ({ url }) => {
     let pdfBase64 = lead.pdf_base64;
 
     if (isPdfMissing || isOld) {
-      console.log(`[download-pdf] Regenerando PDF para o lead ${id} (isPdfMissing: ${isPdfMissing}, isOld: ${isOld})`);
+      // Regeneração de PDF sem logar o ID sensível em texto claro
       const birthDateStr = toBrazilliandate(lead.data_nascimento);
       const fullName = lead.nome_completo;
 
@@ -176,10 +240,7 @@ export const GET: APIRoute = async ({ url }) => {
       },
     });
   } catch (err: any) {
-    console.error('[download-pdf] Erro:', err);
-    return new Response(
-      JSON.stringify({ error: 'Erro interno ao recuperar ou gerar PDF' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    console.error('[download-pdf] Erro ao recuperar ou gerar PDF');
+    return errorResponse(500, 'Erro interno ao recuperar ou gerar PDF.', acceptsJson);
   }
 };

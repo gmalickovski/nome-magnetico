@@ -29,6 +29,7 @@ import { getPublicBaseUrl } from '../../utils/public-url';
 import { toDbDate } from '../../backend/public-free-analysis/guards';
 import { recordPublicFreeAnalysisIpHit } from '../../backend/public-free-analysis/rate-limit';
 import { runFreeAnalysisPreflight } from '../../backend/public-free-analysis/preflight';
+import { signDownloadPdfPath } from '../../backend/security/signedDownloadUrl';
 import {
   buildDefaultFreeAnalysisMarketingUrls,
   fireFreeAnalysisMarketingEvent,
@@ -171,11 +172,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           .update({ pdf_base64: pdfBase64 })
           .eq('id', lead.id);
 
+        const signedDownloadPath = signDownloadPdfPath(lead.id);
+
         await notify('free_analysis.requested', {
           email: dedupEmail,
           firstName: nome_completo.split(' ')[0] || nome_completo,
           fullName: nome_completo,
-          downloadUrl: `${getPublicBaseUrl()}/api/download-pdf?id=${lead.id}`,
+          downloadUrl: `${getPublicBaseUrl()}${signedDownloadPath}`,
         });
 
         const marketingConsent = resolvePublicFreeAnalysisMarketingConsent(opt_in);
@@ -183,7 +186,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           const completedAt = new Date().toISOString();
           const appUrl = process.env.APP_URL ?? getPublicBaseUrl();
           const urls = buildDefaultFreeAnalysisMarketingUrls(appUrl, lead.id, {
-            downloadPath: `/api/download-pdf?id=${lead.id}`,
+            downloadPath: signedDownloadPath,
           });
           fireFreeAnalysisMarketingEvent({
             email: dedupEmail,
