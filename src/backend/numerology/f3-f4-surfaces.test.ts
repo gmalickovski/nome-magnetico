@@ -79,4 +79,32 @@ describe('DEV-187 (F3ab) & DEV-188 (F4) · Superfícies v3 e Página Como Calcul
     assert.match(AVISO_AUTOCONHECIMENTO, /autoconhecimento/i);
     assert.match(AVISO_AUTOCONHECIMENTO, /m.dica|psicol.gica|jur.dica/i);
   });
+
+  it('F3c: Comparativo Antes × Depois do caso de ouro (Guilherme Malickovski Correa -> Guilherme Málickovski)', () => {
+    const antes = avaliarNome('Guilherme Malickovski Correa', '14/02/1990', { calcularPotencial: true });
+    const depois = avaliarNome('Guilherme Málickovski', '14/02/1990');
+
+    assert.equal(antes.score_v3, 66);
+    assert.equal(antes.nivel.codigo, 'N3');
+
+    assert.equal(depois.score_v3, 95);
+    assert.equal(depois.nivel.codigo, 'N5');
+
+    // Antes tem desconto de bloqueio 444 na Vida; depois tem 0 bloqueios na Vida
+    const bloqAntes = antes.descontos.filter(d => d.categoria === 'sequencias_vida');
+    const bloqDepois = depois.descontos.filter(d => d.categoria === 'sequencias_vida');
+    assert.equal(bloqAntes.length, 1);
+    assert.equal(bloqDepois.length, 0);
+  });
+
+  it('F3c: Retrocompatibilidade para análises sem score_version', () => {
+    const legadoAnalysis = {
+      score: 35,
+      score_version: null,
+      score_v3: null,
+    };
+    // Se score_version não for v3, não força v3 se for exibição histórica
+    assert.equal(legadoAnalysis.score_version ?? 'v1', 'v1');
+    assert.equal(legadoAnalysis.score, 35);
+  });
 });

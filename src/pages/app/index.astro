@@ -67,11 +67,13 @@ const needsEmailConfirmation = !(
   user.user_metadata?.email_verified_at
 );
 
+import { obterNivelV3 } from '../../shared/score-v3';
+
 // Busca análise gratuita concluída ou em processamento
 try {
   const { data: foundFreeAnalysis } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, bloqueios, status')
+    .select('id, nome_completo, score, score_v3, score_version, bloqueios, status')
     .or('is_free.eq.true,product_type.eq.analise_gratuita')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -214,7 +216,7 @@ const hasAnyAccess = hasNomeSocial || hasLegacyAccess;
 try {
   const { data: foundBestSocial } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, bloqueios, status, frequencias_numeros, created_at')
+    .select('id, nome_completo, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at')
     .eq('user_id', user.id)
     .eq('product_type', 'nome_social')
     .eq('status', 'complete')
@@ -225,7 +227,7 @@ try {
   bestSocialAnalysis = foundBestSocial;
 } catch {}
 
-// Detectar estado expirado (jÃ¡ comprou antes, mas nenhuma ativa)
+// Detectar estado expirado (já comprou antes, mas nenhuma ativa)
 const isExpired = !isAdmin && !hasAnyAccess && await hasAnySubscription(user.id);
 
 let nomeSocialEndsAt: string | null = null;
@@ -254,8 +256,71 @@ const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', has
 const { prices, promotion } = await getPricesAndPromo().catch(() => ({ prices: {}, promotion: null }));
 const priceMap = prices as Record<string, PriceInfo>;
 
-function getScoreTheme(scoreValue: number | null | undefined) {
+function getScoreTheme(scoreValue: number | null | undefined, scoreVersion?: string | null) {
   const score = Math.max(0, Math.min(100, scoreValue ?? 0));
+  if (scoreVersion === 'v3') {
+    const nivel = obterNivelV3(score);
+    if (nivel.codigo === 'N5') {
+      return {
+        label: `${nivel.codigo} · ${nivel.rotulo}`,
+        color: '#34d399',
+        border: 'rgba(16,185,129,0.34)',
+        bg: 'rgba(16,185,129,0.06)',
+        shadow: '0 0 42px rgba(16,185,129,0.12)',
+        pillBg: 'rgba(16,185,129,0.12)',
+        pillColor: '#6ee7b7',
+        isV3: true,
+      };
+    }
+    if (nivel.codigo === 'N4') {
+      return {
+        label: `${nivel.codigo} · ${nivel.rotulo}`,
+        color: '#a3e635',
+        border: 'rgba(132,204,22,0.30)',
+        bg: 'rgba(132,204,22,0.05)',
+        shadow: '0 0 42px rgba(132,204,22,0.10)',
+        pillBg: 'rgba(132,204,22,0.10)',
+        pillColor: '#bef264',
+        isV3: true,
+      };
+    }
+    if (nivel.codigo === 'N3') {
+      return {
+        label: `${nivel.codigo} · ${nivel.rotulo}`,
+        color: '#facc15',
+        border: 'rgba(234,179,8,0.36)',
+        bg: 'rgba(234,179,8,0.07)',
+        shadow: '0 0 42px rgba(234,179,8,0.12)',
+        pillBg: 'rgba(234,179,8,0.13)',
+        pillColor: '#fef08a',
+        isV3: true,
+      };
+    }
+    if (nivel.codigo === 'N2') {
+      return {
+        label: `${nivel.codigo} · ${nivel.rotulo}`,
+        color: '#f97316',
+        border: 'rgba(249,115,22,0.38)',
+        bg: 'rgba(249,115,22,0.07)',
+        shadow: '0 0 42px rgba(249,115,22,0.14)',
+        pillBg: 'rgba(249,115,22,0.14)',
+        pillColor: '#ffedd5',
+        isV3: true,
+      };
+    }
+    return {
+      label: `${nivel.codigo} · ${nivel.rotulo}`,
+      color: '#ef4444',
+      border: 'rgba(239,68,68,0.38)',
+      bg: 'rgba(239,68,68,0.07)',
+      shadow: '0 0 42px rgba(239,68,68,0.14)',
+      pillBg: 'rgba(239,68,68,0.14)',
+      pillColor: '#fca5a5',
+      isV3: true,
+    };
+  }
+
+  // Retrocompatibilidade v1 / sem score_version
   if (score >= 90) {
     return {
       label: 'Excelente',
@@ -265,6 +330,7 @@ function getScoreTheme(scoreValue: number | null | undefined) {
       shadow: '0 0 42px rgba(16,185,129,0.12)',
       pillBg: 'rgba(16,185,129,0.12)',
       pillColor: '#6ee7b7',
+      isV3: false,
     };
   }
   if (score >= 70) {
@@ -276,6 +342,7 @@ function getScoreTheme(scoreValue: number | null | undefined) {
       shadow: '0 0 42px rgba(132,204,22,0.10)',
       pillBg: 'rgba(132,204,22,0.10)',
       pillColor: '#bef264',
+      isV3: false,
     };
   }
   if (score >= 40) {
@@ -287,6 +354,7 @@ function getScoreTheme(scoreValue: number | null | undefined) {
       shadow: '0 0 42px rgba(234,179,8,0.12)',
       pillBg: 'rgba(234,179,8,0.13)',
       pillColor: '#fef08a',
+      isV3: false,
     };
   }
   if (score >= 20) {
@@ -298,6 +366,7 @@ function getScoreTheme(scoreValue: number | null | undefined) {
       shadow: '0 0 42px rgba(249,115,22,0.14)',
       pillBg: 'rgba(249,115,22,0.14)',
       pillColor: '#ffedd5',
+      isV3: false,
     };
   }
   return {
@@ -308,12 +377,17 @@ function getScoreTheme(scoreValue: number | null | undefined) {
     shadow: '0 0 42px rgba(239,68,68,0.14)',
     pillBg: 'rgba(239,68,68,0.14)',
     pillColor: '#fca5a5',
+    isV3: false,
   };
 }
 
 const featuredAnalysis = bestSocialAnalysis ?? freeAnalysis;
 const featuredAnalysisId = featuredAnalysis?.id ?? null;
 const featuredIsSocial = !!bestSocialAnalysis;
+const featuredIsV3 = featuredAnalysis?.score_version === 'v3';
+const featuredScoreRaw = featuredIsV3 ? (featuredAnalysis?.score_v3 ?? featuredAnalysis?.score) : featuredAnalysis?.score;
+const featuredTheme = getScoreTheme(featuredScoreRaw, featuredAnalysis?.score_version);
+const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
 const featuredName =
   bestSocialAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto
     ?? bestSocialAnalysis?.nome_completo
@@ -323,8 +397,6 @@ const socialPrice = priceMap.nome_social;
 const socialPriceLabel = socialPrice && socialPrice.cents > 0
   ? (socialPrice.hasDiscount && socialPrice.discountedFormatted ? socialPrice.discountedFormatted : socialPrice.formatted)
   : null;
-const featuredTheme = getScoreTheme(featuredAnalysis?.score);
-const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
 
 ---
 
@@ -547,57 +619,73 @@ const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
           </div>
 
           {(() => {
-            const theme = getScoreTheme(featuredAnalysis.score);
-            const scoreVal = Math.max(0, Math.min(100, featuredAnalysis.score ?? 0));
+            const theme = featuredTheme;
+            const scoreVal = Math.max(0, Math.min(100, featuredScoreRaw ?? 0));
             // Circunferência de raio 44 é 2 * PI * 44 = 276.46
             const circumference = 276.46;
             const strokeDashoffset = circumference * (1 - scoreVal / 100);
             return (
-              <div class="relative flex items-center justify-center w-44 h-44 md:w-56 md:h-56 mx-auto order-1 md:order-2">
-                <!-- SVG de Progresso Circular -->
-                <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <!-- Círculo de Fundo -->
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="44"
-                    fill="transparent"
-                    stroke="rgba(255,255,255,0.03)"
-                    stroke-width="4"
-                  />
-                  <!-- Círculo de Progresso -->
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="44"
-                    fill="transparent"
-                    stroke={theme.color}
-                    stroke-width="4"
-                    stroke-dasharray={circumference}
-                    stroke-dashoffset={strokeDashoffset}
-                    stroke-linecap="round"
-                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;"
-                  />
-                </svg>
+              <div class="relative flex flex-col items-center justify-center mx-auto order-1 md:order-2">
+                <div class="relative flex items-center justify-center w-44 h-44 md:w-56 md:h-56">
+                  <!-- SVG de Progresso Circular -->
+                  <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <!-- Círculo de Fundo -->
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      fill="transparent"
+                      stroke="rgba(255,255,255,0.03)"
+                      stroke-width="4"
+                    />
+                    <!-- Círculo de Progresso -->
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="44"
+                      fill="transparent"
+                      stroke={theme.color}
+                      stroke-width="4"
+                      stroke-dasharray={circumference}
+                      stroke-dashoffset={strokeDashoffset}
+                      stroke-linecap="round"
+                      style="transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;"
+                    />
+                  </svg>
 
-                <!-- Conteúdo Interno -->
-                <div
-                  class="flex flex-col items-center justify-center rounded-full w-[88%] h-[88%] bg-[#111111]"
-                  style={`background:radial-gradient(circle at 50% 30%, ${theme.bg}, #111111 58%); box-shadow:${theme.shadow};`}
-                >
-                  <span class="font-cinzel text-5xl font-bold md:text-6xl" style={`color:${theme.color};`}>
-                    {scoreVal}
-                  </span>
-                  <span class="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
-                    {featuredIsSocial ? 'Melhor score' : 'Score atual'}
-                  </span>
-                  <span
-                    class="mt-2.5 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-[0.12em]"
-                    style={`background-color:${theme.pillBg}; color:${theme.pillColor};`}
+                  <!-- Conteúdo Interno -->
+                  <div
+                    class="flex flex-col items-center justify-center rounded-full w-[88%] h-[88%] bg-[#111111]"
+                    style={`background:radial-gradient(circle at 50% 30%, ${theme.bg}, #111111 58%); box-shadow:${theme.shadow};`}
                   >
-                    {theme.label} · {featuredBlockCount} {featuredBlockCount === 1 ? 'bloqueio' : 'bloqueios'}
-                  </span>
+                    <span class="font-cinzel text-5xl font-bold md:text-6xl" style={`color:${theme.color};`}>
+                      {scoreVal}
+                    </span>
+                    <span class="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                      {featuredIsSocial ? 'Melhor score' : 'Score atual'}
+                    </span>
+                    <span
+                      class="mt-2.5 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-[0.12em]"
+                      style={`background-color:${theme.pillBg}; color:${theme.pillColor};`}
+                    >
+                      {theme.label} · {featuredBlockCount} {featuredBlockCount === 1 ? 'bloqueio' : 'bloqueios'}
+                    </span>
+                  </div>
                 </div>
+
+                {featuredIsV3 && (
+                  <div class="mt-3 flex items-center gap-2">
+                    <span class="rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">
+                      Motor v3
+                    </span>
+                    <a
+                      href="/como-funciona-o-score"
+                      class="text-[11px] text-gray-400 hover:text-[#D4AF37] transition-colors underline underline-offset-2"
+                    >
+                      Como calculamos?
+                    </a>
+                  </div>
+                )}
               </div>
             );
           })()}
