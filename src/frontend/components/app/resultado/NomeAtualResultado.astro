@@ -17,6 +17,7 @@ import TriangleVisualization from '../TriangleVisualization';
 import KarmicLessons from '../KarmicLessons';
 import KarmicDebts from '../KarmicDebts';
 import HiddenTendencies from '../HiddenTendencies';
+import { ProductVotingSection } from '../../landing/ProductVotingSection';
 import { ARCANOS } from '../../../../backend/numerology/arcanos';
 
 interface Props {
@@ -822,6 +823,8 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
   )}
 
 </section>
+
+<ProductVotingSection variant="resultado" client:visible />
 
 <script>
   (() => {

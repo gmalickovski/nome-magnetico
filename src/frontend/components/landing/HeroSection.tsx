@@ -39,7 +39,7 @@ export function HeroSection() {
             </h1>
 
             <p className="text-gray-400 text-sm md:text-base mt-6 leading-relaxed max-w-md">
-              Cada letra do seu nome carrega uma frequência matemática. O <strong className="text-[#D4AF37]">Método Nome Magnético</strong> analisa sua vibração de nascimento, detecta bloqueios e revela a assinatura ideal para destravar seu caminho de prosperidade.
+              Cada letra do seu nome carrega uma frequência matemática. O <strong className="text-[#D4AF37]">Método Nome Magnético</strong> calcula a nota atual do seu nome de nascimento, mapeia tensões vibracionais e mostra o potencial que sua assinatura pode alcançar (até o nível N5).
             </p>
 
             {/* Desktop Button - Hidden on mobile/tablet, shown on desktop */}

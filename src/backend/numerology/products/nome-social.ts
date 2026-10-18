@@ -494,55 +494,95 @@ export function gerarExplicacaoSugestao(
   return texto;
 }
 
+export interface OpcoesRankingNomeSocial {
+  /**
+   * Quando false (padrão), não libera a Etapa 3 de encurtar/corte no meio/apelido (fases 110 e 120),
+   * a menos que não haja candidatos suficientes nas etapas 1 e 2.
+   * Quando true ("Topa encurtar ou usar apelido?"), libera a Etapa 3 normalmente e bonifica variações curtas.
+   */
+  aceitaEncurtarOuApelido?: boolean;
+  /**
+   * Contextos de uso selecionados em "Onde vai usar o novo nome?" (múltipla escolha).
+   * Ex: ['redes_sociais', 'profissional', 'documentos', 'artistico']
+   */
+  ondeVaiUsar?: string[];
+  /**
+   * Linha de base ("Como você assina hoje?"), incluída na avaliação comparativa se informada.
+   */
+  assinaturaAtual?: string;
+}
+
 /**
- * Função de ordenação do ranking v3 (DEV-186).
+ * Função de ordenação do ranking v3 (DEV-186 + DEV-190 §6).
  * Dentro de cada etapa:
  * 1. Filtro sem sequência no Triângulo da Vida
  * 2. Corte em N5 (score v3 >= 85)
  * 3. Menor etapa (1 antes de 2, 2 antes de 3)
  * 4. Score v3 DESC
  * 5. Harmonia/Compatibilidade DESC (favoravel > neutro > desfavoravel)
- * 6. Desempate a favor de acentos do português (pontuarOrtografiaPortugues)
- * 7. Menor nível de descaracterização
+ * 6. Preferência de contexto ("Onde vai usar o novo nome?" / "Topa encurtar?")
+ * 7. Desempate a favor de acentos do português (pontuarOrtografiaPortugues)
+ * 8. Menor nível de descaracterização
  */
-function compararCandidatosV3(a: AnaliseNomeSocial, b: AnaliseNomeSocial): number {
-  const vidaA = a.semSequenciaVida ? 1 : 0;
-  const vidaB = b.semSequenciaVida ? 1 : 0;
-  if (vidaA !== vidaB) return vidaB - vidaA;
+function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
+  const prefereCurto = Boolean(
+    opcoes?.aceitaEncurtarOuApelido ||
+      opcoes?.ondeVaiUsar?.some(u => ['redes_sociais', 'artistico', 'assinatura_diaria'].includes(u))
+  );
+  const prefereFormal = Boolean(
+    !opcoes?.aceitaEncurtarOuApelido &&
+      opcoes?.ondeVaiUsar?.some(u => ['documentos', 'contratos', 'profissional'].includes(u))
+  );
 
-  const nivelA = a.nivelGerado ?? 999;
-  const nivelB = b.nivelGerado ?? 999;
-  const etapaA = a.etapa ?? etapaDoNivel(nivelA);
-  const etapaB = b.etapa ?? etapaDoNivel(nivelB);
+  return function compararCandidatosV3(a: AnaliseNomeSocial, b: AnaliseNomeSocial): number {
+    const vidaA = a.semSequenciaVida ? 1 : 0;
+    const vidaB = b.semSequenciaVida ? 1 : 0;
+    if (vidaA !== vidaB) return vidaB - vidaA;
 
-  const n5A = a.score >= 85 ? 1 : 0;
-  const n5B = b.score >= 85 ? 1 : 0;
+    const nivelA = a.nivelGerado ?? 999;
+    const nivelB = b.nivelGerado ?? 999;
+    const etapaA = a.etapa ?? etapaDoNivel(nivelA);
+    const etapaB = b.etapa ?? etapaDoNivel(nivelB);
 
-  // Se ambos atingiram N5: a etapa menor vence (Etapa 1 vence Etapa 2, etc.)
-  if (n5A && n5B) {
-    if (etapaA !== etapaB) return etapaA - etapaB;
-    if (a.score !== b.score) return b.score - a.score;
-  } else if (n5A !== n5B) {
-    // Quem atingiu N5 vence quem não atingiu
-    return n5B - n5A;
-  } else {
-    // Nenhum atingiu N5: etapa menor tem prioridade
-    if (etapaA !== etapaB) return etapaA - etapaB;
-    if (a.score !== b.score) return b.score - a.score;
-  }
+    const n5A = a.score >= 85 ? 1 : 0;
+    const n5B = b.score >= 85 ? 1 : 0;
 
-  // Compatibilidade
-  const compRank: Record<string, number> = { favoravel: 3, neutro: 2, desfavoravel: 1 };
-  const rA = compRank[a.compatibilidade] ?? 1;
-  const rB = compRank[b.compatibilidade] ?? 1;
-  if (rA !== rB) return rB - rA;
+    // Se ambos atingiram N5: a etapa menor vence (Etapa 1 vence Etapa 2, etc.)
+    if (n5A && n5B) {
+      if (etapaA !== etapaB) return etapaA - etapaB;
+      if (a.score !== b.score) return b.score - a.score;
+    } else if (n5A !== n5B) {
+      // Quem atingiu N5 vence quem não atingiu
+      return n5B - n5A;
+    } else {
+      // Nenhum atingiu N5: etapa menor tem prioridade
+      if (etapaA !== etapaB) return etapaA - etapaB;
+      if (a.score !== b.score) return b.score - a.score;
+    }
 
-  // Naturalidade ortográfica do português
-  const ortA = pontuarOrtografiaPortugues(a.nomeCompleto);
-  const ortB = pontuarOrtografiaPortugues(b.nomeCompleto);
-  if (ortA !== ortB) return ortB - ortA;
+    // Compatibilidade
+    const compRank: Record<string, number> = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+    const rA = compRank[a.compatibilidade] ?? 1;
+    const rB = compRank[b.compatibilidade] ?? 1;
+    if (rA !== rB) return rB - rA;
 
-  return nivelA - nivelB;
+    // Desempate contextual por "Onde vai usar" / "Topa encurtar"
+    const wordsA = a.nomeCompleto.trim().split(/\s+/).length;
+    const wordsB = b.nomeCompleto.trim().split(/\s+/).length;
+    if (prefereCurto && wordsA !== wordsB) {
+      return wordsA - wordsB; // Mais enxuto vence para redes/artístico/apelido
+    }
+    if (prefereFormal && wordsA !== wordsB) {
+      return wordsB - wordsA; // Nome mais estruturado vence para contratos/documentos
+    }
+
+    // Naturalidade ortográfica do português
+    const ortA = pontuarOrtografiaPortugues(a.nomeCompleto);
+    const ortB = pontuarOrtografiaPortugues(b.nomeCompleto);
+    if (ortA !== ortB) return ortB - ortA;
+
+    return nivelA - nivelB;
+  };
 }
 
 /**
@@ -551,11 +591,22 @@ function compararCandidatosV3(a: AnaliseNomeSocial, b: AnaliseNomeSocial): numbe
 function gerarSugestoesAutoSocial(
   nomeNascimento: string,
   dataNascimento: string,
-  maxSugestoes = 5
+  maxSugestoes = 5,
+  opcoes?: OpcoesRankingNomeSocial
 ): AnaliseNomeSocial[] {
-  const candidatos = gerarCandidatosComNivel(nomeNascimento);
+  const todosCandidatos = gerarCandidatosComNivel(nomeNascimento);
+  const liberaEtapa3Apelido = Boolean(opcoes?.aceitaEncurtarOuApelido);
 
-  const analisados: AnaliseNomeSocial[] = candidatos.map(({ nome, nivel }) => {
+  // Se o usuário não marcou "Topa encurtar ou usar apelido?" (padrão false),
+  // retemos os níveis 110 (corte no meio) e 120 (diminutivo/apelido) da Etapa 3,
+  // liberando-os apenas como fallback caso etapas 1 e 2 não tenham candidatos viáveis.
+  const candidatosPrimarios = liberaEtapa3Apelido
+    ? todosCandidatos
+    : todosCandidatos.filter(c => c.nivel < 110);
+
+  const poolBase = candidatosPrimarios.length >= 3 ? candidatosPrimarios : todosCandidatos;
+
+  const analisados: AnaliseNomeSocial[] = poolBase.map(({ nome, nivel }) => {
     const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
     const etapa = etapaDoNivel(nivel);
     return {
@@ -566,11 +617,31 @@ function gerarSugestoesAutoSocial(
     };
   });
 
-  analisados.sort(compararCandidatosV3);
+  const comparador = criarComparadorCandidatosV3(opcoes);
+  analisados.sort(comparador);
 
   // Preferência: top candidatos com score >= 85 (N5) e sem sequência na Vida
   const excelentes = analisados.filter(a => a.score >= 85 && a.semSequenciaVida);
   if (excelentes.length >= 3) return excelentes.slice(0, maxSugestoes);
+
+  // Se não atingiu 3 excelentes sem Etapa 3 e o filtro estava ativo, tenta liberar Etapa 3 como último recurso real
+  if (!liberaEtapa3Apelido && poolBase !== todosCandidatos) {
+    const analisadosComEtapa3: AnaliseNomeSocial[] = todosCandidatos.map(({ nome, nivel }) => {
+      const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
+      const etapa = etapaDoNivel(nivel);
+      return {
+        ...analise,
+        nivelGerado: nivel,
+        etapa,
+        explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
+      };
+    });
+    analisadosComEtapa3.sort(comparador);
+    const excelentesComEtapa3 = analisadosComEtapa3.filter(a => a.score >= 85 && a.semSequenciaVida);
+    if (excelentesComEtapa3.length > excelentes.length) {
+      return excelentesComEtapa3.slice(0, maxSugestoes);
+    }
+  }
 
   // Fallback para candidatos com score >= 70 sem sequência na Vida ou melhores gerais
   const viaveis = analisados.filter(a => a.semSequenciaVida);
@@ -640,26 +711,46 @@ function construirTop3Diverso(
  * Seleção do Nome de Ouro (melhorNome):
  * - Prioriza sugestões do usuário se score >= 85 e harmônicas
  * - Segue a nova ordem em 3 etapas com corte N5 (>= 85) e sem sequência na Vida
- * - Desempate por compatibilidade e normas ortográficas do português
+ * - Desempate por compatibilidade, preferência de uso/encurtamento e normas ortográficas do português
  */
 export function analisarNomesSocial(
   nomesCandidatos: string[],
   nomeNascimento: string,
   dataNascimento: string,
-  _generoPreferido?: string
+  opcoes?: OpcoesRankingNomeSocial | string
 ): ResultadoNomeSocial {
+  const resolvedOpcoes: OpcoesRankingNomeSocial | undefined =
+    typeof opcoes === 'object' && opcoes !== null ? opcoes : undefined;
+
   const destino = calcularDestino(dataNascimento);
 
+  // Se o usuário informou "Como você assina hoje?" e é diferente do nome de nascimento,
+  // incluímos na lista avaliada como linha de base se ainda não estiver nos candidatos.
+  const listaCandidatos = [...nomesCandidatos];
+  const assinaturaAtual = resolvedOpcoes?.assinaturaAtual?.trim();
+  if (
+    assinaturaAtual &&
+    assinaturaAtual.length >= 2 &&
+    assinaturaAtual.toLowerCase() !== nomeNascimento.trim().toLowerCase() &&
+    !listaCandidatos.some(c => c.trim().toLowerCase() === assinaturaAtual.toLowerCase())
+  ) {
+    listaCandidatos.unshift(assinaturaAtual);
+  }
+
   // Candidatos do usuário
-  const analisesUsuario: AnaliseNomeSocial[] = nomesCandidatos
+  const analisesUsuario: AnaliseNomeSocial[] = listaCandidatos
     .map(n => n.trim()).filter(n => n.length >= 2)
     .map(n => {
       const a = analisarNomeSocial(n, dataNascimento, 'usuario');
+      const isAssinaturaAtual =
+        Boolean(assinaturaAtual) && n.toLowerCase() === assinaturaAtual!.toLowerCase();
       return {
         ...a,
         nivelGerado: 0,
         etapa: 1,
-        explicacao: 'Nome sugerido por você.',
+        explicacao: isAssinaturaAtual
+          ? 'Sua assinatura atual (linha de base para comparação).'
+          : 'Nome sugerido por você.',
       };
     });
 
@@ -671,7 +762,7 @@ export function analisarNomesSocial(
 
   // Sugestões do sistema
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));
-  const sugestoesIA = gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10)
+  const sugestoesIA = gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
     .filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
 
   // Pool de seleção do melhor nome (Nome de Ouro)
@@ -681,7 +772,8 @@ export function analisarNomesSocial(
     ...sugestoesIA.filter(a => a.score >= 85 && a.semSequenciaVida).map(a => ({ ...a, nivelEfetivo: a.nivelGerado ?? 999 })),
   ];
 
-  aptosN5.sort(compararCandidatosV3);
+  const comparador = criarComparadorCandidatosV3(resolvedOpcoes);
+  aptosN5.sort(comparador);
 
   // Melhor nome
   const melhorNome: AnaliseNomeSocial | null =
@@ -705,4 +797,5 @@ export function analisarNomesSocial(
     top3,
   };
 }
+
 

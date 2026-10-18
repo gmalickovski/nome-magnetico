@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
+import { ProductVotingSection } from '../frontend/components/landing/ProductVotingSection';
 ---
 
 <BaseLayout
@@ -29,7 +30,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
         <div class="rounded-2xl bg-white/[0.04] p-6 sm:p-8 mb-8 text-center">
           <p class="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-3">Quer ir além do diagnóstico?</p>
           <p class="text-gray-400 text-sm sm:text-base leading-relaxed">
-            O Nome Social mostra as assinaturas com score alto e sem bloqueios para você usar no dia a dia.
+            O Nome Social compara sua nota hoje com o potencial máximo (N5) e sugere assinaturas harmonizadas para usar no dia a dia.
           </p>
         </div>
 
@@ -39,6 +40,10 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
         >
           Conhecer o Nome Social
         </a>
+
+        <div class="mt-10 text-left">
+          <ProductVotingSection variant="obrigado" client:visible />
+        </div>
 
         <p class="mt-8">
           <a href="/" class="text-gray-500 text-sm hover:text-[#D4AF37] transition-colors">

@@ -16,25 +16,25 @@ const steps = [
   {
     stepNumber: '01',
     title: 'Preencha seus dados',
-    body: 'Informe seu nome completo de nascimento, data e objetivos pessoais no formulário inicial.',
+    body: 'Informe seu nome completo de nascimento, data e onde pretende usar a assinatura.',
     Figure: FormFigure,
   },
   {
     stepNumber: '02',
-    title: 'Gere a análise',
-    body: 'O algoritmo cabalístico cruza seus 4 triângulos, detecta bloqueios e avalia a compatibilidade energética.',
+    title: 'Veja sua nota hoje × potencial',
+    body: 'O motor cabalístico calcula a nota atual do seu nome (0 a 100), avalia o Triângulo da Vida e mostra o potencial máximo de harmonia.',
     Figure: GenerateFigure,
   },
   {
     stepNumber: '03',
-    title: 'Escolha seu nome',
-    body: 'Veja a assinatura mais indicada com score de harmonia e explore sugestões alternativas se desejar.',
+    title: 'Escolha no ranking (N5)',
+    body: 'Compare sugestões com mudança mínima, forma encurtada e alternativa — cada uma explicando o que mudou e por quê.',
     Figure: ChooseFigure,
   },
   {
     stepNumber: '04',
-    title: 'Baixe o relatório',
-    body: 'Receba seu PDF completo com o mapa numerológico, débitos kármicos e guia prático de ativação.',
+    title: 'Baixe o relatório e o guia',
+    body: 'Receba na hora seu PDF completo com mapa dos 5 números, leitura dos triângulos e guia prático de assinatura.',
     Figure: DownloadFigure,
   },
 ] as const;
@@ -246,8 +246,8 @@ export function HowItWorksSection() {
         <div className={landingSectionShellClass}>
           <LandingSectionIntro
             label="Como funciona"
-            title="Quatro passos até a sua nova assinatura"
-            description="Entenda como a análise cabalística encontra a vibração ideal para harmonizar seu nome e destravar seu caminho."
+            title="Quatro passos da sua nota hoje até a nova assinatura"
+            description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
             className="mb-8 xl:mb-10"
           />
 

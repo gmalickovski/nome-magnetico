@@ -41,12 +41,13 @@ const schema = z.object({
     .enum(['nome_social', 'analise_gratuita'], { errorMap: () => ({ message: 'Produto indisponível.' }) })
     .default('nome_social'),
   nomes_candidatos: z.array(z.string().min(2)).optional(),
-  genero_preferido: z.string().optional(),
-  estilo_preferido: z.string().optional(),
-  // campos específicos nome_social
+  // campos específicos nome_social (DEV-190 §6: sem genero_preferido e sem estilo_preferido)
   objetivo_apresentacao: z.string().max(500).optional(),
   vibracoes_desejadas: z.string().max(300).optional(),
   contexto_uso: z.string().optional(),
+  assinatura_atual: z.string().max(150).optional(),
+  onde_vai_usar: z.array(z.string().max(60)).max(10).optional(),
+  aceita_encurtar_apelido: z.boolean().optional().default(false),
   nome_social_principal: z.string().min(2).max(150).optional(),
   // indica que o nome social já foi escolhido (análise sem ranking de candidatos)
   nome_ja_escolhido: z.boolean().optional(),
@@ -150,8 +151,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const {
     nome_completo, data_nascimento, product_type,
     nomes_candidatos,
-    genero_preferido, estilo_preferido,
     objetivo_apresentacao, vibracoes_desejadas, contexto_uso,
+    assinatura_atual, onde_vai_usar, aceita_encurtar_apelido,
     nome_social_principal,
     nome_ja_escolhido,
     is_free,
@@ -264,7 +265,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
           candidatos,
           nome_completo,
           data_nascimento,
-          genero_preferido
+          {
+            aceitaEncurtarOuApelido: Boolean(aceita_encurtar_apelido),
+            ondeVaiUsar: onde_vai_usar,
+            assinaturaAtual: assinatura_atual,
+          }
         );
 
         if (nome_social_principal) {
@@ -318,6 +323,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
             ranking: resultado,
             frequencias: freqMapSocial,
             selectedNomeSocial: nome_social_principal ? melhor?.nomeCompleto ?? nome_social_principal : null,
+            assinaturaAtual: assinatura_atual?.trim() || null,
+            ondeVaiUsar: onde_vai_usar ?? [],
+            aceitaEncurtarApelido: Boolean(aceita_encurtar_apelido),
           } as unknown,
           numero_expressao:    melhor?.expressao    ?? null,
           numero_destino:      resultado.destino,
@@ -335,7 +343,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           ...scoreFieldsSocial,
         });
 
-        // Salvar inputs do formulário para histórico
+        // Salvar inputs do formulário para histórico (sem genero_preferido nem estilo_preferido — LGPD art. 6º III)
         const parts = data_nascimento.split('/');
         const dataNascIso = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : data_nascimento;
         await supabase.from('social_name_inputs').insert({
@@ -345,9 +353,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
           data_nascimento: dataNascIso,
           objetivo_apresentacao: objetivo_apresentacao ?? null,
           vibracoes_desejadas: vibracoes_desejadas ?? null,
-          contexto_uso: contexto_uso ?? null,
-          estilo_preferido: estilo_preferido ?? null,
-          genero: genero_preferido ?? null,
+          contexto_uso: (onde_vai_usar && onde_vai_usar.length > 0 ? onde_vai_usar.join(', ') : contexto_uso) ?? null,
+          assinatura_atual: assinatura_atual?.trim() || null,
+          onde_vai_usar: onde_vai_usar ?? [],
+          aceita_encurtar_apelido: Boolean(aceita_encurtar_apelido),
           nomes_candidatos: candidatos,
         });
 
@@ -366,9 +375,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
               nomeNascimento: nome_completo,
               objetivoApresentacao: objetivo_apresentacao,
               vibracoesDesejadas: vibracoes_desejadas,
-              contextoUso: contexto_uso,
-              estiloPreferido: estilo_preferido,
-              genero: genero_preferido,
+              contextoUso: onde_vai_usar && onde_vai_usar.length > 0 ? onde_vai_usar.join(', ') : contexto_uso,
+              assinaturaAtual: assinatura_atual?.trim() || undefined,
+              ondeVaiUsar: onde_vai_usar,
+              aceitaEncurtarApelido: Boolean(aceita_encurtar_apelido),
             },
             user.id,
             analysis.id
