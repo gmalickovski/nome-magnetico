@@ -352,12 +352,13 @@ export function calcularPotencialV3(nomeNascimento: string, dataNascimento: stri
 export function avaliarNome(
   nomeCompleto: string,
   dataNascimento: string,
-  opts?: { potencial?: number },
+  opts?: { potencial?: number; calcularPotencial?: boolean },
 ): AvaliacaoScoreNome {
   const core = calcularScoreV3Interno(nomeCompleto.trim(), dataNascimento);
+  const potencial = opts?.potencial ?? (opts?.calcularPotencial ? calcularPotencialV3(nomeCompleto, dataNascimento) : core.score_v3);
   return {
     ...core,
-    potencial: opts?.potencial ?? core.score_v3,
+    potencial,
   };
 }
 

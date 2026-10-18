@@ -1,8 +1,12 @@
+import { obterNivelV3 } from '../../../shared/score-v3';
+
 interface ScoreDisplayProps {
   score: number;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
   showTooltip?: boolean;
+  scoreVersion?: string | null;
+  showHowItWorksLink?: boolean;
 }
 
 interface ScoreLevel {
@@ -10,9 +14,10 @@ interface ScoreLevel {
   text: string;
   label: string;
   description: string;
+  code?: string;
 }
 
-function getScoreLevel(clamped: number): ScoreLevel {
+function getLegacyScoreLevel(clamped: number): ScoreLevel {
   if (clamped >= 90) {
     return {
       bar: 'from-emerald-500 to-emerald-400',
@@ -62,9 +67,25 @@ export default function ScoreDisplay({
   size = 'md',
   showLabel = true,
   showTooltip = false,
+  scoreVersion = 'v3',
+  showHowItWorksLink = false,
 }: ScoreDisplayProps) {
-  const clamped = Math.max(0, Math.min(100, score));
-  const level = getScoreLevel(clamped);
+  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  const isV3 = scoreVersion === 'v3';
+
+  let level: ScoreLevel;
+  if (isV3) {
+    const v3Info = obterNivelV3(clamped);
+    level = {
+      bar: v3Info.corBarra,
+      text: v3Info.corTexto,
+      label: `${v3Info.codigo} · ${v3Info.rotulo}`,
+      description: v3Info.descricao,
+      code: v3Info.codigo,
+    };
+  } else {
+    level = getLegacyScoreLevel(clamped);
+  }
 
   const heights = { sm: 'h-1.5', md: 'h-2', lg: 'h-3' };
   const textSizes = { sm: 'text-xs', md: 'text-sm', lg: 'text-base' };
@@ -92,11 +113,23 @@ export default function ScoreDisplay({
                 <span className={`block font-semibold ${level.text} mb-1`}>{level.label}</span>
                 <span className="block text-gray-400 mb-2">{level.description}</span>
                 <span className="block border-t border-white/10 pt-2 space-y-0.5 text-gray-500">
-                  <span className="block"><span className="text-emerald-400">Excelente</span> 90-100</span>
-                  <span className="block"><span className="text-lime-400">Bom</span> 70-89</span>
-                  <span className="block"><span className="text-yellow-400">Aceitável</span> 40-69</span>
-                  <span className="block"><span className="text-orange-400">Não recomendado</span> 20-39</span>
-                  <span className="block"><span className="text-red-500">Crítico</span> 0-19</span>
+                  {isV3 ? (
+                    <>
+                      <span className="block"><span className="text-emerald-400">N5 Harmonioso</span> 85-100</span>
+                      <span className="block"><span className="text-lime-400">N4 Favorável</span> 70-84</span>
+                      <span className="block"><span className="text-yellow-400">N3 Equilíbrio Parcial</span> 50-69</span>
+                      <span className="block"><span className="text-orange-400">N2 Pede Atenção</span> 30-49</span>
+                      <span className="block"><span className="text-red-400">N1 Em Tensão</span> 0-29</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="block"><span className="text-emerald-400">Excelente</span> 90-100</span>
+                      <span className="block"><span className="text-lime-400">Bom</span> 70-89</span>
+                      <span className="block"><span className="text-yellow-400">Aceitável</span> 40-69</span>
+                      <span className="block"><span className="text-orange-400">Não recomendado</span> 20-39</span>
+                      <span className="block"><span className="text-red-500">Crítico</span> 0-19</span>
+                    </>
+                  )}
                 </span>
               </span>
             </span>
@@ -111,6 +144,17 @@ export default function ScoreDisplay({
           style={{ width: `${clamped}%` }}
         />
       </div>
+      {showHowItWorksLink && (
+        <div className="mt-1.5 text-right">
+          <a
+            href="/como-funciona-o-score"
+            className="text-[11px] text-gray-500 hover:text-[#f2ca50] transition-colors underline decoration-dotted underline-offset-2"
+          >
+            Como calculamos esta nota?
+          </a>
+        </div>
+      )}
     </div>
   );
 }
+

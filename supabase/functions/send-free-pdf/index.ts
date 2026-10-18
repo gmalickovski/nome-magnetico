@@ -160,8 +160,8 @@ serve(async (req) => {
           <div class="card">
             <h1>Olá, ${primeiroNome}</h1>
             <p>O dossiê completo com a análise de nascimento do seu nome <strong>${lead.nome_completo}</strong> já está pronto e foi anexado a este e-mail.</p>
-            <p>Seu relatório em PDF inclui a análise detalhada do seu <span class="highlight">Triângulo da Vida</span>, a interpretação dos seus <span class="highlight">5 Números Principais</span> e o Arcano Regente que governa a sua frequência atual.</p>
-            <p><strong>Quer dar o próximo passo e remover os bloqueios?</strong> Descubra a sua assinatura de poder ideal com o Nome Social, analisando todas as variações para harmonizar o seu Destino.</p>
+            <p>Seu relatório em PDF inclui a análise do seu <span class="highlight">Triângulo da Vida</span> (base do seu score), os 3 triângulos complementares (Pessoal, Social e Destino), seus <span class="highlight">5 Números Cabalísticos</span>, seu diagnóstico vibracional no motor v3 e o cálculo do seu <span class="highlight">potencial de harmonização</span>.</p>
+            <p><strong>Quer dar o próximo passo e remover os bloqueios?</strong> Descubra a sua assinatura de poder ideal com o Nome Social, analisando todas as variações para alcançar o seu potencial máximo.</p>
             <a class="btn" href="https://nomemagnetico.com.br/nome-social">Harmonizar Meu Nome</a>
           </div>
           <div class="footer">

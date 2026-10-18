@@ -22,6 +22,7 @@ export const GET: APIRoute = async () => {
     { url: '/precos', changefreq: 'monthly', priority: '0.8', lastmod: currentDate },
     { url: '/comprar', changefreq: 'weekly', priority: '0.8', lastmod: currentDate },
     { url: '/analise-gratuita', changefreq: 'monthly', priority: '0.8', lastmod: currentDate },
+    { url: '/como-funciona-o-score', changefreq: 'monthly', priority: '0.7', lastmod: currentDate },
     { url: '/perguntas-frequentes', changefreq: 'monthly', priority: '0.6', lastmod: currentDate },
     { url: '/suporte', changefreq: 'monthly', priority: '0.6', lastmod: currentDate },
     { url: '/privacidade', changefreq: 'yearly', priority: '0.3', lastmod: currentDate },

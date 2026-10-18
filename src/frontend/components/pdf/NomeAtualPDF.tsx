@@ -41,6 +41,15 @@ import {
   MISSAO_DESC,
 } from '../../../backend/numerology/interpretations';
 
+import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
+import {
+  getScoreV3Level,
+  getScoreV3LevelBadgeClass,
+  getScoreV3LevelDescription,
+  formatScoreV3Points,
+  SCORE_CONFIG_V3,
+} from '../../../shared/score-v3';
+
 const theme = THEME_NOME_ATUAL;
 
 const GOLD = theme.primaryColor;
@@ -345,7 +354,7 @@ export function NomeAtualPDF({
   );
   const triCellSize = Math.min(18, Math.max(5, Math.floor(TRIANGLE_FULL_WIDTH / baseLen) - 1));
 
-  // ── Score (para a CTA final) ──────────────────────────────────────────────
+  // ── Score v3 (para a CTA final e comparativo) ────────────────────────────
   const storedV3 = normalizeScore((analysis as { score_v3?: number }).score_v3);
   const storedScore = normalizeScore(analysis.score);
   const birthForScore =
@@ -357,26 +366,36 @@ export function NomeAtualPDF({
           })()
         : analysis.data_nascimento
       : '';
-  const computedScore =
-    analysis.nome_completo && birthForScore && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
-      ? isScoreV3()
-        ? avaliarNome(analysis.nome_completo, birthForScore).score_v3
-        : calcularScoreV1SemOcorrenciasExtras({
+
+  const avaliacaoV3 =
+    analysis.nome_completo && birthForScore && isScoreV3()
+      ? avaliarNome(analysis.nome_completo, birthForScore, { calcularPotencial: true })
+      : null;
+
+  const rawScore = isScoreV3()
+    ? (avaliacaoV3?.score_v3 ?? storedV3 ?? storedScore)
+    : (storedScore ?? (analysis.nome_completo && birthForScore && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
+        ? calcularScoreV1SemOcorrenciasExtras({
             bloqueios,
             licoesCarmicas: licoes.length,
             tendenciasOcultas: tendencias.length,
             debitosCarmicos: debitos,
             compatibilidade: avaliarCompatibilidade(cincoNumNasc.expressao, cincoNumNasc.destino),
           })
-      : null;
-  const rawScore = isScoreV3()
-    ? (storedV3 ?? computedScore ?? storedScore)
-    : (storedScore ?? computedScore);
+        : null));
+
+  const nivelV3 = avaliacaoV3?.nivel ?? (rawScore != null ? getScoreV3Level(rawScore) : null);
+  const potencialV3 = avaliacaoV3?.potencial ?? null;
+  const debitosFixos = avaliacaoV3?.marcaDaData && avaliacaoV3.marcaDaData.length > 0
+    ? avaliacaoV3.marcaDaData
+    : debitos.filter(d => d.fixo === true);
+  const reflexosTriangulos = avaliacaoV3?.reflexos ?? [];
+
   type ScoreNivel = 'baixo' | 'aceitavel' | 'excelente' | null;
   const scoreNivel: ScoreNivel =
     rawScore == null ? null
-      : rawScore >= 80 ? 'excelente'
-        : rawScore >= 50 ? 'aceitavel'
+      : (nivelV3 === 'N5' || nivelV3 === 'N4' || rawScore >= 70) ? 'excelente'
+        : (nivelV3 === 'N3' || rawScore >= 40) ? 'aceitavel'
           : 'baixo';
 
   // ── Texto da IA (escudo provisório) ───────────────────────────────────────
@@ -575,9 +594,19 @@ export function NomeAtualPDF({
             <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
           </View>
 
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
-            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para dissolvê-los e recuperar a fluidez.
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada.
           </Text>
+
+          {/* Destaque Triângulo da Vida no motor v3 */}
+          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', padding: 10, marginBottom: 12 }}>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#92640F', marginBottom: 4 }}>
+              O Triângulo da Vida Define a Sua Pontuação
+            </Text>
+            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
+              No motor v3, as sequências repetidas que subtraem pontos do score baseiam-se estritamente no Triângulo da Vida (a vibração pura do seu nome). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e atuam como reflexos vibracionais, sem gerar descontos no score.
+            </Text>
+          </View>
 
           {/* Arcanos info box */}
           <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED', padding: 12, marginBottom: 10 }}>
@@ -785,6 +814,16 @@ export function NomeAtualPDF({
           <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
             Os Débitos Kármicos emergem como ecos de vidas anteriores — áreas onde o livre-arbítrio foi utilizado em desequilíbrio. Não são punições, mas leis de compensação que exigem reintegração. Os mesmos cenários de traição, perda ou esforço redobrado tendem a se repetir até que a lição seja integrada conscientemente.
           </Text>
+          {debitosFixos.length > 0 && (
+            <View wrap={false} style={{ borderRadius: 6, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: '#F59E0B', padding: 8, marginBottom: 8 }}>
+              <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#D97706', marginBottom: 2 }}>
+                Marca da sua data ({debitosFixos.map(d => d.numero).join(', ')}) — Sem impacto no score do nome
+              </Text>
+              <Text style={{ fontSize: 8, color: GRAY, lineHeight: 1.4 }}>
+                Os débitos vinculados à sua data de nascimento ou Destino não descontam pontos na avaliação do seu nome no motor v3. Eles representam aprendizados imutáveis de consciência.
+              </Text>
+            </View>
+          )}
           <DebitosBlock debitos={debitos} />
         </View>
 
@@ -951,6 +990,84 @@ export function NomeAtualPDF({
         <PDFFooter />
       </Page>
 
+      {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
+      <Page size="A4" style={styles.page}>
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
+
+        <View style={{ marginTop: 24, marginBottom: 14 }}>
+          <Text style={[styles.sectionTitle, { fontSize: 13, marginBottom: 8 }]}>
+            Como Calculamos o Seu Score Cabalístico (Motor v3)
+          </Text>
+        </View>
+
+        <Text style={{ fontSize: 9.5, color: GRAY, lineHeight: 1.6, marginBottom: 12, textAlign: 'justify' }}>
+          O Score do Nome Magnético é um modelo estritamente matemático e determinístico, fundamentado nos critérios objetivos da Numerologia Cabalística tradicional. A avaliação parte da pontuação máxima (100 pontos) e aplica regras claras e auditáveis:
+        </Text>
+
+        <View style={{ gap: 8, marginBottom: 14 }}>
+          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
+              1. Base de Cálculo e Piso
+            </Text>
+            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
+              Todo nome inicia em 100 pontos. Nenhum nome recebe nota menor que 5 pontos (piso de dignidade vibracional).
+            </Text>
+          </View>
+
+          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
+              2. Sequências no Triângulo da Vida
+            </Text>
+            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
+              Sequências repetidas (111..999) no Triângulo da Vida subtraem 15 pontos por padrão distinto, com desconto de até 45 pontos no total. Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não subtraem pontos.
+            </Text>
+          </View>
+
+          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
+              3. Harmonia Expressão × Destino
+            </Text>
+            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
+              Relação Favorável (0 pts), Neutro (-6 pts) ou Tensão Vibracional (-18 pts).
+            </Text>
+          </View>
+
+          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
+              4. Débitos Kármicos do Nome e Marca da Data
+            </Text>
+            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
+              Apenas débitos variáveis (originados na Expressão ou Motivação) descontam pontos. Débitos originados no dia do nascimento ou no Destino pertencem à sua data natalícia e têm desconto zero na nota do nome.
+            </Text>
+          </View>
+
+          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
+              5. Escala de 5 Níveis (N1 a N5)
+            </Text>
+            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
+              N5 (85–100 Harmonioso), N4 (70–84 Favorável), N3 (50–69 Equilíbrio Parcial), N2 (30–49 Pede Atenção) e N1 (0–29 Em Tensão).
+            </Text>
+          </View>
+        </View>
+
+        {/* Link para página pública */}
+        <View style={{ borderRadius: 6, backgroundColor: 'rgba(212,175,55,0.08)', borderWidth: 1, borderColor: '#D4AF37', padding: 8, marginBottom: 12 }}>
+          <Text style={{ fontSize: 8, color: '#92640F', textAlign: 'center', fontFamily: BODY_FONT_BOLD }}>
+            Consulte o detalhamento completo das fórmulas em: nomemagnetico.com.br/como-funciona-o-score
+          </Text>
+        </View>
+
+        {/* Aviso Legal Autoconhecimento */}
+        <View style={{ marginTop: 'auto', borderTopWidth: 0.5, borderTopColor: '#E5E7EB', paddingTop: 8 }}>
+          <Text style={{ fontSize: 7, color: '#9CA3AF', lineHeight: 1.4, textAlign: 'justify' }}>
+            {AVISO_AUTOCONHECIMENTO}
+          </Text>
+        </View>
+
+        <PDFFooter />
+      </Page>
+
       {/* ── PÁGINA FINAL: CTA — DIAGNÓSTICO DEFINITIVO (FUNDO ESCURO) ──────── */}
       <Page size="A4" style={styles.darkPage}>
 
@@ -966,11 +1083,16 @@ export function NomeAtualPDF({
           {/* Coluna Atual */}
           <View style={{ flex: 1, backgroundColor: 'rgba(220,38,38,0.12)', borderWidth: 1.5, borderColor: '#EF4444', borderRadius: 8, padding: 12 }}>
             <Text style={{ fontSize: 8, color: '#EF4444', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, textAlign: 'center' }}>
-              Assinatura Atual
+              Assinatura Atual {nivelV3 ? `(${nivelV3})` : ''}
             </Text>
             <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 26, color: rawScore != null ? scoreColor(rawScore) : '#EF4444', textAlign: 'center', marginBottom: 8, lineHeight: 1 }}>
               {rawScore != null ? `${rawScore}` : '--'}/100
             </Text>
+            {nivelV3 && (
+              <Text style={{ fontSize: 7.5, color: '#FCA5A5', textAlign: 'center', marginBottom: 4 }}>
+                Nível {nivelV3}: {getScoreV3LevelDescription(nivelV3)}
+              </Text>
+            )}
             {bloqueios.length > 0 && (
               <Text style={{ fontSize: 8, color: '#FCA5A5', marginBottom: 2 }}>
                 - {bloqueios.length} bloqueio{bloqueios.length > 1 ? 's' : ''} ativo{bloqueios.length > 1 ? 's' : ''} na assinatura
@@ -987,12 +1109,17 @@ export function NomeAtualPDF({
           {/* Coluna Harmonizado */}
           <View style={{ flex: 1, backgroundColor: 'rgba(5,150,105,0.12)', borderWidth: 1.5, borderColor: '#10B981', borderRadius: 8, padding: 12 }}>
             <Text style={{ fontSize: 8, color: '#10B981', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, textAlign: 'center' }}>
-              Assinatura Harmonizada
+              Seu Potencial Harmonizado {nivelPotencialV3 ? `(${nivelPotencialV3})` : ''}
             </Text>
             <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 26, color: '#10B981', textAlign: 'center', marginBottom: 8, lineHeight: 1 }}>
-              80-96/100
+              {potencialV3 != null ? `Até ${potencialV3}/100` : '85-98/100'}
             </Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Zero bloqueios em todos os triângulos</Text>
+            {nivelPotencialV3 && (
+              <Text style={{ fontSize: 7.5, color: '#6EE7B7', textAlign: 'center', marginBottom: 4 }}>
+                Nível {nivelPotencialV3}: {getScoreV3LevelDescription(nivelPotencialV3)}
+              </Text>
+            )}
+            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Zero bloqueios no Triângulo da Vida</Text>
             <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Frequência magnética constante</Text>
             <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Expressão alinhada ao Destino</Text>
             <Text style={{ fontSize: 8, color: '#6EE7B7' }}>+ Campo vibracional recalibrado</Text>

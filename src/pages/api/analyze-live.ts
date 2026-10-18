@@ -135,9 +135,9 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       debitosCarmicos,
       compatibilidade,
     });
-    const score = isScoreV3()
-      ? avaliarNome(body.nome_candidato, bdDataStr).score_v3
-      : scoreLegado;
+
+    const avaliacaoV3 = avaliarNome(body.nome_candidato, bdDataStr, { calcularPotencial: true });
+    const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
 
     return json({
       triangulos,
@@ -153,7 +153,16 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       tendenciasOcultas,
       debitosCarmicos,
       compatibilidade,
-      score: { total: score },
+      score: {
+        total: score,
+        score_version: avaliacaoV3.score_version,
+        score_v3: avaliacaoV3.score_v3,
+        nivel: avaliacaoV3.nivel,
+        potencial: avaliacaoV3.potencial,
+        descontos: avaliacaoV3.descontos,
+        marcaDaData: avaliacaoV3.marcaDaData,
+        reflexos: avaliacaoV3.reflexos,
+      },
     });
   } catch (error) {
     console.error('[api/analyze-live] Erro:', error);

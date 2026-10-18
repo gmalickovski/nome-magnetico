@@ -67,13 +67,40 @@ const TRIANGULO_DESC: Record<string, string> = {
   destino: `Calculado adicionando ao valor de cada letra a soma já reduzida do dia e mês de nascimento. É o triângulo mais revelador: mapeia os resultados que tendem a se materializar ao longo da vida, a missão maior e os frutos que a frequência vibratória do nome produz. Quando há bloqueios aqui, eles se manifestam como ciclos de esforço que raramente chegam à colheita — o trabalho não se converte em resultado.`,
 };
 
+import { avaliarNome } from '../../../../backend/numerology/score';
+import { isScoreV3 } from '../../../../backend/numerology/score-version';
+import { getScoreV3Level, getScoreV3LevelBadgeClass, getScoreV3LevelDescription, formatScoreV3Points } from '../../../../shared/score-v3';
+
 const destinoNum = cincoNumeros.find(n => n.label === 'Destino');
 
-// ── Score-based CTA logic ──────────────────────────────────────────────────
-const score = (analysis as any).score as number | null;
+// ── Score v3 Evaluation ────────────────────────────────────────────────────
 const primeiroNome = nomeExibido.split(' ')[0] ?? nomeExibido;
+const birthDateStr = (() => {
+  const raw = analysis?.data_nascimento ?? '';
+  if (!raw) return '';
+  if (raw.includes('/')) return raw;
+  if (raw.includes('-')) {
+    const parts = raw.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return raw;
+})();
 
-const debitosFixos    = (debitosRaw  ?? []).filter((d: any) => d.fixo === true);
+const v3Active = isScoreV3();
+const avaliacaoV3 = (v3Active && birthDateStr)
+  ? avaliarNome(nomeExibido, birthDateStr, { calcularPotencial: true })
+  : null;
+
+const score = avaliacaoV3 ? avaliacaoV3.score_v3 : ((analysis as any).score as number | null);
+const nivelV3 = avaliacaoV3 ? avaliacaoV3.nivel : (score != null ? getScoreV3Level(score) : null);
+const potencialV3 = avaliacaoV3?.potencial ?? null;
+const nivelPotencialV3 = potencialV3 != null ? getScoreV3Level(potencialV3) : null;
+const debitosFixosData = avaliacaoV3?.marcaDaData && avaliacaoV3.marcaDaData.length > 0
+  ? avaliacaoV3.marcaDaData
+  : (debitosRaw ?? []).filter((d: any) => d.fixo === true);
+const reflexosTriangulos = avaliacaoV3?.reflexos ?? [];
+
+const debitosFixos    = debitosFixosData;
 const debitosVariaveis = (debitosRaw ?? []).filter((d: any) => !d.fixo);
 const licoes           = licoesRaw    ?? [];
 const tendencias       = tendenciasRaw ?? [];
@@ -89,8 +116,8 @@ const temPermanentes      = debitosFixos.length > 0;
 type ScoreNivel = 'excelente' | 'aceitavel' | 'baixo' | 'sem-score';
 const scoreNivel: ScoreNivel =
   score === null || score === undefined ? 'sem-score'
-  : score >= 70  ? 'excelente'
-  : score >= 40  ? 'aceitavel'
+  : (nivelV3 === 'N5' || nivelV3 === 'N4' || score >= 70) ? 'excelente'
+  : (nivelV3 === 'N3' || score >= 40) ? 'aceitavel'
   : 'baixo';
 
 const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 0) || (licoesRaw && licoesRaw.length > 0);
@@ -104,14 +131,58 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
     <p class="text-sm text-gray-400 mt-1">Calculado a partir da sua data de nascimento — o único número verdadeiramente imutável.</p>
   </div>
 
-  {/* Card do Destino — destaque central */}
-  <div class="flex justify-center mb-8">
-    <div class="rounded-2xl bg-[#bea5ff]/8 border border-[#bea5ff]/30 p-8 text-center flex flex-col items-center gap-2 w-64 transition-all duration-700 hover:shadow-lg hover:shadow-purple-500/10">
+  {/* Card do Destino + Score v3 e Potencial */}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="rounded-2xl bg-[#bea5ff]/8 border border-[#bea5ff]/30 p-6 md:p-8 text-center flex flex-col items-center justify-center gap-2 transition-all duration-700 hover:shadow-lg hover:shadow-purple-500/10">
       <span class="text-[#bea5ff]/40 text-2xl leading-none">◈</span>
-      <div class="font-cinzel text-7xl font-bold text-[#bea5ff] leading-none">{destinoNum?.value ?? '?'}</div>
+      <div class="font-cinzel text-6xl md:text-7xl font-bold text-[#bea5ff] leading-none">{destinoNum?.value ?? '?'}</div>
       <div class="text-white text-sm font-semibold mt-2">Número de Destino</div>
-      <div class="text-[#bea5ff]/60 text-xs">A Estrada da Sua Alma</div>
+      <div class="text-[#bea5ff]/60 text-xs">A Estrada Imutável da Sua Alma</div>
     </div>
+
+    {score != null && (
+      <div class="rounded-2xl bg-white/[0.04] border border-[#D4AF37]/30 p-6 md:p-8 flex flex-col justify-between gap-4">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="text-[10px] font-cinzel uppercase tracking-[0.15em] text-[#D4AF37]">Diagnóstico Vibracional v3</span>
+            {nivelV3 && (
+              <span class={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${getScoreV3LevelBadgeClass(nivelV3)}`}>
+                Nível {nivelV3} · {getScoreV3LevelDescription(nivelV3)}
+              </span>
+            )}
+          </div>
+          <div class="flex items-baseline gap-2 mb-1">
+            <span class="font-cinzel text-5xl md:text-6xl font-bold text-white leading-none">{score}</span>
+            <span class="text-gray-500 text-lg">/100</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            Pontuação exata da vibração do seu nome atual de nascimento baseada nos critérios cabalísticos objetivos.
+          </p>
+        </div>
+
+        {potencialV3 != null && (
+          <div class="rounded-xl bg-[#10b981]/10 border border-[#10b981]/30 p-3.5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#10b981] uppercase tracking-wider">Seu Potencial com Harmonização</span>
+              <span class="text-xs font-bold text-[#10b981]">Até {potencialV3}/100 {nivelPotencialV3 ? `(${nivelPotencialV3})` : ''}</span>
+            </div>
+            <p class="text-[11px] text-gray-300 leading-relaxed">
+              O cálculo de harmonização aponta que variações do seu nome podem atingir o nível máximo de fluidez sem bloqueios na Vida.
+            </p>
+          </div>
+        )}
+
+        <div class="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+          <a
+            href="/como-funciona-o-score"
+            class="text-[#D4AF37] hover:underline underline-offset-4 flex items-center gap-1 transition-colors"
+          >
+            Como calculamos esta nota? ↗
+          </a>
+          <span class="text-gray-500 text-[11px]">Motor v3</span>
+        </div>
+      </div>
+    )}
   </div>
 
   {/* Parágrafo 1 — sobre a imutabilidade do Destino */}
@@ -190,6 +261,37 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
         da sua vida, 24 horas por dia.
       </p>
     </div>
+
+    {/* Alerta explicativo do Motor v3 para os Triângulos */}
+    <div class="mb-6 rounded-2xl bg-[#D4AF37]/[0.05] border border-[#D4AF37]/25 p-5 flex flex-col sm:flex-row items-start gap-4">
+      <span class="text-2xl shrink-0">🔺</span>
+      <div class="space-y-1">
+        <h4 class="font-cinzel text-sm font-bold text-[#D4AF37]">
+          O Triângulo da Vida define a sua pontuação
+        </h4>
+        <p class="text-xs text-gray-300 leading-relaxed">
+          No motor v3, as sequências repetidas que subtraem pontos do score baseiam-se estritamente no <strong>Triângulo da Vida</strong> (a vibração pura do seu nome). Os triângulos <strong>Pessoal</strong>, <strong>Social</strong> e <strong>Destino</strong> fornecem leituras complementares de autoconhecimento e atuam como reflexos vibracionais, sem gerar descontos punitivos no score.
+        </p>
+      </div>
+    </div>
+
+    {reflexosTriangulos.length > 0 && (
+      <div class="mb-6 rounded-2xl bg-white/[0.02] border border-white/10 p-5 space-y-3">
+        <p class="text-xs font-cinzel uppercase tracking-[0.12em] text-[#bea5ff]">
+          Reflexos Identificados nos Triângulos Complementares
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {reflexosTriangulos.map(r => (
+            <div class="rounded-xl bg-black/30 border border-white/5 p-3 text-xs">
+              <span class="font-bold text-[#bea5ff] uppercase block mb-1">
+                Sequência {r.codigo} no Triângulo {r.triangulo}
+              </span>
+              <p class="text-gray-400 leading-relaxed">{r.descricao}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
 
     <TriangleVisualization
       client:load
@@ -278,6 +380,17 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
       <h2 class="font-cinzel text-2xl font-bold text-white">Débitos Kármicos</h2>
     </div>
     <KarmicDebts client:load debitos={debitosRaw as any} nomeCompleto={nomeExibido} />
+    {temPermanentes && (
+      <div class="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-amber-400 text-sm">📅</span>
+          <p class="text-xs text-amber-300 uppercase tracking-wider font-bold">Marca da sua data — Sem impacto no score do nome</p>
+        </div>
+        <p class="text-xs text-gray-300 leading-relaxed">
+          Os débitos kármicos associados ao dia do nascimento ou ao Destino ({debitosFixos.map((d: any) => d.numero).join(', ')}) pertencem à sua data e não penalizam a pontuação do seu nome no motor v3. Eles representam aprendizados imutáveis escolhidos para a sua jornada.
+        </p>
+      </div>
+    )}
     <div class="mt-4 rounded-xl border border-[#bea5ff]/25 bg-[#bea5ff]/5 p-4">
       <p class="text-xs text-[#c084fc] uppercase tracking-wider font-semibold mb-2">Como a Harmonização Atua nos Débitos Kármicos</p>
       <p class="text-gray-300 text-sm leading-relaxed">

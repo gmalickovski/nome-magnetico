@@ -111,9 +111,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           debitosCarmicos,
           compatibilidade: avaliarCompatibilidade(expressao, destino),
         });
-        const score = isScoreV3()
-          ? avaliarNome(nome_completo, data_nascimento).score_v3
-          : scoreLegado;
+        const avaliacaoV3 = avaliarNome(nome_completo, data_nascimento, { calcularPotencial: true });
+        const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
         const scoreFields = persistenciaScoreFields({
           scoreLegado,
           nomeParaV3: nome_completo,
@@ -147,6 +146,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           },
           analise_texto: null,
           score,
+          score_version: avaliacaoV3.score_version,
+          score_v3: avaliacaoV3.score_v3,
+          nivel: avaliacaoV3.nivel.codigo,
+          potencial: avaliacaoV3.potencial,
+          score_detalhe: avaliacaoV3,
           is_free: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
