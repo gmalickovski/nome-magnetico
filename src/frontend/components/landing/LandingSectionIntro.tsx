@@ -7,6 +7,8 @@ interface LandingSectionIntroProps {
   description?: React.ReactNode;
   align?: 'center' | 'left';
   className?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
   /** Optional scroll reveal state to animate overline -> title -> description in stagger */
   revealed?: boolean;
   reduceMotion?: boolean;
@@ -47,6 +49,8 @@ export function LandingSectionIntro({
   description,
   align = 'center',
   className = '',
+  titleClassName = '',
+  descriptionClassName = '',
   revealed = true,
   reduceMotion = false,
 }: LandingSectionIntroProps) {
@@ -69,7 +73,10 @@ export function LandingSectionIntro({
       )}
       {title && (
         <h2
-          className={`font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-[2.65rem] xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance ${titleReveal.className}`}
+          className={`font-cinzel ${
+            titleClassName ||
+            'text-2xl sm:text-3xl md:text-4xl lg:text-[2.65rem] xl:text-5xl font-bold leading-[1.16]'
+          } text-[#e5e2e1] mb-4 text-balance ${titleReveal.className}`}
           style={titleReveal.style}
         >
           {title}
@@ -77,7 +84,9 @@ export function LandingSectionIntro({
       )}
       {description && (
         <p
-          className={`text-gray-400 text-sm sm:text-base leading-relaxed max-w-[62ch] text-pretty break-words ${
+          className={`text-gray-400 text-sm sm:text-base leading-relaxed ${
+            descriptionClassName || 'max-w-[62ch]'
+          } text-pretty break-words ${
             align === 'center' ? 'mx-auto' : 'lg:mx-0 mx-auto'
           } ${descReveal.className}`}
           style={descReveal.style}

@@ -36,7 +36,7 @@ export function ProductsSection() {
       <section
         id="produtos"
         ref={reveal1.ref}
-        className={`relative ${landingSectionSpacingClass} bg-[#111111] scroll-mt-28 overflow-x-clip`}
+        className="relative min-h-svh flex items-center justify-center bg-[#111111] py-14 md:py-16 lg:py-14 scroll-mt-28 overflow-x-clip"
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -92,7 +92,7 @@ export function ProductsSection() {
       <section
         id="sugestoes"
         ref={reveal2.ref}
-        className={`relative ${landingSectionSpacingClass} bg-[#131313] scroll-mt-28 overflow-x-clip`}
+        className="relative min-h-svh flex items-center justify-center bg-[#131313] py-14 md:py-16 lg:py-14 scroll-mt-28 overflow-x-clip"
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
