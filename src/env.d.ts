@@ -50,6 +50,7 @@ interface ImportMetaEnv {
   readonly PUBLIC_TURNSTILE_SITE_KEY: string;
   readonly PRODUCT_SLUG: string;
   readonly INTERNAL_API_SECRET: string;
+  readonly DOWNLOAD_PDF_SECRET: string;
   readonly SENTRY_DSN: string;
   readonly PUBLIC_SENTRY_DSN: string;
   readonly NEXT_PUBLIC_SENTRY_DSN: string;
