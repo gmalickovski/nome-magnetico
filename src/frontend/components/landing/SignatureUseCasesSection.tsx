@@ -146,7 +146,7 @@ export function SignatureUseCasesSection() {
       id="onde-usar"
       ref={ref}
       className={`relative bg-[#111111] scroll-mt-20 ${
-        reduceMotion ? landingSectionSpacingClass : 'h-[320vh] py-0'
+        reduceMotion ? landingSectionSpacingClass : 'lg:h-[320vh] py-0'
       }`}
       aria-label="Onde e como usar sua assinatura harmonizada"
     >
@@ -159,14 +159,13 @@ export function SignatureUseCasesSection() {
         <div className="absolute bottom-1/4 right-[5%] w-[300px] h-[300px] lg:w-[440px] lg:h-[440px] bg-[#d7c6ff]/5 rounded-full blur-[100px]" />
       </div>
 
-      <div ref={sectionReveal.ref as React.RefObject<HTMLDivElement>} className="w-full h-full">
-        {/* ── EXPERIÊNCIA DESKTOP PINNED (lg: 1024px+) ────────────────────── */}
-        <div
-          className={`hidden lg:flex flex-col justify-center items-center w-full ${
-            reduceMotion ? '' : 'sticky top-0 min-h-screen pt-16 pb-8'
-          } overflow-x-clip`}
-        >
-          <div className={`relative ${landingSectionShellClass} flex items-center justify-center`}>
+      {/* ── EXPERIÊNCIA DESKTOP PINNED (lg: 1024px+) ────────────────────── */}
+      <div
+        className={`hidden lg:flex flex-col justify-center items-center w-full ${
+          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen'
+        } overflow-x-clip`}
+      >
+        <div className={`relative ${landingSectionShellClass} flex items-center justify-center`}>
             {/*
               M3 12-Column Split Grid (5 cols Left / 7 cols Right) — 100% flush with ProductsSection and Header!
               - Lado Esquerdo (lg:col-span-5): Marcadores verticais na guia esquerda + Título + Texto + Bullets
@@ -384,7 +383,6 @@ export function SignatureUseCasesSection() {
             })}
           </div>
         </div>
-      </div>
     </section>
   );
 }
