@@ -131,6 +131,14 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
       // Tipos diversos no Top 3
       const tipos = res.top3.map(t => t.tipoOpcao);
       assert.ok(tipos.includes('mudanca_minima') || tipos.includes('encurtado'));
+
+      // Etapa 3 (duplicações / último recurso) NÃO deve estar no Top 3 nem nas sugestões quando Etapas 1 e 2 resolvem
+      for (const item of res.top3) {
+        assert.notEqual(item.etapa, 3, `Sugestão ${item.nomeCompleto} não deve ser da Etapa 3 quando Etapas 1 e 2 já têm opções viáveis`);
+      }
+      for (const item of res.nomesCandidatos) {
+        assert.notEqual(item.etapa, 3, `Candidato ${item.nomeCompleto} não deve ser da Etapa 3`);
+      }
     });
   });
 });

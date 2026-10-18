@@ -228,29 +228,36 @@ try {
 } catch {}
 
 // Detectar análises legadas que qualificam para o recálculo grátis v3
-let legacyAnalysisToRecalculate: any = null;
+let legacyAnalysesToRecalculate: any[] = [];
 try {
-  const { data: legacyAnalyses } = await _client
+  const { data: userAnalyses } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, score_version, product_type, parent_analysis_id, created_at')
+    .select('id, nome_completo, score, score_version, product_type, parent_analysis_id, recalculated_from_version, created_at')
     .eq('user_id', user.id)
     .eq('status', 'complete')
     .order('created_at', { ascending: false });
 
-  if (legacyAnalyses && legacyAnalyses.length > 0) {
+  if (userAnalyses && userAnalyses.length > 0) {
     const recalculatedParentIds = new Set(
-      legacyAnalyses
+      userAnalyses
         .filter(a => a.parent_analysis_id && a.score_version === 'v3')
         .map(a => a.parent_analysis_id)
     );
-    // Encontrar a análise mais relevante (paga ou grátis) que ainda não foi recalculada e não é v3
-    legacyAnalysisToRecalculate = legacyAnalyses.find(
-      a => (!a.score_version || a.score_version === 'v1') && !recalculatedParentIds.has(a.id)
-    ) ?? null;
+    // Qualificam apenas análises do motor antigo (v1) que não são fruto de recálculo
+    // e que ainda não têm nenhuma versão recalculada para v3
+    legacyAnalysesToRecalculate = userAnalyses.filter(
+      a => (!a.score_version || a.score_version === 'v1') &&
+           !a.parent_analysis_id &&
+           !a.recalculated_from_version &&
+           !recalculatedParentIds.has(a.id)
+    );
   }
 } catch (e) {
   console.warn('[index.astro] Erro ao buscar análises legadas para recálculo:', e);
 }
+
+const legacyCount = legacyAnalysesToRecalculate.length;
+const singleLegacyAnalysis = legacyCount === 1 ? legacyAnalysesToRecalculate[0] : null;
 
 // Detectar estado expirado (já comprou antes, mas nenhuma ativa)
 const isExpired = !isAdmin && !hasAnyAccess && await hasAnySubscription(user.id);
@@ -490,7 +497,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
     )}
 
     <!-- Banner: Melhoria do Motor v3 e Recálculo Gratuito -->
-    {legacyAnalysisToRecalculate && (
+    {legacyCount > 0 && (
       <div
         id="recalc-v3-banner"
         class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#D4AF37]/15 via-purple-500/10 to-[#D4AF37]/10 border border-[#D4AF37]/30 p-5 md:p-6 shadow-2xl shadow-black/40"
@@ -507,7 +514,15 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
               Melhoramos o cálculo do seu score numerológico
             </h3>
             <p class="text-gray-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
-              Sua análise de <strong class="text-white">{legacyAnalysisToRecalculate.nome_completo}</strong> foi calculada com o motor anterior. O motor v3 traz critérios mais precisos para bloqueios e débitos kármicos. Você pode gerar a nova versão gratuitamente preservando a original.
+              {legacyCount === 1 ? (
+                <>
+                  Sua análise de <strong class="text-white">{singleLegacyAnalysis.nome_completo}</strong> foi calculada com o motor anterior. O motor v3 traz critérios mais precisos para bloqueios e débitos kármicos. Você pode gerar a nova versão gratuitamente preservando a original.
+                </>
+              ) : (
+                <>
+                  Você possui <strong class="text-white">{legacyCount} análises</strong> calculadas com a versão anterior do motor. O motor v3 traz critérios aprimorados para bloqueios e débitos kármicos. Você pode recalcular todas gratuitamente preservando os históricos originais.
+                </>
+              )}
             </p>
           </div>
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
@@ -520,18 +535,23 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
             <button
               id="btn-recalc-v3"
               type="button"
-              data-analysis-id={legacyAnalysisToRecalculate.id}
+              data-analysis-ids={JSON.stringify(legacyAnalysesToRecalculate.map(a => a.id))}
+              data-is-multiple={legacyCount > 1 ? 'true' : 'false'}
               class="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-xs sm:text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-yellow-500/15"
             >
               <span id="btn-recalc-spinner" class="hidden w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
-              <span id="btn-recalc-text">Recalcular com motor v3 (grátis)</span>
+              <span id="btn-recalc-text">
+                {legacyCount === 1
+                  ? 'Recalcular análise com motor v3 (grátis)'
+                  : `Recalcular ${legacyCount} análises com motor v3 (grátis)`}
+              </span>
             </button>
           </div>
         </div>
       </div>
     )}
 
-    {legacyAnalysisToRecalculate && (
+    {legacyCount > 0 && (
       <script>
         (function () {
           const btn = document.getElementById('btn-recalc-v3') as HTMLButtonElement | null;
@@ -541,24 +561,36 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
 
           if (!btn) return;
 
+          const rawIds = btn.dataset.analysisIds;
+          let analysisIds: string[] = [];
+          try {
+            analysisIds = rawIds ? JSON.parse(rawIds) : [];
+          } catch {
+            analysisIds = [];
+          }
+          const isMultiple = btn.dataset.isMultiple === 'true';
+
           btn.addEventListener('click', async () => {
-            const analysisId = btn.dataset.analysisId;
-            if (!analysisId) return;
+            if (!analysisIds.length) return;
 
             btn.disabled = true;
             if (spinner) spinner.classList.remove('hidden');
-            if (text) text.textContent = 'Recalculando...';
+            if (text) text.textContent = isMultiple ? 'Recalculando análises...' : 'Recalculando análise...';
 
             try {
               const res = await fetch('/api/recalculate-v3', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ analysisId }),
+                body: JSON.stringify(isMultiple ? { analysisIds } : { analysisId: analysisIds[0] }),
               });
               const data = await res.json();
-              if (res.ok && data.analysisId) {
-                if (text) text.textContent = 'Sucesso! Abrindo...';
-                window.location.href = `/app/resultado/${data.analysisId}`;
+              if (res.ok) {
+                if (text) text.textContent = 'Sucesso! Atualizando...';
+                if (!isMultiple && data.analysisId) {
+                  window.location.href = `/app/resultado/${data.analysisId}`;
+                } else {
+                  window.location.reload();
+                }
               } else {
                 throw new Error(data.error || 'Erro ao recalcular');
               }
@@ -566,7 +598,11 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
               alert(err instanceof Error ? err.message : 'Falha ao recalcular análise.');
               btn.disabled = false;
               if (spinner) spinner.classList.add('hidden');
-              if (text) text.textContent = 'Recalcular com motor v3 (grátis)';
+              if (text) {
+                text.textContent = isMultiple
+                  ? `Recalcular ${analysisIds.length} análises com motor v3 (grátis)`
+                  : 'Recalcular análise com motor v3 (grátis)';
+              }
             }
           });
         })();

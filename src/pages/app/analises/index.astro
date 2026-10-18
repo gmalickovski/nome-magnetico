@@ -65,7 +65,10 @@ const analysesWithMeta = paidAnalyses.map(a => {
     } else if (version === 'v3' && a.nome_completo && a.data_nascimento) {
       const parts = String(a.data_nascimento).split('-');
       const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : a.data_nascimento;
-      score = avaliarNome(a.nome_completo, dataPt).score_v3;
+      const targetName = (a.product_type === 'nome_social' && rankingSocial?.melhorNome?.nomeCompleto)
+        ? rankingSocial.melhorNome.nomeCompleto
+        : a.nome_completo;
+      score = avaliarNome(targetName, dataPt).score_v3;
     } else if (a.score != null) {
       score = a.score;
     }
