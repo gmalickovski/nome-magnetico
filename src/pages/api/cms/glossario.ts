@@ -14,10 +14,10 @@ function slugify(text: string): string {
     .replace(/-+/g, '-');
 }
 
+import { isValidInternalBearerToken } from '@/backend/security/internalSecret';
+
 function checkAuth(request: Request): boolean {
-  const auth = request.headers.get('authorization') ?? '';
-  const token = auth.replace('Bearer ', '').trim();
-  return token === (readServerEnv('INTERNAL_API_SECRET') ?? '');
+  return isValidInternalBearerToken(request.headers.get('authorization'));
 }
 
 const createSchema = z.object({
