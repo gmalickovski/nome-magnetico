@@ -99,22 +99,18 @@ export function HowItWorksSection() {
   }, []);
 
   // ── CORE PROGRESSION CHOREOGRAPHY ──────────────────────────────────────────
-  // Phase 1 (progress: 0.00 -> 0.18):
-  // - O título sobe suavemente em direção ao header, para de rolar próximo a ele e dissolve gradualmente.
-  // - O texto termina de sumir gradualmente ANTES do Card 01 chegar ao centro da área útil.
-  // - O Card 01 continua subindo (cardEntryY: 150px -> 0px) até o centro exato da área útil.
-  // Phase 2 (progress: 0.18 -> 0.78):
-  // - Card 01 está centrado.
-  // - Revelação sequencial: Desktop rail horizontal / Tablet grid 2x2 / Mobile rail vertical.
-  // Phase 3 (progress: 0.78 -> 1.00):
-  // - Buffer de descanso estável: todos os cards permanecem perfeitamente visíveis antes da Seção 3 entrar.
+  // DESKTOP (lg: 1024px+): 100% intacto conforme aprovado.
+  // MOBILE & TABLET (< lg:): Título inicia centralizado na área útil sozinho.
+  // Cards iniciam 100% ocultos (opacity 0) e só entram após o texto começar a subir e dissolver.
   const {
+    // Desktop variables (DO NOT TOUCH)
     introOpacity,
     introTranslateY,
     cardEntryY,
     railOffsetPercent,
     cardVisibility,
     arrowVisibility,
+    // Tablet variables
     row1Shift,
     card2Vis,
     arrow1Active,
@@ -123,9 +119,15 @@ export function HowItWorksSection() {
     card3Vis,
     card4Vis,
     arrow2Active,
+    // Mobile variables
     mobileRailShift,
     mobileCardOpacities,
     mobileArrowActives,
+    // Mobile/Tablet Intro & Card Entry
+    mobTabIntroOp,
+    mobTabIntroY,
+    mobTabCardsOp,
+    mobTabCardsY,
     activeStepIndex,
   } = useMemo(() => {
     if (reduceMotion) {
@@ -147,11 +149,15 @@ export function HowItWorksSection() {
         mobileRailShift: 0,
         mobileCardOpacities: [1, 1, 1, 1],
         mobileArrowActives: [true, true, true],
+        mobTabIntroOp: 1,
+        mobTabIntroY: 0,
+        mobTabCardsOp: 1,
+        mobTabCardsY: 0,
         activeStepIndex: 0,
       };
     }
 
-    // ── FASE 1: Subida do Card 01 & Dissolução suave do Título ──
+    // ── FASE 1: DESKTOP (INTACTO) ──
     const INTRO_PHASE_END = 0.18;
     let introOp = 1;
     let introY = 0;
@@ -162,19 +168,15 @@ export function HowItWorksSection() {
       introY = 0;
       cardY = 150;
     } else if (progress < INTRO_PHASE_END) {
-      const t = progress / INTRO_PHASE_END; // 0.0 -> 1.0
-
-      // O texto sobe suavemente em direção ao header e para de rolar próximo a ele (t = 0.50)
+      const t = progress / INTRO_PHASE_END;
       const rollT = Math.min(1, t / 0.50);
       const rollEase = rollT * rollT * (3 - 2 * rollT);
       introY = -rollEase * 18;
 
-      // O texto dissolve gradualmente e termina ANTES do Card 01 chegar ao centro (termina em t = 0.68)
       const fadeT = Math.min(1, t / 0.68);
       const fadeEase = fadeT * fadeT * (3 - 2 * fadeT);
       introOp = Math.max(0, 1 - fadeEase);
 
-      // Card 01 continua subindo até o centro exato da área útil (y = 0)
       const cardEase = t * t * (3 - 2 * t);
       cardY = (1 - cardEase) * 150;
     } else {
@@ -183,16 +185,57 @@ export function HowItWorksSection() {
       cardY = 0;
     }
 
+    // ── FASE 1: MOBILE & TABLET (< 1024px) ──
+    // Inicialmente: Título centralizado na área útil (y = 0), Cards 100% invisíveis (opacity = 0)
+    let mtIntroOp = 1;
+    let mtIntroY = 0;
+    let mtCardsOp = 0;
+    let mtCardsY = 220;
+
+    if (progress <= 0) {
+      mtIntroOp = 1;
+      mtIntroY = 0;
+      mtCardsOp = 0;
+      mtCardsY = 220;
+    } else if (progress < INTRO_PHASE_END) {
+      const t = progress / INTRO_PHASE_END; // 0.0 -> 1.0
+
+      // Texto sobe do centro em direção ao header (-140px)
+      const rollT = Math.min(1, t / 0.55);
+      const rollEase = rollT * rollT * (3 - 2 * rollT);
+      mtIntroY = -rollEase * 140;
+
+      // Texto dissolve gradualmente e some completamente até t = 0.65
+      const fadeT = Math.min(1, t / 0.65);
+      const fadeEase = fadeT * fadeT * (3 - 2 * fadeT);
+      mtIntroOp = Math.max(0, 1 - fadeEase);
+
+      // Cards surgem suavemente apenas a partir de t = 0.40, subindo de 220px até 0px
+      if (t < 0.40) {
+        mtCardsOp = 0;
+        mtCardsY = 220;
+      } else {
+        const cardT = (t - 0.40) / 0.60; // 0.0 -> 1.0
+        const cardEase = cardT * cardT * (3 - 2 * cardT);
+        mtCardsOp = cardEase;
+        mtCardsY = (1 - cardEase) * 220;
+      }
+    } else {
+      mtIntroOp = 0;
+      mtIntroY = -140;
+      mtCardsOp = 1;
+      mtCardsY = 0;
+    }
+
     // ── FASE 2: Revelação Sequencial dos Passos (progress: 0.18 -> 0.78) ──
     const REVEAL_PHASE_END = 0.78;
     const revProg = progress <= INTRO_PHASE_END
       ? 0
       : Math.min(1, (progress - INTRO_PHASE_END) / (REVEAL_PHASE_END - INTRO_PHASE_END));
 
-    // Passo ativo atual para o indicador
     const currentActiveStep = revProg < 0.28 ? 0 : revProg < 0.58 ? 1 : revProg < 0.85 ? 2 : 3;
 
-    // ── 1. Desktop Rail (Horizontal) ──
+    // ── 1. Desktop Rail (Horizontal — INTACTO) ──
     const cardVis = [1, 0, 0, 0];
     const arrowVis = [false, false, false];
     let offset = 37.5;
@@ -278,40 +321,45 @@ export function HowItWorksSection() {
 
     // ── 3. Mobile Vertical Stacked Rail (< 768px) ──
     let mShift = 0;
-    const mCardOps = [1, 0.4, 0.2, 0.1];
+    const mCardOps = [1, 0, 0, 0];
     const mArrowActives = [false, false, false];
 
-    if (revProg < 0.04) {
+    if (revProg < 0.05) {
       mShift = 0;
       mCardOps[0] = 1;
-      mCardOps[1] = 0.4;
+      mCardOps[1] = 0;
+      mCardOps[2] = 0;
+      mCardOps[3] = 0;
       mArrowActives[0] = false;
     } else if (revProg < 0.36) {
-      const t = (revProg - 0.04) / 0.32;
+      const t = (revProg - 0.05) / 0.31;
       const ease = t * t * (3 - 2 * t);
       mShift = ease * 1;
-      mCardOps[0] = Math.max(0.3, 1 - ease * 0.7);
-      mCardOps[1] = 0.4 + ease * 0.6;
+      mCardOps[0] = Math.max(0.25, 1 - ease * 0.75);
+      mCardOps[1] = ease;
+      mCardOps[2] = 0;
+      mCardOps[3] = 0;
       mArrowActives[0] = t > 0.2;
     } else if (revProg < 0.68) {
       mArrowActives[0] = true;
-      mCardOps[0] = 0.3;
+      mCardOps[0] = 0.25;
       const t = (revProg - 0.36) / 0.32;
       const ease = t * t * (3 - 2 * t);
       mShift = 1 + ease * 1;
-      mCardOps[1] = Math.max(0.3, 1 - ease * 0.7);
-      mCardOps[2] = 0.4 + ease * 0.6;
+      mCardOps[1] = Math.max(0.25, 1 - ease * 0.75);
+      mCardOps[2] = ease;
+      mCardOps[3] = 0;
       mArrowActives[1] = t > 0.2;
     } else {
       mArrowActives[0] = true;
       mArrowActives[1] = true;
-      mCardOps[0] = 0.25;
-      mCardOps[1] = 0.3;
+      mCardOps[0] = 0.2;
+      mCardOps[1] = 0.25;
       const t = Math.min(1, (revProg - 0.68) / 0.32);
       const ease = t * t * (3 - 2 * t);
       mShift = 2 + ease * 1;
-      mCardOps[2] = Math.max(0.3, 1 - ease * 0.7);
-      mCardOps[3] = 0.4 + ease * 0.6;
+      mCardOps[2] = Math.max(0.25, 1 - ease * 0.75);
+      mCardOps[3] = ease;
       mArrowActives[2] = t > 0.2;
     }
 
@@ -333,6 +381,10 @@ export function HowItWorksSection() {
       mobileRailShift: mShift,
       mobileCardOpacities: mCardOps,
       mobileArrowActives: mArrowActives,
+      mobTabIntroOp: mtIntroOp,
+      mobTabIntroY: mtIntroY,
+      mobTabCardsOp: mtCardsOp,
+      mobTabCardsY: mtCardsY,
       activeStepIndex: currentActiveStep,
     };
   }, [progress, reduceMotion]);
@@ -362,10 +414,9 @@ export function HowItWorksSection() {
         <div className="flex-1 relative flex flex-col justify-center items-center w-full min-h-0">
           <div className={`${landingSectionShellClass} relative flex flex-col items-center justify-center w-full h-full min-h-0`}>
 
-            {/* ── TÍTULO DA SEÇÃO ── */}
-            {/* Mantém-se próximo ao header, para de rolar e dissolve gradualmente antes do card chegar ao centro */}
+            {/* ── TÍTULO DA SEÇÃO (DESKTOP: lg: 1024px+ — INTACTO) ── */}
             <div
-              className="w-full text-center absolute top-2 sm:top-3 lg:top-4 left-0 right-0 z-10 will-change-[transform,opacity] pointer-events-none px-4"
+              className="hidden lg:block w-full text-center absolute top-2 sm:top-3 lg:top-4 left-0 right-0 z-10 will-change-[transform,opacity] pointer-events-none px-4"
               style={{
                 opacity: introOpacity,
                 transform: `translateY(${introTranslateY}px)`,
@@ -386,15 +437,37 @@ export function HowItWorksSection() {
               </div>
             </div>
 
-            {/* ── CARDS CONTAINER (Sobe gradualmente de cardEntryY até o centro da área útil) ── */}
+            {/* ── TÍTULO DA SEÇÃO (MOBILE & TABLET: < lg: — CENTRALIZADO INICIALMENTE NA ÁREA ÚTIL) ── */}
             <div
-              className="w-full flex flex-col items-center justify-center my-auto z-20 will-change-transform"
+              className="lg:hidden w-full text-center absolute top-1/2 left-0 right-0 z-10 will-change-[transform,opacity] pointer-events-none px-4"
+              style={{
+                opacity: mobTabIntroOp,
+                transform: `translateY(calc(-50% + ${mobTabIntroY}px))`,
+                visibility: mobTabIntroOp <= 0 ? 'hidden' : 'visible',
+              }}
+            >
+              <div className="w-full text-center max-w-lg md:max-w-2xl mx-auto">
+                <LandingSectionIntro
+                  label="Como funciona"
+                  title="Quatro passos da sua nota hoje até a nova assinatura"
+                  description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
+                  titleClassName="text-xl sm:text-2xl md:text-3xl font-bold uppercase tracking-wide max-w-lg md:max-w-2xl mx-auto leading-[1.25] text-white text-balance"
+                  descriptionClassName="max-w-[46ch] md:max-w-[56ch] mx-auto text-xs sm:text-sm md:text-base mt-2 leading-relaxed text-pretty text-gray-400"
+                  className="text-center"
+                  revealed={true}
+                  reduceMotion={reduceMotion}
+                />
+              </div>
+            </div>
+
+            {/* ── CARDS CONTAINER DESKTOP (lg: 1024px+ — INTACTO) ── */}
+            <div
+              className="hidden lg:flex w-full flex-col items-center justify-center my-auto z-20 will-change-transform"
               style={{
                 transform: `translateY(${cardEntryY}px)`,
               }}
             >
-              {/* 1. DESKTOP RAIL VIEW (lg: 1024px+ — Notebooks, Desktops, Ultrawide) ─ */}
-              <div className="hidden lg:block relative w-full max-w-[1440px] 2xl:max-w-[1600px] mx-auto overflow-visible py-2">
+              <div className="relative w-full max-w-[1440px] 2xl:max-w-[1600px] mx-auto overflow-visible py-2">
                 <div
                   className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch will-change-transform min-w-[1020px] max-w-[1440px] mx-auto"
                   style={{
@@ -458,9 +531,37 @@ export function HowItWorksSection() {
                 </div>
               </div>
 
+              {/* Indicador de progresso desktop */}
+              {!reduceMotion && (
+                <div className="mt-3.5 sm:mt-4 lg:mt-5 flex justify-center items-center gap-2.5">
+                  {steps.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${
+                        activeStepIndex === idx
+                          ? 'w-7 sm:w-8 bg-[#f2ca50] shadow-[0_0_8px_rgba(242,202,80,0.6)]'
+                          : 'w-2 bg-white/20'
+                      }`}
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── CARDS CONTAINER MOBILE & TABLET (< lg: — SURGE APENAS APÓS O TÍTULO) ── */}
+            <div
+              className="lg:hidden w-full flex flex-col items-center justify-center my-auto z-20 will-change-[transform,opacity]"
+              style={{
+                opacity: mobTabCardsOp,
+                transform: `translateY(${mobTabCardsY}px)`,
+                visibility: mobTabCardsOp <= 0 ? 'hidden' : 'visible',
+                pointerEvents: mobTabCardsOp <= 0.1 ? 'none' : 'auto',
+              }}
+            >
               {/* 2. TABLET 2x2 GRID VIEW (md: 768px a 1023px — iPad, iPad Mini, iPad Air) ─ */}
               {/* Cards compactos e responsivos para caber com folga em qualquer altura de tela */}
-              <div className="hidden md:flex lg:hidden flex-col gap-3 md:gap-4 w-full max-w-2xl md:max-w-3xl mx-auto py-1">
+              <div className="hidden md:flex lg:hidden flex-col gap-3 md:gap-4 w-full max-w-3xl md:max-w-4xl px-4 md:px-6 mx-auto py-1">
                 {/* LINHA 1: Cards 01 e 02 */}
                 <div className="relative grid grid-cols-2 gap-3.5 md:gap-5 w-full items-stretch">
                   {/* Card 01 — Inicia centralizado e desloca para a esquerda */}
@@ -626,8 +727,8 @@ export function HowItWorksSection() {
               </div>
 
               {/* 3. MOBILE SMARTPHONE VERTICAL STACKED RAIL (< md: — Smartphones & Small Viewports) */}
-              {/* Cards empilhados um abaixo do outro com setas para baixo no bottom, ocupando a largura útil com responsividade */}
-              <div className="md:hidden w-full max-w-[440px] px-3.5 mx-auto relative flex flex-col items-center justify-center overflow-visible">
+              {/* Cards empilhados um abaixo do outro com setas para baixo no bottom, aproveitando a largura da tela como o Hero card */}
+              <div className="md:hidden w-full max-w-lg sm:max-w-xl px-4 sm:px-6 mx-auto relative flex flex-col items-center justify-center overflow-visible">
                 <div
                   className="w-full flex flex-col items-center will-change-transform"
                   style={{
@@ -645,10 +746,14 @@ export function HowItWorksSection() {
                         key={step.stepNumber}
                         ref={idx === 0 ? mobileCardRef : undefined}
                         className="w-full flex flex-col items-center will-change-[transform,opacity] transition-opacity duration-300"
-                        style={{ opacity }}
+                        style={{
+                          opacity,
+                          visibility: opacity <= 0 ? 'hidden' : 'visible',
+                          pointerEvents: opacity < 0.2 ? 'none' : 'auto',
+                        }}
                       >
                         <article
-                          className={`w-full ${landingInteractiveCardClass} p-4 sm:p-5 flex flex-col justify-between min-h-[160px] sm:min-h-[175px] group`}
+                          className={`w-full ${landingInteractiveCardClass} p-4 sm:p-5 md:p-6 flex flex-col justify-between min-h-[160px] sm:min-h-[175px] group`}
                         >
                           <div>
                             {/* Header: Passo & Ícone */}
@@ -691,7 +796,7 @@ export function HowItWorksSection() {
                 </div>
               </div>
 
-              {/* Indicador de progresso compartilhado em todas as telas */}
+              {/* Indicador de progresso compartilhado mobile e tablet */}
               {!reduceMotion && (
                 <div className="mt-3.5 sm:mt-4 lg:mt-5 flex justify-center items-center gap-2.5">
                   {steps.map((_, idx) => (
