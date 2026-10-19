@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   LandingSectionIntro,
-  landingInteractiveCardClass,
+  landingMockupFloatClass,
   landingSectionShellClass,
   landingSectionSpacingClass,
 } from './LandingSectionIntro';
@@ -103,9 +103,9 @@ function MobileStepItem({
             : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
         }`}
       >
-        <div className="overflow-hidden w-full">
+        <div className={`w-full transition-[padding] duration-500 ${isExpanded ? 'overflow-visible py-2 px-1' : 'overflow-hidden py-0 px-0'}`}>
           <article
-            className={`w-full ${landingInteractiveCardClass} p-4 sm:p-5 flex flex-col justify-between min-h-[155px] sm:min-h-[170px] group`}
+            className={`w-full ${landingMockupFloatClass} p-4 sm:p-5 flex flex-col justify-between min-h-[155px] sm:min-h-[170px] group`}
           >
             <div>
               {/* Header do Card: Número do Passo & SVG */}
@@ -176,20 +176,20 @@ export function HowItWorksSection() {
       if (!el) return;
 
       const rect = el.getBoundingClientRect();
-      const headerEl = typeof document !== 'undefined' ? document.querySelector('header') : null;
-      const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 76;
+      const vh = window.innerHeight || 800;
 
-      // Distância que o topo da seção já adentrou além do header
-      const scrollInto = headerHeight - rect.top;
+      // Ponto de gatilho: quando a seção passa do centro da tela
+      const screenCenter = vh * 0.50;
+      const scrollPastCenter = screenCenter - rect.top;
 
-      // Se a seção ainda não começou a passar pelo topo do viewport
-      if (scrollInto < 30) {
+      // Se ainda não passou do centro da tela: seção compacta contendo apenas título e texto
+      if (scrollPastCenter < 30) {
         setRevealedCount(0);
-      } else if (scrollInto < 140) {
+      } else if (scrollPastCenter < 170) {
         setRevealedCount(1);
-      } else if (scrollInto < 260) {
+      } else if (scrollPastCenter < 310) {
         setRevealedCount(2);
-      } else if (scrollInto < 380) {
+      } else if (scrollPastCenter < 450) {
         setRevealedCount(3);
       } else {
         setRevealedCount(4);
@@ -316,7 +316,7 @@ export function HowItWorksSection() {
     <section
       id="como-funciona"
       ref={ref}
-      className="relative z-10 bg-[#111111] scroll-mt-24 lg:scroll-mt-28 overflow-clip"
+      className="relative z-10 bg-[#111111] scroll-mt-24 lg:scroll-mt-28 overflow-x-clip"
       aria-label="Como funciona"
     >
       {/* ── 1. DESKTOP VIEW (lg: 1024px+ — 100% INTACTO COM SCROLL PINNING) ────── */}
@@ -392,7 +392,7 @@ export function HowItWorksSection() {
                             pointerEvents: isVisible ? 'auto' : 'none',
                           }}
                         >
-                          <article className={`h-full ${landingInteractiveCardClass} p-5 sm:p-6 lg:p-6 xl:p-7 flex flex-col justify-between group`}>
+                          <article className={`h-full ${landingMockupFloatClass} p-5 sm:p-6 lg:p-6 xl:p-7 flex flex-col justify-between group`}>
                             <div>
                               <div className="flex items-center justify-between mb-4 xl:mb-5">
                                 <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
@@ -449,18 +449,12 @@ export function HowItWorksSection() {
         </div>
       </div>
 
-      {/* ── 2. MOBILE & TABLET VIEW (< lg: — TÍTULO CENTRALIZADO INICIALMENTE, CARDS EXPANDEM NA ROLAGEM) ─ */}
+      {/* ── 2. MOBILE & TABLET VIEW (< lg: — TÍTULO ESTÁTICO NO TOPO, CARDS EXPANDEM NA ROLAGEM) ─ */}
       <div
-        className={`lg:hidden w-full flex flex-col justify-center items-center py-12 sm:py-16 md:py-20 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          revealedCount === 0 ? 'min-h-[55vh] sm:min-h-[60vh]' : 'min-h-0'
-        } ${landingSectionShellClass}`}
+        className={`lg:hidden w-full flex flex-col items-center py-12 sm:py-16 md:py-20 ${landingSectionShellClass}`}
       >
-        {/* TÍTULO DA SEÇÃO (Centralizado inicialmente; cards entram abaixo na rolagem) */}
-        <div
-          className={`w-full text-center transition-all duration-500 ease-out ${
-            revealedCount === 0 ? 'mb-0 my-auto' : 'mb-8 sm:mb-10 md:mb-12'
-          }`}
-        >
+        {/* TÍTULO DA SEÇÃO (Estático, fixo próximo ao topo respeitando o padding padrão) */}
+        <div className="w-full text-center">
           <div className="w-full max-w-xl md:max-w-2xl mx-auto">
             <LandingSectionIntro
               label="Como funciona"
@@ -475,26 +469,36 @@ export function HowItWorksSection() {
           </div>
         </div>
 
-        {/* 2A. SMARTPHONE: CARDS ENTRAM NA ORDEM UM A UM E EXPANDEM O CONTAINER */}
-        <div className="md:hidden flex flex-col items-center w-full max-w-xl mx-auto">
-          {steps.map((step, idx) => {
-            const isExpanded = revealedCount >= idx + 1;
-            const showArrow = revealedCount >= idx + 2;
-            return (
-              <MobileStepItem
-                key={step.stepNumber}
-                step={step}
-                index={idx}
-                isLast={idx === steps.length - 1}
-                isExpanded={isExpanded}
-                showArrow={showArrow}
-              />
-            );
-          })}
-        </div>
+        {/* CONTAINER DOS CARDS: margin-top transiciona quando os cards entram */}
+        <div
+          className={`w-full flex flex-col items-center transition-[margin] duration-500 ease-out ${
+            revealedCount > 0 ? 'mt-8 sm:mt-10 md:mt-12' : 'mt-0'
+          }`}
+        >
+          {/* 2A. SMARTPHONE: CARDS ENTRAM NA ORDEM UM A UM E EXPANDEM O CONTAINER */}
+          <div className="md:hidden flex flex-col items-center w-full max-w-xl mx-auto">
+            {steps.map((step, idx) => {
+              const isExpanded = revealedCount >= idx + 1;
+              const showArrow = revealedCount >= idx + 2;
+              return (
+                <MobileStepItem
+                  key={step.stepNumber}
+                  step={step}
+                  index={idx}
+                  isLast={idx === steps.length - 1}
+                  isExpanded={isExpanded}
+                  showArrow={showArrow}
+                />
+              );
+            })}
+          </div>
 
-        {/* 2B. TABLET: LINHA 1 (01+02) E LINHA 2 (03+04) EXPANDEM PROGRESSIVAMENTE */}
-        <div className="hidden md:flex lg:hidden flex-col gap-4 md:gap-5 w-full max-w-3xl md:max-w-4xl mx-auto">
+          {/* 2B. TABLET: LINHA 1 (01+02) E LINHA 2 (03+04) EXPANDEM PROGRESSIVAMENTE */}
+          <div
+            className={`hidden md:flex lg:hidden flex-col w-full max-w-3xl md:max-w-4xl mx-auto transition-all duration-500 ${
+              revealedCount >= 3 ? 'gap-4 md:gap-5' : 'gap-0'
+            }`}
+          >
           {/* LINHA 1: Cards 01 e 02 */}
           <div
             className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -503,10 +507,10 @@ export function HowItWorksSection() {
                 : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
             }`}
           >
-            <div className="overflow-hidden w-full">
+            <div className={`w-full transition-[padding] duration-500 ${revealedCount >= 1 ? 'overflow-visible py-2.5 px-1.5' : 'overflow-hidden py-0 px-0'}`}>
               <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
                 {/* Card 01 */}
-                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
                   <div>
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
@@ -530,7 +534,7 @@ export function HowItWorksSection() {
                 </article>
 
                 {/* Card 02 */}
-                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
                   <div>
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
@@ -583,10 +587,10 @@ export function HowItWorksSection() {
                 : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
             }`}
           >
-            <div className="overflow-hidden w-full">
+            <div className={`w-full transition-[padding] duration-500 ${revealedCount >= 3 ? 'overflow-visible py-2.5 px-1.5' : 'overflow-hidden py-0 px-0'}`}>
               <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
                 {/* Card 03 */}
-                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
                   <div>
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
@@ -610,7 +614,7 @@ export function HowItWorksSection() {
                 </article>
 
                 {/* Card 04 */}
-                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
                   <div>
                     <div className="flex items-center justify-between mb-2.5">
                       <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
@@ -642,8 +646,9 @@ export function HowItWorksSection() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
 }
 
 
