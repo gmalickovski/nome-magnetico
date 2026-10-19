@@ -226,7 +226,7 @@ export function SignatureUseCasesSection() {
                             Onde Usar · Etapa {item.stepNumber}
                           </p>
 
-                          <h3 className="font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-2.5 leading-snug text-balance">
+                          <h3 className="font-cinzel text-xl sm:text-[1.4rem] md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-2.5 leading-snug text-balance">
                             {item.title}
                           </h3>
 
@@ -309,7 +309,7 @@ export function SignatureUseCasesSection() {
                   <p className="text-[#f2ca50] text-[11px] font-bold uppercase tracking-[0.15em] mb-1.5">
                     Onde Usar · Etapa {item.stepNumber}
                   </p>
-                  <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
+                  <h3 className="font-cinzel text-[1.35rem] sm:text-[1.65rem] font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
                     {item.title}
                   </h3>
 

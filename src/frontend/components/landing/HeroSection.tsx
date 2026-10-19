@@ -18,26 +18,26 @@ export function HeroSection() {
     <section
       id="inicio"
       ref={reveal.ref}
-      className="relative min-h-svh flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-20 md:pt-28 md:pb-24"
+      className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-28 md:pt-32 lg:pt-[84px] pb-12 sm:pb-16 md:pb-20 lg:pb-14"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
-        <div className="absolute top-1/3 left-[20%] -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[800px] md:h-[800px] bg-[#D4AF37]/8 md:bg-[#D4AF37]/15 rounded-full blur-[100px] md:blur-[150px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#241a00] sm:from-[#1e1500] lg:from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
+        <div className="absolute top-1/4 sm:top-1/3 left-1/2 lg:left-[20%] -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[560px] sm:h-[560px] md:w-[720px] md:h-[720px] lg:w-[800px] lg:h-[800px] bg-[#D4AF37]/18 sm:bg-[#D4AF37]/16 md:bg-[#D4AF37]/15 lg:bg-[#D4AF37]/15 rounded-full blur-[90px] sm:blur-[120px] md:blur-[140px] lg:blur-[150px]"></div>
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/5 md:bg-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute top-1/2 right-[20%] translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-[#D4AF37]/5 md:bg-[#D4AF37]/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute top-2/3 sm:top-1/2 right-1/2 sm:right-[15%] lg:right-[20%] translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] md:w-[600px] md:h-[600px] bg-[#D4AF37]/12 sm:bg-[#D4AF37]/10 md:bg-[#D4AF37]/10 rounded-full blur-[80px] md:blur-[120px]"></div>
       </div>
 
-      {/* CONTENT LAYERS (Z-10) */}
-      <div className={`relative z-10 ${landingSectionShellClass} flex flex-col gap-8 md:gap-12`}>
+      {/* CONTENT LAYERS (Z-10) — Centralizado na Área Útil (altura total - header) */}
+      <div className={`relative z-10 ${landingSectionShellClass} flex-1 flex flex-col justify-center gap-8 md:gap-12 my-auto w-full`}>
         
         {/* ROW 1: M3 12-Column Split Grid (5 cols Copy / 7 cols Live Simulation Card) */}
         <div className={`${landingSplitGridClass} text-center lg:text-left`}>
           {/* Left Column: Headlines (5 columns on lg+) */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start min-w-0">
             <h1
-              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
+              className={`font-cinzel text-[1.75rem] sm:text-[2.1rem] md:text-[2.35rem] lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
               style={titleReveal.style}
             >
               Sua Assinatura Tem<br />
@@ -90,7 +90,7 @@ export function HeroSection() {
 
         {/* Mobile Button - Shown only on mobile/tablet below the animated card */}
         <div
-          className={`flex justify-center lg:hidden w-full ${ctaReveal.className}`}
+          className={`flex flex-col items-center lg:hidden w-full ${ctaReveal.className}`}
           style={ctaReveal.style}
         >
           <a
@@ -104,12 +104,19 @@ export function HeroSection() {
           >
             Descobrir a Frequência do Meu Nome
           </a>
+
+          {/* Seta indicadora do Hero no mobile: espaçamento dedicado e elegante abaixo do botão */}
+          <div className="mt-8 mb-2 flex justify-center items-center animate-pulse motion-reduce:animate-none" aria-hidden="true">
+            <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
 
       </div>
 
-      {/* Scroll indicator meditativo */}
-      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-pulse motion-reduce:animate-none z-20" aria-hidden="true">
+      {/* Scroll indicator meditativo - desktop apenas (no mobile fica abaixo do botão com espaçamento dedicado) */}
+      <div className="hidden lg:block absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-pulse motion-reduce:animate-none z-20" aria-hidden="true">
         <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
