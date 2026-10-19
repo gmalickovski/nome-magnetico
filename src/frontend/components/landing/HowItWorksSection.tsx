@@ -79,7 +79,7 @@ function StepArrow({ direction, active = true }: { direction: 'right' | 'down'; 
   );
 }
 
-/** Card de passo no layout mobile/tablet, com reveal suave ao rolar */
+/** Card de passo no layout mobile e tablet (2x2 grid no iPad, 1 col no mobile) */
 function MobileStepItem({
   step,
   index,
@@ -91,7 +91,7 @@ function MobileStepItem({
   isLast: boolean;
   reduceMotion: boolean;
 }) {
-  const itemRef = useRef<HTMLLIElement>(null);
+  const itemRef = useRef<HTMLDivElement>(null);
   const [revealed, setRevealed] = useState(reduceMotion);
 
   useEffect(() => {
@@ -117,43 +117,47 @@ function MobileStepItem({
   const Figure = step.Figure;
 
   return (
-    <li
+    <div
       ref={itemRef}
-      className={`relative flex flex-col items-center w-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      className={`relative flex flex-col justify-between w-full h-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         reduceMotion || revealed
           ? 'opacity-100 translate-y-0 scale-100'
           : 'opacity-0 translate-y-8 scale-95'
       }`}
+      role="listitem"
     >
-      <article className={`w-full max-w-lg mx-auto ${landingMockupFloatClass} p-6 sm:p-7 transition-all duration-500 flex flex-col justify-between`}>
+      <article className={`w-full h-full ${landingInteractiveCardClass} p-5 sm:p-6 md:p-7 flex flex-col justify-between min-h-[250px] sm:min-h-[270px] md:min-h-[280px] group`}>
         <div>
-          <div className="flex items-center justify-between mb-4">
+          {/* Header do Card: Número do Passo & SVG */}
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
               PASSO {step.stepNumber}
             </span>
-            <div className="text-[#D4AF37]">
+            <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500">
               <Figure active={reduceMotion || revealed} />
             </div>
           </div>
 
-          <h3 className="font-cinzel text-lg sm:text-xl font-bold leading-snug text-white mb-2 text-balance">
+          {/* Título & Descrição */}
+          <h3 className="font-cinzel text-base sm:text-lg md:text-xl font-bold leading-snug text-white mb-2.5 text-balance">
             {step.title}
           </h3>
-          <p className="text-sm leading-relaxed text-gray-400 font-normal text-pretty">
+          <p className="text-xs sm:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
             {step.body}
           </p>
         </div>
 
+        {/* Rodapé do Card com Etapa e indicador */}
         <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
           <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
           <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
         </div>
       </article>
 
-      {/* Seta vertical conectando ao próximo card */}
+      {/* Seta vertical no mobile (apenas quando 1 coluna e não for o último passo) */}
       {!isLast && (
         <div
-          className={`py-3 transition-all duration-700 delay-150 ease-out ${
+          className={`py-2.5 sm:hidden flex justify-center transition-all duration-700 delay-150 ease-out pointer-events-none ${
             reduceMotion || revealed
               ? 'opacity-100 translate-y-0 scale-100'
               : 'opacity-0 -translate-y-2 scale-75'
@@ -163,7 +167,7 @@ function MobileStepItem({
           <StepArrow direction="down" active={reduceMotion || revealed} />
         </div>
       )}
-    </li>
+    </div>
   );
 }
 
@@ -312,13 +316,13 @@ export function HowItWorksSection() {
       className={`relative bg-[#111111] scroll-mt-24 lg:scroll-mt-28 ${
         reduceMotion
           ? landingSectionSpacingClass
-          : 'lg:h-[350vh] py-20 md:py-24 lg:py-0'
+          : 'min-[1150px]:h-[350vh] py-16 sm:py-20 md:py-24 min-[1150px]:py-0'
       }`}
       aria-label="Como funciona"
     >
-      {/* ── DESKTOP PINNED EXPERIENCE (lg: 1024px+) ────────────────────── */}
+      {/* ── DESKTOP PINNED EXPERIENCE (min-[1150px]: 1150px+) ──────────── */}
       <div
-        className={`hidden lg:flex flex-col justify-center items-center ${
+        className={`hidden min-[1150px]:flex flex-col justify-center items-center ${
           reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen pt-16 lg:pt-20 pb-12 lg:pb-14'
         } w-full overflow-x-clip`}
       >
@@ -353,10 +357,10 @@ export function HowItWorksSection() {
             </div>
           </div>
 
-          {/* Rail Track with dynamic horizontal offset (centered in viewport) */}
-          <div className="relative w-full overflow-visible py-2">
+          {/* Rail Track with dynamic horizontal offset (capped at max-width on ultrawide monitors) */}
+          <div className="relative w-full max-w-[1440px] 2xl:max-w-[1600px] mx-auto overflow-visible py-2">
             <div
-              className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch will-change-transform"
+              className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch will-change-transform min-w-[1100px] max-w-[1440px] mx-auto"
               style={{
                 transform: `translateX(${railOffsetPercent}%)`,
               }}
@@ -371,7 +375,7 @@ export function HowItWorksSection() {
                 return (
                   <div
                     key={step.stepNumber}
-                    className="relative h-full will-change-[transform,opacity]"
+                    className="relative h-full will-change-[transform,opacity] min-w-[260px] max-w-[360px]"
                     style={{
                       opacity: opacity,
                       transform: `translateY(${(1 - Math.min(1, opacity)) * 20}px) scale(${0.96 + Math.min(1, opacity) * 0.04})`,
@@ -439,21 +443,22 @@ export function HowItWorksSection() {
         </div>
       </div>
 
-      {/* ── MOBILE & TABLET STACKED EXPERIENCE (< 1024px) ────────────── */}
-      <div className="lg:hidden">
+      {/* ── TABLET (2x2 GRID) & MOBILE (1-COL STACK) EXPERIENCE (< 1150px) ── */}
+      <div className="min-[1150px]:hidden">
         <div className={landingSectionShellClass}>
           <LandingSectionIntro
             label="Como funciona"
             title="Quatro passos da sua nota hoje até a nova assinatura"
-            description="Entenda como a análise cabalística encontra a vibração ideal para harmonizar seu nome."
-            titleClassName="text-xl sm:text-2xl font-bold uppercase tracking-wide leading-[1.3] text-white text-balance"
-            descriptionClassName="max-w-[54ch] mx-auto text-sm mt-3 leading-relaxed text-pretty text-gray-400"
-            className="mb-8 text-center"
+            description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
+            titleClassName="text-xl sm:text-2xl md:text-3xl font-bold uppercase tracking-wide leading-[1.3] text-white text-balance"
+            descriptionClassName="max-w-[58ch] mx-auto text-sm sm:text-base mt-3 md:mt-4 leading-relaxed text-pretty text-gray-400"
+            className="mb-8 sm:mb-10 md:mb-12 text-center"
             revealed={true}
             reduceMotion={reduceMotion}
           />
 
-          <ol className="flex flex-col gap-2 list-none m-0 p-0 w-full" role="list">
+          {/* Responsive Layout: 1-col on mobile (< 640px), 2x2 grid on iPad/tablet (640px to 1149px) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 md:gap-7 w-full max-w-4xl lg:max-w-5xl mx-auto" role="list">
             {steps.map((step, index) => (
               <MobileStepItem
                 key={step.stepNumber}
@@ -463,7 +468,7 @@ export function HowItWorksSection() {
                 reduceMotion={reduceMotion}
               />
             ))}
-          </ol>
+          </div>
         </div>
       </div>
     </section>
