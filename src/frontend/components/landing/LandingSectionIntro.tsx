@@ -3,7 +3,7 @@ import { getRevealItemProps } from './useLandingSectionReveal';
 
 interface LandingSectionIntroProps {
   label?: string;
-  title?: string;
+  title?: React.ReactNode;
   description?: React.ReactNode;
   align?: 'center' | 'left';
   className?: string;
@@ -75,7 +75,7 @@ export function LandingSectionIntro({
         <h2
           className={`font-cinzel ${
             titleClassName ||
-            'text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold leading-[1.2]'
+            'text-xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold leading-[1.28] md:leading-[1.32]'
           } text-[#e5e2e1] mb-3.5 text-balance ${titleReveal.className}`}
           style={titleReveal.style}
         >
