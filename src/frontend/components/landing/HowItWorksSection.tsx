@@ -51,7 +51,7 @@ function StepArrow({ direction, active = true }: { direction: 'right' | 'down'; 
     >
       <svg
         viewBox={horizontal ? '0 0 24 24' : '0 0 24 36'}
-        className={horizontal ? 'h-5 w-8' : 'h-7 w-5 sm:h-8 sm:w-6'}
+        className={horizontal ? 'h-5 w-8' : 'h-5 w-3.5 sm:h-6 sm:w-4'}
         fill="none"
       >
         {horizontal ? (
@@ -103,7 +103,7 @@ function MobileStepItem({
             : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
         }`}
       >
-        <div className={`w-full transition-[padding] duration-500 ${isExpanded ? 'overflow-visible py-2 px-1' : 'overflow-hidden py-0 px-0'}`}>
+        <div className={`w-full transition-[padding] duration-500 ${isExpanded ? 'overflow-visible py-1 px-1' : 'overflow-hidden py-0 px-0'}`}>
           <article
             className={`w-full ${landingMockupFloatClass} p-4 sm:p-5 flex flex-col justify-between min-h-[155px] sm:min-h-[170px] group`}
           >
@@ -141,7 +141,7 @@ function MobileStepItem({
         <div
           className={`w-full grid transition-all duration-500 ease-out ${
             showArrow
-              ? 'grid-rows-[1fr] opacity-100 py-2 sm:py-2.5'
+              ? 'grid-rows-[1fr] opacity-100 py-1 sm:py-1.5'
               : 'grid-rows-[0fr] opacity-0 py-0 pointer-events-none'
           }`}
           aria-hidden="true"
