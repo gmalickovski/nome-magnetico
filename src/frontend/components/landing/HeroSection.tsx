@@ -18,7 +18,7 @@ export function HeroSection() {
     <section
       id="inicio"
       ref={reveal.ref}
-      className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-[76px] lg:pt-[80px] pb-10 sm:pb-12"
+      className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-28 md:pt-32 lg:pt-[84px] pb-10 sm:pb-14"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
