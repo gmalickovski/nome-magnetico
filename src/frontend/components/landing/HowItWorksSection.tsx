@@ -169,10 +169,31 @@ function MobileStepItem({
 
 export function HowItWorksSection() {
   const { ref, progress, reduceMotion } = useScrollProgress<HTMLElement>();
+  const introRef = useRef<HTMLDivElement>(null);
+  const [naturalIntroHeight, setNaturalIntroHeight] = useState(340);
+
+  // Measure natural height of intro content to prevent any clipping on start
+  useEffect(() => {
+    if (!introRef.current) return;
+    const updateHeight = () => {
+      if (introRef.current) {
+        const height = introRef.current.scrollHeight;
+        if (height > 100) {
+          setNaturalIntroHeight(height);
+        }
+      }
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   // Progress metrics calculation for Desktop pinned scroll with two-phase choreography:
-  // Phase 1 (p: 0.00 -> 0.22): Intro (Header + Title + Desc) smoothly slides up and fades away into top/hero edge.
-  // Phase 2 (p: 0.22 -> 1.00): Only cards remain, perfectly centered in viewport, sequentially entering and shifting.
+  // Phase 1 (p: 0.00 -> 0.22): Intro smoothly slides up and fades away.
+  // When Intro disappears, flexbox centers Card 1 vertically and horizontally in the usable area.
+  // Phase 2 (p: 0.22 -> 1.00): Only after Card 1 is fully centered, Cards 2, 3 and 4 sequentially enter side-by-side.
+  const isAtStart = progress <= 0.02;
+
   const {
     introOpacity,
     introTranslateY,
@@ -186,7 +207,7 @@ export function HowItWorksSection() {
       return {
         introOpacity: 1,
         introTranslateY: 0,
-        introMaxHeight: 300,
+        introMaxHeight: naturalIntroHeight,
         introMarginBottom: 48,
         railOffsetPercent: 0,
         cardVisibility: [1, 1, 1, 1],
@@ -194,31 +215,32 @@ export function HowItWorksSection() {
       };
     }
 
-    // Phase 1: Intro exit (p: 0.00 -> 0.22)
+    // Phase 1: Intro exit (p: 0.02 -> 0.22)
     let introOp = 1;
     let introY = 0;
-    let introH = 260;
-    let introMB = 40;
+    let introH = naturalIntroHeight;
+    let introMB = 48;
 
-    if (progress <= 0.04) {
+    if (progress <= 0.02) {
       introOp = 1;
       introY = 0;
-      introH = 260;
-      introMB = 40;
+      introH = naturalIntroHeight;
+      introMB = 48;
     } else if (progress <= 0.22) {
-      const t = (progress - 0.04) / 0.18;
+      const t = (progress - 0.02) / 0.20;
       introOp = Math.max(0, 1 - t * 1.15);
-      introY = -t * 60;
-      introH = Math.max(0, 260 * (1 - t));
-      introMB = Math.max(0, 40 * (1 - t));
+      introY = -t * 70;
+      introH = Math.max(0, naturalIntroHeight * (1 - t));
+      introMB = Math.max(0, 48 * (1 - t));
     } else {
       introOp = 0;
-      introY = -60;
+      introY = -70;
       introH = 0;
       introMB = 0;
     }
 
     // Phase 2: Sequential Card Reveal & Rail Shift
+    // Cards 2, 3 and 4 only begin entering after progress > 0.22 (when Card 1 is centered)
     let offset = 37.5;
     const cardVis = [1, 0, 0, 0];
     const arrowVis = [false, false, false];
@@ -270,7 +292,7 @@ export function HowItWorksSection() {
       cardVisibility: cardVis,
       arrowVisibility: arrowVis,
     };
-  }, [progress, reduceMotion]);
+  }, [progress, reduceMotion, naturalIntroHeight]);
 
   return (
     <section
@@ -289,17 +311,19 @@ export function HowItWorksSection() {
           reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen pt-20 lg:pt-24 pb-12 lg:pb-16'
         } w-full overflow-x-clip`}
       >
-        <div className={`${landingSectionShellClass} flex flex-col justify-center items-center h-full min-h-0`}>
+        <div className={`${landingSectionShellClass} flex flex-col justify-center items-center w-full min-h-0`}>
           {/* Section Intro: slides up and fades away as scroll progresses, leaving cards centered */}
           <div
-            className="w-full text-center transition-all duration-300 ease-out will-change-transform"
+            ref={introRef}
+            className="w-full text-center will-change-transform"
             style={{
-              opacity: introOpacity,
-              transform: `translateY(${introTranslateY}px)`,
-              maxHeight: `${introMaxHeight}px`,
+              opacity: isAtStart ? 1 : introOpacity,
+              transform: isAtStart ? 'none' : `translateY(${introTranslateY}px)`,
+              maxHeight: isAtStart ? 'none' : `${introMaxHeight}px`,
               marginBottom: `${introMarginBottom}px`,
-              overflow: 'hidden',
+              overflow: isAtStart ? 'visible' : 'hidden',
               pointerEvents: introOpacity > 0.1 ? 'auto' : 'none',
+              transition: isAtStart ? 'none' : 'opacity 150ms ease-out, transform 150ms ease-out',
             }}
           >
             <LandingSectionIntro
