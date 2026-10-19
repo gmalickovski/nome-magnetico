@@ -18,7 +18,7 @@ export function HeroSection() {
     <section
       id="inicio"
       ref={reveal.ref}
-      className="relative min-h-svh flex items-center justify-center overflow-hidden bg-[#111111] pt-24 pb-20 md:pt-28 md:pb-24"
+      className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-[76px] lg:pt-[80px] pb-10 sm:pb-12"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
@@ -29,8 +29,8 @@ export function HeroSection() {
         <div className="absolute top-1/2 right-[20%] translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-[#D4AF37]/5 md:bg-[#D4AF37]/10 rounded-full blur-[80px] md:blur-[120px]"></div>
       </div>
 
-      {/* CONTENT LAYERS (Z-10) */}
-      <div className={`relative z-10 ${landingSectionShellClass} flex flex-col gap-8 md:gap-12`}>
+      {/* CONTENT LAYERS (Z-10) — Centralizado na Área Útil (altura total - header) */}
+      <div className={`relative z-10 ${landingSectionShellClass} flex-1 flex flex-col justify-center gap-8 md:gap-12 my-auto w-full`}>
         
         {/* ROW 1: M3 12-Column Split Grid (5 cols Copy / 7 cols Live Simulation Card) */}
         <div className={`${landingSplitGridClass} text-center lg:text-left`}>
