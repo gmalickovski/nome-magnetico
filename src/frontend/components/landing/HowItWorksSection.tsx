@@ -493,162 +493,180 @@ export function HowItWorksSection() {
             })}
           </div>
 
-          {/* 2B. TABLET: LINHA 1 (01+02) E LINHA 2 (03+04) EXPANDEM PROGRESSIVAMENTE */}
+          {/* 2B. TABLET: LINHA 1 (01+02) E LINHA 2 (03+04) EXPANDEM PROGRESSIVAMENTE EM GRID 2x2 */}
           <div
-            className={`hidden md:flex lg:hidden flex-col w-full max-w-3xl md:max-w-4xl mx-auto transition-all duration-500 ${
-              revealedCount >= 3 ? 'gap-4 md:gap-5' : 'gap-0'
+            className={`hidden md:flex lg:hidden flex-col w-full max-w-3xl md:max-w-4xl mx-auto transition-[gap] duration-500 ${
+              revealedCount >= 3 ? 'gap-7' : 'gap-0'
             }`}
           >
-          {/* LINHA 1: Cards 01 e 02 */}
-          <div
-            className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-              revealedCount >= 1
-                ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
-                : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
-            }`}
-          >
-            <div className={`w-full transition-[padding] duration-500 ${revealedCount >= 1 ? 'overflow-visible py-2.5 px-1.5' : 'overflow-hidden py-0 px-0'}`}>
-              <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
-                {/* Card 01 */}
-                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                        PASSO {steps[0].stepNumber}
-                      </span>
-                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                        <FormFigure active={revealedCount >= 1} />
+            {/* LINHA 1: Cards 01 e 02 */}
+            <div
+              className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                revealedCount >= 1
+                  ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
+                  : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
+              }`}
+            >
+              <div
+                className={`w-full transition-[padding] duration-500 ${
+                  revealedCount >= 1 ? 'overflow-visible pt-1.5 px-1 pb-0' : 'overflow-hidden py-0 px-0'
+                }`}
+              >
+                <div className="relative grid grid-cols-2 gap-7 w-full items-stretch">
+                  {/* Card 01 (Esquerda) */}
+                  <article
+                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      revealedCount >= 1
+                        ? 'opacity-100 translate-x-0 scale-100 delay-0'
+                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                          PASSO {steps[0].stepNumber}
+                        </span>
+                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                          <FormFigure active={revealedCount >= 1} />
+                        </div>
                       </div>
+                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                        {steps[0].title}
+                      </h3>
+                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                        {steps[0].body}
+                      </p>
                     </div>
-                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                      {steps[0].title}
-                    </h3>
-                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                      {steps[0].body}
-                    </p>
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                  </div>
-                </article>
+                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                    </div>
+                  </article>
 
-                {/* Card 02 */}
-                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                        PASSO {steps[1].stepNumber}
-                      </span>
-                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                        <GenerateFigure active={revealedCount >= 1} />
+                  {/* Card 02 (Direita — delay para surgir da esquerda para direita) */}
+                  <article
+                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      revealedCount >= 2
+                        ? 'opacity-100 translate-x-0 scale-100 delay-150'
+                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                          PASSO {steps[1].stepNumber}
+                        </span>
+                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                          <GenerateFigure active={revealedCount >= 2} />
+                        </div>
                       </div>
+                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                        {steps[1].title}
+                      </h3>
+                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                        {steps[1].body}
+                      </p>
                     </div>
-                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                      {steps[1].title}
-                    </h3>
-                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                      {steps[1].body}
-                    </p>
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                  </div>
-                </article>
+                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                    </div>
+                  </article>
 
-                {/* Seta horizontal na linha 1 */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                  <StepArrow direction="right" active={revealedCount >= 1} />
+                  {/* Seta horizontal na linha 1 */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                    <StepArrow direction="right" active={revealedCount >= 2} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Seta indicadora vertical entre linha 1 e linha 2 no tablet */}
-          <div
-            className={`w-full grid transition-all duration-500 ease-out ${
-              revealedCount >= 3
-                ? 'grid-rows-[1fr] opacity-100 py-1'
-                : 'grid-rows-[0fr] opacity-0 py-0 pointer-events-none'
-            }`}
-            aria-hidden="true"
-          >
-            <div className="overflow-hidden flex justify-center items-center pointer-events-none">
-              <StepArrow direction="down" active={revealedCount >= 3} />
-            </div>
-          </div>
-
-          {/* LINHA 2: Cards 03 e 04 */}
-          <div
-            className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-              revealedCount >= 3
-                ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
-                : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
-            }`}
-          >
-            <div className={`w-full transition-[padding] duration-500 ${revealedCount >= 3 ? 'overflow-visible py-2.5 px-1.5' : 'overflow-hidden py-0 px-0'}`}>
-              <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
-                {/* Card 03 */}
-                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                        PASSO {steps[2].stepNumber}
-                      </span>
-                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                        <ChooseFigure active={revealedCount >= 3} />
+            {/* LINHA 2: Cards 03 e 04 */}
+            <div
+              className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                revealedCount >= 3
+                  ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
+                  : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
+              }`}
+            >
+              <div
+                className={`w-full transition-[padding] duration-500 ${
+                  revealedCount >= 3 ? 'overflow-visible pt-0 px-1 pb-1.5' : 'overflow-hidden py-0 px-0'
+                }`}
+              >
+                <div className="relative grid grid-cols-2 gap-7 w-full items-stretch">
+                  {/* Card 03 (Esquerda) */}
+                  <article
+                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      revealedCount >= 3
+                        ? 'opacity-100 translate-x-0 scale-100 delay-0'
+                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                          PASSO {steps[2].stepNumber}
+                        </span>
+                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                          <ChooseFigure active={revealedCount >= 3} />
+                        </div>
                       </div>
+                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                        {steps[2].title}
+                      </h3>
+                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                        {steps[2].body}
+                      </p>
                     </div>
-                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                      {steps[2].title}
-                    </h3>
-                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                      {steps[2].body}
-                    </p>
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                  </div>
-                </article>
+                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                    </div>
+                  </article>
 
-                {/* Card 04 */}
-                <article className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                        PASSO {steps[3].stepNumber}
-                      </span>
-                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                        <DownloadFigure active={revealedCount >= 3} />
+                  {/* Card 04 (Direita — delay para surgir da esquerda para direita) */}
+                  <article
+                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      revealedCount >= 4
+                        ? 'opacity-100 translate-x-0 scale-100 delay-150'
+                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                          PASSO {steps[3].stepNumber}
+                        </span>
+                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                          <DownloadFigure active={revealedCount >= 4} />
+                        </div>
                       </div>
+                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                        {steps[3].title}
+                      </h3>
+                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                        {steps[3].body}
+                      </p>
                     </div>
-                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                      {steps[3].title}
-                    </h3>
-                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                      {steps[3].body}
-                    </p>
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                  </div>
-                </article>
+                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                    </div>
+                  </article>
 
-                {/* Seta horizontal na linha 2 */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                  <StepArrow direction="right" active={revealedCount >= 3} />
+                  {/* Seta horizontal na linha 2 */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                    <StepArrow direction="right" active={revealedCount >= 4} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
 }
 
 
