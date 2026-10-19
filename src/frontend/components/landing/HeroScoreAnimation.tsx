@@ -160,7 +160,7 @@ export function HeroScoreAnimation() {
               onClick={() => handleSelect(idx)}
               className={`w-full text-left py-2.5 px-3 rounded-xl transition-all duration-300 relative group overflow-hidden ${
                 isSelected
-                  ? `bg-white/[0.04] ring-1 ${cand.ringClass} shadow-md shadow-black/30`
+                  ? `bg-white/[0.05] ring-1 ${cand.ringClass}`
                   : 'bg-[#111]/30 ring-1 ring-white/[0.02] hover:bg-white/[0.02]'
               }`}
             >

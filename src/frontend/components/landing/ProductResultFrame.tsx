@@ -230,7 +230,7 @@ export function ProductHarmonyFrame() {
     <div ref={rootRef} className={`@container/harmony ${desktopFitClass}`}>
       <div className={desktopStackClass}>
         {/* Certificate — floats alone on the page ground */}
-        <section className={`${landingMockupFloatClass} p-4 sm:p-5`}>
+        <section className={`${landingMockupFloatClass} p-3.5 sm:p-4.5`}>
           <div className="flex flex-col gap-3 min-w-0">
             <div className="flex flex-col gap-2 @[420px]/harmony:flex-row @[420px]/harmony:items-center @[420px]/harmony:justify-between min-w-0">
               <div className="min-w-0 flex-1">
@@ -273,8 +273,8 @@ export function ProductHarmonyFrame() {
         </section>
 
         {/* Star comparison — second floating surface */}
-        <section className={`${landingMockupFloatClass} p-3.5 sm:p-4.5`}>
-          <div className="harmony-star-wrap mb-2.5">
+        <section className={`${landingMockupFloatClass} p-3 sm:p-4`}>
+          <div className="harmony-star-wrap mb-2">
             <svg
               className="harmony-star-svg w-full"
               viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
@@ -322,7 +322,7 @@ export function ProductHarmonyFrame() {
                       y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
                       fill="#d0d5de"
                       fontFamily="Inter, sans-serif"
-                      fontSize={19}
+                      fontSize={24}
                       fontWeight={600}
                       textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
                     >
@@ -331,10 +331,10 @@ export function ProductHarmonyFrame() {
                     <text
                       className="harmony-star-num-gold"
                       x={goldPos.x}
-                      y={goldPos.y + 6}
+                      y={goldPos.y + 7}
                       fill={GOLD}
                       fontFamily="Inter, sans-serif"
-                      fontSize={24}
+                      fontSize={32}
                       fontWeight={700}
                       textAnchor="middle"
                     >
@@ -343,10 +343,10 @@ export function ProductHarmonyFrame() {
                     <text
                       className="harmony-star-num-red"
                       x={redPos.x}
-                      y={redPos.y + 5}
+                      y={redPos.y + 6}
                       fill="#DC2626"
                       fontFamily="Inter, sans-serif"
-                      fontSize={14}
+                      fontSize={20}
                       fontWeight={700}
                       textAnchor="middle"
                     >
@@ -390,40 +390,22 @@ export function ProductHarmonyFrame() {
         }
         .harmony-star-svg {
           width: 100%;
-          max-width: min(100%, 280px);
+          max-width: 480px;
           height: auto;
           display: block;
         }
         .harmony-star-label {
           fill: #d0d5de;
-          font-size: 15px;
+          font-size: 24px;
           font-weight: 600;
         }
         .harmony-star-num-gold {
-          font-size: 20px;
+          font-size: 32px;
+          font-weight: 700;
         }
         .harmony-star-num-red {
-          font-size: 13px;
-        }
-        @container harmony (min-width: 440px) {
-          .harmony-star-svg {
-            max-width: min(100%, 320px);
-          }
-          .harmony-star-label {
-            font-size: 17px;
-            font-weight: 600;
-          }
-          .harmony-star-num-gold {
-            font-size: 22px;
-          }
-          .harmony-star-num-red {
-            font-size: 14px;
-          }
-        }
-        @container harmony (min-width: 580px) {
-          .harmony-star-svg {
-            max-width: min(100%, 360px);
-          }
+          font-size: 20px;
+          font-weight: 700;
         }
       `}</style>
     </div>

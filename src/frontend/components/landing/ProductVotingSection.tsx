@@ -175,14 +175,14 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
           </div>
         ) : (
           <div
-            className={`mx-auto rounded-2xl bg-[#181818]/90 ring-1 ring-white/10 p-6 sm:p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
+            className={`mx-auto nm-floating-card p-6 sm:p-8 text-center ${
               isCompact ? 'max-w-2xl' : 'max-w-3xl'
             }`}
           >
             <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.18em] mb-2">
               Próximos Lançamentos
             </p>
-            <h2 className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1] mb-3 leading-tight">
+            <h2 className="font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
               Qual análise você quer ver a seguir no Nome Magnético?
             </h2>
             <p className="text-gray-400 text-sm sm:text-base max-w-xl mx-auto mb-6 leading-relaxed">

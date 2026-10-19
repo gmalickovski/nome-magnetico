@@ -37,7 +37,7 @@ export function HeroSection() {
           {/* Left Column: Headlines (5 columns on lg+) */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start min-w-0">
             <h1
-              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
+              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
               style={titleReveal.style}
             >
               Sua Assinatura Tem<br />
@@ -108,8 +108,8 @@ export function HeroSection() {
 
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20" aria-hidden="true">
+      {/* Scroll indicator meditativo */}
+      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-pulse motion-reduce:animate-none z-20" aria-hidden="true">
         <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>

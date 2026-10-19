@@ -36,7 +36,7 @@ export function ProductsSection() {
       <section
         id="produtos"
         ref={reveal1.ref}
-        className="relative min-h-svh flex items-center justify-center bg-[#111111] py-14 md:py-16 lg:py-14 scroll-mt-28 overflow-x-clip"
+        className="relative min-h-[auto] lg:min-h-[calc(100vh-4.5rem)] flex items-center justify-center bg-[#111111] py-12 md:py-16 lg:py-20 scroll-mt-20 overflow-x-clip"
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -50,21 +50,21 @@ export function ProductsSection() {
             <aside className="lg:col-span-5 min-w-0 order-1">
               <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
                 <p
-                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3 md:mb-4 ${s1Label.className}`}
+                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2 md:mb-2.5 ${s1Label.className}`}
                   style={s1Label.style}
                 >
                   Harmonização
                 </p>
 
                 <h3
-                  className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance ${s1Title.className}`}
+                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-snug text-balance ${s1Title.className}`}
                   style={s1Title.style}
                 >
                   Compare sua nota hoje com o potencial da sua assinatura.
                 </h3>
 
                 <p
-                  className={`text-gray-300 text-sm sm:text-base leading-relaxed text-pretty ${s1Desc.className}`}
+                  className={`text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed text-pretty ${s1Desc.className}`}
                   style={s1Desc.style}
                 >
                   Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
@@ -79,7 +79,9 @@ export function ProductsSection() {
               className={`lg:col-span-7 ${mockupSlotClass} order-2 ${s1Mockup.className}`}
               style={s1Mockup.style}
             >
-              <ProductHarmonyFrame />
+              <div className="w-full max-w-[480px] xl:max-w-[520px] mx-auto lg:ml-auto lg:mr-0">
+                <ProductHarmonyFrame />
+              </div>
             </div>
           </div>
         </div>
@@ -92,7 +94,7 @@ export function ProductsSection() {
       <section
         id="sugestoes"
         ref={reveal2.ref}
-        className="relative min-h-svh flex items-center justify-center bg-[#131313] py-14 md:py-16 lg:py-14 scroll-mt-28 overflow-x-clip"
+        className="relative min-h-[auto] lg:min-h-[calc(100vh-4.5rem)] flex items-center justify-center bg-[#131313] py-12 md:py-16 lg:py-20 scroll-mt-20 overflow-x-clip"
       >
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
@@ -107,27 +109,29 @@ export function ProductsSection() {
               className={`lg:col-span-7 ${mockupSlotClass} order-2 lg:order-1 ${s2Mockup.className}`}
               style={s2Mockup.style}
             >
-              <ProductSuggestionsFrame />
+              <div className="w-full max-w-[620px] xl:max-w-[660px] mx-auto lg:mr-auto lg:ml-0">
+                <ProductSuggestionsFrame />
+              </div>
             </div>
 
             <aside className="lg:col-span-5 min-w-0 order-1 lg:order-2">
               <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
                 <p
-                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3 md:mb-4 ${s2Label.className}`}
+                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2 md:mb-2.5 ${s2Label.className}`}
                   style={s2Label.style}
                 >
                   Sugestões Inteligentes
                 </p>
 
                 <h3
-                  className={`font-cinzel text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-bold text-[#e5e2e1] mb-4 leading-[1.16] text-balance ${s2Title.className}`}
+                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-snug text-balance ${s2Title.className}`}
                   style={s2Title.style}
                 >
                   Não é um nome imposto. É um ranking para você escolher.
                 </h3>
 
                 <p
-                  className={`text-gray-300 text-sm sm:text-base leading-relaxed text-pretty ${s2Desc.className}`}
+                  className={`text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed text-pretty ${s2Desc.className}`}
                   style={s2Desc.style}
                 >
                   O sistema gera sugestões e também analisa as variações que você indicar. Cada
