@@ -82,90 +82,73 @@ function MobileStepItem({
   step,
   index,
   isLast,
-  reduceMotion,
+  isExpanded,
+  showArrow,
 }: {
   step: (typeof steps)[number];
   index: number;
   isLast: boolean;
-  reduceMotion: boolean;
+  isExpanded: boolean;
+  showArrow: boolean;
 }) {
-  const itemRef = useRef<HTMLDivElement>(null);
-  const [revealed, setRevealed] = useState(true);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    const el = itemRef.current;
-    if (!el) return;
-
-    const rect = el.getBoundingClientRect();
-    const vh = window.innerHeight || 0;
-    if (rect.top <= vh + 200) {
-      setRevealed(true);
-      return;
-    }
-
-    setRevealed(false);
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setRevealed(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.05, rootMargin: '100px 0px 0px 0px' },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [reduceMotion]);
-
   const Figure = step.Figure;
 
   return (
-    <div
-      ref={itemRef}
-      className={`relative flex flex-col items-center w-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-        reduceMotion || revealed
-          ? 'opacity-100 translate-y-0 scale-100'
-          : 'opacity-0 translate-y-6 scale-95'
-      }`}
-    >
-      <article
-        className={`w-full ${landingInteractiveCardClass} p-4 sm:p-5 flex flex-col justify-between min-h-[155px] sm:min-h-[170px] group`}
+    <div className="w-full flex flex-col items-center">
+      {/* Container expansível do Card com grid 0fr -> 1fr */}
+      <div
+        className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isExpanded
+            ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
+            : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
+        }`}
       >
-        <div>
-          {/* Header do Card: Número do Passo & SVG */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-              PASSO {step.stepNumber}
-            </span>
-            <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-90 origin-right">
-              <Figure active={reduceMotion || revealed} />
+        <div className="overflow-hidden w-full">
+          <article
+            className={`w-full ${landingInteractiveCardClass} p-4 sm:p-5 flex flex-col justify-between min-h-[155px] sm:min-h-[170px] group`}
+          >
+            <div>
+              {/* Header do Card: Número do Passo & SVG */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-cinzel text-xs font-bold tracking-[0.2em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                  PASSO {step.stepNumber}
+                </span>
+                <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-90 origin-right">
+                  <Figure active={isExpanded} />
+                </div>
+              </div>
+
+              {/* Título & Descrição */}
+              <h3 className="font-cinzel text-base sm:text-lg font-bold leading-snug text-white mb-1.5 text-balance">
+                {step.title}
+              </h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
+                {step.body}
+              </p>
             </div>
-          </div>
 
-          {/* Título & Descrição */}
-          <h3 className="font-cinzel text-base sm:text-lg font-bold leading-snug text-white mb-1.5 text-balance">
-            {step.title}
-          </h3>
-          <p className="text-xs sm:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
-            {step.body}
-          </p>
+            {/* Rodapé do Card */}
+            <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+              <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+            </div>
+          </article>
         </div>
+      </div>
 
-        {/* Rodapé do Card */}
-        <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
-          <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-        </div>
-      </article>
-
-      {/* Seta para baixo apontando para o próximo card */}
+      {/* Seta para baixo apontando para o próximo card (aparece somente quando o próximo card entra) */}
       {!isLast && (
-        <div className="py-2.5 flex justify-center items-center pointer-events-none" aria-hidden="true">
-          <StepArrow direction="down" active={true} />
+        <div
+          className={`w-full grid transition-all duration-500 ease-out ${
+            showArrow
+              ? 'grid-rows-[1fr] opacity-100 py-2 sm:py-2.5'
+              : 'grid-rows-[0fr] opacity-0 py-0 pointer-events-none'
+          }`}
+          aria-hidden="true"
+        >
+          <div className="overflow-hidden flex justify-center items-center pointer-events-none">
+            <StepArrow direction="down" active={showArrow} />
+          </div>
         </div>
       )}
     </div>
@@ -175,6 +158,58 @@ function MobileStepItem({
 export function HowItWorksSection() {
   const { ref, progress, reduceMotion } = useScrollProgress<HTMLElement>();
   const introRef = useRef<HTMLDivElement>(null);
+
+  // Controle de reveal progressivo / reverso para telas mobile e tablet (< 1024px)
+  const [revealedCount, setRevealedCount] = useState(reduceMotion ? 4 : 0);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setRevealedCount(4);
+      return;
+    }
+
+    let rafId = 0;
+
+    const handleScroll = () => {
+      rafId = 0;
+      const el = ref.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const headerEl = typeof document !== 'undefined' ? document.querySelector('header') : null;
+      const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 76;
+
+      // Distância que o topo da seção já adentrou além do header
+      const scrollInto = headerHeight - rect.top;
+
+      // Se a seção ainda não começou a passar pelo topo do viewport
+      if (scrollInto < 30) {
+        setRevealedCount(0);
+      } else if (scrollInto < 140) {
+        setRevealedCount(1);
+      } else if (scrollInto < 260) {
+        setRevealedCount(2);
+      } else if (scrollInto < 380) {
+        setRevealedCount(3);
+      } else {
+        setRevealedCount(4);
+      }
+    };
+
+    const onScroll = () => {
+      if (!rafId) {
+        rafId = requestAnimationFrame(handleScroll);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [reduceMotion]);
 
   // ── DESKTOP CHOREOGRAPHY (lg: 1024px+ — 100% INTACTO) ──────────────────────
   const {
@@ -414,10 +449,18 @@ export function HowItWorksSection() {
         </div>
       </div>
 
-      {/* ── 2. MOBILE & TABLET VIEW (< lg: — TÍTULO NO TOPO, CARDS LOGO ABAIXO) ─ */}
-      <div className={`lg:hidden w-full flex flex-col py-12 sm:py-16 md:py-20 ${landingSectionShellClass}`}>
-        {/* TÍTULO NO TOPO DA SEÇÃO (Com respiro padronizado da divisa) */}
-        <div className="w-full text-center mb-8 sm:mb-10 md:mb-12">
+      {/* ── 2. MOBILE & TABLET VIEW (< lg: — TÍTULO CENTRALIZADO INICIALMENTE, CARDS EXPANDEM NA ROLAGEM) ─ */}
+      <div
+        className={`lg:hidden w-full flex flex-col justify-center items-center py-12 sm:py-16 md:py-20 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          revealedCount === 0 ? 'min-h-[55vh] sm:min-h-[60vh]' : 'min-h-0'
+        } ${landingSectionShellClass}`}
+      >
+        {/* TÍTULO DA SEÇÃO (Centralizado inicialmente; cards entram abaixo na rolagem) */}
+        <div
+          className={`w-full text-center transition-all duration-500 ease-out ${
+            revealedCount === 0 ? 'mb-0 my-auto' : 'mb-8 sm:mb-10 md:mb-12'
+          }`}
+        >
           <div className="w-full max-w-xl md:max-w-2xl mx-auto">
             <LandingSectionIntro
               label="Como funciona"
@@ -432,131 +475,169 @@ export function HowItWorksSection() {
           </div>
         </div>
 
-        {/* 2A. SMARTPHONE: CARDS EMPILHADOS UM ABAIXO DO OUTRO LOGO ABAIXO DO TÍTULO */}
-        {/* Aproveita a largura da tela como o card do Hero */}
+        {/* 2A. SMARTPHONE: CARDS ENTRAM NA ORDEM UM A UM E EXPANDEM O CONTAINER */}
         <div className="md:hidden flex flex-col items-center w-full max-w-xl mx-auto">
-          {steps.map((step, idx) => (
-            <MobileStepItem
-              key={step.stepNumber}
-              step={step}
-              index={idx}
-              isLast={idx === steps.length - 1}
-              reduceMotion={reduceMotion}
-            />
-          ))}
+          {steps.map((step, idx) => {
+            const isExpanded = revealedCount >= idx + 1;
+            const showArrow = revealedCount >= idx + 2;
+            return (
+              <MobileStepItem
+                key={step.stepNumber}
+                step={step}
+                index={idx}
+                isLast={idx === steps.length - 1}
+                isExpanded={isExpanded}
+                showArrow={showArrow}
+              />
+            );
+          })}
         </div>
 
-        {/* 2B. TABLET: GRID 2x2 LOGO ABAIXO DO TÍTULO */}
+        {/* 2B. TABLET: LINHA 1 (01+02) E LINHA 2 (03+04) EXPANDEM PROGRESSIVAMENTE */}
         <div className="hidden md:flex lg:hidden flex-col gap-4 md:gap-5 w-full max-w-3xl md:max-w-4xl mx-auto">
           {/* LINHA 1: Cards 01 e 02 */}
-          <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
-            {/* Card 01 */}
-            <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                    PASSO {steps[0].stepNumber}
-                  </span>
-                  <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                    <FormFigure active={true} />
+          <div
+            className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              revealedCount >= 1
+                ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
+                : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
+            }`}
+          >
+            <div className="overflow-hidden w-full">
+              <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
+                {/* Card 01 */}
+                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                        PASSO {steps[0].stepNumber}
+                      </span>
+                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                        <FormFigure active={revealedCount >= 1} />
+                      </div>
+                    </div>
+                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      {steps[0].title}
+                    </h3>
+                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      {steps[0].body}
+                    </p>
                   </div>
-                </div>
-                <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                  {steps[0].title}
-                </h3>
-                <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                  {steps[0].body}
-                </p>
-              </div>
-              <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                <span className="uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-              </div>
-            </article>
-
-            {/* Card 02 */}
-            <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                    PASSO {steps[1].stepNumber}
-                  </span>
-                  <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                    <GenerateFigure active={true} />
+                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                   </div>
-                </div>
-                <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                  {steps[1].title}
-                </h3>
-                <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                  {steps[1].body}
-                </p>
-              </div>
-              <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                <span className="uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-              </div>
-            </article>
+                </article>
 
-            {/* Seta horizontal na linha 1 */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-              <StepArrow direction="right" active={true} />
+                {/* Card 02 */}
+                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                        PASSO {steps[1].stepNumber}
+                      </span>
+                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                        <GenerateFigure active={revealedCount >= 1} />
+                      </div>
+                    </div>
+                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      {steps[1].title}
+                    </h3>
+                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      {steps[1].body}
+                    </p>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                  </div>
+                </article>
+
+                {/* Seta horizontal na linha 1 */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                  <StepArrow direction="right" active={revealedCount >= 1} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Seta indicadora vertical entre linha 1 e linha 2 no tablet */}
+          <div
+            className={`w-full grid transition-all duration-500 ease-out ${
+              revealedCount >= 3
+                ? 'grid-rows-[1fr] opacity-100 py-1'
+                : 'grid-rows-[0fr] opacity-0 py-0 pointer-events-none'
+            }`}
+            aria-hidden="true"
+          >
+            <div className="overflow-hidden flex justify-center items-center pointer-events-none">
+              <StepArrow direction="down" active={revealedCount >= 3} />
             </div>
           </div>
 
           {/* LINHA 2: Cards 03 e 04 */}
-          <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
-            {/* Card 03 */}
-            <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                    PASSO {steps[2].stepNumber}
-                  </span>
-                  <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                    <ChooseFigure active={true} />
+          <div
+            className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              revealedCount >= 3
+                ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
+                : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
+            }`}
+          >
+            <div className="overflow-hidden w-full">
+              <div className="relative grid grid-cols-2 gap-4 md:gap-5 w-full items-stretch">
+                {/* Card 03 */}
+                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                        PASSO {steps[2].stepNumber}
+                      </span>
+                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                        <ChooseFigure active={revealedCount >= 3} />
+                      </div>
+                    </div>
+                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      {steps[2].title}
+                    </h3>
+                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      {steps[2].body}
+                    </p>
                   </div>
-                </div>
-                <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                  {steps[2].title}
-                </h3>
-                <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                  {steps[2].body}
-                </p>
-              </div>
-              <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                <span className="uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-              </div>
-            </article>
-
-            {/* Card 04 */}
-            <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                    PASSO {steps[3].stepNumber}
-                  </span>
-                  <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                    <DownloadFigure active={true} />
+                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                   </div>
-                </div>
-                <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
-                  {steps[3].title}
-                </h3>
-                <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
-                  {steps[3].body}
-                </p>
-              </div>
-              <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                <span className="uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-              </div>
-            </article>
+                </article>
 
-            {/* Seta horizontal na linha 2 */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-              <StepArrow direction="right" active={true} />
+                {/* Card 04 */}
+                <article className={`h-full ${landingInteractiveCardClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group`}>
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                        PASSO {steps[3].stepNumber}
+                      </span>
+                      <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
+                        <DownloadFigure active={revealedCount >= 3} />
+                      </div>
+                    </div>
+                    <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      {steps[3].title}
+                    </h3>
+                    <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      {steps[3].body}
+                    </p>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
+                    <span className="uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                  </div>
+                </article>
+
+                {/* Seta horizontal na linha 2 */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                  <StepArrow direction="right" active={revealedCount >= 3} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
