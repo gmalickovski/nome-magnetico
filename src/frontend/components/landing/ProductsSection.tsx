@@ -57,7 +57,7 @@ export function ProductsSection() {
                 </p>
 
                 <h3
-                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s1Title.className}`}
+                  className={`font-cinzel text-xl sm:text-[1.4rem] md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s1Title.className}`}
                   style={s1Title.style}
                 >
                   Compare sua nota hoje com o potencial da sua assinatura.
@@ -124,7 +124,7 @@ export function ProductsSection() {
                 </p>
 
                 <h3
-                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s2Title.className}`}
+                  className={`font-cinzel text-xl sm:text-[1.4rem] md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s2Title.className}`}
                   style={s2Title.style}
                 >
                   Não é um nome imposto. É um ranking para você escolher.

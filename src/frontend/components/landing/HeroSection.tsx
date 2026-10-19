@@ -23,10 +23,10 @@ export function HeroSection() {
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
-        <div className="absolute top-1/3 left-[20%] -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[800px] md:h-[800px] bg-[#D4AF37]/8 md:bg-[#D4AF37]/15 rounded-full blur-[100px] md:blur-[150px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#241a00] sm:from-[#1e1500] lg:from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
+        <div className="absolute top-1/4 sm:top-1/3 left-1/2 lg:left-[20%] -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[560px] sm:h-[560px] md:w-[720px] md:h-[720px] lg:w-[800px] lg:h-[800px] bg-[#D4AF37]/18 sm:bg-[#D4AF37]/16 md:bg-[#D4AF37]/15 lg:bg-[#D4AF37]/15 rounded-full blur-[90px] sm:blur-[120px] md:blur-[140px] lg:blur-[150px]"></div>
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/5 md:bg-purple-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
-        <div className="absolute top-1/2 right-[20%] translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-[#D4AF37]/5 md:bg-[#D4AF37]/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+        <div className="absolute top-2/3 sm:top-1/2 right-1/2 sm:right-[15%] lg:right-[20%] translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] md:w-[600px] md:h-[600px] bg-[#D4AF37]/12 sm:bg-[#D4AF37]/10 md:bg-[#D4AF37]/10 rounded-full blur-[80px] md:blur-[120px]"></div>
       </div>
 
       {/* CONTENT LAYERS (Z-10) — Centralizado na Área Útil (altura total - header) */}
@@ -37,7 +37,7 @@ export function HeroSection() {
           {/* Left Column: Headlines (5 columns on lg+) */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start min-w-0">
             <h1
-              className={`font-cinzel text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
+              className={`font-cinzel text-[1.75rem] sm:text-[2.1rem] md:text-[2.35rem] lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
               style={titleReveal.style}
             >
               Sua Assinatura Tem<br />
