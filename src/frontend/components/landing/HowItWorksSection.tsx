@@ -170,15 +170,15 @@ function MobileStepItem({
 export function HowItWorksSection() {
   const { ref, progress, reduceMotion } = useScrollProgress<HTMLElement>();
   const introRef = useRef<HTMLDivElement>(null);
-  const [naturalIntroHeight, setNaturalIntroHeight] = useState(340);
+  const [naturalIntroHeight, setNaturalIntroHeight] = useState(320);
 
-  // Measure natural height of intro content to prevent any clipping on start
+  // Progressive measurement of intro height to prevent any clipping on start
   useEffect(() => {
     if (!introRef.current) return;
     const updateHeight = () => {
       if (introRef.current) {
-        const height = introRef.current.scrollHeight;
-        if (height > 100) {
+        const height = introRef.current.offsetHeight || introRef.current.scrollHeight;
+        if (height > 50) {
           setNaturalIntroHeight(height);
         }
       }
@@ -188,16 +188,15 @@ export function HowItWorksSection() {
     return () => window.removeEventListener('resize', updateHeight);
   }, []);
 
-  // Progress metrics calculation for Desktop pinned scroll with two-phase choreography:
-  // Phase 1 (p: 0.00 -> 0.22): Intro smoothly slides up and fades away.
-  // When Intro disappears, flexbox centers Card 1 vertically and horizontally in the usable area.
-  // Phase 2 (p: 0.22 -> 1.00): Only after Card 1 is fully centered, Cards 2, 3 and 4 sequentially enter side-by-side.
-  const isAtStart = progress <= 0.02;
-
+  // Progress metrics calculation for Desktop pinned scroll with smooth, continuous choreography:
+  // Phase 1 (progress: 0.00 -> 0.22): Seamless, subtle intro exit towards the header with smoothstep easing.
+  // Intro drifts upward and fades out completely before height finishes collapsing, centering Card 1 with zero clipping.
+  // Phase 2 (progress: 0.22 -> 1.00): Only after Card 1 is fully centered and text has vanished, Cards 2, 3 and 4
+  // sequentially glide in with arrows and smoothstep rail shifts.
   const {
     introOpacity,
     introTranslateY,
-    introMaxHeight,
+    introHeight,
     introMarginBottom,
     railOffsetPercent,
     cardVisibility,
@@ -207,86 +206,98 @@ export function HowItWorksSection() {
       return {
         introOpacity: 1,
         introTranslateY: 0,
-        introMaxHeight: naturalIntroHeight,
-        introMarginBottom: 48,
+        introHeight: naturalIntroHeight,
+        introMarginBottom: 36,
         railOffsetPercent: 0,
         cardVisibility: [1, 1, 1, 1],
         arrowVisibility: [true, true, true],
       };
     }
 
-    // Phase 1: Intro exit (p: 0.02 -> 0.22)
+    const PHASE_1_END = 0.22;
+
+    // Phase 1: Intro exit & Card 1 centering (progress: 0.00 -> 0.22)
     let introOp = 1;
     let introY = 0;
     let introH = naturalIntroHeight;
-    let introMB = 48;
+    let introMB = 36;
 
-    if (progress <= 0.02) {
+    if (progress <= 0) {
       introOp = 1;
       introY = 0;
       introH = naturalIntroHeight;
-      introMB = 48;
-    } else if (progress <= 0.22) {
-      const t = (progress - 0.02) / 0.20;
-      introOp = Math.max(0, 1 - t * 1.15);
-      introY = -t * 70;
-      introH = Math.max(0, naturalIntroHeight * (1 - t));
-      introMB = Math.max(0, 48 * (1 - t));
+      introMB = 36;
+    } else if (progress < PHASE_1_END) {
+      // Normalized progress in Phase 1 (0 to 1)
+      const t = progress / PHASE_1_END;
+      // Smoothstep easing: 3*t^2 - 2*t^3 for fluid start and end without abrupt jerk
+      const smooth = t * t * (3 - 2 * t);
+
+      // Intro fades out completely before height finishes collapsing, eliminating any text clipping
+      introOp = Math.max(0, 1 - Math.min(1, t * 1.35));
+      // Intro drifts smoothly upward towards the top/header
+      introY = -smooth * 56;
+      // Intro height collapses smoothly, pulling Card 1 to dead center
+      introH = Math.max(0, naturalIntroHeight * (1 - smooth));
+      introMB = Math.max(0, 36 * (1 - smooth));
     } else {
       introOp = 0;
-      introY = -70;
+      introY = -56;
       introH = 0;
       introMB = 0;
     }
 
-    // Phase 2: Sequential Card Reveal & Rail Shift
-    // Cards 2, 3 and 4 only begin entering after progress > 0.22 (when Card 1 is centered)
+    // Phase 2: Sequential Card Reveal & Rail Shift (progress: 0.22 -> 1.00)
+    // Cards 2, 3 and 4 only begin entering after progress > PHASE_1_END
     let offset = 37.5;
     const cardVis = [1, 0, 0, 0];
     const arrowVis = [false, false, false];
 
-    if (progress <= 0.22) {
+    if (progress <= PHASE_1_END) {
+      // Card 1 centered horizontally (37.5% track offset)
       offset = 37.5;
       cardVis[0] = 1;
-    } else if (progress <= 0.46) {
-      const t = (progress - 0.22) / 0.24;
-      offset = 37.5 - t * 12.5;
-      cardVis[0] = 1;
-      cardVis[1] = Math.min(1, t * 1.4);
-      arrowVis[0] = t > 0.2;
-    } else if (progress <= 0.70) {
-      const t = (progress - 0.46) / 0.24;
-      offset = 25.0 - t * 12.5;
-      cardVis[0] = 1;
-      cardVis[1] = 1;
-      arrowVis[0] = true;
-      cardVis[2] = Math.min(1, t * 1.4);
-      arrowVis[1] = t > 0.2;
-    } else if (progress <= 0.90) {
-      const t = (progress - 0.70) / 0.20;
-      offset = 12.5 - t * 12.5;
-      cardVis[0] = 1;
-      cardVis[1] = 1;
-      cardVis[2] = 1;
-      arrowVis[0] = true;
-      arrowVis[1] = true;
-      cardVis[3] = Math.min(1, t * 1.4);
-      arrowVis[2] = t > 0.2;
     } else {
-      offset = 0;
-      cardVis[0] = 1;
-      cardVis[1] = 1;
-      cardVis[2] = 1;
-      cardVis[3] = 1;
-      arrowVis[0] = true;
-      arrowVis[1] = true;
-      arrowVis[2] = true;
+      // Normalized progress in Phase 2 (0 to 1)
+      const p2 = (progress - PHASE_1_END) / (1 - PHASE_1_END);
+
+      if (p2 <= 0.33) {
+        // Revealing Card 2: rail shifts from 37.5% to 25.0%
+        const t = p2 / 0.33;
+        const ease = t * t * (3 - 2 * t);
+        offset = 37.5 - ease * 12.5;
+        cardVis[0] = 1;
+        cardVis[1] = Math.min(1, ease * 1.25);
+        arrowVis[0] = t > 0.15;
+      } else if (p2 <= 0.66) {
+        // Revealing Card 3: rail shifts from 25.0% to 12.5%
+        const t = (p2 - 0.33) / 0.33;
+        const ease = t * t * (3 - 2 * t);
+        offset = 25.0 - ease * 12.5;
+        cardVis[0] = 1;
+        cardVis[1] = 1;
+        arrowVis[0] = true;
+        cardVis[2] = Math.min(1, ease * 1.25);
+        arrowVis[1] = t > 0.15;
+      } else {
+        // Revealing Card 4: rail shifts from 12.5% to 0.0%
+        const t = Math.min(1, (p2 - 0.66) / 0.34);
+        const ease = t * t * (3 - 2 * t);
+        offset = 12.5 - ease * 12.5;
+        cardVis[0] = 1;
+        cardVis[1] = 1;
+        cardVis[2] = 1;
+        cardVis[3] = Math.min(1, ease * 1.25);
+        arrowVis[0] = true;
+        arrowVis[1] = true;
+        arrowVis[2] = t > 0.15;
+      }
     }
 
     return {
       introOpacity: introOp,
       introTranslateY: introY,
-      introMaxHeight: introH,
+      introHeight: introH,
       introMarginBottom: introMB,
       railOffsetPercent: offset,
       cardVisibility: cardVis,
@@ -308,40 +319,44 @@ export function HowItWorksSection() {
       {/* ── DESKTOP PINNED EXPERIENCE (lg: 1024px+) ────────────────────── */}
       <div
         className={`hidden lg:flex flex-col justify-center items-center ${
-          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen pt-20 lg:pt-24 pb-12 lg:pb-16'
+          reduceMotion ? 'py-20 lg:py-28' : 'sticky top-0 h-screen pt-16 lg:pt-20 pb-12 lg:pb-14'
         } w-full overflow-x-clip`}
       >
         <div className={`${landingSectionShellClass} flex flex-col justify-center items-center w-full min-h-0`}>
-          {/* Section Intro: slides up and fades away as scroll progresses, leaving cards centered */}
+          {/* Section Intro: fully visible at initial state, then smoothly glides up towards the header and fades out */}
           <div
-            ref={introRef}
-            className="w-full text-center will-change-transform"
+            className="w-full text-center will-change-[height,opacity,transform]"
             style={{
-              opacity: isAtStart ? 1 : introOpacity,
-              transform: isAtStart ? 'none' : `translateY(${introTranslateY}px)`,
-              maxHeight: isAtStart ? 'none' : `${introMaxHeight}px`,
+              height: progress <= 0 ? 'auto' : `${introHeight}px`,
+              opacity: introOpacity,
+              transform: `translateY(${introTranslateY}px)`,
               marginBottom: `${introMarginBottom}px`,
-              overflow: isAtStart ? 'visible' : 'hidden',
+              overflow: introOpacity > 0 ? 'visible' : 'hidden',
               pointerEvents: introOpacity > 0.1 ? 'auto' : 'none',
-              transition: isAtStart ? 'none' : 'opacity 150ms ease-out, transform 150ms ease-out',
+              visibility: introOpacity <= 0 ? 'hidden' : 'visible',
             }}
           >
-            <LandingSectionIntro
-              label="Como funciona"
-              title="Quatro passos da sua nota hoje até a nova assinatura"
-              description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-              titleClassName="text-xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold uppercase tracking-wide max-w-4xl mx-auto leading-[1.3] lg:leading-[1.35] text-white text-balance"
-              descriptionClassName="max-w-[64ch] mx-auto text-sm sm:text-base mt-4 md:mt-5 leading-relaxed text-pretty text-gray-400"
-              className="text-center"
-              revealed={true}
-              reduceMotion={reduceMotion}
-            />
+            <div
+              ref={introRef}
+              className="w-full text-center"
+            >
+              <LandingSectionIntro
+                label="Como funciona"
+                title="Quatro passos da sua nota hoje até a nova assinatura"
+                description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
+                titleClassName="text-xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold uppercase tracking-wide max-w-4xl mx-auto leading-[1.3] lg:leading-[1.35] text-white text-balance"
+                descriptionClassName="max-w-[64ch] mx-auto text-sm sm:text-base mt-4 md:mt-5 leading-relaxed text-pretty text-gray-400"
+                className="text-center"
+                revealed={true}
+                reduceMotion={reduceMotion}
+              />
+            </div>
           </div>
 
           {/* Rail Track with dynamic horizontal offset (centered in viewport) */}
           <div className="relative w-full overflow-visible py-2">
             <div
-              className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch transition-transform duration-300 ease-out will-change-transform"
+              className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch will-change-transform"
               style={{
                 transform: `translateX(${railOffsetPercent}%)`,
               }}
@@ -356,12 +371,10 @@ export function HowItWorksSection() {
                 return (
                   <div
                     key={step.stepNumber}
-                    className="relative h-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                    className="relative h-full will-change-[transform,opacity]"
                     style={{
                       opacity: opacity,
-                      transform: isVisible
-                        ? 'translateY(0px) scale(1)'
-                        : 'translateY(24px) scale(0.95)',
+                      transform: `translateY(${(1 - Math.min(1, opacity)) * 20}px) scale(${0.96 + Math.min(1, opacity) * 0.04})`,
                       pointerEvents: isVisible ? 'auto' : 'none',
                     }}
                   >
