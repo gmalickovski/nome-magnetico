@@ -29,7 +29,7 @@ export const landingSectionShellClass =
  * Standardized Vertical Rhythm for standard (non-sticky) landing sections.
  * Follows 8dp grid multiples across mobile, laptop 13"/14", and desktop.
  */
-export const landingSectionSpacingClass = 'py-20 md:py-24 lg:py-28 xl:py-32';
+export const landingSectionSpacingClass = 'py-12 sm:py-16 md:py-20 lg:py-24';
 
 /**
  * Standardized 12-Column Split Grid (M3 Layout Grid):
@@ -65,7 +65,7 @@ export function LandingSectionIntro({
     <div className={`${alignClass} min-w-0 ${className}`}>
       {label && (
         <p
-          className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-3 md:mb-4 ${labelReveal.className}`}
+          className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2.5 sm:mb-3 md:mb-3.5 ${labelReveal.className}`}
           style={labelReveal.style}
         >
           {label}
@@ -75,7 +75,7 @@ export function LandingSectionIntro({
         <h2
           className={`font-cinzel ${
             titleClassName ||
-            'text-xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold leading-[1.28] md:leading-[1.32]'
+            'text-xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold leading-[1.15]'
           } text-[#e5e2e1] mb-3.5 text-balance ${titleReveal.className}`}
           style={titleReveal.style}
         >
@@ -84,8 +84,8 @@ export function LandingSectionIntro({
       )}
       {description && (
         <p
-          className={`text-gray-400 text-sm sm:text-base leading-relaxed ${
-            descriptionClassName || 'max-w-[62ch]'
+          className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed ${
+            descriptionClassName || 'max-w-[58ch]'
           } text-pretty break-words ${
             align === 'center' ? 'mx-auto' : 'lg:mx-0 mx-auto'
           } ${descReveal.className}`}

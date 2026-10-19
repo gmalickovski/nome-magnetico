@@ -57,14 +57,14 @@ export function ProductsSection() {
                 </p>
 
                 <h3
-                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-snug text-balance ${s1Title.className}`}
+                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s1Title.className}`}
                   style={s1Title.style}
                 >
                   Compare sua nota hoje com o potencial da sua assinatura.
                 </h3>
 
                 <p
-                  className={`text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed text-pretty ${s1Desc.className}`}
+                  className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty ${s1Desc.className}`}
                   style={s1Desc.style}
                 >
                   Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
@@ -124,14 +124,14 @@ export function ProductsSection() {
                 </p>
 
                 <h3
-                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-snug text-balance ${s2Title.className}`}
+                  className={`font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s2Title.className}`}
                   style={s2Title.style}
                 >
                   Não é um nome imposto. É um ranking para você escolher.
                 </h3>
 
                 <p
-                  className={`text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed text-pretty ${s2Desc.className}`}
+                  className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty ${s2Desc.className}`}
                   style={s2Desc.style}
                 >
                   O sistema gera sugestões e também analisa as variações que você indicar. Cada

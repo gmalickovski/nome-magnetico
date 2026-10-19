@@ -315,10 +315,10 @@ export function HowItWorksSection() {
                 <div ref={introRef} className="w-full text-center max-w-4xl mx-auto">
                   <LandingSectionIntro
                     label="Como funciona"
-                    title="Quatro passos da sua nota hoje até a nova assinatura"
+                    title="Quatro Passos da Sua Nota Hoje até a Nova Assinatura"
                     description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-                    titleClassName="text-2xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold uppercase tracking-wide max-w-4xl mx-auto leading-[1.25] lg:leading-[1.3] text-white text-balance"
-                    descriptionClassName="max-w-[64ch] mx-auto text-sm sm:text-base mt-2 sm:mt-2.5 leading-relaxed text-pretty text-gray-400"
+                    titleClassName="text-2xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold max-w-4xl mx-auto leading-[1.15] text-white text-balance"
+                    descriptionClassName="max-w-[58ch] mx-auto text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty text-gray-400"
                     className="text-center"
                     revealed={true}
                     reduceMotion={reduceMotion}
@@ -415,16 +415,16 @@ export function HowItWorksSection() {
       </div>
 
       {/* ── 2. MOBILE & TABLET VIEW (< lg: — TÍTULO NO TOPO, CARDS LOGO ABAIXO) ─ */}
-      <div className={`lg:hidden w-full flex flex-col pt-3 sm:pt-5 md:pt-7 pb-12 sm:pb-16 ${landingSectionShellClass}`}>
-        {/* TÍTULO NO TOPO DA SEÇÃO (Perto da divisa superior) */}
-        <div className="w-full text-center mb-4 sm:mb-5 md:mb-6">
+      <div className={`lg:hidden w-full flex flex-col py-12 sm:py-16 md:py-20 ${landingSectionShellClass}`}>
+        {/* TÍTULO NO TOPO DA SEÇÃO (Com respiro padronizado da divisa) */}
+        <div className="w-full text-center mb-8 sm:mb-10 md:mb-12">
           <div className="w-full max-w-xl md:max-w-2xl mx-auto">
             <LandingSectionIntro
               label="Como funciona"
-              title="Quatro passos da sua nota hoje até a nova assinatura"
+              title="Quatro Passos da Sua Nota Hoje até a Nova Assinatura"
               description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-              titleClassName="text-xl sm:text-2xl md:text-3xl font-bold uppercase tracking-wide max-w-xl md:max-w-2xl mx-auto leading-[1.25] text-white text-balance"
-              descriptionClassName="max-w-[48ch] md:max-w-[56ch] mx-auto text-xs sm:text-sm md:text-base mt-2 leading-relaxed text-pretty text-gray-400"
+              titleClassName="text-xl sm:text-2xl md:text-3xl font-bold max-w-xl md:max-w-2xl mx-auto leading-[1.15] text-white text-balance"
+              descriptionClassName="max-w-[48ch] md:max-w-[56ch] mx-auto text-xs sm:text-sm md:text-base mt-4 sm:mt-5 leading-relaxed text-pretty text-gray-400"
               className="text-center"
               revealed={true}
               reduceMotion={reduceMotion}

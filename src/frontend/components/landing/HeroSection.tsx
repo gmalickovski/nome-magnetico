@@ -18,7 +18,7 @@ export function HeroSection() {
     <section
       id="inicio"
       ref={reveal.ref}
-      className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-28 md:pt-32 lg:pt-[84px] pb-10 sm:pb-14"
+      className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-28 md:pt-32 lg:pt-[84px] pb-12 sm:pb-16 md:pb-20 lg:pb-14"
       aria-label="Seção principal — Nome Magnético"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
@@ -90,7 +90,7 @@ export function HeroSection() {
 
         {/* Mobile Button - Shown only on mobile/tablet below the animated card */}
         <div
-          className={`flex justify-center lg:hidden w-full ${ctaReveal.className}`}
+          className={`flex flex-col items-center lg:hidden w-full ${ctaReveal.className}`}
           style={ctaReveal.style}
         >
           <a
@@ -104,12 +104,19 @@ export function HeroSection() {
           >
             Descobrir a Frequência do Meu Nome
           </a>
+
+          {/* Seta indicadora do Hero no mobile: espaçamento dedicado e elegante abaixo do botão */}
+          <div className="mt-8 mb-2 flex justify-center items-center animate-pulse motion-reduce:animate-none" aria-hidden="true">
+            <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
 
       </div>
 
-      {/* Scroll indicator meditativo */}
-      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-pulse motion-reduce:animate-none z-20" aria-hidden="true">
+      {/* Scroll indicator meditativo - desktop apenas (no mobile fica abaixo do botão com espaçamento dedicado) */}
+      <div className="hidden lg:block absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-pulse motion-reduce:animate-none z-20" aria-hidden="true">
         <svg className="w-6 h-6 text-[#D4AF37]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
