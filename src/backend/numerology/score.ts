@@ -6,15 +6,12 @@ import { calcularTodosTriangulos, type Triangulo, type Bloqueio, type TodosTrian
 
 import { calcularExpressao, calcularDestino, calcularMotivacao } from './numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, type DebitoCarmicoInfo, type DebitoFonte } from './karmic';
-import { createRequire } from 'node:module';
 import { avaliarCompatibilidade, type TipoCompatibilidade } from './harmonization';
+import { listarNomesCandidatosGerador } from './products/nome-social';
 import { SCORE_CONFIG_V3, SCORE_VERSION_V3 } from './score-config';
 import { isScoreV3 } from './score-version';
 
-const require = createRequire(import.meta.url);
-
 function listarCandidatosPotencial(nomeNascimento: string): string[] {
-  const { listarNomesCandidatosGerador } = require('./products/nome-social') as typeof import('./products/nome-social');
   return listarNomesCandidatosGerador(nomeNascimento);
 }
 
