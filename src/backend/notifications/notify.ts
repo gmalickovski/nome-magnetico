@@ -107,11 +107,17 @@ async function sendToWebhook(
   payload: NotificationPayload | MarketingPayload | AccessAttributesPayload,
 ): Promise<boolean> {
   const payloadToSend = prepareWebhookPayload(payload);
+  const secret = readServerEnv('N8N_EVENTS_WEBHOOK_SECRET');
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (secret) {
+    headers['Authorization'] = secret;
+  }
 
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         event,
         payload: payloadToSend,
