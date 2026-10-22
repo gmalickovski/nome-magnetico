@@ -4,11 +4,11 @@ Orientação unificada para qualquer agente IA (Jules, Cursor, Antigravity) nest
 
 ## Arquitetura e Negócio
 
-* **Backend:** `src/backend/` tem IA, Supabase, numerologia. O Frontend NUNCA importa do backend; fala por `/api/*` e sempre valida inputs via Zod. O Supabase service key é só server-side.
-* **Frontend:** Seguir `DESIGN.md`. Astro 5, React, Tailwind (sem custom css para layout básico), no-line design (use spacing/shadows em vez de borders 1px).
-* **Numerologia:** 4 triângulos sempre (Vida, Pessoal, Social, Destino), bloqueios (sequências repetidas >=3) com códigos em `triangle.ts`, lições kármicas. ZERO referências à radiestesia ou pêndulo - apenas critérios formais e objetivos.
-* **Pagamentos:** Checkout hospedado via Stripe (`STRIPE_SECRET_KEY` no env). O bot Suporte só vê read-only e não acessa PDFs ou logs financeiros.
-* Documentação técnica (arquitetura, configs, snippets) fica sempre dentro de `/docs`. Se não achar algo aqui, procure em `docs/`.
+Para regras completas de arquitetura, banco, estrutura de pastas e negócio (como numerologia, Supabase, pagamentos, Stripe e Sentry), consulte **`docs/ARCHITECTURE.md`**.
+
+* **Backend:** O Frontend NUNCA importa do backend; fala por `/api/*` e sempre valida inputs via Zod. O Supabase service key é só server-side.
+* **Frontend:** Seguir `DESIGN.md`. Astro 5, React, Tailwind (sem custom css para layout básico), no-line design.
+* **Numerologia:** 4 triângulos sempre, bloqueios (sequências repetidas >=3). ZERO referências à radiestesia ou pêndulo.
 
 ## Stack e Comandos
 
