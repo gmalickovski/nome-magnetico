@@ -1,35 +1,30 @@
 # AGENTS.md
 
-Orientação unificada para qualquer agente IA (Jules, Cursor, Antigravity) neste repositório, substituindo os antigos arquivos específicos.
+Orientação unificada para qualquer agente IA (Jules, Cursor, Antigravity) neste repositório. O `CLAUDE.md`, `CODEX.md`, `GEMINI.md` e `LINEAR.md` originais apontam para cá.
 
-## Playbooks Studio MLK
+## Arquitetura e Negócio
 
-* FE/BE = labels `area:frontend` / `area:backend` — não criar times separados.
-* Antes de mudar UI/layout/mobile/fold/tipografia/SVG/containers: seguir o [Playbook Frontend](https://linear.app/studio-mlk/document/playbook-frontend-layout-tipografia-mobilefold-4ad2081fba87).
-* Antes de mudar API/auth/DB/migrations/LGPD/segurança: seguir o [Playbook Backend](https://linear.app/studio-mlk/document/playbook-backend-seguranca-api-lgpd-400dc095d4f4).
-* Guia Linear: https://linear.app/studio-mlk/document/guia-linear-regras-e-suporte-b9d5bfb39654
+* **Backend:** `src/backend/` tem IA, Supabase, numerologia. O Frontend NUNCA importa do backend; fala por `/api/*` e sempre valida inputs via Zod. O Supabase service key é só server-side.
+* **Frontend:** Seguir `DESIGN.md`. Astro 5, React, Tailwind (sem custom css para layout básico), no-line design (use spacing/shadows em vez de borders 1px).
+* **Numerologia:** 4 triângulos sempre (Vida, Pessoal, Social, Destino), bloqueios (sequências repetidas >=3) com códigos em `triangle.ts`, lições kármicas. ZERO referências à radiestesia ou pêndulo - apenas critérios formais e objetivos.
+* **Pagamentos:** Checkout hospedado via Stripe (`STRIPE_SECRET_KEY` no env). O bot Suporte só vê read-only e não acessa PDFs ou logs financeiros.
+* Documentação técnica (arquitetura, configs, snippets) fica sempre dentro de `/docs`. Se não achar algo aqui, procure em `docs/`.
 
 ## Stack e Comandos
 
 * Stack: Astro 5 SSR, React islands, Tailwind CSS, Supabase Cloud, Stripe.
 * `npm ci`
 * `npm run dev`
-* `npm test`
 * `npm run build`
+* `npx astro check`
 
-## Regras
+## Regras e Fluxo de Trabalho (Obrigatório)
 
-* **Frontend:** Sem mutação de banco no front.
-* **Segurança:** Sem segredos no código.
-* **Banco:** Sem migrations sem pedido explícito.
-* **Design:** Não mudar design nem animações da landing (só texto/copy).
-
-## Fluxo de Trabalho
-
-* **PR em draft**.
-* **Título:** `DEV-### ...`
-* **NUNCA** merge.
-* **NUNCA** tag.
+* **Frontend/Segurança:** Sem mutação de DB no front, sem segredos no código. Sem migrations sem pedido explícito.
+* **Design:** Não mude design nem animações da landing, apenas texto.
+* **Branching e PRs:** PR **sempre** em draft e feito a partir de uma branch `dev-###...` Nunca merge nem tags de deploy manual.
+* Título PR: `DEV-### ...`
+* Rode o build antes de commitar para garantir que o código continua funcional.
 
 ---
 
@@ -43,3 +38,5 @@ Orientação unificada para qualquer agente IA (Jules, Cursor, Antigravity) nest
 ## Não pode mudar
 ## Risco: produção | banco | pagamentos | auth | nenhum
 ```
+
+Labels: um `agent:` (cursor/jules/antigravity) + um `tier:`. Risco diferente de nenhum = `agent:cursor`. O Jules é disparado só pelo Guilherme.
