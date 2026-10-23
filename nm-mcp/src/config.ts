@@ -1,7 +1,14 @@
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 
-export type McpScope = 'read' | 'reprocess' | 'resend';
+export type McpScope =
+  | 'read'
+  | 'reprocess'
+  | 'resend'
+  | 'growth'
+  | 'finance'
+  | 'promotions'
+  | 'action';
 
 export type AgentTokenConfig = {
   agent: string;

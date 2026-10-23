@@ -57,5 +57,11 @@ export function authenticateBearerToken(
 }
 
 export function hasScope(scopes: McpScope[], requiredScope: McpScope): boolean {
+  if (scopes.includes('*' as any)) return true;
   return scopes.includes(requiredScope);
+}
+
+export function hasAnyScope(scopes: McpScope[], requiredScopes: McpScope[]): boolean {
+  if (scopes.includes('*' as any)) return true;
+  return requiredScopes.some((req) => scopes.includes(req));
 }
