@@ -8,6 +8,9 @@ import {
   effectiveFinalBelowFloor,
 } from './effective-price';
 import { OpsRegistryError } from '../ops/registry';
+import { memoize, invalidateProductPricesCache } from '../cache/memo';
+
+const PRODUCT_PRICES_TTL_MS = 5 * 60 * 1000; // 5 minutos em memória (DEV-212)
 
 const COLUMNS = 'product_type, base_cents, min_cents, label, is_active, updated_at, updated_by';
 
@@ -20,18 +23,20 @@ function isBenignProductPricesReadError(error: { code?: string; message?: string
 }
 
 export async function fetchProductPriceRows(): Promise<ProductPriceRow[]> {
-  try {
-    const { data, error } = await supabase.from('product_prices').select(COLUMNS).eq('is_active', true);
-    if (error) {
-      if (isBenignProductPricesReadError(error)) return [];
-      console.warn('[product_prices] leitura falhou — usando fallback estático:', error.message ?? error.code);
+  return memoize('product_prices:rows', PRODUCT_PRICES_TTL_MS, async () => {
+    try {
+      const { data, error } = await supabase.from('product_prices').select(COLUMNS).eq('is_active', true);
+      if (error) {
+        if (isBenignProductPricesReadError(error)) return [];
+        console.warn('[product_prices] leitura falhou — usando fallback estático:', error.message ?? error.code);
+        return [];
+      }
+      return (data ?? []) as ProductPriceRow[];
+    } catch (err) {
+      console.warn('[product_prices] leitura falhou — usando fallback estático:', err);
       return [];
     }
-    return (data ?? []) as ProductPriceRow[];
-  } catch (err) {
-    console.warn('[product_prices] leitura falhou — usando fallback estático:', err);
-    return [];
-  }
+  });
 }
 
 export async function fetchProductPriceMap(): Promise<Map<ProductType, ProductPriceRow>> {
@@ -97,6 +102,7 @@ export async function updateProductPrice(input: UpdateProductPriceInput): Promis
     changed_by: input.actorId,
   });
 
+  invalidateProductPricesCache();
   return data as ProductPriceRow;
 }
 

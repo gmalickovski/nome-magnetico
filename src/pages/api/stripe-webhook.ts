@@ -20,6 +20,7 @@ import {
 import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
 import { parsePurchaseKind } from '../../backend/payments/renewal';
 import { captureFluxoException } from '../../sentry/fluxo';
+import { invalidateUserSubscriptionsCache } from '../../backend/cache/memo';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -147,6 +148,7 @@ export const POST: APIRoute = async ({ request }) => {
       currency: session.currency ?? 'brl',
       purchaseKind,
     });
+    invalidateUserSubscriptionsCache(userId);
     // stripe_session_id é único. Retry do cartão ou do Pix não repete acesso nem purchase.
     if (!created) {
       console.log('[stripe-webhook] Sessão já processada:', session.id);
@@ -328,6 +330,7 @@ export const POST: APIRoute = async ({ request }) => {
           if (subscription) {
             const stripeRefundId = charge.refunds?.data?.[0]?.id ?? null;
             await refundSubscription(subscription.id, stripeRefundId, 'Reembolso via Stripe Dashboard');
+            invalidateUserSubscriptionsCache(subscription.user_id);
             console.log('[stripe-webhook] Acesso revogado por reembolso manual:', subscription.id);
             try {
               await publishAccessAttributes({
