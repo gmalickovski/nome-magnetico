@@ -208,11 +208,37 @@ export function createDefaultReprocessDeps(
       if (error) throw new Error(error.message);
     },
     savePdf: async (leadId, pdfBase64) => {
-      const { error } = await supabase
-        .from('free_analyses_leads')
-        .update({ pdf_base64: pdfBase64, status: 'processing' })
-        .eq('id', leadId);
-      if (error) throw new Error(error.message);
+      const storagePath = `${leadId}.pdf`;
+      const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+      let uploadSuccess = false;
+
+      if (supabase.storage) {
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('free-pdfs')
+            .upload(storagePath, pdfBuffer, {
+              contentType: 'application/pdf',
+              upsert: true,
+            });
+          if (!uploadError) uploadSuccess = true;
+        } catch {
+          uploadSuccess = false;
+        }
+      }
+
+      if (uploadSuccess) {
+        const { error } = await supabase
+          .from('free_analyses_leads')
+          .update({ pdf_path: storagePath, status: 'processing' })
+          .eq('id', leadId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from('free_analyses_leads')
+          .update({ pdf_base64: pdfBase64, status: 'processing' })
+          .eq('id', leadId);
+        if (error) throw new Error(error.message);
+      }
     },
     sendFreePdf: (leadId) => invokeSendFreePdf(supabase, leadId),
     markError: async (leadId, message) => {

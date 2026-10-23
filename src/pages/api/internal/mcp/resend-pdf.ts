@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const { data: lead, error: fetchError } = await supabase
     .from('free_analyses_leads')
-    .select('id, email, nome_completo, data_nascimento, status, pdf_base64, created_at')
+    .select('id, email, nome_completo, data_nascimento, status, pdf_base64, pdf_path, created_at')
     .eq('id', leadId)
     .maybeSingle();
 
@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  const typedLead = lead as FreeAnalysisLeadRow & { pdf_base64?: string | null };
+  const typedLead = lead as FreeAnalysisLeadRow & { pdf_base64?: string | null; pdf_path?: string | null };
   const emailMasked = maskEmail(typedLead.email);
 
   if (dryRun) {
@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
         status: 'dry_run',
         leadId,
         emailMasked,
-        hasPdf: Boolean(typedLead.pdf_base64),
+        hasPdf: Boolean(typedLead.pdf_path || typedLead.pdf_base64),
         action: 'send-free-pdf',
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -97,8 +97,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    // Se o PDF ainda não foi gerado, renderiza e salva
-    if (!typedLead.pdf_base64) {
+    // Se o PDF ainda não foi gerado, renderiza e salva no Storage (com fallback)
+    if (!typedLead.pdf_path && !typedLead.pdf_base64) {
       const dataPt = dbBirthDateToPtBr(typedLead.data_nascimento);
       const dataDb = typedLead.data_nascimento.slice(0, 10);
       const { record: analysis } = buildFreeLeadAnalysisRecord({
@@ -110,13 +110,31 @@ export const POST: APIRoute = async ({ request }) => {
       const firstName = typedLead.nome_completo.split(' ')[0] || typedLead.nome_completo;
       const generatedBase64 = await renderFreeLeadPdfBase64(analysis, firstName);
 
-      const { error: savePdfError } = await supabase
-        .from('free_analyses_leads')
-        .update({ pdf_base64: generatedBase64, status: 'processing' })
-        .eq('id', leadId);
+      const storagePath = `${leadId}.pdf`;
+      const pdfBuffer = Buffer.from(generatedBase64, 'base64');
+      const { error: uploadError } = await supabase.storage
+        .from('free-pdfs')
+        .upload(storagePath, pdfBuffer, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
 
-      if (savePdfError) {
-        throw new Error(`Falha ao salvar PDF: ${savePdfError.message}`);
+      if (!uploadError) {
+        const { error: savePdfError } = await supabase
+          .from('free_analyses_leads')
+          .update({ pdf_path: storagePath, status: 'processing' })
+          .eq('id', leadId);
+        if (savePdfError) {
+          throw new Error(`Falha ao salvar PDF path: ${savePdfError.message}`);
+        }
+      } else {
+        const { error: savePdfError } = await supabase
+          .from('free_analyses_leads')
+          .update({ pdf_base64: generatedBase64, status: 'processing' })
+          .eq('id', leadId);
+        if (savePdfError) {
+          throw new Error(`Falha ao salvar PDF base64 fallback: ${savePdfError.message}`);
+        }
       }
     }
 

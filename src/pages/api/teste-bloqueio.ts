@@ -88,10 +88,28 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           nome_completo.split(' ')[0],
         );
 
-        await supabase
-          .from('free_analyses_leads')
-          .update({ pdf_base64: pdfBase64 })
-          .eq('id', lead.id);
+        // DEV-211 (Fase 2): Gravar PDF no Supabase Storage (bucket free-pdfs) e registrar pdf_path
+        const storagePath = `${lead.id}.pdf`;
+        const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+        const { error: uploadError } = await supabase.storage
+          .from('free-pdfs')
+          .upload(storagePath, pdfBuffer, {
+            contentType: 'application/pdf',
+            upsert: true,
+          });
+
+        if (!uploadError) {
+          await supabase
+            .from('free_analyses_leads')
+            .update({ pdf_path: storagePath })
+            .eq('id', lead.id);
+        } else {
+          console.error('[teste-bloqueio] Falha ao enviar PDF para Storage, usando fallback pdf_base64:', uploadError.message);
+          await supabase
+            .from('free_analyses_leads')
+            .update({ pdf_base64: pdfBase64 })
+            .eq('id', lead.id);
+        }
 
         const signedDownloadPath = signDownloadPdfPath(lead.id);
 
