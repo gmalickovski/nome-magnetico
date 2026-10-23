@@ -10,7 +10,7 @@ const mockLead = {
   nome_completo: 'Carlos Santos',
   data_nascimento: '1985-11-20',
   status: 'complete',
-  pdf_base64: 'JVBERi0xLjQK...',
+  pdf_path: 'c0000000-0000-0000-0000-000000000001.pdf',
   created_at: '2026-10-21T12:00:00Z',
 };
 
