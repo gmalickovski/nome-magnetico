@@ -226,19 +226,15 @@ export function createDefaultReprocessDeps(
         }
       }
 
-      if (uploadSuccess) {
-        const { error } = await supabase
-          .from('free_analyses_leads')
-          .update({ pdf_path: storagePath, status: 'processing' })
-          .eq('id', leadId);
-        if (error) throw new Error(error.message);
-      } else {
-        const { error } = await supabase
-          .from('free_analyses_leads')
-          .update({ pdf_base64: pdfBase64, status: 'processing' })
-          .eq('id', leadId);
-        if (error) throw new Error(error.message);
+      if (!uploadSuccess) {
+        throw new Error('Falha ao enviar PDF para Storage (bucket free-pdfs)');
       }
+
+      const { error } = await supabase
+        .from('free_analyses_leads')
+        .update({ pdf_path: storagePath, status: 'processing' })
+        .eq('id', leadId);
+      if (error) throw new Error(error.message);
     },
     sendFreePdf: (leadId) => invokeSendFreePdf(supabase, leadId),
     markError: async (leadId, message) => {

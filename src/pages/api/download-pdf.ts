@@ -173,7 +173,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     // Buscar o lead pelo ID com colunas explícitas
     const { data: lead, error } = await supabase
       .from('free_analyses_leads')
-      .select('id, nome_completo, data_nascimento, pdf_base64, pdf_path, created_at')
+      .select('id, nome_completo, data_nascimento, pdf_path, created_at')
       .eq('id', id)
       .single();
 
@@ -197,14 +197,9 @@ export const GET: APIRoute = async ({ url, request }) => {
       }
     }
 
-    // Cutoff: data do deploy do novo layout de PDF gratuito
-    const cutoffDate = new Date('2026-06-10T18:40:00Z');
-    const recordDate = lead.created_at ? new Date(lead.created_at) : new Date();
-    const isOld = recordDate < cutoffDate;
-
     let pdfBuffer: Buffer | null = null;
 
-    // 1. Tentar ler do Supabase Storage se pdf_path estiver preenchido (Fase 2)
+    // 1. Ler do Supabase Storage quando pdf_path estiver preenchido
     if (lead.pdf_path) {
       const { data: storageData, error: downloadError } = await supabase.storage
         .from('free-pdfs')
@@ -213,22 +208,14 @@ export const GET: APIRoute = async ({ url, request }) => {
       if (!downloadError && storageData) {
         pdfBuffer = Buffer.from(await storageData.arrayBuffer());
       } else {
-        console.warn(`[download-pdf] Falha ao recuperar ${lead.pdf_path} do Storage, tentando fallback:`, downloadError?.message);
+        console.warn(
+          `[download-pdf] Falha ao recuperar ${lead.pdf_path} do Storage:`,
+          downloadError?.message,
+        );
       }
     }
 
-    // 2. Se não encontrou no Storage, verificar se possui pdf_base64 no banco
-    if (!pdfBuffer && lead.pdf_base64) {
-      if (isOld) {
-        // Opção B: registros anteriores ao novo layout são regenerados on-the-fly
-        // e entregues ao usuário SEM gravar no banco (evita Disk IO desnecessário)
-        pdfBuffer = await generateLeadPdfBuffer(lead);
-      } else {
-        pdfBuffer = Buffer.from(lead.pdf_base64, 'base64');
-      }
-    }
-
-    // 3. Se ainda não há PDF (ausente no registro): gerar e subir para o Storage
+    // 2. Se ainda não há PDF: gerar e subir para o Storage
     if (!pdfBuffer) {
       pdfBuffer = await generateLeadPdfBuffer(lead);
 

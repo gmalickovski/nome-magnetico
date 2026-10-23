@@ -47,6 +47,11 @@ mock.module('../../../../backend/db/supabase', {
           return { data: { success: true }, error: null };
         },
       },
+      storage: {
+        from: () => ({
+          upload: async () => ({ error: null }),
+        }),
+      },
     }),
   },
 });

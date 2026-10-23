@@ -98,18 +98,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             upsert: true,
           });
 
-        if (!uploadError) {
-          await supabase
-            .from('free_analyses_leads')
-            .update({ pdf_path: storagePath })
-            .eq('id', lead.id);
-        } else {
-          console.error('[teste-bloqueio] Falha ao enviar PDF para Storage, usando fallback pdf_base64:', uploadError.message);
-          await supabase
-            .from('free_analyses_leads')
-            .update({ pdf_base64: pdfBase64 })
-            .eq('id', lead.id);
+        if (uploadError) {
+          throw new Error(`Falha ao enviar PDF para Storage: ${uploadError.message}`);
         }
+
+        await supabase
+          .from('free_analyses_leads')
+          .update({ pdf_path: storagePath })
+          .eq('id', lead.id);
 
         const signedDownloadPath = signDownloadPdfPath(lead.id);
 

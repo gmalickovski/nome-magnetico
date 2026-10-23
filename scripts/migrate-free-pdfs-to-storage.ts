@@ -20,7 +20,8 @@
  *   --pause-ms <n>  Pausa entre itens em ms (padrão: 100)
  *
  * Regra de Segurança:
- *   NUNCA zera o campo pdf_base64 nesta fase. Apenas preenche pdf_path.
+ *   NUNCA zera pdf_base64 nesta fase (só preenche pdf_path).
+ *   Obsoleto após a migration 053 (DROP COLUMN pdf_base64). Não executar depois do drop.
  */
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
