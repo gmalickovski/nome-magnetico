@@ -1,30 +1,11 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../backend/db/supabase';
 import { notify } from '../../backend/notifications/notify';
-import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
+import { persistenciaScoreFields } from '../../backend/numerology/score';
 import {
-  calcularExpressao,
-  calcularDestino,
-  calcularMotivacao,
-  calcularImpressao,
-  calcularMissao,
-} from '../../backend/numerology/numbers';
-import {
-  detectarLicoesCarmicas,
-  detectarTendenciasOcultas,
-  mapearFrequencias,
-  calcularDebitosCarmicos,
-} from '../../backend/numerology/karmic';
-import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
-import {
-  avaliarNome,
-  calcularScoreV1SemOcorrenciasExtras,
-  persistenciaScoreFields,
-} from '../../backend/numerology/score';
-import { isScoreV3 } from '../../backend/numerology/score-version';
-import { renderToBuffer } from '@react-pdf/renderer';
-import React from 'react';
-import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
+  buildFreeLeadAnalysisRecord,
+  renderFreeLeadPdfBase64,
+} from '../../backend/public-free-analysis/generate-free-lead-pdf';
 import { getPublicBaseUrl } from '../../utils/public-url';
 import { toDbDate } from '../../backend/public-free-analysis/guards';
 import { recordPublicFreeAnalysisIpHit } from '../../backend/public-free-analysis/rate-limit';
@@ -89,83 +70,23 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           .update({ status: 'processing' })
           .eq('id', lead.id);
 
-        const todosTriangulos = calcularTodosTriangulos(nome_completo, data_nascimento);
-        const bloqueios = detectarBloqueios(todosTriangulos);
-        const expressao = calcularExpressao(nome_completo);
-        const destino = calcularDestino(data_nascimento);
-        const motivacao = calcularMotivacao(nome_completo);
-        const impressao = calcularImpressao(nome_completo);
-        const missao = calcularMissao(nome_completo, data_nascimento);
-        const licoesCarmicas = detectarLicoesCarmicas(nome_completo);
-        const tendenciasOcultas = detectarTendenciasOcultas(nome_completo);
-        const debitosCarmicos = calcularDebitosCarmicos(
-          data_nascimento,
-          destino,
-          motivacao,
-          expressao,
-        );
-        const frequencias = mapearFrequencias(nome_completo);
-        const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
-          bloqueios,
-          licoesCarmicas: licoesCarmicas.length,
-          tendenciasOcultas: tendenciasOcultas.length,
-          debitosCarmicos,
-          compatibilidade: avaliarCompatibilidade(expressao, destino),
+        const built = buildFreeLeadAnalysisRecord({
+          nomeCompleto: nome_completo,
+          dataNascimentoPt: data_nascimento,
+          dataNascimentoDb: toDbDate(data_nascimento),
+          createdAt: new Date().toISOString(),
         });
-        const avaliacaoV3 = avaliarNome(nome_completo, data_nascimento, { calcularPotencial: true });
-        const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
-        const scoreFields = persistenciaScoreFields({
+        const { record: analysisObj, scoreLegado, score } = built;
+        persistenciaScoreFields({
           scoreLegado,
           nomeParaV3: nome_completo,
           dataNascimento: data_nascimento,
         });
 
-        const analysisObj = {
-          nome_completo: nome_completo.trim(),
-          data_nascimento: toDbDate(data_nascimento),
-          numero_expressao: expressao,
-          numero_destino: destino,
-          numero_motivacao: motivacao,
-          numero_missao: missao,
-          numero_impressao: impressao,
-          numero_personalidade: impressao,
-          arcano_regente: todosTriangulos.vida.arcanoRegente,
-          bloqueios,
-          triangulo_vida: todosTriangulos.vida,
-          triangulo_pessoal: todosTriangulos.pessoal,
-          triangulo_social: todosTriangulos.social,
-          triangulo_destino: todosTriangulos.destino,
-          licoes_carmicas: licoesCarmicas,
-          tendencias_ocultas: tendenciasOcultas,
-          debitos_carmicos: debitosCarmicos,
-          frequencias_numeros: {
-            frequencias,
-            ranking: {
-              melhorNome: { nomeCompleto: nome_completo.trim() },
-              dataNascimento: toDbDate(data_nascimento),
-            },
-          },
-          analise_texto: null,
-          score,
-          score_version: avaliacaoV3.score_version,
-          score_v3: avaliacaoV3.score_v3,
-          nivel: avaliacaoV3.nivel.codigo,
-          potencial: avaliacaoV3.potencial,
-          score_detalhe: avaliacaoV3,
-          is_free: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          completed_at: new Date().toISOString(),
-        };
-
-        const pdfBuffer = await renderToBuffer(
-          React.createElement(NomeAtualPDF, {
-            analysis: analysisObj as any,
-            magneticNames: [],
-            userName: nome_completo.split(' ')[0],
-          }) as any,
+        const pdfBase64 = await renderFreeLeadPdfBase64(
+          analysisObj,
+          nome_completo.split(' ')[0],
         );
-        const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
         await supabase
           .from('free_analyses_leads')
