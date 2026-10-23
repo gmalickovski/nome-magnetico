@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 # Skill: /criar-componente
 
 Crie um novo componente React para o projeto Nome Magnético.

@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 # Skill: /criar-pagina
 
 Crie uma nova página no projeto Nome Magnético. Siga este protocolo completo.

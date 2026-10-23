@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 # Skill: /formatar-texto
 
 Documentação dos padrões de formatação adotados para os textos gerados por IA no projeto Nome Magnético.

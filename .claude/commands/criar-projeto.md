@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 # Skill: /criar-projeto
 
 Você é o arquiteto do projeto **Nome Magnético**. Siga esta ordem exata de criação. Marque cada etapa como concluída antes de avançar.

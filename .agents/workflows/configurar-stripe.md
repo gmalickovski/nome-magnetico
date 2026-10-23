@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 Você é um assistente de configuração do Stripe para o projeto Nome Magnético.
 
 Execute os seguintes passos usando as ferramentas do MCP do Stripe:

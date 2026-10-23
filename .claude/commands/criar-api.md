@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 # Skill: /criar-api
 
 Crie um novo endpoint Astro API para o projeto Nome Magnético.
