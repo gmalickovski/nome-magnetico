@@ -52,6 +52,35 @@ const sentry = getSentryRuntimeConfig();
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
 
+    <!-- Recarga resiliente de chunk desatualizado pós-deploy (DEV-209) -->
+    <script is:inline>
+      (function () {
+        function reloadOnceOnChunkError() {
+          try {
+            var k = 'nm-chunk-reload';
+            if (!sessionStorage.getItem(k)) {
+              sessionStorage.setItem(k, String(Date.now()));
+              location.reload();
+            }
+          } catch (e) {
+            // sessionStorage desativado ou inacessível; aborta para evitar loop
+          }
+        }
+
+        window.addEventListener('vite:preloadError', function (e) {
+          e.preventDefault();
+          reloadOnceOnChunkError();
+        });
+
+        window.addEventListener('unhandledrejection', function (e) {
+          var m = String((e.reason && (e.reason.message || e.reason)) || '');
+          if (/Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(m)) {
+            reloadOnceOnChunkError();
+          }
+        });
+      })();
+    </script>
+
     <!-- SEO Primário -->
     <title>{title} | Nome Magnético</title>
     <meta name="description" content={description} />

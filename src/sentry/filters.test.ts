@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { EMAIL_LINK_CHECKER_ERROR, isLocalDevEvent } from './filters';
+import { EMAIL_LINK_CHECKER_ERROR, PAGEAD_INT64_ERROR, PAGEAD_DENY_URLS, isLocalDevEvent } from './filters';
 import { sentryInitOptions } from './options';
 import { scrubSentryEvent } from './scrub';
 
@@ -55,6 +55,32 @@ describe('ignoreErrors', () => {
     assert.ok(patterns.includes(EMAIL_LINK_CHECKER_ERROR));
     assert.match('Object Not Found Matching Id: 2, MethodName: update, ParamCount: 4', EMAIL_LINK_CHECKER_ERROR);
     assert.equal(EMAIL_LINK_CHECKER_ERROR.test('Erro ao criar sessão de pagamento'), false);
+  });
+
+  it('ignora o erro int64 de scripts externos (Google Ads)', () => {
+    const patterns = init().ignoreErrors ?? [];
+    assert.ok(patterns.includes(PAGEAD_INT64_ERROR));
+    assert.match('int64', PAGEAD_INT64_ERROR);
+    assert.equal(PAGEAD_INT64_ERROR.test('int64 overflow'), false);
+  });
+});
+
+describe('denyUrls', () => {
+  it('bloqueia scripts do Google Ads e AdSense', () => {
+    const deny = (init().denyUrls ?? []) as RegExp[];
+    assert.ok(deny.length >= 3);
+    for (const pattern of PAGEAD_DENY_URLS) {
+      assert.ok(deny.includes(pattern));
+    }
+    const sampleUrls = [
+      'https://pagead2.googlesyndication.com/pagead/js/r20261015/r20190131/rum_fy2021.js',
+      'https://tpc.googlesyndication.com/sodar/sodar2.js',
+      'https://www.googletagservices.com/activeview/js/current/rx_lidar.js',
+    ];
+    for (const url of sampleUrls) {
+      assert.ok(deny.some((re) => re.test(url)), `Deveria bloquear ${url}`);
+    }
+    assert.equal(deny.some((re) => re.test('https://www.nomemagnetico.com.br/_astro/FAQSection.js')), false);
   });
 });
 
