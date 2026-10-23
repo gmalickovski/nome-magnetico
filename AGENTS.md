@@ -29,7 +29,7 @@ Validação mínima quando a mudança tocar TS/Astro/frontend/backend/build: `np
 
 - **Camadas:** React em `src/frontend/` nunca importa `src/backend/`. Só `fetch` para `/api/*`. Endpoints validam com Zod.
 - **Segurança:** sem service key Supabase no cliente; sem segredos commitados no código.
-- **Banco:** sem mutação de banco no front; sem migrations/schema sem pedido explícito do humano.
+- **Banco:** sem mutação de banco no front; sem migrations/schema sem pedido explícito do humano. Toda `CREATE TABLE public.*` (a partir de 30/10/2026) traz na mesma migration: `ENABLE ROW LEVEL SECURITY`, políticas, e GRANT explícito e mínimo por role (`anon`, `authenticated`, `service_role`) conforme o uso. Sem GRANT a tabela não aparece no Data API. Nunca `GRANT ALL ... TO anon`. Views e funções novas: GRANT também explícito. FKs sempre com índice e RLS usando `(select auth.uid())`.
 - **Acesso:** checar subscription ativa, usuário teste válido ou admin antes de processar análise.
 - **IA:** toda chamada passa pelo LoopGuard; config só em `src/backend/ai/config/` e `prompts/`.
 - **Numerologia:** sempre os 4 triângulos (`calcularTodosTriangulos`); copy “Tensão Vibracional”, não “incompatível”; sem radiestesia/pêndulo.

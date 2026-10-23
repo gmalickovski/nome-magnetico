@@ -106,6 +106,26 @@ O bot Suporte le a FAQ ativa e o status minimo de um contato por e-mail. O resto
 - Padrao para Simulaweb, Vibraweb e SaaS novos. Nao criar a FAQ desses produtos neste repositorio.
 - Detalhe e checklist: `docs/architecture/support-bot-faq-readonly.md`. Regra curta: `LINEAR.md`.
 
+## Banco de Dados & Migrations: GRANT explícito
+
+A partir de 30/10/2026 o Supabase exige `GRANT` explícito em tabelas novas do schema `public` para o PostgREST / Data API funcionar. Criar a tabela e ativar RLS sem conceder `GRANT` faz com que as consultas da API respondam erro 404/403 ou fiquem invisíveis.
+
+| Caso de Uso | Roles | Permissões | Exemplo de Política RLS |
+| --- | --- | --- | --- |
+| **Somente Servidor / Backend** | `service_role` | `SELECT, INSERT, UPDATE, DELETE` | Políticas de service_role ou bypass automático |
+| **Leitura Pública** | `anon, authenticated` | `SELECT` | `FOR SELECT USING (is_published = true)` |
+| **Dono Autenticado** | `authenticated` | `SELECT, INSERT, UPDATE` | `FOR ALL TO authenticated USING (user_id = (select auth.uid()))` |
+
+### Regras Obrigatórias para Migrations Novas:
+1. **RLS ativo:** `ALTER TABLE public.<tabela> ENABLE ROW LEVEL SECURITY;`.
+2. **GRANT explícito e mínimo:** Conceder apenas os verbos necessários para as roles pretendidas (`anon`, `authenticated`, `service_role`). Nunca usar `GRANT ALL ... TO anon`.
+3. **InitPlan RLS:** Expressões com auth devem sempre usar `(select auth.uid())` ou `(select auth.role())` para permitir que o otimizador do Postgres avalie uma única vez por query (initplan).
+4. **Índice em Foreign Keys:** Toda coluna que faz `REFERENCES` deve possuir `CREATE INDEX IF NOT EXISTS <tabela>_<coluna>_idx`.
+5. **Views e Funções:** Devem conter `GRANT SELECT` ou `GRANT EXECUTE` explícito para as roles autorizadas.
+6. **Modelo canônico:** Seguir o template em `supabase/migrations/_TEMPLATE.sql`.
+
+Referência oficial: [Supabase Database Roles Documentation](https://supabase.com/docs/guides/database/postgres/roles).
+
 ## Auth, Admin e HQ
 
 - `/app/*`: exige session e acesso ativo.
