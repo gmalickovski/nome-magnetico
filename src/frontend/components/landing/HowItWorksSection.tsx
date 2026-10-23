@@ -350,9 +350,13 @@ export function HowItWorksSection() {
                 <div ref={introRef} className="w-full text-center max-w-4xl mx-auto">
                   <LandingSectionIntro
                     label="Como funciona"
-                    title="Quatro Passos da Sua Nota Hoje até a Nova Assinatura"
+                    title={
+                      <>
+                        Quatro Passos<br />da Sua Nota Hoje até a Nova Assinatura
+                      </>
+                    }
                     description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-                    titleClassName="text-2xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold max-w-4xl mx-auto leading-[1.15] text-white text-balance"
+                    titleClassName="text-2xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold max-w-4xl mx-auto leading-[1.25] lg:leading-[1.26] text-white text-balance"
                     descriptionClassName="max-w-[58ch] mx-auto text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty text-gray-400"
                     className="text-center"
                     revealed={true}

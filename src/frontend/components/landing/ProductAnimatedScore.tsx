@@ -7,19 +7,19 @@ interface ScoreLevel {
 }
 
 function getScoreLevel(clamped: number): ScoreLevel {
-  if (clamped >= 90) {
-    return { bar: 'from-emerald-500 to-emerald-400', text: 'text-emerald-400', label: 'Excelente' };
+  if (clamped >= 85) {
+    return { bar: 'from-emerald-500 to-emerald-400', text: 'text-emerald-400', label: 'N5 · Harmonioso' };
   }
   if (clamped >= 70) {
-    return { bar: 'from-lime-500 to-lime-400', text: 'text-lime-400', label: 'Bom' };
+    return { bar: 'from-lime-500 to-lime-400', text: 'text-lime-400', label: 'N4 · Alinhado' };
   }
-  if (clamped >= 40) {
-    return { bar: 'from-yellow-500 to-yellow-400', text: 'text-yellow-400', label: 'Aceitável' };
+  if (clamped >= 50) {
+    return { bar: 'from-yellow-500 to-yellow-400', text: 'text-yellow-400', label: 'N3 · Funcional' };
   }
-  if (clamped >= 20) {
-    return { bar: 'from-orange-500 to-orange-400', text: 'text-orange-400', label: 'Não recomendado' };
+  if (clamped >= 30) {
+    return { bar: 'from-orange-500 to-orange-400', text: 'text-orange-400', label: 'N2 · Em Ajuste' };
   }
-  return { bar: 'from-red-600 to-red-500', text: 'text-red-500', label: 'Crítico' };
+  return { bar: 'from-red-600 to-red-500', text: 'text-red-500', label: 'N1 · Em Tensão' };
 }
 
 interface ProductAnimatedScoreProps {
@@ -110,7 +110,7 @@ export function ProductAnimatedScore({
           <span className={`${textSizes} font-inter font-normal text-gray-500 ml-0.5`}>/100</span>
         </span>
         <span
-          className={`${textSizes} font-medium ${shownLevel.text} text-right leading-tight w-[6.75rem] shrink-0`}
+          className={`${textSizes} font-medium ${shownLevel.text} text-right leading-tight shrink-0`}
         >
           {shownLevel.label}
         </span>

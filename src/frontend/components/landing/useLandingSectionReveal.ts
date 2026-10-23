@@ -33,13 +33,13 @@ export function useLandingSectionReveal(_threshold = 0.05) {
     const rect = el.getBoundingClientRect();
     const vh = window.innerHeight || 0;
 
-    // Se o elemento estiver a até 300px da viewport ou já visível, mantém imediatamente revelado
-    if (rect.top <= vh + 300 && rect.bottom >= -100) {
+    // Se o elemento já está visível na viewport (ex: Hero no topo), mantém revelado imediatamente
+    if (rect.top < vh && rect.bottom > 0) {
       setRevealed(true);
       return;
     }
 
-    // Se estiver bem abaixo do viewport, arma o observer com antecedência generosa (300px)
+    // Se estiver fora da viewport, inicializa como false para animar na rolagem
     setRevealed(false);
 
     const observer = new IntersectionObserver(
@@ -49,19 +49,13 @@ export function useLandingSectionReveal(_threshold = 0.05) {
           observer.disconnect();
         }
       },
-      { threshold: 0.01, rootMargin: '300px 0px 0px 0px' },
+      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' },
     );
 
     observer.observe(el);
 
-    // Failsafe timer reduzido para 500ms para garantir que o conteúdo nunca fique preso invisível
-    const timer = window.setTimeout(() => {
-      setRevealed(true);
-    }, 500);
-
     return () => {
       observer.disconnect();
-      window.clearTimeout(timer);
     };
   }, [reduceMotion]);
 
