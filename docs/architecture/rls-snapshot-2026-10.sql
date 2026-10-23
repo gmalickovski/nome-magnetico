@@ -1,0 +1,61 @@
+-- ==============================================================================
+-- RLS Snapshot — Schema public — 23/10/2026
+-- Projeto: Nome Magnético (bhxneaeuhybtucmbmpvg)
+-- Baseline para as migrations DEV-213 (049_rls_initplan.sql e 050_rls_consolidate_permissive.sql)
+-- ==============================================================================
+
+-- Metadata de pg_policies:
+-- access_code_uses | access_code_uses_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- access_codes | access_codes_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- ai_config | ai_config_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- ai_config | ai_config_select_service | PERMISSIVE | {public} | SELECT | qual: (is_active = true) | with_check: null
+-- ai_usage | ai_usage_service_all | PERMISSIVE | {public} | ALL | qual: (EXISTS (SELECT 1 FROM profiles p WHERE ((p.id = auth.uid()) AND (p.role = 'admin'::text)))) | with_check: null
+-- analyses | analyses_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- analyses | analyses_insert_own | PERMISSIVE | {public} | INSERT | qual: null | with_check: (auth.uid() = user_id)
+-- analyses | analyses_select_own | PERMISSIVE | {public} | SELECT | qual: (auth.uid() = user_id) | with_check: null
+-- analyses | analyses_update_own | PERMISSIVE | {public} | UPDATE | qual: (auth.uid() = user_id) | with_check: null
+-- analysis_feedback | admin_read_feedback | PERMISSIVE | {public} | SELECT | qual: (EXISTS (SELECT 1 FROM profiles WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text)))) | with_check: null
+-- analysis_feedback | insert_own_feedback | PERMISSIVE | {public} | INSERT | qual: null | with_check: ((auth.uid() = user_id) OR (user_id IS NULL))
+-- baby_name_inputs | baby_inputs_own | PERMISSIVE | {public} | ALL | qual: (auth.uid() = user_id) | with_check: null
+-- blog_posts | blog_posts public read | PERMISSIVE | {public} | SELECT | qual: (is_published = true) | with_check: null
+-- blog_posts | blog_public_read | PERMISSIVE | {public} | SELECT | qual: (is_published = true) | with_check: null
+-- blog_posts | blog_service_all | PERMISSIVE | {public} | ALL | qual: (auth.role() = 'service_role'::text) | with_check: null
+-- blog_reactions | blog_reactions_delete_own | PERMISSIVE | {public} | DELETE | qual: true | with_check: null
+-- blog_reactions | blog_reactions_insert_public | PERMISSIVE | {public} | INSERT | qual: null | with_check: true
+-- blog_reactions | blog_reactions_select_public | PERMISSIVE | {public} | SELECT | qual: true | with_check: null
+-- client_message_deliveries | client_message_deliveries_service_all | PERMISSIVE | {public} | ALL | qual: (auth.role() = 'service_role'::text) | with_check: (auth.role() = 'service_role'::text)
+-- client_message_templates | client_message_templates_service_all | PERMISSIVE | {public} | ALL | qual: (auth.role() = 'service_role'::text) | with_check: (auth.role() = 'service_role'::text)
+-- client_messages | client_messages_service_all | PERMISSIVE | {public} | ALL | qual: (auth.role() = 'service_role'::text) | with_check: (auth.role() = 'service_role'::text)
+-- company_name_inputs | company_inputs_own | PERMISSIVE | {public} | ALL | qual: (auth.uid() = user_id) | with_check: null
+-- faq_categories | faq_categories_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- faq_categories | faq_categories_public_select | PERMISSIVE | {public} | SELECT | qual: (is_active = true) | with_check: null
+-- faq_embeddings | faq_embeddings_auth_read | PERMISSIVE | {authenticated} | SELECT | qual: true | with_check: null
+-- faq_embeddings | faq_embeddings_service_write | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- faq_items | faq_items_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- faq_items | faq_items_public_select | PERMISSIVE | {public} | SELECT | qual: (is_active = true) | with_check: null
+-- free_analyses_leads | free_analyses_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- glossary_terms | glossary_public_read | PERMISSIVE | {public} | SELECT | qual: (is_published = true) | with_check: null
+-- glossary_terms | glossary_service_all | PERMISSIVE | {public} | ALL | qual: (auth.role() = 'service_role'::text) | with_check: null
+-- glossary_terms | glossary_terms public read | PERMISSIVE | {public} | SELECT | qual: (is_published = true) | with_check: null
+-- magnetic_names | magnetic_names_select_own | PERMISSIVE | {public} | SELECT | qual: (auth.uid() = user_id) | with_check: null
+-- magnetic_names | magnetic_names_service_insert | PERMISSIVE | {public} | INSERT | qual: null | with_check: true
+-- product_price_history | product_price_history_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- product_prices | product_prices_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- product_votes | product_votes_select_public | PERMISSIVE | {anon,authenticated} | SELECT | qual: true | with_check: null
+-- profiles | profiles_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- profiles | profiles_select_own | PERMISSIVE | {public} | SELECT | qual: (auth.uid() = id) | with_check: null
+-- profiles | profiles_update_own | PERMISSIVE | {public} | UPDATE | qual: (auth.uid() = id) | with_check: null
+-- promotions | promotions_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- public_analysis_rate_limits | public_analysis_rate_limits_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- social_name_inputs | social_inputs_own | PERMISSIVE | {public} | ALL | qual: (auth.uid() = user_id) | with_check: null
+-- subscriptions | subscriptions_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- subscriptions | subscriptions_select_own | PERMISSIVE | {public} | SELECT | qual: (auth.uid() = user_id) | with_check: null
+-- subscriptions | subscriptions_service_insert | PERMISSIVE | {public} | INSERT | qual: null | with_check: true
+-- support_contact_rate_limits | support_contact_rate_limits_service_all | PERMISSIVE | {service_role} | ALL | qual: true | with_check: true
+-- support_messages | messages_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- support_messages | messages_insert_ticket_owner | PERMISSIVE | {public} | INSERT | qual: null | with_check: ((auth.uid() = author_id) AND (EXISTS (SELECT 1 FROM support_tickets t WHERE ((t.id = support_messages.ticket_id) AND (t.user_id = auth.uid())))))
+-- support_messages | messages_select_ticket_owner | PERMISSIVE | {public} | SELECT | qual: (EXISTS (SELECT 1 FROM support_tickets t WHERE ((t.id = support_messages.ticket_id) AND (t.user_id = auth.uid())))) | with_check: null
+-- support_tickets | tickets_admin_all | PERMISSIVE | {public} | ALL | qual: is_admin() | with_check: null
+-- support_tickets | tickets_insert_own | PERMISSIVE | {public} | INSERT | qual: null | with_check: (auth.uid() = user_id)
+-- support_tickets | tickets_select_own | PERMISSIVE | {public} | SELECT | qual: (auth.uid() = user_id) | with_check: null
+-- trial_redemptions | service_role_only | PERMISSIVE | {public} | ALL | qual: (auth.role() = 'service_role'::text) | with_check: null
