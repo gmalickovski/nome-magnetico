@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  nm-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nm-mcp
+    restart: unless-stopped
+    # Rede interna do docker ou rede host
+    network_mode: "host"
+    environment:
+      - MCP_PORT=8765
+      - MCP_HOST=127.0.0.1
+      - APP_URL=http://127.0.0.1:4321
+      - INTERNAL_HMAC_SECRET=${INTERNAL_HMAC_SECRET}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - MCP_TOKENS_JSON=${MCP_TOKENS_JSON}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
