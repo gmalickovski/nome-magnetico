@@ -37,7 +37,7 @@ serve(async (req) => {
     // Buscar o lead e os dados do PDF
     const { data: lead, error: fetchError } = await supabase
       .from("free_analyses_leads")
-      .select("*")
+      .select("id, email, nome_completo, pdf_base64")
       .eq("id", leadId)
       .single();
 

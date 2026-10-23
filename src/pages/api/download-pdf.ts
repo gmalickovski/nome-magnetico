@@ -128,7 +128,8 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     let pdfBase64 = lead.pdf_base64;
 
-    if (isPdfMissing || isOld) {
+    // DEV-211: Só gera e regrava o PDF se ele estiver ausente no registro (evita update de 627 kB por download)
+    if (isPdfMissing) {
       // Regeneração de PDF sem logar o ID sensível em texto claro
       const birthDateStr = toBrazilliandate(lead.data_nascimento);
       const fullName = lead.nome_completo;
