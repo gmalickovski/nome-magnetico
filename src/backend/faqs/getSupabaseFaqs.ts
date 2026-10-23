@@ -1,6 +1,9 @@
 import { supabase } from '../db/supabase';
 import { marked } from 'marked';
 import type { FaqItemProps } from '../../frontend/components/landing/FAQSection';
+import { memoize } from '../cache/memo';
+
+const FAQ_TTL_MS = 10 * 60 * 1000; // 10 minutos em memória (DEV-212)
 
 // Configura marked para FAQ (sem sanitização extra — conteúdo nosso)
 marked.use({ gfm: true, breaks: false });
@@ -15,6 +18,8 @@ interface GetFaqsOptions {
 }
 
 export async function getSupabaseFaqs(opts: GetFaqsOptions = {}): Promise<FaqItemProps[]> {
+  const cacheKey = `faq:supabase:${opts.featuredOnly ? 'featured' : 'all'}`;
+  return memoize(cacheKey, FAQ_TTL_MS, async () => {
   let query = supabase
     .from('faq_items')
     .select('id, question, answer_markdown, order_index')
@@ -36,4 +41,5 @@ export async function getSupabaseFaqs(opts: GetFaqsOptions = {}): Promise<FaqIte
       answer: '',
       answer_html: marked.parse(item.answer_markdown ?? '') as string,
     }));
+  });
 }

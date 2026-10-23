@@ -2,6 +2,7 @@ import { supabase } from '../db/supabase';
 import { SELLABLE_PRODUCT_TYPES, type ProductType } from '../../shared/product-labels';
 import { recordAccessTrialUse, validateAccessTrial } from './prices';
 import { TRIAL_ALREADY_USED, TRIAL_INVALID, TRIAL_NOT_FOUND } from './promo-math';
+import { invalidateUserSubscriptionsCache } from '../cache/memo';
 
 const VALID_PRODUCTS = SELLABLE_PRODUCT_TYPES;
 
@@ -127,6 +128,8 @@ export async function redeemAccessTrial(params: {
       metadata: { source: kind === 'gift' ? 'gift_access_link' : 'access_code', code: trialCode },
     });
   }
+
+  invalidateUserSubscriptionsCache(params.userId);
 
   await supabase.from('trial_redemptions').insert({
     user_id: params.userId,

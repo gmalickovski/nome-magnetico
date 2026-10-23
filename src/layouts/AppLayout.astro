@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import { createUserClient } from '../backend/db/supabase';
+import { memoize } from '../backend/cache/memo';
 import AvatarMenu from '../frontend/components/app/AvatarMenu';
 import MobileNavBar from '../frontend/components/app/MobileNavBar.astro';
 import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
@@ -33,11 +34,14 @@ try {
       .select('role, nome, is_test, test_ends_at')
       .eq('id', user.id)
       .single(),
-    client
-      .from('subscriptions')
-      .select('product_type')
-      .eq('user_id', user.id)
-      .gt('ends_at', new Date().toISOString()),
+    memoize<{ data: { product_type: string }[] | null }>(`user_subs:${user.id}`, 60 * 1000, async () => {
+      const res = await client
+        .from('subscriptions')
+        .select('product_type')
+        .eq('user_id', user.id)
+        .gt('ends_at', new Date().toISOString());
+      return { data: (res.data ?? []) as { product_type: string }[] };
+    }),
     client
       .from('analyses')
       .select('id')
