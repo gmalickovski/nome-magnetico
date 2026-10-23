@@ -6,54 +6,70 @@ Projeto: `nome_magnetico` (`bhxneaeuhybtucmbmpvg`). **Não aplicar em produção
 
 - [ ] Backup / janela acordada
 - [ ] Revisar diff da `055_security_advisors_dev223.sql`
-- [ ] Rollback à mão: `docs/architecture/security-advisors-dev223-rollback.sql`
+- [ ] Rollback: `docs/architecture/security-advisors-dev223-rollback.sql`
 
-## Após aplicar (staging ou produção)
+## Após aplicar
 
-### Security Advisors (`get_advisors` → Security)
+### Security Advisors
 
-- [ ] Sem WARN de `public.is_admin()` exposto à REST (`authenticated` não deve ter RPC em `public`)
-- [ ] Sem WARN de extensão `vector` em `public` (deve estar em `extensions`)
-- [ ] Sem INFO de RLS sem policy em `access_lifecycle_sends`, `analise_leads`, `error_logs`
+- [ ] Sem WARN de `public.is_admin()` na REST
+- [ ] Extensão `vector` em `extensions` (se a 055 for aplicada integralmente)
+- [ ] Sem INFO de RLS sem policy nas 3 tabelas service-only
 
-### SQL de sanidade
+### SQL — `private.is_admin` e anon
 
 ```sql
--- is_admin só em private
-SELECT n.nspname, p.proname
-FROM pg_proc p
-JOIN pg_namespace n ON n.oid = p.pronamespace
-WHERE p.proname = 'is_admin';
+-- anon NÃO deve ter EXECUTE em is_admin (nem public nem private)
+SELECT routine_schema, routine_name, grantee
+FROM information_schema.routine_privileges
+WHERE routine_name = 'is_admin'
+ORDER BY routine_schema, grantee;
 
-SELECT grantee FROM information_schema.routine_privileges
-WHERE routine_schema = 'private' AND routine_name = 'is_admin';
-
--- vector em extensions
-SELECT e.extname, n.nspname
-FROM pg_extension e
-JOIN pg_namespace n ON e.extnamespace = n.oid
-WHERE e.extname = 'vector';
-
--- policies service_role
-SELECT c.relname, p.polname, p.polroles::regrole[]
+-- Policies de leitura anon sem is_admin
+SELECT c.relname, p.polname, p.polroles::regrole[], pg_get_expr(p.polqual, p.polrelid)
 FROM pg_policy p
 JOIN pg_class c ON c.oid = p.polrelid
-WHERE c.relname IN ('access_lifecycle_sends', 'analise_leads', 'error_logs');
+WHERE p.polname LIKE '%_select_anon'
+ORDER BY 1, 2;
 ```
 
-### App (smoke)
+### Teste REST como **anon** (publishable key, sem JWT)
 
-- [ ] Login / sessão em `/app`
-- [ ] Usuário admin: leitura de dados admin via app (políticas RLS com `private.is_admin()`)
-- [ ] Checkout Stripe (criação de sessão) sem erro
-- [ ] `POST /api/save-lead` grava em `analise_leads` (service_role)
-- [ ] Busca FAQ / embeddings (`match_faq_embeddings`) se usada no fluxo de suporte
+Deve retornar **200** com linhas (ou `[]`), **não** `42501 permission denied`:
+
+```bash
+ANON_KEY="<SUPABASE_ANON_KEY>"
+API="${SUPABASE_URL}/rest/v1"
+
+curl -s -o /dev/null -w "%{http_code}" \
+  "$API/faq_items?select=id&is_active=eq.true&limit=1" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY"
+
+curl -s -o /dev/null -w "%{http_code}" \
+  "$API/faq_categories?select=id&is_active=eq.true&limit=1" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY"
+
+curl -s -o /dev/null -w "%{http_code}" \
+  "$API/blog_posts?select=slug&is_published=eq.true&limit=1" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY"
+
+curl -s -o /dev/null -w "%{http_code}" \
+  "$API/glossary_terms?select=slug&is_published=eq.true&limit=1" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY"
+```
+
+Esperado: códigos `200` em todas.
+
+### Smoke autenticado / admin / checkout
+
+- [ ] Login `/app`
+- [ ] Admin vê conteúdo inativo/rascunho (policy `*_select_authenticated` + `private.is_admin()`)
+- [ ] Checkout Stripe OK
 
 ### Repositório
 
 - [ ] `npm test`
-- [ ] `npx astro check` e `npm run build` (se alterou TS — esta issue só DB/docs)
 
-## Senha vazada (HaveIBeenPwned)
+## Senha vazada (Auth)
 
-- [ ] Guilherme: ativar no painel Supabase Auth (fora do escopo desta migration)
+- [ ] Painel Supabase — Guilherme

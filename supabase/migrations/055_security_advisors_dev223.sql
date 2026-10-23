@@ -1,11 +1,11 @@
 -- Migration 055: Advisors de segurança restantes (DEV-223)
--- 1. is_admin() em schema private (fora da REST API) — policies continuam usando a função
--- 2. Extensão vector → schema extensions (Supabase advisor)
+-- 1. private.is_admin() — só policies TO authenticated/service_role (anon não precisa de EXECUTE)
+-- 2. Extensão vector → schema extensions
 -- 3. Policies explícitas service_role em tabelas com RLS sem policy
--- NÃO aplicar em produção sem OK do Guilherme. Rollback: docs/architecture/security-advisors-dev223-rollback.sql
+-- Rollback: docs/architecture/security-advisors-dev223-rollback.sql
 
 -- =============================================================================
--- 1. private.is_admin() (substitui public.is_admin nas políticas RLS)
+-- 1. private.is_admin()
 -- =============================================================================
 
 CREATE SCHEMA IF NOT EXISTS private;
@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION private.is_admin()
  RETURNS boolean
  LANGUAGE sql
  SECURITY DEFINER
- SET search_path TO 'public'
+ SET search_path TO 'public', pg_temp
 AS $function$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
@@ -29,80 +29,195 @@ $function$;
 REVOKE ALL ON FUNCTION private.is_admin() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION private.is_admin() TO authenticated, service_role;
 
--- Reescreve expressões das políticas que referenciam is_admin()
-DO $$
-DECLARE
-  pol record;
-  new_qual text;
-  new_check text;
-  cmd text;
-BEGIN
-  FOR pol IN
-    SELECT
-      n.nspname AS schemaname,
-      c.relname AS tablename,
-      p.polname AS policyname,
-      pg_get_expr(p.polqual, p.polrelid) AS qual,
-      pg_get_expr(p.polwithcheck, p.polrelid) AS with_check
-    FROM pg_policy p
-    JOIN pg_class c ON c.oid = p.polrelid
-    JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = 'public'
-      AND (
-        pg_get_expr(p.polqual, p.polrelid) LIKE '%is_admin()%'
-        OR pg_get_expr(p.polwithcheck, p.polrelid) LIKE '%is_admin()%'
+-- =============================================================================
+-- 1b. RLS — recria policies da 050 com private.is_admin() e leitura anon sem is_admin
+-- =============================================================================
+
+-- AI_CONFIG
+DROP POLICY IF EXISTS "ai_config_read" ON public.ai_config;
+DROP POLICY IF EXISTS "ai_config_select_anon" ON public.ai_config;
+DROP POLICY IF EXISTS "ai_config_select_authenticated" ON public.ai_config;
+
+CREATE POLICY "ai_config_select_anon" ON public.ai_config
+  FOR SELECT TO anon
+  USING (is_active = true);
+
+CREATE POLICY "ai_config_select_authenticated" ON public.ai_config
+  FOR SELECT TO authenticated
+  USING (is_active = true OR private.is_admin());
+
+ALTER POLICY "ai_config_admin_insert" ON public.ai_config
+  WITH CHECK (private.is_admin());
+ALTER POLICY "ai_config_admin_update" ON public.ai_config
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "ai_config_admin_delete" ON public.ai_config
+  USING (private.is_admin());
+
+-- ANALYSES (só authenticated — sem anon)
+ALTER POLICY "analyses_select" ON public.analyses
+  USING (private.is_admin() OR (SELECT auth.uid()) = user_id);
+ALTER POLICY "analyses_insert" ON public.analyses
+  WITH CHECK (private.is_admin() OR (SELECT auth.uid()) = user_id);
+ALTER POLICY "analyses_update" ON public.analyses
+  USING (private.is_admin() OR (SELECT auth.uid()) = user_id)
+  WITH CHECK (private.is_admin() OR (SELECT auth.uid()) = user_id);
+ALTER POLICY "analyses_delete_admin" ON public.analyses
+  USING (private.is_admin());
+
+-- BLOG_POSTS
+DROP POLICY IF EXISTS "blog_posts_select" ON public.blog_posts;
+DROP POLICY IF EXISTS "blog_posts_select_anon" ON public.blog_posts;
+DROP POLICY IF EXISTS "blog_posts_select_authenticated" ON public.blog_posts;
+
+CREATE POLICY "blog_posts_select_anon" ON public.blog_posts
+  FOR SELECT TO anon
+  USING (is_published = true);
+
+CREATE POLICY "blog_posts_select_authenticated" ON public.blog_posts
+  FOR SELECT TO authenticated
+  USING (is_published = true OR private.is_admin());
+
+ALTER POLICY "blog_posts_admin_insert" ON public.blog_posts
+  WITH CHECK (private.is_admin());
+ALTER POLICY "blog_posts_admin_update" ON public.blog_posts
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "blog_posts_admin_delete" ON public.blog_posts
+  USING (private.is_admin());
+
+-- FAQ_CATEGORIES
+DROP POLICY IF EXISTS "faq_categories_select" ON public.faq_categories;
+DROP POLICY IF EXISTS "faq_categories_select_anon" ON public.faq_categories;
+DROP POLICY IF EXISTS "faq_categories_select_authenticated" ON public.faq_categories;
+
+CREATE POLICY "faq_categories_select_anon" ON public.faq_categories
+  FOR SELECT TO anon
+  USING (is_active = true);
+
+CREATE POLICY "faq_categories_select_authenticated" ON public.faq_categories
+  FOR SELECT TO authenticated
+  USING (is_active = true OR private.is_admin());
+
+ALTER POLICY "faq_categories_admin_insert" ON public.faq_categories
+  WITH CHECK (private.is_admin());
+ALTER POLICY "faq_categories_admin_update" ON public.faq_categories
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "faq_categories_admin_delete" ON public.faq_categories
+  USING (private.is_admin());
+
+-- FAQ_ITEMS
+DROP POLICY IF EXISTS "faq_items_select" ON public.faq_items;
+DROP POLICY IF EXISTS "faq_items_select_anon" ON public.faq_items;
+DROP POLICY IF EXISTS "faq_items_select_authenticated" ON public.faq_items;
+
+CREATE POLICY "faq_items_select_anon" ON public.faq_items
+  FOR SELECT TO anon
+  USING (is_active = true);
+
+CREATE POLICY "faq_items_select_authenticated" ON public.faq_items
+  FOR SELECT TO authenticated
+  USING (is_active = true OR private.is_admin());
+
+ALTER POLICY "faq_items_admin_insert" ON public.faq_items
+  WITH CHECK (private.is_admin());
+ALTER POLICY "faq_items_admin_update" ON public.faq_items
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "faq_items_admin_delete" ON public.faq_items
+  USING (private.is_admin());
+
+-- GLOSSARY_TERMS
+DROP POLICY IF EXISTS "glossary_terms_select" ON public.glossary_terms;
+DROP POLICY IF EXISTS "glossary_terms_select_anon" ON public.glossary_terms;
+DROP POLICY IF EXISTS "glossary_terms_select_authenticated" ON public.glossary_terms;
+
+CREATE POLICY "glossary_terms_select_anon" ON public.glossary_terms
+  FOR SELECT TO anon
+  USING (is_published = true);
+
+CREATE POLICY "glossary_terms_select_authenticated" ON public.glossary_terms
+  FOR SELECT TO authenticated
+  USING (is_published = true OR private.is_admin());
+
+ALTER POLICY "glossary_terms_admin_insert" ON public.glossary_terms
+  WITH CHECK (private.is_admin());
+ALTER POLICY "glossary_terms_admin_update" ON public.glossary_terms
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "glossary_terms_admin_delete" ON public.glossary_terms
+  USING (private.is_admin());
+
+-- PROFILES
+ALTER POLICY "profiles_select" ON public.profiles
+  USING (private.is_admin() OR (SELECT auth.uid()) = id);
+ALTER POLICY "profiles_update" ON public.profiles
+  USING (private.is_admin() OR (SELECT auth.uid()) = id)
+  WITH CHECK (private.is_admin() OR (SELECT auth.uid()) = id);
+ALTER POLICY "profiles_admin_insert" ON public.profiles
+  WITH CHECK (private.is_admin());
+ALTER POLICY "profiles_admin_delete" ON public.profiles
+  USING (private.is_admin());
+
+-- SUBSCRIPTIONS
+ALTER POLICY "subscriptions_select" ON public.subscriptions
+  USING (private.is_admin() OR (SELECT auth.uid()) = user_id);
+ALTER POLICY "subscriptions_admin_insert" ON public.subscriptions
+  WITH CHECK (private.is_admin());
+ALTER POLICY "subscriptions_admin_update" ON public.subscriptions
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "subscriptions_admin_delete" ON public.subscriptions
+  USING (private.is_admin());
+
+-- SUPPORT_MESSAGES
+ALTER POLICY "messages_select" ON public.support_messages
+  USING (
+    private.is_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.support_tickets t
+      WHERE t.id = support_messages.ticket_id AND t.user_id = (SELECT auth.uid())
+    )
+  );
+ALTER POLICY "messages_insert" ON public.support_messages
+  WITH CHECK (
+    private.is_admin()
+    OR (
+      ((SELECT auth.uid()) = author_id)
+      AND EXISTS (
+        SELECT 1 FROM public.support_tickets t
+        WHERE t.id = support_messages.ticket_id AND t.user_id = (SELECT auth.uid())
       )
-  LOOP
-    new_qual := pol.qual;
-    new_check := pol.with_check;
+    )
+  );
+ALTER POLICY "messages_admin_update" ON public.support_messages
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "messages_admin_delete" ON public.support_messages
+  USING (private.is_admin());
 
-    IF new_qual IS NOT NULL THEN
-      new_qual := replace(new_qual, 'private.is_admin()', '<<<PRIVATE_IS_ADMIN>>>');
-      new_qual := replace(new_qual, 'public.is_admin()', 'private.is_admin()');
-      new_qual := replace(new_qual, 'is_admin()', 'private.is_admin()');
-      new_qual := replace(new_qual, '<<<PRIVATE_IS_ADMIN>>>', 'private.is_admin()');
-    END IF;
-
-    IF new_check IS NOT NULL THEN
-      new_check := replace(new_check, 'private.is_admin()', '<<<PRIVATE_IS_ADMIN>>>');
-      new_check := replace(new_check, 'public.is_admin()', 'private.is_admin()');
-      new_check := replace(new_check, 'is_admin()', 'private.is_admin()');
-      new_check := replace(new_check, '<<<PRIVATE_IS_ADMIN>>>', 'private.is_admin()');
-    END IF;
-
-    IF new_qual IS NOT NULL AND new_check IS NOT NULL THEN
-      cmd := format(
-        'ALTER POLICY %I ON %I.%I USING (%s) WITH CHECK (%s)',
-        pol.policyname, pol.schemaname, pol.tablename, new_qual, new_check
-      );
-    ELSIF new_qual IS NOT NULL THEN
-      cmd := format(
-        'ALTER POLICY %I ON %I.%I USING (%s)',
-        pol.policyname, pol.schemaname, pol.tablename, new_qual
-      );
-    ELSIF new_check IS NOT NULL THEN
-      cmd := format(
-        'ALTER POLICY %I ON %I.%I WITH CHECK (%s)',
-        pol.policyname, pol.schemaname, pol.tablename, new_check
-      );
-    ELSE
-      CONTINUE;
-    END IF;
-
-    EXECUTE cmd;
-  END LOOP;
-END $$;
+-- SUPPORT_TICKETS
+ALTER POLICY "tickets_select" ON public.support_tickets
+  USING (private.is_admin() OR (SELECT auth.uid()) = user_id);
+ALTER POLICY "tickets_insert" ON public.support_tickets
+  WITH CHECK (private.is_admin() OR (SELECT auth.uid()) = user_id);
+ALTER POLICY "tickets_admin_update" ON public.support_tickets
+  USING (private.is_admin())
+  WITH CHECK (private.is_admin());
+ALTER POLICY "tickets_admin_delete" ON public.support_tickets
+  USING (private.is_admin());
 
 DROP FUNCTION IF EXISTS public.is_admin();
 
 -- =============================================================================
--- 2. pgvector no schema extensions (coluna faq_embeddings.embedding + índice HNSW)
+-- 2. pgvector no schema extensions
 -- =============================================================================
 
 ALTER EXTENSION vector SET SCHEMA extensions;
 
 -- =============================================================================
--- 3. RLS com policy explícita para service_role (backend / BYPASSRLS)
+-- 3. RLS com policy explícita para service_role
 -- =============================================================================
 
 DO $$
