@@ -8,6 +8,12 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
 /** Robô que abre o link de verificação de e-mail e procura um id no DOM. */
 export const EMAIL_LINK_CHECKER_ERROR = /Object Not Found Matching Id/;
 
+/** Erro de terceiros do Google Ads em rum_fy2021.js (NOME-MAGNETICO-A) */
+export const PAGEAD_INT64_ERROR = /^int64$/;
+
+/** Domínios e paths de scripts de anúncios externos (Google Ads / AdSense) */
+export const PAGEAD_DENY_URLS = [/\/pagead\//, /googlesyndication\.com/, /googletagservices\.com/];
+
 export interface SentryEventLike {
   request?: {
     url?: string;
