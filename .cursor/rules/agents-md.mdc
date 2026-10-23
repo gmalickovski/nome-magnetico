@@ -1,0 +1,12 @@
+---
+description: Ponto de entrada único para agentes IA — leia AGENTS.md na raiz
+alwaysApply: true
+---
+
+# Agentes IA (Cursor / Antigravity)
+
+Antes de alterar código ou docs neste repositório, leia e siga **[`AGENTS.md`](../../AGENTS.md)** na raiz.
+
+- Arquitetura detalhada: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
+- Referência extendida: [`CLAUDE.md`](../../CLAUDE.md)
+- Workflow Linear: [`LINEAR.md`](../../LINEAR.md)

@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **Agentes:** leia primeiro [`AGENTS.md`](./AGENTS.md) na raiz. Este arquivo continua sendo a referência canônica completa do projeto.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 # Nome Magnético — Contexto do Projeto para Agentes IA

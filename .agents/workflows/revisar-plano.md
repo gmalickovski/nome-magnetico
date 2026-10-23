@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../AGENTS.md) na raiz do repositório.
+
+
 ---
 description: skill/workflow revisar plano - workflow para verificar progresso do PLANO-REVISAO.md
 ---

@@ -1,3 +1,6 @@
+> **Agentes:** leia primeiro [`AGENTS.md`](../../../AGENTS.md) na raiz do repositório.
+
+
 ---
 name: slate
 description: >

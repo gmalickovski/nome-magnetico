@@ -1,5 +1,7 @@
 # Nome Magnético — Contexto do Projeto para Agentes IA (Gemini / Antigravity)
 
+> **Agentes:** leia primeiro [`AGENTS.md`](./AGENTS.md) na raiz.
+
 ## Identidade
 
 **Produto:** Nome Magnético
