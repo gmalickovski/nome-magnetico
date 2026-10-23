@@ -37,7 +37,7 @@ serve(async (req) => {
     // Buscar o lead e os dados do PDF
     const { data: lead, error: fetchError } = await supabase
       .from("free_analyses_leads")
-      .select("id, email, nome_completo, pdf_base64")
+      .select("id, email, nome_completo, pdf_base64, pdf_path")
       .eq("id", leadId)
       .single();
 
@@ -45,7 +45,18 @@ serve(async (req) => {
       throw new Error(`Lead não encontrado: ${fetchError?.message}`);
     }
 
-    if (!lead.pdf_base64) {
+    let pdfBytes: Uint8Array;
+    if (lead.pdf_path) {
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from("free-pdfs")
+        .download(lead.pdf_path);
+      if (storageError || !storageData) {
+        throw new Error(`Falha ao baixar PDF do storage: ${storageError?.message}`);
+      }
+      pdfBytes = new Uint8Array(await storageData.arrayBuffer());
+    } else if (lead.pdf_base64) {
+      pdfBytes = decode(lead.pdf_base64);
+    } else {
       throw new Error("Arquivo PDF ainda não foi gerado ou está ausente no registro");
     }
 
@@ -77,8 +88,6 @@ serve(async (req) => {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    // Decodificar PDF base64 para bytes
-    const pdfBytes = decode(lead.pdf_base64);
 
     // Template HTML baseado nas cores "The Celestial Alchemist"
     const htmlBody = `

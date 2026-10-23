@@ -74,6 +74,83 @@ function errorResponse(status: number, message: string, acceptsJson: boolean) {
   });
 }
 
+async function generateLeadPdfBuffer(lead: {
+  nome_completo: string;
+  data_nascimento: string;
+  created_at: string | null;
+}): Promise<Buffer> {
+  const birthDateStr = toBrazilliandate(lead.data_nascimento);
+  const fullName = lead.nome_completo;
+
+  const todosTriangulos = calcularTodosTriangulos(fullName, birthDateStr);
+  const bloqueios = detectarBloqueios(todosTriangulos);
+  const expressao = calcularExpressao(fullName);
+  const destino = calcularDestino(birthDateStr);
+  const motivacao = calcularMotivacao(fullName);
+  const impressao = calcularImpressao(fullName);
+  const missao = calcularMissao(fullName, birthDateStr);
+  const licoesCarmicas = detectarLicoesCarmicas(fullName);
+  const tendenciasOcultas = detectarTendenciasOcultas(fullName);
+  const debitosCarmicos = calcularDebitosCarmicos(birthDateStr, destino, motivacao, expressao);
+  const frequencias = mapearFrequencias(fullName);
+  const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
+    bloqueios,
+    licoesCarmicas: licoesCarmicas.length,
+    tendenciasOcultas: tendenciasOcultas.length,
+    debitosCarmicos,
+    compatibilidade: avaliarCompatibilidade(expressao, destino),
+  });
+  const avaliacaoV3 = avaliarNome(fullName, birthDateStr, { calcularPotencial: true });
+  const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
+
+  const analysisObj = {
+    nome_completo: fullName.trim(),
+    data_nascimento: lead.data_nascimento,
+    numero_expressao: expressao,
+    numero_destino: destino,
+    numero_motivacao: motivacao,
+    numero_missao: missao,
+    numero_impressao: impressao,
+    numero_personalidade: impressao,
+    arcano_regente: todosTriangulos.vida.arcanoRegente,
+    bloqueios,
+    triangulo_vida: todosTriangulos.vida,
+    triangulo_pessoal: todosTriangulos.pessoal,
+    triangulo_social: todosTriangulos.social,
+    triangulo_destino: todosTriangulos.destino,
+    licoes_carmicas: licoesCarmicas,
+    tendencias_ocultas: tendenciasOcultas,
+    debitos_carmicos: debitosCarmicos,
+    frequencias_numeros: {
+      frequencias,
+      ranking: {
+        melhorNome: { nomeCompleto: fullName.trim() },
+        dataNascimento: lead.data_nascimento,
+      },
+    },
+    analise_texto: null,
+    score,
+    score_version: avaliacaoV3.score_version,
+    score_v3: avaliacaoV3.score_v3,
+    nivel: avaliacaoV3.nivel.codigo,
+    potencial: avaliacaoV3.potencial,
+    score_detalhe: avaliacaoV3,
+    is_free: true,
+    created_at: lead.created_at,
+    updated_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+  };
+
+  const buffer = await renderToBuffer(
+    React.createElement(NomeAtualPDF, {
+      analysis: analysisObj as any,
+      magneticNames: [],
+      userName: fullName.split(' ')[0],
+    }) as any
+  );
+  return Buffer.from(buffer);
+}
+
 export const GET: APIRoute = async ({ url, request }) => {
   const id = url.searchParams.get('id');
   const exp = url.searchParams.get('exp');
@@ -93,10 +170,10 @@ export const GET: APIRoute = async ({ url, request }) => {
   }
 
   try {
-    // Buscar o lead pelo ID
+    // Buscar o lead pelo ID com colunas explícitas
     const { data: lead, error } = await supabase
       .from('free_analyses_leads')
-      .select('id, nome_completo, data_nascimento, pdf_base64, created_at')
+      .select('id, nome_completo, data_nascimento, pdf_base64, pdf_path, created_at')
       .eq('id', id)
       .single();
 
@@ -124,101 +201,58 @@ export const GET: APIRoute = async ({ url, request }) => {
     const cutoffDate = new Date('2026-06-10T18:40:00Z');
     const recordDate = lead.created_at ? new Date(lead.created_at) : new Date();
     const isOld = recordDate < cutoffDate;
-    const isPdfMissing = !lead.pdf_base64;
 
-    let pdfBase64 = lead.pdf_base64;
+    let pdfBuffer: Buffer | null = null;
 
-    // DEV-211: Só gera e regrava o PDF se ele estiver ausente no registro (evita update de 627 kB por download)
-    if (isPdfMissing) {
-      // Regeneração de PDF sem logar o ID sensível em texto claro
-      const birthDateStr = toBrazilliandate(lead.data_nascimento);
-      const fullName = lead.nome_completo;
+    // 1. Tentar ler do Supabase Storage se pdf_path estiver preenchido (Fase 2)
+    if (lead.pdf_path) {
+      const { data: storageData, error: downloadError } = await supabase.storage
+        .from('free-pdfs')
+        .download(lead.pdf_path);
 
-      // Cálculos numerológicos locais
-      const todosTriangulos = calcularTodosTriangulos(fullName, birthDateStr);
-      const bloqueios = detectarBloqueios(todosTriangulos);
-      const expressao = calcularExpressao(fullName);
-      const destino = calcularDestino(birthDateStr);
-      const motivacao = calcularMotivacao(fullName);
-      const impressao = calcularImpressao(fullName);
-      const missao = calcularMissao(fullName, birthDateStr);
-      const licoesCarmicas = detectarLicoesCarmicas(fullName);
-      const tendenciasOcultas = detectarTendenciasOcultas(fullName);
-      const debitosCarmicos = calcularDebitosCarmicos(birthDateStr, destino, motivacao, expressao);
-      const frequencias = mapearFrequencias(fullName);
-      const scoreLegado = calcularScoreV1SemOcorrenciasExtras({
-        bloqueios,
-        licoesCarmicas: licoesCarmicas.length,
-        tendenciasOcultas: tendenciasOcultas.length,
-        debitosCarmicos,
-        compatibilidade: avaliarCompatibilidade(expressao, destino),
-      });
-      const avaliacaoV3 = avaliarNome(fullName, birthDateStr, { calcularPotencial: true });
-      const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
-
-      // Montar objeto de análise compatível com NomeAtualPDF
-      const analysisObj = {
-        nome_completo: fullName.trim(),
-        data_nascimento: lead.data_nascimento,
-        numero_expressao: expressao,
-        numero_destino: destino,
-        numero_motivacao: motivacao,
-        numero_missao: missao,
-        numero_impressao: impressao,
-        numero_personalidade: impressao,
-        arcano_regente: todosTriangulos.vida.arcanoRegente,
-        bloqueios,
-        triangulo_vida: todosTriangulos.vida,
-        triangulo_pessoal: todosTriangulos.pessoal,
-        triangulo_social: todosTriangulos.social,
-        triangulo_destino: todosTriangulos.destino,
-        licoes_carmicas: licoesCarmicas,
-        tendencias_ocultas: tendenciasOcultas,
-        debitos_carmicos: debitosCarmicos,
-        frequencias_numeros: {
-          frequencias,
-          ranking: {
-            melhorNome: { nomeCompleto: fullName.trim() },
-            dataNascimento: lead.data_nascimento,
-          },
-        },
-        analise_texto: null,
-        score,
-        score_version: avaliacaoV3.score_version,
-        score_v3: avaliacaoV3.score_v3,
-        nivel: avaliacaoV3.nivel.codigo,
-        potencial: avaliacaoV3.potencial,
-        score_detalhe: avaliacaoV3,
-        is_free: true,
-        created_at: lead.created_at,
-        updated_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-      };
-
-      // Renderizar o PDF do relatório
-      const pdfBuffer = await renderToBuffer(
-        React.createElement(NomeAtualPDF, {
-          analysis: analysisObj as any,
-          magneticNames: [],
-          userName: fullName.split(' ')[0],
-        }) as any
-      );
-      
-      pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
-
-      // Atualizar o registro com o PDF gerado no Supabase para futuros downloads rápidos
-      await supabase
-        .from('free_analyses_leads')
-        .update({
-          pdf_base64: pdfBase64,
-          status: 'complete',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', id);
+      if (!downloadError && storageData) {
+        pdfBuffer = Buffer.from(await storageData.arrayBuffer());
+      } else {
+        console.warn(`[download-pdf] Falha ao recuperar ${lead.pdf_path} do Storage, tentando fallback:`, downloadError?.message);
+      }
     }
 
-    // Decodificar base64 para buffer
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+    // 2. Se não encontrou no Storage, verificar se possui pdf_base64 no banco
+    if (!pdfBuffer && lead.pdf_base64) {
+      if (isOld) {
+        // Opção B: registros anteriores ao novo layout são regenerados on-the-fly
+        // e entregues ao usuário SEM gravar no banco (evita Disk IO desnecessário)
+        pdfBuffer = await generateLeadPdfBuffer(lead);
+      } else {
+        pdfBuffer = Buffer.from(lead.pdf_base64, 'base64');
+      }
+    }
+
+    // 3. Se ainda não há PDF (ausente no registro): gerar e subir para o Storage
+    if (!pdfBuffer) {
+      pdfBuffer = await generateLeadPdfBuffer(lead);
+
+      const storagePath = `${id}.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from('free-pdfs')
+        .upload(storagePath, pdfBuffer, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
+
+      if (!uploadError) {
+        await supabase
+          .from('free_analyses_leads')
+          .update({
+            pdf_path: storagePath,
+            status: 'complete',
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', id);
+      } else {
+        console.error('[download-pdf] Erro ao subir PDF para Storage:', uploadError.message);
+      }
+    }
 
     // Nome do arquivo limpo e amigável
     const slugName = lead.nome_completo
@@ -229,7 +263,7 @@ export const GET: APIRoute = async ({ url, request }) => {
       .replace(/^-|-$/g, '');
     const filename = `analise-gratuita-${slugName}.pdf`;
 
-    return new Response(pdfBuffer, {
+    return new Response(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
