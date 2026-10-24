@@ -1,5 +1,11 @@
 import type { BrowserOptions } from '@sentry/astro';
-import { EMAIL_LINK_CHECKER_ERROR, PAGEAD_INT64_ERROR, PAGEAD_DENY_URLS, isLocalDevEvent } from './filters';
+import {
+  EMAIL_LINK_CHECKER_ERROR,
+  PAGEAD_INT64_ERROR,
+  PAGEAD_DENY_URLS,
+  STORAGE_ACCESS_DENIED_ERROR,
+  isLocalDevEvent,
+} from './filters';
 import { scrubSentryEvent } from './scrub';
 
 /**
@@ -20,7 +26,7 @@ export function sentryInitOptions(input: {
     release: input.release,
     tracesSampleRate: 0,
     denyUrls: PAGEAD_DENY_URLS,
-    ignoreErrors: [EMAIL_LINK_CHECKER_ERROR, PAGEAD_INT64_ERROR],
+    ignoreErrors: [EMAIL_LINK_CHECKER_ERROR, PAGEAD_INT64_ERROR, STORAGE_ACCESS_DENIED_ERROR],
     dataCollection: {
       userInfo: false,
       cookies: false,

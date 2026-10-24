@@ -10,9 +10,23 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
   var NM_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
   var NM_UTM_STORAGE_KEY = 'nm-utm-first-touch';
 
+  function nmStorageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function nmStorageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {}
+  }
+
   function nmReadStoredUtm() {
     try {
-      var raw = localStorage.getItem(NM_UTM_STORAGE_KEY);
+      var raw = nmStorageGet(NM_UTM_STORAGE_KEY);
       if (!raw) return null;
       var parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') return null;
@@ -24,7 +38,7 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
 
   function nmPersistUtmFirstTouch() {
     try {
-      if (localStorage.getItem(NM_UTM_STORAGE_KEY)) return;
+      if (nmStorageGet(NM_UTM_STORAGE_KEY)) return;
       var params = new URLSearchParams(window.location.search);
       var stored = {};
       var found = false;
@@ -35,7 +49,7 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
         stored[key] = value;
         found = true;
       }
-      if (found) localStorage.setItem(NM_UTM_STORAGE_KEY, JSON.stringify(stored));
+      if (found) nmStorageSet(NM_UTM_STORAGE_KEY, JSON.stringify(stored));
     } catch (e) {}
   }
 
@@ -101,7 +115,7 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
   function loadPostHog() {
     try {
       if (!posthogKey) return;
-      if (localStorage.getItem('nm-cookie-consent') !== 'all') return;
+      if (nmStorageGet('nm-cookie-consent') !== 'all') return;
       if (window.__nm_posthog_ready) return;
       window.__nm_posthog_ready = true;
 
@@ -140,7 +154,7 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
 
     function isAdmin() {
       try {
-        return localStorage.getItem('nm-user-role') === 'admin';
+        return nmStorageGet('nm-user-role') === 'admin';
       } catch (e) {
         return false;
       }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { readLocalStorage, writeLocalStorage } from '../../../utils/browser-storage';
 import { Button } from './Button';
 
 const CONSENT_KEY = 'nm-cookie-consent';
@@ -7,12 +8,12 @@ export function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(CONSENT_KEY);
+    const saved = readLocalStorage(CONSENT_KEY);
     if (!saved) setVisible(true);
   }, []);
 
   function accept(type: 'all' | 'essential') {
-    localStorage.setItem(CONSENT_KEY, type);
+    writeLocalStorage(CONSENT_KEY, type);
     setVisible(false);
 
     if (type === 'all') {

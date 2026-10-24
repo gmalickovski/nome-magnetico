@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { DateInput } from '../ui/DateInput';
+import { readSessionStorage, writeSessionStorage } from '../../../utils/browser-storage';
 
 interface Props {
   nomeSalvo?: string;
@@ -17,7 +18,7 @@ export function OnboardingNomeSocialModal({ nomeSalvo, dataSalva }: Props) {
   useEffect(() => {
     const handler = () => {
       // Previne reabrir o modal se a sessão atual avisou que já completamos
-      if (sessionStorage.getItem('onboarding_completed') === 'true') {
+      if (readSessionStorage('onboarding_completed') === 'true') {
         window.location.href = '/app/analise/nome-social';
         return;
       }
@@ -74,7 +75,7 @@ export function OnboardingNomeSocialModal({ nomeSalvo, dataSalva }: Props) {
       }
 
       // Marcar na sessão local para evitar repetição ao testar o botão voltar do navegador
-      sessionStorage.setItem('onboarding_completed', 'true');
+      writeSessionStorage('onboarding_completed', 'true');
       
       // Destruir o modal via prop "open" enquanto recarrega a página
       setOpen(false);

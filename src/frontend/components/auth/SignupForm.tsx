@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { identifyUser } from '../../lib/analytics';
+import { writeLocalStorage } from '../../../utils/browser-storage';
 
 interface Props {
   produto?: string;
@@ -19,7 +20,7 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
 
   useEffect(() => {
     if (produto) {
-      localStorage.setItem('nome_magnetico_pending_product', produto);
+      writeLocalStorage('nome_magnetico_pending_product', produto);
     }
   }, [produto]);
 

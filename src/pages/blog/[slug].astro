@@ -547,11 +547,15 @@ const wasUpdated = Boolean(
 
 <script define:vars={{ articleTitle: post.title, articleSlug: post.slug }}>
   (function () {
+    function storageGet(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
     // 1. Rastrear visualização do artigo
     function sendArticleView() {
       if (typeof window.gtag === 'function' &&
-          localStorage.getItem('nm-cookie-consent') === 'all' &&
-          localStorage.getItem('nm-user-role') !== 'admin') {
+          storageGet('nm-cookie-consent') === 'all' &&
+          storageGet('nm-user-role') !== 'admin') {
         window.gtag('event', 'blog_article_view', {
           article_title: articleTitle,
           article_slug: articleSlug
@@ -569,8 +573,8 @@ const wasUpdated = Boolean(
           link.addEventListener('click', function () {
             const dest = link.getAttribute('href') || '';
             if (typeof window.gtag === 'function' &&
-                localStorage.getItem('nm-cookie-consent') === 'all' &&
-                localStorage.getItem('nm-user-role') !== 'admin') {
+                storageGet('nm-cookie-consent') === 'all' &&
+                storageGet('nm-user-role') !== 'admin') {
               window.gtag('event', 'blog_cta_click', {
                 destination_url: dest,
                 origin_article: articleSlug

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { readLocalStorage, writeLocalStorage } from '../../../utils/browser-storage';
 
 export function MailWarning({ email }: { email: string }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -7,11 +8,11 @@ export function MailWarning({ email }: { email: string }) {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    setDismissed(localStorage.getItem('nm-mail-warning-dismissed') === email);
+    setDismissed(readLocalStorage('nm-mail-warning-dismissed') === email);
   }, [email]);
 
   function dismiss() {
-    localStorage.setItem('nm-mail-warning-dismissed', email);
+    writeLocalStorage('nm-mail-warning-dismissed', email);
     setDismissed(true);
   }
 

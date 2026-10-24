@@ -369,10 +369,13 @@ const pageTitle = activeCategory
   </script>
   <script define:vars={{ activeCategory }}>
     (function () {
+      function storageGet(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
+      }
       function sendBlogView() {
         if (typeof window.gtag === 'function' &&
-            localStorage.getItem('nm-cookie-consent') === 'all' &&
-            localStorage.getItem('nm-user-role') !== 'admin') {
+            storageGet('nm-cookie-consent') === 'all' &&
+            storageGet('nm-user-role') !== 'admin') {
           window.gtag('event', 'blog_view', {
             categoria: activeCategory || 'todos'
           });

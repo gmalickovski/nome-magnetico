@@ -3,6 +3,8 @@
  * e não é substituída por visitas seguintes.
  */
 
+import { readLocalStorage, writeLocalStorage } from '../../utils/browser-storage';
+
 export const UTM_FIRST_TOUCH_KEY = 'nm-utm-first-touch';
 
 export interface FirstTouchUtm {
@@ -39,7 +41,7 @@ export function parseUtmSearch(search: string): FirstTouchUtm {
 function readStored(): FirstTouchUtm | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = window.localStorage.getItem(UTM_FIRST_TOUCH_KEY);
+    const raw = readLocalStorage(UTM_FIRST_TOUCH_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return null;
@@ -57,11 +59,7 @@ function readStored(): FirstTouchUtm | null {
 
 function writeStored(utm: FirstTouchUtm): void {
   if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(UTM_FIRST_TOUCH_KEY, JSON.stringify(utm));
-  } catch {
-    // Storage indisponível não pode impedir o envio do formulário.
-  }
+  writeLocalStorage(UTM_FIRST_TOUCH_KEY, JSON.stringify(utm));
 }
 
 /** Grava a primeira passagem com UTM. Se já houver first-touch, devolve o valor salvo. */

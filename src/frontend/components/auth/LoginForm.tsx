@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabaseBrowser } from '../../lib/supabase-browser';
+import { readLocalStorage, removeLocalStorage } from '../../../utils/browser-storage';
 import { identifyUser } from '../../lib/analytics';
 
 export function LoginForm() {
@@ -109,11 +110,11 @@ export function LoginForm() {
 
       // Recuperar produto solto durante a confirmação de e-mail (fallback)
       if (!produto) {
-        produto = localStorage.getItem('nome_magnetico_pending_product');
+        produto = readLocalStorage('nome_magnetico_pending_product');
       }
 
       if (produto) {
-        localStorage.removeItem('nome_magnetico_pending_product');
+        removeLocalStorage('nome_magnetico_pending_product');
         window.location.href = `/comprar?produto=${produto}`;
       } else {
         window.location.href = searchParams.get('redirect') ?? '/app';

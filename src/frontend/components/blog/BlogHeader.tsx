@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { writeLocalStorage } from '../../../utils/browser-storage';
 
 const CATEGORIES = [
   { label: 'Todos os artigos', slug: '' },
@@ -34,7 +35,7 @@ export function BlogHeader({ activeCategory = '' }: Props) {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     document.documentElement.setAttribute('data-blog-theme', next);
-    localStorage.setItem('blog-theme', next);
+    writeLocalStorage('blog-theme', next);
   }
 
   useEffect(() => {

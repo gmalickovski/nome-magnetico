@@ -8,6 +8,7 @@ import { DateInput } from '../ui/DateInput';
 import { track } from '../../lib/analytics';
 import { marketingBodyFields } from '../../lib/utm';
 import { MarketingOptInField } from './MarketingOptInField';
+import { readSessionStorage, removeSessionStorage } from '../../../utils/browser-storage';
 
 export default function FreeAnalysisForm() {
   const [nome, setNome] = useState('');
@@ -19,12 +20,12 @@ export default function FreeAnalysisForm() {
   // Pré-preenche os campos se o usuário veio da prévia na landing page
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem('pendingFreeAnalysis');
+      const raw = readSessionStorage('pendingFreeAnalysis');
       if (raw) {
         const { nome: n, data: d } = JSON.parse(raw);
         if (n) setNome(n);
         if (d) setData(d);
-        sessionStorage.removeItem('pendingFreeAnalysis');
+        removeSessionStorage('pendingFreeAnalysis');
       }
     } catch {}
   }, []);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { readLocalStorage, writeLocalStorage } from '../../../utils/browser-storage';
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 
@@ -16,16 +17,11 @@ type Counts = Record<ReactionKey, number>;
 
 /** Gera ou recupera um UUID de sessão anônimo armazenado no localStorage */
 function getSessionId(): string {
-  try {
-    const existing = localStorage.getItem('blog-session-id');
-    if (existing) return existing;
-    const id = crypto.randomUUID();
-    localStorage.setItem('blog-session-id', id);
-    return id;
-  } catch {
-    // SSR ou navegador bloqueado
-    return 'unknown';
-  }
+  const existing = readLocalStorage('blog-session-id');
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  writeLocalStorage('blog-session-id', id);
+  return id;
 }
 
 function formatCount(n: number): string {
@@ -63,7 +59,7 @@ export function ArticleReactions({ slug }: Props) {
 
         // Recupera quais reactions desta sessão estão salvas localmente
         // (o GET não filtra por sessão — usamos localStorage para isso)
-        const saved = localStorage.getItem(`blog-reactions-${slug}`);
+        const saved = readLocalStorage(`blog-reactions-${slug}`);
         if (saved) {
           try {
             const parsed = JSON.parse(saved) as ReactionKey[];
@@ -101,7 +97,7 @@ export function ArticleReactions({ slug }: Props) {
     }));
 
     // Persiste localmente (UX instantânea em reloads)
-    localStorage.setItem(`blog-reactions-${slug}`, JSON.stringify([...newMyReactions]));
+    writeLocalStorage(`blog-reactions-${slug}`, JSON.stringify([...newMyReactions]));
 
     try {
       const res = await fetch('/api/blog/reactions', {
@@ -121,7 +117,7 @@ export function ArticleReactions({ slug }: Props) {
         ...prev,
         [key]: Math.max(0, prev[key] + (isRemoving ? 1 : -1)),
       }));
-      localStorage.setItem(`blog-reactions-${slug}`, JSON.stringify([...myReactions]));
+      writeLocalStorage(`blog-reactions-${slug}`, JSON.stringify([...myReactions]));
     } finally {
       setPending(null);
     }
