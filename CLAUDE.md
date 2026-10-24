@@ -17,6 +17,14 @@ npx astro check  # type-check TypeScript + Astro
 
 Não há testes automatizados no projeto. Type-checking é feito via `npx astro check`.
 
+## Segredos e Variáveis de Ambiente (1Password CLI `op`)
+
+Regras completas em [`AGENTS.md`](./AGENTS.md#segredos-e-variáveis-de-ambiente-1password-cli-op). Resumo:
+
+- Nunca commitar segredos reais em `.env` ou no código.
+- Dev local: `npm run dev:1p` ou `npm run env:1p` (gera `.env` com `op inject ... --force`).
+- Nova chave: atualizar item no cofre **Studio MLK** (`NM-PROD-*` / `NM-OPS-*`) com `op item edit` / `op item create` e referência `op://Studio MLK/...` em `.env.1password` com `# pragma: allowlist secret` quando o pre-commit exigir.
+
 ## Identidade
 
 **Produto:** Nome Magnético

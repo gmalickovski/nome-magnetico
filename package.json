@@ -12,7 +12,7 @@
     "test:mcp": "npm --prefix nm-mcp test",
     "test:client-mcp": "npm --prefix nm-client-mcp test",
     "dev:1p": "op run --env-file=.env.1password -- npm run dev",
-    "env:1p": "op inject -i .env.1password -o .env"
+    "env:1p": "op inject -i .env.1password -o .env --force"
 
   },
   "dependencies": {
