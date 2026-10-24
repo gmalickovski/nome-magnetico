@@ -539,6 +539,8 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
 export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [internalPlay, setInternalPlay] = useState(false);
+  // Reduced motion: estado final imediato, sem transições (definido após hidratar para evitar mismatch SSR).
+  const [instant, setInstant] = useState(false);
   const shouldPlay = play ?? internalPlay;
   const birthVisual = getScoreTierVisual(DEMO_SCORE_BIRTH);
   const harmVisual = getScoreTierVisual(DEMO_SCORE_HARMONIZED);
@@ -553,10 +555,13 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
     if (!el) return;
 
     if (prefersReducedMotion()) {
+      setInstant(true);
       setInternalPlay(true);
       return;
     }
 
+    // A estrela tem gatilho próprio: no mobile/tablet ela fica abaixo do texto e do card,
+    // então só desenha quando uma parte relevante dela está visível (desktop, widescreen e mobile).
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -564,7 +569,7 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' },
+      { threshold: 0.35, rootMargin: '0px 0px -10% 0px' },
     );
 
     observer.observe(el);
@@ -588,50 +593,57 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
             </radialGradient>
           </defs>
 
-          {/* Aura Mística ao Fundo */}
+          {/* Aura Mística ao Fundo (surge depois do traçado das linhas) */}
           <circle
             cx={LANDING_STAR_CX}
             cy={LANDING_STAR_CY}
             r={280}
             fill="url(#harmony-star-aura)"
-            className={`transition-opacity duration-1000 ease-out pointer-events-none ${
-              shouldPlay ? 'opacity-100' : 'opacity-0'
-            }`}
+            style={{
+              opacity: shouldPlay ? 1 : 0,
+              transition: instant ? 'none' : 'opacity 1200ms ease-out 700ms',
+            }}
+            className="pointer-events-none"
           />
 
-          {/* Estrela Externa (Harmonizada - bloom gracioso) */}
+          {/* Estrela Externa (Harmonizada): linha desenhada progressivamente, depois preenchimento */}
           <path
             d={LANDING_OUTER_PATH}
+            pathLength={1}
             fill={harmVisual.stroke}
             fillOpacity={shouldPlay ? 0.12 : 0}
             stroke={harmVisual.stroke}
             strokeWidth={2.2}
             strokeLinejoin="round"
             strokeLinecap="round"
+            strokeDasharray={1}
+            strokeDashoffset={shouldPlay ? 0 : 1}
             style={{
-              transformOrigin: `${LANDING_STAR_CX}px ${LANDING_STAR_CY}px`,
+              opacity: shouldPlay ? 1 : 0,
+              transition: instant
+                ? 'none'
+                : 'stroke-dashoffset 1300ms cubic-bezier(0.22,1,0.36,1) 0ms, fill-opacity 1000ms ease-out 900ms, opacity 120ms linear 0ms',
             }}
-            className={`transition-all duration-900 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              shouldPlay ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.90]'
-            }`}
           />
 
-          {/* Estrela Interna (Nascimento - bloom com leve defasagem) */}
+          {/* Estrela Interna (Nascimento): traçado com leve defasagem */}
           <path
             d={LANDING_INNER_PATH}
+            pathLength={1}
             fill={birthVisual.stroke}
             fillOpacity={shouldPlay ? 0.14 : 0}
             stroke={birthVisual.stroke}
             strokeWidth={1.8}
             strokeLinejoin="round"
             strokeLinecap="round"
+            strokeDasharray={1}
+            strokeDashoffset={shouldPlay ? 0 : 1}
             style={{
-              transformOrigin: `${LANDING_STAR_CX}px ${LANDING_STAR_CY}px`,
-              transitionDelay: shouldPlay ? '150ms' : '0ms',
+              opacity: shouldPlay ? 1 : 0,
+              transition: instant
+                ? 'none'
+                : 'stroke-dashoffset 1100ms cubic-bezier(0.22,1,0.36,1) 250ms, fill-opacity 1000ms ease-out 1000ms, opacity 120ms linear 250ms',
             }}
-            className={`transition-all duration-900 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              shouldPlay ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.82]'
-            }`}
           />
 
           {HARMONY_STAR_TIP_LABELS.map((label, i) => {
@@ -657,11 +669,12 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
               <g
                 key={label}
                 style={{
-                  transitionDelay: shouldPlay ? `${240 + i * 65}ms` : '0ms',
+                  opacity: shouldPlay ? 1 : 0,
+                  transform: shouldPlay ? 'translateY(0px)' : 'translateY(10px)',
+                  transition: instant
+                    ? 'none'
+                    : `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${1000 + i * 110}ms, transform 700ms cubic-bezier(0.16,1,0.3,1) ${1000 + i * 110}ms`,
                 }}
-                className={`transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                  shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-                }`}
               >
                 {/* Rótulo do Vértice (Destino, Expressão, etc.) */}
                 <text
@@ -716,7 +729,7 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
       {/* Legenda comparativa posicionada mais abaixo */}
       <div
         style={{
-          transitionDelay: shouldPlay ? '480ms' : '0ms',
+          transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
         }}
         className={`flex flex-col sm:flex-row justify-center items-center gap-2.5 sm:gap-6 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
           shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'

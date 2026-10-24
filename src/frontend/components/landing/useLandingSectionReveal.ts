@@ -13,16 +13,28 @@ function isInOrNearViewport(el: HTMLElement): boolean {
   return rect.top < vh - 40 && rect.bottom > 0;
 }
 
+export interface LandingSectionRevealOptions {
+  /**
+   * Quando false, a seção SEMPRE começa oculta e só revela quando o IntersectionObserver
+   * detectar a entrada na viewport — mesmo se a ilha React hidratar (client:visible) já na borda da tela.
+   * Padrão true (Hero e demais seções mantêm o comportamento anterior).
+   */
+  startRevealed?: boolean;
+  threshold?: number;
+  rootMargin?: string;
+}
+
 /**
- * Standardized landing section reveal hook (DEV-196.3).
+ * Standardized landing section reveal hook (DEV-196.3 / DEV-227).
  * Uses a meditative 700ms cubic-bezier(0.22, 1, 0.36, 1) curve for smooth
  * text and card stagger entrances while respecting prefers-reduced-motion.
  */
-export function useLandingSectionReveal(_threshold = 0.05) {
+export function useLandingSectionReveal(options: LandingSectionRevealOptions = {}) {
+  const { startRevealed = true, threshold = 0.08, rootMargin = '0px 0px -40px 0px' } = options;
   const ref = useRef<HTMLElement>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
-  // Inicia sempre como true no SSR e hidratação para evitar qualquer flash preto ou seção vazia
-  const [revealed, setRevealed] = useState(true);
+  // Padrão: true no SSR/hidratação para evitar flash vazio. Com startRevealed=false, inicia oculto.
+  const [revealed, setRevealed] = useState(startRevealed);
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -30,26 +42,29 @@ export function useLandingSectionReveal(_threshold = 0.05) {
     const el = ref.current;
     if (!el) return;
 
-    const rect = el.getBoundingClientRect();
-    const vh = window.innerHeight || 0;
+    if (startRevealed) {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || 0;
 
-    // Se o elemento já está visível na viewport (ex: Hero no topo), mantém revelado imediatamente
-    if (rect.top < vh && rect.bottom > 0) {
-      setRevealed(true);
-      return;
+      // Se o elemento já está visível na viewport (ex: Hero no topo), mantém revelado imediatamente
+      if (rect.top < vh && rect.bottom > 0) {
+        setRevealed(true);
+        return;
+      }
+
+      // Se estiver fora da viewport, inicializa como false para animar na rolagem
+      setRevealed(false);
     }
-
-    // Se estiver fora da viewport, inicializa como false para animar na rolagem
-    setRevealed(false);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setRevealed(true);
+          // Duplo rAF: garante que o estado oculto foi pintado antes da transição começar.
+          requestAnimationFrame(() => requestAnimationFrame(() => setRevealed(true)));
           observer.disconnect();
         }
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' },
+      { threshold, rootMargin },
     );
 
     observer.observe(el);
@@ -57,7 +72,7 @@ export function useLandingSectionReveal(_threshold = 0.05) {
     return () => {
       observer.disconnect();
     };
-  }, [reduceMotion]);
+  }, [reduceMotion, startRevealed, threshold, rootMargin]);
 
   if (reduceMotion) {
     return {
@@ -94,4 +109,3 @@ export function getRevealItemProps(revealed: boolean, delayMs = 0, reduceMotion 
     style: { transitionDelay: revealed ? `${delayMs}ms` : '0ms' } as React.CSSProperties,
   };
 }
-

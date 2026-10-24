@@ -18,14 +18,14 @@ const productCopyProseClass = 'max-w-[58ch] mx-auto lg:mx-0';
 const mockupSlotClass = 'min-w-0 w-full max-w-full';
 
 export function ProductsSection() {
-  const reveal1 = useLandingSectionReveal();
-  const reveal2 = useLandingSectionReveal();
+  // startRevealed=false: client:visible hidrata na borda da tela; forca estado oculto e revela no scroll (todas as larguras).
+  const reveal1 = useLandingSectionReveal({ startRevealed: false, threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
+  const reveal2 = useLandingSectionReveal({ startRevealed: false, threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
 
   const s1Label = getRevealItemProps(reveal1.revealed, 0, reveal1.reduceMotion);
-  const s1Title = getRevealItemProps(reveal1.revealed, 100, reveal1.reduceMotion);
-  const s1Desc = getRevealItemProps(reveal1.revealed, 200, reveal1.reduceMotion);
-  const s1ScoreCard = getRevealItemProps(reveal1.revealed, 280, reveal1.reduceMotion);
-  const s1StarWrap = getRevealItemProps(reveal1.revealed, 140, reveal1.reduceMotion);
+  const s1Title = getRevealItemProps(reveal1.revealed, 110, reveal1.reduceMotion);
+  const s1Desc = getRevealItemProps(reveal1.revealed, 220, reveal1.reduceMotion);
+  const s1ScoreCard = getRevealItemProps(reveal1.revealed, 340, reveal1.reduceMotion);
 
   const s2Label = getRevealItemProps(reveal2.revealed, 0, reveal2.reduceMotion);
   const s2Title = getRevealItemProps(reveal2.revealed, 90, reveal2.reduceMotion);
@@ -84,18 +84,17 @@ export function ProductsSection() {
                   className={`mt-6 sm:mt-8 w-full max-w-xl mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
                   style={s1ScoreCard.style}
                 >
-                  <ProductHarmonyScoreCard play={reveal1.revealed} />
+                  <ProductHarmonyScoreCard />
                 </div>
               </div>
             </aside>
 
             {/* Coluna Direita: 50% da largura no desktop, com estrela centralizada */}
             <div
-              className={`w-full min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6 ${s1StarWrap.className}`}
-              style={s1StarWrap.style}
+              className={`w-full min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6`}
             >
               <div className="w-full max-w-[580px] xl:max-w-[620px] mx-auto flex flex-col items-center justify-center">
-                <ProductHarmonyStar play={reveal1.revealed} />
+                <ProductHarmonyStar />
               </div>
             </div>
           </div>
