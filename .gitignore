@@ -18,6 +18,8 @@ pnpm-debug.log*
 .env
 .env.local
 .env.production
+!.env.example
+!.env.1password
 
 # arquivos de chaves secretas (nunca commitar)
 secretkey-*.txt
