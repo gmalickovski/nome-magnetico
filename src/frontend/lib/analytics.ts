@@ -19,6 +19,8 @@
  * O evento calculadora_submit (CalculadoraGratis) continua existindo como widget auxiliar.
  */
 
+import { readLocalStorage } from '../../utils/browser-storage';
+
 type AnalyticsEvent =
   // --- Funil principal ---
   | 'analise_gratis_submit'       // Lead capturado: form email-first submetido com sucesso (nome + data + email)
@@ -82,11 +84,7 @@ const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>(['analise_gratis_submit'])
 export type CheckoutPaymentMethod = 'card' | 'pix';
 
 function isAdminBrowser(): boolean {
-  try {
-    return window.localStorage?.getItem('nm-user-role') === 'admin';
-  } catch {
-    return false;
-  }
+  return readLocalStorage('nm-user-role') === 'admin';
 }
 
 function capturePostHog(event: AnalyticsEvent): void {
@@ -135,11 +133,7 @@ export function captureViewOffer(): void {
 }
 
 function hasGa4Consent(): boolean {
-  try {
-    return window.localStorage?.getItem('nm-cookie-consent') === 'all';
-  } catch {
-    return false;
-  }
+  return readLocalStorage('nm-cookie-consent') === 'all';
 }
 
 /** begin_checkout padrão GA4 (value, currency, payment_method). Consentimento igual ao gtag do layout. */

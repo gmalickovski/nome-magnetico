@@ -247,18 +247,28 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 
         <script define:vars={{ analysisId: id }}>
           (function () {
+            function sessionGet(key) {
+              try { return sessionStorage.getItem(key); } catch (e) { return null; }
+            }
+            function sessionSet(key, value) {
+              try { sessionStorage.setItem(key, value); } catch (e) {}
+            }
+            function sessionRemove(key) {
+              try { sessionStorage.removeItem(key); } catch (e) {}
+            }
+
             const MAX_POLLS = 84; // 7 minutos (84 × 5s)
             const key = 'poll_' + analysisId;
-            const count = parseInt(sessionStorage.getItem(key) || '0', 10);
+            const count = parseInt(sessionGet(key) || '0', 10);
 
             if (count >= MAX_POLLS) {
-              sessionStorage.removeItem(key);
+              sessionRemove(key);
               document.getElementById('processing-state')?.classList.add('hidden');
               document.getElementById('timeout-state')?.classList.remove('hidden');
               return;
             }
 
-            sessionStorage.setItem(key, String(count + 1));
+            sessionSet(key, String(count + 1));
             const baseSec = count * 5;
             const ctrEl = document.getElementById('poll-counter-text');
 
@@ -277,7 +287,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 
             setTimeout(() => {
               clearInterval(liveInterval);
-              sessionStorage.setItem(key, String(count + 1));
+              sessionSet(key, String(count + 1));
               window.location.reload();
             }, 5000);
           })();
@@ -312,7 +322,9 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
             function send() {
               if (fired) return;
               try {
-                if (localStorage.getItem('nm-user-role') === 'admin') return;
+                var role = null;
+                try { role = localStorage.getItem('nm-user-role'); } catch (e) {}
+                if (role === 'admin') return;
               } catch (e) {}
               if (typeof window.posthog?.capture !== 'function') return;
               fired = true;
@@ -533,7 +545,9 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 <script define:vars={{ analysisId: id, isComplete: !isProcessing && !isError }}>
   // Limpar contador de polling quando a análise estiver completa
   if (isComplete) {
-    sessionStorage.removeItem('poll_' + analysisId);
+    try {
+      sessionStorage.removeItem('poll_' + analysisId);
+    } catch (e) {}
   }
 </script>
 

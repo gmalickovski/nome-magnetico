@@ -957,13 +957,17 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
 
   <script define:vars={{ isAdmin }}>
     (function () {
-      try {
-        if (isAdmin) {
-          localStorage.setItem('nm-user-role', 'admin');
-        } else {
-          localStorage.removeItem('nm-user-role');
-        }
-      } catch (e) {}
+      function localSet(key, value) {
+        try { localStorage.setItem(key, value); } catch (e) {}
+      }
+      function localRemove(key) {
+        try { localStorage.removeItem(key); } catch (e) {}
+      }
+      if (isAdmin) {
+        localSet('nm-user-role', 'admin');
+      } else {
+        localRemove('nm-user-role');
+      }
     })();
   </script>
 </AppLayout>

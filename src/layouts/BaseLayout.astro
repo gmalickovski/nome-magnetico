@@ -55,15 +55,24 @@ const sentry = getSentryRuntimeConfig();
     <!-- Recarga resiliente de chunk desatualizado pós-deploy (DEV-209) -->
     <script is:inline>
       (function () {
-        function reloadOnceOnChunkError() {
+        function nmSessionGet(key) {
           try {
-            var k = 'nm-chunk-reload';
-            if (!sessionStorage.getItem(k)) {
-              sessionStorage.setItem(k, String(Date.now()));
-              location.reload();
-            }
+            return sessionStorage.getItem(key);
           } catch (e) {
-            // sessionStorage desativado ou inacessível; aborta para evitar loop
+            return null;
+          }
+        }
+        function nmSessionSet(key, value) {
+          try {
+            sessionStorage.setItem(key, value);
+          } catch (e) {}
+        }
+
+        function reloadOnceOnChunkError() {
+          var k = 'nm-chunk-reload';
+          if (!nmSessionGet(k)) {
+            nmSessionSet(k, String(Date.now()));
+            location.reload();
           }
         }
 
@@ -158,9 +167,17 @@ const sentry = getSentryRuntimeConfig();
     <>
     <!-- Google Analytics 4: carregado somente apos consentimento explicito. -->
     <script is:inline define:vars={{ ga4MeasurementId }}>
+      function nmLocalGet(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          return null;
+        }
+      }
+
       function loadGA4() {
         try {
-          if (localStorage.getItem('nm-cookie-consent') !== 'all') return;
+          if (nmLocalGet('nm-cookie-consent') !== 'all') return;
           if (!ga4MeasurementId) return;
           if (document.getElementById('ga4-script')) return;
 

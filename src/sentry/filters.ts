@@ -11,6 +11,10 @@ export const EMAIL_LINK_CHECKER_ERROR = /Object Not Found Matching Id/;
 /** Erro de terceiros do Google Ads em rum_fy2021.js (NOME-MAGNETICO-A) */
 export const PAGEAD_INT64_ERROR = /^int64$/;
 
+/** WebViews / browsers com storage bloqueado (issue Sentry storage, DEV-230) */
+export const STORAGE_ACCESS_DENIED_ERROR =
+  /Failed to read the '(localStorage|sessionStorage)' property from 'Window'/i;
+
 /** Domínios e paths de scripts de anúncios externos (Google Ads / AdSense) */
 export const PAGEAD_DENY_URLS = [/\/pagead\//, /googlesyndication\.com/, /googletagservices\.com/];
 

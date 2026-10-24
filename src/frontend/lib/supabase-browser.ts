@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAuthStorage } from '../../utils/browser-storage';
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -17,6 +18,7 @@ export const supabaseBrowser = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    storage: createSupabaseAuthStorage(),
     // storageKey isolado para evitar colisão de sessão com outros apps
     // que rodem na mesma instância Supabase (ex: Sincro em localhost)
     storageKey: 'nome-magnetico-auth',

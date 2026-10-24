@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { EMAIL_LINK_CHECKER_ERROR, PAGEAD_INT64_ERROR, PAGEAD_DENY_URLS, isLocalDevEvent } from './filters';
+import {
+  EMAIL_LINK_CHECKER_ERROR,
+  PAGEAD_INT64_ERROR,
+  PAGEAD_DENY_URLS,
+  STORAGE_ACCESS_DENIED_ERROR,
+  isLocalDevEvent,
+} from './filters';
 import { sentryInitOptions } from './options';
 import { scrubSentryEvent } from './scrub';
 
@@ -62,6 +68,19 @@ describe('ignoreErrors', () => {
     assert.ok(patterns.includes(PAGEAD_INT64_ERROR));
     assert.match('int64', PAGEAD_INT64_ERROR);
     assert.equal(PAGEAD_INT64_ERROR.test('int64 overflow'), false);
+  });
+
+  it('ignora SecurityError ao acessar localStorage/sessionStorage no Window', () => {
+    const patterns = init().ignoreErrors ?? [];
+    assert.ok(patterns.includes(STORAGE_ACCESS_DENIED_ERROR));
+    assert.match(
+      "SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+      STORAGE_ACCESS_DENIED_ERROR,
+    );
+    assert.match(
+      "Failed to read the 'sessionStorage' property from 'Window'",
+      STORAGE_ACCESS_DENIED_ERROR,
+    );
   });
 });
 
