@@ -25,6 +25,13 @@ npx astro check
 
 Validação mínima quando a mudança tocar TS/Astro/frontend/backend/build: `npm test`, `npx astro check` e `npm run build`.
 
+## Segredos e Variáveis de Ambiente (1Password CLI `op`)
+
+- **Nunca** criar ou versionar segredos reais em `.env` (ignorado pelo Git) ou no código-fonte.
+- **Local / worktree:** subir o dev server com segredos injetados em runtime: `npm run dev:1p` (`op run --env-file=.env.1password -- npm run dev`). Ou gerar `.env` local com `npm run env:1p` (`op inject -i .env.1password -o .env --force`).
+- **Nova variável de ambiente:** o agente deve (1) cadastrar ou atualizar o valor no cofre **Studio MLK** via CLI (`op item edit "<Item>" --vault "Studio MLK" "NOVA_CHAVE[password]=valor"` ou `op item create ... --vault "Studio MLK"`, seguindo itens `NM-PROD-*` / `NM-OPS-*`); (2) adicionar em `.env.1password` a referência `NOVA_CHAVE="op://Studio MLK/<Item>/NOVA_CHAVE" # pragma: allowlist secret` para o `detect-secrets` no pre-commit.
+- **Cursor Cloud Agents:** com `OP_SERVICE_ACCOUNT_TOKEN` no ambiente, o `install` em `.cursor/environment.json` tenta instalar o `op` e rodar `npm run env:1p`; sem token ou se a injeção falhar, o install continua (variáveis já definidas no ambiente).
+
 ## Regras essenciais
 
 - **Camadas:** React em `src/frontend/` nunca importa `src/backend/`. Só `fetch` para `/api/*`. Endpoints validam com Zod.

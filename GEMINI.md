@@ -9,6 +9,10 @@
 **Stack:** Astro 5 SSR + React islands + Tailwind CSS + Supabase Cloud + Stripe
 **Nota:** "Astro" é APENAS o framework técnico. Nunca aparece na interface, copy ou branding do produto.
 
+## Segredos e Variáveis de Ambiente (1Password CLI `op`)
+
+Ver [`AGENTS.md`](./AGENTS.md#segredos-e-variáveis-de-ambiente-1password-cli-op). Em resumo: sem segredos no Git; `npm run dev:1p` / `npm run env:1p`; novas variáveis no cofre **Studio MLK** + linha `op://Studio MLK/...` em `.env.1password` com `# pragma: allowlist secret` se o scanner reclamar.
+
 ---
 
 ## Design System ("The Celestial Alchemist")
