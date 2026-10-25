@@ -96,28 +96,28 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
   return (
     <div
       ref={reveal.ref}
-      className="grid grid-cols-1 lg:grid-cols-12 items-center gap-6 sm:gap-8 lg:gap-10 w-full min-w-0"
+      className={`flex flex-col ${
+        mockupFirst ? 'lg:flex-row-reverse' : 'lg:flex-row'
+      } items-center justify-between gap-8 sm:gap-10 lg:gap-14 xl:gap-16 w-full min-w-0`}
     >
-      {/* Coluna de Texto: no desktop inverte com order se mockupFirst for true; no mobile é sempre primeiro */}
+      {/* Coluna de Texto: no mobile/tablet fica sempre em cima (flex-col); no desktop alterna via flex-row / flex-row-reverse */}
       <div
-        className={`lg:col-span-6 w-full min-w-0 flex flex-col justify-center text-center lg:text-left ${
-          mockupFirst ? 'lg:order-2' : 'lg:order-1'
-        } ${textReveal.className}`}
+        className={`w-full lg:w-1/2 flex-1 min-w-0 flex flex-col justify-center text-center lg:text-left ${textReveal.className}`}
         style={textReveal.style}
       >
-        <p className="nm-eyebrow mb-1.5">
+        <p className="nm-eyebrow mb-2">
           {item.eyebrow}
         </p>
 
-        <h3 className="nm-h3 mb-2.5">
+        <h3 className="nm-h3 mb-3">
           {item.title}
         </h3>
 
-        <p className="nm-body mb-4 max-w-[50ch] mx-auto lg:mx-0">
+        <p className="nm-body mb-5 max-w-[56ch] mx-auto lg:mx-0">
           {item.description}
         </p>
 
-        <div className="space-y-2 max-w-[48ch] mx-auto lg:mx-0 text-left">
+        <div className="space-y-2.5 max-w-[54ch] mx-auto lg:mx-0 text-left">
           {item.bulletPoints.map((bullet, bIdx) => (
             <div key={bIdx} className="flex items-start gap-2.5">
               <span className="text-[#D4AF37] text-sm shrink-0 leading-none mt-1">✦</span>
@@ -127,11 +127,9 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
         </div>
       </div>
 
-      {/* Coluna de Mockup: no desktop inverte com order se mockupFirst for true */}
+      {/* Coluna de Mockup: no mobile/tablet fica sempre abaixo do texto */}
       <div
-        className={`lg:col-span-6 w-full min-w-0 flex items-center justify-center ${
-          mockupFirst ? 'lg:order-1' : 'lg:order-2'
-        } ${mockupReveal.className}`}
+        className={`w-full lg:w-1/2 flex-1 min-w-0 flex items-center justify-center ${mockupReveal.className}`}
         style={mockupReveal.style}
       >
         <div className="w-full flex items-center justify-center">
@@ -173,8 +171,8 @@ export function SignatureUseCasesSection() {
           />
         </div>
 
-        {/* 4 Exemplos Empilhados em Zigue-zague */}
-        <div className="max-w-5xl mx-auto space-y-12 sm:space-y-16 lg:space-y-20 w-full">
+        {/* 4 Exemplos Empilhados em Zigue-zague ocupando a largura útil da seção */}
+        <div className="max-w-7xl mx-auto space-y-16 sm:space-y-20 lg:space-y-24 w-full">
           {USE_CASES.map((item, idx) => (
             <UseCaseRow
               key={item.id}
