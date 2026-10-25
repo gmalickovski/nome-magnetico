@@ -148,17 +148,19 @@ export function HeroScoreAnimation() {
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
-    <div className="w-full max-w-[575px] xl:max-w-[615px] flex flex-col md:flex-row gap-4 lg:gap-5 items-center nm-floating-card p-4 sm:p-5 lg:p-6">
+    <div className="w-full max-w-[380px] sm:max-w-[400px] lg:max-w-[390px] xl:max-w-[615px] flex flex-col xl:flex-row gap-3.5 xl:gap-5 items-center nm-floating-card p-4 sm:p-5 lg:p-4 xl:p-6">
       
-      {/* Esquerda: Lista de Opções */}
-      <div className="w-full md:w-[56%] flex flex-col gap-2.5 order-2 md:order-1">
+      {/* Lista de Opções:
+          - < 1280px (mobile, tablet e telas ~11" lg): fica empilhada abaixo do círculo com 100% da largura, sem cortar nomes.
+          - >= 1280px (xl desktop): fica à esquerda (58% da largura) ao lado do círculo. */}
+      <div className="w-full xl:w-[58%] flex flex-col gap-2 xl:gap-2.5 order-2 xl:order-1">
         {CANDIDATES.map((cand, idx) => {
           const isSelected = activeIndex === idx;
           return (
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              className={`w-full text-left py-2.5 px-3 rounded-xl transition-all duration-300 relative group overflow-hidden ${
+              className={`w-full text-left py-2 xl:py-2.5 px-3 rounded-xl transition-all duration-300 relative group overflow-hidden ${
                 isSelected
                   ? `bg-white/[0.05] ring-1 ${cand.ringClass}`
                   : 'bg-[#111]/30 ring-1 ring-white/[0.02] hover:bg-white/[0.02]'
@@ -169,21 +171,21 @@ export function HeroScoreAnimation() {
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${cand.barClass}`} />
               )}
               
-              <div className="flex justify-between items-center pl-2">
-                <div className="min-w-0 pr-2">
+              <div className="flex justify-between items-center pl-2 gap-2">
+                <div className="min-w-0">
                   <p className={`text-[10px] uppercase tracking-wider font-semibold ${
                     isSelected ? cand.colorClass : 'text-gray-500'
                   }`}>
                     {cand.type}
                   </p>
-                  <p className={`font-cinzel font-bold text-sm tracking-wider truncate mt-0.5 ${
+                  <p className={`font-cinzel font-bold text-xs sm:text-[13px] xl:text-[13.5px] tracking-wide whitespace-nowrap mt-0.5 ${
                     isSelected ? 'text-[#e5e2e1]' : 'text-gray-400 group-hover:text-gray-300'
                   }`}>
                     {cand.name}
                   </p>
                 </div>
                 
-                <span className={`text-base font-bold font-cinzel shrink-0 pl-2 ${
+                <span className={`text-sm sm:text-base font-bold font-cinzel shrink-0 ${
                   isSelected ? cand.colorClass : 'text-gray-600'
                 }`}>
                   {cand.score}
@@ -194,9 +196,11 @@ export function HeroScoreAnimation() {
         })}
       </div>
 
-      {/* Direita: Visor Circular do Score (Maior e Centralizado) */}
-      <div className="w-full md:w-[44%] flex flex-col items-center justify-center p-2 order-1 md:order-2">
-        <div className="relative w-56 h-56 flex items-center justify-center">
+      {/* Visor Circular do Score:
+          - < 1280px (mobile, tablet e telas ~11" lg): fica no topo do card empilhado, centralizado sem vazar das bordas.
+          - >= 1280px (xl desktop): fica à direita (42% da largura). */}
+      <div className="w-full xl:w-[42%] flex flex-col items-center justify-center p-1 xl:p-2 order-1 xl:order-2">
+        <div className="relative w-44 h-44 sm:w-48 sm:h-48 lg:w-40 lg:h-40 xl:w-52 xl:h-52 flex items-center justify-center">
           {/* Background circle */}
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 224 224">
             <circle
@@ -224,22 +228,22 @@ export function HeroScoreAnimation() {
 
           {/* Inner Text info */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className={`font-cinzel text-6xl font-bold tracking-tight ${activeCandidate.colorClass}`}>
+            <span className={`font-cinzel text-5xl xl:text-6xl font-bold tracking-tight ${activeCandidate.colorClass}`}>
               {displayedScore}
             </span>
             <span className="text-[10px] uppercase tracking-widest text-gray-500 mt-0.5">Pontos</span>
-            <span className={`text-sm font-bold uppercase mt-1 tracking-wider ${activeCandidate.colorClass}`}>
+            <span className={`text-xs xl:text-sm font-bold uppercase mt-1 tracking-wider ${activeCandidate.colorClass}`}>
               {activeCandidate.label}
             </span>
           </div>
         </div>
 
-        {/* Info card details */}
-        <div className="w-full text-center mt-4">
-          <p className="text-xs font-semibold text-gray-300 transition-all duration-500 truncate">
+        {/* Info card details (sempre visíveis sem cortar com reticências) */}
+        <div className="w-full text-center mt-2.5 xl:mt-4 px-1">
+          <p className="text-xs font-semibold text-gray-300 transition-all duration-500 leading-snug">
             {activeCandidate.bloqueios}
           </p>
-          <p className="text-[11px] text-gray-500 mt-1 transition-all duration-500 truncate">
+          <p className="text-[11px] text-gray-500 mt-0.5 xl:mt-1 transition-all duration-500 leading-snug">
             {activeCandidate.vibracao}
           </p>
         </div>

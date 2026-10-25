@@ -8,6 +8,7 @@ export function LandingHeader() {
   const rowRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const navRef = useRef<HTMLElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
@@ -23,19 +24,26 @@ export function LandingHeader() {
     const row = rowRef.current;
     const logo = logoRef.current;
     const nav = navRef.current;
-    if (!row || !logo || !nav) return;
+    const actions = actionsRef.current;
+    if (!row || !logo || !nav || !actions) return;
 
     const measure = () => {
-      const previous = nav.className;
+      const prevNav = nav.className;
+      const prevActions = actions.className;
       nav.className =
         'flex items-center gap-4 xl:gap-6 whitespace-nowrap absolute w-max invisible pointer-events-none';
+      actions.className =
+        'flex items-center gap-3 whitespace-nowrap absolute w-max invisible pointer-events-none';
       const navWidth = nav.scrollWidth;
-      nav.className = previous;
+      const actionsWidth = actions.scrollWidth;
+      nav.className = prevNav;
+      actions.className = prevActions;
       const styles = getComputedStyle(row);
       const pad = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
       const available = row.clientWidth - pad;
       const logoWidth = logo.getBoundingClientRect().width;
-      const fits = logoWidth + navWidth + 24 <= available;
+      const maxSide = Math.max(logoWidth, actionsWidth);
+      const fits = navWidth + maxSide * 2 + 32 <= available;
       setCompact(!fits);
       if (fits) setMenuOpen(false);
     };
@@ -48,10 +56,17 @@ export function LandingHeader() {
 
   const desktopNavClass =
     compact === null
-      ? 'hidden min-[1200px]:flex items-center gap-4 xl:gap-6 whitespace-nowrap'
+      ? 'hidden min-[1200px]:flex items-center justify-center gap-4 xl:gap-6 whitespace-nowrap shrink-0'
       : compact
         ? 'absolute w-max invisible pointer-events-none flex items-center gap-4 xl:gap-6 whitespace-nowrap'
-        : 'flex items-center gap-4 xl:gap-6 whitespace-nowrap';
+        : 'flex items-center justify-center gap-4 xl:gap-6 whitespace-nowrap shrink-0';
+
+  const desktopActionsClass =
+    compact === null
+      ? 'hidden min-[1200px]:flex items-center justify-end gap-3 whitespace-nowrap shrink-0'
+      : compact
+        ? 'absolute w-max invisible pointer-events-none flex items-center gap-3 whitespace-nowrap'
+        : 'flex items-center justify-end gap-3 whitespace-nowrap shrink-0';
 
   const menuButtonClass =
     compact === null ? 'min-[1200px]:hidden' : compact ? '' : 'hidden';
@@ -78,12 +93,14 @@ export function LandingHeader() {
       }`}
     >
       <div ref={rowRef} className={`max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 flex items-center justify-between ${scrolled ? 'py-3' : 'py-4 sm:py-5'}`}>
-        {/* Logo */}
-        <a ref={logoRef} href="/" className="hover:opacity-80 transition-opacity shrink-0">
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-8 sm:h-10 md:h-11 w-auto max-w-none aspect-[2447/500]" />
-        </a>
+        {/* Coluna Esquerda: Logo permanece no mesmo lugar */}
+        <div className="flex-1 flex items-center justify-start">
+          <a ref={logoRef} href="/" className="hover:opacity-80 transition-opacity shrink-0">
+            <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-8 sm:h-10 md:h-11 w-auto max-w-none aspect-[2447/500]" />
+          </a>
+        </div>
 
-        {/* Nav desktop — hidden until the logo and the links both fit */}
+        {/* Coluna Central: Textos do menu centralizados no header */}
         <nav ref={navRef} className={desktopNavClass} aria-hidden={compact === true}>
           <a href="/#como-funciona" className={`${navLink('/#como-funciona')} whitespace-nowrap shrink-0`}>
             Como Funciona
@@ -108,32 +125,38 @@ export function LandingHeader() {
           <a href="/sobre" className={`${navLink('/sobre')} whitespace-nowrap shrink-0`}>
             Sobre
           </a>
-          <a href="/auth/login" className="shrink-0 whitespace-nowrap bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-sm px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300 shadow-md shadow-[#D4AF37]/10">
-            Entrar
-          </a>
-          <a
-            href="/auth/cadastro"
-            data-cta-id="comecar"
-            data-cta-position="header"
-            className="shrink-0 whitespace-nowrap bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
-          >
-            Começar Agora
-          </a>
         </nav>
 
-        {/* Menu mobile toggle */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className={`${menuButtonClass} text-[#D4AF37] hover:text-[#f2ca50] transition-colors`}
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            {menuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+        {/* Coluna Direita: Botões de ação e toggle mobile permanecem no mesmo lugar */}
+        <div className="flex-1 flex items-center justify-end">
+          <div ref={actionsRef} className={desktopActionsClass} aria-hidden={compact === true}>
+            <a href="/auth/login" className="shrink-0 whitespace-nowrap bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-sm px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300 shadow-md shadow-[#D4AF37]/10">
+              Entrar
+            </a>
+            <a
+              href="/auth/cadastro"
+              data-cta-id="comecar"
+              data-cta-position="header"
+              className="shrink-0 whitespace-nowrap bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
+            >
+              Começar Agora
+            </a>
+          </div>
+
+          {/* Menu mobile toggle */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`${menuButtonClass} text-[#D4AF37] hover:text-[#f2ca50] transition-colors`}
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Menu mobile aberto */}

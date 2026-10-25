@@ -32,8 +32,11 @@ export function HeroSection() {
       {/* CONTENT LAYERS (Z-10) — Centralizado na Área Útil (altura total - header) */}
       <div className={`relative z-10 ${landingSectionShellClass} flex-1 flex flex-col justify-center gap-8 md:gap-12 my-auto w-full`}>
         
-        {/* ROW 1: Mesma aproximação entre texto e card (~617px col esquerda + gap), com card interativo levemente mais largo (~610px) */}
-        <div className="max-w-[1230px] xl:max-w-[1260px] mx-auto grid grid-cols-1 lg:grid-cols-[1.01fr_0.99fr] gap-8 lg:gap-6 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
+        {/* ROW 1:
+            - < 1024px (mobile/tablet em pé): Texto empilhado em cima e Card empilhado embaixo.
+            - 1024px–1279px (lg / ~11"): Texto permanece à esquerda (1.15fr) e Card à direita (0.85fr) no formato empilhado sem cortar textos.
+            - >= 1280px (xl / desktop): Texto à esquerda e Card horizontal completo à direita com mesma aproximação central. */}
+        <div className="max-w-[1120px] xl:max-w-[1260px] mx-auto grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] xl:grid-cols-[1.01fr_0.99fr] gap-8 lg:gap-8 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
           {/* Left Column: Headlines (ocupa espaço confortável para o título sem sobra excessiva à direita) */}
           <div className="w-full flex flex-col items-center lg:items-start min-w-0">
             <h1
@@ -79,9 +82,9 @@ export function HeroSection() {
             </div>
           </div>
           
-          {/* Right Column: Interactive Animation Card (aproximado do texto à esquerda) */}
+          {/* Right Column: Interactive Animation Card (empilhado no lg ~11", horizontal no xl desktop) */}
           <div
-            className={`w-full min-w-0 flex justify-center lg:justify-start ${cardReveal.className}`}
+            className={`w-full min-w-0 flex justify-center lg:justify-center xl:justify-start ${cardReveal.className}`}
             style={cardReveal.style}
           >
             <HeroScoreAnimation />
