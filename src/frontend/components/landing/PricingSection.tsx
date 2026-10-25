@@ -191,7 +191,7 @@ export function PricingSection({
     <section
       id="precos"
       ref={reveal.ref}
-      className={`${landingSectionSpacingClass} bg-[#131313] overflow-x-hidden ${reveal.className}`}
+      className={`${landingSectionSpacingClass} bg-[#111111] overflow-x-hidden ${reveal.className}`}
     >
       <style>
         {`
@@ -248,7 +248,7 @@ export function PricingSection({
               </div>
 
               {/* 2. Valor na esquerda no desktop widescreen (lg+) | abaixo do título no mobile (<1024px) */}
-              <div className="order-2 lg:order-none lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:row-span-3 flex flex-col items-center justify-center text-center lg:py-8 lg:px-6 lg:rounded-2xl lg:bg-[#131313]/65 h-full">
+              <div className="order-2 lg:order-none lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:row-span-3 flex flex-col items-center justify-center text-center lg:py-4 lg:px-4 h-full">
                 <Price {...priceProps} size="hero" className="text-center items-center" />
 
                 <div className="hidden lg:block mt-5 space-y-1.5">
