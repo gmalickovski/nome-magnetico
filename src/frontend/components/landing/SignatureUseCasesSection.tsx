@@ -96,7 +96,7 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
   return (
     <div
       ref={reveal.ref}
-      className="grid grid-cols-1 lg:grid-cols-12 items-center gap-8 sm:gap-10 lg:gap-12 xl:gap-16 w-full min-w-0"
+      className="grid grid-cols-1 lg:grid-cols-12 items-center gap-6 sm:gap-8 lg:gap-10 w-full min-w-0"
     >
       {/* Coluna de Texto: no desktop inverte com order se mockupFirst for true; no mobile é sempre primeiro */}
       <div
@@ -105,19 +105,19 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
         } ${textReveal.className}`}
         style={textReveal.style}
       >
-        <p className="nm-eyebrow mb-2">
+        <p className="nm-eyebrow mb-1.5">
           {item.eyebrow}
         </p>
 
-        <h3 className="nm-h3 mb-3">
+        <h3 className="nm-h3 mb-2.5">
           {item.title}
         </h3>
 
-        <p className="nm-body mb-5 max-w-[54ch] mx-auto lg:mx-0">
+        <p className="nm-body mb-4 max-w-[50ch] mx-auto lg:mx-0">
           {item.description}
         </p>
 
-        <div className="space-y-2.5 max-w-[50ch] mx-auto lg:mx-0 text-left">
+        <div className="space-y-2 max-w-[48ch] mx-auto lg:mx-0 text-left">
           {item.bulletPoints.map((bullet, bIdx) => (
             <div key={bIdx} className="flex items-start gap-2.5">
               <span className="text-[#D4AF37] text-sm shrink-0 leading-none mt-1">✦</span>
@@ -174,7 +174,7 @@ export function SignatureUseCasesSection() {
         </div>
 
         {/* 4 Exemplos Empilhados em Zigue-zague */}
-        <div className="space-y-16 sm:space-y-20 lg:space-y-28 w-full">
+        <div className="max-w-5xl mx-auto space-y-12 sm:space-y-16 lg:space-y-20 w-full">
           {USE_CASES.map((item, idx) => (
             <UseCaseRow
               key={item.id}
