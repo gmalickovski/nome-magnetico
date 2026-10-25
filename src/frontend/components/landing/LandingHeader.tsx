@@ -130,14 +130,14 @@ export function LandingHeader() {
         {/* Coluna Direita: Botões de ação e toggle mobile permanecem no mesmo lugar */}
         <div className="flex-1 flex items-center justify-end">
           <div ref={actionsRef} className={desktopActionsClass} aria-hidden={compact === true}>
-            <a href="/auth/login" className="shrink-0 whitespace-nowrap bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-sm px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300 shadow-md shadow-[#D4AF37]/10">
+            <a href="/auth/login" className="shrink-0 whitespace-nowrap bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-sm px-5 py-2 rounded-full hover:bg-[#D4AF37]/10 transition-all duration-300 shadow-md shadow-[#D4AF37]/10">
               Entrar
             </a>
             <a
               href="/auth/cadastro"
               data-cta-id="comecar"
               data-cta-position="header"
-              className="shrink-0 whitespace-nowrap bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
+              className="shrink-0 whitespace-nowrap bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
             >
               Começar Agora
             </a>
@@ -171,8 +171,8 @@ export function LandingHeader() {
           <a href="/sobre" className={mobileLink('/sobre')} onClick={() => setMenuOpen(false)}>Sobre</a>
 
           <div className="pt-3 space-y-3">
-            <a href="/auth/login" className="block bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-center py-2.5 rounded-lg hover:bg-[#D4AF37]/10 transition-all duration-300" onClick={() => setMenuOpen(false)}>Entrar</a>
-            <a href="/auth/cadastro" data-cta-id="comecar" data-cta-position="header_mobile" className="block bg-[#D4AF37] text-[#1A1A1A] font-medium text-center py-3 rounded-lg hover:bg-[#f2ca50] transition-all duration-300" onClick={() => setMenuOpen(false)}>
+            <a href="/auth/login" className="block bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-center py-2.5 rounded-full hover:bg-[#D4AF37]/10 transition-all duration-300" onClick={() => setMenuOpen(false)}>Entrar</a>
+            <a href="/auth/cadastro" data-cta-id="comecar" data-cta-position="header_mobile" className="block bg-[#D4AF37] text-[#1A1A1A] font-medium text-center py-3 rounded-full hover:bg-[#f2ca50] transition-all duration-300" onClick={() => setMenuOpen(false)}>
               Começar Agora
             </a>
           </div>
