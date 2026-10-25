@@ -178,18 +178,15 @@ export function HowItWorksSection() {
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight || 800;
 
-      // Ponto de gatilho: quando a seção passa do centro da tela
-      const screenCenter = vh * 0.50;
-      const scrollPastCenter = screenCenter - rect.top;
-
-      // Se ainda não passou do centro da tela: seção compacta contendo apenas título e texto
-      if (scrollPastCenter < 30) {
+      // Gatilho antecipado: inicia assim que o título entra e fica visível na tela (rect.top <= 82% da altura da tela)
+      // e conclui os 4 cards na ordem (01 -> 02 -> 03 -> 04) antes da seção centralizar na tela (rect.top <= 46% da tela).
+      if (rect.top > vh * 0.82) {
         setRevealedCount(0);
-      } else if (scrollPastCenter < 170) {
+      } else if (rect.top > vh * 0.70) {
         setRevealedCount(1);
-      } else if (scrollPastCenter < 310) {
+      } else if (rect.top > vh * 0.58) {
         setRevealedCount(2);
-      } else if (scrollPastCenter < 450) {
+      } else if (rect.top > vh * 0.46) {
         setRevealedCount(3);
       } else {
         setRevealedCount(4);
@@ -319,9 +316,9 @@ export function HowItWorksSection() {
       className="relative z-10 bg-[#111111] scroll-mt-24 lg:scroll-mt-28 overflow-x-clip"
       aria-label="Como funciona"
     >
-      {/* ── 1. DESKTOP VIEW (lg: 1024px+ — 100% INTACTO COM SCROLL PINNING) ────── */}
+      {/* ── 1. DESKTOP WIDESCREEN VIEW (xl: 1280px+ — 4 CARDS EM LINHA CENTRALIZADOS COM SCROLL PINNING) ────── */}
       <div
-        className={`hidden lg:block w-full ${
+        className={`hidden xl:block w-full ${
           reduceMotion
             ? landingSectionSpacingClass
             : 'h-[360vh]'
@@ -370,9 +367,9 @@ export function HowItWorksSection() {
                   transform: `translateY(${cardEntryY}px)`,
                 }}
               >
-                <div className="relative w-full max-w-[1440px] 2xl:max-w-[1600px] mx-auto overflow-visible py-2">
+                <div className="relative w-full max-w-[1360px] mx-auto overflow-visible py-2">
                   <div
-                    className="grid grid-cols-4 gap-6 xl:gap-8 items-stretch will-change-transform min-w-[1020px] max-w-[1440px] mx-auto"
+                    className="grid grid-cols-4 gap-6 2xl:gap-8 items-stretch will-change-transform w-full mx-auto"
                     style={{
                       transform: `translateX(${railOffsetPercent}%)`,
                     }}
@@ -387,7 +384,7 @@ export function HowItWorksSection() {
                       return (
                         <div
                           key={step.stepNumber}
-                          className="relative h-full will-change-[transform,opacity] min-w-[240px] max-w-[340px]"
+                          className="relative h-full will-change-[transform,opacity] min-w-0 w-full"
                           style={{
                             opacity: opacity,
                             transform: `translateY(${(1 - Math.min(1, opacity)) * 20}px) scale(${0.96 + Math.min(1, opacity) * 0.04})`,
@@ -451,13 +448,13 @@ export function HowItWorksSection() {
         </div>
       </div>
 
-      {/* ── 2. MOBILE & TABLET VIEW (< lg: — TÍTULO ESTÁTICO NO TOPO, CARDS EXPANDEM NA ROLAGEM) ─ */}
+      {/* ── 2. MOBILE, TABLET & TELAS ~12" (< xl: 1280px — QUEBRA EM 2x2 OU 1x4 COM REVEAL FLUIDO E RÁPIDO) ─ */}
       <div
-        className={`lg:hidden w-full flex flex-col items-center py-12 sm:py-16 md:py-20 ${landingSectionShellClass}`}
+        className={`xl:hidden w-full flex flex-col items-center py-12 sm:py-16 md:py-20 ${landingSectionShellClass}`}
       >
-        {/* TÍTULO DA SEÇÃO (Estático, fixo próximo ao topo respeitando o padding padrão) */}
+        {/* TÍTULO DA SEÇÃO */}
         <div className="w-full text-center">
-          <div className="w-full max-w-xl md:max-w-2xl mx-auto">
+          <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto">
             <LandingSectionIntro
               label="Como Funciona"
               title="Quatro Passos Até a Sua Nova Assinatura"
@@ -473,13 +470,9 @@ export function HowItWorksSection() {
           </div>
         </div>
 
-        {/* CONTAINER DOS CARDS: margin-top transiciona quando os cards entram */}
-        <div
-          className={`w-full flex flex-col items-center transition-[margin] duration-500 ease-out ${
-            revealedCount > 0 ? 'mt-8 sm:mt-10 md:mt-12' : 'mt-0'
-          }`}
-        >
-          {/* 2A. SMARTPHONE: CARDS ENTRAM NA ORDEM UM A UM E EXPANDEM O CONTAINER */}
+        {/* CONTAINER DOS CARDS */}
+        <div className="w-full flex flex-col items-center mt-8 sm:mt-10 md:mt-12">
+          {/* 2A. SMARTPHONE (< 768px): CARDS ENTRAM NA ORDEM UM A UM */}
           <div className="md:hidden flex flex-col items-center w-full max-w-xl mx-auto">
             {steps.map((step, idx) => {
               const isExpanded = revealedCount >= idx + 1;
@@ -497,173 +490,144 @@ export function HowItWorksSection() {
             })}
           </div>
 
-          {/* 2B. TABLET: LINHA 1 (01+02) E LINHA 2 (03+04) EXPANDEM PROGRESSIVAMENTE EM GRID 2x2 */}
-          <div
-            className={`hidden md:flex lg:hidden flex-col w-full max-w-3xl md:max-w-4xl mx-auto transition-[gap] duration-500 ${
-              revealedCount >= 3 ? 'gap-7' : 'gap-0'
-            }`}
-          >
+          {/* 2B. TABLET & TELAS INTERMEDIÁRIAS (~10" a ~12", 768px–1279px):
+              Quebra em 2 linhas com 2 cards por linha (01+02 em cima, 03+04 embaixo),
+              centralizados na tela e com animação fluida na ordem 01 -> 02 -> 03 -> 04
+              sem salto de layout e concluindo antes da seção centralizar na tela. */}
+          <div className="hidden md:flex xl:hidden flex-col gap-6 lg:gap-7 w-full max-w-3xl lg:max-w-4xl mx-auto">
             {/* LINHA 1: Cards 01 e 02 */}
-            <div
-              className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                revealedCount >= 1
-                  ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
-                  : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
-              }`}
-            >
-              <div
-                className={`w-full transition-[padding] duration-500 ${
-                  revealedCount >= 1 ? 'overflow-visible pt-1.5 px-1 pb-0' : 'overflow-hidden py-0 px-0'
+            <div className="relative grid grid-cols-2 gap-6 lg:gap-7 w-full items-stretch">
+              {/* Card 01 (Esquerda) */}
+              <article
+                className={`h-full ${landingMockupFloatClass} p-5 lg:p-6 flex flex-col justify-between min-h-[175px] group transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[transform,opacity] ${
+                  revealedCount >= 1
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-4 scale-[0.97] pointer-events-none'
                 }`}
               >
-                <div className="relative grid grid-cols-2 gap-7 w-full items-stretch">
-                  {/* Card 01 (Esquerda) */}
-                  <article
-                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      revealedCount >= 1
-                        ? 'opacity-100 translate-x-0 scale-100 delay-0'
-                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                          PASSO {steps[0].stepNumber}
-                        </span>
-                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                          <FormFigure active={revealedCount >= 1} />
-                        </div>
-                      </div>
-                      <h3 className="nm-h4 mb-1">
-                        {steps[0].title}
-                      </h3>
-                      <p className="nm-body line-clamp-3">
-                        {steps[0].body}
-                      </p>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-cinzel text-xs font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                      PASSO {steps[0].stepNumber}
+                    </span>
+                    <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-90 origin-right">
+                      <FormFigure active={revealedCount >= 1} />
                     </div>
-                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                    </div>
-                  </article>
-
-                  {/* Card 02 (Direita — delay para surgir da esquerda para direita) */}
-                  <article
-                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      revealedCount >= 2
-                        ? 'opacity-100 translate-x-0 scale-100 delay-150'
-                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                          PASSO {steps[1].stepNumber}
-                        </span>
-                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                          <GenerateFigure active={revealedCount >= 2} />
-                        </div>
-                      </div>
-                      <h3 className="nm-h4 mb-1">
-                        {steps[1].title}
-                      </h3>
-                      <p className="nm-body line-clamp-3">
-                        {steps[1].body}
-                      </p>
-                    </div>
-                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                    </div>
-                  </article>
-
-                  {/* Seta horizontal na linha 1 */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                    <StepArrow direction="right" active={revealedCount >= 2} />
                   </div>
+                  <h3 className="nm-h4 mb-1.5">
+                    {steps[0].title}
+                  </h3>
+                  <p className="nm-body">
+                    {steps[0].body}
+                  </p>
                 </div>
+                <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+                  <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                </div>
+              </article>
+
+              {/* Card 02 (Direita) */}
+              <article
+                className={`h-full ${landingMockupFloatClass} p-5 lg:p-6 flex flex-col justify-between min-h-[175px] group transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[transform,opacity] ${
+                  revealedCount >= 2
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-4 scale-[0.97] pointer-events-none'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-cinzel text-xs font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                      PASSO {steps[1].stepNumber}
+                    </span>
+                    <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-90 origin-right">
+                      <GenerateFigure active={revealedCount >= 2} />
+                    </div>
+                  </div>
+                  <h3 className="nm-h4 mb-1.5">
+                    {steps[1].title}
+                  </h3>
+                  <p className="nm-body">
+                    {steps[1].body}
+                  </p>
+                </div>
+                <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+                  <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                </div>
+              </article>
+
+              {/* Seta horizontal na linha 1 */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                <StepArrow direction="right" active={revealedCount >= 2} />
               </div>
             </div>
 
             {/* LINHA 2: Cards 03 e 04 */}
-            <div
-              className={`w-full grid transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                revealedCount >= 3
-                  ? 'grid-rows-[1fr] opacity-100 translate-y-0 scale-100'
-                  : 'grid-rows-[0fr] opacity-0 translate-y-6 scale-95 pointer-events-none'
-              }`}
-            >
-              <div
-                className={`w-full transition-[padding] duration-500 ${
-                  revealedCount >= 3 ? 'overflow-visible pt-0 px-1 pb-1.5' : 'overflow-hidden py-0 px-0'
+            <div className="relative grid grid-cols-2 gap-6 lg:gap-7 w-full items-stretch">
+              {/* Card 03 (Esquerda) */}
+              <article
+                className={`h-full ${landingMockupFloatClass} p-5 lg:p-6 flex flex-col justify-between min-h-[175px] group transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[transform,opacity] ${
+                  revealedCount >= 3
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-4 scale-[0.97] pointer-events-none'
                 }`}
               >
-                <div className="relative grid grid-cols-2 gap-7 w-full items-stretch">
-                  {/* Card 03 (Esquerda) */}
-                  <article
-                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      revealedCount >= 3
-                        ? 'opacity-100 translate-x-0 scale-100 delay-0'
-                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                          PASSO {steps[2].stepNumber}
-                        </span>
-                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                          <ChooseFigure active={revealedCount >= 3} />
-                        </div>
-                      </div>
-                      <h3 className="nm-h4 mb-1">
-                        {steps[2].title}
-                      </h3>
-                      <p className="nm-body line-clamp-3">
-                        {steps[2].body}
-                      </p>
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-cinzel text-xs font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                      PASSO {steps[2].stepNumber}
+                    </span>
+                    <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-90 origin-right">
+                      <ChooseFigure active={revealedCount >= 3} />
                     </div>
-                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                    </div>
-                  </article>
-
-                  {/* Card 04 (Direita — delay para surgir da esquerda para direita) */}
-                  <article
-                    className={`h-full ${landingMockupFloatClass} p-4 md:p-5 flex flex-col justify-between min-h-[155px] group transition-all duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      revealedCount >= 4
-                        ? 'opacity-100 translate-x-0 scale-100 delay-150'
-                        : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="font-cinzel text-[11px] font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-2.5 py-0.5 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
-                          PASSO {steps[3].stepNumber}
-                        </span>
-                        <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-85 origin-right">
-                          <DownloadFigure active={revealedCount >= 4} />
-                        </div>
-                      </div>
-                      <h3 className="nm-h4 mb-1">
-                        {steps[3].title}
-                      </h3>
-                      <p className="nm-body line-clamp-3">
-                        {steps[3].body}
-                      </p>
-                    </div>
-                    <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
-                    </div>
-                  </article>
-
-                  {/* Seta horizontal na linha 2 */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                    <StepArrow direction="right" active={revealedCount >= 4} />
                   </div>
+                  <h3 className="nm-h4 mb-1.5">
+                    {steps[2].title}
+                  </h3>
+                  <p className="nm-body">
+                    {steps[2].body}
+                  </p>
                 </div>
+                <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+                  <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                </div>
+              </article>
+
+              {/* Card 04 (Direita) */}
+              <article
+                className={`h-full ${landingMockupFloatClass} p-5 lg:p-6 flex flex-col justify-between min-h-[175px] group transition-all duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[transform,opacity] ${
+                  revealedCount >= 4
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-4 scale-[0.97] pointer-events-none'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-cinzel text-xs font-bold tracking-[0.18em] text-[#f2ca50] bg-[#f2ca50]/10 px-3 py-1 rounded-full ring-1 ring-[#f2ca50]/25 whitespace-nowrap">
+                      PASSO {steps[3].stepNumber}
+                    </span>
+                    <div className="text-[#D4AF37] group-hover:scale-105 transition-transform duration-500 scale-90 origin-right">
+                      <DownloadFigure active={revealedCount >= 4} />
+                    </div>
+                  </div>
+                  <h3 className="nm-h4 mb-1.5">
+                    {steps[3].title}
+                  </h3>
+                  <p className="nm-body">
+                    {steps[3].body}
+                  </p>
+                </div>
+                <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
+                  <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
+                </div>
+              </article>
+
+              {/* Seta horizontal na linha 2 */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                <StepArrow direction="right" active={revealedCount >= 4} />
               </div>
             </div>
           </div>

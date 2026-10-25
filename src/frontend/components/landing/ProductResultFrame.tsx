@@ -134,7 +134,7 @@ function SuggestionCard({
       style={{ transitionDelay: stagger ? `${delayIndex * 80}ms` : '0ms' }}
     >
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] break-words leading-tight">
+        <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none] leading-tight">
           {c.nome}
         </div>
         <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
@@ -444,19 +444,14 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
     <section ref={rootRef} className={`${landingMockupFloatClass} p-4 sm:p-5 w-full`}>
       <div className="flex flex-col gap-4 min-w-0 w-full">
         {/* Item 1: Nome de Nascimento (Nota Hoje - N2 · Em Ajuste) */}
-        <div className="flex flex-col gap-2 min-w-0 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 sm:gap-4 min-w-0">
-            <div className="min-w-0 flex-1">
-              <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500">
-                Nome de nascimento (Nota Hoje)
-              </p>
-              <h4 className="font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] truncate mt-0.5">
-                {BIRTH_NAME}
-              </h4>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
+        <div className="flex flex-col gap-1.5 min-w-0 w-full">
+          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+            <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500 leading-snug">
+              Nome de nascimento (Nota Hoje)
+            </p>
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span
-                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums"
+                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
                 style={{ color: birthVisual.text }}
               >
                 {birthScore}
@@ -467,6 +462,9 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
               </span>
             </div>
           </div>
+          <h4 className="w-full font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
+            {BIRTH_NAME}
+          </h4>
           {/* Barra de progresso full-width */}
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
             <div
@@ -480,19 +478,14 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
         <div className="border-t border-white/10" />
 
         {/* Item 2: Nome Harmonizado (Potencial - N4 · Alinhado) */}
-        <div className="flex flex-col gap-2 min-w-0 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 sm:gap-4 min-w-0">
-            <div className="min-w-0 flex-1">
-              <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400">
-                Nome harmonizado (Potencial)
-              </p>
-              <h4 className="font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] truncate mt-0.5">
-                {INDICATED_NAME}
-              </h4>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
+        <div className="flex flex-col gap-1.5 min-w-0 w-full">
+          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+            <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400 leading-snug">
+              Nome harmonizado (Potencial)
+            </p>
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span
-                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums"
+                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
                 style={{ color: harmVisual.text }}
               >
                 {harmScore}
@@ -503,6 +496,9 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
               </span>
             </div>
           </div>
+          <h4 className="w-full font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
+            {INDICATED_NAME}
+          </h4>
           {/* Barra de progresso full-width */}
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
             <div
