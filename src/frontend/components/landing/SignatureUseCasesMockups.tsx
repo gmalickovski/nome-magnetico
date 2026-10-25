@@ -83,15 +83,16 @@ export function CleanSignatureSvg({
 }
 
 /**
- * Larguras responsivas específicas para cada mockup na Seção 4:
- * No mobile smartphone (< 640px), cartões (CIN e Marca Pessoal) e o smartphone
- * ficam compactos e centralizados (~270px–300px), sem esticar até as bordas da tela.
- * No tablet e desktop (sm / lg), aproveitam a coluna lado a lado (~440px–520px).
+ * Escala progressiva por dispositivo para manter proporção entre todos os mockups:
+ * - Mobile smartphone (< 640px): 335px para cartões/folha e 285px para celular (equilíbrio sem colar nas bordas).
+ * - Tablet 10" em pé (sm / md, 640px–1023px): meio-termo (375px -> 405px cartões/folha; 310px -> 330px celular).
+ * - Tablet 12"–13" (lg, 1024px–1279px): lado a lado com o texto (430px cartões/folha; 340px celular).
+ * - Desktop amplo (xl+, >= 1280px): 480px cartões/folha e 365px celular.
  */
-const CIN_CARD_WIDTH = 'w-full max-w-[290px] sm:max-w-[440px] lg:max-w-[520px] mx-auto';
-const SOCIAL_CARD_WIDTH = 'w-full max-w-[260px] sm:max-w-[340px] lg:max-w-[400px] mx-auto';
-const CONTRACT_CARD_WIDTH = 'w-full max-w-[310px] sm:max-w-[440px] lg:max-w-[500px] mx-auto';
-const BRANDING_CARD_WIDTH = 'w-full max-w-[290px] sm:max-w-[440px] lg:max-w-[520px] mx-auto';
+const HORIZONTAL_CARD_WIDTH =
+  'w-full max-w-[335px] sm:max-w-[375px] md:max-w-[405px] lg:max-w-[430px] xl:max-w-[480px] mx-auto';
+const SOCIAL_PHONE_WIDTH =
+  'w-full max-w-[285px] sm:max-w-[310px] md:max-w-[330px] lg:max-w-[340px] xl:max-w-[365px] mx-auto';
 
 /**
  * MOCKUP 1: Documento Oficial (CIN - Carteira de Identidade Nacional / CNH)
@@ -100,7 +101,7 @@ const BRANDING_CARD_WIDTH = 'w-full max-w-[290px] sm:max-w-[440px] lg:max-w-[520
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`${CIN_CARD_WIDTH} aspect-[85.6/54] ${landingMockupFloatClass} relative overflow-hidden flex flex-col justify-between p-3 sm:p-5 lg:p-6 select-none ${className}`}
+      className={`${HORIZONTAL_CARD_WIDTH} aspect-[85.6/54] ${landingMockupFloatClass} relative overflow-hidden flex flex-col justify-between p-3.5 sm:p-4 md:p-5 lg:p-5 xl:p-6 select-none ${className}`}
     >
       {/* Padrão geométrico de fundo estilo cédula de segurança */}
       <div
@@ -222,107 +223,149 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
 }
 
 /**
- * MOCKUP 2: Perfil de Rede Social / Presença Digital
- * Recorte superior da tela de smartphone com proporções reais de interface mobile
- * e corte suave na parte inferior (grade de publicações).
+ * MOCKUP 2: Perfil de Rede Social / Presença Digital (Crop da Parte Superior do Smartphone)
+ * Usa a mesma lógica de mockup inteiro com recorte (crop):
+ * - Representa o chassi superior de um smartphone real (bordas arredondadas no topo,
+ *   Dynamic Island, barra de status, @handle, avatar, métricas, bio e botões).
+ * - Na base, exibe o início dos Destaques (Stories) e da grade do feed sendo
+ *   recortados suavemente por máscara (fade inferior), tanto no mobile quanto no desktop.
  */
 export function SocialProfileMockup({ className = '' }: MockupProps) {
   return (
-    <div
-      className={`${SOCIAL_CARD_WIDTH} ${landingMockupFloatClass} rounded-t-[1.8rem] sm:rounded-t-[2.2rem] rounded-b-2xl border-t-2 border-x-2 border-b border-white/15 relative overflow-hidden flex flex-col justify-between p-3.5 sm:p-5 select-none ${className}`}
-    >
-      {/* Brilho de fundo místico roxo e dourado */}
+    <div className={`${SOCIAL_PHONE_WIDTH} relative select-none ${className}`}>
       <div
-        className="absolute -top-12 -left-12 w-44 h-44 bg-[#d7c6ff]/10 rounded-full blur-3xl pointer-events-none"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -bottom-12 -right-12 w-44 h-44 bg-[#f2ca50]/10 rounded-full blur-3xl pointer-events-none"
-        aria-hidden="true"
-      />
+        className="relative mx-auto w-full rounded-t-[2.2rem] sm:rounded-t-[2.5rem] rounded-b-none bg-gradient-to-b from-[#1a1918] via-[#151413] to-[#121110] border-t-[3px] border-x-[3px] border-b-0 border-white/20 shadow-[0_24px_50px_rgba(0,0,0,0.65)] overflow-hidden px-4 sm:px-5 pt-3 pb-5"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 0%, black 76%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 76%, transparent 100%)',
+        }}
+      >
+        {/* Brilho de fundo místico roxo e dourado */}
+        <div
+          className="absolute -top-12 -left-12 w-40 h-40 bg-[#d7c6ff]/10 rounded-full blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute top-1/3 -right-12 w-40 h-40 bg-[#f2ca50]/10 rounded-full blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
 
-      {/* Barra superior de smartphone com Notch */}
-      <div className="relative z-10 flex flex-col items-center pb-2 border-b border-white/10 shrink-0">
-        <div className="w-20 h-3 bg-black/60 rounded-full mb-1.5 border border-white/5" />
-        <div className="w-full flex items-center justify-between px-1">
+        {/* Barra de Status do Smartphone + Dynamic Island */}
+        <div className="relative z-10 flex items-center justify-between px-1.5 mb-2 text-[9px] font-mono text-gray-300">
+          <span className="font-semibold">9:41</span>
+          <div className="w-16 sm:w-20 h-3 bg-black rounded-full border border-white/10" />
+          <div className="flex items-center gap-1 text-[8px] text-gray-400">
+            <span>5G</span>
+            <span className="inline-block w-3.5 h-2 rounded-[2px] border border-gray-400 p-[1px]">
+              <span className="block w-full h-full bg-[#f2ca50] rounded-[1px]" />
+            </span>
+          </div>
+        </div>
+
+        {/* Barra do App com @handle */}
+        <div className="relative z-10 flex items-center justify-between pb-2 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-mono text-xs font-semibold text-[#e5e2e1] tracking-wide">
+            <span className="font-mono text-[11px] sm:text-xs font-semibold text-[#e5e2e1] tracking-wide">
               @anapaulaferreira
             </span>
-            <span className="w-3.5 h-3.5 rounded-full bg-[#f2ca50] text-[#131313] flex items-center justify-center text-[9px] font-bold">
+            <span className="w-3.5 h-3.5 rounded-full bg-[#f2ca50] text-[#131313] flex items-center justify-center text-[8px] font-bold">
               ✓
             </span>
           </div>
           <span className="text-gray-400 text-xs">•••</span>
         </div>
-      </div>
 
-      {/* Header do Perfil: Avatar com anel dourado + Métricas */}
-      <div className="relative z-10 flex items-center gap-4 my-3 shrink-0">
-        <div className="relative shrink-0">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-[2px] bg-gradient-to-tr from-[#f2ca50] via-[#d7c6ff] to-[#f2ca50]">
-            <div className="w-full h-full rounded-full bg-[#161616] flex items-center justify-center overflow-hidden border border-black">
-              <span className="font-cinzel text-base sm:text-lg font-bold text-[#f2ca50]">
-                AP
-              </span>
+        {/* Header do Perfil: Avatar com anel dourado + Métricas */}
+        <div className="relative z-10 flex items-center gap-3 sm:gap-4 my-2.5 shrink-0">
+          <div className="relative shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full p-[2px] bg-gradient-to-tr from-[#f2ca50] via-[#d7c6ff] to-[#f2ca50]">
+              <div className="w-full h-full rounded-full bg-[#161616] flex items-center justify-center overflow-hidden border border-black">
+                <span className="font-cinzel text-sm sm:text-base font-bold text-[#f2ca50]">
+                  AP
+                </span>
+              </div>
+            </div>
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-[#f2ca50] text-[#131313] border border-[#131313] flex items-center justify-center text-[7px] font-bold">
+              ✦
+            </span>
+          </div>
+
+          <div className="flex-1 grid grid-cols-3 text-center gap-1.5">
+            <div>
+              <p className="font-mono text-xs sm:text-sm font-bold text-[#e5e2e1]">142</p>
+              <p className="text-[9px] text-gray-400">posts</p>
+            </div>
+            <div>
+              <p className="font-mono text-xs sm:text-sm font-bold text-[#f2ca50]">48.6K</p>
+              <p className="text-[9px] text-gray-400">seguidores</p>
+            </div>
+            <div>
+              <p className="font-mono text-xs sm:text-sm font-bold text-[#e5e2e1]">1.2K</p>
+              <p className="text-[9px] text-gray-400">conexões</p>
             </div>
           </div>
-          <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-[#f2ca50] text-[#131313] border-2 border-[#131313] flex items-center justify-center text-[8px] font-bold">
-            ✦
-          </span>
         </div>
 
-        <div className="flex-1 grid grid-cols-3 text-center gap-2">
-          <div>
-            <p className="font-mono text-xs sm:text-sm font-bold text-[#e5e2e1]">142</p>
-            <p className="text-[10px] text-gray-400">posts</p>
-          </div>
-          <div>
-            <p className="font-mono text-xs sm:text-sm font-bold text-[#f2ca50]">48.6K</p>
-            <p className="text-[10px] text-gray-400">seguidores</p>
-          </div>
-          <div>
-            <p className="font-mono text-xs sm:text-sm font-bold text-[#e5e2e1]">1.2K</p>
-            <p className="text-[10px] text-gray-400">conexões</p>
-          </div>
+        {/* Nome e Biografia Profissional */}
+        <div className="relative z-10 space-y-0.5 shrink-0">
+          <h4 className="font-cinzel text-xs sm:text-sm font-bold text-[#e5e2e1] leading-tight">
+            Ana Paula Férreira
+          </h4>
+          <p className="text-[10.5px] sm:text-xs text-[#d7c6ff]/90 font-medium leading-tight">
+            Diretora Criativa & Consultora Estratégica
+          </p>
+          <p className="text-[10px] sm:text-[11px] text-gray-400 leading-snug">
+            Projetos autorais, comunicação e posicionamento de marca.
+          </p>
+          <p className="text-[10px] sm:text-[11px] font-mono text-[#f2ca50]/90 flex items-center gap-1 pt-0.5">
+            <span>🔗</span> anapaulaferreira.com.br
+          </p>
         </div>
-      </div>
 
-      {/* Nome e Biografia Profissional */}
-      <div className="relative z-10 space-y-1 shrink-0">
-        <h4 className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] leading-tight">
-          Ana Paula Férreira
-        </h4>
-        <p className="text-xs text-[#d7c6ff]/90 font-medium leading-tight">
-          Diretora Criativa & Consultora Estratégica
-        </p>
-        <p className="text-[11px] text-gray-400 leading-snug">
-          Projetos autorais, comunicação e posicionamento de marca.
-        </p>
-        <p className="text-[11px] font-mono text-[#f2ca50]/90 flex items-center gap-1 pt-0.5">
-          <span>🔗</span> anapaulaferreira.com.br
-        </p>
-      </div>
+        {/* Botões de Ação */}
+        <div className="relative z-10 grid grid-cols-2 gap-2 mt-2.5 shrink-0">
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="rounded-full bg-[#f2ca50] text-[#131313] py-1 sm:py-1.5 text-[10.5px] sm:text-xs font-bold tracking-wide flex items-center justify-center gap-1"
+          >
+            <span>Seguir</span>
+            <span className="text-[8px]">✦</span>
+          </button>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="rounded-full bg-white/5 border border-white/10 text-[#e5e2e1] py-1 sm:py-1.5 text-[10.5px] sm:text-xs font-medium flex items-center justify-center"
+          >
+            Mensagem
+          </button>
+        </div>
 
-      {/* Botões de Ação */}
-      <div className="relative z-10 grid grid-cols-2 gap-2.5 mt-3 pt-2.5 border-t border-white/5 shrink-0">
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-hidden="true"
-          className="rounded-full bg-[#f2ca50] text-[#131313] py-1.5 text-xs font-bold tracking-wide flex items-center justify-center gap-1"
-        >
-          <span>Seguir</span>
-          <span className="text-[9px]">✦</span>
-        </button>
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-hidden="true"
-          className="rounded-full bg-white/5 border border-white/10 text-[#e5e2e1] py-1.5 text-xs font-medium flex items-center justify-center"
-        >
-          Mensagem
-        </button>
+        {/* Destaques (Stories) + topo do feed aparecendo no corte inferior */}
+        <div className="relative z-10 flex items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-white/5 shrink-0 opacity-85">
+          {[
+            { label: 'Obras', icon: '📖' },
+            { label: 'Palestras', icon: '🎙️' },
+            { label: 'Bastidores', icon: '✨' },
+            { label: 'Imprensa', icon: '📰' },
+          ].map((item, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-0.5 shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full p-[1px] bg-[#f2ca50]/25 border border-[#f2ca50]/35 flex items-center justify-center bg-[#181818]">
+                <span className="text-[10px]">{item.icon}</span>
+              </div>
+              <span className="text-[7.5px] text-gray-400">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Início da grade de posts cortada pelo fade inferior */}
+        <div className="relative z-10 grid grid-cols-3 gap-1 pt-2 mt-2 border-t border-white/5 h-8 opacity-50">
+          {[1, 2, 3].map((p) => (
+            <div key={p} className="rounded-t-md bg-white/5 border-t border-x border-white/5" />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -338,7 +381,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 export function ContractMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`${CONTRACT_CARD_WIDTH} relative pt-2 select-none ${className}`}
+      className={`${HORIZONTAL_CARD_WIDTH} relative pt-2 select-none ${className}`}
     >
       {/* Fade superior que cria o efeito de recorte (crop) vindo do meio da folha de ofício */}
       <div
@@ -414,7 +457,7 @@ export function ContractMockup({ className = '' }: MockupProps) {
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`${BRANDING_CARD_WIDTH} aspect-[1.72/1] ${landingMockupFloatClass} rounded-xl relative overflow-hidden flex flex-col justify-between p-3.5 sm:p-5 lg:p-6 select-none ${className}`}
+      className={`${HORIZONTAL_CARD_WIDTH} aspect-[1.72/1] ${landingMockupFloatClass} rounded-xl relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 lg:p-5 xl:p-6 select-none ${className}`}
     >
       {/* Topo do cartão: Monograma 'AP' + Identidade */}
       <div className="flex items-center justify-between shrink-0">

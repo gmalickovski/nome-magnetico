@@ -98,26 +98,28 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
       ref={reveal.ref}
       className={`flex flex-col ${
         mockupFirst ? 'lg:flex-row-reverse' : 'lg:flex-row'
-      } items-center justify-between gap-8 sm:gap-10 lg:gap-14 xl:gap-16 w-full min-w-0`}
+      } items-center justify-between gap-7 sm:gap-9 md:gap-10 lg:gap-10 xl:gap-16 w-full min-w-0`}
     >
-      {/* Coluna de Texto: no mobile/tablet fica sempre em cima (flex-col); no desktop alterna via flex-row / flex-row-reverse */}
+      {/* Coluna de Texto:
+          - Smartphone (<640px) e Tablet 10" em pé (640px–1023px): empilhada no topo, centralizada com largura de leitura confortável.
+          - Tablet 12"–13" (lg: 1024px+) e Desktop (xl: 1280px+): lado a lado em zigue-zague, reservando 52% no lg para máxima legibilidade. */}
       <div
-        className={`w-full lg:w-1/2 flex-1 min-w-0 flex flex-col justify-center text-center lg:text-left ${textReveal.className}`}
+        className={`w-full lg:w-[52%] xl:w-1/2 flex-1 min-w-0 flex flex-col justify-center text-center lg:text-left ${textReveal.className}`}
         style={textReveal.style}
       >
         <p className="nm-eyebrow mb-2">
           {item.eyebrow}
         </p>
 
-        <h3 className="nm-h3 mb-3">
+        <h3 className="nm-h3 mb-3 max-w-[28ch] mx-auto lg:mx-0">
           {item.title}
         </h3>
 
-        <p className="nm-body mb-5 max-w-[56ch] mx-auto lg:mx-0">
+        <p className="nm-body mb-5 max-w-[54ch] sm:max-w-[60ch] lg:max-w-[56ch] mx-auto lg:mx-0">
           {item.description}
         </p>
 
-        <div className="space-y-2.5 max-w-[54ch] mx-auto lg:mx-0 text-left">
+        <div className="space-y-2.5 max-w-[50ch] sm:max-w-[56ch] lg:max-w-[54ch] mx-auto lg:mx-0 text-left">
           {item.bulletPoints.map((bullet, bIdx) => (
             <div key={bIdx} className="flex items-start gap-2.5">
               <span className="text-[#D4AF37] text-sm shrink-0 leading-none mt-1">✦</span>
@@ -127,9 +129,11 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
         </div>
       </div>
 
-      {/* Coluna de Mockup: no mobile/tablet fica sempre abaixo do texto */}
+      {/* Coluna de Mockup:
+          - Smartphone e Tablet 10" em pé: fica abaixo do texto, centralizado em escala intermediária.
+          - Tablet 12"–13" (lg) e Desktop (xl): lado a lado com o texto. */}
       <div
-        className={`w-full lg:w-1/2 flex-1 min-w-0 flex items-center justify-center ${mockupReveal.className}`}
+        className={`w-full lg:w-[48%] xl:w-1/2 flex-1 min-w-0 flex items-center justify-center ${mockupReveal.className}`}
         style={mockupReveal.style}
       >
         <div className="w-full flex items-center justify-center">
