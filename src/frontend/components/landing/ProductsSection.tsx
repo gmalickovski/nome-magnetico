@@ -51,10 +51,10 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 xl:gap-12 items-center w-full min-w-0">
-            {/* Coluna Esquerda: 50% da largura no desktop */}
-            <aside className="w-full min-w-0 order-1">
-              <div className="w-full text-center lg:text-left">
+          <div className="max-w-6xl xl:max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-8 items-center w-full min-w-0">
+            {/* Coluna Esquerda: texto e card de score aproximados do centro */}
+            <aside className="w-full lg:col-span-6 min-w-0 order-1 lg:pr-2">
+              <div className="w-full max-w-[560px] mx-auto lg:ml-auto lg:mr-0 text-center lg:text-left">
                 <p
                   className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${s1Label.className}`}
                   style={s1Label.style}
@@ -70,15 +70,15 @@ export function ProductsSection() {
                 </h2>
 
                 <p
-                  className={`nm-body-lg mt-4 sm:mt-5 max-w-[58ch] mx-auto lg:mx-0 ${s1Desc.className}`}
+                  className={`nm-body-lg mt-4 sm:mt-5 max-w-[54ch] mx-auto lg:mx-0 ${s1Desc.className}`}
                   style={s1Desc.style}
                 >
                   Cada letra e cada acento entram no cálculo. O que vem da sua data de nascimento fica à parte, porque nenhum nome muda isso. O que vem só do nome pode ser harmonizado numa assinatura só sua, sem mudar o seu registro. Você vê o antes e o depois lado a lado, com a nota de cada um.
                 </p>
 
-                {/* Card de Score: ocupa a largura total da coluna esquerda (50%), logo abaixo do texto */}
+                {/* Card de Score: logo abaixo do texto */}
                 <div
-                  className={`mt-6 sm:mt-8 w-full max-w-xl mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
+                  className={`mt-6 sm:mt-8 w-full max-w-[520px] mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
                   style={s1ScoreCard.style}
                 >
                   <ProductHarmonyScoreCard />
@@ -86,11 +86,11 @@ export function ProductsSection() {
               </div>
             </aside>
 
-            {/* Coluna Direita: 50% da largura no desktop, com estrela centralizada */}
+            {/* Coluna Direita: estrela aproximada em direção ao centro */}
             <div
-              className={`w-full min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6`}
+              className="w-full lg:col-span-6 min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:py-4 lg:pl-2 lg:pr-0"
             >
-              <div className="w-full max-w-[580px] xl:max-w-[620px] mx-auto flex flex-col items-center justify-center">
+              <div className="w-full max-w-[540px] xl:max-w-[580px] mx-auto lg:mr-auto lg:ml-0 flex flex-col items-center justify-center">
                 <ProductHarmonyStar />
               </div>
             </div>
