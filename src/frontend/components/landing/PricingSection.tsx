@@ -195,67 +195,119 @@ export function PricingSection({
     >
       <style>
         {`
-          @keyframes nm-price-border-shift {
-            0%, 100% { border-color: #D4AF37; }
-            50% { border-color: #E8C84A; }
+          @keyframes nm-price-border-flow {
+            0% {
+              background-position: 0% 50%, 0% 50%;
+            }
+            50% {
+              background-position: 0% 50%, 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%, 0% 50%;
+            }
           }
           .nm-price-border {
-            border: 2px solid #D4AF37;
-            animation: nm-price-border-shift 4.8s ease-in-out infinite;
+            border: 1.5px solid transparent;
+            background-image:
+              linear-gradient(#181818, #181818),
+              linear-gradient(
+                115deg,
+                rgba(140, 109, 22, 0.3) 0%,
+                rgba(212, 175, 55, 0.85) 20%,
+                rgba(245, 215, 110, 1) 38%,
+                rgba(150, 118, 24, 0.35) 55%,
+                rgba(212, 175, 55, 0.9) 75%,
+                rgba(242, 202, 80, 1) 90%,
+                rgba(140, 109, 22, 0.3) 100%
+              );
+            background-origin: padding-box, border-box;
+            background-clip: padding-box, border-box;
+            background-size: 100% 100%, 300% 300%;
+            animation: nm-price-border-flow 6s ease-in-out infinite;
           }
           @media (prefers-reduced-motion: reduce) {
             .nm-price-border {
               animation: none;
-              border-color: #D4AF37;
+              border-color: rgba(212, 175, 55, 0.65);
             }
           }
         `}
       </style>
       <div className={landingSectionShellClass}>
         <div
-          className={`mx-auto w-full max-w-xl min-w-0 ${cardReveal.className}`}
+          className={`mx-auto w-full max-w-xl lg:max-w-[980px] xl:max-w-[1060px] min-w-0 ${cardReveal.className}`}
           style={cardReveal.style}
         >
-          <div className="nm-floating-card nm-price-border rounded-2xl px-6 py-8 md:px-10 md:py-10 text-center">
-            <h3 className="nm-h3">
-              Análise Completa Nome Social
-            </h3>
+          <div className="nm-floating-card nm-price-border rounded-2xl px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-11 xl:px-14 xl:py-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-5 lg:gap-y-0 lg:gap-x-10 xl:gap-x-14 items-center text-center lg:text-left">
+              {/* 1. Título: no topo no mobile (<1024px) | na direita no desktop widescreen (lg+) */}
+              <div className="order-1 lg:order-none lg:col-span-7 lg:col-start-6 lg:row-start-1">
+                <h3 className="nm-h3 lg:text-2xl xl:text-[1.65rem]">
+                  Análise Completa Nome Social
+                </h3>
+              </div>
 
-            <div className="mt-3 flex justify-center">
-              <Price {...priceProps} size="hero" className="text-center items-center" />
+              {/* 2. Valor na esquerda no desktop widescreen (lg+) | abaixo do título no mobile (<1024px) */}
+              <div className="order-2 lg:order-none lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:row-span-3 flex flex-col items-center justify-center text-center lg:py-8 lg:px-6 lg:rounded-2xl lg:bg-[#131313]/65 h-full">
+                <Price {...priceProps} size="hero" className="text-center items-center" />
+
+                <div className="hidden lg:block mt-5 space-y-1.5">
+                  <p className="text-[#e5e2e1] font-semibold text-sm leading-relaxed">
+                    pagamento único, sem mensalidade.
+                  </p>
+                  <p className="text-gray-400 text-xs xl:text-sm leading-relaxed">
+                    Acesso na hora.{' '}
+                    <span className="whitespace-nowrap">Sete dias de garantia.</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. Entregáveis: no meio no mobile (<1024px) | na direita abaixo do título no desktop (lg+) */}
+              <div className="order-3 lg:order-none lg:col-span-7 lg:col-start-6 lg:row-start-2 lg:mt-4">
+                <ul className="space-y-2 list-none p-0 m-0">
+                  {NOME_SOCIAL_DELIVERABLES.map((item) => (
+                    <li
+                      key={item}
+                      className="nm-body flex items-center justify-center lg:justify-start gap-2.5"
+                    >
+                      <span className="hidden lg:inline text-[#D4AF37] text-xs shrink-0 leading-none">
+                        ✦
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* 4. Termos de pagamento no mobile (<1024px): empilhados antes do botão */}
+              <div className="order-4 lg:hidden space-y-1.5">
+                <p className="text-[#e5e2e1] font-semibold text-sm leading-relaxed">
+                  pagamento único, sem mensalidade.
+                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Acesso na hora.{' '}
+                  <span className="whitespace-nowrap">Sete dias de garantia.</span>
+                </p>
+              </div>
+
+              {/* 5. Botão de Ação: embaixo no mobile (<1024px) e embaixo na coluna direita no desktop (lg+) */}
+              <div className="order-5 lg:order-none lg:col-span-7 lg:col-start-6 lg:row-start-3 lg:mt-7">
+                <button
+                  type="button"
+                  onClick={handleBuy}
+                  data-cta-id="pricing_nome_social"
+                  data-cta-position="precos"
+                  disabled={priceUnavailableOnHq}
+                  className={`w-full ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
+                    priceUnavailableOnHq
+                      ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500'
+                      : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
+                  }`}
+                >
+                  Ver Minhas 3 Opções
+                </button>
+              </div>
             </div>
-
-            <ul className="mt-4 space-y-1.5 list-none p-0 m-0">
-              {NOME_SOCIAL_DELIVERABLES.map((item) => (
-                <li key={item} className="nm-body">
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-4 text-[#e5e2e1] text-sm leading-relaxed">
-              pagamento único, sem mensalidade.
-            </p>
-
-            <p className="mt-2 text-gray-400 text-sm leading-relaxed">
-              Acesso na hora.{' '}
-              <span className="whitespace-nowrap">Sete dias de garantia.</span>
-            </p>
-
-            <button
-              type="button"
-              onClick={handleBuy}
-              data-cta-id="pricing_nome_social"
-              data-cta-position="precos"
-              disabled={priceUnavailableOnHq}
-              className={`mt-6 w-full ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
-                priceUnavailableOnHq
-                  ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500'
-                  : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
-              }`}
-            >
-              Ver Minhas 3 Opções
-            </button>
           </div>
         </div>
       </div>
