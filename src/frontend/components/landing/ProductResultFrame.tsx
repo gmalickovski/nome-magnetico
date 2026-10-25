@@ -26,14 +26,14 @@ import { ProductAnimatedScore } from './ProductAnimatedScore';
 
 const GOLD = '#D4AF37';
 
-/** Demo pairing validated against analisarNomeSocial("Maria da Silva Santos", "26/05/1971"). */
-const BIRTH_NAME = 'MARIA DA SILVA SANTOS';
-const INDICATED_NAME = 'MARIÃ SILVA';
-const DEMO_SCORE_BIRTH = 46;
-const DEMO_SCORE_HARMONIZED = 83;
+/** Demo pairing validated against analisarNomeSocial("ANA PAULA FERREIRA LIMA", "15/03/1985"). */
+const BIRTH_NAME = 'ANA PAULA FERREIRA LIMA';
+const INDICATED_NAME = 'ANA PAULA FÉRREIRA';
+const DEMO_SCORE_BIRTH = 42;
+const DEMO_SCORE_HARMONIZED = 95;
 
-const DEMO_GOLD_NUMS = [4, 8, 8, 3, 9];
-const DEMO_RED_NUMS = [4, 6, 5, 1, 1];
+const DEMO_GOLD_NUMS = [5, 9, 6, 5, 3];
+const DEMO_RED_NUMS = [5, 7, 6, 3, 1];
 
 const OUTER_PTS = harmonyStarPts(
   HARMONY_STAR_CX,
@@ -65,35 +65,35 @@ interface DemoSuggestion {
 /** System suggestions (IA) — mirrors "Nossas Sugestões". */
 const DEMO_SYSTEM_SUGGESTIONS: DemoSuggestion[] = [
   {
-    nome: 'MARIA DA SANNTOS',
-    score: 84,
+    nome: 'ANA PAULA FÉRREIRA',
+    score: 95,
     compatibilidade: 'favoravel',
     expressao: 9,
-    destino: 4,
-    motivacao: 5,
-    impressao: 4,
-    missao: 4,
+    destino: 5,
+    motivacao: 6,
+    impressao: 3,
+    missao: 5,
     bloqueios: 0,
   },
   {
-    nome: 'MARIÃ SILVA',
-    score: 83,
+    nome: 'ANA',
+    score: 84,
     compatibilidade: 'favoravel',
-    expressao: 8,
-    destino: 4,
-    motivacao: 8,
-    impressao: 9,
+    expressao: 7,
+    destino: 5,
+    motivacao: 2,
+    impressao: 5,
     missao: 3,
     bloqueios: 0,
   },
   {
-    nome: 'MARIA SILVA',
-    score: 84,
-    compatibilidade: 'favoravel',
-    expressao: 9,
-    destino: 4,
-    motivacao: 6,
-    impressao: 3,
+    nome: 'ANA PAULA',
+    score: 65,
+    compatibilidade: 'desfavoravel',
+    expressao: 8,
+    destino: 5,
+    motivacao: 1,
+    impressao: 7,
     missao: 4,
     bloqueios: 0,
   },
@@ -102,26 +102,26 @@ const DEMO_SYSTEM_SUGGESTIONS: DemoSuggestion[] = [
 /** User candidates — mirrors "Suas Sugestões". */
 const DEMO_USER_SUGGESTIONS: DemoSuggestion[] = [
   {
-    nome: 'MARIA SANTOS',
-    score: 57,
-    compatibilidade: 'desfavoravel',
-    expressao: 5,
-    destino: 4,
-    motivacao: 11,
-    impressao: 3,
-    missao: 9,
-    bloqueios: 0,
+    nome: 'PAULA FERREIRA',
+    score: 48,
+    compatibilidade: 'favoravel',
+    expressao: 9,
+    destino: 5,
+    motivacao: 2,
+    impressao: 7,
+    missao: 5,
+    bloqueios: 6,
   },
   {
-    nome: 'MARIA DA SILVA',
-    score: 6,
-    compatibilidade: 'neutro',
-    expressao: 1,
-    destino: 4,
-    motivacao: 6,
-    impressao: 4,
-    missao: 5,
-    bloqueios: 4,
+    nome: 'ANA FERREIRA',
+    score: 29,
+    compatibilidade: 'desfavoravel',
+    expressao: 6,
+    destino: 5,
+    motivacao: 5,
+    impressao: 1,
+    missao: 11,
+    bloqueios: 6,
   },
 ];
 
@@ -211,7 +211,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 85) {
     return {
       code: 'N5',
-      label: 'N5 · Harmonioso',
+      label: 'Harmonioso',
       stroke: '#10B981',
       text: '#34D399',
       fill: 'rgba(16, 185, 129, 0.12)',
@@ -223,7 +223,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 70) {
     return {
       code: 'N4',
-      label: 'N4 · Alinhado',
+      label: 'Favorável',
       stroke: '#84CC16',
       text: '#A3E635',
       fill: 'rgba(132, 204, 22, 0.12)',
@@ -235,7 +235,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 50) {
     return {
       code: 'N3',
-      label: 'N3 · Funcional',
+      label: 'Equilíbrio Parcial',
       stroke: '#EAB308',
       text: '#FACC15',
       fill: 'rgba(234, 179, 8, 0.12)',
@@ -247,7 +247,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 30) {
     return {
       code: 'N2',
-      label: 'N2 · Em Ajuste',
+      label: 'Pede Atenção',
       stroke: '#F97316',
       text: '#FB923C',
       fill: 'rgba(249, 115, 22, 0.12)',
@@ -258,7 +258,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   }
   return {
     code: 'N1',
-    label: 'N1 · Em Tensão',
+    label: 'Em Tensão',
     stroke: '#EF4444',
     text: '#F87171',
     fill: 'rgba(239, 68, 68, 0.12)',
@@ -847,13 +847,13 @@ export function ProductSuggestionsFrame() {
     <div ref={rootRef} className={`@container/suggestions ${desktopFitClass}`}>
       <div className={`${desktopStackClass} gap-4 sm:gap-5`}>
         <div className="min-w-0">
-          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-0.5 px-0.5">
+          <p className="nm-eyebrow mb-0.5 px-0.5">
             Selecionadas para Você
           </p>
-          <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] px-0.5 mb-0.5">
+          <h4 className="nm-h4 px-0.5 mb-0.5">
             Nossas Sugestões
           </h4>
-          <p className="text-[11px] text-gray-400 px-0.5 mb-2.5 leading-relaxed">
+          <p className="nm-body text-xs md:text-xs text-gray-400 px-0.5 mb-2.5">
             Criadas para o seu perfil numerológico.
           </p>
           {/* 3-up from sm, 1-up on mobile. */}
@@ -870,13 +870,13 @@ export function ProductSuggestionsFrame() {
         </div>
 
         <div className="min-w-0">
-          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-0.5 px-0.5">
+          <p className="nm-eyebrow mb-0.5 px-0.5">
             Seus Candidatos
           </p>
-          <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] px-0.5 mb-0.5">
+          <h4 className="nm-h4 px-0.5 mb-0.5">
             Suas Sugestões
           </h4>
-          <p className="text-[11px] text-gray-400 px-0.5 mb-2.5 leading-relaxed">
+          <p className="nm-body text-xs md:text-xs text-gray-400 px-0.5 mb-2.5">
             Nomes que você indicou, analisados numerologicamente.
           </p>
           {/* 2-up from sm (two candidates), 1-up on mobile. */}

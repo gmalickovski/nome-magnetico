@@ -138,7 +138,7 @@ export function GenerateFigure({ active = true }: FigureProps) {
  */
 export function ChooseFigure({ active = true }: FigureProps) {
   return (
-    <FigureFrame label="Ranking de nomes e alternativas" className={active ? 'opacity-100 scale-100' : 'opacity-40 scale-95'}>
+    <FigureFrame label="Opções de nome e alternativas" className={active ? 'opacity-100 scale-100' : 'opacity-40 scale-95'}>
       {/* Item 1: Ouro / Indicado principal */}
       <rect
         x="8"

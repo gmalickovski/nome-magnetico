@@ -14,25 +14,31 @@ export interface FaqItemProps {
   answer_html?: string | null;
 }
 
-// Failsafe mínimo — exibido apenas se o Supabase estiver indisponível
+// Failsafe mínimo: exibido apenas se o Supabase estiver indisponível
 const fallbackItems = [
   {
     id: '1',
-    question: 'O que é a numerologia cabalística?',
+    question: 'Como a nota é calculada?',
     answer:
-      'É a ciência exata de conversão de letras em números e cálculo de frequências. Baseada na tradição mística hebraica, oferece um mapa matemático profundo, unindo cabala, cálculos precisos e arquétipos junguianos.',
+      'Pela numerologia cabalística, com regras fixas: o mesmo nome com a mesma data sempre dá a mesma nota. A nota usa o triângulo da Vida; cada padrão conta uma única vez, e o que vem da sua data aparece separado. A conta é aberta: veja como calculamos a sua nota na página explicativa.',
   },
   {
     id: '2',
-    question: 'Como a mudança da assinatura remove bloqueios?',
+    question: 'O que o meu nome muda e o que não muda?',
     answer:
-      'Cada letra emite uma força. Mudando letras na assinatura, a equação do seu Triângulo da Vida muda, desmanchando sequências repetitivas (como 444, de inércia ou 888 de excesso) que causam bloqueios visíveis em diversas áreas.',
+      'A data de nascimento traz marcas que nenhum nome muda, e elas aparecem separadas como "Marca da sua data". O que a assinatura pode harmonizar são os padrões que vêm só do nome. Por isso mostramos duas coisas lado a lado: a nota de hoje e o potencial.',
   },
   {
     id: '3',
-    question: 'O que o relatório completo entrega?',
+    question: 'Por que às vezes aparecem acentos?',
     answer:
-      'Uma interpretação profunda dos 5 números, o caminho de transformação de cada bloqueio, top 3 Nomes Magnéticos personalizados com scoring numérico, além do Guia Executivo de Implementação de 30 dias em PDF premium.',
+      'Na numerologia cabalística, cada acento muda o valor da letra. Antes de sugerir acento, o motor tenta encurtar o nome. Quando há acento, é um só e fica só na assinatura. Ele muda o cálculo sem mudar o seu nome.',
+  },
+  {
+    id: '4',
+    question: 'O que é a numerologia cabalística?',
+    answer:
+      'É um sistema tradicional que atribui valores numéricos às letras e aos acentos do nome. No Nome Magnético, esse cálculo segue regras fixas para cada letra e cada acento, garantindo que o mesmo nome sempre gere o mesmo resultado.',
   },
 ];
 

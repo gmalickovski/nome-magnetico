@@ -16,7 +16,7 @@ interface MockupProps {
  * - Mantém o acento de harmonização exato (Mariã Silva / João Silva).
  */
 export function CleanSignatureSvg({
-  name = 'Mariã Silva',
+  name = 'Ana Paula Férreira',
   className = 'w-full h-12 sm:h-14',
 }: {
   name?: string;
@@ -170,7 +170,7 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
               Nome Civil (Certidão de Nascimento)
             </p>
             <p className="font-cinzel text-xs sm:text-sm font-bold text-[#e5e2e1] tracking-wide leading-tight">
-              MARIA DA SILVA SANTOS
+              ANA PAULA FERREIRA LIMA
             </p>
           </div>
 
@@ -181,7 +181,7 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
             </div>
             <div>
               <p className="text-[7px] uppercase tracking-wider text-gray-500">Nascimento</p>
-              <p className="font-mono text-gray-300">26/05/1971</p>
+              <p className="font-mono text-gray-300">15/03/1985</p>
             </div>
           </div>
 
@@ -207,10 +207,10 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
           </p>
         </div>
 
-        {/* Quadro com a assinatura límpida e legível Mariã Silva */}
+        {/* Quadro com a assinatura límpida e legível Ana Paula Férreira */}
         <div className="relative rounded-lg bg-black/40 border border-[#f2ca50]/40 p-1.5 sm:p-2 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f2ca50]/5 to-transparent pointer-events-none" />
-          <CleanSignatureSvg name="Mariã Silva" className="w-full h-8 sm:h-10" />
+          <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-8 sm:h-10" />
         </div>
       </div>
     </div>
@@ -243,7 +243,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
         <div className="w-full flex items-center justify-between px-1 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="font-mono text-[11px] font-semibold text-[#e5e2e1] tracking-wide">
-              joaosilva.oficial
+              anapaulaferreira
             </span>
             <span className="w-3.5 h-3.5 rounded-full bg-[#f2ca50] text-[#131313] flex items-center justify-center text-[9px] font-bold">
               ✓
@@ -259,7 +259,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
           <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full p-[2px] bg-gradient-to-tr from-[#f2ca50] via-[#d7c6ff] to-[#f2ca50]">
             <div className="w-full h-full rounded-full bg-[#161616] flex items-center justify-center overflow-hidden border border-black">
               <span className="font-cinzel text-base sm:text-lg font-bold text-[#f2ca50]">
-                JS
+                AP
               </span>
             </div>
           </div>
@@ -287,16 +287,16 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
       {/* Nome e Biografia Profissional */}
       <div className="relative z-10 my-1 space-y-0.5 shrink-0">
         <h4 className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] leading-tight">
-          João Silva
+          Ana Paula Férreira
         </h4>
         <p className="text-[11px] text-[#d7c6ff]/90 font-medium">
-          Diretor Criativo & Palestrante Internacional
+          Diretora Criativa & Consultora Estratégica
         </p>
         <p className="text-[10px] text-gray-400 leading-tight">
-          Projetos autorais, palestras e consultoria de alto impacto.
+          Projetos autorais, comunicação e posicionamento de marca.
         </p>
         <p className="text-[10px] font-mono text-[#f2ca50]/90 flex items-center gap-1 pt-0.5">
-          <span>🔗</span> joaosilva.com.br
+          <span>🔗</span> anapaulaferreira.com.br
         </p>
       </div>
 
@@ -378,26 +378,26 @@ export function ContractMockup({ className = '' }: MockupProps) {
           <p className="text-[9px] text-gray-400">Identificador Digital: #DOC-2026-NM-88</p>
         </div>
 
-        {/* Selo / Carimbo de Autenticidade Dourado */}
+        {/* Selo / Carimbo de Identificação Dourado */}
         <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#f2ca50]/70 p-0.5 flex flex-col items-center justify-center text-center bg-[#f2ca50]/10 shrink-0">
           <span className="text-[#f2ca50] text-[7px] font-bold uppercase tracking-tighter leading-none">
-            FIRMA
+            DOC
           </span>
           <span className="text-[#f2ca50] text-[10px] leading-none">✦</span>
           <span className="text-[#f2ca50] text-[6px] font-bold uppercase tracking-tighter leading-none">
-            VÁLIDA
+            DIGITAL
           </span>
         </div>
       </div>
 
-      {/* Cláusulas simuladas com trecho legal legível */}
+      {/* Cláusulas simuladas com trecho legível */}
       <div className="relative z-10 my-auto space-y-2.5">
         <div className="text-[10px] text-gray-300 leading-relaxed font-sans bg-white/5 p-2.5 rounded-lg border border-white/5">
           <p className="font-medium text-[#f2ca50]/90 text-[9px] uppercase tracking-wider mb-1">
-            Cláusula 1ª — Da Titularidade e Representação
+            Cláusula 1ª: Da Titularidade e Acordo
           </p>
           <p className="text-gray-400 text-[9px] sm:text-[10px] leading-relaxed">
-            As partes elegem por comum acordo a representação cívica e comercial, reconhecendo a plena validade da assinatura física e eletrônica firmada sob a nova assinatura harmonizada.
+            As partes elegem por mútuo acordo as condições de prestação e entrega, adotando padrão consistente de assinatura digital em todas as comunicações e instrumentos vinculados.
           </p>
         </div>
 
@@ -411,19 +411,19 @@ export function ContractMockup({ className = '' }: MockupProps) {
         </div>
       </div>
 
-      {/* Fechamento formal do contrato e assinatura límpida MARIÃ SILVA */}
+      {/* Fechamento formal do contrato e assinatura límpida ANA PAULA FÉRREIRA */}
       <div className="relative z-10 pt-2.5 border-t border-dashed border-[#f2ca50]/30 shrink-0">
         <div className="flex items-center justify-between text-[8px] text-gray-400 mb-1.5">
-          <span>São Paulo, SP — Em testemunho da verdade</span>
-          <span className="font-mono text-[#f2ca50]/80">Gov.br / DocuSign ✓</span>
+          <span>São Paulo, SP · Conforme acordo firmado</span>
+          <span className="font-mono text-[#f2ca50]/80">Plataforma Digital ✓</span>
         </div>
 
         {/* Bloco de assinatura da parte */}
         <div className="rounded-lg bg-black/40 border border-[#f2ca50]/40 p-1.5 sm:p-2 relative overflow-hidden">
-          <CleanSignatureSvg name="Mariã Silva" className="w-full h-9 sm:h-11" />
+          <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-9 sm:h-11" />
           <div className="mt-1 pt-1 border-t border-[#f2ca50]/20 flex items-center justify-between text-[8px] sm:text-[9px]">
             <div>
-              <p className="font-cinzel font-bold text-[#e5e2e1] leading-none">MARIA DA SILVA SANTOS</p>
+              <p className="font-cinzel font-bold text-[#e5e2e1] leading-none">ANA PAULA FERREIRA LIMA</p>
               <p className="text-gray-400 text-[7px] uppercase tracking-widest leading-none mt-0.5">
                 Contratante / Titular
               </p>
@@ -448,16 +448,16 @@ export function BrandingCardMockup({ className = '' }: MockupProps) {
     <div
       className={`w-full max-w-[490px] mx-auto aspect-[1.75/1] ${landingMockupFloatClass} rounded-xl relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 select-none ${className}`}
     >
-      {/* Topo do cartão: Monograma 'JS' + Identidade */}
+      {/* Topo do cartão: Monograma 'AP' + Identidade */}
       <div className="flex items-center justify-between shrink-0">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#f2ca50]/20 to-[#d4af37]/5 border border-[#f2ca50]/40 flex items-center justify-center shadow-inner">
           <span className="font-cinzel text-base font-bold text-[#f2ca50] tracking-wider">
-            JS
+            AP
           </span>
         </div>
         <div className="text-right">
           <p className="font-cinzel text-[9px] tracking-[0.2em] text-[#f2ca50] uppercase font-bold">
-            Studio JS
+            Studio AP
           </p>
           <p className="text-[8px] text-gray-400 uppercase tracking-widest font-mono">
             Consultoria & Autoria
@@ -468,27 +468,27 @@ export function BrandingCardMockup({ className = '' }: MockupProps) {
       {/* Nome do Profissional / Autor */}
       <div className="my-auto">
         <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] tracking-wide mb-0.5">
-          João Silva
+          Ana Paula Férreira
         </h4>
         <p className="text-[11px] text-[#d7c6ff] font-medium tracking-wide">
-          Estrategista Criativo & Palestrante Internacional
+          Estrategista Criativa & Consultora de Marca
         </p>
       </div>
 
       {/* Assinatura limpa e legível sem rabiscos */}
       <div className="py-1 border-y border-white/5 my-1 bg-black/20 rounded-md px-2 shrink-0">
-        <CleanSignatureSvg name="João Silva" className="w-full h-8 sm:h-10" />
+        <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-8 sm:h-10" />
       </div>
 
       {/* Informações de contato e autoridade */}
       <div className="grid grid-cols-2 gap-2 text-[9px] text-gray-400 pt-1 shrink-0">
         <div>
           <p className="text-[7px] uppercase tracking-wider text-gray-500">E-mail Profissional</p>
-          <p className="text-[#e5e2e1] font-mono">contato@joaosilva.com</p>
+          <p className="text-[#e5e2e1] font-mono">contato@anapaulaferreira.com</p>
         </div>
         <div className="text-right">
           <p className="text-[7px] uppercase tracking-wider text-gray-500">Presença & Mídia</p>
-          <p className="text-[#f2ca50] font-mono">@joaosilva.oficial</p>
+          <p className="text-[#f2ca50] font-mono">@anapaulaferreira</p>
         </div>
       </div>
     </div>

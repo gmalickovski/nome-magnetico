@@ -65,7 +65,7 @@ export function LandingSectionIntro({
     <div className={`${alignClass} min-w-0 ${className}`}>
       {label && (
         <p
-          className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2.5 sm:mb-3 md:mb-3.5 ${labelReveal.className}`}
+          className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${labelReveal.className}`}
           style={labelReveal.style}
         >
           {label}
@@ -73,10 +73,7 @@ export function LandingSectionIntro({
       )}
       {title && (
         <h2
-          className={`font-cinzel ${
-            titleClassName ||
-            'text-2xl sm:text-[1.65rem] md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold leading-[1.15]'
-          } text-[#e5e2e1] mb-3.5 text-balance ${titleReveal.className}`}
+          className={`nm-h2 mb-3.5 ${titleClassName} ${titleReveal.className}`}
           style={titleReveal.style}
         >
           {title}
@@ -84,9 +81,9 @@ export function LandingSectionIntro({
       )}
       {description && (
         <p
-          className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed ${
+          className={`nm-body-lg mt-4 sm:mt-5 ${
             descriptionClassName || 'max-w-[58ch]'
-          } text-pretty break-words ${
+          } break-words ${
             align === 'center' ? 'mx-auto' : 'lg:mx-0 mx-auto'
           } ${descReveal.className}`}
           style={descReveal.style}

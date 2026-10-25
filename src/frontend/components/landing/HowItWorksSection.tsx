@@ -16,26 +16,26 @@ import {
 const steps = [
   {
     stepNumber: '01',
-    title: 'Preencha seus dados',
-    body: 'Informe seu nome completo de nascimento, data e onde pretende usar a assinatura.',
+    title: 'Conte Quem Você É',
+    body: 'Informe seu nome completo de nascimento, sua data e, se quiser, como você assina hoje.',
     Figure: FormFigure,
   },
   {
     stepNumber: '02',
-    title: 'Veja sua nota hoje × potencial',
-    body: 'O motor cabalístico calcula a nota atual do seu nome (0 a 100), avalia o Triângulo da Vida e mostra o potencial máximo de harmonia.',
+    title: 'Veja Nota e Potencial',
+    body: 'Veja a nota de hoje, o nível e até onde seu nome pode chegar, com o que vem da data à parte.',
     Figure: GenerateFigure,
   },
   {
     stepNumber: '03',
-    title: 'Escolha no ranking (N5)',
-    body: 'Compare sugestões com mudança mínima, forma encurtada e alternativa — cada uma explicando o que mudou e por quê.',
+    title: 'Escolha Entre 3 Opções',
+    body: 'Mudança mínima, nome encurtado ou acento sutil: cada opção mostra nota, nível e o que mudou.',
     Figure: ChooseFigure,
   },
   {
     stepNumber: '04',
-    title: 'Baixe o relatório e o guia',
-    body: 'Receba na hora seu PDF completo com mapa dos 5 números, leitura dos triângulos e guia prático de assinatura.',
+    title: 'Baixe o Seu PDF',
+    body: 'Receba o PDF com os 5 números, o triângulo da Vida e a leitura dos outros 3 triângulos.',
     Figure: DownloadFigure,
   },
 ] as const;
@@ -119,17 +119,17 @@ function MobileStepItem({
               </div>
 
               {/* Título & Descrição */}
-              <h3 className="font-cinzel text-base sm:text-lg font-bold leading-snug text-white mb-1.5 text-balance">
+              <h3 className="nm-h4 mb-1.5">
                 {step.title}
               </h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
+              <p className="nm-body">
                 {step.body}
               </p>
             </div>
 
             {/* Rodapé do Card */}
             <div className="mt-4 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
-              <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
+              <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
             </div>
           </article>
@@ -349,15 +349,13 @@ export function HowItWorksSection() {
               >
                 <div ref={introRef} className="w-full text-center max-w-4xl mx-auto">
                   <LandingSectionIntro
-                    label="Como funciona"
-                    title={
-                      <>
-                        Quatro Passos<br />da Sua Nota Hoje até a Nova Assinatura
-                      </>
+                    label="Como Funciona"
+                    title="Quatro Passos Até a Sua Nova Assinatura"
+                    description={
+                      reduceMotion
+                        ? 'Do seu nome de hoje às 3 opções, por regras fixas.'
+                        : 'Do seu nome de hoje às 3 opções, com cálculo por regras fixas da numerologia cabalística.'
                     }
-                    description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-                    titleClassName="text-2xl sm:text-2xl md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold max-w-4xl mx-auto leading-[1.25] lg:leading-[1.26] text-white text-balance"
-                    descriptionClassName="max-w-[58ch] mx-auto text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty text-gray-400"
                     className="text-center"
                     revealed={true}
                     reduceMotion={reduceMotion}
@@ -407,16 +405,16 @@ export function HowItWorksSection() {
                                 </div>
                               </div>
 
-                              <h3 className="font-cinzel text-base sm:text-lg xl:text-xl font-bold leading-snug text-white mb-2.5 text-balance">
+                              <h3 className="nm-h4 mb-2.5">
                                 {step.title}
                               </h3>
-                              <p className="text-xs sm:text-sm leading-relaxed text-gray-400 font-normal text-pretty">
+                              <p className="nm-body">
                                 {step.body}
                               </p>
                             </div>
 
                             <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between text-[11px] text-gray-500">
-                              <span className="uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
+                              <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa {index + 1} de 4</span>
                               <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                             </div>
                           </article>
@@ -461,11 +459,13 @@ export function HowItWorksSection() {
         <div className="w-full text-center">
           <div className="w-full max-w-xl md:max-w-2xl mx-auto">
             <LandingSectionIntro
-              label="Como funciona"
-              title="Quatro Passos da Sua Nota Hoje até a Nova Assinatura"
-              description="Entenda como a análise cabalística compara a vibração atual do seu nome com o potencial máximo de harmonia."
-              titleClassName="text-2xl sm:text-[1.65rem] md:text-3xl font-bold max-w-xl md:max-w-2xl mx-auto leading-[1.15] text-white text-balance"
-              descriptionClassName="max-w-[48ch] md:max-w-[56ch] mx-auto text-xs sm:text-sm md:text-base mt-4 sm:mt-5 leading-relaxed text-pretty text-gray-400"
+              label="Como Funciona"
+              title="Quatro Passos Até a Sua Nova Assinatura"
+              description={
+                reduceMotion
+                  ? 'Do seu nome de hoje às 3 opções, por regras fixas.'
+                  : 'Do seu nome de hoje às 3 opções, com cálculo por regras fixas da numerologia cabalística.'
+              }
               className="text-center"
               revealed={true}
               reduceMotion={reduceMotion}
@@ -534,15 +534,15 @@ export function HowItWorksSection() {
                           <FormFigure active={revealedCount >= 1} />
                         </div>
                       </div>
-                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      <h3 className="nm-h4 mb-1">
                         {steps[0].title}
                       </h3>
-                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      <p className="nm-body line-clamp-3">
                         {steps[0].body}
                       </p>
                     </div>
                     <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
+                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 1 de 4</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                     </div>
                   </article>
@@ -564,15 +564,15 @@ export function HowItWorksSection() {
                           <GenerateFigure active={revealedCount >= 2} />
                         </div>
                       </div>
-                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      <h3 className="nm-h4 mb-1">
                         {steps[1].title}
                       </h3>
-                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      <p className="nm-body line-clamp-3">
                         {steps[1].body}
                       </p>
                     </div>
                     <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
+                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 2 de 4</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                     </div>
                   </article>
@@ -616,15 +616,15 @@ export function HowItWorksSection() {
                           <ChooseFigure active={revealedCount >= 3} />
                         </div>
                       </div>
-                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      <h3 className="nm-h4 mb-1">
                         {steps[2].title}
                       </h3>
-                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      <p className="nm-body line-clamp-3">
                         {steps[2].body}
                       </p>
                     </div>
                     <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
+                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 3 de 4</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                     </div>
                   </article>
@@ -646,15 +646,15 @@ export function HowItWorksSection() {
                           <DownloadFigure active={revealedCount >= 4} />
                         </div>
                       </div>
-                      <h3 className="font-cinzel text-sm md:text-base font-bold leading-snug text-white mb-1 text-balance">
+                      <h3 className="nm-h4 mb-1">
                         {steps[3].title}
                       </h3>
-                      <p className="text-xs md:text-[13px] leading-relaxed text-gray-400 font-normal text-pretty line-clamp-3">
+                      <p className="nm-body line-clamp-3">
                         {steps[3].body}
                       </p>
                     </div>
                     <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
-                      <span className="uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
+                      <span className="nm-caption uppercase tracking-widest whitespace-nowrap">Etapa 4 de 4</span>
                       <span className="w-1.5 h-1.5 rounded-full bg-[#f2ca50]/50" />
                     </div>
                   </article>

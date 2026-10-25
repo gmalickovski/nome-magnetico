@@ -56,27 +56,24 @@ export function ProductsSection() {
             <aside className="w-full min-w-0 order-1">
               <div className="w-full text-center lg:text-left">
                 <p
-                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2.5 sm:mb-3 md:mb-3.5 ${s1Label.className}`}
+                  className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${s1Label.className}`}
                   style={s1Label.style}
                 >
                   Harmonização
                 </p>
 
-                <h3
-                  className={`font-cinzel text-2xl sm:text-[1.65rem] md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold text-white leading-[1.25] sm:leading-[1.25] lg:leading-[1.26] text-balance max-w-[28ch] sm:max-w-[34ch] lg:max-w-none mx-auto lg:mx-0 ${s1Title.className}`}
+                <h2
+                  className={`nm-h2 max-w-[28ch] sm:max-w-[34ch] lg:max-w-none mx-auto lg:mx-0 ${s1Title.className}`}
                   style={s1Title.style}
                 >
-                  Compare sua nota hoje com o potencial da sua assinatura.
-                </h3>
+                  O Antes e o Depois do Seu Nome, Lado a Lado
+                </h2>
 
                 <p
-                  className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty max-w-[58ch] mx-auto lg:mx-0 ${s1Desc.className}`}
+                  className={`nm-body-lg mt-4 sm:mt-5 max-w-[58ch] mx-auto lg:mx-0 ${s1Desc.className}`}
                   style={s1Desc.style}
                 >
-                  Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
-                  Triângulo da Vida ou entra em tensão com o Destino, isso aparece na sua nota de 0 a 100. A
-                  Harmonização revela variações de nome social em nível N5 (Harmonioso), preservando sua
-                  identidade. Você vê o antes e o depois lado a lado — com transparência em cada critério.
+                  Cada letra e cada acento entram no cálculo. O que vem da sua data de nascimento fica à parte, porque nenhum nome muda isso. O que vem só do nome pode ser harmonizado numa assinatura só sua, sem mudar o seu registro. Você vê o antes e o depois lado a lado, com a nota de cada um.
                 </p>
 
                 {/* Card de Score: ocupa a largura total da coluna esquerda (50%), logo abaixo do texto */}
@@ -131,27 +128,24 @@ export function ProductsSection() {
             <aside className="lg:col-span-5 min-w-0 order-1 lg:order-2">
               <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
                 <p
-                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2 md:mb-2.5 ${s2Label.className}`}
+                  className={`nm-eyebrow mb-2 md:mb-2.5 ${s2Label.className}`}
                   style={s2Label.style}
                 >
                   Sugestões Inteligentes
                 </p>
 
-                <h3
-                  className={`font-cinzel text-xl sm:text-[1.4rem] md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s2Title.className}`}
+                <h2
+                  className={`nm-h2 mb-3 ${s2Title.className}`}
                   style={s2Title.style}
                 >
-                  Não é um nome imposto. É um ranking para você escolher.
-                </h3>
+                  Três Opções de Assinatura Para Você Escolher a Sua
+                </h2>
 
                 <p
-                  className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty ${s2Desc.className}`}
+                  className={`nm-body-lg mt-4 sm:mt-5 ${s2Desc.className}`}
                   style={s2Desc.style}
                 >
-                  O sistema gera sugestões e também analisa as variações que você indicar. Cada
-                  card mostra score, compatibilidade Expressão × Destino, os 5 números e se ainda
-                  há bloqueios. Compare, escolha a assinatura que ressoa — e rode a análise completa
-                  quando quiser. Self-service, na hora.
+                  Você não recebe um nome imposto. O sistema testa primeiro a mudança mais leve: encurtar o nome, usar só o primeiro nome ou incluir um acento sutil. Um acento sutil, só na assinatura, muda o cálculo sem mudar o seu nome. Cada card mostra a nota, o nível, a combinação com o seu Destino e os 5 números para você escolher.
                 </p>
               </div>
             </aside>

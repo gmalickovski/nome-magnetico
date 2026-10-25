@@ -57,7 +57,11 @@ export function Accordion({
                 variant === 'landing' ? 'sm:min-h-[56px]' : ''
               }`}
             >
-              <span className="font-medium text-[#e5e2e1] text-sm sm:text-base leading-snug text-pretty min-w-0">
+              <span className={`leading-snug text-pretty min-w-0 ${
+                variant === 'landing'
+                  ? 'font-inter font-semibold text-base md:text-[17px] text-[#E5E2E1]'
+                  : 'font-medium text-[#e5e2e1] text-sm sm:text-base'
+              }`}>
                 {item.question}
               </span>
               <svg
@@ -79,11 +83,17 @@ export function Accordion({
               <div className="px-4 sm:px-6 pb-5 border-t border-white/5 pt-3.5">
                 {item.answerHtml ? (
                   <div
-                    className="prose prose-invert prose-sm max-w-none text-pretty"
+                    className={
+                      variant === 'landing'
+                        ? 'nm-body'
+                        : 'prose prose-invert prose-sm max-w-none text-pretty'
+                    }
                     dangerouslySetInnerHTML={{ __html: item.answerHtml }}
                   />
                 ) : (
-                  <p className="text-gray-400 text-sm leading-relaxed text-pretty">{item.answer}</p>
+                  <p className={variant === 'landing' ? 'nm-body' : 'text-gray-400 text-sm leading-relaxed text-pretty'}>
+                    {item.answer}
+                  </p>
                 )}
               </div>
             </div>

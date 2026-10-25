@@ -1,11 +1,10 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React from 'react';
 import {
+  LandingSectionIntro,
   landingSectionShellClass,
   landingSectionSpacingClass,
-  landingSplitGridClass,
 } from './LandingSectionIntro';
 import { getRevealItemProps, useLandingSectionReveal } from './useLandingSectionReveal';
-import { useScrollProgress } from './useScrollProgress';
 import {
   DocumentCinMockup,
   SocialProfileMockup,
@@ -16,6 +15,7 @@ import {
 interface UseCaseItem {
   id: string;
   stepNumber: string;
+  eyebrow: string;
   title: string;
   description: string;
   bulletPoints: string[];
@@ -26,131 +26,132 @@ const USE_CASES: UseCaseItem[] = [
   {
     id: 'documentos-oficiais',
     stepNumber: '01',
-    title: 'Documentos Pessoais: CNH, RG e CIN',
+    eyebrow: '01 · Identidade e Registro',
+    title: 'Sua Assinatura Muda, Seu Nome Civil Continua',
     description:
-      'A legislação brasileira assegura sua liberdade para assinar como desejar em documentos oficiais, desde que mantida a consistência grafotécnica. No documento, o nome de certidão de nascimento permanece no registro civil, enquanto o seu Nome Harmonizado — Mariã Silva — é adotado como a assinatura oficial límpida, ancorando essa frequência em todas as esferas cívicas da sua vida.',
+      'Você não precisa alterar sua certidão nem abrir processo em cartório. O seu nome oficial permanece exatamente como está hoje, enquanto a nova assinatura passa a representar a forma limpa e legível como você assina.',
     bulletPoints: [
-      'O nome civil de certidão permanece inalterado no documento',
-      'O nome harmonizado (Mariã Silva) é firmado no campo oficial de assinatura',
-      'Assinatura límpida, legível e ascendente, sem traços que cruzem letras',
+      'Seu nome de certidão continua exatamente o mesmo',
+      'Zero burocracia: sem cartório e sem processo judicial',
+      'Traço único e legível para assinar sempre do mesmo jeito',
     ],
     MockupComponent: DocumentCinMockup,
   },
   {
     id: 'redes-sociais',
     stepNumber: '02',
-    title: 'Nome Artístico & Redes Sociais',
+    eyebrow: '02 · Presença Digital',
+    title: 'Perfis, Redes Sociais e Nome Artístico',
     description:
-      'No Instagram, LinkedIn, YouTube e no seu ecossistema digital, seu nome é a primeira frequência que o mundo recebe. Adotar a variação harmonizada no @handle, no nome de exibição e na biografia elimina bloqueios de visibilidade e atrai conexões e oportunidades alinhadas ao seu propósito de Destino.',
+      'Use a versão que você escolheu no nome de exibição, no @ e na bio do Instagram, LinkedIn, YouTube e TikTok. É a forma mais simples de apresentar o seu novo nome para quem acompanha o seu conteúdo e o seu trabalho.',
     bulletPoints: [
-      'Perfis no Instagram, LinkedIn, YouTube e TikTok',
-      'Nome artístico e assinatura de conteúdo digital',
-      'Fortalecimento do magnetismo e da percepção de valor',
+      'Nome de exibição, @ e bio no Instagram, LinkedIn e TikTok',
+      'Canais de vídeo, podcasts, newsletters e páginas pessoais',
+      'Nome artístico ou público alinhado ao seu cálculo',
     ],
     MockupComponent: SocialProfileMockup,
   },
   {
     id: 'contratos-negocios',
     stepNumber: '03',
-    title: 'Contratos, Sociedades & Bancos',
+    eyebrow: '03 · Rotina de Trabalho',
+    title: 'Propostas, Acordos e Rotina Digital',
     description:
-      'Em contratos de prestação de serviços, abertura de empresas, fechamento de propostas e transações bancárias — físicas ou via Gov.br e DocuSign. A assinatura límpida com seu nome harmonizado — Mariã Silva —, escrita de forma limpa e ascendente sem letras que cruzem por cima, equilibra a energia de realização material e destravamento comercial.',
+      'Em orçamentos, propostas comerciais, recibos e plataformas digitais do dia a dia, você adota um padrão visual único. Sua assinatura deixa de variar a cada folha e ganha firmeza em todas as suas entregas.',
     bulletPoints: [
-      'Contratos de prestação de serviços e parcerias comerciais',
-      'Assinatura digital avançada (Gov.br, DocuSign, Clicksign)',
-      'Abertura de contas bancárias e documentos societários',
+      'Propostas comerciais, orçamentos e termos de serviço',
+      'Plataformas de assinatura eletrônica e documentos em PDF',
+      'Padrão visual consistente do primeiro contato à entrega',
     ],
     MockupComponent: ContractMockup,
   },
   {
     id: 'marca-pessoal',
     stepNumber: '04',
-    title: 'Marca Pessoal, E-mails & Cartões',
+    eyebrow: '04 · Marca Pessoal e Autoria',
+    title: 'E-mails, Cartões e Projetos Autorais',
     description:
-      'Em assinaturas de e-mail profissional, cartões de visita, crachás, capas de livros, certificados e obras autorais. Cada repetição consciente da sua assinatura harmonizada condiciona sua mente e seu campo vibracional ao novo padrão de clareza, abundância e realização.',
+      'Leve a mesma identidade para o rodapé dos seus e-mails, cartões de visita, apresentações, certificados e capas de cursos ou livros. Uma assinatura pensada por você, presente em tudo o que leva a sua autoria.',
     bulletPoints: [
-      'Rodapé e assinatura de e-mails profissionais',
-      'Cartões de visita, timbrados e papelaria executiva',
-      'Obras autorais, capas de livros e cursos',
+      'Assinatura de e-mail profissional e papelaria corporativa',
+      'Cartões de visita, crachás, portfólios e apresentações',
+      'Capas de livros, cursos, certificados e obras autorais',
     ],
     MockupComponent: BrandingCardMockup,
   },
 ];
 
+interface UseCaseRowProps {
+  item: UseCaseItem;
+  mockupFirst: boolean;
+}
+
+function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
+  const reveal = useLandingSectionReveal();
+  const Mockup = item.MockupComponent;
+
+  const textReveal = getRevealItemProps(reveal.revealed, 0, reveal.reduceMotion);
+  const mockupReveal = getRevealItemProps(reveal.revealed, 120, reveal.reduceMotion);
+
+  return (
+    <div
+      ref={reveal.ref}
+      className="grid grid-cols-1 lg:grid-cols-12 items-center gap-8 sm:gap-10 lg:gap-12 xl:gap-16 w-full min-w-0"
+    >
+      {/* Coluna de Texto: no desktop inverte com order se mockupFirst for true; no mobile é sempre primeiro */}
+      <div
+        className={`lg:col-span-6 w-full min-w-0 flex flex-col justify-center text-center lg:text-left ${
+          mockupFirst ? 'lg:order-2' : 'lg:order-1'
+        } ${textReveal.className}`}
+        style={textReveal.style}
+      >
+        <p className="nm-eyebrow mb-2">
+          {item.eyebrow}
+        </p>
+
+        <h3 className="nm-h3 mb-3">
+          {item.title}
+        </h3>
+
+        <p className="nm-body mb-5 max-w-[54ch] mx-auto lg:mx-0">
+          {item.description}
+        </p>
+
+        <div className="space-y-2.5 max-w-[50ch] mx-auto lg:mx-0 text-left">
+          {item.bulletPoints.map((bullet, bIdx) => (
+            <div key={bIdx} className="flex items-start gap-2.5">
+              <span className="text-[#D4AF37] text-sm shrink-0 leading-none mt-1">✦</span>
+              <span className="nm-body">{bullet}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Coluna de Mockup: no desktop inverte com order se mockupFirst for true */}
+      <div
+        className={`lg:col-span-6 w-full min-w-0 flex items-center justify-center ${
+          mockupFirst ? 'lg:order-1' : 'lg:order-2'
+        } ${mockupReveal.className}`}
+        style={mockupReveal.style}
+      >
+        <div className="w-full flex items-center justify-center">
+          <Mockup />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SignatureUseCasesSection() {
-  const { ref, progress, reduceMotion } = useScrollProgress<HTMLElement>();
-  const sectionReveal = useLandingSectionReveal();
-  const [manualIndex, setManualIndex] = useState<number | null>(null);
-
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-
-  // Mapeia o progresso do scroll para a etapa ativa (0 a 3)
-  const activeIndex = useMemo(() => {
-    if (manualIndex !== null) return manualIndex;
-    if (reduceMotion) return 0;
-
-    if (progress < 0.25) return 0;
-    if (progress < 0.5) return 1;
-    if (progress < 0.75) return 2;
-    return 3;
-  }, [progress, reduceMotion, manualIndex]);
-
-  // Se o usuário clicar manualmente em um marcador ou der swipe, sincroniza o scroll suave para a etapa correspondente
-  const handleSelectTab = (idx: number) => {
-    setManualIndex(idx);
-    const el = ref.current;
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      const currentScrollY = window.scrollY;
-      const sectionTop = currentScrollY + rect.top;
-      const totalScrollable = rect.height - window.innerHeight;
-      if (totalScrollable > 0) {
-        const targetProgress = (idx + 0.5) / USE_CASES.length;
-        const targetScrollY = sectionTop + targetProgress * totalScrollable;
-        window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-      }
-    }
-    window.setTimeout(() => {
-      setManualIndex(null);
-    }, 1500);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-
-    // Se o swipe for horizontal com amplitude maior que 40px
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
-      if (deltaX < 0 && activeIndex < USE_CASES.length - 1) {
-        handleSelectTab(activeIndex + 1);
-      } else if (deltaX > 0 && activeIndex > 0) {
-        handleSelectTab(activeIndex - 1);
-      }
-    }
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
-
-  const copyReveal = getRevealItemProps(sectionReveal.revealed, 0, sectionReveal.reduceMotion);
-  const mockupReveal = getRevealItemProps(sectionReveal.revealed, 140, sectionReveal.reduceMotion);
+  const headerReveal = useLandingSectionReveal();
 
   return (
     <section
       id="onde-usar"
-      ref={ref}
-      className={`relative bg-[#111111] scroll-mt-20 ${
-        reduceMotion ? landingSectionSpacingClass : 'lg:h-[200vh] py-0'
-      }`}
-      aria-label="Onde e como usar sua assinatura harmonizada"
+      className={`relative bg-[#111111] scroll-mt-20 overflow-x-clip ${landingSectionSpacingClass}`}
+      aria-label="Onde usar a sua nova assinatura no dia a dia"
     >
-      {/* Brilho cósmico sutil no fundo */}
+      {/* Brilhos decorativos cósmicos sutis de fundo */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
@@ -159,230 +160,30 @@ export function SignatureUseCasesSection() {
         <div className="absolute bottom-1/4 right-[5%] w-[300px] h-[300px] lg:w-[440px] lg:h-[440px] bg-[#d7c6ff]/5 rounded-full blur-[100px]" />
       </div>
 
-      {/* ── EXPERIÊNCIA DESKTOP PINNED (lg: 1024px+) ────────────────────── */}
-      <div
-        className={`hidden lg:flex flex-col justify-center items-center w-full ${
-          reduceMotion ? 'py-16 lg:py-20' : 'sticky top-0 h-screen pt-16 lg:pt-20 pb-6'
-        } overflow-x-clip`}
-      >
-        <div className={`relative ${landingSectionShellClass} flex items-center justify-center`}>
-            {/*
-              M3 12-Column Split Grid (5 cols Left / 7 cols Right) — 100% flush with ProductsSection and Header!
-              - Lado Esquerdo (lg:col-span-5): Marcadores verticais na guia esquerda + Título + Texto + Bullets
-              - Lado Direito (lg:col-span-7): Mockups flutuantes ocupando a coluna até a guia direita
-            */}
-            <div className={landingSplitGridClass}>
-              {/* ── LADO ESQUERDO (5 Colunas): Marcadores Verticais + Título + Explicações ── */}
-              <aside
-                className={`lg:col-span-5 w-full min-w-0 order-1 flex items-center ${copyReveal.className}`}
-                style={copyReveal.style}
-              >
-                <div className="flex items-center gap-6 xl:gap-8 w-full">
-                  {/* Marcadores verticais no lado esquerdo no sentido da rolagem */}
-                  <div
-                    className="flex flex-col items-center justify-center gap-3 shrink-0"
-                    role="tablist"
-                    aria-label="Etapas dos casos de uso"
-                  >
-                    {USE_CASES.map((item, idx) => {
-                      const isActive = idx === activeIndex;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={isActive}
-                          onClick={() => handleSelectTab(idx)}
-                          title={item.title}
-                          className={`cursor-pointer transition-all duration-500 rounded-full ${
-                            isActive
-                              ? 'w-1.5 h-12 bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.7)]'
-                              : 'w-1.5 h-3 bg-white/20 hover:bg-white/40'
-                          }`}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {/* Bloco de Texto Ativo */}
-                  <div className="flex-1 min-w-0 relative overflow-hidden min-h-[340px] flex items-center">
-                    {USE_CASES.map((item, idx) => {
-                      const isActive = idx === activeIndex;
-                      const isPast = idx < activeIndex;
-
-                      const transformClass = isActive
-                        ? 'opacity-100 translate-y-0 pointer-events-auto relative z-10'
-                        : isPast
-                        ? 'opacity-0 -translate-y-12 pointer-events-none absolute inset-x-0 top-0 z-0'
-                        : 'opacity-0 translate-y-12 pointer-events-none absolute inset-x-0 top-0 z-0';
-
-                      return (
-                        <div
-                          key={item.id}
-                          className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform w-full ${transformClass}`}
-                          aria-hidden={!isActive}
-                        >
-                          <p className="text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2">
-                            Onde Usar · Etapa {item.stepNumber}
-                          </p>
-
-                          <h3 className="font-cinzel text-xl sm:text-[1.4rem] md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-2.5 leading-snug text-balance">
-                            {item.title}
-                          </h3>
-
-                          <p className="text-gray-300 text-xs sm:text-sm lg:text-base leading-relaxed mb-4 max-w-[54ch] text-pretty">
-                            {item.description}
-                          </p>
-
-                          <div className="space-y-2">
-                            {item.bulletPoints.map((bullet, bIdx) => (
-                              <div key={bIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-300 text-pretty">
-                                <span className="text-[#f2ca50] text-sm shrink-0 leading-none mt-0.5">✦</span>
-                                <span>{bullet}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </aside>
-
-              {/* ── LADO DIREITO (7 Colunas): Mockups Flutuantes Alinhados com a Grade ────── */}
-              <div
-                className={`lg:col-span-7 w-full min-w-0 order-2 flex items-center justify-center relative min-h-[440px] ${mockupReveal.className}`}
-                style={mockupReveal.style}
-              >
-                {USE_CASES.map((item, idx) => {
-                  const Mockup = item.MockupComponent;
-                  const isActive = idx === activeIndex;
-                  const isPast = idx < activeIndex;
-
-                  const mockupTransform = isActive
-                    ? 'opacity-100 scale-100 pointer-events-auto relative z-10'
-                    : isPast
-                    ? 'opacity-0 scale-95 -translate-y-6 pointer-events-none absolute inset-0 z-0'
-                    : 'opacity-0 scale-95 translate-y-6 pointer-events-none absolute inset-0 z-0';
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] w-full flex justify-center lg:justify-end items-center ${mockupTransform}`}
-                      aria-hidden={!isActive}
-                    >
-                      <Mockup />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+      <div className={`relative ${landingSectionShellClass}`}>
+        {/* Cabeçalho Geral da Seção 4 no Topo */}
+        <div ref={headerReveal.ref} className="mb-12 sm:mb-16 md:mb-20">
+          <LandingSectionIntro
+            label="Onde Usar no Dia a Dia"
+            title="Uma Assinatura Só Sua Para Usar em Todo Lugar"
+            description="Seu nome de registro continua intacto. Veja como aplicar a versão escolhida na sua rotina profissional, nas redes sociais e em cada lugar onde você assina."
+            align="center"
+            revealed={headerReveal.revealed}
+            reduceMotion={headerReveal.reduceMotion}
+          />
         </div>
 
-        {/* ── EXPERIÊNCIA MOBILE / TABLET (< 1024px) PINNED ────────────────── */}
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className={`lg:hidden flex flex-col justify-between w-full ${
-            reduceMotion ? 'py-16 min-h-screen' : 'sticky top-0 h-[100dvh]'
-          } pt-16 pb-6 px-4 sm:px-6 overflow-hidden select-none`}
-        >
-          {/* TEXTO EM CIMA — depois card + seletor (mobile / tablet). */}
-          <div className="shrink-0 relative w-full max-w-lg mx-auto min-h-[185px] xs:min-h-[200px] overflow-hidden flex items-center">
-            {USE_CASES.map((item, idx) => {
-              const isActive = idx === activeIndex;
-              const isPast = idx < activeIndex;
-
-              const textTransform = isActive
-                ? 'opacity-100 translate-x-0 pointer-events-auto relative z-10'
-                : isPast
-                ? 'opacity-0 -translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0'
-                : 'opacity-0 translate-x-12 pointer-events-none absolute inset-x-0 top-0 z-0';
-
-              return (
-                <div
-                  key={item.id}
-                  className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform w-full text-center ${textTransform}`}
-                  aria-hidden={!isActive}
-                >
-                  <p className="text-[#f2ca50] text-[11px] font-bold uppercase tracking-[0.15em] mb-1.5">
-                    Onde Usar · Etapa {item.stepNumber}
-                  </p>
-                  <h3 className="font-cinzel text-[1.35rem] sm:text-[1.65rem] font-bold text-[#e5e2e1] mb-2 leading-tight text-balance">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mb-2.5 max-w-md mx-auto line-clamp-3 xs:line-clamp-none text-pretty">
-                    {item.description}
-                  </p>
-
-                  <div className="space-y-1 max-w-sm mx-auto text-left">
-                    {item.bulletPoints.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start gap-2 text-[11px] sm:text-xs text-gray-300">
-                        <span className="text-[#f2ca50] text-xs shrink-0 leading-none mt-0.5">✦</span>
-                        <span className="line-clamp-1 xs:line-clamp-none">{bullet}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* CARD (mockup) */}
-          <div className="flex-1 min-h-0 flex items-center justify-center relative w-full max-w-lg mx-auto overflow-visible py-2">
-            {USE_CASES.map((item, idx) => {
-              const Mockup = item.MockupComponent;
-              const isActive = idx === activeIndex;
-              const isPast = idx < activeIndex;
-
-              const mockupTransform = isActive
-                ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto relative z-10'
-                : isPast
-                ? 'opacity-0 -translate-x-12 scale-95 pointer-events-none absolute inset-0 z-0'
-                : 'opacity-0 translate-x-12 scale-95 pointer-events-none absolute inset-0 z-0';
-
-              return (
-                <div
-                  key={item.id}
-                  className={`transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] w-full flex justify-center items-center ${mockupTransform}`}
-                  aria-hidden={!isActive}
-                >
-                  <div className="w-full scale-[0.92] xs:scale-[0.96] sm:scale-100 origin-center">
-                    <Mockup />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* SELETOR abaixo do card */}
-          <div
-            className="flex items-center justify-center gap-2 py-2 shrink-0"
-            role="tablist"
-            aria-label="Etapas dos casos de uso"
-          >
-            {USE_CASES.map((item, idx) => {
-              const isActive = idx === activeIndex;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => handleSelectTab(idx)}
-                  title={item.title}
-                  className={`cursor-pointer transition-all duration-500 rounded-full ${
-                    isActive
-                      ? 'w-7 h-1.5 bg-[#f2ca50] shadow-[0_0_8px_rgba(242,202,80,0.7)]'
-                      : 'w-2 h-1.5 bg-white/20 hover:bg-white/40'
-                  }`}
-                />
-              );
-            })}
-          </div>
+        {/* 4 Exemplos Empilhados em Zigue-zague */}
+        <div className="space-y-16 sm:space-y-20 lg:space-y-28 w-full">
+          {USE_CASES.map((item, idx) => (
+            <UseCaseRow
+              key={item.id}
+              item={item}
+              mockupFirst={idx % 2 === 1}
+            />
+          ))}
         </div>
+      </div>
     </section>
   );
 }

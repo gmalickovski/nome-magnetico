@@ -19,7 +19,7 @@ export function HeroSection() {
       id="inicio"
       ref={reveal.ref}
       className="relative z-0 isolate min-h-svh flex flex-col overflow-hidden bg-[#111111] pt-[72px] sm:pt-28 md:pt-32 lg:pt-[84px] pb-12 sm:pb-16 md:pb-20 lg:pb-14"
-      aria-label="Seção principal — Nome Magnético"
+      aria-label="Veja a nota do seu nome hoje e até onde ele pode chegar"
     >
       {/* BACKGROUND DECORATIVE LAYERS (Z-0) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
@@ -37,10 +37,10 @@ export function HeroSection() {
           {/* Left Column: Headlines (5 columns on lg+) */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start min-w-0">
             <h1
-              className={`font-cinzel text-[1.75rem] sm:text-[2.1rem] md:text-[2.35rem] lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-white leading-[1.15] text-balance ${titleReveal.className}`}
+              className={`nm-h1 ${titleReveal.className}`}
               style={titleReveal.style}
             >
-              Sua Assinatura Tem<br />
+              Veja a Nota do Seu Nome<br />
               <span
                 style={{
                   background: 'linear-gradient(135deg, #D4AF37, #E8C84A, #B8960E)',
@@ -49,15 +49,15 @@ export function HeroSection() {
                   backgroundClip: 'text',
                 }}
               >
-                Mais Poder Do Que Você Imagina
+                e Até Onde Ele Pode Chegar
               </span>
             </h1>
 
             <p
-              className={`text-gray-400 text-sm sm:text-base mt-5 md:mt-6 leading-relaxed max-w-[54ch] text-pretty ${descReveal.className}`}
+              className={`nm-body-lg mt-5 md:mt-6 max-w-[54ch] ${descReveal.className}`}
               style={descReveal.style}
             >
-              Cada letra do seu nome carrega uma frequência matemática. O <strong className="text-[#D4AF37]">Método Nome Magnético</strong> calcula a nota atual do seu nome de nascimento, mapeia tensões vibracionais e mostra o potencial que sua assinatura pode alcançar (até o nível N5).
+              Calculamos o seu nome pela numerologia cabalística e mostramos lado a lado a nota de hoje e até onde ele pode chegar.
             </p>
 
             {/* Desktop Button - Hidden on mobile/tablet, shown on desktop */}
@@ -71,10 +71,10 @@ export function HeroSection() {
                 data-cta-id="analise_gratis"
                 data-cta-position="hero_desktop"
                 className="inline-block w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20 whitespace-nowrap"
-                aria-label="Descobrir a frequência do meu nome gratuitamente"
+                aria-label="Ver a nota do meu nome grátis"
                 onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero_desktop' })}
               >
-                Descobrir a Frequência do Meu Nome
+                Ver Minha Nota Grátis
               </a>
             </div>
           </div>
@@ -99,10 +99,10 @@ export function HeroSection() {
             data-cta-id="analise_gratis"
             data-cta-position="hero_mobile"
             className="w-full sm:w-auto text-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-8 py-3.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20"
-            aria-label="Descobrir a frequência do meu nome gratuitamente"
+            aria-label="Ver a nota do meu nome grátis"
             onClick={() => track('cta_hero_click', { produto: 'nome_social', posicao: 'hero_mobile' })}
           >
-            Descobrir a Frequência do Meu Nome
+            Ver Minha Nota Grátis
           </a>
 
           {/* Seta indicadora do Hero no mobile: espaçamento dedicado e elegante abaixo do botão */}

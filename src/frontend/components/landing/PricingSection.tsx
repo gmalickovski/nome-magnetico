@@ -18,14 +18,14 @@ export interface StripePrices {
 
 type ProductType = SellableProductType;
 
-const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: '—', hasDiscount: false };
+const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
 
 const NOME_SOCIAL_DELIVERABLES = [
-  'comparativo nota hoje × potencial (escala N1 a N5)',
-  'nome mais indicado + top 3 opções explicadas (mudança mínima, encurtado e alternativa)',
-  'análise do Triângulo da Vida e leitura complementar dos demais triângulos',
-  'bloqueios, marca da data, débitos, lições e tendências ocultas',
-  'PDF completo com guia de 30 dias e folha de treino da assinatura',
+  '3 opções com nota, nível e o que mudou',
+  'triângulos Pessoal, Social e do Destino',
+  'lições kármicas e arquétipo',
+  'compare os nomes que você quiser',
+  'PDF com guia de 30 dias',
 ] as const;
 
 function promotionAppliesToProduct(
@@ -217,17 +217,19 @@ export function PricingSection({
           style={cardReveal.style}
         >
           <div className="nm-floating-card nm-price-border rounded-2xl px-6 py-8 md:px-10 md:py-10 text-center">
-            <p className="text-[#e5e2e1] text-sm font-medium leading-relaxed">
-              Nome Social.
-            </p>
+            <h3 className="nm-h3">
+              Análise Completa Nome Social
+            </h3>
 
             <div className="mt-3 flex justify-center">
               <Price {...priceProps} size="hero" className="text-center items-center" />
             </div>
 
-            <ul className="mt-4 space-y-1 text-xs leading-relaxed text-[#76746a] list-none p-0 m-0 text-pretty">
+            <ul className="mt-4 space-y-1.5 list-none p-0 m-0">
               {NOME_SOCIAL_DELIVERABLES.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item} className="nm-body">
+                  {item}
+                </li>
               ))}
             </ul>
 
@@ -252,7 +254,7 @@ export function PricingSection({
                   : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
               }`}
             >
-              Harmonizar minha assinatura
+              Ver Minhas 3 Opções
             </button>
           </div>
         </div>
