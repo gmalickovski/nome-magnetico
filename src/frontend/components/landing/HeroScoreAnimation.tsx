@@ -141,19 +141,19 @@ export function HeroScoreAnimation() {
     setActiveIndex(index);
   };
 
-  // SVG Circular progress formulas - Enlarged Circle (224px diameter)
-  const radius = 96;
-  const strokeWidth = 12;
+  // SVG Circular progress formulas - Raio ampliado dentro do viewBox 224x224 para maximizar a área interna útil do círculo
+  const radius = 102;
+  const strokeWidth = 11;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
-    <div className="w-full max-w-[380px] sm:max-w-[400px] lg:max-w-[390px] xl:max-w-[615px] flex flex-col xl:flex-row gap-3.5 xl:gap-5 items-center nm-floating-card p-4 sm:p-5 lg:p-4 xl:p-6">
+    <div className="w-full max-w-[380px] sm:max-w-[410px] lg:max-w-[400px] xl:max-w-[635px] flex flex-col xl:flex-row gap-3.5 xl:gap-5 items-center nm-floating-card p-4 sm:p-5 lg:p-4 xl:p-6">
       
       {/* Lista de Opções:
           - < 1280px (mobile, tablet e telas ~11" lg): fica empilhada abaixo do círculo com 100% da largura, sem cortar nomes.
-          - >= 1280px (xl desktop): fica à esquerda (58% da largura) ao lado do círculo. */}
-      <div className="w-full xl:w-[58%] flex flex-col gap-2 xl:gap-2.5 order-2 xl:order-1">
+          - >= 1280px (xl desktop): fica à esquerda (56% da largura) ao lado do círculo. */}
+      <div className="w-full xl:w-[56%] flex flex-col gap-2 xl:gap-2.5 order-2 xl:order-1">
         {CANDIDATES.map((cand, idx) => {
           const isSelected = activeIndex === idx;
           return (
@@ -198,9 +198,9 @@ export function HeroScoreAnimation() {
 
       {/* Visor Circular do Score:
           - < 1280px (mobile, tablet e telas ~11" lg): fica no topo do card empilhado, centralizado sem vazar das bordas.
-          - >= 1280px (xl desktop): fica à direita (42% da largura). */}
-      <div className="w-full xl:w-[42%] flex flex-col items-center justify-center p-1 xl:p-2 order-1 xl:order-2">
-        <div className="relative w-44 h-44 sm:w-48 sm:h-48 lg:w-40 lg:h-40 xl:w-52 xl:h-52 flex items-center justify-center">
+          - >= 1280px (xl desktop): fica à direita (44% da largura). */}
+      <div className="w-full xl:w-[44%] flex flex-col items-center justify-center p-1 xl:p-2 order-1 xl:order-2">
+        <div className="relative w-48 h-48 sm:w-52 sm:h-52 lg:w-48 lg:h-48 xl:w-56 xl:h-56 flex items-center justify-center">
           {/* Background circle */}
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 224 224">
             <circle
@@ -226,13 +226,13 @@ export function HeroScoreAnimation() {
             />
           </svg>
 
-          {/* Inner Text info */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className={`font-cinzel text-5xl xl:text-6xl font-bold tracking-tight ${activeCandidate.colorClass}`}>
+          {/* Inner Text info — calibrado para caber confortavelmente dentro do anel mesmo no maior rótulo ("EQUILÍBRIO PARCIAL") */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
+            <span className={`font-cinzel text-[44px] sm:text-5xl xl:text-[54px] font-bold leading-none tracking-tight ${activeCandidate.colorClass}`}>
               {displayedScore}
             </span>
-            <span className="text-[10px] uppercase tracking-widest text-gray-500 mt-0.5">Pontos</span>
-            <span className={`text-xs xl:text-sm font-bold uppercase mt-1 tracking-wider ${activeCandidate.colorClass}`}>
+            <span className="text-[9.5px] xl:text-[10px] uppercase tracking-[0.18em] text-gray-500 mt-1">Pontos</span>
+            <span className={`text-[11px] sm:text-xs xl:text-[12.5px] font-bold uppercase mt-1 tracking-[0.03em] leading-tight whitespace-nowrap ${activeCandidate.colorClass}`}>
               {activeCandidate.label}
             </span>
           </div>

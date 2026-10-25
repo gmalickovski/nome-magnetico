@@ -36,7 +36,7 @@ export function HeroSection() {
             - < 1024px (mobile/tablet em pé): Texto empilhado em cima e Card empilhado embaixo.
             - 1024px–1279px (lg / ~11"): Texto permanece à esquerda (1.15fr) e Card à direita (0.85fr) no formato empilhado sem cortar textos.
             - >= 1280px (xl / desktop): Texto à esquerda e Card horizontal completo à direita com mesma aproximação central. */}
-        <div className="max-w-[1120px] xl:max-w-[1260px] mx-auto grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] xl:grid-cols-[1.01fr_0.99fr] gap-8 lg:gap-8 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
+        <div className="max-w-[1120px] xl:max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] xl:grid-cols-[0.99fr_1.01fr] gap-8 lg:gap-8 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
           {/* Left Column: Headlines (ocupa espaço confortável para o título sem sobra excessiva à direita) */}
           <div className="w-full flex flex-col items-center lg:items-start min-w-0">
             <h1
