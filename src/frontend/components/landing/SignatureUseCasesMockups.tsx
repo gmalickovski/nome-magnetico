@@ -385,65 +385,75 @@ export function ContractMockup({ className = '' }: MockupProps) {
     >
       {/* Fade superior que cria o efeito de recorte (crop) vindo do meio da folha de ofício */}
       <div
-        className="relative mx-auto w-full rounded-b-xl rounded-t-sm bg-gradient-to-b from-[#1c1b1a] via-[#181716] to-[#151413] border-x border-b border-white/15 shadow-[0_24px_50px_rgba(0,0,0,0.65)] overflow-hidden px-5 sm:px-8 pt-6 pb-5"
+        className="relative mx-auto w-full rounded-b-xl rounded-t-sm bg-gradient-to-b from-[#1c1b1a] via-[#181716] to-[#151413] border-x border-b border-white/15 shadow-[0_24px_50px_rgba(0,0,0,0.65)] overflow-hidden px-6 sm:px-9 pt-6 pb-4 sm:pb-5"
         style={{
-          maskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 100%)',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, black 16%, black 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 16%, black 100%)',
         }}
       >
         {/* Margem lateral esquerda típica de folha de ofício / laudas contratuais */}
         <div
-          className="absolute inset-y-0 left-3 sm:left-4 w-px bg-[#f2ca50]/15 pointer-events-none"
+          className="absolute inset-y-0 left-3.5 sm:left-5 w-px bg-[#f2ca50]/15 pointer-events-none"
           aria-hidden="true"
         />
 
-        {/* Linhas fictícias da cláusula anterior cortada no topo da folha */}
-        <div className="space-y-2 mb-3.5 opacity-55">
-          <div className="h-1.5 bg-white/15 rounded-full w-full" />
-          <div className="h-1.5 bg-white/15 rounded-full w-11/12" />
-          <div className="h-1.5 bg-white/15 rounded-full w-3/4" />
+        {/* Linhas fictícias da cláusula anterior cortada no topo (espessura proporcional a 12pt em A4) */}
+        <div className="space-y-1.5 mb-3 opacity-40">
+          <div className="h-[2.5px] sm:h-[3px] bg-white/20 rounded-full w-full" />
+          <div className="h-[2.5px] sm:h-[3px] bg-white/20 rounded-full w-[94%]" />
+          <div className="h-[2.5px] sm:h-[3px] bg-white/20 rounded-full w-[97%]" />
+          <div className="h-[2.5px] sm:h-[3px] bg-white/20 rounded-full w-[68%]" />
         </div>
 
-        {/* Último parágrafo legível de fechamento do contrato + linhas fictícias */}
-        <div className="space-y-2 mb-4">
-          <p className="text-[10px] sm:text-[11px] text-gray-300 leading-relaxed font-serif">
-            <span className="font-bold text-[#e5e2e1] uppercase tracking-wider text-[9.5px] sm:text-[10px] font-sans mr-1.5">
+        {/* Texto de cláusula em escala real de folha A4 (12pt/14pt reduzido proporcionalmente à lauda) */}
+        <div className="space-y-2 mb-3.5">
+          <p className="text-[6.5px] sm:text-[7.5px] text-gray-400/90 leading-[1.45] font-serif text-justify">
+            <span className="font-bold text-gray-300 uppercase tracking-wider font-sans mr-1">
+              Cláusula 8ª:
+            </span>
+            As partes reconhecem a validade plena das comunicações, propostas e instrumentos firmados sob o padrão visual adotado pela titular em suas entregas técnicas e comerciais.
+          </p>
+
+          <p className="text-[6.5px] sm:text-[7.5px] text-gray-400/90 leading-[1.45] font-serif text-justify">
+            <span className="font-bold text-gray-300 uppercase tracking-wider font-sans mr-1">
               Cláusula 9ª:
             </span>
-            E, por estarem assim justas e contratadas, as partes assinam o presente instrumento em meio físico e digital para que produza todos os seus efeitos.
+            E, por estarem assim justas e contratadas, firmam o presente instrumento em meio físico e digital para que produza todos os seus efeitos regulares.
           </p>
-          <div className="space-y-1.5 pt-0.5 opacity-65">
-            <div className="h-1.5 bg-white/15 rounded-full w-full" />
-            <div className="h-1.5 bg-white/15 rounded-full w-4/5" />
+
+          <div className="space-y-1.5 pt-0.5 opacity-40">
+            <div className="h-[2.5px] sm:h-[3px] bg-white/20 rounded-full w-full" />
+            <div className="h-[2.5px] sm:h-[3px] bg-white/20 rounded-full w-[76%]" />
           </div>
-          <p className="text-[10px] text-gray-400 text-right pt-1 font-serif italic">
+
+          <p className="text-[6.5px] sm:text-[7.5px] text-gray-400 text-right pt-1 font-serif italic">
             São Paulo, 15 de março de 2026.
           </p>
         </div>
 
-        {/* Área de assinatura no pé da folha de ofício */}
-        <div className="mt-2 pt-2 flex flex-col items-center text-center relative">
-          {/* Assinatura harmonizada posicionada logo acima da linha de assinatura */}
-          <div className="w-full max-w-[280px] sm:max-w-[310px] -mb-2 z-10">
-            <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-11 sm:h-12" />
+        {/* Área de assinatura no pé da folha de ofício (único elemento em destaque legível) */}
+        <div className="mt-2 pt-1.5 flex flex-col items-center text-center relative">
+          {/* Assinatura harmonizada um pouco menor, porém nítida e 100% legível */}
+          <div className="w-full max-w-[195px] sm:max-w-[225px] -mb-1.5 z-10">
+            <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-8 sm:h-9" />
           </div>
 
           {/* Linha clássica horizontal de assinatura do contrato */}
-          <div className="w-full max-w-[300px] sm:max-w-[340px] border-b border-[#f2ca50]/60 mb-2" />
+          <div className="w-full max-w-[215px] sm:max-w-[250px] border-b border-[#f2ca50]/55 mb-1.5" />
 
-          {/* Identificação formal abaixo da linha */}
-          <p className="font-cinzel text-xs sm:text-sm font-bold text-[#e5e2e1] tracking-wide leading-tight">
+          {/* Identificação formal impressa abaixo da linha na mesma escala 12pt da folha */}
+          <p className="font-cinzel text-[8px] sm:text-[9px] font-bold text-[#e5e2e1]/90 tracking-wider leading-tight">
             ANA PAULA FERREIRA LIMA
           </p>
-          <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] text-gray-400 mt-0.5">
+          <p className="text-[6px] sm:text-[7px] uppercase tracking-[0.14em] text-gray-400 mt-0.5">
             Contratante / Titular · CPF ***.842.109-**
           </p>
         </div>
 
-        {/* Rodapé da folha de ofício */}
-        <div className="mt-4 pt-2.5 border-t border-white/10 flex items-center justify-between text-[8px] sm:text-[9px] text-gray-500 font-mono">
+        {/* Rodapé da folha de ofício em escala de micro-impressão */}
+        <div className="mt-3.5 pt-2 border-t border-white/10 flex items-center justify-between text-[6px] sm:text-[7px] text-gray-500 font-mono">
           <span>INSTRUMENTO PARTICULAR · #DOC-2026-NM</span>
-          <span className="text-[#f2ca50]/80">Página 3 de 3</span>
+          <span className="text-[#f2ca50]/75">Página 3 de 3</span>
         </div>
       </div>
     </div>
