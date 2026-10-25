@@ -99,32 +99,6 @@ const DEMO_SYSTEM_SUGGESTIONS: DemoSuggestion[] = [
   },
 ];
 
-/** User candidates — mirrors "Suas Sugestões". */
-const DEMO_USER_SUGGESTIONS: DemoSuggestion[] = [
-  {
-    nome: 'PAULA FERREIRA',
-    score: 48,
-    compatibilidade: 'favoravel',
-    expressao: 9,
-    destino: 5,
-    motivacao: 2,
-    impressao: 7,
-    missao: 5,
-    bloqueios: 6,
-  },
-  {
-    nome: 'ANA FERREIRA',
-    score: 29,
-    compatibilidade: 'desfavoravel',
-    expressao: 6,
-    destino: 5,
-    motivacao: 5,
-    impressao: 1,
-    missao: 11,
-    bloqueios: 6,
-  },
-];
-
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -154,43 +128,54 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`${landingMockupTileClass} p-3 sm:p-3.5 xl:p-4 flex flex-col gap-1.5 sm:gap-2 min-w-0 h-full transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      className={`${landingMockupTileClass} px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 min-w-0 w-full transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{ transitionDelay: stagger ? `${delayIndex * 80}ms` : '0ms' }}
     >
-      <div className="font-cinzel text-xs sm:text-sm xl:text-base font-bold text-[#e5e2e1] break-words leading-tight">
-        {c.nome}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] break-words leading-tight">
+          {c.nome}
+        </div>
+        <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
       </div>
+
       <ProductAnimatedScore
         score={c.score}
         play={stagger}
         size="sm"
         delayMs={stagger ? delayIndex * 80 : 0}
       />
-      <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] sm:text-[11px] text-gray-400">
-        <span className="whitespace-nowrap">
-          Expr: <span className="text-gray-200 font-medium">{c.expressao}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Mot: <span className="text-gray-200 font-medium">{c.motivacao}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Imp: <span className="text-gray-200 font-medium">{c.impressao}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Mis: <span className="text-gray-200 font-medium">{c.missao}</span>
-        </span>
+
+      <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
+        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10.5px] sm:text-xs text-gray-400">
+          <span className="whitespace-nowrap">
+            Expr: <span className="text-gray-200 font-medium">{c.expressao}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Mot: <span className="text-gray-200 font-medium">{c.motivacao}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Imp: <span className="text-gray-200 font-medium">{c.impressao}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Mis: <span className="text-gray-200 font-medium">{c.missao}</span>
+          </span>
+        </div>
+
+        {c.bloqueios > 0 ? (
+          <span className="text-[10.5px] sm:text-xs font-medium text-red-400 whitespace-nowrap">
+            ⚠ {c.bloqueios} bloqueio(s)
+          </span>
+        ) : (
+          <span className="text-[10.5px] sm:text-xs font-medium text-emerald-400 whitespace-nowrap">
+            ✓ Sem bloqueios
+          </span>
+        )}
       </div>
-      {c.bloqueios > 0 ? (
-        <span className="text-[10px] sm:text-[11px] font-medium text-red-400 whitespace-nowrap">⚠ {c.bloqueios} bloqueio(s)</span>
-      ) : (
-        <span className="text-[10px] sm:text-[11px] font-medium text-emerald-400 whitespace-nowrap">✓ Sem bloqueios</span>
-      )}
     </div>
   );
 }
@@ -845,52 +830,15 @@ export function ProductSuggestionsFrame() {
 
   return (
     <div ref={rootRef} className={`@container/suggestions ${desktopFitClass}`}>
-      <div className={`${desktopStackClass} gap-4 sm:gap-5`}>
-        <div className="min-w-0">
-          <p className="nm-eyebrow mb-0.5 px-0.5">
-            Selecionadas para Você
-          </p>
-          <h4 className="nm-h4 px-0.5 mb-0.5">
-            Nossas Sugestões
-          </h4>
-          <p className="nm-body text-xs md:text-xs text-gray-400 px-0.5 mb-2.5">
-            Criadas para o seu perfil numerológico.
-          </p>
-          {/* 3-up from sm, 1-up on mobile. */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-            {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard
-                key={c.nome}
-                c={c}
-                stagger={stagger}
-                delayIndex={index}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          <p className="nm-eyebrow mb-0.5 px-0.5">
-            Seus Candidatos
-          </p>
-          <h4 className="nm-h4 px-0.5 mb-0.5">
-            Suas Sugestões
-          </h4>
-          <p className="nm-body text-xs md:text-xs text-gray-400 px-0.5 mb-2.5">
-            Nomes que você indicou, analisados numerologicamente.
-          </p>
-          {/* 2-up from sm (two candidates), 1-up on mobile. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-            {DEMO_USER_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard
-                key={c.nome}
-                c={c}
-                stagger={stagger}
-                delayIndex={DEMO_SYSTEM_SUGGESTIONS.length + index}
-              />
-            ))}
-          </div>
-        </div>
+      <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+        {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
+          <SuggestionCard
+            key={c.nome}
+            c={c}
+            stagger={stagger}
+            delayIndex={index}
+          />
+        ))}
       </div>
     </div>
   );

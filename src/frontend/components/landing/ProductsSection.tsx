@@ -115,20 +115,22 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className={landingSplitGridClass}>
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-center w-full min-w-0">
+            {/* Coluna Esquerda no Desktop (abaixo do texto no mobile/tablet): 3 cards empilhados e mais largos */}
             <div
-              className={`lg:col-span-7 ${mockupSlotClass} order-2 lg:order-1 ${s2Mockup.className}`}
+              className={`w-full lg:col-span-6 ${mockupSlotClass} order-2 lg:order-1 ${s2Mockup.className}`}
               style={s2Mockup.style}
             >
-              <div className="w-full max-w-[620px] xl:max-w-[660px] mx-auto lg:mr-auto lg:ml-0">
+              <div className="w-full max-w-[335px] sm:max-w-[400px] md:max-w-[440px] lg:max-w-[500px] xl:max-w-[540px] mx-auto lg:mx-0">
                 <ProductSuggestionsFrame />
               </div>
             </div>
 
-            <aside className="lg:col-span-5 min-w-0 order-1 lg:order-2">
-              <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
+            {/* Coluna Direita no Desktop (no topo no mobile/tablet): texto com mesma referência da Seção 3A e Seção 4 */}
+            <aside className="w-full lg:col-span-6 min-w-0 order-1 lg:order-2">
+              <div className="w-full max-w-[560px] mx-auto lg:mx-0 text-center lg:text-left">
                 <p
-                  className={`nm-eyebrow mb-2 md:mb-2.5 ${s2Label.className}`}
+                  className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${s2Label.className}`}
                   style={s2Label.style}
                 >
                   Sugestões Inteligentes
@@ -142,7 +144,7 @@ export function ProductsSection() {
                 </h2>
 
                 <p
-                  className={`nm-body-lg mt-4 sm:mt-5 ${s2Desc.className}`}
+                  className={`nm-body-lg mt-4 sm:mt-5 max-w-[54ch] mx-auto lg:mx-0 ${s2Desc.className}`}
                   style={s2Desc.style}
                 >
                   Você não recebe um nome imposto. O sistema testa primeiro a mudança mais leve: encurtar o nome, usar só o primeiro nome ou incluir um acento sutil. Um acento sutil, só na assinatura, muda o cálculo sem mudar o seu nome. Cada card mostra a nota, o nível, a combinação com o seu Destino e os 5 números para você escolher.
