@@ -32,9 +32,9 @@ export function HeroSection() {
       {/* CONTENT LAYERS (Z-10) — Centralizado na Área Útil (altura total - header) */}
       <div className={`relative z-10 ${landingSectionShellClass} flex-1 flex flex-col justify-center gap-8 md:gap-12 my-auto w-full`}>
         
-        {/* ROW 1: Coluna esquerda mais larga (54%) empurrando e reduzindo a largura horizontal do card à direita (46%) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8 lg:gap-8 xl:gap-10 items-center w-full min-w-0 text-center lg:text-left">
-          {/* Left Column: Headlines (ocupa mais espaço horizontal para o título e texto) */}
+        {/* ROW 1: Texto e card aproximados em direção ao centro, com mais espaço para a coluna de texto */}
+        <div className="max-w-[1200px] xl:max-w-[1220px] mx-auto grid grid-cols-1 lg:grid-cols-[1.08fr_0.92fr] gap-8 lg:gap-6 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
+          {/* Left Column: Headlines (ocupa espaço confortável para o título sem sobra excessiva à direita) */}
           <div className="w-full flex flex-col items-center lg:items-start min-w-0">
             <h1
               className={`nm-h1 ${titleReveal.className}`}
@@ -79,9 +79,9 @@ export function HeroSection() {
             </div>
           </div>
           
-          {/* Right Column: Interactive Animation Card (largura horizontal reduzida) */}
+          {/* Right Column: Interactive Animation Card (aproximado do texto à esquerda) */}
           <div
-            className={`w-full min-w-0 flex justify-center lg:justify-end ${cardReveal.className}`}
+            className={`w-full min-w-0 flex justify-center lg:justify-start ${cardReveal.className}`}
             style={cardReveal.style}
           >
             <HeroScoreAnimation />
