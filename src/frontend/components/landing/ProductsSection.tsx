@@ -51,10 +51,10 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className="max-w-6xl xl:max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-8 items-center w-full min-w-0">
-            {/* Coluna Esquerda: texto e card de score aproximados do centro */}
-            <aside className="w-full lg:col-span-6 min-w-0 order-1 lg:pr-2">
-              <div className="w-full max-w-[560px] mx-auto lg:ml-auto lg:mr-0 text-center lg:text-left">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-center w-full min-w-0">
+            {/* Coluna Esquerda: alinhada à mesma referência de container e espaçamento da Seção 4 */}
+            <aside className="w-full lg:col-span-6 min-w-0 order-1">
+              <div className="w-full max-w-[560px] mx-auto lg:mx-0 text-center lg:text-left">
                 <p
                   className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${s1Label.className}`}
                   style={s1Label.style}
@@ -86,11 +86,11 @@ export function ProductsSection() {
               </div>
             </aside>
 
-            {/* Coluna Direita: estrela aproximada em direção ao centro */}
+            {/* Coluna Direita: estrela centralizada na sua metade (mesma referência da Seção 4) */}
             <div
-              className="w-full lg:col-span-6 min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:py-4 lg:pl-2 lg:pr-0"
+              className="w-full lg:col-span-6 min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:p-4"
             >
-              <div className="w-full max-w-[540px] xl:max-w-[580px] mx-auto lg:mr-auto lg:ml-0 flex flex-col items-center justify-center">
+              <div className="w-full max-w-[540px] xl:max-w-[580px] mx-auto flex flex-col items-center justify-center">
                 <ProductHarmonyStar />
               </div>
             </div>
