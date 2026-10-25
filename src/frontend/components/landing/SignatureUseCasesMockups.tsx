@@ -83,11 +83,15 @@ export function CleanSignatureSvg({
 }
 
 /**
- * Base flexível compartilhada entre os mockups da Seção 4:
- * Aproveita a largura disponível da coluna em smartphones, tablets e desktops,
- * mantendo altura visual equilibrada (~280px–320px) com o bloco de texto ao lado.
+ * Larguras responsivas específicas para cada mockup na Seção 4:
+ * No mobile smartphone (< 640px), cartões (CIN e Marca Pessoal) e o smartphone
+ * ficam compactos e centralizados (~270px–300px), sem esticar até as bordas da tela.
+ * No tablet e desktop (sm / lg), aproveitam a coluna lado a lado (~440px–520px).
  */
-const MOCKUP_CARD_WIDTH = 'w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[540px] mx-auto';
+const CIN_CARD_WIDTH = 'w-full max-w-[290px] sm:max-w-[440px] lg:max-w-[520px] mx-auto';
+const SOCIAL_CARD_WIDTH = 'w-full max-w-[260px] sm:max-w-[340px] lg:max-w-[400px] mx-auto';
+const CONTRACT_CARD_WIDTH = 'w-full max-w-[310px] sm:max-w-[440px] lg:max-w-[500px] mx-auto';
+const BRANDING_CARD_WIDTH = 'w-full max-w-[290px] sm:max-w-[440px] lg:max-w-[520px] mx-auto';
 
 /**
  * MOCKUP 1: Documento Oficial (CIN - Carteira de Identidade Nacional / CNH)
@@ -96,7 +100,7 @@ const MOCKUP_CARD_WIDTH = 'w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[540px
 export function DocumentCinMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`${MOCKUP_CARD_WIDTH} aspect-[85.6/54] ${landingMockupFloatClass} relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 lg:p-6 select-none ${className}`}
+      className={`${CIN_CARD_WIDTH} aspect-[85.6/54] ${landingMockupFloatClass} relative overflow-hidden flex flex-col justify-between p-3 sm:p-5 lg:p-6 select-none ${className}`}
     >
       {/* Padrão geométrico de fundo estilo cédula de segurança */}
       <div
@@ -115,11 +119,11 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
       />
 
       {/* Cabeçalho Oficial do Documento */}
-      <div className="relative z-10 flex items-center justify-between pb-2 border-b border-white/10 shrink-0">
-        <div className="flex items-center gap-2.5">
+      <div className="relative z-10 flex items-center justify-between pb-1.5 sm:pb-2 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Brasão estilizado em vetor dourado */}
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#f2ca50]" fill="none" stroke="currentColor">
+          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#f2ca50]" fill="none" stroke="currentColor">
               <path
                 d="M12 2L4 6v6c0 5.5 3.5 10 8 11 4.5-1 8-5.5 8-11V6l-8-4z"
                 strokeWidth="1.5"
@@ -135,63 +139,63 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
             </svg>
           </div>
           <div>
-            <p className="font-cinzel text-[9px] sm:text-[10px] font-bold tracking-[0.14em] text-[#f2ca50] uppercase leading-tight">
+            <p className="font-cinzel text-[7.5px] sm:text-[10px] font-bold tracking-[0.12em] text-[#f2ca50] uppercase leading-tight">
               República Federativa do Brasil
             </p>
-            <p className="text-[8px] sm:text-[9px] text-gray-400 tracking-wider uppercase font-medium">
+            <p className="text-[6.5px] sm:text-[9px] text-gray-400 tracking-wider uppercase font-medium">
               Carteira de Identidade Nacional (CIN)
             </p>
           </div>
         </div>
-        <span className="font-mono text-[8px] text-[#f2ca50]/80 border border-[#f2ca50]/20 px-2 py-0.5 rounded-full bg-[#f2ca50]/5 whitespace-nowrap">
+        <span className="font-mono text-[6.5px] sm:text-[8px] text-[#f2ca50]/80 border border-[#f2ca50]/20 px-1.5 py-0.5 rounded-full bg-[#f2ca50]/5 whitespace-nowrap">
           DOCUMENTO OFICIAL
         </span>
       </div>
 
       {/* Corpo do Documento: Foto biométrica abstrata + Metadados */}
-      <div className="relative z-10 grid grid-cols-12 gap-3 my-auto items-center py-1">
+      <div className="relative z-10 grid grid-cols-12 gap-2 sm:gap-3 my-auto items-center py-0.5 sm:py-1">
         {/* Foto biométrica / Silhueta estilizada com auréola */}
         <div className="col-span-4 sm:col-span-3 flex flex-col items-center">
-          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-b from-white/10 to-white/5 border border-[#f2ca50]/30 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+          <div className="w-12 h-16 sm:w-16 sm:h-20 lg:w-20 lg:h-24 rounded-lg bg-gradient-to-b from-white/10 to-white/5 border border-[#f2ca50]/30 flex flex-col items-center justify-center relative overflow-hidden shadow-inner py-1">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#f2ca50] to-transparent animate-pulse" />
-            <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400/80" fill="currentColor">
+            <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-gray-400/80" fill="currentColor">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
-            <div className="mt-0.5 flex items-center gap-0.5 text-[7px] font-mono text-[#f2ca50]/80">
+            <div className="mt-0.5 flex items-center gap-0.5 text-[6px] sm:text-[7px] font-mono text-[#f2ca50]/80">
               <span>●</span> BIOMETRIA
             </div>
           </div>
         </div>
 
         {/* Campos Oficiais com Nome de Certidão de Nascimento */}
-        <div className="col-span-8 sm:col-span-9 space-y-1.5">
+        <div className="col-span-8 sm:col-span-9 space-y-1 sm:space-y-1.5">
           <div>
-            <p className="text-[7px] sm:text-[8px] uppercase tracking-wider text-gray-400">
+            <p className="text-[6px] sm:text-[8px] uppercase tracking-wider text-gray-400">
               Nome Civil (Certidão de Nascimento)
             </p>
-            <p className="font-cinzel text-xs sm:text-sm font-bold text-[#e5e2e1] tracking-wide leading-tight">
+            <p className="font-cinzel text-[10.5px] sm:text-xs lg:text-sm font-bold text-[#e5e2e1] tracking-wide leading-tight">
               ANA PAULA FERREIRA LIMA
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[8px] sm:text-[9px]">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[7px] sm:text-[9px]">
             <div>
-              <p className="text-[7px] uppercase tracking-wider text-gray-500">CPF</p>
+              <p className="text-[6px] sm:text-[7px] uppercase tracking-wider text-gray-500">CPF</p>
               <p className="font-mono text-gray-300">***.842.109-**</p>
             </div>
             <div>
-              <p className="text-[7px] uppercase tracking-wider text-gray-500">Nascimento</p>
+              <p className="text-[6px] sm:text-[7px] uppercase tracking-wider text-gray-500">Nascimento</p>
               <p className="font-mono text-gray-300">15/03/1985</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[8px] sm:text-[9px]">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[7px] sm:text-[9px]">
             <div>
-              <p className="text-[7px] uppercase tracking-wider text-gray-500">Nacionalidade</p>
+              <p className="text-[6px] sm:text-[7px] uppercase tracking-wider text-gray-500">Nacionalidade</p>
               <p className="text-gray-300">Brasileira</p>
             </div>
             <div>
-              <p className="text-[7px] uppercase tracking-wider text-gray-500">Órgão</p>
+              <p className="text-[6px] sm:text-[7px] uppercase tracking-wider text-gray-500">Órgão</p>
               <p className="text-gray-300">SSP / Registro Civil</p>
             </div>
           </div>
@@ -199,18 +203,18 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
       </div>
 
       {/* Campo da Assinatura: onde vai o NOME HARMONIZADO LIMPO */}
-      <div className="relative z-10 pt-2 border-t border-dashed border-[#f2ca50]/30 shrink-0">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-[8px] sm:text-[9px] uppercase tracking-[0.16em] font-medium text-[#f2ca50] flex items-center gap-1">
+      <div className="relative z-10 pt-1.5 sm:pt-2 border-t border-dashed border-[#f2ca50]/30 shrink-0">
+        <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+          <p className="text-[7px] sm:text-[9px] uppercase tracking-[0.16em] font-medium text-[#f2ca50] flex items-center gap-1">
             <span className="w-1 h-1 rounded-full bg-[#f2ca50] animate-ping" />
             Assinatura do Titular
           </p>
         </div>
 
         {/* Quadro com a assinatura límpida e legível Ana Paula Férreira */}
-        <div className="relative rounded-lg bg-black/40 border border-[#f2ca50]/40 p-1.5 sm:p-2 overflow-hidden">
+        <div className="relative rounded-lg bg-black/40 border border-[#f2ca50]/40 p-1 sm:p-1.5 lg:p-2 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#f2ca50]/5 to-transparent pointer-events-none" />
-          <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-8 sm:h-10" />
+          <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-6 sm:h-8 lg:h-10" />
         </div>
       </div>
     </div>
@@ -225,7 +229,7 @@ export function DocumentCinMockup({ className = '' }: MockupProps) {
 export function SocialProfileMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`w-full max-w-[400px] sm:max-w-[440px] mx-auto ${landingMockupFloatClass} rounded-t-[2.2rem] rounded-b-2xl border-t-2 border-x-2 border-b border-white/15 relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 select-none ${className}`}
+      className={`${SOCIAL_CARD_WIDTH} ${landingMockupFloatClass} rounded-t-[1.8rem] sm:rounded-t-[2.2rem] rounded-b-2xl border-t-2 border-x-2 border-b border-white/15 relative overflow-hidden flex flex-col justify-between p-3.5 sm:p-5 select-none ${className}`}
     >
       {/* Brilho de fundo místico roxo e dourado */}
       <div
@@ -334,7 +338,7 @@ export function SocialProfileMockup({ className = '' }: MockupProps) {
 export function ContractMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`${MOCKUP_CARD_WIDTH} relative pt-2 select-none ${className}`}
+      className={`${CONTRACT_CARD_WIDTH} relative pt-2 select-none ${className}`}
     >
       {/* Fade superior que cria o efeito de recorte (crop) vindo do meio da folha de ofício */}
       <div
@@ -410,48 +414,48 @@ export function ContractMockup({ className = '' }: MockupProps) {
 export function BrandingCardMockup({ className = '' }: MockupProps) {
   return (
     <div
-      className={`${MOCKUP_CARD_WIDTH} aspect-[1.72/1] ${landingMockupFloatClass} rounded-xl relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 lg:p-6 select-none ${className}`}
+      className={`${BRANDING_CARD_WIDTH} aspect-[1.72/1] ${landingMockupFloatClass} rounded-xl relative overflow-hidden flex flex-col justify-between p-3.5 sm:p-5 lg:p-6 select-none ${className}`}
     >
       {/* Topo do cartão: Monograma 'AP' + Identidade */}
       <div className="flex items-center justify-between shrink-0">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#f2ca50]/20 to-[#d4af37]/5 border border-[#f2ca50]/40 flex items-center justify-center shadow-inner">
-          <span className="font-cinzel text-base font-bold text-[#f2ca50] tracking-wider">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[#f2ca50]/20 to-[#d4af37]/5 border border-[#f2ca50]/40 flex items-center justify-center shadow-inner">
+          <span className="font-cinzel text-xs sm:text-base font-bold text-[#f2ca50] tracking-wider">
             AP
           </span>
         </div>
         <div className="text-right">
-          <p className="font-cinzel text-[9px] sm:text-[10px] tracking-[0.2em] text-[#f2ca50] uppercase font-bold">
+          <p className="font-cinzel text-[8px] sm:text-[10px] tracking-[0.2em] text-[#f2ca50] uppercase font-bold">
             Studio AP
           </p>
-          <p className="text-[8px] sm:text-[9px] text-gray-400 uppercase tracking-widest font-mono">
+          <p className="text-[7px] sm:text-[9px] text-gray-400 uppercase tracking-widest font-mono">
             Consultoria & Autoria
           </p>
         </div>
       </div>
 
       {/* Nome do Profissional / Autor */}
-      <div className="my-auto py-1">
-        <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] tracking-wide mb-0.5">
+      <div className="my-auto py-0.5 sm:py-1">
+        <h4 className="font-cinzel text-sm sm:text-lg lg:text-xl font-bold text-[#e5e2e1] tracking-wide mb-0.5 leading-tight">
           Ana Paula Férreira
         </h4>
-        <p className="text-[11px] sm:text-xs text-[#d7c6ff] font-medium tracking-wide">
+        <p className="text-[9.5px] sm:text-xs text-[#d7c6ff] font-medium tracking-wide">
           Estrategista Criativa & Consultora de Marca
         </p>
       </div>
 
       {/* Assinatura limpa e legível sem rabiscos */}
-      <div className="py-1 border-y border-white/5 my-1 bg-black/20 rounded-md px-2 shrink-0">
-        <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-8 sm:h-10" />
+      <div className="py-0.5 sm:py-1 border-y border-white/5 my-0.5 sm:my-1 bg-black/20 rounded-md px-2 shrink-0">
+        <CleanSignatureSvg name="Ana Paula Férreira" className="w-full h-6 sm:h-8 lg:h-10" />
       </div>
 
       {/* Informações de contato e autoridade */}
-      <div className="grid grid-cols-2 gap-2 text-[9px] sm:text-[10px] text-gray-400 pt-1 shrink-0">
+      <div className="grid grid-cols-2 gap-2 text-[7.5px] sm:text-[9px] lg:text-[10px] text-gray-400 pt-0.5 sm:pt-1 shrink-0">
         <div className="truncate">
-          <p className="text-[7px] uppercase tracking-wider text-gray-500">E-mail Profissional</p>
+          <p className="text-[6px] sm:text-[7px] uppercase tracking-wider text-gray-500">E-mail Profissional</p>
           <p className="text-[#e5e2e1] font-mono truncate">contato@anapaulaferreira.com</p>
         </div>
         <div className="text-right">
-          <p className="text-[7px] uppercase tracking-wider text-gray-500">Presença & Mídia</p>
+          <p className="text-[6px] sm:text-[7px] uppercase tracking-wider text-gray-500">Presença & Mídia</p>
           <p className="text-[#f2ca50] font-mono">@anapaulaferreira</p>
         </div>
       </div>
