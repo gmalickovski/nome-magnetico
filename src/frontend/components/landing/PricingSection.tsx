@@ -197,32 +197,34 @@ export function PricingSection({
         {`
           @keyframes nm-price-border-flow {
             0% {
-              background-position: 0% 50%, 0% 50%;
+              background-position: 0% 0%, 0% 50%;
             }
             50% {
-              background-position: 0% 50%, 100% 50%;
+              background-position: 0% 0%, 100% 50%;
             }
             100% {
-              background-position: 0% 50%, 0% 50%;
+              background-position: 0% 0%, 0% 50%;
             }
           }
           .nm-price-border {
-            border: 1.5px solid transparent;
+            position: relative;
+            border: 2px solid transparent;
             background-image:
-              linear-gradient(#181818, #181818),
+              radial-gradient(ellipse at top, #1d1a0d 0%, #131313 65%),
               linear-gradient(
                 115deg,
-                rgba(140, 109, 22, 0.3) 0%,
+                rgba(140, 109, 22, 0.35) 0%,
                 rgba(212, 175, 55, 0.85) 20%,
                 rgba(245, 215, 110, 1) 38%,
-                rgba(150, 118, 24, 0.35) 55%,
+                rgba(150, 118, 24, 0.4) 55%,
                 rgba(212, 175, 55, 0.9) 75%,
                 rgba(242, 202, 80, 1) 90%,
-                rgba(140, 109, 22, 0.3) 100%
+                rgba(140, 109, 22, 0.35) 100%
               );
             background-origin: padding-box, border-box;
             background-clip: padding-box, border-box;
             background-size: 100% 100%, 300% 300%;
+            box-shadow: 0 30px 80px rgba(212, 175, 55, 0.15);
             animation: nm-price-border-flow 6s ease-in-out infinite;
           }
           @media (prefers-reduced-motion: reduce) {
@@ -238,7 +240,13 @@ export function PricingSection({
           className={`mx-auto w-full max-w-xl lg:max-w-[980px] xl:max-w-[1060px] min-w-0 ${cardReveal.className}`}
           style={cardReveal.style}
         >
-          <div className="nm-floating-card nm-price-border rounded-2xl px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-11 xl:px-14 xl:py-12">
+          <div className="nm-price-border rounded-3xl overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-11 xl:px-14 xl:py-12">
+            {/* Glow topo dourado idêntico ao card da página de preços */}
+            <div
+              className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-64 h-1 rounded-full"
+              style={{ background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }}
+              aria-hidden="true"
+            />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-5 lg:gap-y-0 lg:gap-x-10 xl:gap-x-14 items-center text-center lg:text-left">
               {/* 1. Título: no topo no mobile (<1024px) | na direita no desktop widescreen (lg+) */}
               <div className="order-1 lg:order-none lg:col-span-7 lg:col-start-6 lg:row-start-1">
@@ -298,10 +306,10 @@ export function PricingSection({
                   data-cta-id="pricing_nome_social"
                   data-cta-position="precos"
                   disabled={priceUnavailableOnHq}
-                  className={`w-full ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-colors duration-300 text-base motion-reduce:transition-none ${
+                  className={`w-full ${landingTouchTargetClass} font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-base motion-reduce:transition-none ${
                     priceUnavailableOnHq
                       ? 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500'
-                      : 'bg-[#f2ca50] text-[#1A1A1A] hover:bg-[#D4AF37]'
+                      : 'bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/25'
                   }`}
                 >
                   Ver Minhas 3 Opções
