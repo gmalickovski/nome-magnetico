@@ -148,7 +148,7 @@ export function HeroScoreAnimation() {
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
-    <div className="w-full max-w-[540px] xl:max-w-[580px] flex flex-col md:flex-row gap-3.5 lg:gap-4 items-center nm-floating-card p-4 sm:p-5 lg:p-6">
+    <div className="w-full max-w-[575px] xl:max-w-[615px] flex flex-col md:flex-row gap-4 lg:gap-5 items-center nm-floating-card p-4 sm:p-5 lg:p-6">
       
       {/* Esquerda: Lista de Opções */}
       <div className="w-full md:w-[56%] flex flex-col gap-2.5 order-2 md:order-1">

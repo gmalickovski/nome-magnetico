@@ -32,8 +32,8 @@ export function HeroSection() {
       {/* CONTENT LAYERS (Z-10) — Centralizado na Área Útil (altura total - header) */}
       <div className={`relative z-10 ${landingSectionShellClass} flex-1 flex flex-col justify-center gap-8 md:gap-12 my-auto w-full`}>
         
-        {/* ROW 1: Texto e card aproximados em direção ao centro, com mais espaço para a coluna de texto */}
-        <div className="max-w-[1200px] xl:max-w-[1220px] mx-auto grid grid-cols-1 lg:grid-cols-[1.08fr_0.92fr] gap-8 lg:gap-6 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
+        {/* ROW 1: Mesma aproximação entre texto e card (~617px col esquerda + gap), com card interativo levemente mais largo (~610px) */}
+        <div className="max-w-[1230px] xl:max-w-[1260px] mx-auto grid grid-cols-1 lg:grid-cols-[1.01fr_0.99fr] gap-8 lg:gap-6 xl:gap-8 items-center w-full min-w-0 text-center lg:text-left">
           {/* Left Column: Headlines (ocupa espaço confortável para o título sem sobra excessiva à direita) */}
           <div className="w-full flex flex-col items-center lg:items-start min-w-0">
             <h1
