@@ -8,18 +8,18 @@ interface ScoreLevel {
 
 function getScoreLevel(clamped: number): ScoreLevel {
   if (clamped >= 85) {
-    return { bar: 'from-emerald-500 to-emerald-400', text: 'text-emerald-400', label: 'N5 · Harmonioso' };
+    return { bar: 'from-emerald-500 to-emerald-400', text: 'text-emerald-400', label: 'Harmonioso' };
   }
   if (clamped >= 70) {
-    return { bar: 'from-lime-500 to-lime-400', text: 'text-lime-400', label: 'N4 · Alinhado' };
+    return { bar: 'from-lime-500 to-lime-400', text: 'text-lime-400', label: 'Favorável' };
   }
   if (clamped >= 50) {
-    return { bar: 'from-yellow-500 to-yellow-400', text: 'text-yellow-400', label: 'N3 · Funcional' };
+    return { bar: 'from-yellow-500 to-yellow-400', text: 'text-yellow-400', label: 'Equilíbrio Parcial' };
   }
   if (clamped >= 30) {
-    return { bar: 'from-orange-500 to-orange-400', text: 'text-orange-400', label: 'N2 · Em Ajuste' };
+    return { bar: 'from-orange-500 to-orange-400', text: 'text-orange-400', label: 'Pede Atenção' };
   }
-  return { bar: 'from-red-600 to-red-500', text: 'text-red-500', label: 'N1 · Em Tensão' };
+  return { bar: 'from-red-600 to-red-500', text: 'text-red-500', label: 'Em Tensão' };
 }
 
 interface ProductAnimatedScoreProps {

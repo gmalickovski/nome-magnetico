@@ -26,14 +26,14 @@ import { ProductAnimatedScore } from './ProductAnimatedScore';
 
 const GOLD = '#D4AF37';
 
-/** Demo pairing validated against analisarNomeSocial("Maria da Silva Santos", "26/05/1971"). */
-const BIRTH_NAME = 'MARIA DA SILVA SANTOS';
-const INDICATED_NAME = 'MARIÃ SILVA';
-const DEMO_SCORE_BIRTH = 46;
-const DEMO_SCORE_HARMONIZED = 83;
+/** Demo pairing validated against analisarNomeSocial("ANA PAULA FERREIRA LIMA", "15/03/1985"). */
+const BIRTH_NAME = 'ANA PAULA FERREIRA LIMA';
+const INDICATED_NAME = 'ANA PAULA FÉRREIRA';
+const DEMO_SCORE_BIRTH = 42;
+const DEMO_SCORE_HARMONIZED = 95;
 
-const DEMO_GOLD_NUMS = [4, 8, 8, 3, 9];
-const DEMO_RED_NUMS = [4, 6, 5, 1, 1];
+const DEMO_GOLD_NUMS = [5, 9, 6, 5, 3];
+const DEMO_RED_NUMS = [5, 7, 6, 3, 1];
 
 const OUTER_PTS = harmonyStarPts(
   HARMONY_STAR_CX,
@@ -65,63 +65,37 @@ interface DemoSuggestion {
 /** System suggestions (IA) — mirrors "Nossas Sugestões". */
 const DEMO_SYSTEM_SUGGESTIONS: DemoSuggestion[] = [
   {
-    nome: 'MARIA DA SANNTOS',
-    score: 84,
+    nome: 'ANA PAULA FÉRREIRA',
+    score: 95,
     compatibilidade: 'favoravel',
     expressao: 9,
-    destino: 4,
-    motivacao: 5,
-    impressao: 4,
-    missao: 4,
+    destino: 5,
+    motivacao: 6,
+    impressao: 3,
+    missao: 5,
     bloqueios: 0,
   },
   {
-    nome: 'MARIÃ SILVA',
-    score: 83,
+    nome: 'ANA',
+    score: 84,
     compatibilidade: 'favoravel',
-    expressao: 8,
-    destino: 4,
-    motivacao: 8,
-    impressao: 9,
+    expressao: 7,
+    destino: 5,
+    motivacao: 2,
+    impressao: 5,
     missao: 3,
     bloqueios: 0,
   },
   {
-    nome: 'MARIA SILVA',
-    score: 84,
-    compatibilidade: 'favoravel',
-    expressao: 9,
-    destino: 4,
-    motivacao: 6,
-    impressao: 3,
+    nome: 'ANA PAULA',
+    score: 65,
+    compatibilidade: 'desfavoravel',
+    expressao: 8,
+    destino: 5,
+    motivacao: 1,
+    impressao: 7,
     missao: 4,
     bloqueios: 0,
-  },
-];
-
-/** User candidates — mirrors "Suas Sugestões". */
-const DEMO_USER_SUGGESTIONS: DemoSuggestion[] = [
-  {
-    nome: 'MARIA SANTOS',
-    score: 57,
-    compatibilidade: 'desfavoravel',
-    expressao: 5,
-    destino: 4,
-    motivacao: 11,
-    impressao: 3,
-    missao: 9,
-    bloqueios: 0,
-  },
-  {
-    nome: 'MARIA DA SILVA',
-    score: 6,
-    compatibilidade: 'neutro',
-    expressao: 1,
-    destino: 4,
-    motivacao: 6,
-    impressao: 4,
-    missao: 5,
-    bloqueios: 4,
   },
 ];
 
@@ -154,43 +128,54 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className={`${landingMockupTileClass} p-3 sm:p-3.5 xl:p-4 flex flex-col gap-1.5 sm:gap-2 min-w-0 h-full transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      className={`${landingMockupTileClass} px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 min-w-0 w-full transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{ transitionDelay: stagger ? `${delayIndex * 80}ms` : '0ms' }}
     >
-      <div className="font-cinzel text-xs sm:text-sm xl:text-base font-bold text-[#e5e2e1] break-words leading-tight">
-        {c.nome}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none] leading-tight">
+          {c.nome}
+        </div>
+        <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
       </div>
+
       <ProductAnimatedScore
         score={c.score}
         play={stagger}
         size="sm"
         delayMs={stagger ? delayIndex * 80 : 0}
       />
-      <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] sm:text-[11px] text-gray-400">
-        <span className="whitespace-nowrap">
-          Expr: <span className="text-gray-200 font-medium">{c.expressao}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Mot: <span className="text-gray-200 font-medium">{c.motivacao}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Imp: <span className="text-gray-200 font-medium">{c.impressao}</span>
-        </span>
-        <span className="whitespace-nowrap">
-          Mis: <span className="text-gray-200 font-medium">{c.missao}</span>
-        </span>
+
+      <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
+        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10.5px] sm:text-xs text-gray-400">
+          <span className="whitespace-nowrap">
+            Expr: <span className="text-gray-200 font-medium">{c.expressao}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Dest: <span className="text-[#D4AF37] font-semibold">{c.destino}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Mot: <span className="text-gray-200 font-medium">{c.motivacao}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Imp: <span className="text-gray-200 font-medium">{c.impressao}</span>
+          </span>
+          <span className="whitespace-nowrap">
+            Mis: <span className="text-gray-200 font-medium">{c.missao}</span>
+          </span>
+        </div>
+
+        {c.bloqueios > 0 ? (
+          <span className="text-[10.5px] sm:text-xs font-medium text-red-400 whitespace-nowrap">
+            ⚠ {c.bloqueios} bloqueio(s)
+          </span>
+        ) : (
+          <span className="text-[10.5px] sm:text-xs font-medium text-emerald-400 whitespace-nowrap">
+            ✓ Sem bloqueios
+          </span>
+        )}
       </div>
-      {c.bloqueios > 0 ? (
-        <span className="text-[10px] sm:text-[11px] font-medium text-red-400 whitespace-nowrap">⚠ {c.bloqueios} bloqueio(s)</span>
-      ) : (
-        <span className="text-[10px] sm:text-[11px] font-medium text-emerald-400 whitespace-nowrap">✓ Sem bloqueios</span>
-      )}
     </div>
   );
 }
@@ -211,7 +196,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 85) {
     return {
       code: 'N5',
-      label: 'N5 · Harmonioso',
+      label: 'Harmonioso',
       stroke: '#10B981',
       text: '#34D399',
       fill: 'rgba(16, 185, 129, 0.12)',
@@ -223,7 +208,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 70) {
     return {
       code: 'N4',
-      label: 'N4 · Alinhado',
+      label: 'Favorável',
       stroke: '#84CC16',
       text: '#A3E635',
       fill: 'rgba(132, 204, 22, 0.12)',
@@ -235,7 +220,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 50) {
     return {
       code: 'N3',
-      label: 'N3 · Funcional',
+      label: 'Equilíbrio Parcial',
       stroke: '#EAB308',
       text: '#FACC15',
       fill: 'rgba(234, 179, 8, 0.12)',
@@ -247,7 +232,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   if (s >= 30) {
     return {
       code: 'N2',
-      label: 'N2 · Em Ajuste',
+      label: 'Pede Atenção',
       stroke: '#F97316',
       text: '#FB923C',
       fill: 'rgba(249, 115, 22, 0.12)',
@@ -258,7 +243,7 @@ export function getScoreTierVisual(score: number): ScoreTierVisual {
   }
   return {
     code: 'N1',
-    label: 'N1 · Em Tensão',
+    label: 'Em Tensão',
     stroke: '#EF4444',
     text: '#F87171',
     fill: 'rgba(239, 68, 68, 0.12)',
@@ -459,19 +444,14 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
     <section ref={rootRef} className={`${landingMockupFloatClass} p-4 sm:p-5 w-full`}>
       <div className="flex flex-col gap-4 min-w-0 w-full">
         {/* Item 1: Nome de Nascimento (Nota Hoje - N2 · Em Ajuste) */}
-        <div className="flex flex-col gap-2 min-w-0 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 sm:gap-4 min-w-0">
-            <div className="min-w-0 flex-1">
-              <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500">
-                Nome de nascimento (Nota Hoje)
-              </p>
-              <h4 className="font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] truncate mt-0.5">
-                {BIRTH_NAME}
-              </h4>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
+        <div className="flex flex-col gap-1.5 min-w-0 w-full">
+          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+            <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500 leading-snug">
+              Nome de nascimento (Nota Hoje)
+            </p>
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span
-                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums"
+                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
                 style={{ color: birthVisual.text }}
               >
                 {birthScore}
@@ -482,6 +462,9 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
               </span>
             </div>
           </div>
+          <h4 className="w-full font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
+            {BIRTH_NAME}
+          </h4>
           {/* Barra de progresso full-width */}
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
             <div
@@ -495,19 +478,14 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
         <div className="border-t border-white/10" />
 
         {/* Item 2: Nome Harmonizado (Potencial - N4 · Alinhado) */}
-        <div className="flex flex-col gap-2 min-w-0 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 sm:gap-4 min-w-0">
-            <div className="min-w-0 flex-1">
-              <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400">
-                Nome harmonizado (Potencial)
-              </p>
-              <h4 className="font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] truncate mt-0.5">
-                {INDICATED_NAME}
-              </h4>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
+        <div className="flex flex-col gap-1.5 min-w-0 w-full">
+          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+            <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400 leading-snug">
+              Nome harmonizado (Potencial)
+            </p>
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span
-                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums"
+                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
                 style={{ color: harmVisual.text }}
               >
                 {harmScore}
@@ -518,6 +496,9 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
               </span>
             </div>
           </div>
+          <h4 className="w-full font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
+            {INDICATED_NAME}
+          </h4>
           {/* Barra de progresso full-width */}
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
             <div
@@ -845,52 +826,15 @@ export function ProductSuggestionsFrame() {
 
   return (
     <div ref={rootRef} className={`@container/suggestions ${desktopFitClass}`}>
-      <div className={`${desktopStackClass} gap-4 sm:gap-5`}>
-        <div className="min-w-0">
-          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-0.5 px-0.5">
-            Selecionadas para Você
-          </p>
-          <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] px-0.5 mb-0.5">
-            Nossas Sugestões
-          </h4>
-          <p className="text-[11px] text-gray-400 px-0.5 mb-2.5 leading-relaxed">
-            Criadas para o seu perfil numerológico.
-          </p>
-          {/* 3-up from sm, 1-up on mobile. */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-            {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard
-                key={c.nome}
-                c={c}
-                stagger={stagger}
-                delayIndex={index}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          <p className="font-cinzel text-[10px] sm:text-xs uppercase tracking-[0.15em] text-[#D4AF37]/80 mb-0.5 px-0.5">
-            Seus Candidatos
-          </p>
-          <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] px-0.5 mb-0.5">
-            Suas Sugestões
-          </h4>
-          <p className="text-[11px] text-gray-400 px-0.5 mb-2.5 leading-relaxed">
-            Nomes que você indicou, analisados numerologicamente.
-          </p>
-          {/* 2-up from sm (two candidates), 1-up on mobile. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-            {DEMO_USER_SUGGESTIONS.map((c, index) => (
-              <SuggestionCard
-                key={c.nome}
-                c={c}
-                stagger={stagger}
-                delayIndex={DEMO_SYSTEM_SUGGESTIONS.length + index}
-              />
-            ))}
-          </div>
-        </div>
+      <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+        {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
+          <SuggestionCard
+            key={c.nome}
+            c={c}
+            stagger={stagger}
+            delayIndex={index}
+          />
+        ))}
       </div>
     </div>
   );

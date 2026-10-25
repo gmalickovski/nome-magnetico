@@ -98,9 +98,9 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
         {variant === 'landing' ? (
           <div className="w-full min-w-0">
             <LandingSectionIntro
-              label="Próximos Lançamentos"
-              title="Qual análise você quer ver a seguir no Nome Magnético?"
-              description="Toque em uma opção para votar. Votação 100% anônima e instantânea — sem cadastro e sem coleta de dados pessoais."
+              label="Você Decide"
+              title="Você Decide o Próximo Lançamento"
+              description="Escolha com um clique, sem precisar de cadastro."
               align="center"
               className="mb-10 md:mb-14"
               revealed={reveal.revealed}
@@ -115,7 +115,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                 <p className="font-cinzel text-base sm:text-lg font-bold text-emerald-300 mb-1 text-balance">
                   ✦ Voto contabilizado! Obrigado por participar.
                 </p>
-                <p className="text-xs sm:text-sm text-gray-300 text-pretty">
+                <p className="nm-caption text-gray-300">
                   Você votou em{' '}
                   <strong className="text-[#e5e2e1]">
                     {VOTE_OPTIONS.find((o) => o.id === selected)?.label ?? selected}
@@ -144,19 +144,19 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                     >
                       <div>
                         <div className="flex items-center justify-between gap-3 mb-3">
-                          <span className="font-cinzel text-lg sm:text-xl font-bold text-[#e5e2e1] group-hover:text-[#f2ca50] transition-colors text-balance">
+                          <h3 className="nm-h3 group-hover:text-[#f2ca50] transition-colors">
                             {opt.label}
-                          </span>
+                          </h3>
                           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10 text-xs text-[#D4AF37] ring-1 ring-[#D4AF37]/30 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
                             {isCurrent ? '…' : '→'}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-400 leading-relaxed text-pretty">
+                        <p className="nm-body">
                           {opt.description}
                         </p>
                       </div>
                       <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50] transition-colors whitespace-nowrap">
+                        <span className="nm-caption font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50] transition-colors whitespace-nowrap">
                           {isCurrent ? 'Registrando voto...' : 'Votar nesta opção'}
                         </span>
                         <span className="text-xs text-[#bea5ff]/40 group-hover:text-[#bea5ff] transition-colors">◈</span>
@@ -165,6 +165,12 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                   );
                 })}
               </div>
+            )}
+
+            {!voted && (
+              <p className="nm-caption text-center mt-6">
+                Seu voto é anônimo: contamos só a opção escolhida, sem cookies e sem dados pessoais.
+              </p>
             )}
 
             {error && (
@@ -179,14 +185,14 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
               isCompact ? 'max-w-2xl' : 'max-w-3xl'
             }`}
           >
-            <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.18em] mb-2">
-              Próximos Lançamentos
+            <p className="nm-eyebrow mb-2">
+              Você Decide
             </p>
-            <h2 className="font-cinzel text-lg sm:text-xl md:text-2xl lg:text-[1.75rem] font-bold text-[#e5e2e1] mb-3 leading-tight text-balance">
-              Qual análise você quer ver a seguir no Nome Magnético?
+            <h2 className="nm-h2 mb-3">
+              Você Decide o Próximo Lançamento
             </h2>
-            <p className="text-gray-400 text-sm sm:text-base max-w-xl mx-auto mb-6 leading-relaxed">
-              Toque em uma opção para votar. Votação 100% anônima e instantânea — sem cadastro e sem coleta de dados pessoais.
+            <p className="nm-body-lg max-w-xl mx-auto mb-6">
+              Escolha com um clique, sem precisar de cadastro.
             </p>
 
             {voted ? (
@@ -197,7 +203,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                 <p className="font-cinzel text-base sm:text-lg font-bold text-emerald-300 mb-1">
                   ✦ Voto contabilizado! Obrigado por participar.
                 </p>
-                <p className="text-xs sm:text-sm text-gray-300">
+                <p className="nm-caption text-gray-300">
                   Você votou em{' '}
                   <strong className="text-[#e5e2e1]">
                     {VOTE_OPTIONS.find((o) => o.id === selected)?.label ?? selected}
@@ -220,24 +226,30 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] group-hover:text-[#f2ca50] transition-colors">
+                          <h3 className="nm-h3 group-hover:text-[#f2ca50] transition-colors">
                             {opt.label}
-                          </span>
+                          </h3>
                           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10 text-xs text-[#D4AF37] ring-1 ring-[#D4AF37]/30 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
                             {isCurrent ? '…' : '→'}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400 leading-relaxed">
+                        <p className="nm-body">
                           {opt.description}
                         </p>
                       </div>
-                      <span className="mt-4 inline-block text-[11px] font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50]">
+                      <span className="nm-caption mt-4 inline-block font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50]">
                         {isCurrent ? 'Registrando voto...' : 'Votar nesta opção'}
                       </span>
                     </button>
                   );
                 })}
               </div>
+            )}
+
+            {!voted && (
+              <p className="nm-caption text-center mt-4">
+                Seu voto é anônimo: contamos só a opção escolhida, sem cookies e sem dados pessoais.
+              </p>
             )}
 
             {error && (

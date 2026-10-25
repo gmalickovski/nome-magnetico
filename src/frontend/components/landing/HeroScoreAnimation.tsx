@@ -16,67 +16,67 @@ interface NameCandidate {
 
 const CANDIDATES: NameCandidate[] = [
   {
-    name: 'JOÃO ALBERTO DA SILVA',
-    type: 'Nome de Nascimento (Nota Hoje)',
-    score: 28,
-    label: 'N1 · Em Tensão',
-    colorClass: 'text-red-500',
-    gradientClass: 'from-red-700 to-red-500',
-    ringGradient: '#ef4444',
-    bloqueios: '3 Sequências no Triângulo da Vida',
-    vibracao: 'Tensão Vibracional (Expressão × Destino)',
-    ringClass: 'ring-red-500/30',
-    barClass: 'bg-red-500',
-  },
-  {
-    name: 'JOÃO DA SILVA',
-    type: 'Assinatura Atual',
-    score: 46,
-    label: 'N2 · Em Ajuste',
-    colorClass: 'text-orange-500',
-    gradientClass: 'from-orange-600 to-orange-400',
-    ringGradient: '#f97316',
-    bloqueios: '2 Sequências no Triângulo da Vida',
-    vibracao: 'Tensão Vibracional Moderada',
-    ringClass: 'ring-orange-500/30',
-    barClass: 'bg-orange-500',
-  },
-  {
-    name: 'JOÃO A. SILVA',
-    type: 'Variação Sugerida 1',
-    score: 64,
-    label: 'N3 · Funcional',
-    colorClass: 'text-yellow-400',
-    gradientClass: 'from-yellow-500 to-yellow-400',
-    ringGradient: '#facc15',
-    bloqueios: '1 Sequência Restante na Vida',
-    vibracao: 'Relação Neutra com o Destino',
-    ringClass: 'ring-yellow-400/30',
-    barClass: 'bg-yellow-400',
-  },
-  {
-    name: 'JOÃO SILVA',
-    type: 'Variação Sugerida 2',
-    score: 79,
-    label: 'N4 · Alinhado',
+    name: 'JULIANA MARTINS ROCHA',
+    type: 'Nome de Nascimento',
+    score: 81,
+    label: 'Favorável',
     colorClass: 'text-lime-400',
     gradientClass: 'from-lime-600 to-lime-400',
     ringGradient: '#a3e635',
-    bloqueios: 'Sem Sequências no Triângulo da Vida',
-    vibracao: 'Fluxo Harmônico Geral',
+    bloqueios: 'Nome completo da certidão',
+    vibracao: 'Boa base, com pontos a afinar',
     ringClass: 'ring-lime-400/30',
     barClass: 'bg-lime-400',
   },
   {
-    name: 'JOÃO ALBERTO SILVA',
-    type: 'Potencial Harmonizado (N5)',
-    score: 95,
-    label: 'N5 · Harmonioso',
+    name: 'JULIANA M. ROCHA',
+    type: 'Assinatura Atual',
+    score: 83,
+    label: 'Favorável',
+    colorClass: 'text-lime-400',
+    gradientClass: 'from-lime-600 to-lime-400',
+    ringGradient: '#a3e635',
+    bloqueios: 'Abreviação do primeiro sobrenome',
+    vibracao: 'Boa base, com pontos a afinar',
+    ringClass: 'ring-lime-400/30',
+    barClass: 'bg-lime-400',
+  },
+  {
+    name: 'JULIANA MÁRTINS ROCHA',
+    type: 'Acento Sutil',
+    score: 65,
+    label: 'Equilíbrio Parcial',
+    colorClass: 'text-yellow-400',
+    gradientClass: 'from-yellow-500 to-yellow-400',
+    ringGradient: '#facc15',
+    bloqueios: 'Inclusão de acento na assinatura',
+    vibracao: 'Forças claras, alguns pontos',
+    ringClass: 'ring-yellow-400/30',
+    barClass: 'bg-yellow-400',
+  },
+  {
+    name: 'JULIANA MARTINS',
+    type: 'Nome Encurtado',
+    score: 87,
+    label: 'Harmonioso',
     colorClass: 'text-emerald-400',
     gradientClass: 'from-emerald-600 to-emerald-400',
     ringGradient: '#34d399',
-    bloqueios: 'Sem Sequências no Triângulo da Vida',
-    vibracao: 'Compatibilidade Favorável (Expressão × Destino)',
+    bloqueios: 'Uso do primeiro sobrenome',
+    vibracao: 'Em harmonia com a sua data',
+    ringClass: 'ring-emerald-400/30',
+    barClass: 'bg-emerald-400',
+  },
+  {
+    name: 'JULIANA ROCHA',
+    type: 'Nome Harmonizado',
+    score: 93,
+    label: 'Harmonioso',
+    colorClass: 'text-emerald-400',
+    gradientClass: 'from-emerald-600 to-emerald-400',
+    ringGradient: '#34d399',
+    bloqueios: 'Saiu "Martins", sem acento',
+    vibracao: 'Em harmonia com a sua data',
     ringClass: 'ring-emerald-400/30',
     barClass: 'bg-emerald-400',
   },
@@ -141,24 +141,26 @@ export function HeroScoreAnimation() {
     setActiveIndex(index);
   };
 
-  // SVG Circular progress formulas - Enlarged Circle (224px diameter)
-  const radius = 96;
-  const strokeWidth = 12;
+  // SVG Circular progress formulas - Raio ampliado dentro do viewBox 224x224 para maximizar a área interna útil do círculo
+  const radius = 102;
+  const strokeWidth = 11;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
-    <div className="w-full flex flex-col md:flex-row gap-4 lg:gap-6 items-center nm-floating-card p-5 sm:p-6 lg:p-7">
+    <div className="w-full max-w-[380px] sm:max-w-[410px] lg:max-w-[400px] xl:max-w-[635px] flex flex-col xl:flex-row gap-3.5 xl:gap-5 items-center nm-floating-card p-4 sm:p-5 lg:p-4 xl:p-6">
       
-      {/* Esquerda: Lista de Opções */}
-      <div className="w-full md:w-[56%] flex flex-col gap-2.5 order-2 md:order-1">
+      {/* Lista de Opções:
+          - < 1280px (mobile, tablet e telas ~11" lg): fica empilhada abaixo do círculo com 100% da largura, sem cortar nomes.
+          - >= 1280px (xl desktop): fica à esquerda (56% da largura) ao lado do círculo. */}
+      <div className="w-full xl:w-[56%] flex flex-col gap-2 xl:gap-2.5 order-2 xl:order-1">
         {CANDIDATES.map((cand, idx) => {
           const isSelected = activeIndex === idx;
           return (
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              className={`w-full text-left py-2.5 px-3 rounded-xl transition-all duration-300 relative group overflow-hidden ${
+              className={`w-full text-left py-2 xl:py-2.5 px-3 rounded-xl transition-all duration-300 relative group overflow-hidden ${
                 isSelected
                   ? `bg-white/[0.05] ring-1 ${cand.ringClass}`
                   : 'bg-[#111]/30 ring-1 ring-white/[0.02] hover:bg-white/[0.02]'
@@ -169,21 +171,21 @@ export function HeroScoreAnimation() {
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${cand.barClass}`} />
               )}
               
-              <div className="flex justify-between items-center pl-2">
-                <div className="min-w-0 pr-2">
+              <div className="flex justify-between items-center pl-2 gap-2">
+                <div className="min-w-0">
                   <p className={`text-[10px] uppercase tracking-wider font-semibold ${
                     isSelected ? cand.colorClass : 'text-gray-500'
                   }`}>
                     {cand.type}
                   </p>
-                  <p className={`font-cinzel font-bold text-sm tracking-wider truncate mt-0.5 ${
+                  <p className={`font-cinzel font-bold text-xs sm:text-[13px] xl:text-[13.5px] tracking-wide whitespace-nowrap mt-0.5 ${
                     isSelected ? 'text-[#e5e2e1]' : 'text-gray-400 group-hover:text-gray-300'
                   }`}>
                     {cand.name}
                   </p>
                 </div>
                 
-                <span className={`text-base font-bold font-cinzel shrink-0 pl-2 ${
+                <span className={`text-sm sm:text-base font-bold font-cinzel shrink-0 ${
                   isSelected ? cand.colorClass : 'text-gray-600'
                 }`}>
                   {cand.score}
@@ -194,9 +196,11 @@ export function HeroScoreAnimation() {
         })}
       </div>
 
-      {/* Direita: Visor Circular do Score (Maior e Centralizado) */}
-      <div className="w-full md:w-[44%] flex flex-col items-center justify-center p-2 order-1 md:order-2">
-        <div className="relative w-56 h-56 flex items-center justify-center">
+      {/* Visor Circular do Score:
+          - < 1280px (mobile, tablet e telas ~11" lg): fica no topo do card empilhado, centralizado sem vazar das bordas.
+          - >= 1280px (xl desktop): fica à direita (44% da largura). */}
+      <div className="w-full xl:w-[44%] flex flex-col items-center justify-center p-1 xl:p-2 order-1 xl:order-2">
+        <div className="relative w-48 h-48 sm:w-52 sm:h-52 lg:w-48 lg:h-48 xl:w-56 xl:h-56 flex items-center justify-center">
           {/* Background circle */}
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 224 224">
             <circle
@@ -222,24 +226,24 @@ export function HeroScoreAnimation() {
             />
           </svg>
 
-          {/* Inner Text info */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className={`font-cinzel text-6xl font-bold tracking-tight ${activeCandidate.colorClass}`}>
+          {/* Inner Text info — calibrado para caber confortavelmente dentro do anel mesmo no maior rótulo ("EQUILÍBRIO PARCIAL") */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
+            <span className={`font-cinzel text-[44px] sm:text-5xl xl:text-[54px] font-bold leading-none tracking-tight ${activeCandidate.colorClass}`}>
               {displayedScore}
             </span>
-            <span className="text-[10px] uppercase tracking-widest text-gray-500 mt-0.5">Pontos</span>
-            <span className={`text-sm font-bold uppercase mt-1 tracking-wider ${activeCandidate.colorClass}`}>
+            <span className="text-[9.5px] xl:text-[10px] uppercase tracking-[0.18em] text-gray-500 mt-1">Pontos</span>
+            <span className={`text-[11px] sm:text-xs xl:text-[12.5px] font-bold uppercase mt-1 tracking-[0.03em] leading-tight whitespace-nowrap ${activeCandidate.colorClass}`}>
               {activeCandidate.label}
             </span>
           </div>
         </div>
 
-        {/* Info card details */}
-        <div className="w-full text-center mt-4">
-          <p className="text-xs font-semibold text-gray-300 transition-all duration-500 truncate">
+        {/* Info card details (sempre visíveis sem cortar com reticências) */}
+        <div className="w-full text-center mt-2.5 xl:mt-4 px-1">
+          <p className="text-xs font-semibold text-gray-300 transition-all duration-500 leading-snug">
             {activeCandidate.bloqueios}
           </p>
-          <p className="text-[11px] text-gray-500 mt-1 transition-all duration-500 truncate">
+          <p className="text-[11px] text-gray-500 mt-0.5 xl:mt-1 transition-all duration-500 leading-snug">
             {activeCandidate.vibracao}
           </p>
         </div>

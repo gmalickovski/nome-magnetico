@@ -51,37 +51,34 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 xl:gap-12 items-center w-full min-w-0">
-            {/* Coluna Esquerda: 50% da largura no desktop */}
-            <aside className="w-full min-w-0 order-1">
-              <div className="w-full text-center lg:text-left">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-center w-full min-w-0">
+            {/* Coluna Esquerda: alinhada à mesma referência de container e espaçamento da Seção 4 */}
+            <aside className="w-full lg:col-span-6 min-w-0 order-1">
+              <div className="w-full max-w-[560px] mx-auto lg:mx-0 text-center lg:text-left">
                 <p
-                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2.5 sm:mb-3 md:mb-3.5 ${s1Label.className}`}
+                  className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${s1Label.className}`}
                   style={s1Label.style}
                 >
                   Harmonização
                 </p>
 
-                <h3
-                  className={`font-cinzel text-2xl sm:text-[1.65rem] md:text-3xl lg:text-[2.25rem] xl:text-[2.5rem] font-bold text-white leading-[1.25] sm:leading-[1.25] lg:leading-[1.26] text-balance max-w-[28ch] sm:max-w-[34ch] lg:max-w-none mx-auto lg:mx-0 ${s1Title.className}`}
+                <h2
+                  className={`nm-h2 max-w-[28ch] sm:max-w-[34ch] lg:max-w-none mx-auto lg:mx-0 ${s1Title.className}`}
                   style={s1Title.style}
                 >
-                  Compare sua nota hoje com o potencial da sua assinatura.
-                </h3>
+                  O Antes e o Depois do Seu Nome, Lado a Lado
+                </h2>
 
                 <p
-                  className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty max-w-[58ch] mx-auto lg:mx-0 ${s1Desc.className}`}
+                  className={`nm-body-lg mt-4 sm:mt-5 max-w-[54ch] mx-auto lg:mx-0 ${s1Desc.className}`}
                   style={s1Desc.style}
                 >
-                  Cada letra carrega uma frequência. Quando o nome de nascimento acumula sequências repetidas no
-                  Triângulo da Vida ou entra em tensão com o Destino, isso aparece na sua nota de 0 a 100. A
-                  Harmonização revela variações de nome social em nível N5 (Harmonioso), preservando sua
-                  identidade. Você vê o antes e o depois lado a lado — com transparência em cada critério.
+                  Cada letra e cada acento entram no cálculo. O que vem da sua data de nascimento fica à parte, porque nenhum nome muda isso. O que vem só do nome pode ser harmonizado numa assinatura só sua, sem mudar o seu registro. Você vê o antes e o depois lado a lado, com a nota de cada um.
                 </p>
 
-                {/* Card de Score: ocupa a largura total da coluna esquerda (50%), logo abaixo do texto */}
+                {/* Card de Score: logo abaixo do texto */}
                 <div
-                  className={`mt-6 sm:mt-8 w-full max-w-xl mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
+                  className={`mt-6 sm:mt-8 w-full max-w-[520px] mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
                   style={s1ScoreCard.style}
                 >
                   <ProductHarmonyScoreCard />
@@ -89,11 +86,11 @@ export function ProductsSection() {
               </div>
             </aside>
 
-            {/* Coluna Direita: 50% da largura no desktop, com estrela centralizada */}
+            {/* Coluna Direita: estrela centralizada na sua metade (mesma referência da Seção 4) */}
             <div
-              className={`w-full min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:p-6`}
+              className="w-full lg:col-span-6 min-w-0 order-2 flex flex-col items-center justify-center p-2 sm:p-4 lg:p-4"
             >
-              <div className="w-full max-w-[580px] xl:max-w-[620px] mx-auto flex flex-col items-center justify-center">
+              <div className="w-full max-w-[540px] xl:max-w-[580px] mx-auto flex flex-col items-center justify-center">
                 <ProductHarmonyStar />
               </div>
             </div>
@@ -118,40 +115,39 @@ export function ProductsSection() {
         </div>
 
         <div className={`relative ${landingSectionShellClass}`}>
-          <div className={landingSplitGridClass}>
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-center w-full min-w-0">
+            {/* Coluna Esquerda no Desktop (abaixo do texto no mobile/tablet): 3 cards empilhados e mais largos */}
             <div
-              className={`lg:col-span-7 ${mockupSlotClass} order-2 lg:order-1 ${s2Mockup.className}`}
+              className={`w-full lg:col-span-6 ${mockupSlotClass} order-2 lg:order-1 ${s2Mockup.className}`}
               style={s2Mockup.style}
             >
-              <div className="w-full max-w-[620px] xl:max-w-[660px] mx-auto lg:mr-auto lg:ml-0">
+              <div className="w-full max-w-[335px] sm:max-w-[400px] md:max-w-[440px] lg:max-w-[500px] xl:max-w-[540px] mx-auto lg:mx-0">
                 <ProductSuggestionsFrame />
               </div>
             </div>
 
-            <aside className="lg:col-span-5 min-w-0 order-1 lg:order-2">
-              <div className={`${productCopyProseClass} ${productCopyAlignClass}`}>
+            {/* Coluna Direita no Desktop (no topo no mobile/tablet): texto com mesma referência da Seção 3A e Seção 4 */}
+            <aside className="w-full lg:col-span-6 min-w-0 order-1 lg:order-2">
+              <div className="w-full max-w-[560px] mx-auto lg:mx-0 text-center lg:text-left">
                 <p
-                  className={`text-[#f2ca50] text-xs md:text-sm font-bold uppercase tracking-[0.15em] mb-2 md:mb-2.5 ${s2Label.className}`}
+                  className={`nm-eyebrow mb-2.5 sm:mb-3 md:mb-3.5 ${s2Label.className}`}
                   style={s2Label.style}
                 >
                   Sugestões Inteligentes
                 </p>
 
-                <h3
-                  className={`font-cinzel text-xl sm:text-[1.4rem] md:text-2xl lg:text-[1.75rem] xl:text-[2rem] font-bold text-[#e5e2e1] mb-3 leading-[1.15] text-balance ${s2Title.className}`}
+                <h2
+                  className={`nm-h2 mb-3 ${s2Title.className}`}
                   style={s2Title.style}
                 >
-                  Não é um nome imposto. É um ranking para você escolher.
-                </h3>
+                  Três Opções de Assinatura Para Você Escolher a Sua
+                </h2>
 
                 <p
-                  className={`text-gray-400 text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed text-pretty ${s2Desc.className}`}
+                  className={`nm-body-lg mt-4 sm:mt-5 max-w-[54ch] mx-auto lg:mx-0 ${s2Desc.className}`}
                   style={s2Desc.style}
                 >
-                  O sistema gera sugestões e também analisa as variações que você indicar. Cada
-                  card mostra score, compatibilidade Expressão × Destino, os 5 números e se ainda
-                  há bloqueios. Compare, escolha a assinatura que ressoa — e rode a análise completa
-                  quando quiser. Self-service, na hora.
+                  Você não recebe um nome imposto. O sistema testa primeiro a mudança mais leve: encurtar o nome, usar só o primeiro nome ou incluir um acento sutil. Um acento sutil, só na assinatura, muda o cálculo sem mudar o seu nome. Cada card mostra a nota, o nível, a combinação com o seu Destino e os 5 números para você escolher.
                 </p>
               </div>
             </aside>
