@@ -111,7 +111,7 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
           {item.eyebrow}
         </p>
 
-        <h3 className="nm-h3 mb-3 max-w-[28ch] mx-auto lg:mx-0">
+        <h3 className="nm-h3 mb-3 max-w-[28ch] sm:max-w-[36ch] md:max-w-[40ch] lg:max-w-[28ch] mx-auto lg:mx-0">
           {item.title}
         </h3>
 

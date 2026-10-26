@@ -85,14 +85,14 @@ export function CleanSignatureSvg({
 /**
  * Escala progressiva por dispositivo para manter proporção entre todos os mockups:
  * - Mobile smartphone (< 640px): 335px para cartões/folha e 285px para celular (equilíbrio sem colar nas bordas).
- * - Tablet 10" em pé (sm / md, 640px–1023px): meio-termo (375px -> 405px cartões/folha; 310px -> 330px celular).
+ * - Tablet 10" em pé (sm / md, 640px–1023px): escala ampliada para aproveitar a tela de 10" (430px -> 490px cartões/folha; 345px -> 385px celular).
  * - Tablet 12"–13" (lg, 1024px–1279px): lado a lado com o texto (430px cartões/folha; 340px celular).
  * - Desktop amplo (xl+, >= 1280px): 480px cartões/folha e 365px celular.
  */
 const HORIZONTAL_CARD_WIDTH =
-  'w-full max-w-[335px] sm:max-w-[375px] md:max-w-[405px] lg:max-w-[430px] xl:max-w-[480px] mx-auto';
+  'w-full max-w-[335px] sm:max-w-[430px] md:max-w-[490px] lg:max-w-[430px] xl:max-w-[480px] mx-auto';
 const SOCIAL_PHONE_WIDTH =
-  'w-full max-w-[285px] sm:max-w-[310px] md:max-w-[330px] lg:max-w-[340px] xl:max-w-[365px] mx-auto';
+  'w-full max-w-[285px] sm:max-w-[345px] md:max-w-[385px] lg:max-w-[340px] xl:max-w-[365px] mx-auto';
 
 /**
  * MOCKUP 1: Documento Oficial (CIN - Carteira de Identidade Nacional / CNH)
