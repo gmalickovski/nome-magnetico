@@ -142,7 +142,7 @@ describe('marketing da rota pública /api/teste-bloqueio (preflight)', () => {
     assert.deepEqual(consent, { send: true, optIn: false, optInEm: null });
   });
 
-  it('opt_in false no preflight não dispara marketing', async () => {
+  it('opt_in false no preflight dispara fluxo com optIn false (sem descartar o lead)', async () => {
     const result = await runFreeAnalysisPreflight(
       buildRequest({
         nome_completo: 'Maria Silva',
@@ -154,7 +154,11 @@ describe('marketing da rota pública /api/teste-bloqueio (preflight)', () => {
       { allowLocalhostOrigins: false, now: Date.UTC(2020, 0, 15) },
     );
     assert.ok('ok' in result && result.ok);
-    assert.deepEqual(resolvePublicFreeAnalysisMarketingConsent(result.opt_in), { send: false });
+    assert.deepEqual(resolvePublicFreeAnalysisMarketingConsent(result.opt_in), {
+      send: true,
+      optIn: false,
+      optInEm: null,
+    });
   });
 
   it('opt_in true no preflight dispara marketing com consentimento explícito', async () => {

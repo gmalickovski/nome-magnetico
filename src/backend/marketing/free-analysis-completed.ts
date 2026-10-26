@@ -21,13 +21,12 @@ export interface FreeAnalysisMarketingNotifyInput {
 
 /**
  * Opt-in explícito no body (`opt_in === true`): marketing com consentimento registrado.
- * Campo ausente: fluxo DOI no n8n/Brevo (`opt_in: false`, sem inscrição silenciosa).
- * `opt_in === false`: não dispara marketing.
+ * Campo ausente ou `opt_in === false`: envia ao n8n/Brevo com `opt_in: false` e `optInEm: null`
+ * para entrar na Lista 16 (transacional/DOI) sem descartar o lead.
  */
 export function resolvePublicFreeAnalysisMarketingConsent(
   optInField: unknown,
-): { send: true; optIn: boolean; optInEm: string | null } | { send: false } {
-  if (optInField === false) return { send: false };
+): { send: true; optIn: boolean; optInEm: string | null } {
   if (optInField === true) {
     return { send: true, optIn: true, optInEm: new Date().toISOString() };
   }

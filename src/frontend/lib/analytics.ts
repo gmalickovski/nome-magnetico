@@ -24,6 +24,8 @@ import { readLocalStorage } from '../../utils/browser-storage';
 type AnalyticsEvent =
   // --- Funil principal ---
   | 'analise_gratis_submit'       // Lead capturado: form email-first submetido com sucesso (nome + data + email)
+  | 'analise_gratis_preview_view'
+  | 'upsell_modal_click'
   | 'pdf_downloaded'               // Download de PDF confirmado
   | 'begin_checkout'               // Início do checkout (padrão GA4 e-commerce)
   | 'purchase_complete'            // Retorno visual pós-checkout (UX only — receita vem do Measurement Protocol server-side)
@@ -79,7 +81,32 @@ interface EventData {
   [key: string]: unknown;
 }
 
-const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>(['analise_gratis_submit']);
+const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>([
+  'analise_gratis_submit',
+  'analise_gratis_preview_view',
+  'upsell_modal_click',
+  'pdf_downloaded',
+  'begin_checkout',
+  'purchase_complete',
+  'cta_hero_click',
+  'cta_produto_click',
+  'cta_nome_social_hero',
+  'analise_resultado_cta_click',
+  'checkout_start',
+  'checkout_redirect_start',
+  'checkout_failed',
+  'coupon_applied',
+  'pricing_view',
+  'precos_view',
+  'lp_view',
+  'upsell_view',
+  'cta_pdf_download_upsell_nome_social',
+  'cta_resultado_gratis_upsell_contextual',
+  'cta_resultado_gratis_upsell_excelente',
+  'cta_resultado_gratis_upsell_excelente_melhorias',
+  'cta_resultado_gratis_upsell_aceitavel',
+  'cta_resultado_gratis_upsell',
+]);
 
 export type CheckoutPaymentMethod = 'card' | 'pix';
 
@@ -87,9 +114,9 @@ function isAdminBrowser(): boolean {
   return readLocalStorage('nm-user-role') === 'admin';
 }
 
-function capturePostHog(event: AnalyticsEvent): void {
+function capturePostHog(event: AnalyticsEvent, data?: EventData): void {
   if (!POSTHOG_CLIENT_EVENTS.has(event)) return;
-  capturePostHogEvent(event);
+  capturePostHogEvent(event, data);
 }
 
 /** Envia evento ao PostHog só se o SDK (ou o stub pós-consentimento) existir. */
@@ -169,7 +196,7 @@ export function track(event: AnalyticsEvent, data?: EventData): void {
   } catch {}
 
   try {
-    capturePostHog(event);
+    capturePostHog(event, data);
   } catch {}
 }
 
@@ -224,6 +251,7 @@ declare global {
       ) => void;
       reset: () => void;
       startSessionRecording?: () => void;
+      set_config?: (config: Record<string, unknown>) => void;
       get_distinct_id?: () => string;
     };
   }

@@ -127,13 +127,14 @@ export function PricingSection({
   });
 
   function handleBuy() {
+    track('checkout_start', {
+      produto: planId,
+      preco: priceInfo.cents / 100,
+      promocao: promotion?.name ?? null,
+      origem: 'pricing_section',
+      authenticated: isLoggedIn,
+    });
     if (isLoggedIn) {
-      track('checkout_start', {
-        produto: planId,
-        preco: priceInfo.cents / 100,
-        promocao: promotion?.name ?? null,
-        origem: 'pricing_section',
-      });
       track('begin_checkout', { produto: planId, valor: priceInfo.cents / 100 });
       setCheckoutProduct(planId);
     } else {

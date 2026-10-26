@@ -1184,7 +1184,7 @@ export function NomeAtualPDF({
 
         {/* CTA Button */}
         <View style={{ alignItems: 'center', marginBottom: 10 }}>
-          <Link src="https://nomemagnetico.com.br/nome-social" style={{ textDecoration: 'none', marginBottom: 8 }}>
+          <Link src="https://www.nomemagnetico.com.br/nome-social?utm_source=pdf_gratis&utm_medium=pdf&utm_campaign=upsell_nome_social" style={{ textDecoration: 'none', marginBottom: 8 }}>
             <View style={{ backgroundColor: '#10B981', paddingVertical: 18, paddingHorizontal: 44, borderRadius: 32 }}>
               <Text style={{ color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 15, textAlign: 'center' }}>
                 Harmonizar Minha Assinatura Agora
