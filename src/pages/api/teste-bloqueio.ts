@@ -16,6 +16,11 @@ import {
   fireFreeAnalysisMarketingEvent,
   resolvePublicFreeAnalysisMarketingConsent,
 } from '../../backend/marketing/free-analysis-completed';
+import {
+  captureServerEvent,
+  posthogEventUuid,
+  readPostHogDistinctIdFromCookie,
+} from '../../backend/analytics/posthog-server';
 
 function json(body: object, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -63,6 +68,38 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       `${dedupEmail}|${nome_completo.trim()}`,
     );
 
+    const built = buildFreeLeadAnalysisRecord({
+      nomeCompleto: nome_completo,
+      dataNascimentoPt: data_nascimento,
+      dataNascimentoDb: toDbDate(data_nascimento),
+      createdAt: new Date().toISOString(),
+    });
+    const { record: analysisObj, scoreLegado, score, avaliacaoV3 } = built;
+
+    const cookieDistinctId = readPostHogDistinctIdFromCookie(
+      request.headers.get('cookie'),
+      process.env.PUBLIC_POSTHOG_KEY,
+    );
+    const distinctId = cookieDistinctId ?? posthogEventUuid('lead-distinct', dedupEmail);
+
+    void captureServerEvent({
+      distinctId,
+      event: 'analise_gratis_submit',
+      uuid: posthogEventUuid('analise_gratis_submit', String(lead.id)),
+      properties: {
+        analise_id: lead.id,
+        score_v3: avaliacaoV3.score_v3,
+        nivel: avaliacaoV3.nivel.codigo,
+        potencial: avaliacaoV3.potencial,
+        marca_da_data_count: avaliacaoV3.marcaDaData.length,
+        opt_in: Boolean(opt_in),
+        utm_source: utm_source ?? null,
+        utm_medium: utm_medium ?? null,
+        utm_campaign: utm_campaign ?? null,
+        source: 'server_teste_bloqueio',
+      },
+    });
+
     (async () => {
       try {
         await supabase
@@ -70,13 +107,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           .update({ status: 'processing' })
           .eq('id', lead.id);
 
-        const built = buildFreeLeadAnalysisRecord({
-          nomeCompleto: nome_completo,
-          dataNascimentoPt: data_nascimento,
-          dataNascimentoDb: toDbDate(data_nascimento),
-          createdAt: new Date().toISOString(),
-        });
-        const { record: analysisObj, scoreLegado, score } = built;
         persistenciaScoreFields({
           scoreLegado,
           nomeParaV3: nome_completo,
@@ -158,7 +188,22 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       }
     })();
 
-    return json({ success: true, leadId: lead.id }, 200);
+    const firstName = nome_completo.trim().split(/\s+/)[0] || nome_completo.trim();
+    return json(
+      {
+        success: true,
+        leadId: lead.id,
+        preview: {
+          firstName,
+          score: avaliacaoV3.score_v3,
+          nivelCodigo: avaliacaoV3.nivel.codigo,
+          nivelRotulo: avaliacaoV3.nivel.rotulo,
+          potencial: avaliacaoV3.potencial ?? 92,
+          marcaDaDataPresente: avaliacaoV3.marcaDaData.length > 0,
+        },
+      },
+      200,
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro ao processar análise';
     console.error('[teste-bloqueio] Erro:', err);

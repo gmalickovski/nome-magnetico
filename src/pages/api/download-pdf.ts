@@ -25,6 +25,11 @@ import {
   DOWNLOAD_PDF_LEGACY_CUTOFF_MS,
   DOWNLOAD_PDF_TTL_SECONDS,
 } from '../../backend/security/signedDownloadUrl';
+import {
+  captureServerEvent,
+  posthogEventUuid,
+  readPostHogDistinctIdFromCookie,
+} from '../../backend/analytics/posthog-server';
 
 function toBrazilliandate(dbDate: string): string {
   // dbDate is YYYY-MM-DD
@@ -249,6 +254,23 @@ export const GET: APIRoute = async ({ url, request }) => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
     const filename = `analise-gratuita-${slugName}.pdf`;
+
+    const cookieDistinctId = readPostHogDistinctIdFromCookie(
+      request.headers.get('cookie'),
+      process.env.PUBLIC_POSTHOG_KEY,
+    );
+    const distinctId = cookieDistinctId ?? posthogEventUuid('lead-distinct', String(lead.id));
+    const hourBucket = new Date().toISOString().slice(0, 13);
+    void captureServerEvent({
+      distinctId,
+      event: 'free_pdf_downloaded',
+      uuid: posthogEventUuid('free_pdf_downloaded', `${lead.id}:${hourBucket}`),
+      properties: {
+        analise_id: lead.id,
+        had_cached_pdf: Boolean(lead.pdf_path),
+        source: 'email_link',
+      },
+    });
 
     return new Response(new Uint8Array(pdfBuffer), {
       status: 200,

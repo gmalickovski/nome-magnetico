@@ -135,7 +135,10 @@ function distinctIdFromCookieValue(raw: string): string | undefined {
 }
 
 /** Cookie do posthog-js: ph_<project_key>_posthog. */
-export function readPostHogDistinctIdFromCookie(cookieHeader: string | null | undefined): string | undefined {
+export function readPostHogDistinctIdFromCookie(
+  cookieHeader: string | null | undefined,
+  _projectKey?: string | null,
+): string | undefined {
   if (!cookieHeader) return undefined;
   for (const part of cookieHeader.split(';')) {
     const trimmed = part.trim();

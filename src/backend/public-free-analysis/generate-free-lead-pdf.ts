@@ -16,7 +16,11 @@ import {
   calcularDebitosCarmicos,
 } from '../numerology/karmic';
 import { avaliarCompatibilidade } from '../numerology/harmonization';
-import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '../numerology/score';
+import {
+  avaliarNome,
+  calcularScoreV1SemOcorrenciasExtras,
+  type AvaliacaoScoreNome,
+} from '../numerology/score';
 import { isScoreV3 } from '../numerology/score-version';
 import { isoBirthDateToPtBr } from './birth-date';
 
@@ -26,6 +30,7 @@ export type BuiltFreeLeadAnalysis = {
   record: FreeLeadAnalysisRecord;
   scoreLegado: number;
   score: number;
+  avaliacaoV3: AvaliacaoScoreNome;
 };
 
 export function dbBirthDateToPtBr(dbDate: string): string {
@@ -109,7 +114,7 @@ export function buildFreeLeadAnalysisRecord(input: {
     completed_at: completedAt,
   };
 
-  return { record, scoreLegado, score };
+  return { record, scoreLegado, score, avaliacaoV3 };
 }
 
 export async function renderFreeLeadPdfBase64(

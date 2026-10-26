@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { track } from '../../lib/analytics';
+import { marketingBodyFields } from '../../lib/utm';
 import { TurnstileWidget } from './TurnstileWidget';
 
 const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
@@ -9,6 +10,15 @@ interface FormErrors {
   nome?: string;
   data?: string;
   email?: string;
+}
+
+interface FreeAnalysisPreview {
+  firstName: string;
+  score: number;
+  nivelCodigo: string;
+  nivelRotulo: string;
+  potencial: number;
+  marcaDaDataPresente: boolean;
 }
 
 function isValidEmail(val: string) {
@@ -24,6 +34,8 @@ export function PublicAnalysisForm() {
   const [apiError, setApiError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [preview, setPreview] = useState<FreeAnalysisPreview | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const [optIn, setOptIn] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -72,7 +84,7 @@ export function PublicAnalysisForm() {
         nome_completo: nome.trim(),
         data_nascimento: data,
         email: email.trim().toLowerCase(),
-        opt_in: optIn,
+        ...marketingBodyFields(optIn),
         [HONEYPOT_FIELD]: honeypot,
       };
       if (TURNSTILE_SITE_KEY && turnstileToken) {
@@ -98,8 +110,22 @@ export function PublicAnalysisForm() {
         return;
       }
 
+      const previewData: FreeAnalysisPreview | null = data_result?.preview ?? null;
+      setPreview(previewData);
+      setSubmittedEmail(email.trim().toLowerCase());
       setShowSuccessModal(true);
-      track('analise_gratis_submit');
+      track('analise_gratis_submit', {
+        score: previewData?.score,
+        potencial: previewData?.potencial,
+        nivel: previewData?.nivelCodigo,
+      });
+      if (previewData) {
+        track('analise_gratis_preview_view', {
+          score: previewData.score,
+          potencial: previewData.potencial,
+          nivel: previewData.nivelCodigo,
+        });
+      }
 
       // Limpar formulário após envio com sucesso
       setNome('');
@@ -243,37 +269,110 @@ export function PublicAnalysisForm() {
 
       {/* Popup de Confirmação */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-[#D4AF37]/25 bg-[#131313] p-6 sm:p-8 shadow-2xl shadow-black/60 relative animate-fade-in">
-            {/* Ícone de sucesso */}
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#D4AF37]/10 text-[#D4AF37] mx-auto">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-7 h-7">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl border border-[#D4AF37]/30 bg-[#131313] p-6 sm:p-8 shadow-2xl shadow-black/70 relative animate-fade-in my-auto">
+            {/* Badge de envio do PDF */}
+            <div className="mb-4 flex items-center justify-center gap-2 rounded-full border border-[#2DD4BF]/30 bg-[#2DD4BF]/10 px-3.5 py-1.5 text-xs font-medium text-[#2DD4BF] w-fit mx-auto">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 shrink-0">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
+              <span>PDF completo de 9 páginas enviado para {submittedEmail || 'seu e-mail'}</span>
             </div>
 
-            <h2 className="font-cinzel text-2xl font-bold text-[#e5e2e1] text-center mb-4">
-              Análise Solicitada!
+            <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] text-center mb-2">
+              {preview?.firstName ? `${preview.firstName}, aqui está a prévia do seu diagnóstico` : 'Análise Solicitada com Sucesso'}
             </h2>
 
-            <div className="space-y-4 text-sm text-gray-300 text-center leading-relaxed">
-              <p>
-                Em alguns minutos, você receberá um e-mail contendo o PDF da análise vibracional completa do seu nome.
-              </p>
-              <p className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 text-xs text-gray-400 italic">
-                💡 Caso não veja a mensagem em sua caixa de entrada, verifique sua pasta de <strong>Spam</strong> ou de <strong>Promoções</strong>, e certifique-se de que digitou seu e-mail corretamente.
-              </p>
-            </div>
+            {preview ? (
+              <div className="mt-5 space-y-5">
+                {/* Placar comparativo: Nota Hoje vs Potencial Harmonizado */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-4 text-center">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                      Sua Nota Hoje
+                    </p>
+                    <p className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1]">
+                      {preview.score}<span className="text-sm text-gray-500 font-normal">/100</span>
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-amber-400">
+                      {preview.nivelRotulo}
+                    </p>
+                  </div>
 
-            <div className="mt-8">
-              <button
-                type="button"
-                onClick={() => setShowSuccessModal(false)}
-                className="w-full bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-bold py-3.5 rounded-xl transition-colors tracking-wide uppercase text-xs"
-              >
-                Entendido
-              </button>
-            </div>
+                  <div className="rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/[0.08] p-4 text-center">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#D4AF37] mb-1">
+                      Potencial da Assinatura
+                    </p>
+                    <p className="font-cinzel text-2xl sm:text-3xl font-bold text-[#f2ca50]">
+                      até {preview.potencial}<span className="text-sm text-[#D4AF37]/70 font-normal">/100</span>
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-[#e5e2e1]">
+                      Com Nome Social Harmonizado
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-300 text-center leading-relaxed">
+                  Enquanto o PDF detalhado chega na sua caixa de entrada, veja como criamos 3 opções de assinatura magnética prontas para destravar o seu potencial máximo.
+                </p>
+
+                <div className="space-y-3 pt-1">
+                  <a
+                    href="/nome-social?utm_source=modal_resultado_gratis&utm_medium=upsell_imediato&utm_campaign=analise_gratis"
+                    onClick={() =>
+                      track('upsell_modal_click', {
+                        score: preview.score,
+                        potencial: preview.potencial,
+                        nivel: preview.nivelCodigo,
+                      })
+                    }
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#f2ca50] px-5 py-4 text-center text-xs sm:text-sm font-bold uppercase tracking-wide text-[#131313] shadow-lg shadow-[#D4AF37]/20 transition-colors"
+                  >
+                    <span>Ver Como Chegar a {preview.potencial}/100 no Nome Social</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSuccessModal(false)}
+                    className="w-full rounded-xl border border-white/10 bg-transparent hover:bg-white/5 py-3 text-xs font-medium text-gray-400 hover:text-gray-200 transition-colors"
+                  >
+                    Fechar e aguardar o PDF no meu e-mail
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-gray-500 text-center">
+                  Caso não encontre o e-mail em até 2 minutos, confira as abas Spam e Promoções.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 text-sm text-gray-300 text-center leading-relaxed mt-4">
+                  <p>
+                    Em alguns minutos, você receberá um e-mail contendo o PDF da análise vibracional completa do seu nome.
+                  </p>
+                  <p className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 text-xs text-gray-400 italic">
+                    Caso não veja a mensagem em sua caixa de entrada, verifique sua pasta de <strong>Spam</strong> ou de <strong>Promoções</strong>.
+                  </p>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <a
+                    href="/nome-social?utm_source=modal_resultado_gratis&utm_medium=upsell_imediato&utm_campaign=analise_gratis"
+                    onClick={() => track('upsell_modal_click')}
+                    className="block w-full text-center bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-bold py-3.5 rounded-xl transition-colors tracking-wide uppercase text-xs"
+                  >
+                    Conhecer a Harmonização do Nome Social →
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowSuccessModal(false)}
+                    className="w-full text-gray-400 hover:text-gray-200 py-2 text-xs transition-colors"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

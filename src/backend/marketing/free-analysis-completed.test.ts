@@ -22,8 +22,12 @@ describe('resolvePublicFreeAnalysisMarketingConsent', () => {
     }
   });
 
-  it('opt_in false não dispara marketing', () => {
-    assert.deepEqual(resolvePublicFreeAnalysisMarketingConsent(false), { send: false });
+  it('opt_in false dispara fluxo DOI/transacional sem consentimento de marketing (optIn: false)', () => {
+    assert.deepEqual(resolvePublicFreeAnalysisMarketingConsent(false), {
+      send: true,
+      optIn: false,
+      optInEm: null,
+    });
   });
 });
 
