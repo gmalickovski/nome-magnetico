@@ -445,10 +445,16 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
       <div className="flex flex-col gap-4 min-w-0 w-full">
         {/* Item 1: Nome de Nascimento (Nota Hoje - N2 · Em Ajuste) */}
         <div className="flex flex-col gap-1.5 min-w-0 w-full">
-          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-            <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500 leading-snug">
-              Nome de nascimento (Nota Hoje)
-            </p>
+          {/* Linha 1: Título cinza separado em cima */}
+          <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500 leading-snug">
+            Nome de nascimento (Nota Hoje)
+          </p>
+
+          {/* Linha 2: Nome à esquerda + Pontuação sempre ao lado na mesma linha (quebra apenas por palavra inteira se necessário, nunca "...") */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0 w-full">
+            <h4 className="min-w-0 flex-1 font-cinzel text-sm sm:text-[15px] xl:text-base font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
+              {BIRTH_NAME}
+            </h4>
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span
                 className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
@@ -462,10 +468,8 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
               </span>
             </div>
           </div>
-          <h4 className="w-full font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
-            {BIRTH_NAME}
-          </h4>
-          {/* Barra de progresso full-width */}
+
+          {/* Linha 3: Barra de progresso embaixo */}
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
             <div
               className={`h-2 rounded-full bg-gradient-to-r ${birthVisual.barGradient} transition-all duration-150`}
@@ -479,10 +483,16 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
 
         {/* Item 2: Nome Harmonizado (Potencial - N4 · Alinhado) */}
         <div className="flex flex-col gap-1.5 min-w-0 w-full">
-          <div className="flex items-center justify-between gap-2 min-w-0 w-full">
-            <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400 leading-snug">
-              Nome harmonizado (Potencial)
-            </p>
+          {/* Linha 1: Título cinza separado em cima */}
+          <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400 leading-snug">
+            Nome harmonizado (Potencial)
+          </p>
+
+          {/* Linha 2: Nome à esquerda + Pontuação sempre ao lado na mesma linha */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0 w-full">
+            <h4 className="min-w-0 flex-1 font-cinzel text-sm sm:text-[15px] xl:text-base font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
+              {INDICATED_NAME}
+            </h4>
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <span
                 className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
@@ -496,10 +506,8 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
               </span>
             </div>
           </div>
-          <h4 className="w-full font-cinzel text-base sm:text-base md:text-lg font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
-            {INDICATED_NAME}
-          </h4>
-          {/* Barra de progresso full-width */}
+
+          {/* Linha 3: Barra de progresso embaixo */}
           <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
             <div
               className={`h-2 rounded-full bg-gradient-to-r ${harmVisual.barGradient} transition-all duration-150`}
