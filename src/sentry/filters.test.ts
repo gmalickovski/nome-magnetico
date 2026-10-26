@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  CHUNK_DYNAMIC_IMPORT_ERROR,
   EMAIL_LINK_CHECKER_ERROR,
+  NON_ERROR_UNDEFINED_REJECTION,
   PAGEAD_INT64_ERROR,
   PAGEAD_DENY_URLS,
   STORAGE_ACCESS_DENIED_ERROR,
@@ -82,6 +84,25 @@ describe('ignoreErrors', () => {
       STORAGE_ACCESS_DENIED_ERROR,
     );
   });
+
+  it('ignora UnhandledRejection undefined de scripts externos (DEV-233)', () => {
+    const patterns = init().ignoreErrors ?? [];
+    assert.ok(patterns.includes(NON_ERROR_UNDEFINED_REJECTION));
+    assert.match(
+      'UnhandledRejection: Non-Error promise rejection captured with value: undefined',
+      NON_ERROR_UNDEFINED_REJECTION,
+    );
+    assert.equal(NON_ERROR_UNDEFINED_REJECTION.test('Non-Error promise rejection captured with value: null'), false);
+  });
+
+  it('ignora falhas transitórias de import dinâmico de chunk pós-deploy (DEV-233)', () => {
+    const patterns = init().ignoreErrors ?? [];
+    assert.ok(patterns.includes(CHUNK_DYNAMIC_IMPORT_ERROR));
+    assert.match('Failed to fetch dynamically imported module: https://www.nomemagnetico.com.br/_astro/foo.js', CHUNK_DYNAMIC_IMPORT_ERROR);
+    assert.match('TypeError: Importing a module script failed.', CHUNK_DYNAMIC_IMPORT_ERROR);
+    assert.match('error loading dynamically imported module', CHUNK_DYNAMIC_IMPORT_ERROR);
+    assert.equal(CHUNK_DYNAMIC_IMPORT_ERROR.test('Failed to fetch'), false);
+  });
 });
 
 describe('denyUrls', () => {
@@ -95,6 +116,7 @@ describe('denyUrls', () => {
       'https://pagead2.googlesyndication.com/pagead/js/r20261015/r20190131/rum_fy2021.js',
       'https://tpc.googlesyndication.com/sodar/sodar2.js',
       'https://www.googletagservices.com/activeview/js/current/rx_lidar.js',
+      'https://ep1.adtrafficquality.google/getconfig/sodar?sv=200&tid=...',
     ];
     for (const url of sampleUrls) {
       assert.ok(deny.some((re) => re.test(url)), `Deveria bloquear ${url}`);
