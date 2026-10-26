@@ -15,8 +15,21 @@ export const PAGEAD_INT64_ERROR = /^int64$/;
 export const STORAGE_ACCESS_DENIED_ERROR =
   /Failed to read the '(localStorage|sessionStorage)' property from 'Window'/i;
 
+/** Rejeição de Promise sem valor em unload/visibilitychange (DEV-233) */
+export const NON_ERROR_UNDEFINED_REJECTION =
+  /Non-Error promise rejection captured with value: undefined/i;
+
+/** Falha transitória de chunk após deploy, antes do auto-reload (DEV-233) */
+export const CHUNK_DYNAMIC_IMPORT_ERROR =
+  /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i;
+
 /** Domínios e paths de scripts de anúncios externos (Google Ads / AdSense) */
-export const PAGEAD_DENY_URLS = [/\/pagead\//, /googlesyndication\.com/, /googletagservices\.com/];
+export const PAGEAD_DENY_URLS = [
+  /\/pagead\//,
+  /googlesyndication\.com/,
+  /googletagservices\.com/,
+  /adtrafficquality\.google/,
+];
 
 export interface SentryEventLike {
   request?: {

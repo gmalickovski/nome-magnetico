@@ -1,6 +1,8 @@
 import type { BrowserOptions } from '@sentry/astro';
 import {
+  CHUNK_DYNAMIC_IMPORT_ERROR,
   EMAIL_LINK_CHECKER_ERROR,
+  NON_ERROR_UNDEFINED_REJECTION,
   PAGEAD_INT64_ERROR,
   PAGEAD_DENY_URLS,
   STORAGE_ACCESS_DENIED_ERROR,
@@ -26,7 +28,13 @@ export function sentryInitOptions(input: {
     release: input.release,
     tracesSampleRate: 0,
     denyUrls: PAGEAD_DENY_URLS,
-    ignoreErrors: [EMAIL_LINK_CHECKER_ERROR, PAGEAD_INT64_ERROR, STORAGE_ACCESS_DENIED_ERROR],
+    ignoreErrors: [
+      EMAIL_LINK_CHECKER_ERROR,
+      PAGEAD_INT64_ERROR,
+      STORAGE_ACCESS_DENIED_ERROR,
+      NON_ERROR_UNDEFINED_REJECTION,
+      CHUNK_DYNAMIC_IMPORT_ERROR,
+    ],
     dataCollection: {
       userInfo: false,
       cookies: false,
