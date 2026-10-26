@@ -78,7 +78,7 @@ export function ProductsSection() {
 
                 {/* Card de Score: logo abaixo do texto */}
                 <div
-                  className={`mt-6 sm:mt-8 w-full max-w-[520px] mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
+                  className={`mt-6 sm:mt-8 w-full max-w-[540px] mx-auto lg:mx-0 text-left ${s1ScoreCard.className}`}
                   style={s1ScoreCard.style}
                 >
                   <ProductHarmonyScoreCard />
