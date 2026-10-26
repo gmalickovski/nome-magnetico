@@ -516,22 +516,22 @@
 }
 
 .nm-h1 {
-  @apply font-cinzel text-[1.75rem] sm:text-[2.25rem] md:text-[2.625rem] lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-[#E5E2E1] leading-[1.15] tracking-[-0.01em];
+  @apply font-cinzel text-[1.75rem] sm:text-[2.2rem] md:text-[2.5rem] lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-[#E5E2E1] leading-[1.15] tracking-[-0.01em];
   text-wrap: balance;
 }
 
 .nm-h2 {
-  @apply font-cinzel text-2xl sm:text-[1.95rem] md:text-[2.35rem] lg:text-[2.25rem] xl:text-[2.5rem] font-bold text-[#E5E2E1] leading-[1.2] tracking-[-0.01em];
+  @apply font-cinzel text-2xl sm:text-[1.875rem] md:text-[2.2rem] lg:text-[2.3rem] xl:text-[2.5rem] font-bold text-[#E5E2E1] leading-[1.2] tracking-[-0.01em];
   text-wrap: balance;
 }
 
 .nm-h3 {
-  @apply font-cinzel text-lg sm:text-[1.35rem] md:text-[1.625rem] lg:text-2xl font-bold text-[#E5E2E1] leading-[1.28];
+  @apply font-cinzel text-lg sm:text-[1.3rem] md:text-[1.5rem] lg:text-2xl font-bold text-[#E5E2E1] leading-[1.28];
   text-wrap: balance;
 }
 
 .nm-h4 {
-  @apply font-cinzel text-base sm:text-[1.125rem] md:text-[1.25rem] lg:text-lg font-bold text-[#E5E2E1] leading-[1.3];
+  @apply font-cinzel text-base sm:text-[1.1rem] md:text-[1.2rem] lg:text-lg font-bold text-[#E5E2E1] leading-[1.3];
   text-wrap: balance;
 }
 
@@ -548,6 +548,56 @@
 .nm-caption {
   @apply font-inter text-xs md:text-[13px] font-normal text-[#6B7280] leading-[1.5];
   text-wrap: pretty;
+}
+
+.nm-usecase-card-width {
+  width: 100%;
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nm-usecase-phone-width {
+  width: 100%;
+  max-width: 290px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .nm-usecase-card-width {
+    max-width: 405px;
+  }
+  .nm-usecase-phone-width {
+    max-width: 335px;
+  }
+}
+
+@media (min-width: 768px) {
+  .nm-usecase-card-width {
+    max-width: 440px;
+  }
+  .nm-usecase-phone-width {
+    max-width: 365px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .nm-usecase-card-width {
+    max-width: 455px;
+  }
+  .nm-usecase-phone-width {
+    max-width: 365px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .nm-usecase-card-width {
+    max-width: 480px;
+  }
+  .nm-usecase-phone-width {
+    max-width: 380px;
+  }
 }
 
 /* Previne quebra de layout por overflow em viewports compactas (280px-344px) */
