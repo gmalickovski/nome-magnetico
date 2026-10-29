@@ -10,6 +10,9 @@ type ProductType = SellableProductType;
 interface Props {
   product: ProductType;
   isLoggedIn: boolean;
+  isOwned?: boolean;
+  ownedProductLabel?: string;
+  analysisPath?: string;
   priceInfo: PriceInfo;
   promotion?: ActivePromotion | null;
   label?: string;
@@ -22,6 +25,9 @@ interface Props {
 export function LandingCheckout({
   product,
   isLoggedIn,
+  isOwned = false,
+  ownedProductLabel = 'Nome Social',
+  analysisPath = '/app/analise/nome-social',
   priceInfo,
   promotion,
   label,
@@ -55,6 +61,10 @@ export function LandingCheckout({
   }, []);
 
   function handleClick() {
+    if (isOwned) {
+      window.location.href = analysisPath;
+      return;
+    }
     if (isLoggedIn) {
       track('checkout_start', {
         produto: product,
@@ -97,6 +107,10 @@ export function LandingCheckout({
       );
       if (!result.ok) {
         if ('priceChanged' in result && result.priceChanged) return;
+        if ('alreadyActive' in result && result.alreadyActive) {
+          window.location.href = result.redirectUrl ?? analysisPath;
+          return;
+        }
         throw new Error(checkoutFailureMessage(result));
       }
       if ('bypass' in result && result.bypass) {
@@ -118,6 +132,24 @@ export function LandingCheckout({
     variant === 'primary'
       ? 'w-full text-center font-medium px-6 py-3 rounded-xl transition-all duration-300 text-sm bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20'
       : 'w-full text-center font-medium px-6 py-3 rounded-xl transition-all duration-300 text-sm border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:border-[#D4AF37] hover:scale-[1.02] active:scale-[0.98]';
+
+  if (isLoggedIn && isOwned) {
+    return (
+      <div className="w-full space-y-3 text-center sm:text-left">
+        <p className="text-sm text-[#D4AF37]/90">
+          Você já possui <strong>{ownedProductLabel}</strong> ativo.
+        </p>
+        <a
+          href={analysisPath}
+          className={className ?? defaultCls}
+          data-cta-id={ctaId ?? `checkout_${product}_owned`}
+          data-cta-position={ctaPosition ?? 'checkout'}
+        >
+          Ir para minha análise
+        </a>
+      </div>
+    );
+  }
 
   return (
     <>

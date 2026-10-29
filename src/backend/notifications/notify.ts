@@ -84,6 +84,9 @@ const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>
   'marketing.free_analysis_completed': 'leads',
   'subscription.expiring_soon': 'notify_expiring',
   'subscription.expired': 'notify_expiring',
+  'payment.confirmed': 'notify_transacional',
+  'user.analysis_complete': 'notify_transacional',
+  'payment.failed': 'notify_transacional',
 };
 
 function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: unknown): void {
@@ -126,15 +129,33 @@ async function sendToWebhook(
     });
 
     if (!response.ok) {
-      console.error(`[notify] Falha ao enviar evento ${event}: ${response.status}`);
-      reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
+      const bodySnippet = await response.text().catch(() => '');
+      console.error(
+        JSON.stringify({
+          scope: 'notify',
+          event,
+          ok: false,
+          httpStatus: response.status,
+          bodySnippet: bodySnippet.slice(0, 200),
+        }),
+      );
+      reportNotifyFailure(
+        event,
+        new Error(`notify_http_${response.status}`),
+      );
       return false;
     }
     return true;
   } catch (err) {
-    console.error(`[notify] Erro ao enviar evento ${event}:`, err);
-    // Mensagem genérica: o erro do fetch pode trazer a URL do webhook.
-    reportNotifyFailure(event, new Error(`Falha ao enviar evento ${event}`));
+    console.error(
+      JSON.stringify({
+        scope: 'notify',
+        event,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
+    reportNotifyFailure(event, err instanceof Error ? err : new Error(`Falha ao enviar evento ${event}`));
     return false;
   }
 }
@@ -156,7 +177,15 @@ export async function notify(
   const { url, envName } = webhookFor(event);
 
   if (!url) {
-    console.warn(`[notify] ${envName} não configurado — notificação ignorada`);
+    console.warn(
+      JSON.stringify({
+        scope: 'notify',
+        event,
+        ok: false,
+        reason: 'webhook_not_configured',
+        envName,
+      }),
+    );
     return false;
   }
 

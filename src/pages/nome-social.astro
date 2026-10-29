@@ -13,8 +13,18 @@ import { promotionAppliesToProduct } from '../backend/payments/prices';
 applyPricingPageCache(Astro);
 import { LandingCheckout } from '../frontend/components/purchase/LandingCheckout';
 import { HeroNomeSocial } from '../frontend/components/landing/HeroNomeSocial';
+import { hasActiveSubscription } from '../backend/db/subscriptions';
 
 const user = Astro.locals.user;
+
+let isOwned = false;
+if (user) {
+  try {
+    isOwned = await hasActiveSubscription(user.id, 'nome_social');
+  } catch {
+    isOwned = false;
+  }
+}
 
 let faqItems: FaqItemProps[] = [];
 try {
@@ -117,6 +127,7 @@ const displayFinal = social.discountedFormatted ?? social.formatted;
                 client:load
                 product="nome_social"
                 isLoggedIn={!!user}
+                isOwned={isOwned}
                 priceInfo={getPrice('nome_social')}
                 promotion={promotion}
                 label="Harmonizar Minha Assinatura"
@@ -418,6 +429,7 @@ const displayFinal = social.discountedFormatted ?? social.formatted;
           client:load
           product="nome_social"
           isLoggedIn={!!user}
+          isOwned={isOwned}
           priceInfo={getPrice('nome_social')}
           promotion={promotion}
           label="Harmonizar Minha Assinatura"

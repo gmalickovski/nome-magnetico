@@ -8,7 +8,7 @@ export interface Subscription {
   product_type: ProductType;
   stripe_session_id: string | null;
   stripe_payment_intent_id: string | null;
-  payment_provider: 'stripe' | 'asaas';
+  payment_provider: 'stripe' | 'asaas' | 'test';
   asaas_payment_id: string | null;
   amount_paid: number | null;
   currency: string;
@@ -146,7 +146,7 @@ export async function createSubscription(params: {
   productType: ProductType;
   stripeSessionId: string;
   stripePaymentIntentId?: string;
-  paymentProvider?: 'stripe' | 'asaas';
+  paymentProvider?: 'stripe' | 'asaas' | 'test';
   asaasPaymentId?: string;
   amountPaid?: number;
   currency?: string;

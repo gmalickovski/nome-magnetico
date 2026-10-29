@@ -26,6 +26,8 @@ import {
   buildDefaultFreeAnalysisMarketingUrls,
   fireFreeAnalysisMarketingEvent,
 } from '../../backend/marketing/free-analysis-completed';
+import { failStaleAnalysesForUser, markAnalysisFailed, STALE_ERROR_MESSAGE } from '../../backend/db/analysis-processing';
+import { notifyPaidAnalysisComplete } from '../../backend/notifications/analysis-complete';
 
 const utmSchema = z
   .string()
@@ -194,6 +196,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         status: 403, headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    await failStaleAnalysesForUser(user.id, product_type as AnalysisProductType);
   }
 
   if (product_type === 'nome_social' || isGratuita) {
@@ -243,8 +247,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     ...(isGratuita ? { optIn, optInData } : {}),
   });
 
+  const userEmail = (user.email || profile?.email || '').trim();
+  const userFirstName = profile?.nome?.split(' ')[0] ?? userEmail.split('@')[0] ?? 'Cliente';
+
   // Processar em background (não bloqueia a resposta)
-  (async () => {
+  void (async () => {
     try {
       await updateAnalysis(analysis.id, { status: 'processing' });
 
@@ -486,8 +493,31 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
 
       // Marketing só com opt-in. Falha aqui não altera a análise nem a resposta HTTP.
+      if (!isGratuita && product_type === 'nome_social' && userEmail) {
+        const notified = await notifyPaidAnalysisComplete({
+          email: userEmail,
+          firstName: userFirstName,
+          productType: 'nome_social',
+          analysisId: analysis.id,
+        });
+        if (!notified) {
+          console.error(
+            JSON.stringify({
+              scope: 'analyze',
+              event: 'user.analysis_complete',
+              ok: false,
+              analysisId: analysis.id,
+              userId: user.id,
+            }),
+          );
+          captureFluxoException('notify_transacional', new Error('analysis_complete_notify_failed'), {
+            analysis_id: analysis.id,
+          });
+        }
+      }
+
       if (isGratuita && optIn) {
-        const email = (user.email || profile?.email || '').trim();
+        const email = userEmail;
         const score = marketingStats.score;
         if (email && typeof score === 'number' && Number.isFinite(score)) {
           const appUrl = process.env.APP_URL ?? 'https://nomemagnetico.com.br';
@@ -535,7 +565,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }),
       ]);
     }
-  })();
+  })().catch(async (err) => {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error('[analyze] Erro não tratado no worker em background:', errMsg);
+    captureFluxoException('resultado_gratis', err, { analysis_id: analysis.id, fase: 'background_unhandled' });
+    await markAnalysisFailed(
+      analysis.id,
+      STALE_ERROR_MESSAGE,
+    );
+  });
 
   return new Response(JSON.stringify({ analysisId: analysis.id }), {
     status: 200, headers: { 'Content-Type': 'application/json' },
