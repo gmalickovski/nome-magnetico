@@ -12,8 +12,62 @@
  * - Microcopy de confiança do §6.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import * as Sentry from '@sentry/astro';
 import { DateInput } from '../ui/DateInput';
+
+export type SocialNameClientValidationCode = 'nome_completo' | 'data_nascimento' | 'data_formato';
+
+const NOME_COMPLETO_MIN_LEN = 2;
+const NOME_COMPLETO_MAX_LEN = 150;
+
+/** Mesmas regras de `nome_completo` e `data_nascimento` em `src/pages/api/analyze.ts`. */
+export function validateSocialNameClientSubmit(
+  form: Pick<SocialNameFormState, 'nome_completo' | 'data_nascimento'>,
+): { ok: true } | { ok: false; code: SocialNameClientValidationCode; message: string } {
+  const nomeLimpo = form.nome_completo.trim();
+  const palavras = nomeLimpo.split(/\s+/).filter(Boolean);
+
+  if (!nomeLimpo || nomeLimpo.length < NOME_COMPLETO_MIN_LEN || nomeLimpo.length > NOME_COMPLETO_MAX_LEN) {
+    return {
+      ok: false,
+      code: 'nome_completo',
+      message: `Informe seu nome completo de nascimento (${NOME_COMPLETO_MIN_LEN} a ${NOME_COMPLETO_MAX_LEN} caracteres).`,
+    };
+  }
+
+  if (palavras.length < 2) {
+    return {
+      ok: false,
+      code: 'nome_completo',
+      message: 'Informe seu nome completo de nascimento, com pelo menos 2 palavras (nome e sobrenome).',
+    };
+  }
+
+  if (!form.data_nascimento) {
+    return { ok: false, code: 'data_nascimento', message: 'Informe sua data de nascimento.' };
+  }
+
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.data_nascimento)) {
+    return {
+      ok: false,
+      code: 'data_formato',
+      message: 'A data de nascimento deve estar no formato DD/MM/AAAA.',
+    };
+  }
+
+  return { ok: true };
+}
+
+function reportClientValidationBlocked(code: SocialNameClientValidationCode) {
+  Sentry.captureMessage('social_name_form.client_validation_blocked', {
+    level: 'warning',
+    tags: {
+      fluxo: 'nome_social',
+      validation: code,
+    },
+  });
+}
 
 export interface SocialNameFormState {
   nome_completo: string;
@@ -142,6 +196,12 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
   const [editingBirthData, setEditingBirthData] = useState(!hasSavedBirthData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const submitErrorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    submitErrorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [error]);
 
   function set<K extends keyof SocialNameFormState>(field: K, value: SocialNameFormState[K]) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -177,19 +237,10 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
     e.preventDefault();
     setError('');
 
-    const nomeLimpo = form.nome_completo.trim();
-    if (!nomeLimpo || nomeLimpo.split(/\s+/).length < 3) {
-      setError('Informe seu nome completo de nascimento, com pelo menos 3 palavras.');
-      return;
-    }
-
-    if (!form.data_nascimento) {
-      setError('Informe sua data de nascimento.');
-      return;
-    }
-
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.data_nascimento)) {
-      setError('A data de nascimento deve estar no formato DD/MM/AAAA.');
+    const validation = validateSocialNameClientSubmit(form);
+    if (!validation.ok) {
+      reportClientValidationBlocked(validation.code);
+      setError(validation.message);
       return;
     }
 
@@ -470,13 +521,17 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/25">
-          {error}
-        </div>
-      )}
-
       <div className="pt-4">
+        {error && (
+          <div
+            ref={submitErrorRef}
+            role="alert"
+            tabIndex={-1}
+            className="mb-4 scroll-mt-24 rounded-2xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/25"
+          >
+            {error}
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading}
