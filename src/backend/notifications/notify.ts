@@ -57,6 +57,8 @@ interface NotificationPayload {
   userId?: string;
   productType?: string;
   downloadUrl?: string;
+  /** Quando true, fluxos n8n não devem postar aviso admin no Slack (ex.: provider test). */
+  skipAdminSlack?: boolean;
   [key: string]: unknown;
 }
 
