@@ -32,6 +32,7 @@ type NotificationEvent =
   | 'admin.new_user'
   | 'admin.new_payment'
   | 'payment.refunded'
+  | 'refund.requested'
   | 'free_analysis.requested'
 ;
 
