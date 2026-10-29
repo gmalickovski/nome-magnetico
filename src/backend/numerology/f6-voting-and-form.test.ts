@@ -6,7 +6,11 @@ import {
   resetVoteRateLimiterForTests,
   type ProductVoteOption,
 } from '../../pages/api/product-vote.ts';
-import { buildSocialAnalyzePayload, type SocialNameFormState } from '../../frontend/components/app/SocialNameForm.tsx';
+import {
+  buildSocialAnalyzePayload,
+  validateSocialNameClientSubmit,
+  type SocialNameFormState,
+} from '../../frontend/components/app/SocialNameForm.tsx';
 import { analisarNomesSocial } from './products/nome-social.ts';
 
 describe('DEV-190 · F6: Votação sem cookies e sem dados pessoais', () => {
@@ -99,6 +103,38 @@ describe('DEV-190 · F6: Votação sem cookies e sem dados pessoais', () => {
     const res = await handleProductVotePost(req, mockAdapter);
     assert.equal(res.status, 400);
     assert.equal(res.headers.get('set-cookie'), null);
+  });
+});
+
+describe('DEV-236 · validação cliente Nome Social alinhada a /api/analyze', () => {
+  it('aceita nome com 2 palavras (nome + sobrenome)', () => {
+    const result = validateSocialNameClientSubmit({
+      nome_completo: 'Maria Santos',
+      data_nascimento: '26/05/1971',
+    });
+    assert.equal(result.ok, true);
+  });
+
+  it('rejeita nome com apenas 1 palavra', () => {
+    const result = validateSocialNameClientSubmit({
+      nome_completo: 'Maria',
+      data_nascimento: '26/05/1971',
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.equal(result.code, 'nome_completo');
+    }
+  });
+
+  it('rejeita nome vazio ou curto demais para o schema (min 2 caracteres)', () => {
+    assert.equal(
+      validateSocialNameClientSubmit({ nome_completo: ' ', data_nascimento: '01/01/1990' }).ok,
+      false,
+    );
+    assert.equal(
+      validateSocialNameClientSubmit({ nome_completo: 'A', data_nascimento: '01/01/1990' }).ok,
+      false,
+    );
   });
 });
 
