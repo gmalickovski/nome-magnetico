@@ -47,6 +47,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 
+  // Buscar perfil para notificações
+  const profile = await getProfile(user.id);
+  if (profile) {
+    await notify('refund.requested', {
+      email: profile.email,
+      firstName: profile.nome ?? profile.email.split('@')[0],
+      userId: user.id,
+      subscriptionId: subscription.id,
+      productType: subscription.product_type,
+      productName: PRODUCT_NAMES[subscription.product_type as ProductType],
+      amount: subscription.amount_paid ?? undefined,
+      purchasedAt: subscription.starts_at,
+      requestedAt: new Date().toISOString(),
+      reason: body.reason ?? null,
+      paymentProvider: subscription.payment_provider,
+      skipAdminSlack: !shouldNotifyAdminSlackForProvider(subscription.payment_provider),
+    });
+  }
+
   // Processar reembolso no Stripe (bypass para usuários teste sem payment_intent)
   let stripeRefundId: string | null = null;
 
@@ -75,7 +94,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   // Notificar usuário via n8n
-  const profile = await getProfile(user.id);
   if (profile) {
     await notify('payment.refunded', {
       email: profile.email,
