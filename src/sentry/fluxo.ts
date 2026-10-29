@@ -9,6 +9,7 @@ export type Fluxo =
   | 'stripe_webhook'
   | 'resultado_gratis'
   | 'notify_expiring'
+  | 'notify_transacional'
   | 'leads'
   | 'suporte_contato';
 

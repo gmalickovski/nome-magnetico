@@ -21,6 +21,8 @@ import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-
 import { parsePurchaseKind } from '../../backend/payments/renewal';
 import { captureFluxoException } from '../../sentry/fluxo';
 import { invalidateUserSubscriptionsCache } from '../../backend/cache/memo';
+import { getPublicBaseUrl } from '../../utils/public-url';
+import { productAnalysisAppPath } from '../../backend/payments/checkout-access';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -242,22 +244,62 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const profile = await getProfile(userId);
+    const baseUrl = getPublicBaseUrl();
+    const accessUrl = `${baseUrl}${productAnalysisAppPath(productType)}`;
+
     if (profile) {
-      await notify('payment.confirmed', {
+      const paymentConfirmedOk = await notify('payment.confirmed', {
         email: profile.email,
         firstName: profile.nome ?? profile.email.split('@')[0],
-        accessUrl: `${process.env.APP_URL}/app`,
+        accessUrl,
         productType,
         productName: PRODUCT_NAMES[productType],
         amount: session.amount_total ?? undefined,
       });
+      if (!paymentConfirmedOk) {
+        console.error(
+          JSON.stringify({
+            scope: 'stripe-webhook',
+            event: 'payment.confirmed',
+            ok: false,
+            userId,
+            productType,
+            stripeSessionId: session.id,
+          }),
+        );
+        captureFluxoException('notify_transacional', new Error('payment.confirmed_notify_failed'), {
+          product_type: productType,
+        });
+      }
+    } else {
+      console.error(
+        JSON.stringify({
+          scope: 'stripe-webhook',
+          event: 'payment.confirmed',
+          ok: false,
+          reason: 'profile_not_found',
+          userId,
+          stripeSessionId: session.id,
+        }),
+      );
     }
 
-    await notify('admin.new_payment', {
+    const adminNotifyOk = await notify('admin.new_payment', {
       userId,
       productType,
       amount: session.amount_total ?? undefined,
     });
+    if (!adminNotifyOk) {
+      console.warn(
+        JSON.stringify({
+          scope: 'stripe-webhook',
+          event: 'admin.new_payment',
+          ok: false,
+          userId,
+          productType,
+        }),
+      );
+    }
 
   }
 

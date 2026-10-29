@@ -61,6 +61,11 @@ export function DashboardCheckoutButton({
       return;
     }
 
+    if ('alreadyActive' in result && result.alreadyActive) {
+      window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
+      return;
+    }
+
     track('checkout_failed', {
       produto: type,
       erro: checkoutFailureMessage(result),

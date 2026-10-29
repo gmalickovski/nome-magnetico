@@ -121,6 +121,10 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
           setLoading(null);
           return;
         }
+        if ('alreadyActive' in result && result.alreadyActive) {
+          window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
+          return;
+        }
         throw new Error(checkoutFailureMessage(result));
       }
       if ('bypass' in result && result.bypass) {
@@ -296,10 +300,10 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
               </p>
               <p className="text-gray-400 text-sm mb-8">Acesse o app para começar sua análise.</p>
               <button
-                onClick={() => { window.location.href = '/app'; }}
+                onClick={() => { window.location.href = '/app/analise/nome-social'; }}
                 className="w-full bg-[#D4AF37] text-black font-bold py-3.5 rounded-xl hover:bg-yellow-300 transition-all duration-300"
               >
-                Ir para o App
+                Ir para minha análise
               </button>
             </div>
           </div>

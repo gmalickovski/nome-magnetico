@@ -169,6 +169,10 @@ export function PricingSection({
       );
       if (!result.ok) {
         if ('priceChanged' in result && result.priceChanged) return;
+        if ('alreadyActive' in result && result.alreadyActive) {
+          window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
+          return;
+        }
         throw new Error(checkoutFailureMessage(result));
       }
       if ('bypass' in result && result.bypass) {

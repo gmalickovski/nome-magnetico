@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { getAnalysis } from '../../backend/db/analyses';
+import { reconcileStaleAnalysis } from '../../backend/db/analysis-processing';
 
 const querySchema = z.object({
   id: z.string().uuid(),
@@ -25,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const analysis = await getAnalysis(parsed.data.id);
+  let analysis = await getAnalysis(parsed.data.id);
   if (!analysis || analysis.user_id !== user.id) {
     return new Response(JSON.stringify({ error: 'Analise nao encontrada' }), {
       status: 404,
@@ -33,10 +34,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   }
 
+  analysis = await reconcileStaleAnalysis(analysis);
+
   return new Response(JSON.stringify({
     id: analysis.id,
     status: analysis.status,
-    error: (analysis as any).error_message ?? null,
+    error: analysis.error_message ?? null,
   }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },

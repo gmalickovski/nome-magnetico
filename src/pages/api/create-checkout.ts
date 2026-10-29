@@ -21,6 +21,13 @@ import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES } from '../../shared/product-labe
 import { logError } from '../../backend/utils/error-logger';
 import { captureFluxoException } from '../../sentry/fluxo';
 import { getPublicBaseUrl } from '../../utils/public-url';
+import { hasActiveSubscription } from '../../backend/db/subscriptions';
+import {
+  CHECKOUT_ALREADY_ACTIVE_CODE,
+  checkoutAlreadyActiveMessage,
+  productAnalysisAppPath,
+  shouldBlockCheckoutForActiveProduct,
+} from '../../backend/payments/checkout-access';
 
 const schema = z.object({
   product_type: z.enum(PRODUCT_TYPES),
@@ -131,12 +138,26 @@ export async function createCheckoutResponse(args: {
     profile?.is_test === true &&
     (profile.test_ends_at === null || new Date(profile.test_ends_at) > new Date());
 
+  const hasActiveProduct = await hasActiveSubscription(user.id, product_type);
+  if (shouldBlockCheckoutForActiveProduct(isRenewal, hasActiveProduct)) {
+    const redirectUrl = productAnalysisAppPath(product_type);
+    return json(
+      {
+        error: checkoutAlreadyActiveMessage(product_type),
+        code: CHECKOUT_ALREADY_ACTIVE_CODE,
+        redirectUrl,
+      },
+      409,
+    );
+  }
+
   if (isAdmin || isTest) {
     await createSubscription({
       userId: user.id,
       productType: product_type,
       stripeSessionId: `bypass_${isAdmin ? 'admin' : 'test'}_${Date.now()}`,
       amountPaid: 0,
+      paymentProvider: 'test',
       purchaseKind: isRenewal ? 'renewal' : 'new',
     });
 

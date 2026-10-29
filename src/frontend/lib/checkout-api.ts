@@ -9,7 +9,7 @@ export interface CreateCheckoutBody {
 export type CreateCheckoutResult =
   | { ok: true; url: string }
   | { ok: true; bypass: true; redirectUrl: string }
-  | { ok: false; error: string }
+  | { ok: false; error: string; alreadyActive?: boolean; redirectUrl?: string }
   | {
       ok: false;
       priceChanged: true;
@@ -32,6 +32,7 @@ export async function postCreateCheckout(body: CreateCheckoutBody): Promise<Crea
     bypass?: boolean;
     redirectUrl?: string;
     error?: string;
+    code?: string;
     price_changed?: boolean;
     message?: string;
     pricing?: { cents: number; formatted: string; hasDiscount: boolean; discountedFormatted?: string };
@@ -49,6 +50,14 @@ export async function postCreateCheckout(body: CreateCheckoutBody): Promise<Crea
   }
 
   if (!res.ok) {
+    if (data.code === 'already_active') {
+      return {
+        ok: false,
+        error: data.error ?? 'Produto já ativo',
+        alreadyActive: true,
+        redirectUrl: data.redirectUrl,
+      };
+    }
     return { ok: false, error: data.error ?? 'Erro ao criar sessão' };
   }
   if (data.bypass && data.redirectUrl) {
