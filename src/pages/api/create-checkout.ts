@@ -2,7 +2,6 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createCheckoutSession, stripe, type ProductType } from '../../backend/payments/stripe';
 import { supabase } from '../../backend/db/supabase';
-import { createSubscription } from '../../backend/db/subscriptions';
 import { effectiveResultToPriceInfo, validateAccessCoupon } from '../../backend/payments/prices';
 import { getEffectivePriceCore } from '../../backend/pricing/service';
 import { effectiveFinalBelowFloor } from '../../backend/pricing/effective-price';
@@ -21,7 +20,8 @@ import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES } from '../../shared/product-labe
 import { logError } from '../../backend/utils/error-logger';
 import { captureFluxoException } from '../../sentry/fluxo';
 import { getPublicBaseUrl } from '../../utils/public-url';
-import { hasActiveSubscription } from '../../backend/db/subscriptions';
+import { hasActiveProductSubscription } from '../../backend/db/subscriptions';
+import { processTestCheckoutSuccess } from '../../backend/payments/test-checkout-success';
 import {
   CHECKOUT_ALREADY_ACTIVE_CODE,
   checkoutAlreadyActiveMessage,
@@ -138,7 +138,7 @@ export async function createCheckoutResponse(args: {
     profile?.is_test === true &&
     (profile.test_ends_at === null || new Date(profile.test_ends_at) > new Date());
 
-  const hasActiveProduct = await hasActiveSubscription(user.id, product_type);
+  const hasActiveProduct = await hasActiveProductSubscription(user.id, product_type);
   if (shouldBlockCheckoutForActiveProduct(isRenewal, hasActiveProduct)) {
     const redirectUrl = productAnalysisAppPath(product_type);
     return json(
@@ -152,13 +152,13 @@ export async function createCheckoutResponse(args: {
   }
 
   if (isAdmin || isTest) {
-    await createSubscription({
+    const stripeSessionId = `bypass_${isAdmin ? 'admin' : 'test'}_${Date.now()}`;
+    await processTestCheckoutSuccess({
       userId: user.id,
       productType: product_type,
-      stripeSessionId: `bypass_${isAdmin ? 'admin' : 'test'}_${Date.now()}`,
-      amountPaid: 0,
-      paymentProvider: 'test',
+      stripeSessionId,
       purchaseKind: isRenewal ? 'renewal' : 'new',
+      amountPaid: 0,
     });
 
     return json({ bypass: true, redirectUrl: '/app?acesso=liberado' }, 200);

@@ -7,6 +7,7 @@ import {
 import { createRefund, PRODUCT_NAMES } from '../../backend/payments/stripe';
 import { getProfile } from '../../backend/db/users';
 import { notify, publishAccessAttributes } from '../../backend/notifications/notify';
+import { shouldNotifyAdminSlackForProvider } from '../../backend/payments/admin-slack';
 import type { ProductType } from '../../backend/payments/stripe';
 
 const schema = z.object({
@@ -82,6 +83,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       productType: subscription.product_type,
       productName: PRODUCT_NAMES[subscription.product_type as ProductType],
       amount: subscription.amount_paid ?? undefined,
+      skipAdminSlack: !shouldNotifyAdminSlackForProvider(subscription.payment_provider),
     });
   }
 

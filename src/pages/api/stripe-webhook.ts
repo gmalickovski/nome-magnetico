@@ -23,6 +23,7 @@ import { captureFluxoException } from '../../sentry/fluxo';
 import { invalidateUserSubscriptionsCache } from '../../backend/cache/memo';
 import { getPublicBaseUrl } from '../../utils/public-url';
 import { productAnalysisAppPath } from '../../backend/payments/checkout-access';
+import { shouldNotifyAdminSlackForProvider } from '../../backend/payments/admin-slack';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -284,21 +285,23 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const adminNotifyOk = await notify('admin.new_payment', {
-      userId,
-      productType,
-      amount: session.amount_total ?? undefined,
-    });
-    if (!adminNotifyOk) {
-      console.warn(
-        JSON.stringify({
-          scope: 'stripe-webhook',
-          event: 'admin.new_payment',
-          ok: false,
-          userId,
-          productType,
-        }),
-      );
+    if (shouldNotifyAdminSlackForProvider(subscription.payment_provider)) {
+      const adminNotifyOk = await notify('admin.new_payment', {
+        userId,
+        productType,
+        amount: session.amount_total ?? undefined,
+      });
+      if (!adminNotifyOk) {
+        console.warn(
+          JSON.stringify({
+            scope: 'stripe-webhook',
+            event: 'admin.new_payment',
+            ok: false,
+            userId,
+            productType,
+          }),
+        );
+      }
     }
 
   }

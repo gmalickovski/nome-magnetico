@@ -72,6 +72,28 @@ export async function hasActiveSubscription(
 }
 
 /**
+ * Linha de assinatura ativa para um product_type (ignora admin/is_test no profile).
+ * Usado para travar recompra no checkout — perfil de teste sozinho não conta como produto comprado.
+ */
+export async function hasActiveProductSubscription(
+  userId: string,
+  productType: ProductType = 'nome_social',
+): Promise<boolean> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('product_type', productType)
+    .gt('ends_at', now)
+    .is('refunded_at', null)
+    .limit(1);
+
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
+/**
  * Retorna a subscription ativa mais recente do usuário.
  */
 export async function getActiveSubscription(
