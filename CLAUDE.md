@@ -408,3 +408,5 @@ Guia: `docs/devops/sentry.md`.
 12. Análise SEMPRE usa os 4 triângulos (não só o Triângulo da Vida) — importar `calcularTodosTriangulos` de `triangle.ts`
 13. **DOCUMENTAÇÃO OBRIGATÓRIA**: Todo novo processo, componente reutilizável ou decisão de arquitetura deve ser documentada na pasta `docs/` seguindo a estrutura exata: `architecture/`, `sops/`, `snippets/` ou `devops/`. Nunca crie arquivos `.md` soltos na raiz do `docs/`.
 14. **Bot Suporte = FAQ + status mínimo de cliente.** A role `support_bot` só faz `SELECT` em `support_faq.support_faq_v` e `EXECUTE` em `support_faq.support_lookup_contact(text)`. Sem `GRANT` em perfis, assinaturas, leads, análises, auth ou HQ. Não expor ids de pagamento, valores, PDF ou texto de análise. Não criar senha na migration.
+
+15. **Regras de acesso ao banco no front**: proibido `location.reload()` dentro de `setTimeout`/`setInterval`; proibido `setInterval` chamando API ou Supabase; polling só com endpoint leve (uma query), backoff (5,10,20,40,60 s), limite total de tempo e pausa em `visibilitychange`; preferir Supabase Realtime quando possível.

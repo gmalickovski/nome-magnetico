@@ -298,3 +298,5 @@ O n8n recebe o evento via webhook e processa o envio. Webhooks configurados:
 12. Análise SEMPRE usa os 4 triângulos (não só o Triângulo da Vida) — importar `calcularTodosTriangulos` de `triangle.ts`
 13. Para implementar qualquer funcionalidade referente ao projeto, SEMPRE validar os requisitos com o documento `PLANO-REVISAO.md`.
 14. **DOCUMENTAÇÃO OBRIGATÓRIA**: Todo novo processo, componente reutilizável ou decisão de arquitetura deve ser documentada na pasta `docs/` seguindo a estrutura exata: `architecture/`, `sops/`, `snippets/` ou `devops/`. Nunca crie arquivos `.md` soltos na raiz do `docs/`.
+
+15. **Regras de acesso ao banco no front**: proibido `location.reload()` dentro de `setTimeout`/`setInterval`; proibido `setInterval` chamando API ou Supabase; polling só com endpoint leve (uma query), backoff (5,10,20,40,60 s), limite total de tempo e pausa em `visibilitychange`; preferir Supabase Realtime quando possível.

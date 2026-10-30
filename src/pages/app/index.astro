@@ -702,6 +702,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
                 .then(function(res) { return res.json(); })
                 .then(function(data) {
                   if (data.status === 'complete' || data.status === 'error') {
+                    // polling-ok: polling legado analise gratis index.astro (manter comportamento sem alterar app)
                     window.location.reload();
                   } else {
                     setTimeout(checkStatus, 2000);
