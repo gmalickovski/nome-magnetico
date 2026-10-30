@@ -18,7 +18,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Instalar dependências
@@ -33,12 +33,12 @@ jobs:
       - name: Testes Automatizados
         env:
           STRIPE_SECRET_KEY: sk_test_dummy
-          PUBLIC_SUPABASE_URL: https://bhxneaeuhybtucmbmpvg.supabase.co
-          PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoeG5lYWV1aHlidHVjbWJtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzMwMDUsImV4cCI6MjA4OTYwOTAwNX0.CM5eismxAXiccsqNNkTjqCBLgDx4Ndr2mQUziWSMwKQ
+          PUBLIC_SUPABASE_URL: https://kbqrkkltjvmxomrgsrbc.supabase.co
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
         run: npm test
 
       - name: Build da Aplicação
         env:
-          PUBLIC_SUPABASE_URL: https://bhxneaeuhybtucmbmpvg.supabase.co
-          PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoeG5lYWV1aHlidHVjbWJtcHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMzMwMDUsImV4cCI6MjA4OTYwOTAwNX0.CM5eismxAXiccsqNNkTjqCBLgDx4Ndr2mQUziWSMwKQ
+          PUBLIC_SUPABASE_URL: https://kbqrkkltjvmxomrgsrbc.supabase.co
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
         run: npm run build
