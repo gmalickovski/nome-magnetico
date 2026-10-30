@@ -37,6 +37,7 @@ Validação mínima quando a mudança tocar TS/Astro/frontend/backend/build: `np
 
 - **Camadas:** React em `src/frontend/` nunca importa `src/backend/`. Só `fetch` para `/api/*`. Endpoints validam com Zod.
 - **Segurança:** sem service key Supabase no cliente; sem segredos commitados no código.
+- **Regras de acesso ao banco no front:** proibido `location.reload()` dentro de `setTimeout`/`setInterval`; proibido `setInterval` chamando API ou Supabase; polling só com endpoint leve (uma query), backoff (5,10,20,40,60 s), limite total de tempo e pausa em `visibilitychange`; preferir Supabase Realtime quando possível.
 - **Banco:** sem mutação de banco no front; sem migrations/schema sem pedido explícito do humano. Toda `CREATE TABLE public.*` (a partir de 30/10/2026) traz na mesma migration: `ENABLE ROW LEVEL SECURITY`, políticas, e GRANT explícito e mínimo por role (`anon`, `authenticated`, `service_role`) conforme o uso. Sem GRANT a tabela não aparece no Data API. Nunca `GRANT ALL ... TO anon`. Views e funções novas: GRANT também explícito. FKs sempre com índice e RLS usando `(select auth.uid())`.
 - **Acesso:** checar subscription ativa, usuário teste válido ou admin antes de processar análise.
 - **IA:** toda chamada passa pelo LoopGuard; config só em `src/backend/ai/config/` e `prompts/`.
@@ -91,3 +92,15 @@ React island → fetch /api/* → Astro API route → src/backend/* → Supabase
 | [`DEPLOY.md`](DEPLOY.md) | Tag semver `v*.*.*` |
 | [`.agents/workflows/`](.agents/workflows/) | Workflows criar-* , Stripe, docs |
 | [`.claude/commands/`](.claude/commands/) | Comandos Claude espelhados |
+
+
+## Cursor Cloud specific instructions
+- Responda em pt-BR, curto.
+- Você só tem acesso ao repositório. Sem VPS, PM2, n8n, banco de produção ou Stripe real.
+- NUNCA altere `supabase/migrations/**`, código de Stripe/pagamentos, auth/assinaturas (`subscriptions.ts`) ou arquivos de env/secrets sem pedido explícito na mensagem. Se o bug exigir isso, pare e explique.
+- Nunca faça merge, tag, deploy, force-push ou commit na `main`. Sempre abra PR em draft.
+- Branch: `fix/nm-<resumo-curto>` ou `gmalickovski/dev-<n>-<slug>` quando houver issue DEV-.
+- PR deve ter: causa, mudança, testes rodados (`npm run lint`, `npm test`, `npm run build`) e plano de rollback (tag anterior).
+- Use apenas chaves de TESTE (`.env.1password` / `scripts/ensure-env-1p.mjs`). Nunca use item 1Password `NM-PROD`.
+- Se a causa parecer infra (DB fora, Disk IO, 5xx/504 da VPS), não altere código: responda "provável infra" e pare.
+- Mudança mínima; sem refatoração fora do escopo. Respeite a regra anti-polling da DEV-251.

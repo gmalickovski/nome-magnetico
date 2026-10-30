@@ -108,8 +108,9 @@ const mockSupabase = {
 };
 
 mock.module('../db/supabase', {
-  exports: {
+  namedExports: {
     supabase: mockSupabase,
+    getSupabaseAdmin: () => mockSupabase,
   },
 });
 
