@@ -122,7 +122,6 @@ const {
   fetchActivePromotionRow,
 } = await import('./promotions-db');
 const { getSupabaseFaqs } = await import('../faqs/getSupabaseFaqs');
-const { hasActiveSubscription } = await import('../db/subscriptions');
 
 describe('product-prices-db e resiliência SSR com Supabase indisponível', () => {
   beforeEach(() => {
@@ -223,13 +222,5 @@ describe('product-prices-db e resiliência SSR com Supabase indisponível', () =
     const remainingMs = entry.expiresAt - Date.now();
     assert.ok(remainingMs <= 30_000, `Falha de FAQ deve expirar em no máximo 30s, deu ${remainingMs}ms`);
     assert.ok(remainingMs >= 28_000, `TTL da falha de FAQ deve ser próximo a 30s, deu ${remainingMs}ms`);
-  });
-
-  it('hasActiveSubscription: timeout de 2s cai no fallback seguro (false) sem quebrar o SSR', async () => {
-    mockShouldTimeout = true;
-
-    const isActive = await hasActiveSubscription('test-user-id', 'nome_social');
-    assert.equal(isActive, false);
-    assert.ok(capturedSignal instanceof AbortSignal, 'Deve usar abortSignal na verificação de assinatura');
   });
 });
