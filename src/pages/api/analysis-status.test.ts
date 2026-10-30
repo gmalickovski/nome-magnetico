@@ -69,14 +69,14 @@ const mockSupabase = {
 };
 
 mock.module('../../backend/db/supabase', {
-  exports: {
+  namedExports: {
     supabase: mockSupabase,
     getSupabaseAdmin: () => mockSupabase,
   },
 });
 
 mock.module('../../backend/db/analysis-processing', {
-  exports: {
+  namedExports: {
     STALE_ERROR_MESSAGE,
     ANALYSIS_STALE_PROCESSING_MS: 10 * 60 * 1000,
     reconcileStaleAnalysis: async (analysis: any) => {
