@@ -250,14 +250,24 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 
         <script define:vars={{ analysisId: id }}>
           (function () {
+            function sessionGet(key) {
+              try { return sessionStorage.getItem(key); } catch (e) { return null; }
+            }
+            function sessionSet(key, value) {
+              try { sessionStorage.setItem(key, value); } catch (e) {}
+            }
+            function sessionRemove(key) {
+              try { sessionStorage.removeItem(key); } catch (e) {}
+            }
+
             const BACKOFF_STEPS = [5, 10, 20, 40, 60];
             const MAX_TOTAL_SECONDS = 15 * 60; // 15 minutos = 900s
             const keyStart = 'poll_start_' + analysisId;
 
-            let startTime = parseInt(sessionStorage.getItem(keyStart) || '0', 10);
+            let startTime = parseInt(sessionGet(keyStart) || '0', 10);
             if (!startTime || startTime <= 0 || Date.now() - startTime > MAX_TOTAL_SECONDS * 1000 + 60000) {
               startTime = Date.now();
-              sessionStorage.setItem(keyStart, String(startTime));
+              sessionSet(keyStart, String(startTime));
             }
 
             const processingEl = document.getElementById('processing-state');
@@ -300,7 +310,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
                 clearInterval(counterInterval);
                 counterInterval = null;
               }
-              sessionStorage.removeItem(keyStart);
+              sessionRemove(keyStart);
             }
 
             function triggerReload() {
@@ -642,9 +652,11 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 <script define:vars={{ analysisId: id, isComplete: !isProcessing && !isError }}>
   // Limpar contador de polling quando a análise estiver completa
   if (isComplete) {
-    try {
-      sessionStorage.removeItem('poll_' + analysisId);
-    } catch (e) {}
+    function sessionRemove(key) {
+      try { sessionStorage.removeItem(key); } catch (e) {}
+    }
+    sessionRemove('poll_' + analysisId);
+    sessionRemove('poll_start_' + analysisId);
   }
 </script>
 
