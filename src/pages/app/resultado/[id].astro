@@ -1,6 +1,7 @@
 ---
 import ResultadoLayout from '../../../layouts/ResultadoLayout.astro';
 import { getAnalysis, getMagneticNames } from '../../../backend/db/analyses';
+import { reconcileStaleAnalysis } from '../../../backend/db/analysis-processing';
 import { supabase } from '../../../backend/db/supabase';
 import { getArcano } from '../../../backend/numerology/arcanos';
 import { getArquetipo } from '../../../backend/numerology/archetypes';
@@ -22,7 +23,7 @@ if (!user) return Astro.redirect('/auth/login');
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/app');
 
-const [analysis, magneticNames] = await Promise.all([
+let [analysis, magneticNames] = await Promise.all([
   getAnalysis(id),
   getMagneticNames(id),
 ]);
@@ -30,6 +31,8 @@ const [analysis, magneticNames] = await Promise.all([
 if (!analysis || analysis.user_id !== user.id) {
   return Astro.redirect('/app');
 }
+
+analysis = await reconcileStaleAnalysis(analysis);
 
 // ── Status ──────────────────────────────────────────────────────────
 const isProcessing = analysis.status === 'processing' || analysis.status === 'pending';
@@ -235,11 +238,11 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 
         <div id="timeout-state" class="hidden w-full max-w-lg rounded-2xl bg-[#111111] border border-amber-500/20 p-8 text-center" style="box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
           <div class="text-4xl mb-4">⏱</div>
-          <h3 class="font-cinzel text-xl font-bold text-amber-400 mb-3">A análise está demorando mais que o esperado</h3>
+          <h3 class="font-cinzel text-xl font-bold text-amber-400 mb-3">A análise está demorando; atualize a página mais tarde</h3>
           <p class="text-gray-400 text-sm sm:text-base leading-relaxed mb-6">O processamento pode estar lento no momento. Aguarde mais alguns minutos e recarregue a página, ou relate o problema caso persista.</p>
           <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
             <button onclick="window.location.reload()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-black font-semibold px-6 py-3 rounded-full hover:bg-[#f2ca50] transition-all">
-              Verificar agora
+              Atualizar página
             </button>
             <a href="/suporte" target="_blank" class="text-amber-400 hover:text-amber-300 text-sm underline underline-offset-4">Relatar atraso no Suporte</a>
           </div>
@@ -257,39 +260,143 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
               try { sessionStorage.removeItem(key); } catch (e) {}
             }
 
-            const MAX_POLLS = 84; // 7 minutos (84 × 5s)
-            const key = 'poll_' + analysisId;
-            const count = parseInt(sessionGet(key) || '0', 10);
+            const BACKOFF_STEPS = [5, 10, 20, 40, 60];
+            const MAX_TOTAL_SECONDS = 15 * 60; // 15 minutos = 900s
+            const keyStart = 'poll_start_' + analysisId;
 
-            if (count >= MAX_POLLS) {
-              sessionRemove(key);
-              document.getElementById('processing-state')?.classList.add('hidden');
-              document.getElementById('timeout-state')?.classList.remove('hidden');
-              return;
+            let startTime = parseInt(sessionGet(keyStart) || '0', 10);
+            if (!startTime || startTime <= 0 || Date.now() - startTime > MAX_TOTAL_SECONDS * 1000 + 60000) {
+              startTime = Date.now();
+              sessionSet(keyStart, String(startTime));
             }
 
-            sessionSet(key, String(count + 1));
-            const baseSec = count * 5;
+            const processingEl = document.getElementById('processing-state');
+            const timeoutEl = document.getElementById('timeout-state');
             const ctrEl = document.getElementById('poll-counter-text');
+
+            let attempt = 0;
+            let pollTimeout = null;
+            let counterInterval = null;
+            let isChecking = false;
+            let isTerminated = false;
+            let hasReloaded = false;
 
             function fmt(sec) {
               const m = Math.floor(sec / 60);
               return sec >= 60 ? m + 'min ' + (sec % 60) + 's' : sec + 's';
             }
 
-            let localSec = 0;
-            if (ctrEl) ctrEl.textContent = '(' + fmt(baseSec) + ')';
+            function getElapsedSeconds() {
+              return Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+            }
 
-            const liveInterval = setInterval(() => {
-              localSec++;
-              if (ctrEl) ctrEl.textContent = '(' + fmt(baseSec + localSec) + ')';
-            }, 1000);
+            function updateCounter() {
+              const elapsed = getElapsedSeconds();
+              if (ctrEl) ctrEl.textContent = '(' + fmt(elapsed) + ')';
+              if (elapsed >= MAX_TOTAL_SECONDS) {
+                stopAll();
+                if (processingEl) processingEl.classList.add('hidden');
+                if (timeoutEl) timeoutEl.classList.remove('hidden');
+              }
+            }
 
-            setTimeout(() => {
-              clearInterval(liveInterval);
-              sessionSet(key, String(count + 1));
+            function stopAll() {
+              isTerminated = true;
+              if (pollTimeout) {
+                clearTimeout(pollTimeout);
+                pollTimeout = null;
+              }
+              if (counterInterval) {
+                clearInterval(counterInterval);
+                counterInterval = null;
+              }
+              sessionRemove(keyStart);
+            }
+
+            function triggerReload() {
+              if (hasReloaded) return;
+              hasReloaded = true;
+              stopAll();
               window.location.reload();
-            }, 5000);
+            }
+
+            function getDelaySeconds() {
+              return attempt < BACKOFF_STEPS.length ? BACKOFF_STEPS[attempt] : 60;
+            }
+
+            async function checkStatus() {
+              if (isTerminated || hasReloaded || isChecking) return;
+              if (document.hidden) return;
+
+              const elapsed = getElapsedSeconds();
+              if (elapsed >= MAX_TOTAL_SECONDS) {
+                updateCounter();
+                return;
+              }
+
+              isChecking = true;
+              try {
+                const res = await fetch('/api/analysis-status?id=' + encodeURIComponent(analysisId), {
+                  headers: { 'Accept': 'application/json' },
+                });
+
+                if (res.ok) {
+                  const data = await res.json();
+                  const status = data && data.status;
+                  if (status === 'complete' || status === 'done' || status === 'error') {
+                    triggerReload();
+                    return;
+                  }
+                }
+              } catch (err) {
+                console.warn('[polling] falha ao checar status:', err);
+              } finally {
+                isChecking = false;
+              }
+
+              if (isTerminated || hasReloaded || document.hidden) return;
+
+              attempt++;
+              const delaySec = getDelaySeconds();
+              pollTimeout = setTimeout(checkStatus, delaySec * 1000);
+            }
+
+            function startTimer() {
+              if (counterInterval) clearInterval(counterInterval);
+              updateCounter();
+              counterInterval = setInterval(updateCounter, 1000);
+            }
+
+            function stopTimer() {
+              if (counterInterval) {
+                clearInterval(counterInterval);
+                counterInterval = null;
+              }
+            }
+
+            if (getElapsedSeconds() >= MAX_TOTAL_SECONDS) {
+              updateCounter();
+              return;
+            }
+
+            startTimer();
+            const initialDelaySec = getDelaySeconds();
+            pollTimeout = setTimeout(checkStatus, initialDelaySec * 1000);
+
+            document.addEventListener('visibilitychange', () => {
+              if (isTerminated || hasReloaded) return;
+
+              if (document.hidden) {
+                stopTimer();
+                if (pollTimeout) {
+                  clearTimeout(pollTimeout);
+                  pollTimeout = null;
+                }
+              } else {
+                startTimer();
+                checkStatus();
+              }
+            });
           })();
         </script>
       </div>
@@ -545,9 +652,11 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 <script define:vars={{ analysisId: id, isComplete: !isProcessing && !isError }}>
   // Limpar contador de polling quando a análise estiver completa
   if (isComplete) {
-    try {
-      sessionStorage.removeItem('poll_' + analysisId);
-    } catch (e) {}
+    function sessionRemove(key) {
+      try { sessionStorage.removeItem(key); } catch (e) {}
+    }
+    sessionRemove('poll_' + analysisId);
+    sessionRemove('poll_start_' + analysisId);
   }
 </script>
 
