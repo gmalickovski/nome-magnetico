@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type { Analysis, AnalysisProductType, AnalysisStatus } from './analyses';
 
 /** Alinhado ao timeout de IA + margem para persistência e PDF. */
-export const ANALYSIS_STALE_PROCESSING_MS = 20 * 60 * 1000;
+export const ANALYSIS_STALE_PROCESSING_MS = 10 * 60 * 1000;
 
 const STALE_ERROR_MESSAGE =
   'A análise expirou antes de concluir (tempo limite do servidor). Você pode tentar novamente.';
