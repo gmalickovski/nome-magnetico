@@ -14,9 +14,15 @@ const inFlight = new Map<string, Promise<unknown>>();
 
 /**
  * Executa `fn` e armazena o resultado em memória pelo tempo `ttlMs`.
+ * `ttlMs` pode ser um número fixo (em ms) ou uma função `(result: T) => number`,
+ * permitindo definir TTL por resultado (ex.: 5 min para sucesso, 30 s para falha/fallback).
  * Se chamado concorrentemente enquanto a busca está ativa, reutiliza a Promise em andamento.
  */
-export async function memoize<T>(key: string, ttlMs: number, fn: () => Promise<T> | PromiseLike<T>): Promise<T> {
+export async function memoize<T>(
+  key: string,
+  ttlMs: number | ((result: T) => number),
+  fn: () => Promise<T> | PromiseLike<T>,
+): Promise<T> {
   const now = Date.now();
   const existing = store.get(key);
 
@@ -32,7 +38,8 @@ export async function memoize<T>(key: string, ttlMs: number, fn: () => Promise<T
   const promise = (async () => {
     try {
       const result = await fn();
-      store.set(key, { value: result, expiresAt: Date.now() + ttlMs });
+      const resolvedTtl = typeof ttlMs === 'function' ? ttlMs(result) : ttlMs;
+      store.set(key, { value: result, expiresAt: Date.now() + resolvedTtl });
       return result;
     } finally {
       inFlight.delete(key);
@@ -69,6 +76,11 @@ export function clearCache(): void {
   inFlight.clear();
 }
 
+/** Retorna a entrada do cache (útil para testes de TTL e expiração) */
+export function getCacheEntry(key: string): { value: unknown; expiresAt: number } | undefined {
+  return store.get(key);
+}
+
 /** Invalida o cache do catálogo de preços */
 export function invalidateProductPricesCache(): void {
   invalidate('product_prices:rows');
@@ -79,9 +91,14 @@ export function invalidateFaqCache(): void {
   invalidatePrefix('faq:');
 }
 
+/** Invalida o cache de promoções ativas */
+export function invalidatePromotionsCache(): void {
+  invalidatePrefix('promotions:');
+}
+
 /** Invalida o cache de assinaturas ativas de um usuário */
 export function invalidateUserSubscriptionsCache(userId: string): void {
   if (userId) {
-    invalidate(`user_subs:${userId}`);
+    invalidatePrefix(`user_subs:${userId}`);
   }
 }

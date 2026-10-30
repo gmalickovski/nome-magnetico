@@ -10,6 +10,7 @@ import {
   registryState,
   type RegistryState,
 } from './registry';
+import { invalidatePromotionsCache } from '../cache/memo';
 
 const COLUMNS =
   'id, name, product_types, discount_type, discount_value, starts_at, ends_at, is_active, deactivated_at, created_at, banner_text, stripe_coupon_id, stripe_promo_code';
@@ -127,6 +128,7 @@ export async function createPromotion(input: CreatePromotionInput): Promise<OpsP
   assertRegistryReady(error);
   if (error) throw error;
 
+  invalidatePromotionsCache();
   console.info('[ops/promotions] create', { actorId: input.actorId, promotionId: data.id });
   return toRow(data as PromotionDbRow);
 }
@@ -148,6 +150,7 @@ export async function setPromotionActive(
   if (error) throw error;
   if (!data) throw new OpsRegistryError(404, 'Promoção não encontrada');
 
+  invalidatePromotionsCache();
   console.info('[ops/promotions] set-active', { actorId, promotionId: id, isActive });
   return toRow(data as PromotionDbRow);
 }

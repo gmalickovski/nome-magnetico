@@ -5,8 +5,10 @@ import {
   invalidate,
   invalidatePrefix,
   clearCache,
+  getCacheEntry,
   invalidateProductPricesCache,
   invalidateFaqCache,
+  invalidatePromotionsCache,
   invalidateUserSubscriptionsCache,
 } from './memo';
 
@@ -45,6 +47,43 @@ describe('memoize cache', () => {
     const res2 = await memoize('test:exp', 20, fetcher);
     assert.equal(res2, 'exec_2');
     assert.equal(callCount, 2);
+  });
+
+  it('suporta TTL dinâmico por resultado (função) e getCacheEntry', async () => {
+    let callCount = 0;
+    const fetcher = async () => {
+      callCount++;
+      // Primeira chamada retorna vazio (falha), segunda chamada retorna dados
+      return callCount === 1 ? [] : ['item1'];
+    };
+
+    const ttlResolver = (result: string[]) => (result.length === 0 ? 30_000 : 300_000);
+
+    const res1 = await memoize('test:dynamic_ttl', ttlResolver, fetcher);
+    assert.deepEqual(res1, []);
+    assert.equal(callCount, 1);
+
+    const entry1 = getCacheEntry('test:dynamic_ttl');
+    assert.ok(entry1, 'Entrada de cache deve existir');
+    assert.deepEqual(entry1.value, []);
+    const remainingMs1 = entry1.expiresAt - Date.now();
+    // O TTL para falha/vazio deve ser <= 30s
+    assert.ok(remainingMs1 <= 30_000, `TTL da falha deve ser <= 30s, deu ${remainingMs1}ms`);
+    assert.ok(remainingMs1 >= 28_000, `TTL da falha deve ser próximo a 30s, deu ${remainingMs1}ms`);
+
+    // Invalida e simula sucesso
+    invalidate('test:dynamic_ttl');
+    const res2 = await memoize('test:dynamic_ttl', ttlResolver, fetcher);
+    assert.deepEqual(res2, ['item1']);
+    assert.equal(callCount, 2);
+
+    const entry2 = getCacheEntry('test:dynamic_ttl');
+    assert.ok(entry2);
+    assert.deepEqual(entry2.value, ['item1']);
+    const remainingMs2 = entry2.expiresAt - Date.now();
+    // O TTL para sucesso deve ser de 5 min (300s)
+    assert.ok(remainingMs2 > 30_000, 'TTL de sucesso deve ser maior que 30s');
+    assert.ok(remainingMs2 >= 295_000, `TTL de sucesso deve ser próximo a 300s, deu ${remainingMs2}ms`);
   });
 
   it('invalida por chave específica', async () => {
@@ -122,9 +161,14 @@ describe('memoize cache', () => {
     await memoize('faq:all', 5000, fetcher);
     assert.equal(count, 4);
 
+    await memoize('promotions:active', 5000, fetcher);
+    invalidatePromotionsCache();
+    await memoize('promotions:active', 5000, fetcher);
+    assert.equal(count, 6);
+
     await memoize('user_subs:user-123', 5000, fetcher);
     invalidateUserSubscriptionsCache('user-123');
     await memoize('user_subs:user-123', 5000, fetcher);
-    assert.equal(count, 6);
+    assert.equal(count, 8);
   });
 });

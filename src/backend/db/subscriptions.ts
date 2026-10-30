@@ -30,45 +30,53 @@ export async function hasActiveSubscription(
   userId: string,
   productType: ProductType = 'nome_social'
 ): Promise<boolean> {
-  // 1. Verificar role, is_test e test_ends_at
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, is_test, test_ends_at')
-    .eq('id', userId)
-    .single();
+  try {
+    // 1. Verificar role, is_test e test_ends_at
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, is_test, test_ends_at')
+      .eq('id', userId)
+      .abortSignal(AbortSignal.timeout(2000))
+      .maybeSingle();
 
-  if (profile?.role === 'admin') return true;
+    if (profile?.role === 'admin') return true;
 
-  // 2. Verificar assinatura normal/trial para o produto pedido
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select('id, ends_at')
-    .eq('user_id', userId)
-    .eq('product_type', productType)
-    .gt('ends_at', now)
-    .limit(1);
+    // 2. Verificar assinatura normal/trial para o produto pedido
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('id, ends_at')
+      .eq('user_id', userId)
+      .eq('product_type', productType)
+      .gt('ends_at', now)
+      .abortSignal(AbortSignal.timeout(2000))
+      .limit(1);
 
-  if (!error && (data?.length ?? 0) > 0) return true;
+    if (!error && (data?.length ?? 0) > 0) return true;
 
-  // 3. Compatibilidade com usuários teste legados/globais.
-  // Se existem assinaturas trial ativas, elas definem o escopo por produto.
-  // Sem assinatura trial ativa, profiles.is_test continua significando acesso geral.
-  const isActiveTest =
-    profile?.is_test === true &&
-    (profile.test_ends_at === null || new Date(profile.test_ends_at) > new Date());
+    // 3. Compatibilidade com usuários teste legados/globais.
+    // Se existem assinaturas trial ativas, elas definem o escopo por produto.
+    // Sem assinatura trial ativa, profiles.is_test continua significando acesso geral.
+    const isActiveTest =
+      profile?.is_test === true &&
+      (profile.test_ends_at === null || new Date(profile.test_ends_at) > new Date());
 
-  if (!isActiveTest) return false;
+    if (!isActiveTest) return false;
 
-  const { data: activeTrialSubs } = await supabase
-    .from('subscriptions')
-    .select('id')
-    .eq('user_id', userId)
-    .gt('ends_at', now)
-    .like('stripe_session_id', 'trial_%')
-    .limit(1);
+    const { data: activeTrialSubs } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .gt('ends_at', now)
+      .like('stripe_session_id', 'trial_%')
+      .abortSignal(AbortSignal.timeout(2000))
+      .limit(1);
 
-  return (activeTrialSubs?.length ?? 0) === 0;
+    return (activeTrialSubs?.length ?? 0) === 0;
+  } catch (err) {
+    console.warn('[subscriptions] hasActiveSubscription timeout ou erro — fallback seguro:', err);
+    return false;
+  }
 }
 
 /**
