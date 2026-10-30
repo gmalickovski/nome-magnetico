@@ -4,6 +4,7 @@ import type { FaqItemProps } from '../../frontend/components/landing/FAQSection'
 import { memoize } from '../cache/memo';
 
 const FAQ_TTL_MS = 10 * 60 * 1000; // 10 minutos em memória (DEV-212)
+const FAQ_ERROR_TTL_MS = 30 * 1000; // 30 segundos em caso de falha/timeout (HOTFIX)
 
 // Configura marked para FAQ (sem sanitização extra — conteúdo nosso)
 marked.use({ gfm: true, breaks: false });
@@ -19,27 +20,41 @@ interface GetFaqsOptions {
 
 export async function getSupabaseFaqs(opts: GetFaqsOptions = {}): Promise<FaqItemProps[]> {
   const cacheKey = `faq:supabase:${opts.featuredOnly ? 'featured' : 'all'}`;
-  return memoize(cacheKey, FAQ_TTL_MS, async () => {
-  let query = supabase
-    .from('faq_items')
-    .select('id, question, answer_markdown, order_index')
-    .eq('is_active', true)
-    .order('order_index', { ascending: true });
+  return memoize(
+    cacheKey,
+    (items) => (!items || items.length === 0 ? FAQ_ERROR_TTL_MS : FAQ_TTL_MS),
+    async () => {
+      try {
+        let query = supabase
+          .from('faq_items')
+          .select('id, question, answer_markdown, order_index')
+          .eq('is_active', true)
+          .order('order_index', { ascending: true })
+          .abortSignal(AbortSignal.timeout(2000));
 
-  if (opts.featuredOnly) {
-    query = query.eq('is_featured', true);
-  }
+        if (opts.featuredOnly) {
+          query = query.eq('is_featured', true);
+        }
 
-  const { data, error } = await query;
-  if (error || !data?.length) return [];
+        const { data, error } = await query;
+        if (error) {
+          console.warn('[faqs] leitura de FAQs falhou — usando fallback vazio:', error.message ?? error.code);
+          return [];
+        }
+        if (!data?.length) return [];
 
-  return data
-    .filter(item => !RETIRED_PRODUCT_PATTERN.test(`${item.question ?? ''} ${item.answer_markdown ?? ''}`))
-    .map(item => ({
-      id: item.id,
-      question: item.question,
-      answer: '',
-      answer_html: marked.parse(item.answer_markdown ?? '') as string,
-    }));
-  });
+        return data
+          .filter(item => !RETIRED_PRODUCT_PATTERN.test(`${item.question ?? ''} ${item.answer_markdown ?? ''}`))
+          .map(item => ({
+            id: item.id,
+            question: item.question,
+            answer: '',
+            answer_html: marked.parse(item.answer_markdown ?? '') as string,
+          }));
+      } catch (err) {
+        console.warn('[faqs] timeout/erro na leitura de FAQs — usando fallback vazio:', err);
+        return [];
+      }
+    },
+  );
 }
