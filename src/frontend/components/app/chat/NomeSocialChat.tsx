@@ -45,6 +45,8 @@ import {
   saveChatSession,
   type PersistedChatSession,
 } from './chat-session-storage.js';
+import { buildPostSuggestionChoiceText } from '../../../../shared/interactive-engine/copy.js';
+import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { Button } from '../../ui/Button.js';
 import { Modal } from '../../ui/Modal.js';
 
@@ -163,6 +165,11 @@ export function NomeSocialChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (!birthConfirmed || !currentStepId) return;
+    capturePostHogEvent('chat_step_viewed', { step: currentStepId });
+  }, [currentStepId, birthConfirmed]);
 
   const applyFreshSession = () => {
     setDraftNome(initialBirthName);
@@ -604,16 +611,6 @@ export function NomeSocialChat({
 
     const newMsgs: ChatMessage[] = [];
 
-    if (data.reading) {
-      newMsgs.push({
-        id: `reading-${Date.now()}`,
-        sender: 'assistant',
-        type: 'text',
-        eyebrow: 'LEITURA DO MOMENTO',
-        content: data.reading,
-      });
-    }
-
     if (data.next_question) {
       const q = data.next_question;
       const msgType =
@@ -647,7 +644,39 @@ export function NomeSocialChat({
       });
     }
 
-    setMessages((prev) => [...prev, ...newMsgs]);
+    setMessages((prev) => {
+      const toAdd = newMsgs.filter((m) => {
+        if (m.sender !== 'assistant' || !m.stepId) return true;
+        return !prev.some((p) => p.sender === 'assistant' && p.stepId === m.stepId);
+      });
+      return [...prev, ...toAdd];
+    });
+  };
+
+  const handleSuggestionSelect = (id: string | null) => {
+    if (id && basePanel) {
+      const sug = suggestions.find((s) => s.id === id);
+      if (sug && id !== activeSuggestionId) {
+        capturePostHogEvent('suggestion_selected', {
+          suggestion_id: id,
+          nota_escolhida: sug.score,
+        });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sug-choice-${Date.now()}`,
+            sender: 'assistant',
+            type: 'text',
+            content: buildPostSuggestionChoiceText({
+              assinaturaEscolhida: sug.nome,
+              notaHoje: basePanel.score,
+              notaEscolhida: sug.score,
+            }),
+          },
+        ]);
+      }
+    }
+    setActiveSuggestionId(id);
   };
 
   const handleUserAnswer = async (text: string, optionId?: string) => {
@@ -886,7 +915,7 @@ export function NomeSocialChat({
                     <SuggestionPicker
                       suggestions={suggestions}
                       selectedId={activeSuggestionId}
-                      onSelect={(id) => setActiveSuggestionId(id)}
+                      onSelect={handleSuggestionSelect}
                       onRegenerate={handleRegenerate}
                       isRegenerating={isRegenerating}
                       analysisId={analysisId}

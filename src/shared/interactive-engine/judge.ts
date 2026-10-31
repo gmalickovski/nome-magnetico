@@ -8,7 +8,6 @@ export interface CorrectionJudgeParams {
   textoCorrecao: string;
   destino: number;
   notaHoje: number;
-  potencial: number;
   areaFocoAtual?: string | null;
 }
 
@@ -36,7 +35,7 @@ export function applyCorrectionJudge(params: CorrectionJudgeParams): CorrectionJ
     areaInferida = 'autoestima_expressao';
   }
 
-  const leituraAjustada = `Compreendido perfeitamente. O seu foco real está em "${limpo}". Alinhando isso ao seu Destino ${params.destino}, direcionamos os cálculos para elevar sua nota de ${params.notaHoje} para ${params.potencial} com máxima prioridade nesse objetivo.`;
+  const leituraAjustada = `Compreendido. O seu foco real está em "${limpo}". Alinhando isso ao seu Destino ${params.destino} e à nota ${params.notaHoje} do seu nome de registro, seguimos com sugestões que respeitam essa prioridade. Escolha a que mais combina com você e eu mostro o que ela muda.`;
 
   const linhaResumoFoco = `Prioridade personalizada: ${limpo.length > 50 ? limpo.slice(0, 47) + '...' : limpo}`;
 

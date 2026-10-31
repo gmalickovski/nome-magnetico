@@ -215,35 +215,49 @@ export const SUBFOCO_QUESTIONS_BY_AREA: Record<AreaFocoNomeMagnetico, SubfocoQue
 };
 
 export interface ReadingTemplateParams {
+  nome: string;
   areaFoco: AreaFocoNomeMagnetico;
   destino: number;
-  bloqueio?: string | null;
   notaHoje: number;
-  potencial: number;
-  alertaComplianceLegal: boolean;
+  alertaComplianceLegal?: boolean;
+}
+
+function primeiroNome(nome: string): string {
+  const t = nome.trim().split(/\s+/).filter(Boolean);
+  return t[0] ?? nome.trim();
 }
 
 /**
- * Monta o texto da "Leitura inicial do seu momento" seguindo literalmente os 5 templates da seção 4.1.
+ * Leitura do momento (pré escolha de sugestão): só {{nome}}, {{destino}}, {{nota_hoje}}.
  */
 export function buildInitialMomentReadingText(params: ReadingTemplateParams): string {
-  const { areaFoco, destino, bloqueio, notaHoje, potencial, alertaComplianceLegal } = params;
-  const codigoBloqueio = bloqueio && bloqueio.trim().length > 0 ? bloqueio.trim() : 'repetida';
+  const { areaFoco, destino, notaHoje, alertaComplianceLegal } = params;
+  const nome = primeiroNome(params.nome);
 
   if (alertaComplianceLegal) {
-    return `A numerologia não substitui cuidados médicos ou emocionais, mas ajuda a organizar a clareza e a leveza da sua rotina. Pelo seu Destino ${destino}, harmonizar as sequências do seu nome para a nota ${potencial} cria uma direção mais tranquila para os seus próximos passos. Vamos focar nesse equilíbrio prático?`;
+    return `${nome}, o seu nome hoje tem nota ${notaHoje} e o seu Destino é ${destino}. A numerologia ajuda a organizar clareza na rotina, sem substituir cuidados de saúde. Escolha a sugestão que mais combina com você e eu mostro o que ela muda.`;
   }
 
   switch (areaFoco) {
     case 'prosperidade_financeira':
-      return `Pelo seu Destino ${destino} e pela sequência ${codigoBloqueio} no seu nome de registro, você coloca muita energia no que faz, mas sente que o retorno financeiro demora a firmar. Ao levar sua nota de ${notaHoje} para ${potencial}, sua nova assinatura limpa essa trava material. Faz sentido para o seu momento?`;
+      return `${nome}, o seu nome hoje tem nota ${notaHoje} e o seu Destino é ${destino}. Quando a assinatura conversa melhor com esse Destino, muita gente sente mais clareza para lidar com dinheiro e escolhas. Escolha a sugestão que mais combina com você e eu mostro o que ela muda.`;
     case 'carreira_negocios':
-      return `O seu Destino ${destino} pede crescimento e liderança, mas a sequência ${codigoBloqueio} no seu nome atual faz com que cada avanço profissional exija o dobro de esforço. Uma assinatura com nota ${potencial} alinha sua expressão profissional ao que você já entrega na prática. É isso que você sente hoje?`;
+      return `${nome}, o seu nome hoje tem nota ${notaHoje} e o seu Destino é ${destino}. Na carreira, a forma como você assina é a primeira impressão que fica. Escolha a sugestão que você usaria no trabalho e eu mostro o que ela muda.`;
     case 'relacionamentos_harmonia':
-      return `A combinação do seu Destino ${destino} com a sequência ${codigoBloqueio} no seu nome de nascimento costuma gerar ruídos de comunicação e desgaste nas trocas do dia a dia. Harmonizar sua assinatura para a nota ${potencial} traz mais fluidez para a sua convivência pessoal e familiar. Isso bate com a sua fase atual?`;
+      return `${nome}, o seu nome hoje tem nota ${notaHoje} e o seu Destino é ${destino}. Um nome mais alinhado ao seu Destino traz uma energia de equilíbrio para a forma como você se apresenta. Escolha a sugestão que mais soa como você e eu mostro o que ela muda.`;
     case 'autoestima_expressao':
-      return `Com o Destino ${destino}, você tem potencial de sobra para se posicionar, mas a sequência ${codigoBloqueio} no seu nome de registro cria dúvida na hora de colocar suas ideias no mundo. Subir a nota do seu nome para ${potencial} destrava uma presença mais segura e autêntica. Você se reconhece nesse cenário?`;
+      return `${nome}, o seu nome hoje tem nota ${notaHoje} e o seu Destino é ${destino}. A sua assinatura é o jeito como você se mostra ao mundo, e ela pode refletir melhor quem você é. Escolha a sugestão que você teria orgulho de assinar e eu mostro o que ela muda.`;
   }
+}
+
+/** Após o usuário escolher uma sugestão harmonizada. */
+export function buildPostSuggestionChoiceText(params: {
+  assinaturaEscolhida: string;
+  notaHoje: number;
+  notaEscolhida: number;
+}): string {
+  const { assinaturaEscolhida, notaHoje, notaEscolhida } = params;
+  return `Com ${assinaturaEscolhida}, a nota vai de ${notaHoje} para ${notaEscolhida}. Veja abaixo o que muda na sua Expressão.`;
 }
 
 export function buildRecomendacaoEstiloTexto(
@@ -303,12 +317,12 @@ export function buildVibrationalDiagramNodes(params: BuildDiagramNodesParams): D
         ? 'Acento sutil ou nome encurtado'
         : `Harmonia entre Expressão e Destino ${destino}`;
 
+  void potencial;
+  void notaHoje;
   const alvoLabel =
-    notaHoje < potencial
-      ? `Nota sobe de ${notaHoje} para ${potencial}`
-      : ondeAssina === 'rotina_trabalho' || ondeAssina === 'identidade_registro'
-        ? 'Mais força em contratos e trabalho'
-        : 'Presença magnética nas redes e rotina';
+    ondeAssina === 'rotina_trabalho' || ondeAssina === 'identidade_registro'
+      ? 'Mais força em contratos e trabalho'
+      : 'Presença magnética nas redes e rotina';
 
   return [
     {

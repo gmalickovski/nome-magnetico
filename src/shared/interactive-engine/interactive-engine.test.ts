@@ -151,7 +151,7 @@ describe('DEV-235 · Motor Interativo JEV (@typesafe-ai/sdk) + Filtros Mobile-Fi
     });
 
     assert.equal(out.alertaComplianceLegal, true);
-    assert.ok(out.palpiteTexto.includes('A numerologia não substitui cuidados médicos ou emocionais'));
+    assert.ok(out.palpiteTexto.includes('sem substituir cuidados de saúde'));
   });
 
   it('audita toda a copy do Nome Magnético: zero travessões (—/–), zero ×, zero jargões proibidos e nós entre 4 e 6 palavras', () => {
@@ -179,11 +179,10 @@ describe('DEV-235 · Motor Interativo JEV (@typesafe-ai/sdk) + Filtros Mobile-Fi
     for (const area of areas) {
       allStrings.push(
         buildInitialMomentReadingText({
+          nome: 'Ana Paula Ferreira',
           areaFoco: area,
           destino: 8,
-          bloqueio: '444',
           notaHoje: 60,
-          potencial: 96,
           alertaComplianceLegal: false,
         })
       );

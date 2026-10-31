@@ -154,15 +154,14 @@ describe('DEV-235 · Motor Interativo e Partitura (4 Camadas)', () => {
 
   it('escritor cai em texto determinístico na ausência de OPENAI_API_KEY', async () => {
     const texto = await writeHypothesis({
+      nome: 'Maria Silva',
       areaFoco: 'prosperidade_financeira',
       destino: 1,
       notaHoje: 48,
-      potencial: 95,
-      bloqueio: '111',
     });
 
     assert.ok(texto.length > 30);
-    assert.ok(texto.includes('Destino 1'));
+    assert.ok(texto.includes('Destino é 1'));
     // Sem travessões (DEV-183)
     assert.equal(/[—–]/.test(texto), false);
   });

@@ -121,6 +121,7 @@ export function mapApiPanel(api: ApiPanel): ResultPanelData {
     expressao: api.expressao,
     destino: api.destino,
     motivacao: api.motivacao,
+    missao: api.missao,
     impressao: api.impressao,
     potencial: api.potencial,
     bloqueiosCount: api.bloqueiosCount,
@@ -192,7 +193,7 @@ function buildNextQuestion(api: RawDecideLiveResponse): NextQuestionSpec | undef
       tipo: 'palpite',
       prompt: basePrompt,
       eyebrow: api.eyebrow || 'Será que é isso?',
-      palpiteTexto: api.reading || api.palpiteTexto || basePrompt,
+      palpiteTexto: api.reading || api.palpiteTexto || '',
     };
   }
 
@@ -255,10 +256,7 @@ export function mapDecideLiveResponse(raw: RawDecideLiveResponse): DecideLiveRes
   return {
     next_step: raw.next_step,
     remaining: raw.remaining,
-    reading:
-      raw.next_step === 'palpite' || raw.areaFoco
-        ? raw.reading || raw.palpiteTexto || ''
-        : '',
+    reading: raw.next_step === 'palpite' ? raw.reading || raw.palpiteTexto || '' : '',
     radarAxes: mapRadarAxes(raw.radarAxes),
     summary,
     readingSummary: raw.readingSummary,

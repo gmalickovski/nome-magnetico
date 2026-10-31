@@ -51,11 +51,10 @@ export class InteractiveDecisionEngine {
     const bloqueioPrincipal = state.bloqueios_triangulos[0] ?? null;
 
     const palpiteTexto = buildInitialMomentReadingText({
+      nome: state.nome_completo,
       areaFoco: decision.areaFoco,
       destino: state.numero_destino,
-      bloqueio: bloqueioPrincipal,
       notaHoje: state.nota_hoje,
-      potencial: state.potencial,
       alertaComplianceLegal: decision.alertaComplianceLegal,
     });
 

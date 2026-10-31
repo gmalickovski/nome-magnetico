@@ -221,27 +221,30 @@ export const POST: APIRoute = async ({ request }) => {
       subfoco_momento_chip: subfoco_momento,
     });
 
-    // LLM Escritor ou Juiz de Correção
-    let reading = decision.palpiteTexto;
-    if (palpite_status === 'nao' && objetivo_texto) {
-      const judgeRes = applyCorrectionJudge({
-        textoCorrecao: objetivo_texto,
-        destino,
-        notaHoje,
-        potencial,
-        areaFocoAtual: area_foco_chip,
-      });
-      reading = judgeRes.leituraAjustada;
-    } else if (area_foco_chip) {
-      reading = await writeHypothesis({
-        areaFoco: area_foco_chip as AreaFocoNomeMagnetico,
-        destino,
-        notaHoje,
-        potencial,
-        bloqueio: bloqueioPrincipal,
-        relatoUsuario: objetivo_texto,
-        alertaComplianceLegal: decision.alertaComplianceLegal,
-      });
+    // Leitura do momento: só no passo palpite, sem potencial/nota harmonizada
+    let reading = '';
+    if (routerDecision.nextStep === 'palpite') {
+      if (palpite_status === 'nao' && objetivo_texto) {
+        const judgeRes = applyCorrectionJudge({
+          textoCorrecao: objetivo_texto,
+          destino,
+          notaHoje,
+          areaFocoAtual: area_foco_chip,
+        });
+        reading = judgeRes.leituraAjustada;
+      } else if (area_foco_chip) {
+        reading = await writeHypothesis({
+          nome: nomeLimpo,
+          areaFoco: area_foco_chip as AreaFocoNomeMagnetico,
+          destino,
+          notaHoje,
+          subfocoMomento: subfoco_momento ?? null,
+          relatoUsuario: objetivo_texto,
+          alertaComplianceLegal: decision.alertaComplianceLegal,
+        });
+      } else {
+        reading = decision.palpiteTexto;
+      }
     }
 
     // Painel de Resultado Base (Original)
