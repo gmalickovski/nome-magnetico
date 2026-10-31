@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  applyQuestionnaireStep,
   buildNextQuestion,
   buildSobrenomePillOptions,
   INITIAL_COLLECT_STATE,
@@ -30,5 +31,17 @@ describe('buildNextQuestion · sobrenomes_uso', () => {
     assert.equal(q?.tipo, 'questionnaire');
     assert.ok(q?.options?.some((o) => o.label === 'Guilherme'));
     assert.ok(q?.options?.some((o) => o.label === 'Outro jeito'));
+  });
+
+  it('múltipla escolha preserva ordem dos toques em subfoco', () => {
+    const next = applyQuestionnaireStep(
+      { ...INITIAL_COLLECT_STATE, areaFoco: 'carreira_negocios' },
+      'subfoco',
+      {
+        optionIds: ['lideranca_promocao', 'foco_execucao'],
+        labels: ['Buscando reconhecimento', 'Quero crescer onde estou'],
+      }
+    );
+    assert.deepEqual(next.subfocosOrdenados, ['lideranca_promocao', 'foco_execucao']);
   });
 });
