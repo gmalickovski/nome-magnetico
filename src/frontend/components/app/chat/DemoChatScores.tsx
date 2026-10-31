@@ -76,7 +76,9 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
 
       <SummaryDrawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+        }}
         birthPanel={birthPanel}
         harmonizedPanel={active?.panel ?? null}
         showScoreCard

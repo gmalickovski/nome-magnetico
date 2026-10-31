@@ -12,7 +12,9 @@ import { fetchChatReadingSummary } from './chat-reading-summary-client.js';
 import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
-import { SummaryFab } from './SummaryFab.js';
+import { MobileChatDock } from './MobileChatDock.js';
+import type { MobileDockActionId, MobileDockScreen } from './mobile-dock-screen.js';
+import type { SummaryPanelCloseMethod } from './SummaryDrawer.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { GuessButtons } from './GuessButtons.js';
@@ -144,6 +146,8 @@ export function NomeSocialChat({
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [summaryBadge, setSummaryBadge] = useState(false);
+  const lastSummarySnapshotRef = useRef<string>('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
@@ -1020,6 +1024,117 @@ export function NomeSocialChat({
     summaryItems.length +
     (showReadingSummaryPanel && (activeReadingSummary || activeReadingLoading) ? 1 : 0);
 
+  const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
+
+  const mobileDockScreen: MobileDockScreen | null =
+    birthConfirmed && Boolean(basePanel)
+      ? !profileCollectionComplete
+        ? 'questionnaire'
+        : activeSuggestionId
+          ? 'result'
+          : hasSuggestionsMessage
+            ? 'suggestions'
+            : 'questionnaire'
+      : null;
+
+  const summarySnapshot = [
+    summaryCount,
+    activeSuggestionId ?? '',
+    basePanel?.score ?? '',
+    activeSuggestion?.score ?? '',
+    showRadarPanel ? 'r' : '',
+  ].join(':');
+
+  useEffect(() => {
+    if (!birthConfirmed || !basePanel) return;
+    const prev = lastSummarySnapshotRef.current;
+    if (prev && prev !== summarySnapshot && !drawerOpen) {
+      setSummaryBadge(true);
+    }
+    lastSummarySnapshotRef.current = summarySnapshot;
+  }, [summarySnapshot, drawerOpen, birthConfirmed, basePanel]);
+
+  const openSummaryPanel = (source: 'dock' | 'toggle') => {
+    if (!drawerOpen) {
+      capturePostHogEvent('summary_panel_opened', {
+        screen: mobileDockScreen ?? 'questionnaire',
+        source,
+      });
+      setSummaryBadge(false);
+    }
+    setDrawerOpen(true);
+  };
+
+  const closeSummaryPanel = (method: SummaryPanelCloseMethod) => {
+    capturePostHogEvent('summary_panel_closed', { method });
+    setDrawerOpen(false);
+  };
+
+  const handleMobileDockBack = () => {
+    capturePostHogEvent('mobile_dock_action', {
+      screen: mobileDockScreen ?? 'questionnaire',
+      action: 'back',
+    });
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/app';
+    }
+  };
+
+  const handleShareResult = async () => {
+    const sug = activeSuggestion;
+    const title = 'Nome Magnético — minha assinatura harmonizada';
+    const text = sug
+      ? `Assinatura escolhida: ${sug.nome} (score ${sug.score}/100).`
+      : 'Minha análise de Nome Social no Nome Magnético.';
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+      } catch (err) {
+        if ((err as DOMException).name !== 'AbortError') {
+          await navigator.clipboard?.writeText?.(url);
+        }
+      }
+    } else {
+      await navigator.clipboard?.writeText?.(url);
+    }
+  };
+
+  const handlePdfDownload = () => {
+    if (!analysisId) return;
+    window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
+  };
+
+  const handleMobileDockAction = (action: MobileDockActionId, screen: MobileDockScreen) => {
+    capturePostHogEvent('mobile_dock_action', { screen, action });
+
+    if (action === 'summary') {
+      if (drawerOpen) {
+        closeSummaryPanel('toggle');
+      } else {
+        openSummaryPanel('dock');
+      }
+      return;
+    }
+    if (action === 'restart') {
+      handleRequestReset();
+      return;
+    }
+    if (action === 'regenerate') {
+      void handleRegenerate();
+      return;
+    }
+    if (action === 'pdf') {
+      handlePdfDownload();
+      return;
+    }
+    if (action === 'share') {
+      void handleShareResult();
+    }
+  };
+
   const sidebarSection = (
     <ChatSidebarSection
       birthPanel={basePanel}
@@ -1069,7 +1184,7 @@ export function NomeSocialChat({
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5">
+          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[calc(80px+env(safe-area-inset-bottom,0px))]">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
@@ -1257,15 +1372,26 @@ export function NomeSocialChat({
         </aside>
       </div>
 
-      <SummaryFab
-        visible={birthConfirmed && Boolean(basePanel)}
-        count={summaryCount}
-        onClick={() => setDrawerOpen(true)}
+      <MobileChatDock
+        birthConfirmed={birthConfirmed}
+        profileCollectionComplete={profileCollectionComplete}
+        hasSuggestionsMessage={hasSuggestionsMessage}
+        activeSuggestionId={activeSuggestionId}
+        canShowSummary={birthConfirmed && Boolean(basePanel)}
+        canRestart={birthConfirmed}
+        canRegenerate={profileCollectionComplete && suggestions.length > 0}
+        canPdf={Boolean(analysisId)}
+        canShare={profileCollectionComplete && Boolean(activeSuggestionId)}
+        summaryPanelOpen={drawerOpen}
+        summaryBadge={summaryBadge}
+        onBack={handleMobileDockBack}
+        onAction={handleMobileDockAction}
+        regenerateDisabled={isRegenerating}
       />
 
       <SummaryDrawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeSummaryPanel}
         birthPanel={basePanel}
         harmonizedPanel={activeSuggestion?.panel ?? null}
         showScoreCard={showScoreCard}

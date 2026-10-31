@@ -540,10 +540,51 @@
   }
 }
 @media (max-width: 767px) {
-  /* Smartphone / ~7": sidebar oculta; resumo via SummaryDrawer + FAB */
+  /* Smartphone / ~7": sidebar oculta; resumo via SummaryDrawer + dock */
   .nm-chat-shell {
     top: 73px;
     bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    --nm-mobile-nav-h: 3.75rem;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mobile-chat-dock-bar {
+    background: #131313 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  @keyframes mobile-dock-btn-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mobile-dock-btn-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .mobile-chat-dock-bar--animate-width {
+    transition: width 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .mobile-chat-dock-actions .mobile-chat-dock-btn {
+    animation: mobile-dock-btn-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn {
+    animation: mobile-dock-btn-fade-in 120ms ease both;
   }
 }
 

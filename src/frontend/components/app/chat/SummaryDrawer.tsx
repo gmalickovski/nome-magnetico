@@ -6,10 +6,14 @@ import type {
   ReadingSummaryItem,
 } from './chat-types.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
+import { useFocusTrap } from './useFocusTrap.js';
+import { IconChevronRight } from './MobileChatDockIcons.js';
+
+export type SummaryPanelCloseMethod = 'toggle' | 'arrow' | 'overlay' | 'swipe' | 'escape';
 
 export interface SummaryDrawerProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (method: SummaryPanelCloseMethod) => void;
   birthPanel: ResultPanelData | null;
   harmonizedPanel?: ResultPanelData | null;
   showScoreCard: boolean;
@@ -29,7 +33,7 @@ export interface SummaryDrawerProps {
   showReadingSummary?: boolean;
 }
 
-const SWIPE_CLOSE_PX = 72;
+const SWIPE_CLOSE_PX = 80;
 
 export function SummaryDrawer({
   isOpen,
@@ -52,29 +56,40 @@ export function SummaryDrawer({
   readingSummaryLoading = false,
   showReadingSummary = false,
 }: SummaryDrawerProps) {
-  const [dragX, setDragX] = useState(0);
+  const [mounted, setMounted] = useState(isOpen);
   const [entered, setEntered] = useState(false);
+  const [dragX, setDragX] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(mounted && entered, dialogRef);
 
   useEffect(() => {
-    if (!isOpen) {
-      setEntered(false);
-      setDragX(0);
-      return;
+    if (isOpen) {
+      setMounted(true);
+      const frame = requestAnimationFrame(() => setEntered(true));
+      return () => cancelAnimationFrame(frame);
     }
-    const frame = requestAnimationFrame(() => setEntered(true));
-    return () => cancelAnimationFrame(frame);
+    setEntered(false);
+    const t = window.setTimeout(() => setMounted(false), 240);
+    return () => window.clearTimeout(t);
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!mounted) {
+      setDragX(0);
+    }
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onClose('escape');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onClose]);
+  }, [mounted, onClose]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -89,29 +104,32 @@ export function SummaryDrawer({
 
   const handleTouchEnd = useCallback(() => {
     if (dragX >= SWIPE_CLOSE_PX) {
-      onClose();
+      onClose('swipe');
     }
     setDragX(0);
     touchStartX.current = null;
   }, [dragX, onClose]);
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
-  const panelTransform = entered
-    ? `translateX(${dragX}px)`
-    : 'translateX(100%)';
+  const panelTransform = entered ? `translateX(${dragX}px)` : 'translateX(100%)';
+  const overlayOpacity = entered ? 1 : 0;
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] md:hidden"
+      aria-labelledby="mobile-summary-title"
+      className="fixed inset-0 z-[64] md:hidden"
     >
       <div
-        onClick={onClose}
-        className={`fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
-          entered ? 'opacity-100' : 'opacity-0'
-        }`}
+        onClick={() => onClose('overlay')}
+        className="fixed inset-0 bg-black/50 backdrop-blur-[4px] transition-opacity duration-[240ms]"
+        style={{
+          opacity: overlayOpacity,
+          transitionTimingFunction: entered ? 'cubic-bezier(0.32, 0.72, 0, 1)' : 'ease-out',
+        }}
         aria-hidden="true"
       />
 
@@ -121,36 +139,33 @@ export function SummaryDrawer({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className="fixed right-0 top-0 bottom-0 z-10 flex w-[min(92vw,400px)] max-w-[400px] flex-col overflow-hidden border-l border-white/10 bg-chat-drawer shadow-2xl ease-out touch-pan-y"
+        className="fixed right-0 top-0 z-[65] flex h-[100dvh] w-[88vw] max-w-[420px] flex-col overflow-hidden rounded-l-[20px] border-l border-[rgba(212,175,55,0.18)] bg-[#131313] touch-pan-y"
         style={{
           transform: panelTransform,
-          transition: dragX > 0 ? 'none' : 'transform 300ms cubic-bezier(0.22,1,0.36,1)',
+          transition:
+            dragX > 0
+              ? 'none'
+              : entered
+                ? 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1)'
+                : 'transform 240ms cubic-bezier(0.32, 0.72, 0, 1)',
         }}
       >
-        <div className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-white/5 bg-chat-drawer/90 px-4 py-3 backdrop-blur-md">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-gold" aria-hidden />
-            <h2 className="nm-h4 truncate text-sm font-cinzel text-chat-ink">Painel de Leitura</h2>
-          </div>
+        <div
+          className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/5 bg-[#131313]/95 px-4 pb-3 backdrop-blur-md"
+          style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+        >
           <button
             type="button"
-            onClick={onClose}
-            aria-label="Fechar painel"
-            className="shrink-0 rounded-full p-1.5 text-chat-muted transition hover:bg-white/5 hover:text-chat-ink"
+            onClick={() => onClose('arrow')}
+            aria-label="Fechar resumo"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] hover:bg-white/5 hover:text-[#e5e2e1]"
           >
-            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <IconChevronRight />
           </button>
+          <h2 id="mobile-summary-title" className="nm-h3 text-[#D4AF37] truncate">
+            Seu resumo
+          </h2>
         </div>
-
-        <p className="px-4 pt-2 text-[10px] text-chat-muted md:hidden">
-          Deslize para a direita para fechar
-        </p>
 
         <div className="min-h-0 flex-1 chat-scroll-pane p-4 pt-2">
           <ChatSidebarSection
