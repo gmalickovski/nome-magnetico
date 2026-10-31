@@ -23,6 +23,7 @@ import {
 } from './chat-onboarding-validation.js';
 import { SuggestionPicker } from './SuggestionPicker.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
+import { ChatSidebarPanelChrome } from './ChatSidebarPanelChrome.js';
 import { ChatInlineTextReply } from './ChatInlineTextReply.js';
 import {
   INITIAL_COLLECT_STATE,
@@ -134,6 +135,7 @@ export function NomeSocialChat({
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
@@ -749,13 +751,29 @@ export function NomeSocialChat({
     (showRadarPanel ? 1 : 0) +
     summaryItems.length;
 
+  const sidebarSection = (
+    <ChatSidebarSection
+      birthPanel={basePanel}
+      harmonizedPanel={activeSuggestion?.panel ?? null}
+      showScoreCard={showScoreCard}
+      showStarDetail={showStarDetail}
+      starPanelData={starPanelData}
+      isSuggestion={Boolean(activeSuggestionId)}
+      onResetToBase={() => setActiveSuggestionId(null)}
+      radarAxes={radarAxes}
+      showRadar={showRadarPanel}
+      summaryItems={summaryItems}
+      showSummary={showSummaryPanel}
+    />
+  );
+
   return (
-    <div className="w-full flex flex-col min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
       <ChatProgress
         currentStep={stepIndex}
         totalSteps={totalSteps}
         remaining={remaining}
-        className="shrink-0 sticky top-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
+        className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
         trailing={
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
@@ -772,10 +790,19 @@ export function NomeSocialChat({
         }
       />
 
-      <div className="flex-1 min-h-0 w-full max-w-5xl mx-auto px-4 lg:grid lg:grid-cols-[minmax(0,640px)_320px] lg:gap-8">
-        <main className="flex flex-col min-h-0 min-w-0 py-4 lg:py-6">
-
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-6 pt-3">
+      <div
+        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-3 sm:px-5 lg:px-6 xl:px-8 grid min-h-0 gap-4 lg:gap-6 xl:gap-8 ${
+          sidebarExpanded
+            ? 'lg:grid-cols-1'
+            : 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,36%)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,34%)]'
+        }`}
+      >
+        <main
+          className={`flex flex-col min-h-0 min-w-0 py-3 lg:py-4 ${
+            sidebarExpanded ? 'hidden' : ''
+          }`}
+        >
+          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
@@ -888,20 +915,17 @@ export function NomeSocialChat({
           </div>
         </main>
 
-        <aside className="hidden lg:flex flex-col min-h-0 py-6 overflow-y-auto">
-          <ChatSidebarSection
-            birthPanel={basePanel}
-            harmonizedPanel={activeSuggestion?.panel ?? null}
-            showScoreCard={showScoreCard}
-            showStarDetail={showStarDetail}
-            starPanelData={starPanelData}
-            isSuggestion={Boolean(activeSuggestionId)}
-            onResetToBase={() => setActiveSuggestionId(null)}
-            radarAxes={radarAxes}
-            showRadar={showRadarPanel}
-            summaryItems={summaryItems}
-            showSummary={showSummaryPanel}
-          />
+        <aside
+          className={`hidden lg:flex flex-col min-h-0 py-3 lg:py-4 ${
+            sidebarExpanded ? 'max-w-4xl mx-auto w-full' : ''
+          }`}
+        >
+          <ChatSidebarPanelChrome
+            expanded={sidebarExpanded}
+            onToggleExpand={() => setSidebarExpanded((v) => !v)}
+          >
+            {sidebarSection}
+          </ChatSidebarPanelChrome>
         </aside>
       </div>
 

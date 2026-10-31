@@ -494,6 +494,58 @@
   display: none; /* Chrome/Safari */
 }
 
+/* Chat v2: scroll só nos panes; barra visível no hover do container */
+.chat-scroll-pane {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 0.625rem;
+  margin-right: -0.125rem;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.chat-scroll-pane:hover {
+  scrollbar-color: rgba(229, 226, 225, 0.28) transparent;
+}
+.chat-scroll-pane::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-scroll-pane::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 6px;
+}
+.chat-scroll-pane::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.chat-scroll-pane:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(229, 226, 225, 0.28);
+}
+
+/* Shell full-viewport do chat (sem scroll global da página) */
+.nm-chat-shell {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+@media (min-width: 768px) {
+  .nm-chat-shell {
+    left: 5rem;
+  }
+}
+@media (max-width: 767px) {
+  .nm-chat-shell {
+    top: 73px;
+    bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* =============================================
    RESPONSIVE MULTI-DEVICE UTILITIES (DEV-195)
    ============================================= */

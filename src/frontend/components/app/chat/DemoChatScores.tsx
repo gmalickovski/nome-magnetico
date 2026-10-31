@@ -13,7 +13,7 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
   const active = suggestions.find((s) => s.id === selectedId);
 
   return (
-    <div className="max-w-5xl mx-auto grid lg:grid-cols-[1fr_320px] gap-8 text-[#e5e2e1]">
+    <div className="w-full max-w-[1680px] mx-auto grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,36%)] gap-6 xl:gap-8 text-[#e5e2e1] px-4">
       <SuggestionPicker
         suggestions={suggestions}
         selectedId={selectedId}

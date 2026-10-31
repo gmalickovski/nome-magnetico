@@ -61,7 +61,7 @@ export function SummaryDrawer({
       />
 
       {/* Drawer panel */}
-      <aside className="fixed right-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-chat-drawer border-l border-white/10 shadow-2xl flex flex-col overflow-y-auto animate-slide-left z-10">
+      <aside className="fixed right-0 top-0 bottom-0 w-[86vw] max-w-[360px] bg-chat-drawer border-l border-white/10 shadow-2xl flex flex-col animate-slide-left z-10 overflow-hidden">
         <div className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-chat-drawer/90 backdrop-blur-md border-b border-white/5">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-gold" />
@@ -85,7 +85,7 @@ export function SummaryDrawer({
           </button>
         </div>
 
-        <div className="p-4 flex-1">
+        <div className="p-4 flex-1 min-h-0 chat-scroll-pane">
           <ChatSidebarSection
             birthPanel={birthPanel}
             harmonizedPanel={harmonizedPanel}
