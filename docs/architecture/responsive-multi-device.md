@@ -67,7 +67,11 @@ Para evitar truncamento ou quebras bizarras de palavras em telas pequenas sem pr
 * **Pirâmides SVG**: Devem sempre usar `overflow-x-auto touch-scroll-container` e `preserveAspectRatio="xMidYMid meet"`.
 * **Abas do Triângulo**: Em telas estreitas, abas de navegação utilizam `min-w-[105px] sm:min-w-[130px]` e `px-2.5 sm:px-3` para que se ajustem em 2 colunas perfeitamente alinhadas sem quebra de texto.
 
-### 2.5 Floating Action Buttons e Safe Area
+### 2.5 Scrollbars (touch / tablet vs desktop)
+* **≤1023px ou `pointer: coarse`**: nenhuma barra de rolagem visível em todo o sistema (`global.css`); scroll por toque/gesto.
+* **`min-width: 1024px` e `pointer: fine`**: barras douradas globais; panes `.chat-scroll-pane` exibem thumb no hover.
+
+### 2.6 Floating Action Buttons e Safe Area
 * O botão flutuante mobile de download de PDF (`PDFFeedbackButton.tsx`):
   * Usa `--nm-mobile-dock-stacked-clearance` quando há dock de ações + nav empilhadas.
   * Largura responsiva `left-3 right-3 sm:left-4 sm:right-4 max-w-md mx-auto` com `text-xs sm:text-sm font-bold`, impedindo que o texto "BAIXAR ANÁLISE COMPLETA" quebre em duas linhas em telas de `280px–340px`.

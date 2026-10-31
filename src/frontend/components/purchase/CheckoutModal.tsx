@@ -177,7 +177,7 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
       onClick={(e) => { if (e.target === e.currentTarget && canClose) onClose(); }}
     >
       <div
-        className="relative flex h-[100dvh] max-h-[100dvh] w-full max-w-[33rem] flex-col overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:h-auto md:max-h-[min(92vh,48rem)] md:rounded-2xl md:[scrollbar-width:auto] md:[-ms-overflow-style:auto] md:[&::-webkit-scrollbar]:block lg:grid lg:h-auto lg:max-h-[calc(100dvh-4rem)] lg:w-full lg:max-w-5xl lg:grid-cols-[0.9fr_1.1fr] lg:overflow-hidden xl:max-w-6xl"
+        className="relative flex h-[100dvh] max-h-[100dvh] w-full max-w-[33rem] flex-col overflow-y-auto overflow-x-hidden md:h-auto md:max-h-[min(92vh,48rem)] md:rounded-2xl lg:grid lg:h-auto lg:max-h-[calc(100dvh-4rem)] lg:w-full lg:max-w-5xl lg:grid-cols-[0.9fr_1.1fr] lg:overflow-hidden xl:max-w-6xl"
         style={{
           background: 'rgba(15,15,15,0.96)',
           border: '1px solid rgba(212,175,55,0.16)',
