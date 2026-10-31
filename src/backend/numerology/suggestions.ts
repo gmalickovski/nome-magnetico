@@ -7,7 +7,7 @@ import { calcularExpressao, calcularMotivacao, calcularImpressao } from './numbe
 import { reduzirNumero } from './core';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from './karmic';
 import { calcularScore, calcularScoreTeto } from './score'; // legado v1 — aposentar na F2+
-import { avaliarCompatibilidade } from './harmonization';
+import { avaliarCompatibilidade, obterAvisoCompatibilidade, pessoaTemMaster11ou22 } from './harmonization';
 
 export interface VariacaoNome {
   nome: string;
@@ -19,6 +19,7 @@ export interface VariacaoNome {
   /** Score máximo atingível para esta pessoa (100 - débitos fixos × 12). */
   scoreTeto: number;
   justificativa: string;
+  aviso?: string;
 }
 
 // Substituições de letras comuns para variações
@@ -49,14 +50,65 @@ const PREFIXOS_FEMININOS = ['Ana', 'Maria', 'Laura', 'Clara', 'Rosa'];
  * Gera variações de um nome completo.
  * Modifica o primeiro nome mantendo o(s) sobrenome(s).
  */
-export function gerarVariacoes(nomeCompleto: string, quantidade = 5, gender: string = 'Neutro'): string[] {
+export interface OpcoesVariacoes {
+  sobrenomeCasamento?: string;
+}
+
+export function gerarVariacoes(
+  nomeCompleto: string,
+  quantidade = 5,
+  gender: string = 'Neutro',
+  opcoes?: OpcoesVariacoes
+): string[] {
   const partes = nomeCompleto.trim().split(/\s+/);
   const primeiroNome = partes[0]!;
-  const sobrenomes = partes.slice(1).join(' ');
+  const sobrenomesArr = partes.slice(1);
+  const sobrenomes = sobrenomesArr.join(' ');
 
   const variacoes = new Set<string>();
 
-  // Variação 1: adicionar/remover letra final
+  // DEV-260: Novas técnicas do curso:
+  // 1. Estrutural: Tirar sobrenome (se >= 2 sobrenomes)
+  if (sobrenomesArr.length >= 2) {
+    for (let i = 0; i < sobrenomesArr.length; i++) {
+      const restantes = sobrenomesArr.filter((_, idx) => idx !== i);
+      variacoes.add([primeiroNome, ...restantes].join(' '));
+    }
+    variacoes.add(`${primeiroNome} ${sobrenomesArr[sobrenomesArr.length - 1]}`);
+  }
+
+  // 2. Estrutural: Tirar primeiro nome (se >= 3 partes)
+  if (partes.length >= 3) {
+    variacoes.add(sobrenomes);
+    const segundoNome = partes[1]!;
+    const resto = partes.slice(2).join(' ');
+    variacoes.add([segundoNome, resto].filter(Boolean).join(' '));
+  }
+
+  // 3. Estrutural: Abreviar com inicial (ex.: "M. Silva Santos" ou "Maria S. Santos")
+  if (primeiroNome.length > 1 && sobrenomes) {
+    const inicial = primeiroNome.charAt(0).toUpperCase() + '.';
+    variacoes.add(`${inicial} ${sobrenomes}`);
+  }
+  if (sobrenomesArr.length >= 2) {
+    const meioAbreviado = sobrenomesArr.map((s, idx) => {
+      if (idx === 0) return s.charAt(0).toUpperCase() + '.';
+      return s;
+    }).join(' ');
+    variacoes.add(`${primeiroNome} ${meioAbreviado}`);
+  }
+
+  // 4. Estrutural: Sobrenome de casamento quando informado
+  if (opcoes?.sobrenomeCasamento && opcoes.sobrenomeCasamento.trim()) {
+    const casam = opcoes.sobrenomeCasamento.trim();
+    variacoes.add(`${nomeCompleto} ${casam}`);
+    variacoes.add(`${primeiroNome} ${casam}`);
+    if (sobrenomesArr.length >= 1) {
+      variacoes.add(`${primeiroNome} ${sobrenomesArr[0]} ${casam}`);
+    }
+  }
+
+  // 5. Adicionar/remover letra final
   if (primeiroNome.endsWith('a') || primeiroNome.endsWith('A')) {
     variacoes.add(`${primeiroNome.slice(0, -1)}e ${sobrenomes}`.trim());
     variacoes.add(`${primeiroNome.slice(0, -1)}i ${sobrenomes}`.trim());
@@ -67,7 +119,7 @@ export function gerarVariacoes(nomeCompleto: string, quantidade = 5, gender: str
     variacoes.add(`${primeiroNome.slice(0, -1)}e ${sobrenomes}`.trim());
   }
 
-  // Variação 2: adicionar prefixo baseado no gênero
+  // 6. Adicionar prefixo baseado no gênero
   let prefixosAUsar: string[] = [];
   if (gender === 'Masculino') {
     prefixosAUsar = PREFIXOS_MASCULINOS;
@@ -81,19 +133,7 @@ export function gerarVariacoes(nomeCompleto: string, quantidade = 5, gender: str
     variacoes.add(`${prefixo} ${primeiroNome} ${sobrenomes}`.trim());
   }
 
-  // Variação 3: substituições de letras (acentos)
-  for (const [orig, subs] of Object.entries(SUBSTITUICOES)) {
-    if (primeiroNome.toUpperCase().includes(orig)) {
-      for (const sub of subs.slice(0, 2)) {
-        const novo = primeiroNome.replace(new RegExp(orig, 'gi'), sub);
-        if (novo !== primeiroNome) {
-          variacoes.add(`${novo} ${sobrenomes}`.trim());
-        }
-      }
-    }
-  }
-
-  // Variação 4: diminutivos/hipocorísticos comuns baseados no Gênero
+  // 7. Diminutivos/hipocorísticos
   const nomeBase = primeiroNome.replace(/[aeiou]$/i, '');
   let sufixosAUsar: string[] = [];
   if (gender === 'Masculino') {
@@ -112,10 +152,26 @@ export function gerarVariacoes(nomeCompleto: string, quantidade = 5, gender: str
     }
   }
 
-  // Filtrar o nome original e limitar
+  // 8. Substituições de letras (acentos por ÚLTIMO — nunca usar anel °)
+  for (const [orig, subs] of Object.entries(SUBSTITUICOES)) {
+    if (primeiroNome.toUpperCase().includes(orig)) {
+      for (const sub of subs.slice(0, 2)) {
+        const novo = primeiroNome.replace(new RegExp(orig, 'gi'), sub);
+        if (novo !== primeiroNome) {
+          variacoes.add(`${novo} ${sobrenomes}`.trim());
+        }
+      }
+    }
+  }
+
+  // Filtrar o nome original, nomes com anel ° e limitar
   const resultado = Array.from(variacoes)
-    .filter(v => v.toLowerCase() !== nomeCompleto.toLowerCase())
-    .slice(0, quantidade * 3); // pegar mais para filtrar depois
+    .filter(v => {
+      if (v.toLowerCase() === nomeCompleto.toLowerCase()) return false;
+      if (v.normalize('NFD').includes('\u030A')) return false; // Sem anel °
+      return true;
+    })
+    .slice(0, Math.max(quantidade * 4, 20));
 
   return resultado;
 }
@@ -166,6 +222,11 @@ export function scoreVariacao(
   if (debitos.length > 0) justificativas.push(`${debitos.length} débito(s) kármico(s)`);
   justificativas.push(`Compatibilidade: ${compatibilidade}`);
 
+  const aviso = obterAvisoCompatibilidade(compatibilidade);
+  if (aviso) {
+    justificativas.push(aviso);
+  }
+
   return {
     nome: nomeSugerido,
     numerosExpressao: expressao,
@@ -175,6 +236,7 @@ export function scoreVariacao(
     score,
     scoreTeto,
     justificativa: justificativas.join(' | '),
+    aviso,
   };
 }
 
@@ -192,33 +254,56 @@ export function gerarNomesMagneticos(
   gender: string,
   dataNascimento: string = '',
   quantidade = 5,
-  minScore = 0
+  minScore = 0,
+  opcoes?: OpcoesVariacoes
 ): VariacaoNome[] {
   // Pool ampliado para ter mais candidatos a filtrar
-  const poolSize = Math.max(quantidade * 6, 20);
-  const variacoes = gerarVariacoes(nomeCompleto, poolSize, gender);
+  const poolSize = Math.max(quantidade * 6, 25);
+  const variacoes = gerarVariacoes(nomeCompleto, poolSize, gender, opcoes);
   const scoredAll = variacoes.map(v => scoreVariacao(v, numeroExpressao, numeroDestino, dataNascimento));
 
-  // Preferência 1: sem bloqueio + score >= minScore (alvo: excelente alto)
-  const primarios = scoredAll
+  // DEV-260: Só sugerir Expressão 11/22 para Destino 1–9 se 11 ou 22 já aparecer em outro número da pessoa
+  const temMaster = pessoaTemMaster11ou22({
+    destino: numeroDestino,
+    motivacao: calcularMotivacao(nomeCompleto),
+    dataNascimento,
+  });
+
+  const filtrados = scoredAll.filter(v => {
+    if (numeroDestino >= 1 && numeroDestino <= 9 && (v.numerosExpressao === 11 || v.numerosExpressao === 22)) {
+      return temMaster;
+    }
+    return true;
+  });
+
+  // Mínimo de opções solicitado: no mínimo 2
+  const minOpcoes = Math.max(quantidade, 2);
+
+  // Preferência 1: sem bloqueio + score >= minScore
+  const primarios = filtrados
     .filter(v => !v.temBloqueio && v.score >= minScore)
     .sort((a, b) => b.score - a.score);
 
-  if (primarios.length >= quantidade) {
-    return primarios.slice(0, quantidade);
+  if (primarios.length >= minOpcoes) {
+    return primarios.slice(0, minOpcoes);
   }
 
-  // Fallback 1: sem bloqueio + score >= 70 (mínimo "Excelente" no ScoreDisplay)
+  // Fallback 1: sem bloqueio + score >= 70
   const SCORE_EXCELENTE = 70;
-  const excelentes = scoredAll
+  const excelentes = filtrados
     .filter(v => !v.temBloqueio && v.score >= SCORE_EXCELENTE)
     .sort((a, b) => b.score - a.score);
 
-  if (excelentes.length >= quantidade) {
-    return excelentes.slice(0, quantidade);
+  if (excelentes.length >= minOpcoes) {
+    return excelentes.slice(0, minOpcoes);
   }
 
-  // Fallback 2: sem bloqueio (qualquer score) — NUNCA retornar nomes com bloqueio
-  const semBloqueio = scoredAll.filter(v => !v.temBloqueio).sort((a, b) => b.score - a.score);
-  return semBloqueio.slice(0, quantidade);
+  // Fallback 2: sem bloqueio (qualquer score)
+  const semBloqueio = filtrados.filter(v => !v.temBloqueio).sort((a, b) => b.score - a.score);
+  if (semBloqueio.length >= minOpcoes) {
+    return semBloqueio.slice(0, minOpcoes);
+  }
+
+  // Se mesmo assim faltar para o mínimo de 2 opções, retorna os melhores disponíveis
+  return filtrados.sort((a, b) => b.score - a.score).slice(0, minOpcoes);
 }
