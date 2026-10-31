@@ -142,9 +142,6 @@ describe('DEV-235 · Motor Interativo e Partitura (4 Camadas)', () => {
   it('juiz de correção reescreve a leitura e resumo ao receber texto do usuário', () => {
     const judge = applyCorrectionJudge({
       textoCorrecao: 'Quero focar em fechar contratos de consultoria e liderança',
-      destino: 8,
-      notaHoje: 48,
-      potencial: 98,
     });
 
     assert.equal(judge.areaFocoInferida, 'carreira_negocios');
@@ -161,8 +158,7 @@ describe('DEV-235 · Motor Interativo e Partitura (4 Camadas)', () => {
     });
 
     assert.ok(texto.length > 30);
-    assert.ok(texto.includes('Destino é 1'));
-    // Sem travessões (DEV-183)
+    assert.equal(/\d/.test(texto), false);
     assert.equal(/[—–]/.test(texto), false);
   });
 });

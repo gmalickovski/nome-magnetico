@@ -12,7 +12,10 @@ import type {
 } from './chat-types.js';
 import type { ChatCollectState } from './decide-live-bridge.js';
 
-const STORAGE_VERSION = 2 as const;
+/** Bump quando copy/fluxo do palpite mudar (invalida sessões antigas com leitura duplicada). */
+export const CHAT_SESSION_STORAGE_VERSION = 3 as const;
+
+const STORAGE_VERSION = CHAT_SESSION_STORAGE_VERSION;
 
 export interface PersistedChatSession {
   version: typeof STORAGE_VERSION;
@@ -53,7 +56,7 @@ export function loadChatSession(userId: string): PersistedChatSession | null {
     if (!Array.isArray(parsed.messages)) {
       return null;
     }
-    if (parsed.version !== 1 && parsed.version !== STORAGE_VERSION) {
+    if (parsed.version !== STORAGE_VERSION) {
       return null;
     }
     return {

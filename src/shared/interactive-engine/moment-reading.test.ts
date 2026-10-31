@@ -45,7 +45,12 @@ describe('Leitura do momento (pré seleção)', () => {
     const off = mapDecideLiveResponse(base);
     assert.equal(off.reading, '');
 
-    const on = mapDecideLiveResponse({ ...base, next_step: 'palpite' });
-    assert.ok(on.reading.includes('Leitura') || on.reading.length > 0);
+    const on = mapDecideLiveResponse({
+      ...base,
+      next_step: 'palpite',
+      reading: 'Guilherme, pelo que você contou até aqui: seu foco agora é carreira.',
+    });
+    assert.ok(on.next_question?.prompt.includes('carreira'));
+    assert.equal(on.next_question?.palpiteTexto, '');
   });
 });

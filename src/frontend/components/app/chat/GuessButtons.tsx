@@ -33,7 +33,7 @@ export function GuessButtons({
         className="!border-white/20 hover:!border-gold/40"
       />
       <Pill
-        label="Não, é outra coisa"
+        label="Não é bem isso"
         size="lg"
         disabled={disabled}
         onClick={onOther}

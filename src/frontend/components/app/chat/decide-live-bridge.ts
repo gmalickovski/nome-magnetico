@@ -188,12 +188,13 @@ function buildNextQuestion(api: RawDecideLiveResponse): NextQuestionSpec | undef
   const basePrompt = api.promptSugestao || 'Conte um pouco mais para continuarmos.';
 
   if (step === 'palpite') {
+    const palpiteBody = api.reading || api.palpiteTexto || '';
     return {
       id: step,
       tipo: 'palpite',
-      prompt: basePrompt,
+      prompt: palpiteBody,
       eyebrow: api.eyebrow || 'Será que é isso?',
-      palpiteTexto: api.reading || api.palpiteTexto || '',
+      palpiteTexto: '',
     };
   }
 

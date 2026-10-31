@@ -68,7 +68,7 @@ export function determineNextStep(state: RouterState): NextStepDecision {
     return {
       nextStep: 'palpite',
       remainingSteps: 2,
-      promptSugestao: 'Analisando seu mapa cabalístico e o momento informado, será que é isso que você busca?',
+      promptSugestao: 'Calculando a sua leitura.',
       eyebrow: 'Será que é isso?',
     };
   }

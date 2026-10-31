@@ -11,8 +11,7 @@ import { buildBirthNamePanel } from '../../backend/numerology/birth-name-panel';
 import { buildChatReadingSummary } from '../../backend/numerology/chat-reading-summary';
 import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engine';
 import { determineNextStep } from '../../shared/interactive-engine/router';
-import { writeHypothesis } from '../../shared/interactive-engine/writer';
-import { applyCorrectionJudge } from '../../shared/interactive-engine/judge';
+import { buildProfilePalpiteText } from '../../shared/interactive-engine/chat-profile-copy';
 import { computeRadarAxes } from '../../shared/interactive-engine/radar-axes';
 import type { AreaFocoNomeMagnetico } from '../../shared/interactive-engine/copy';
 
@@ -221,30 +220,23 @@ export const POST: APIRoute = async ({ request }) => {
       subfoco_momento_chip: subfoco_momento,
     });
 
-    // Leitura do momento: só no passo palpite, sem potencial/nota harmonizada
+    // Palpite de perfil: só no passo palpite, sem números (copy a partir das respostas)
     let reading = '';
     if (routerDecision.nextStep === 'palpite') {
-      if (palpite_status === 'nao' && objetivo_texto) {
-        const judgeRes = applyCorrectionJudge({
-          textoCorrecao: objetivo_texto,
-          destino,
-          notaHoje,
-          areaFocoAtual: area_foco_chip,
-        });
-        reading = judgeRes.leituraAjustada;
-      } else if (area_foco_chip) {
-        reading = await writeHypothesis({
-          nome: nomeLimpo,
-          areaFoco: area_foco_chip as AreaFocoNomeMagnetico,
-          destino,
-          notaHoje,
-          subfocoMomento: subfoco_momento ?? null,
-          relatoUsuario: objetivo_texto,
-          alertaComplianceLegal: decision.alertaComplianceLegal,
-        });
-      } else {
-        reading = decision.palpiteTexto;
-      }
+      reading = buildProfilePalpiteText({
+        nomeCompleto: nomeLimpo,
+        areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
+        subfocoMomento: subfoco_momento ?? decision.subfocoMomento,
+        ondeAssina: onde_assina ?? [],
+        sobrenomesObrigatorios: sobrenomes_obrigatorios,
+        sobrenomesExcluidos: sobrenomes_excluidos,
+        relatoUsuario: objetivo_texto,
+        alertaComplianceLegal: decision.alertaComplianceLegal,
+        textoCorrecao:
+          (palpite_status === 'nao' || palpite_status === 'parcial') && objetivo_texto
+            ? objetivo_texto
+            : undefined,
+      });
     }
 
     // Painel de Resultado Base (Original)

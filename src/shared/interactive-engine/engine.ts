@@ -10,12 +10,12 @@
  */
 
 import {
-  buildInitialMomentReadingText,
   buildRecomendacaoEstiloTexto,
   buildVibrationalDiagramNodes,
   NOME_MAGNETICO_BRAND,
   SUBFOCO_QUESTIONS_BY_AREA,
 } from './presets/nome-magnetico';
+import { buildProfilePalpiteText } from './chat-profile-copy';
 import type {
   AreaFocoNomeMagnetico,
   BrandPresetId,
@@ -50,11 +50,12 @@ export class InteractiveDecisionEngine {
     const decision = await runJevDecision(state);
     const bloqueioPrincipal = state.bloqueios_triangulos[0] ?? null;
 
-    const palpiteTexto = buildInitialMomentReadingText({
-      nome: state.nome_completo,
+    const palpiteTexto = buildProfilePalpiteText({
+      nomeCompleto: state.nome_completo,
       areaFoco: decision.areaFoco,
-      destino: state.numero_destino,
-      notaHoje: state.nota_hoje,
+      subfocoMomento: decision.subfocoMomento,
+      ondeAssina: state.onde_assina_chips ?? [],
+      relatoUsuario: state.relato_consulente,
       alertaComplianceLegal: decision.alertaComplianceLegal,
     });
 

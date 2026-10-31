@@ -45,7 +45,7 @@ import {
   saveChatSession,
   type PersistedChatSession,
 } from './chat-session-storage.js';
-import { buildPostSuggestionChoiceText } from '../../../../shared/interactive-engine/copy.js';
+import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-engine/chat-profile-copy.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { Button } from '../../ui/Button.js';
 import { Modal } from '../../ui/Modal.js';
@@ -136,6 +136,9 @@ export function NomeSocialChat({
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [pendingPalpiteFeedback, setPendingPalpiteFeedback] = useState<'parcial' | 'nao' | null>(
+    null
+  );
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const sessionBootstrapped = useRef(false);
@@ -189,6 +192,7 @@ export function NomeSocialChat({
     setBirthReadingSummary(null);
     setHarmonizedSummaries({});
     setReadingSummaryLoading(false);
+    setPendingPalpiteFeedback(null);
     setBasePanel(hasRegisteredBirthName ? initialBirthPanel : null);
     setActiveSuggestionId(null);
     setSuggestions([]);
@@ -629,7 +633,6 @@ export function NomeSocialChat({
         stepId: data.next_step,
         eyebrow: q.eyebrow,
         content: q.prompt,
-        hypotheticalText: q.palpiteTexto,
         options: q.options,
       });
     }
@@ -645,18 +648,23 @@ export function NomeSocialChat({
     }
 
     setMessages((prev) => {
-      const toAdd = newMsgs.filter((m) => {
-        if (m.sender !== 'assistant' || !m.stepId) return true;
-        return !prev.some((p) => p.sender === 'assistant' && p.stepId === m.stepId);
-      });
-      return [...prev, ...toAdd];
+      let merged = prev;
+      for (const m of newMsgs) {
+        if (m.sender === 'assistant' && m.stepId) {
+          merged = merged.filter(
+            (p) => !(p.sender === 'assistant' && p.stepId === m.stepId)
+          );
+        }
+        merged = [...merged, m];
+      }
+      return merged;
     });
   };
 
   const handleSuggestionSelect = (id: string | null) => {
     if (id && basePanel) {
       const sug = suggestions.find((s) => s.id === id);
-      if (sug && id !== activeSuggestionId) {
+      if (sug && id !== activeSuggestionId && sug.panel) {
         capturePostHogEvent('suggestion_selected', {
           suggestion_id: id,
           nota_escolhida: sug.score,
@@ -667,10 +675,12 @@ export function NomeSocialChat({
             id: `sug-choice-${Date.now()}`,
             sender: 'assistant',
             type: 'text',
-            content: buildPostSuggestionChoiceText({
+            content: buildPostSuggestionChoiceBlock({
               assinaturaEscolhida: sug.nome,
               notaHoje: basePanel.score,
               notaEscolhida: sug.score,
+              birth: basePanel,
+              chosen: sug.panel,
             }),
           },
         ]);
@@ -697,13 +707,21 @@ export function NomeSocialChat({
     };
     setAnswers(updatedAnswers);
 
-    const nextCollect = applyAnswerToCollectState(
+    let nextCollect = applyAnswerToCollectState(
       collectState,
       currentStepId,
       text,
       optionId,
       sobrenomesDetectados
     );
+    if (currentStepId === 'palpite' && pendingPalpiteFeedback) {
+      nextCollect = {
+        ...nextCollect,
+        palpiteStatus: pendingPalpiteFeedback,
+        objetivoTexto: text.trim(),
+      };
+      setPendingPalpiteFeedback(null);
+    }
     setCollectState(nextCollect);
     setLoading(true);
 
@@ -745,21 +763,36 @@ export function NomeSocialChat({
   };
 
   const handleGuessExact = () => {
+    capturePostHogEvent('chat_palpite_response', { response: 'acertou' });
     handleUserAnswer('Na mosca');
   };
 
-  const handleGuessPartial = () => {
-    handleUserAnswer('Em parte');
-  };
-
-  const handleGuessOther = (messageId: string) => {
+  const handleGuessPartial = (messageId: string) => {
+    capturePostHogEvent('chat_palpite_response', { response: 'parcial' });
+    setPendingPalpiteFeedback('parcial');
     setMessages((prev) =>
       prev.map((m) =>
         m.id === messageId
           ? {
               ...m,
               type: 'text_input',
-              content: 'Então, o que é? Conta com as suas palavras...',
+              content: 'O que faltou?',
+            }
+          : m
+      )
+    );
+  };
+
+  const handleGuessOther = (messageId: string) => {
+    capturePostHogEvent('chat_palpite_response', { response: 'nao' });
+    setPendingPalpiteFeedback('nao');
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageId
+          ? {
+              ...m,
+              type: 'text_input',
+              content: 'O que faltou?',
             }
           : m
       )
@@ -929,16 +962,10 @@ export function NomeSocialChat({
                 <NmBubble key={msg.id} wide={msg.wide} eyebrow={msg.eyebrow}>
                   <p className="text-chat-ink leading-relaxed">{msg.content}</p>
 
-                  {msg.hypotheticalText && msg.type === 'guess' && (
-                    <p className="mt-2 text-sm text-chat-muted italic leading-relaxed">
-                      {msg.hypotheticalText}
-                    </p>
-                  )}
-
                   {pending && msg.type === 'guess' && (
                     <GuessButtons
                       onExact={handleGuessExact}
-                      onPartial={handleGuessPartial}
+                      onPartial={() => handleGuessPartial(msg.id)}
                       onOther={() => handleGuessOther(msg.id)}
                       disabled={loading}
                     />
