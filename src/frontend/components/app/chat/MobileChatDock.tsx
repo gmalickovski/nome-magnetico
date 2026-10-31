@@ -115,7 +115,7 @@ export function MobileChatDock({
                   </DockTooltipButton>
                 );
               })}
-              <DockTooltipButton tooltip="Resumo" aria-label={summaryPanelOpen ? 'Fechar resumo' : 'Resumo'} aria-pressed={summaryPanelOpen ? true : undefined} onClick={() => onSecondary('summary', layout.middleSecondaries.length)} className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] ${summaryPanelOpen ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37]' : ''}`}>
+              <DockTooltipButton tooltip="Resumo" aria-label={summaryPanelOpen ? 'Fechar resumo' : 'Resumo'} aria-pressed={summaryPanelOpen ? true : undefined} onClick={() => onSecondary('summary', layout.middleSecondaries.length)} className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] ${summaryPanelOpen ? 'bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)]' : ''}`}>
                 <SummaryIcon />
               </DockTooltipButton>
               <DockTooltipButton tooltip={primary.label} disabled={primary.disabled} onClick={() => onPrimary(primary.id)} className="mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(40vw,160px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] bg-[#D4AF37] text-[#111111]">
@@ -250,8 +250,10 @@ export function MobileChatDock({
               aria-label={isSummaryActive ? 'Fechar resumo' : summarySpec.label}
               aria-pressed={isSummaryActive ? true : undefined}
               onClick={() => onSecondary('summary', layout.middleSecondaries.length)}
-              className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] ${
-                isSummaryActive ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37]' : ''
+              className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color,box-shadow] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] ${
+                isSummaryActive
+                  ? 'bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)]'
+                  : ''
               }`}
             >
               <span className="relative flex h-[22px] w-[22px] items-center justify-center">
@@ -263,11 +265,6 @@ export function MobileChatDock({
                   />
                 )}
               </span>
-              {isSummaryActive && (
-                <span className="nm-caption mt-0.5 text-[11px] font-normal leading-none text-[#D4AF37]">
-                  {summarySpec.label}
-                </span>
-              )}
             </DockTooltipButton>
 
             {pdfModel && (pdfModel.visible || pdfExiting) && onPdfClick && (

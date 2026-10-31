@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 const LONG_PRESS_MS = 400;
-const HIDE_AFTER_RELEASE_MS = 1200;
+const HIDE_AFTER_RELEASE_MS = 700;
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;

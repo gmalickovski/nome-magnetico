@@ -12,9 +12,17 @@ export interface Props {
   noPadding?: boolean;
   /** Oculta a barra inferior mobile (ex.: chat conversacional com dock própria). */
   hideMobileNav?: boolean;
+  /** Header mobile compacto do chat: logo central + avatar, sem voltar. */
+  chatCompactMobileHeader?: boolean;
 }
 
-const { title, description, noPadding = false, hideMobileNav = false } = Astro.props;
+const {
+  title,
+  description,
+  noPadding = false,
+  hideMobileNav = false,
+  chatCompactMobileHeader = false,
+} = Astro.props;
 
 const user = Astro.locals.user;
 if (!user) {
@@ -154,25 +162,37 @@ const navSuporteActive = isActive('/app/suporte');
       </nav>
     </aside>
 
-    <header class="md:hidden border-b border-[#D4AF37]/20 bg-[#111111]/80 backdrop-blur-md sticky top-0 z-40 h-[73px]">
-      <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 py-4 h-full flex items-center relative">
-        {pathname !== '/app' && pathname !== '/app/' && (
+    <header
+      class:list={[
+        'md:hidden border-b border-[#D4AF37]/20 bg-[#111111]/80 backdrop-blur-md sticky top-0 z-40',
+        chatCompactMobileHeader ? 'h-[52px] nm-chat-compact-header' : 'h-[73px]',
+      ]}
+    >
+      <div class="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-12 h-full flex items-center relative">
+        {!chatCompactMobileHeader && pathname !== '/app' && pathname !== '/app/' && (
           <button onclick="window.history.length > 1 ? window.history.back() : window.location.href='/app'" class="text-[#D4AF37] hover:text-[#f2ca50] transition-colors md:hidden absolute left-4 z-10 p-1">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
         )}
 
-        <a 
-          href="/app" 
+        <a
+          href="/app"
           class="hover:opacity-80 transition-all duration-500 absolute"
-          style={pathname !== '/app' && pathname !== '/app/' ? "left: 50%; transform: translateX(-50%);" : "left: 1rem; transform: translateX(0);"}
+          style={
+            chatCompactMobileHeader || (pathname !== '/app' && pathname !== '/app/')
+              ? 'left: 50%; transform: translateX(-50%);'
+              : 'left: 1rem; transform: translateX(0);'
+          }
         >
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-9 sm:h-10 w-auto" />
+          <img
+            src="/logo-nm-header.svg"
+            alt="Nome Magnético"
+            class={chatCompactMobileHeader ? 'h-8 w-auto' : 'h-9 sm:h-10 w-auto'}
+          />
         </a>
 
         <div class="md:hidden flex items-center justify-end gap-2 absolute right-4">
-
-          <div class="w-8 flex justify-center">
+          <div class="w-9 h-9 flex items-center justify-center">
             <AvatarMenu client:load nome={userNome} isAdmin={isAdmin} />
           </div>
         </div>
