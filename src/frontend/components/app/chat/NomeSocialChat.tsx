@@ -89,6 +89,14 @@ import {
   trackPaywallShown,
   type PaywallSurface,
 } from './chat-paywall-utils.js';
+import {
+  fetchNomeSocialAccessActive,
+  isCheckoutSuccessReturn,
+  pollProductAccessActive,
+  PAYMENT_ACCESS_POLL_DELAYS_MS,
+  resolveChatPhaseFromSession,
+  stripCheckoutSuccessQuery,
+} from './chat-free-access.js';
 import { ChatFreeBirthAnalysisBody } from './ChatFreeBirthAnalysisBody.js';
 import { ChatFreePaywallBubble } from './ChatFreePaywallBubble.js';
 import { ChatPaywallStickyDesktop } from './ChatPaywallStickyDesktop.js';
@@ -189,6 +197,8 @@ export function NomeSocialChat({
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
+  const [paidAccessActive, setPaidAccessActive] = useState(isSubscriber);
+  const [paymentConfirming, setPaymentConfirming] = useState(false);
   const [chatPhase, setChatPhase] = useState<'onboarding' | 'free_paywall' | 'subscriber'>(
     isSubscriber ? 'subscriber' : 'onboarding'
   );
@@ -251,6 +261,10 @@ export function NomeSocialChat({
   }, [messages, loading]);
 
   useEffect(() => {
+    if (isSubscriber) setPaidAccessActive(true);
+  }, [isSubscriber]);
+
+  useEffect(() => {
     if (!birthConfirmed || !currentStepId) return;
     stepViewedAtRef.current = Date.now();
     capturePostHogEvent('chat_step_viewed', { step: currentStepId });
@@ -288,6 +302,8 @@ export function NomeSocialChat({
     setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
     blockTransitionsShown.current = new Set();
     chatStartedAtRef.current = null;
+    setPaidAccessActive(isSubscriber);
+    setPaymentConfirming(false);
   };
 
   const restoreSession = (saved: PersistedChatSession) => {
@@ -319,7 +335,7 @@ export function NomeSocialChat({
     setSuggestions(collectionComplete ? saved.suggestions : []);
     setAnalysisId(saved.analysisId);
     setChatPhase(
-      saved.chatPhase ?? (isSubscriber ? 'subscriber' : saved.birthConfirmed ? 'free_paywall' : 'onboarding')
+      resolveChatPhaseFromSession(isSubscriber, saved.chatPhase, saved.birthConfirmed)
     );
     setFreePdfDownloaded(Boolean(saved.freePdfDownloaded));
     setFreeAnalysisId(saved.freeAnalysisId);
@@ -404,13 +420,13 @@ export function NomeSocialChat({
   ]);
 
   useEffect(() => {
-    if (!isSubscriber && chatPhase === 'free_paywall') {
+    if (!paidAccessActive && chatPhase === 'free_paywall') {
       void fetchNomeSocialPriceLabel().then(setPaywallPriceLabel);
     }
-  }, [isSubscriber, chatPhase]);
+  }, [paidAccessActive, chatPhase]);
 
   useEffect(() => {
-    if (isSubscriber || chatPhase !== 'free_paywall' || !paywallBubbleRef.current) return;
+    if (paidAccessActive || chatPhase !== 'free_paywall' || !paywallBubbleRef.current) return;
     const el = paywallBubbleRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -425,7 +441,7 @@ export function NomeSocialChat({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isSubscriber, chatPhase, messages]);
+  }, [paidAccessActive, chatPhase, messages]);
 
   useEffect(() => {
     if (demoMode) return;
@@ -753,7 +769,7 @@ export function NomeSocialChat({
         setLoading(true);
         await saveBaseProfile(nome, dataNascimento, gender);
       }
-      if (isSubscriber) {
+      if (paidAccessActive) {
         await runDecideLive(nome, dataNascimento);
       } else {
         await runFreeTierAnalysis(nome, dataNascimento);
@@ -839,7 +855,7 @@ export function NomeSocialChat({
 
   useEffect(() => {
     if (
-      !isSubscriber ||
+      !paidAccessActive ||
       !birthConfirmed ||
       chatPhase !== 'free_paywall' ||
       subscriberResumeRef.current ||
@@ -850,9 +866,40 @@ export function NomeSocialChat({
     subscriberResumeRef.current = true;
     setChatPhase('subscriber');
     void runDecideLive(confirmedName, confirmedDate);
-  }, [isSubscriber, birthConfirmed, chatPhase, confirmedName, confirmedDate, demoMode]);
+  }, [paidAccessActive, birthConfirmed, chatPhase, confirmedName, confirmedDate, demoMode]);
 
-  const freePaywallActiveForFx = !isSubscriber && chatPhase === 'free_paywall';
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (paidAccessActive) {
+      stripCheckoutSuccessQuery();
+      return;
+    }
+    if (!birthConfirmed || chatPhase !== 'free_paywall') return;
+    const params = new URLSearchParams(window.location.search);
+    if (!isCheckoutSuccessReturn(params)) return;
+
+    stripCheckoutSuccessQuery();
+    let cancelled = false;
+    setPaymentConfirming(true);
+
+    void (async () => {
+      const ok = await pollProductAccessActive(
+        fetchNomeSocialAccessActive,
+        PAYMENT_ACCESS_POLL_DELAYS_MS,
+        { isVisible: () => !document.hidden }
+      );
+      if (cancelled) return;
+      setPaymentConfirming(false);
+      if (ok) setPaidAccessActive(true);
+    })();
+
+    return () => {
+      cancelled = true;
+      setPaymentConfirming(false);
+    };
+  }, [paidAccessActive, birthConfirmed, chatPhase]);
+
+  const freePaywallActiveForFx = !paidAccessActive && chatPhase === 'free_paywall';
   useEffect(() => {
     if (!freePaywallActiveForFx || typeof window === 'undefined') return;
     if (!window.matchMedia('(min-width: 768px)').matches) return;
@@ -1428,7 +1475,7 @@ export function NomeSocialChat({
     (showReadingSummaryPanel && (activeReadingSummary || activeReadingLoading) ? 1 : 0);
 
   const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
-  const freePaywallActive = !isSubscriber && chatPhase === 'free_paywall';
+  const freePaywallActive = !paidAccessActive && chatPhase === 'free_paywall';
 
   const suggestionSelected = Boolean(activeSuggestionId);
   const suggestionRank =
@@ -1441,7 +1488,7 @@ export function NomeSocialChat({
     canShowSummary: birthConfirmed && Boolean(basePanel),
     profileCollectionComplete,
     hasSuggestionsMessage,
-    canRestart: birthConfirmed && isSubscriber,
+    canRestart: birthConfirmed && paidAccessActive,
     canRegenerate: profileCollectionComplete && suggestions.length > 0,
     suggestionSelected,
     freePaywallActive,
@@ -1453,7 +1500,7 @@ export function NomeSocialChat({
         canShowSummary: birthConfirmed && Boolean(basePanel),
         profileCollectionComplete,
         hasSuggestionsMessage,
-        canRestart: birthConfirmed && isSubscriber,
+        canRestart: birthConfirmed && paidAccessActive,
         canRegenerate: profileCollectionComplete && suggestions.length > 0,
         suggestionSelected,
         freePaywallActive,
@@ -1473,7 +1520,7 @@ export function NomeSocialChat({
     selectedScore: activeSuggestion?.score ?? 0,
     suggestionRank: suggestionRank || 1,
     analysisId,
-    isFree: !isSubscriber,
+    isFree: !paidAccessActive,
     emailConfirmed,
     screen: chatDockScreen ?? 'chat_questionnaire',
   });
@@ -1560,7 +1607,7 @@ export function NomeSocialChat({
     capturePostHogEvent('dock_primary_clicked', {
       screen: chatDockScreen ?? 'chat_suggestions',
       action,
-      is_free: !isSubscriber,
+      is_free: !paidAccessActive,
     });
     if (action === 'unlock_nome_social') {
       goPaywallCheckout('dock');
@@ -1581,7 +1628,7 @@ export function NomeSocialChat({
         radarOverlayAxes={radarOverlayAxes}
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
-        showRadar={showRadarPanel && isSubscriber}
+        showRadar={showRadarPanel && paidAccessActive}
         summaryItems={summaryItems}
         showSummary={showSummaryPanel}
         readingSummary={activeReadingSummary}
@@ -1673,7 +1720,7 @@ export function NomeSocialChat({
               }
 
               if (msg.type === 'suggestions') {
-                if (!isSubscriber) return null;
+                if (!paidAccessActive) return null;
                 if (!profileCollectionComplete) return null;
                 return (
                   <NmBubble key={msg.id} wide eyebrow="OPÇÕES HARMONIZADAS">
@@ -1823,6 +1870,15 @@ export function NomeSocialChat({
               <div className="text-brand-error text-xs p-2 rounded-lg bg-brand-error/10 border border-brand-error/20">
                 {onboardingError}
               </div>
+            )}
+
+            {paymentConfirming && freePaywallActive && (
+              <NmBubble>
+                <div className="flex items-center gap-2 text-xs text-chat-muted py-1">
+                  <span className="w-2 h-2 rounded-full bg-gold animate-ping" />
+                  <span>Confirmando seu pagamento...</span>
+                </div>
+              </NmBubble>
             )}
 
             {loading && (
