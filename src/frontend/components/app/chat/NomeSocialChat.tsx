@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type {
   ChatMessage,
   ChatReadingSummary,
@@ -13,6 +13,7 @@ import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
 import MobileDockActionBridge from '../MobileDockActionBridge.js';
+import { buildChatPdfAnalyzePayload } from './chat-pdf-persist.js';
 import { useDockRestartForSummary } from './useDockRestartForSummary.js';
 import {
   buildChatDockLayout,
@@ -1427,6 +1428,40 @@ export function NomeSocialChat({
 
   const chatDockLayout = chatDockScreen ? buildChatDockLayout(chatDockScreen, chatDockInput) : null;
 
+  const ensurePaidAnalysisIdForPdf = useCallback(async (): Promise<string | undefined> => {
+    if (analysisId) return analysisId;
+    if (!paidAccessActive || !activeSuggestion?.nome?.trim() || !confirmedName.trim() || !confirmedDate.trim()) {
+      return undefined;
+    }
+    const res = await fetchWithAuth('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        buildChatPdfAnalyzePayload({
+          birthName: confirmedName,
+          birthDate: confirmedDate,
+          selectedSocialName: activeSuggestion.nome,
+          collect: collectState,
+        })
+      ),
+    });
+    const data = (await res.json()) as { analysisId?: string; error?: string };
+    if (!res.ok) {
+      throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao salvar análise');
+    }
+    const id = data.analysisId?.trim();
+    if (!id) return undefined;
+    setAnalysisId(id);
+    return id;
+  }, [
+    analysisId,
+    paidAccessActive,
+    activeSuggestion?.nome,
+    confirmedName,
+    confirmedDate,
+    collectState,
+  ]);
+
   const {
     model: pdfCtaModel,
     onDockClick: onPdfDockClick,
@@ -1440,6 +1475,7 @@ export function NomeSocialChat({
     selectedScore: activeSuggestion?.score ?? 0,
     suggestionRank: suggestionRank || 1,
     analysisId,
+    ensureAnalysisId: paidAccessActive ? ensurePaidAnalysisIdForPdf : undefined,
     isFree: !paidAccessActive,
     emailConfirmed,
     screen: chatDockScreen ?? 'chat_questionnaire',
@@ -1818,14 +1854,7 @@ export function NomeSocialChat({
               visible={paywallStickyVisible}
               onClick={() => goPaywallCheckout('sticky')}
             />
-          ) : (
-            <ChatPdfStickyDesktop
-              model={pdfCtaModel}
-              onClick={onPdfStickyClick}
-              onResendEmail={onPdfResendEmail}
-              resending={pdfResending}
-            />
-          )}
+          ) : null}
         </main>
 
         <aside
@@ -1841,6 +1870,15 @@ export function NomeSocialChat({
           </ChatSidebarPanelChrome>
         </aside>
       </div>
+
+      {!freePaywallActive && (
+        <ChatPdfStickyDesktop
+          model={pdfCtaModel}
+          onClick={onPdfStickyClick}
+          onResendEmail={onPdfResendEmail}
+          resending={pdfResending}
+        />
+      )}
 
       <MobileDockActionBridge
         layout={chatDockLayout}

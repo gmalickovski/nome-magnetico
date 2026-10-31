@@ -57,6 +57,8 @@ export function useChatPdfCta(input: {
   selectedScore: number;
   suggestionRank: number;
   analysisId?: string;
+  /** Cria/persiste análise paga quando o chat ainda não tem analysisId. */
+  ensureAnalysisId?: () => Promise<string | undefined>;
   isFree: boolean;
   emailConfirmed: boolean;
   screen: string;
@@ -73,6 +75,7 @@ export function useChatPdfCta(input: {
   const [resending, setResending] = useState(false);
   const shownRef = useRef(false);
   const glowDoneRef = useRef(false);
+  const pdfRunLockRef = useRef(false);
   const { toasts, addToast, removeToast } = useToast();
 
   const visible = input.suggestionSelected && Boolean(input.selectedNome?.trim());
@@ -129,14 +132,21 @@ export function useChatPdfCta(input: {
   );
 
   const runPaidPdf = useCallback(async () => {
-    if (!input.analysisId) {
-      addToast('Salve ou conclua a análise antes de gerar o PDF.', 'warning');
-      return;
-    }
+    if (pdfRunLockRef.current) return;
+    pdfRunLockRef.current = true;
     setPhase('loading');
     const started = performance.now();
     try {
-      const url = `/api/generate-pdf?id=${encodeURIComponent(input.analysisId)}&t=${Date.now()}`;
+      let analysisId = input.analysisId;
+      if (!analysisId && input.ensureAnalysisId) {
+        analysisId = await input.ensureAnalysisId();
+      }
+      if (!analysisId) {
+        setPhase('error');
+        addToast('Salve ou conclua a análise antes de gerar o PDF.', 'warning');
+        return;
+      }
+      const url = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}&t=${Date.now()}`;
       const res = await fetchWithAuth(url);
       if (!res.ok) throw new Error('pdf_error');
       const blob = await res.blob();
@@ -160,8 +170,10 @@ export function useChatPdfCta(input: {
         error: err instanceof Error ? err.message : 'unknown',
       });
       addToast('Não foi possível gerar o PDF. Tente novamente.', 'error');
+    } finally {
+      pdfRunLockRef.current = false;
     }
-  }, [input.analysisId, input.suggestionRank, addToast]);
+  }, [input.analysisId, input.ensureAnalysisId, input.suggestionRank, addToast]);
 
   const onStickyClick = useCallback(() => {
     if (!visible) return;
@@ -278,7 +290,7 @@ export function ChatPdfStickyDesktop({
 
   if (!model.emailConfirmed || model.phase === 'email_gate') {
     return (
-      <div className="hidden md:flex absolute bottom-4 left-0 right-0 z-[65] px-2 pointer-events-none justify-center">
+      <div className="hidden md:flex fixed bottom-6 left-1/2 z-[75] w-full max-w-xl -translate-x-1/2 px-4 pointer-events-none justify-center">
         <div
           className="pointer-events-auto w-full max-w-lg rounded-full border-2 border-[#F59E0B] bg-[#131313]/95 px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           role="status"
@@ -308,7 +320,7 @@ export function ChatPdfStickyDesktop({
         : `Gerar análise completa de ${nomeTrunc}`;
 
   return (
-    <div className="hidden md:flex absolute bottom-4 left-0 right-0 z-[65] px-2 pointer-events-none justify-center">
+    <div className="hidden md:flex fixed bottom-6 left-1/2 z-[75] w-full max-w-xl -translate-x-1/2 px-4 pointer-events-none justify-center">
       <button
         type="button"
         onClick={onClick}

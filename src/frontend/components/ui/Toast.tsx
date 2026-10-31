@@ -91,7 +91,12 @@ export function useToast() {
 
   const addToast = (message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).slice(2);
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts((prev) => {
+      if (prev.some((t) => t.message === message && t.type === type)) {
+        return prev;
+      }
+      return [...prev, { id, message, type }];
+    });
   };
 
   const removeToast = (id: string) => {

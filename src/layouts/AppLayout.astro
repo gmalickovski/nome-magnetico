@@ -2,7 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import { createUserClient } from '../backend/db/supabase';
 import { memoize } from '../backend/cache/memo';
-import AvatarMenu from '../frontend/components/app/AvatarMenu';
+import AppMobileHeader from '../frontend/components/app/AppMobileHeader';
 import AppMobileDock from '../frontend/components/app/AppMobileDock';
 import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
 import { resolveMobileDockContext } from '../frontend/lib/mobile-dock-context.ts';
@@ -11,8 +11,6 @@ export interface Props {
   title: string;
   description?: string;
   noPadding?: boolean;
-  /** Header mobile compacto do chat: logo central + avatar, sem voltar. */
-  chatCompactMobileHeader?: boolean;
   /** Shell full-viewport no mobile (chat): clearance fica no conteúdo interno, não no main. */
   mobileFullViewport?: boolean;
 }
@@ -21,7 +19,6 @@ const {
   title,
   description,
   noPadding = false,
-  chatCompactMobileHeader = false,
   mobileFullViewport = false,
 } = Astro.props;
 
@@ -167,42 +164,7 @@ const mobileDockContext = resolveMobileDockContext(pathname);
       </nav>
     </aside>
 
-    <header
-      class:list={[
-        'md:hidden border-b border-[#D4AF37]/20 bg-[#111111]/80 backdrop-blur-md sticky top-0 z-40',
-        chatCompactMobileHeader ? 'h-[52px] nm-chat-compact-header' : 'h-[73px]',
-      ]}
-    >
-      <div class="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-12 h-full flex items-center relative">
-        {!chatCompactMobileHeader && pathname !== '/app' && pathname !== '/app/' && (
-          <button type="button" data-nm-app-back class="text-[#D4AF37] hover:text-[#f2ca50] transition-colors md:hidden absolute left-4 z-10 p-1">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-          </button>
-        )}
-
-        <a
-          href="/app"
-          class="hover:opacity-80 transition-all duration-500 absolute"
-          style={
-            chatCompactMobileHeader || (pathname !== '/app' && pathname !== '/app/')
-              ? 'left: 50%; transform: translateX(-50%);'
-              : 'left: 1rem; transform: translateX(0);'
-          }
-        >
-          <img
-            src="/logo-nm-header.svg"
-            alt="Nome Magnético"
-            class={chatCompactMobileHeader ? 'h-8 w-auto' : 'h-9 sm:h-10 w-auto'}
-          />
-        </a>
-
-        <div class="md:hidden flex items-center justify-end gap-2 absolute right-4">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <AvatarMenu client:load nome={userNome} isAdmin={isAdmin} />
-          </div>
-        </div>
-      </div>
-    </header>
+    <AppMobileHeader client:load nome={userNome} isAdmin={isAdmin} />
 
     <AppMobileDock
       client:load
@@ -235,15 +197,9 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 </style>
 
 <script>
-  import { navigateClientAreaBack, recordAppNavigationPath } from '../frontend/lib/app-nav-back.ts';
+  import { recordAppNavigationPath } from '../frontend/lib/app-nav-back.ts';
 
   recordAppNavigationPath();
-
-  document.querySelectorAll('[data-nm-app-back]').forEach((el) => {
-    el.addEventListener('click', () => {
-      navigateClientAreaBack();
-    });
-  });
 </script>
 
 <script>
