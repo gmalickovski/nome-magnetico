@@ -12,18 +12,30 @@ organizacao dos relatorios PDF/HTML.
   1 = A, I, Q, J, Y
   2 = B, K, R
   3 = C, G, L, S
-  4 = D, M, T, X
+  4 = D, M, T
   5 = E, H, N
-  6 = U, V, W, C (cedilha)
+  6 = U, V, W, X, C (cedilha)
   7 = O, Z
   8 = F, P
 
-Tratamento de acentos:
-  - Agudo (´)  : +2 ao valor base da letra
-  - Til   (~)  : +3 ao valor base da letra
-  - Grave (`)  : x3 do valor base da letra
+Tratamento de acentos e sinais (DEV-260):
+  - Agudo (´)       : +2 ao valor base da letra
+  - Til   (~)       : +3 ao valor base da letra
+  - Grave (`)       : x2 do valor base da letra
+  - Trema (¨)       : x2 do valor base da letra
+  - Circunflexo (^) : +7 ao valor base da letra (Antônio Araújo = 57)
+  - Anel (°) (Å)    : +7 ao valor base da letra
+  - Apostrofo ('/’) : soma +2 na letra anterior (D'Angelo = 30)
 
-Numeros Masters: 11 e 22 NAO sao reduzidos nos contextos que usam masters.
+Numeros Masters e Regra do 2/4 (DEV-260):
+  - 11 e 22 NAO sao reduzidos em Expressao, Destino, Motivacao e Missao.
+  - Impressao e SEMPRE 1-9 (sem masters).
+  - Regra do 2/4: Se Destino, Motivacao ou Expressao resultar em 2 ou 4,
+    recalcula-se por partes mantendo 11 e 22 em cada parte:
+    * Destino: dia, mes e ano separados (ex.: dia 29 -> 11).
+    * Expressao e Motivacao: palavra por palavra separadas.
+    Impressao e Missao NAO usam a regra do 2/4.
+  - 11 e 22 NAO geram divida carmica (22 nao vira 4 para gerar 13).
 
 Modulo: src/backend/numerology/numbers.ts
 
@@ -314,8 +326,8 @@ OS DOIS DESTINOS
 OS 5 NUMEROS DA EMPRESA (para cada candidato)
   Expressao   : todas as letras do nome da empresa
   Motivacao   : apenas vogais
-  Missao      : apenas consoantes
-  Impressao   : PRIMEIRA PALAVRA do nome (calcularPersonalidade(nomeEmpresa))
+  Impressao   : apenas consoantes da empresa (1-9)
+  Missao      : Destino + Expressao
   Compat Socio: avaliarCompatibilidade(expressao, destinoSocio)
   Compat Empresa: avaliarCompatibilidade(expressao, destinoEmpresa)  <- se aplicavel
 
