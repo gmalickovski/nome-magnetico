@@ -2,7 +2,7 @@
 import AppLayout from '../../../layouts/AppLayout.astro';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
 import { createUserClient } from '../../../backend/db/supabase';
-import SocialNameForm from '../../../frontend/components/app/SocialNameForm';
+import NomeSocialChat from '../../../frontend/components/app/chat/NomeSocialChat';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
@@ -29,42 +29,13 @@ const nomeInicial = profile?.birth_name ?? '';
 const dataInicial = dbDateToInput(profile?.birth_date ?? '');
 ---
 
-<AppLayout title="Análise — Nome Social">
-  <div class="mx-auto max-w-5xl space-y-10 pb-16">
-    <header class="space-y-5">
-      <p class="font-inter text-xs font-bold uppercase tracking-[0.28em] text-[#D4AF37]">
-        Harmonização de assinatura
-      </p>
-      <div class="max-w-4xl">
-        <h1 class="font-cinzel text-3xl font-bold leading-tight text-[#e5e2e1] md:text-5xl">
-          Análise de Nome Social
-        </h1>
-        <p class="mt-5 text-base leading-relaxed text-gray-400 md:text-lg">
-          Informe seus dados de origem e como deseja se apresentar ao mundo. Encontraremos a assinatura ideal, livre de bloqueios energéticos e perfeitamente alinhada ao seu Destino.
-        </p>
-      </div>
-      <div class="grid gap-4 text-sm text-gray-400 sm:grid-cols-3">
-        <div class="rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
-          <span class="block font-bold text-[#D4AF37]">1. Base fixa</span>
-          Nome de nascimento e data definem o mapa original.
-        </div>
-        <div class="rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
-          <span class="block font-bold text-[#D4AF37]">2. Candidatos</span>
-          Você informa opções ou deixa o sistema sugerir variações.
-        </div>
-        <div class="rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
-          <span class="block font-bold text-[#D4AF37]">3. Ranking</span>
-          O melhor nome prioriza score alto e baixa descaracterização.
-        </div>
-      </div>
-    </header>
-
-    <div class="pt-4 md:pt-6">
-      <SocialNameForm
-        client:load
-        nomeInicial={nomeInicial}
-        dataInicial={dataInicial}
-      />
-    </div>
+<AppLayout title="Análise de Nome Social">
+  <div class="mx-auto max-w-5xl">
+    <NomeSocialChat
+      client:load
+      birthName={nomeInicial}
+      birthDate={dataInicial}
+      userId={user.id}
+    />
   </div>
 </AppLayout>
