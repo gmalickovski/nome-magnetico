@@ -17,6 +17,8 @@ export interface ResultPanelProps {
   data: ResultPanelData;
   isSuggestion?: boolean;
   onResetToBase?: () => void;
+  /** Oculta barras de pontuação (já exibidas no ChatHarmonyScoreCard). */
+  hideScoreBar?: boolean;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ export function ResultPanel({
   data,
   isSuggestion = false,
   onResetToBase,
+  hideScoreBar = false,
   className = '',
 }: ResultPanelProps) {
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -135,21 +138,22 @@ export function ResultPanel({
           </ul>
         </div>
 
-        {/* Pontuação */}
-        <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-chat-muted font-medium">Pontuação geral</span>
-            <span className="font-cinzel font-bold text-gold text-sm">
-              {data.score} / 100
-            </span>
+        {!hideScoreBar && (
+          <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-chat-muted font-medium">Pontuação geral</span>
+              <span className="font-cinzel font-bold text-gold text-sm">
+                {data.score} / 100
+              </span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-gold to-brand-spiritual rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(5, data.score))}%` }}
+              />
+            </div>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-gold to-brand-spiritual rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, Math.max(5, data.score))}%` }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Bloqueios */}
         <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs">

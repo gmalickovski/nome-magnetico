@@ -34,6 +34,12 @@ import {
   shouldShowSummary,
   type ChatCollectState,
 } from './decide-live-bridge.js';
+import {
+  clearChatSession,
+  loadChatSession,
+  saveChatSession,
+  type PersistedChatSession,
+} from './chat-session-storage.js';
 
 export interface NomeSocialChatProps {
   birthName?: string;
@@ -132,6 +138,11 @@ export function NomeSocialChat({
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const sessionBootstrapped = useRef(false);
+  const persistReady = useRef(false);
+
+  const hasRegisteredBirthName =
+    Boolean(initialBirthName.trim()) && Boolean(initialBirthDate.trim());
 
   const scrollToBottom = () => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -141,22 +152,134 @@ export function NomeSocialChat({
     scrollToBottom();
   }, [messages, loading]);
 
-  const hasRegisteredBirthName =
-    Boolean(initialBirthName.trim()) && Boolean(initialBirthDate.trim());
-
-  useEffect(() => {
+  const applyFreshSession = () => {
     setDraftNome(initialBirthName);
     setDraftDate(initialBirthDate);
     setDraftGender(initialProfileGender);
-    setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
+    setConfirmedName(initialBirthName);
+    setConfirmedDate(initialBirthDate);
+    setAnswers({});
+    setStepIndex(0);
+    setCurrentStepId('nome_nascimento');
+    setRemaining(7);
+    setBirthConfirmed(false);
+    setCollectState(INITIAL_COLLECT_STATE);
+    setSobrenomesDetectados([]);
+    setRadarAxes(null);
+    setSummaryItems([]);
     setBasePanel(hasRegisteredBirthName ? initialBirthPanel : null);
+    setActiveSuggestionId(null);
+    setSuggestions([]);
+    setAnalysisId(undefined);
+    setOnboardingError(null);
+    setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
+  };
+
+  const restoreSession = (saved: PersistedChatSession) => {
+    setMessages(saved.messages);
+    setAnswers(saved.answers);
+    setConfirmedName(saved.confirmedName);
+    setConfirmedDate(saved.confirmedDate);
+    setDraftNome(saved.draftNome);
+    setDraftDate(saved.draftDate);
+    setDraftGender(saved.draftGender);
+    setStepIndex(saved.stepIndex);
+    setCurrentStepId(saved.currentStepId);
+    setRemaining(saved.remaining);
+    setBirthConfirmed(saved.birthConfirmed);
+    setCollectState(saved.collectState);
+    setSobrenomesDetectados(saved.sobrenomesDetectados);
+    setRadarAxes(saved.radarAxes);
+    setSummaryItems(saved.summaryItems);
+    setBasePanel(saved.basePanel);
+    setActiveSuggestionId(saved.activeSuggestionId);
+    setSuggestions(saved.suggestions);
+    setAnalysisId(saved.analysisId);
+  };
+
+  useEffect(() => {
+    if (sessionBootstrapped.current) return;
+    sessionBootstrapped.current = true;
+
+    const saved = userId ? loadChatSession(userId) : null;
+    if (saved && saved.messages.length > 0) {
+      restoreSession(saved);
+    } else {
+      applyFreshSession();
+    }
+    persistReady.current = true;
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || !persistReady.current) return;
+
+    const timer = window.setTimeout(() => {
+      const snapshot: PersistedChatSession = {
+        version: 1,
+        savedAt: Date.now(),
+        messages,
+        answers,
+        confirmedName,
+        confirmedDate,
+        draftNome,
+        draftDate,
+        draftGender,
+        stepIndex,
+        currentStepId,
+        remaining,
+        birthConfirmed,
+        collectState,
+        sobrenomesDetectados,
+        radarAxes,
+        summaryItems,
+        basePanel,
+        activeSuggestionId,
+        suggestions,
+        analysisId,
+      };
+      saveChatSession(userId, snapshot);
+    }, 450);
+
+    return () => window.clearTimeout(timer);
   }, [
-    initialBirthName,
-    initialBirthDate,
-    initialProfileGender,
-    initialBirthPanel,
-    hasRegisteredBirthName,
+    userId,
+    messages,
+    answers,
+    confirmedName,
+    confirmedDate,
+    draftNome,
+    draftDate,
+    draftGender,
+    stepIndex,
+    currentStepId,
+    remaining,
+    birthConfirmed,
+    collectState,
+    sobrenomesDetectados,
+    radarAxes,
+    summaryItems,
+    basePanel,
+    activeSuggestionId,
+    suggestions,
+    analysisId,
   ]);
+
+  const resetChat = () => {
+    clearChatSession(userId);
+    applyFreshSession();
+  };
+
+  const handleRequestReset = () => {
+    const ok = window.confirm(
+      'Reiniciar o chat? Todo o progresso desta conversa será apagado. Você pode começar de novo em seguida.'
+    );
+    if (ok) resetChat();
+  };
+
+  const handleFinalizeAnalysis = () => {
+    clearChatSession(userId);
+    applyFreshSession();
+  };
 
   const appendUserBubble = (content: string, stepId: string) => {
     setMessages((prev) => [
@@ -607,12 +730,17 @@ export function NomeSocialChat({
   };
 
   const activeSuggestion = suggestions.find((s) => s.id === activeSuggestionId);
-  const displayedPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
+  const starPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
+  const showScoreCard = Boolean(basePanel);
+  const showStarDetail = birthConfirmed && Boolean(basePanel);
   const showRadarPanel = shouldShowRadar(collectState);
   const showSummaryPanel = shouldShowSummary(summaryItems);
 
   const summaryCount =
-    (displayedPanelData ? 1 : 0) + (showRadarPanel ? 1 : 0) + summaryItems.length;
+    (showScoreCard ? 1 : 0) +
+    (showStarDetail ? 1 : 0) +
+    (showRadarPanel ? 1 : 0) +
+    summaryItems.length;
 
   return (
     <div className="w-full flex flex-col min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
@@ -622,8 +750,17 @@ export function NomeSocialChat({
         remaining={remaining}
         className="shrink-0 sticky top-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
         trailing={
-          <div className="lg:hidden">
-            <SummaryButton count={summaryCount} onClick={() => setDrawerOpen(true)} />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={handleRequestReset}
+              className="text-[11px] font-inter text-chat-muted hover:text-chat-ink transition-colors px-1 py-0.5 rounded-md hover:bg-white/5"
+            >
+              Reiniciar
+            </button>
+            <div className="lg:hidden">
+              <SummaryButton count={summaryCount} onClick={() => setDrawerOpen(true)} />
+            </div>
           </div>
         }
       />
@@ -649,6 +786,7 @@ export function NomeSocialChat({
                       onRegenerate={handleRegenerate}
                       isRegenerating={isRegenerating}
                       analysisId={analysisId}
+                      onGenerateAnalysis={handleFinalizeAnalysis}
                     />
                   </NmBubble>
                 );
@@ -744,8 +882,11 @@ export function NomeSocialChat({
 
         <aside className="hidden lg:flex flex-col min-h-0 py-6 overflow-y-auto">
           <ChatSidebarSection
-            panelData={displayedPanelData}
-            showBirthStar={hasRegisteredBirthName}
+            birthPanel={basePanel}
+            harmonizedPanel={activeSuggestion?.panel ?? null}
+            showScoreCard={showScoreCard}
+            showStarDetail={showStarDetail}
+            starPanelData={starPanelData}
             isSuggestion={Boolean(activeSuggestionId)}
             onResetToBase={() => setActiveSuggestionId(null)}
             radarAxes={radarAxes}
@@ -759,8 +900,11 @@ export function NomeSocialChat({
       <SummaryDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        panelData={displayedPanelData}
-        showBirthStar={hasRegisteredBirthName}
+        birthPanel={basePanel}
+        harmonizedPanel={activeSuggestion?.panel ?? null}
+        showScoreCard={showScoreCard}
+        showStarDetail={showStarDetail}
+        starPanelData={starPanelData}
         isSuggestion={Boolean(activeSuggestionId)}
         onResetToBase={() => setActiveSuggestionId(null)}
         radarAxes={radarAxes}

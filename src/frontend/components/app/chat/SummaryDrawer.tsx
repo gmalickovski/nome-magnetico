@@ -5,8 +5,11 @@ import { ChatSidebarSection } from './ChatSidebarSection.js';
 export interface SummaryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  panelData: ResultPanelData | null;
-  showBirthStar?: boolean;
+  birthPanel: ResultPanelData | null;
+  harmonizedPanel?: ResultPanelData | null;
+  showScoreCard: boolean;
+  showStarDetail: boolean;
+  starPanelData: ResultPanelData | null;
   isSuggestion?: boolean;
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
@@ -18,8 +21,11 @@ export interface SummaryDrawerProps {
 export function SummaryDrawer({
   isOpen,
   onClose,
-  panelData,
-  showBirthStar = true,
+  birthPanel,
+  harmonizedPanel = null,
+  showScoreCard,
+  showStarDetail,
+  starPanelData,
   isSuggestion = false,
   onResetToBase,
   radarAxes,
@@ -81,8 +87,11 @@ export function SummaryDrawer({
 
         <div className="p-4 flex-1">
           <ChatSidebarSection
-            panelData={panelData}
-            showBirthStar={showBirthStar}
+            birthPanel={birthPanel}
+            harmonizedPanel={harmonizedPanel}
+            showScoreCard={showScoreCard}
+            showStarDetail={showStarDetail}
+            starPanelData={starPanelData}
             isSuggestion={isSuggestion}
             onResetToBase={onResetToBase}
             radarAxes={radarAxes}

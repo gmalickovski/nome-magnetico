@@ -3,11 +3,15 @@ import type { RadarAxesData, ReadingSummaryItem, ResultPanelData } from './chat-
 import { ResultPanel } from './ResultPanel.js';
 import { ReadingRadar } from './ReadingRadar.js';
 import { SummaryCard } from './SummaryCard.js';
+import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
 
 export interface ChatSidebarSectionProps {
-  panelData: ResultPanelData | null;
-  /** false = sem nome cadastrado — não renderiza card da estrela nem placeholder. */
-  showBirthStar?: boolean;
+  birthPanel: ResultPanelData | null;
+  harmonizedPanel?: ResultPanelData | null;
+  showScoreCard: boolean;
+  /** Estrela cabalística (após confirmação da certidão). */
+  showStarDetail: boolean;
+  starPanelData: ResultPanelData | null;
   isSuggestion: boolean;
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
@@ -18,8 +22,11 @@ export interface ChatSidebarSectionProps {
 }
 
 export function ChatSidebarSection({
-  panelData,
-  showBirthStar = true,
+  birthPanel,
+  harmonizedPanel = null,
+  showScoreCard,
+  showStarDetail,
+  starPanelData,
   isSuggestion,
   onResetToBase,
   radarAxes,
@@ -28,19 +35,25 @@ export function ChatSidebarSection({
   showSummary,
   className = '',
 }: ChatSidebarSectionProps) {
-  const hasPanel = showBirthStar && Boolean(panelData);
+  const hasScore = showScoreCard && Boolean(birthPanel);
+  const hasStar = showStarDetail && Boolean(starPanelData);
 
-  if (!hasPanel && !showRadar && !showSummary) {
+  if (!hasScore && !hasStar && !showRadar && !showSummary) {
     return null;
   }
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
-      {hasPanel && panelData && (
+      {hasScore && birthPanel && (
+        <ChatHarmonyScoreCard birthPanel={birthPanel} harmonizedPanel={harmonizedPanel} />
+      )}
+
+      {hasStar && starPanelData && (
         <ResultPanel
-          data={panelData}
+          data={starPanelData}
           isSuggestion={isSuggestion}
           onResetToBase={onResetToBase}
+          hideScoreBar={hasScore}
         />
       )}
 

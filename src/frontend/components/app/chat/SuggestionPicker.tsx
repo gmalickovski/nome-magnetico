@@ -11,6 +11,7 @@ export interface SuggestionPickerProps {
   onRegenerate: () => void;
   analysisId?: string;
   isRegenerating?: boolean;
+  onGenerateAnalysis?: () => void;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export function SuggestionPicker({
   onRegenerate,
   analysisId,
   isRegenerating = false,
+  onGenerateAnalysis,
   className = '',
 }: SuggestionPickerProps) {
   const handleCardClick = (id: string) => {
@@ -28,7 +30,8 @@ export function SuggestionPicker({
     onSelect(nextSelected);
   };
 
-  const handlePdfClick = () => {
+  const handleGenerateAnalysis = () => {
+    onGenerateAnalysis?.();
     if (!analysisId) return;
     window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
   };
@@ -114,10 +117,10 @@ export function SuggestionPicker({
             type="button"
             variant="primary"
             size="md"
-            onClick={handlePdfClick}
+            onClick={handleGenerateAnalysis}
             className="!rounded-full font-semibold shadow-gold w-full sm:w-auto"
           >
-            Gerar análise completa (PDF)
+            Gerar análise
           </Button>
         )}
       </div>
