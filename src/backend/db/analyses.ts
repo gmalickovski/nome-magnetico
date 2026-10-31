@@ -147,6 +147,30 @@ export async function updateAnalysis(
   return data as Analysis;
 }
 
+/** Reutiliza análise nome_social recente para PDF do chat (mesmo nome social). */
+export async function findRecentNomeSocialAnalysisForPdf(
+  userId: string,
+  socialName: string,
+  maxAgeMs = 30 * 60 * 1000
+): Promise<Analysis | null> {
+  const trimmed = socialName.trim();
+  if (!trimmed) return null;
+  const since = new Date(Date.now() - maxAgeMs).toISOString();
+  const { data, error } = await supabase
+    .from('analyses')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('product_type', 'nome_social')
+    .eq('nome_completo', trimmed)
+    .gte('created_at', since)
+    .in('status', ['pending', 'processing', 'complete'])
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error || !data?.length) return null;
+  return data[0] as Analysis;
+}
+
 export async function getAnalysis(analysisId: string): Promise<Analysis | null> {
   const { data, error } = await supabase
     

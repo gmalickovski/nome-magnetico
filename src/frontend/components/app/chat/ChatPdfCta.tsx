@@ -11,6 +11,10 @@ import {
   type PdfDevice,
   type PdfSurface,
 } from './chat-pdf-utils.js';
+import {
+  ChatPdfPreparingOverlay,
+  type ChatPdfOverlayPhase,
+} from './ChatPdfPreparingOverlay.js';
 
 export type ChatPdfPhase = 'idle' | 'loading' | 'ready' | 'error' | 'email_gate';
 
@@ -58,7 +62,7 @@ export function useChatPdfCta(input: {
   suggestionRank: number;
   analysisId?: string;
   /** Cria/persiste análise paga quando o chat ainda não tem analysisId. */
-  ensureAnalysisId?: () => Promise<string | undefined>;
+  ensureAnalysisId?: (signal: AbortSignal) => Promise<string | undefined>;
   isFree: boolean;
   emailConfirmed: boolean;
   screen: string;
@@ -69,14 +73,23 @@ export function useChatPdfCta(input: {
   resendEmail: () => Promise<void>;
   resending: boolean;
   toastUi: React.ReactNode;
+  pdfOverlayUi: React.ReactNode;
 } {
   const [phase, setPhase] = useState<ChatPdfPhase>('idle');
+  const [overlayPhase, setOverlayPhase] = useState<ChatPdfOverlayPhase>('idle');
   const [priceLabel, setPriceLabel] = useState('');
   const [resending, setResending] = useState(false);
   const shownRef = useRef(false);
   const glowDoneRef = useRef(false);
   const pdfRunLockRef = useRef(false);
+  const pdfAbortRef = useRef<AbortController | null>(null);
   const { toasts, addToast, removeToast } = useToast();
+
+  useEffect(() => {
+    return () => {
+      pdfAbortRef.current?.abort();
+    };
+  }, []);
 
   const visible = input.suggestionSelected && Boolean(input.selectedNome?.trim());
   const displayName = input.selectedNome?.trim() ?? '';
@@ -134,20 +147,31 @@ export function useChatPdfCta(input: {
   const runPaidPdf = useCallback(async () => {
     if (pdfRunLockRef.current) return;
     pdfRunLockRef.current = true;
+    pdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    pdfAbortRef.current = controller;
+    const { signal } = controller;
+
     setPhase('loading');
+    setOverlayPhase('preparing');
     const started = performance.now();
     try {
       let analysisId = input.analysisId;
       if (!analysisId && input.ensureAnalysisId) {
-        analysisId = await input.ensureAnalysisId();
+        analysisId = await input.ensureAnalysisId(signal);
       }
+      if (signal.aborted) return;
       if (!analysisId) {
         setPhase('error');
+        setOverlayPhase('error');
         addToast('Salve ou conclua a análise antes de gerar o PDF.', 'warning');
         return;
       }
+      setOverlayPhase('generating');
       const url = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}&t=${Date.now()}`;
-      const res = await fetchWithAuth(url);
+      const res = await fetchWithAuth(url, { signal });
+      if (signal.aborted) return;
+      if (res.status === 202) throw new Error('pdf_not_ready');
       if (!res.ok) throw new Error('pdf_error');
       const blob = await res.blob();
       const cd = res.headers.get('content-disposition') ?? '';
@@ -160,16 +184,22 @@ export function useChatPdfCta(input: {
       a.click();
       URL.revokeObjectURL(objectUrl);
       setPhase('ready');
+      setOverlayPhase('idle');
       capturePostHogEvent('nm_pdf_generated', {
         duration_ms: Math.round(performance.now() - started),
         suggestion_rank: input.suggestionRank,
       });
     } catch (err) {
+      if (signal.aborted) {
+        setOverlayPhase('idle');
+        setPhase('idle');
+        return;
+      }
       setPhase('error');
+      setOverlayPhase('error');
       capturePostHogEvent('nm_pdf_failed', {
         error: err instanceof Error ? err.message : 'unknown',
       });
-      addToast('Não foi possível gerar o PDF. Tente novamente.', 'error');
     } finally {
       pdfRunLockRef.current = false;
     }
@@ -259,6 +289,20 @@ export function useChatPdfCta(input: {
     screen: input.screen,
   };
 
+  const pdfOverlayUi = (
+    <ChatPdfPreparingOverlay
+      phase={overlayPhase}
+      onRetry={() => {
+        setOverlayPhase('idle');
+        void runPaidPdf();
+      }}
+      onDismissError={() => {
+        setOverlayPhase('idle');
+        setPhase((p) => (p === 'error' ? 'idle' : p));
+      }}
+    />
+  );
+
   return {
     model,
     onDockClick,
@@ -266,6 +310,7 @@ export function useChatPdfCta(input: {
     resendEmail,
     resending,
     toastUi: <ToastContainer toasts={toasts} onRemove={removeToast} />,
+    pdfOverlayUi,
   };
 }
 

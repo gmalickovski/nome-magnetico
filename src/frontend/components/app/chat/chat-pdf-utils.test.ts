@@ -2,6 +2,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildNomeSocialCheckoutHref,
+  CHAT_PDF_PREP_TIME_LABEL,
+  CHAT_PDF_TYPICAL_TOTAL_MS,
   scoreBucket,
   truncateDisplayName,
 } from './chat-pdf-utils.ts';
@@ -24,5 +26,10 @@ describe('chat-pdf-utils', () => {
     assert.match(href, /utm_source=app_chat/);
     assert.match(href, /utm_campaign=card_pdf/);
     assert.match(href, /produto=nome_social/);
+  });
+
+  it('CHAT_PDF_PREP_TIME_LABEL comunica teto pós-fix', () => {
+    assert.equal(CHAT_PDF_PREP_TIME_LABEL, 'até 1 minuto');
+    assert.ok(CHAT_PDF_TYPICAL_TOTAL_MS <= 60_000);
   });
 });

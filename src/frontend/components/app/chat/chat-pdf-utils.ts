@@ -25,3 +25,9 @@ export function buildNomeSocialCheckoutHref(): string {
 export type PdfDevice = 'mobile' | 'desktop';
 
 export type PdfSurface = 'dock' | 'sticky';
+
+/** Limite superior exibido no overlay (pós-fix: persistência numérica ~2–5s + PDF ~3–8s). */
+export const CHAT_PDF_PREP_TIME_LABEL = 'até 1 minuto';
+
+/** Tempo típico esperado após persistência sem LLM (ms). */
+export const CHAT_PDF_TYPICAL_TOTAL_MS = 8_000;

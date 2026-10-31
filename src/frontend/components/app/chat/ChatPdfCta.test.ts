@@ -10,5 +10,8 @@ describe('ChatPdfCta / useChatPdfCta', () => {
     const src = readFileSync(file, 'utf8');
     assert.match(src, /ensureAnalysisId/);
     assert.match(src, /pdfRunLockRef/);
+    assert.match(src, /pdfAbortRef/);
+    assert.match(src, /ChatPdfPreparingOverlay/);
+    assert.match(src, /setOverlayPhase\('preparing'\)/);
   });
 });

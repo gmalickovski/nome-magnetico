@@ -14,6 +14,11 @@ import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
 import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import { buildChatPdfAnalyzePayload } from './chat-pdf-persist.js';
+import {
+  buildChatPdfEnsureKey,
+  clearChatPdfEnsureInflight,
+  runChatPdfEnsureOnce,
+} from './chat-pdf-ensure-client.js';
 import { useDockRestartForSummary } from './useDockRestartForSummary.js';
 import {
   buildChatDockLayout,
@@ -1428,39 +1433,68 @@ export function NomeSocialChat({
 
   const chatDockLayout = chatDockScreen ? buildChatDockLayout(chatDockScreen, chatDockInput) : null;
 
-  const ensurePaidAnalysisIdForPdf = useCallback(async (): Promise<string | undefined> => {
-    if (analysisId) return analysisId;
-    if (!paidAccessActive || !activeSuggestion?.nome?.trim() || !confirmedName.trim() || !confirmedDate.trim()) {
-      return undefined;
-    }
-    const res = await fetchWithAuth('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(
-        buildChatPdfAnalyzePayload({
-          birthName: confirmedName,
-          birthDate: confirmedDate,
-          selectedSocialName: activeSuggestion.nome,
-          collect: collectState,
-        })
-      ),
-    });
-    const data = (await res.json()) as { analysisId?: string; error?: string };
-    if (!res.ok) {
-      throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao salvar análise');
-    }
-    const id = data.analysisId?.trim();
-    if (!id) return undefined;
-    setAnalysisId(id);
-    return id;
-  }, [
-    analysisId,
-    paidAccessActive,
-    activeSuggestion?.nome,
-    confirmedName,
-    confirmedDate,
-    collectState,
-  ]);
+  useEffect(() => {
+    return () => {
+      clearChatPdfEnsureInflight();
+    };
+  }, []);
+
+  const ensurePaidAnalysisIdForPdf = useCallback(
+    async (signal: AbortSignal): Promise<string | undefined> => {
+      if (analysisId) return analysisId;
+      if (
+        !paidAccessActive ||
+        !activeSuggestion?.nome?.trim() ||
+        !confirmedName.trim() ||
+        !confirmedDate.trim()
+      ) {
+        return undefined;
+      }
+
+      const key = buildChatPdfEnsureKey(
+        confirmedName,
+        confirmedDate,
+        activeSuggestion.nome
+      );
+
+      return runChatPdfEnsureOnce(
+        key,
+        async (innerSignal) => {
+          if (innerSignal.aborted) return undefined;
+          const res = await fetchWithAuth('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: innerSignal,
+            body: JSON.stringify(
+              buildChatPdfAnalyzePayload({
+                birthName: confirmedName,
+                birthDate: confirmedDate,
+                selectedSocialName: activeSuggestion.nome,
+                collect: collectState,
+              })
+            ),
+          });
+          const data = (await res.json()) as { analysisId?: string; error?: string };
+          if (!res.ok) {
+            throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao salvar análise');
+          }
+          const id = data.analysisId?.trim();
+          if (!id) return undefined;
+          setAnalysisId(id);
+          return id;
+        },
+        signal
+      );
+    },
+    [
+      analysisId,
+      paidAccessActive,
+      activeSuggestion?.nome,
+      confirmedName,
+      confirmedDate,
+      collectState,
+    ]
+  );
 
   const {
     model: pdfCtaModel,
@@ -1469,6 +1503,7 @@ export function NomeSocialChat({
     resendEmail: onPdfResendEmail,
     resending: pdfResending,
     toastUi: pdfToastUi,
+    pdfOverlayUi,
   } = useChatPdfCta({
     suggestionSelected,
     selectedNome: activeSuggestion?.nome ?? null,
@@ -1894,6 +1929,7 @@ export function NomeSocialChat({
       />
 
       {pdfToastUi}
+      {pdfOverlayUi}
 
       <SummaryDrawer
         isOpen={drawerOpen}
