@@ -1,6 +1,9 @@
 /** Transição de largura da barra flutuante (dock). */
 export const DOCK_BAR_WIDTH_TRANSITION_MS = 240;
 
+/** Saída do botão Recomeçar ao abrir Resumo fullscreen (antes de encolher a dock). */
+export const DOCK_RESTART_EXIT_MS = 180;
+
 export const DOCK_BAR_WIDTH_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 
 export function dockShellWidthStyle(

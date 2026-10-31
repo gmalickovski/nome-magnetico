@@ -27,6 +27,14 @@ describe('mobile-dock-screen', () => {
     );
   });
 
+  it('omite Recomeçar na dock com Resumo fullscreen aberto', () => {
+    const layout = buildChatDockLayout('chat_questionnaire', {
+      ...chatBase,
+      summaryPanelOpen: true,
+    });
+    assert.deepEqual(layout.middleSecondaries.map((s) => s.id), []);
+  });
+
   it('sugestões: Recomeçar no centro, sem estrela Outras opções; PDF só com seleção', () => {
     const input = {
       ...chatBase,

@@ -14,6 +14,8 @@ import { DockTooltipButton } from './DockTooltipButton.js';
 export interface MobileChatDockProps {
   layout: MobileDockLayout | null;
   summaryPanelOpen: boolean;
+  /** Recomeçar saindo da dock (Resumo aberto, antes de encolher). */
+  restartExitActive?: boolean;
   summaryBadge: boolean;
   pdfModel?: ChatPdfCtaModel | null;
   pdfExiting?: boolean;
@@ -31,6 +33,7 @@ function prefersReducedMotion(): boolean {
 export function MobileChatDock({
   layout,
   summaryPanelOpen,
+  restartExitActive = false,
   summaryBadge,
   pdfModel = null,
   pdfExiting = false,
@@ -92,6 +95,9 @@ export function MobileChatDock({
   };
 
   const SummaryIcon = dockIconFor('panel-right');
+
+  const dockSecondaryBtnClass = (actionId: string, base: string) =>
+    `${base}${actionId === 'restart' && restartExitActive ? ' mobile-chat-dock-btn--exit' : ''}`;
 
   if (layout.screen === 'chat_free_paywall' && layout.primary) {
     const primary = layout.primary;
@@ -238,7 +244,10 @@ export function MobileChatDock({
                   aria-label={action.label}
                   style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
                   onClick={() => onSecondary(action.id, index)}
-                  className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
+                  className={dockSecondaryBtnClass(
+                    action.id,
+                    'mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]'
+                  )}
                 >
                   <Icon />
                 </DockTooltipButton>

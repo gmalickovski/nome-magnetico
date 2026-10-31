@@ -593,6 +593,38 @@
     animation: mobile-dock-btn-fade-in 120ms ease both;
   }
 
+  @keyframes mobile-dock-btn-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+      max-width: 44px;
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.82);
+      max-width: 0;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .mobile-chat-dock-btn--exit {
+    pointer-events: none;
+    animation: mobile-dock-btn-out 180ms ease both;
+    overflow: hidden;
+  }
+
+  .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn--exit {
+    animation: none;
+    opacity: 0;
+    max-width: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
   @keyframes mobile-dock-pdf-enter {
     from {
       opacity: 0;

@@ -60,6 +60,8 @@ export interface ChatDockInput {
   suggestionSelected: boolean;
   /** Usuário sem assinatura Nome Social, após leitura gratuita. */
   freePaywallActive?: boolean;
+  /** Resumo fullscreen aberto — oculta Recomeçar na dock (após animação no UI). */
+  summaryPanelOpen?: boolean;
 }
 
 export function resolveChatDockScreen(input: ChatDockInput): ChatDockScreen | null {
@@ -93,14 +95,14 @@ export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput
 
   if (screen === 'chat_questionnaire') {
     const middleSecondaries: DockSecondarySpec[] = [];
-    if (input.canRestart) {
+    if (input.canRestart && !input.summaryPanelOpen) {
       middleSecondaries.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
     }
     return { screen, middleSecondaries, showPdfCircle: false };
   }
 
   const middleSecondaries: DockSecondarySpec[] = [];
-  if (input.canRestart) {
+  if (input.canRestart && !input.summaryPanelOpen) {
     middleSecondaries.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
   }
 

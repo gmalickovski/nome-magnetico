@@ -13,6 +13,7 @@ import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
 import { MobileChatDock } from './MobileChatDock.js';
+import { useDockRestartForSummary } from './useDockRestartForSummary.js';
 import {
   buildChatDockLayout,
   resolveChatDockScreen,
@@ -1483,7 +1484,9 @@ export function NomeSocialChat({
       ? Math.max(1, suggestions.findIndex((s) => s.id === activeSuggestionId) + 1)
       : 0;
 
-  const chatDockScreen = resolveChatDockScreen({
+  const { omitRestartFromDockLayout, restartExitActive } = useDockRestartForSummary(drawerOpen);
+
+  const chatDockInput = {
     birthConfirmed,
     canShowSummary: birthConfirmed && Boolean(basePanel),
     profileCollectionComplete,
@@ -1492,20 +1495,12 @@ export function NomeSocialChat({
     canRegenerate: profileCollectionComplete && suggestions.length > 0,
     suggestionSelected,
     freePaywallActive,
-  });
+    summaryPanelOpen: omitRestartFromDockLayout,
+  };
 
-  const chatDockLayout = chatDockScreen
-    ? buildChatDockLayout(chatDockScreen, {
-        birthConfirmed,
-        canShowSummary: birthConfirmed && Boolean(basePanel),
-        profileCollectionComplete,
-        hasSuggestionsMessage,
-        canRestart: birthConfirmed && paidAccessActive,
-        canRegenerate: profileCollectionComplete && suggestions.length > 0,
-        suggestionSelected,
-        freePaywallActive,
-      })
-    : null;
+  const chatDockScreen = resolveChatDockScreen(chatDockInput);
+
+  const chatDockLayout = chatDockScreen ? buildChatDockLayout(chatDockScreen, chatDockInput) : null;
 
   const {
     model: pdfCtaModel,
@@ -1925,6 +1920,7 @@ export function NomeSocialChat({
       <MobileChatDock
         layout={chatDockLayout}
         summaryPanelOpen={drawerOpen}
+        restartExitActive={restartExitActive}
         summaryBadge={summaryBadge}
         pdfModel={freePaywallActive ? null : pdfCtaModel}
         pdfExiting={pdfCircleExiting}
