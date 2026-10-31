@@ -17,7 +17,6 @@ const { data: profile } = await client
 
 const isAdmin = profile?.role === 'admin';
 const hasAccess = isAdmin || await hasActiveSubscription(user.id, 'nome_social');
-if (!hasAccess) return Astro.redirect('/comprar?produto=nome_social');
 
 function dbDateToInput(dbDate: string | null): string {
   if (!dbDate) return '';
@@ -49,7 +48,7 @@ if (nomeInicial.trim() && dataInicial.trim()) {
       profileGender={generoInicial}
       initialBirthPanel={initialBirthPanel}
       userId={user.id}
-      isSubscriber
+      isSubscriber={hasAccess}
       emailConfirmed={Boolean(user.email_confirmed_at)}
     />
   </div>

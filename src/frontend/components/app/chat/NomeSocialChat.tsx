@@ -68,11 +68,26 @@ import {
 } from '../../../../shared/interactive-engine/motor-radar.js';
 import { buildQuestionnaireContextChips } from '../../../../shared/interactive-engine/questionnaire-context-chips.js';
 import {
+  CHAT_SESSION_STORAGE_VERSION,
   clearChatSession,
   loadChatSession,
   saveChatSession,
   type PersistedChatSession,
 } from './chat-session-storage.js';
+import {
+  buildPaywallCheckoutHref,
+  fetchNomeSocialPriceLabel,
+  pickMotorHighlights,
+  trackFreePdfClicked,
+  trackPaywallCtaClicked,
+  trackPaywallDismissed,
+  trackPaywallShown,
+  type PaywallSurface,
+} from './chat-paywall-utils.js';
+import { ChatFreeBirthAnalysisBody } from './ChatFreeBirthAnalysisBody.js';
+import { ChatFreePaywallBubble } from './ChatFreePaywallBubble.js';
+import { ChatPaywallStickyDesktop } from './ChatPaywallStickyDesktop.js';
+import { ChatPaywallSidebarCta } from './ChatPaywallSidebarCta.js';
 import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-engine/chat-profile-copy.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { fetchWithAuth } from '../../../lib/auth-fetch.js';
@@ -169,6 +184,14 @@ export function NomeSocialChat({
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
+  const [chatPhase, setChatPhase] = useState<'onboarding' | 'free_paywall' | 'subscriber'>(
+    isSubscriber ? 'subscriber' : 'onboarding'
+  );
+  const [freePdfDownloaded, setFreePdfDownloaded] = useState(false);
+  const [freeAnalysisId, setFreeAnalysisId] = useState<string | undefined>(undefined);
+  const [paywallPriceLabel, setPaywallPriceLabel] = useState('');
+  const [paywallStickyVisible, setPaywallStickyVisible] = useState(false);
+  const [freePdfLoading, setFreePdfLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -185,6 +208,10 @@ export function NomeSocialChat({
   );
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const paywallBubbleRef = useRef<HTMLDivElement>(null);
+  const paywallShownRef = useRef(false);
+  const paywallDismissTrackedRef = useRef(false);
+  const subscriberResumeRef = useRef(false);
   const sessionBootstrapped = useRef(false);
   const chatStartedAtRef = useRef<number | null>(null);
   const [nomeArtisticoDraft, setNomeArtisticoDraft] = useState('');
@@ -244,6 +271,10 @@ export function NomeSocialChat({
     setActiveSuggestionId(null);
     setSuggestions([]);
     setAnalysisId(undefined);
+    setFreeAnalysisId(undefined);
+    setFreePdfDownloaded(false);
+    setChatPhase(isSubscriber ? 'subscriber' : 'onboarding');
+    setPaywallStickyVisible(false);
     setOnboardingError(null);
     setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
   };
@@ -276,6 +307,11 @@ export function NomeSocialChat({
     setActiveSuggestionId(collectionComplete ? saved.activeSuggestionId : null);
     setSuggestions(collectionComplete ? saved.suggestions : []);
     setAnalysisId(saved.analysisId);
+    setChatPhase(
+      saved.chatPhase ?? (isSubscriber ? 'subscriber' : saved.birthConfirmed ? 'free_paywall' : 'onboarding')
+    );
+    setFreePdfDownloaded(Boolean(saved.freePdfDownloaded));
+    setFreeAnalysisId(saved.freeAnalysisId);
   };
 
   useEffect(() => {
@@ -296,7 +332,7 @@ export function NomeSocialChat({
 
     const timer = window.setTimeout(() => {
       const snapshot: PersistedChatSession = {
-        version: 2,
+        version: CHAT_SESSION_STORAGE_VERSION,
         savedAt: Date.now(),
         messages,
         answers,
@@ -319,6 +355,9 @@ export function NomeSocialChat({
         activeSuggestionId,
         suggestions,
         analysisId,
+        chatPhase,
+        freePdfDownloaded,
+        freeAnalysisId,
       };
       saveChatSession(userId, snapshot);
     }, 450);
@@ -347,7 +386,34 @@ export function NomeSocialChat({
     activeSuggestionId,
     suggestions,
     analysisId,
+    chatPhase,
+    freePdfDownloaded,
+    freeAnalysisId,
   ]);
+
+  useEffect(() => {
+    if (!isSubscriber && chatPhase === 'free_paywall') {
+      void fetchNomeSocialPriceLabel().then(setPaywallPriceLabel);
+    }
+  }, [isSubscriber, chatPhase]);
+
+  useEffect(() => {
+    if (isSubscriber || chatPhase !== 'free_paywall' || !paywallBubbleRef.current) return;
+    const el = paywallBubbleRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = Boolean(entry?.isIntersecting);
+        setPaywallStickyVisible(!visible);
+        if (!visible && !paywallDismissTrackedRef.current) {
+          paywallDismissTrackedRef.current = true;
+          trackPaywallDismissed();
+        }
+      },
+      { root: null, threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isSubscriber, chatPhase, messages]);
 
   useEffect(() => {
     if (demoMode) return;
@@ -513,6 +579,85 @@ export function NomeSocialChat({
     }
   };
 
+  const runFreeTierAnalysis = async (nome: string, dataNascimento: string) => {
+    setConfirmedName(nome);
+    setConfirmedDate(dataNascimento);
+    setLoading(true);
+    setOnboardingError(null);
+
+    try {
+      const res = await fetch('/api/decide-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          buildDecideLiveBody(nome, dataNascimento, {
+            ...INITIAL_COLLECT_STATE,
+            sobrenomesDecididos: false,
+          })
+        ),
+      });
+      if (!res.ok) throw new Error('Falha ao calcular leitura');
+      const raw = await res.json();
+      if (raw.error) throw new Error(raw.error);
+
+      const responseData = mapDecideLiveResponse(raw, {
+        nomeCompleto: nome,
+        collect: INITIAL_COLLECT_STATE,
+        sobrenomesDetectados: raw.sobrenomesDetectados ?? [],
+      });
+
+      if (responseData.panel) setBasePanel(responseData.panel);
+      if (responseData.readingSummary) setBirthReadingSummary(responseData.readingSummary);
+      const highlights = pickMotorHighlights(responseData.summary);
+      setSummaryItems(highlights);
+      if (responseData.radarAxes) setRadarAxes(responseData.radarAxes);
+
+      setBirthConfirmed(true);
+      setChatPhase('free_paywall');
+      setCurrentStepId('free_paywall');
+      setStepIndex(1);
+      setRemaining(0);
+      setCollectState(INITIAL_COLLECT_STATE);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `free-analysis-${Date.now()}`,
+          sender: 'assistant',
+          type: 'free_birth_analysis',
+          wide: true,
+          eyebrow: 'LEITURA DO NOME ATUAL',
+          content: 'Esta é a vibração do nome que você usa hoje, calculada com o mesmo motor do Nome Social.',
+        },
+        {
+          id: `free-paywall-${Date.now()}`,
+          sender: 'assistant',
+          type: 'free_paywall',
+          wide: true,
+          content: '',
+        },
+      ]);
+
+      if (!paywallShownRef.current) {
+        paywallShownRef.current = true;
+        trackPaywallShown('bubble');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          sender: 'assistant',
+          type: 'text',
+          content: 'Houve uma instabilidade temporária. Por favor, tente novamente.',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const runDecideLive = async (nome: string, dataNascimento: string) => {
     setConfirmedName(nome);
     setConfirmedDate(dataNascimento);
@@ -592,12 +737,111 @@ export function NomeSocialChat({
         setLoading(true);
         await saveBaseProfile(nome, dataNascimento, gender);
       }
-      await runDecideLive(nome, dataNascimento);
+      if (isSubscriber) {
+        await runDecideLive(nome, dataNascimento);
+      } else {
+        await runFreeTierAnalysis(nome, dataNascimento);
+      }
     } catch (err) {
       setOnboardingError(err instanceof Error ? err.message : 'Erro ao salvar dados.');
       setLoading(false);
     }
   };
+
+  const goPaywallCheckout = (surface: PaywallSurface) => {
+    trackPaywallCtaClicked(surface);
+    window.location.href = buildPaywallCheckoutHref();
+  };
+
+  const ensureFreeAnalysisRecord = async (): Promise<string> => {
+    const existing = freeAnalysisId ?? analysisId;
+    if (existing) return existing;
+
+    const res = await fetchWithAuth('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_type: 'analise_gratuita',
+        nome_completo: confirmedName.trim(),
+        data_nascimento: confirmedDate.trim(),
+        nome_ja_escolhido: true,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao gerar análise gratuita');
+    }
+    const id = String(data.analysisId ?? data.id ?? '');
+    if (!id) throw new Error('Análise gratuita sem identificador');
+    setFreeAnalysisId(id);
+    setAnalysisId(id);
+    return id;
+  };
+
+  const handleFreePdfDownload = async (surface: PaywallSurface) => {
+    if (freePdfLoading) return;
+    trackFreePdfClicked(surface);
+    setFreePdfLoading(true);
+    try {
+      const id = await ensureFreeAnalysisRecord();
+      const url = `/api/generate-pdf?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+      const res = await fetchWithAuth(url);
+      if (!res.ok) throw new Error('pdf_error');
+      const blob = await res.blob();
+      const cd = res.headers.get('content-disposition') ?? '';
+      const match = cd.match(/filename="?([^";]+)"?/i);
+      const filename = match?.[1] ?? 'analise-nome-atual.pdf';
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+
+      if (!freePdfDownloaded) {
+        setFreePdfDownloaded(true);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `free-post-pdf-${Date.now()}`,
+            sender: 'assistant',
+            type: 'free_post_pdf',
+            wide: true,
+            content: 'Quando quiser seguir, as suas respostas ficam guardadas aqui.',
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error(err);
+      setOnboardingError(
+        err instanceof Error ? err.message : 'Não foi possível baixar o PDF gratuito.'
+      );
+    } finally {
+      setFreePdfLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      !isSubscriber ||
+      !birthConfirmed ||
+      chatPhase !== 'free_paywall' ||
+      subscriberResumeRef.current ||
+      demoMode
+    ) {
+      return;
+    }
+    subscriberResumeRef.current = true;
+    setChatPhase('subscriber');
+    void runDecideLive(confirmedName, confirmedDate);
+  }, [isSubscriber, birthConfirmed, chatPhase, confirmedName, confirmedDate, demoMode]);
+
+  const freePaywallActiveForFx = !isSubscriber && chatPhase === 'free_paywall';
+  useEffect(() => {
+    if (!freePaywallActiveForFx || typeof window === 'undefined') return;
+    if (!window.matchMedia('(min-width: 768px)').matches) return;
+    trackPaywallShown('panel');
+  }, [freePaywallActiveForFx]);
 
   const handleOnboardingNome = (text: string) => {
     const err = validateBirthName(text);
@@ -1152,6 +1396,7 @@ export function NomeSocialChat({
     (showReadingSummaryPanel && (activeReadingSummary || activeReadingLoading) ? 1 : 0);
 
   const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
+  const freePaywallActive = !isSubscriber && chatPhase === 'free_paywall';
 
   const suggestionSelected = Boolean(activeSuggestionId);
   const suggestionRank =
@@ -1164,9 +1409,10 @@ export function NomeSocialChat({
     canShowSummary: birthConfirmed && Boolean(basePanel),
     profileCollectionComplete,
     hasSuggestionsMessage,
-    canRestart: birthConfirmed,
+    canRestart: birthConfirmed && isSubscriber,
     canRegenerate: profileCollectionComplete && suggestions.length > 0,
     suggestionSelected,
+    freePaywallActive,
   });
 
   const chatDockLayout = chatDockScreen
@@ -1175,9 +1421,10 @@ export function NomeSocialChat({
         canShowSummary: birthConfirmed && Boolean(basePanel),
         profileCollectionComplete,
         hasSuggestionsMessage,
-        canRestart: birthConfirmed,
+        canRestart: birthConfirmed && isSubscriber,
         canRegenerate: profileCollectionComplete && suggestions.length > 0,
         suggestionSelected,
+        freePaywallActive,
       })
     : null;
 
@@ -1268,6 +1515,10 @@ export function NomeSocialChat({
       handleRequestReset();
       return;
     }
+    if (action === 'free_pdf') {
+      void handleFreePdfDownload('dock');
+      return;
+    }
     if (action === 'other_options') {
       void handleRegenerate();
     }
@@ -1279,28 +1530,39 @@ export function NomeSocialChat({
       action,
       is_free: !isSubscriber,
     });
+    if (action === 'unlock_nome_social') {
+      goPaywallCheckout('dock');
+    }
   };
 
   const sidebarSection = (
-    <ChatSidebarSection
-      birthPanel={basePanel}
-      harmonizedPanel={activeSuggestion?.panel ?? null}
-      showScoreCard={showScoreCard}
-      showStarDetail={showStarDetail}
-      starPanelData={starPanelData}
-      isSuggestion={Boolean(activeSuggestionId)}
-      onResetToBase={() => setActiveSuggestionId(null)}
-      radarAxes={radarAxes}
-      radarOverlayAxes={radarOverlayAxes}
-      radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
-      contextChips={contextChips}
-      showRadar={showRadarPanel}
-      summaryItems={summaryItems}
-      showSummary={showSummaryPanel}
-      readingSummary={activeReadingSummary}
-      readingSummaryLoading={activeReadingLoading}
-      showReadingSummary={showReadingSummaryPanel}
-    />
+    <div className="flex flex-col gap-4">
+      <ChatSidebarSection
+        birthPanel={basePanel}
+        harmonizedPanel={activeSuggestion?.panel ?? null}
+        showScoreCard={showScoreCard}
+        showStarDetail={showStarDetail}
+        starPanelData={starPanelData}
+        isSuggestion={Boolean(activeSuggestionId)}
+        onResetToBase={() => setActiveSuggestionId(null)}
+        radarAxes={radarAxes}
+        radarOverlayAxes={radarOverlayAxes}
+        radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
+        contextChips={contextChips}
+        showRadar={showRadarPanel && isSubscriber}
+        summaryItems={summaryItems}
+        showSummary={showSummaryPanel}
+        readingSummary={activeReadingSummary}
+        readingSummaryLoading={activeReadingLoading}
+        showReadingSummary={showReadingSummaryPanel}
+      />
+      {freePaywallActive && (
+        <ChatPaywallSidebarCta
+          priceLabel={paywallPriceLabel}
+          onClick={() => goPaywallCheckout('panel')}
+        />
+      )}
+    </div>
   );
 
   return (
@@ -1341,9 +1603,45 @@ export function NomeSocialChat({
                 return <UserBubble key={msg.id} content={msg.content} />;
               }
 
-              const pending = isInteractionPending(msg, currentStepId, answers, birthConfirmed);
+              const pending =
+                freePaywallActive || chatPhase === 'free_paywall'
+                  ? false
+                  : isInteractionPending(msg, currentStepId, answers, birthConfirmed);
+
+              if (msg.type === 'free_birth_analysis' && basePanel) {
+                return (
+                  <NmBubble key={msg.id} wide={msg.wide} eyebrow={msg.eyebrow}>
+                    <p className="text-chat-ink leading-relaxed">{msg.content}</p>
+                    <ChatFreeBirthAnalysisBody panel={basePanel} highlights={summaryItems} />
+                  </NmBubble>
+                );
+              }
+
+              if (msg.type === 'free_paywall') {
+                return (
+                  <div key={msg.id} ref={paywallBubbleRef}>
+                    <NmBubble wide eyebrow="PRÓXIMO PASSO">
+                      <ChatFreePaywallBubble
+                        priceLabel={paywallPriceLabel}
+                        pdfLoading={freePdfLoading}
+                        onPaidClick={() => goPaywallCheckout('bubble')}
+                        onFreePdfClick={() => void handleFreePdfDownload('bubble')}
+                      />
+                    </NmBubble>
+                  </div>
+                );
+              }
+
+              if (msg.type === 'free_post_pdf') {
+                return (
+                  <NmBubble key={msg.id} wide>
+                    <p className="text-chat-ink leading-relaxed">{msg.content}</p>
+                  </NmBubble>
+                );
+              }
 
               if (msg.type === 'suggestions') {
+                if (!isSubscriber) return null;
                 if (!profileCollectionComplete) return null;
                 return (
                   <NmBubble key={msg.id} wide eyebrow="OPÇÕES HARMONIZADAS">
@@ -1507,12 +1805,19 @@ export function NomeSocialChat({
             <div ref={chatBottomRef} />
           </div>
 
-          <ChatPdfStickyDesktop
-            model={pdfCtaModel}
-            onClick={onPdfStickyClick}
-            onResendEmail={onPdfResendEmail}
-            resending={pdfResending}
-          />
+          {freePaywallActive ? (
+            <ChatPaywallStickyDesktop
+              visible={paywallStickyVisible}
+              onClick={() => goPaywallCheckout('sticky')}
+            />
+          ) : (
+            <ChatPdfStickyDesktop
+              model={pdfCtaModel}
+              onClick={onPdfStickyClick}
+              onResendEmail={onPdfResendEmail}
+              resending={pdfResending}
+            />
+          )}
         </main>
 
         <aside
@@ -1533,9 +1838,9 @@ export function NomeSocialChat({
         layout={chatDockLayout}
         summaryPanelOpen={drawerOpen}
         summaryBadge={summaryBadge}
-        pdfModel={pdfCtaModel}
+        pdfModel={freePaywallActive ? null : pdfCtaModel}
         pdfExiting={pdfCircleExiting}
-        onPdfClick={onPdfDockClick}
+        onPdfClick={freePaywallActive ? undefined : onPdfDockClick}
         onBack={handleChatDockBack}
         onSecondary={handleDockSecondary}
         onPrimary={handleDockPrimary}

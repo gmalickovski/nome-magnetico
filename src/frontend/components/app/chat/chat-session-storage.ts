@@ -13,7 +13,7 @@ import type {
 import type { ChatCollectState } from './decide-live-bridge.js';
 
 /** Bump quando copy/fluxo do palpite mudar (invalida sessões antigas com leitura duplicada). */
-export const CHAT_SESSION_STORAGE_VERSION = 4 as const;
+export const CHAT_SESSION_STORAGE_VERSION = 5 as const;
 
 const STORAGE_VERSION = CHAT_SESSION_STORAGE_VERSION;
 
@@ -41,6 +41,9 @@ export interface PersistedChatSession {
   activeSuggestionId: string | null;
   suggestions: CandidateSuggestion[];
   analysisId?: string;
+  chatPhase?: 'onboarding' | 'free_paywall' | 'subscriber';
+  freePdfDownloaded?: boolean;
+  freeAnalysisId?: string;
 }
 
 function storageKey(userId: string): string {

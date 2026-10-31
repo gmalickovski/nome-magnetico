@@ -63,6 +63,30 @@ describe('mobile-dock-screen', () => {
     );
   });
 
+  it('paywall gratuito: Resumo + PDF grátis + Desbloquear', () => {
+    const screen = resolveChatDockScreen({
+      ...chatBase,
+      birthConfirmed: true,
+      canShowSummary: true,
+      profileCollectionComplete: false,
+      freePaywallActive: true,
+    });
+    assert.equal(screen, 'chat_free_paywall');
+    const layout = buildChatDockLayout('chat_free_paywall', {
+      ...chatBase,
+      birthConfirmed: true,
+      canShowSummary: true,
+      profileCollectionComplete: false,
+      freePaywallActive: true,
+    });
+    assert.equal(layout.primary?.id, 'unlock_nome_social');
+    assert.equal(layout.primary?.label, 'Desbloquear');
+    assert.deepEqual(
+      layout.middleSecondaries.map((s) => s.id),
+      ['free_pdf']
+    );
+  });
+
   it('resultado gratuito: primária Desbloquear', () => {
     const layout = buildResultadoDockLayout({
       canShare: true,

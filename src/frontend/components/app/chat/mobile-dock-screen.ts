@@ -1,6 +1,12 @@
-export type ChatDockScreen = 'chat_questionnaire' | 'chat_suggestions';
+export type ChatDockScreen = 'chat_questionnaire' | 'chat_suggestions' | 'chat_free_paywall';
 
-export type DockSecondaryActionId = 'summary' | 'restart' | 'other_options' | 'share' | 'redo_analysis';
+export type DockSecondaryActionId =
+  | 'summary'
+  | 'restart'
+  | 'other_options'
+  | 'share'
+  | 'redo_analysis'
+  | 'free_pdf';
 
 export type DockPrimaryActionId = 'generate_pdf' | 'download_pdf' | 'unlock_nome_social';
 
@@ -32,6 +38,8 @@ export interface ChatDockLayout {
   middleSecondaries: DockSecondarySpec[];
   /** Botão circular de PDF quando há assinatura selecionada. */
   showPdfCircle: boolean;
+  /** Paywall gratuito: CTA principal Desbloquear na dock. */
+  primary?: DockPrimarySpec;
 }
 
 export interface ResultadoDockLayout {
@@ -50,10 +58,15 @@ export interface ChatDockInput {
   canRestart: boolean;
   canRegenerate: boolean;
   suggestionSelected: boolean;
+  /** Usuário sem assinatura Nome Social, após leitura gratuita. */
+  freePaywallActive?: boolean;
 }
 
 export function resolveChatDockScreen(input: ChatDockInput): ChatDockScreen | null {
   if (!input.birthConfirmed || !input.canShowSummary) return null;
+  if (input.freePaywallActive) {
+    return 'chat_free_paywall';
+  }
   if (input.profileCollectionComplete && input.hasSuggestionsMessage) {
     return 'chat_suggestions';
   }
@@ -64,6 +77,20 @@ export function resolveChatDockScreen(input: ChatDockInput): ChatDockScreen | nu
 }
 
 export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput): ChatDockLayout {
+  if (screen === 'chat_free_paywall') {
+    return {
+      screen,
+      middleSecondaries: [{ id: 'free_pdf', label: 'PDF grátis', icon: 'file-down' }],
+      showPdfCircle: false,
+      primary: {
+        id: 'unlock_nome_social',
+        label: 'Desbloquear',
+        icon: 'lock-open',
+        disabled: false,
+      },
+    };
+  }
+
   if (screen === 'chat_questionnaire') {
     const middleSecondaries: DockSecondarySpec[] = [];
     if (input.canRestart) {

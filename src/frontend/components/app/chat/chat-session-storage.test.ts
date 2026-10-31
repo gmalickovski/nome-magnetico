@@ -33,7 +33,7 @@ function installLocalStorageMock() {
 
 function minimalSession(): PersistedChatSession {
   return {
-    version: 4,
+    version: 5,
     savedAt: Date.now(),
     messages: [{ id: 'm1', sender: 'assistant', type: 'text', content: 'Olá' }],
     answers: { onboarding_confirm: 'ok' },

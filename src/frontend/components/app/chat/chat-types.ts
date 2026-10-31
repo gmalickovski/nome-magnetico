@@ -145,6 +145,9 @@ export type MessageType =
   | 'pills'
   | 'questionnaire'
   | 'suggestions'
+  | 'free_birth_analysis'
+  | 'free_paywall'
+  | 'free_post_pdf'
   | 'custom';
 
 export interface ChatMessage {
