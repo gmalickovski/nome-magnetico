@@ -1,14 +1,16 @@
 import React from 'react';
 
 export interface SummaryFabProps {
+  /** Ex.: após confirmar certidão, mesmo enquanto o resumo carrega. */
+  visible: boolean;
   count: number;
   onClick: () => void;
   className?: string;
 }
 
 /** Botão fixo discreto (< md) para abrir o painel de leitura. */
-export function SummaryFab({ count, onClick, className = '' }: SummaryFabProps) {
-  if (count <= 0) return null;
+export function SummaryFab({ visible, count, onClick, className = '' }: SummaryFabProps) {
+  if (!visible) return null;
 
   return (
     <button

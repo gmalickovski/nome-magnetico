@@ -4,6 +4,7 @@ import TriangleVisualization from '../TriangleVisualization';
 import KarmicDebts from '../KarmicDebts';
 import KarmicLessons from '../KarmicLessons';
 import HiddenTendencies from '../HiddenTendencies';
+import BlockAnalysisCard from '../BlockAnalysisCard';
 
 function SectionIntro({
   eyebrow,
@@ -98,6 +99,20 @@ export function ChatReadingSummaryPanel({
           />
         </div>
       </SectionIntro>
+
+      {bloqueios.length > 0 && (
+        <SectionIntro eyebrow="O raio-x vibracional" title="Bloqueios energéticos">
+          <div className="space-y-3">
+            {bloqueios.map((bloqueio, i) => (
+              <BlockAnalysisCard
+                key={bloqueio.codigo}
+                bloqueio={bloqueio}
+                defaultOpen={i === 0}
+              />
+            ))}
+          </div>
+        </SectionIntro>
+      )}
 
       {debitosCarmicos.length > 0 && (
         <SectionIntro eyebrow="O peso do passado" title="Débitos kármicos">

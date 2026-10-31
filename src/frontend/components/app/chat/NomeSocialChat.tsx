@@ -871,10 +871,15 @@ export function NomeSocialChat({
       />
 
       <div
-        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 grid min-h-0 gap-3 md:gap-4 lg:gap-6 xl:gap-8 ${
+        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-2.5 sm:px-4 md:px-5 lg:px-6 xl:px-8 2xl:px-10 grid min-h-0 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-8 ${
           sidebarExpanded
             ? 'md:grid-cols-1'
-            : 'md:grid-cols-[minmax(0,1fr)_minmax(220px,44%)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,38%)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,34%)] 2xl:grid-cols-[minmax(0,1fr)_minmax(360px,32%)]'
+            : [
+                'md:grid-cols-[minmax(0,1fr)_minmax(200px,42%)]',
+                'lg:grid-cols-[minmax(0,1fr)_minmax(260px,36%)]',
+                'xl:grid-cols-[minmax(0,1fr)_minmax(300px,32%)]',
+                '2xl:grid-cols-[minmax(0,1fr)_minmax(340px,30%)]',
+              ].join(' ')
         }`}
       >
         <main
@@ -996,8 +1001,8 @@ export function NomeSocialChat({
         </main>
 
         <aside
-          className={`hidden md:flex flex-col min-h-0 py-3 md:py-3 lg:py-4 ${
-            sidebarExpanded ? 'max-w-4xl mx-auto w-full' : ''
+          className={`hidden md:flex flex-col min-h-0 min-w-0 py-2 md:py-3 lg:py-4 ${
+            sidebarExpanded ? 'max-w-4xl mx-auto w-full' : 'md:max-w-[min(44vw,380px)] lg:max-w-none'
           }`}
         >
           <ChatSidebarPanelChrome
@@ -1009,7 +1014,11 @@ export function NomeSocialChat({
         </aside>
       </div>
 
-      <SummaryFab count={summaryCount} onClick={() => setDrawerOpen(true)} />
+      <SummaryFab
+        visible={birthConfirmed && Boolean(basePanel)}
+        count={summaryCount}
+        onClick={() => setDrawerOpen(true)}
+      />
 
       <SummaryDrawer
         isOpen={drawerOpen}

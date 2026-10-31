@@ -540,6 +540,7 @@
   }
 }
 @media (max-width: 767px) {
+  /* Smartphone / ~7": sidebar oculta; resumo via SummaryDrawer + FAB */
   .nm-chat-shell {
     top: 73px;
     bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));

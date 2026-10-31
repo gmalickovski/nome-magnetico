@@ -72,7 +72,7 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
         </aside>
       </div>
 
-      <SummaryFab count={summaryCount} onClick={() => setDrawerOpen(true)} />
+      <SummaryFab visible count={summaryCount} onClick={() => setDrawerOpen(true)} />
 
       <SummaryDrawer
         isOpen={drawerOpen}
