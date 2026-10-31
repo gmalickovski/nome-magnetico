@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { syncVerifiedEmailMarker } from './confirmEmail';
+import {
+  confirmEmailAfterPayment,
+  isAccountCreatedViaCheckout,
+  syncVerifiedEmailMarker,
+} from './confirmEmail';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 describe('syncVerifiedEmailMarker', () => {
@@ -117,5 +121,105 @@ describe('syncVerifiedEmailMarker', () => {
     assert.deepEqual(updatedProfileFields, {
       email_verified_at: confirmedTimestamp,
     });
+  });
+});
+
+describe('isAccountCreatedViaCheckout', () => {
+  it('detecta flag no user_metadata', () => {
+    assert.equal(isAccountCreatedViaCheckout({ user_metadata: { account_created_via_checkout: true } }), true);
+    assert.equal(isAccountCreatedViaCheckout({ user_metadata: {} }), false);
+  });
+});
+
+describe('confirmEmailAfterPayment', () => {
+  it('não chama email_confirm quando conta comum ainda não confirmou', async () => {
+    let confirmCalled = false;
+
+    const fakeClient = {
+      auth: {
+        admin: {
+          getUserById: async () => ({
+            data: {
+              user: {
+                id: 'u1',
+                email_confirmed_at: null,
+                user_metadata: {},
+              },
+            },
+            error: null,
+          }),
+          updateUserById: async (_id: string, attrs: { email_confirm?: boolean }) => {
+            if (attrs.email_confirm) confirmCalled = true;
+            return { data: {}, error: null };
+          },
+        },
+      },
+      from: () => ({
+        update: () => ({
+          eq: () => ({
+            is: () => Promise.resolve({ error: null }),
+          }),
+        }),
+      }),
+    } as unknown as SupabaseClient;
+
+    await confirmEmailAfterPayment('u1', fakeClient);
+    assert.equal(confirmCalled, false);
+  });
+
+  it('confirma via admin só para conta criada no checkout', async () => {
+    let confirmCalled = false;
+    let syncCalled = false;
+
+    const fakeClient = {
+      auth: {
+        admin: {
+          getUserById: async () => ({
+            data: {
+              user: {
+                id: 'u2',
+                email_confirmed_at: null,
+                user_metadata: { account_created_via_checkout: true },
+              },
+            },
+            error: null,
+          }),
+          updateUserById: async (_id: string, attrs: { email_confirm?: boolean }) => {
+            if (attrs.email_confirm) confirmCalled = true;
+            return { data: {}, error: null };
+          },
+        },
+      },
+      from: () => ({
+        update: () => {
+          syncCalled = true;
+          return {
+            eq: () => ({
+              is: () => Promise.resolve({ error: null }),
+            }),
+          };
+        },
+      }),
+    } as unknown as SupabaseClient;
+
+    const originalGetUserById = fakeClient.auth.admin.getUserById;
+    fakeClient.auth.admin.getUserById = async (id: string) => {
+      const first = await originalGetUserById(id);
+      if (!confirmCalled) return first;
+      return {
+        data: {
+          user: {
+            id: 'u2',
+            email_confirmed_at: '2026-10-31T12:00:00.000Z',
+            user_metadata: { account_created_via_checkout: true },
+          },
+        },
+        error: null,
+      };
+    };
+
+    await confirmEmailAfterPayment('u2', fakeClient);
+    assert.equal(confirmCalled, true);
+    assert.equal(syncCalled, true);
   });
 });

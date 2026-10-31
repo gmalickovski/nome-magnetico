@@ -2,7 +2,11 @@ import { useState } from 'react';
 import type { ActivePromotion, PriceInfo } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
 import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
-import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import {
+  isCheckoutEmailNotConfirmed,
+  postCreateCheckoutWithPriceConfirm,
+} from '../../lib/checkout-api';
+import { EmailConfirmationPrompt } from './EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -29,6 +33,7 @@ export function DashboardCheckoutButton({
   ctaPosition = 'dashboard',
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   async function handleTriggerCard(type: ProductType, couponCode?: string) {
     track('checkout_redirect_start', {
@@ -66,9 +71,14 @@ export function DashboardCheckoutButton({
       return;
     }
 
+    if (isCheckoutEmailNotConfirmed(result)) {
+      setEmailNotConfirmed(true);
+      return;
+    }
+
     track('checkout_failed', {
       produto: type,
-      erro: checkoutFailureMessage(result),
+      erro: 'email_not_confirmed',
       origem: 'dashboard',
     });
   }
@@ -97,6 +107,21 @@ export function DashboardCheckoutButton({
       >
         {label}
       </button>
+
+      {emailNotConfirmed && (
+        <div className="fixed inset-0 z-[100002] flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[#D4AF37]/30 bg-slate-900 p-6 shadow-2xl">
+            <EmailConfirmationPrompt />
+            <button
+              type="button"
+              onClick={() => setEmailNotConfirmed(false)}
+              className="mt-4 w-full rounded-full border border-[#D4AF37]/40 px-4 py-2 text-sm font-semibold text-[#D4AF37]"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {open && (
         <CheckoutModal

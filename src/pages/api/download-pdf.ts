@@ -30,6 +30,7 @@ import {
   posthogEventUuid,
   readPostHogDistinctIdFromCookie,
 } from '../../backend/analytics/posthog-server';
+import { guardConfirmedEmail } from '../../backend/auth/requireConfirmedEmail';
 
 function toBrazilliandate(dbDate: string): string {
   // dbDate is YYYY-MM-DD
@@ -156,11 +157,19 @@ async function generateLeadPdfBuffer(lead: {
   return Buffer.from(buffer);
 }
 
-export const GET: APIRoute = async ({ url, request }) => {
+export const GET: APIRoute = async ({ url, request, locals }) => {
   const id = url.searchParams.get('id');
   const exp = url.searchParams.get('exp');
   const sig = url.searchParams.get('sig');
   const acceptsJson = (request.headers.get('accept') ?? '').includes('application/json');
+
+  if (locals.user) {
+    const emailGate = guardConfirmedEmail(locals.user);
+    if (emailGate) {
+      if (acceptsJson) return emailGate;
+      return errorResponse(403, 'Confirme seu e-mail para baixar documentos.', acceptsJson);
+    }
+  }
 
   if (!id) {
     return errorResponse(400, 'ID da análise é obrigatório.', acceptsJson);
