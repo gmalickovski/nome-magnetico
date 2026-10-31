@@ -3,6 +3,7 @@ import { buildResultadoDockLayout } from './mobile-dock-screen.js';
 import { MobileChatDock } from './MobileChatDock.js';
 import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
+import { navigateClientAreaBack } from '../../../lib/app-nav-back.js';
 
 export interface ResultadoMobileDockProps {
   analysisId: string;
@@ -29,8 +30,8 @@ export function ResultadoMobileDock({
   );
 
   const handleBack = () => {
-    capturePostHogEvent('back_clicked', { screen: 'resultado', step: productType });
-    window.location.href = '/app/analises';
+    const destination = navigateClientAreaBack();
+    capturePostHogEvent('back_clicked', { screen: 'resultado', step: productType, destination });
   };
 
   const handleSecondary = async (action: DockSecondaryActionId, position: number) => {

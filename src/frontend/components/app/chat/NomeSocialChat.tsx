@@ -99,6 +99,7 @@ import { ChatPaywallStickyDesktop } from './ChatPaywallStickyDesktop.js';
 import { ChatPaywallSidebarCta } from './ChatPaywallSidebarCta.js';
 import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-engine/chat-profile-copy.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
+import { navigateClientAreaBack } from '../../../lib/app-nav-back.js';
 import { fetchWithAuth } from '../../../lib/auth-fetch.js';
 import { Button } from '../../ui/Button.js';
 import { Modal } from '../../ui/Modal.js';
@@ -499,9 +500,10 @@ export function NomeSocialChat({
 
   const handleChatDockBack = () => {
     const screen = chatDockScreen ?? 'chat_questionnaire';
-    capturePostHogEvent('back_clicked', { screen, step: currentStepId, destination: 'app_home' });
-    flushChatSessionToStorage();
-    window.location.href = '/app';
+    const destination = navigateClientAreaBack({
+      beforeLeave: flushChatSessionToStorage,
+    });
+    capturePostHogEvent('back_clicked', { screen, step: currentStepId, destination });
   };
 
   const appendUserBubble = (content: string, stepId: string) => {

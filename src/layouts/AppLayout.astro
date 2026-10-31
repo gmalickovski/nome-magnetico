@@ -170,7 +170,7 @@ const navSuporteActive = isActive('/app/suporte');
     >
       <div class="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-12 h-full flex items-center relative">
         {!chatCompactMobileHeader && pathname !== '/app' && pathname !== '/app/' && (
-          <button onclick="window.history.length > 1 ? window.history.back() : window.location.href='/app'" class="text-[#D4AF37] hover:text-[#f2ca50] transition-colors md:hidden absolute left-4 z-10 p-1">
+          <button type="button" data-nm-app-back class="text-[#D4AF37] hover:text-[#f2ca50] transition-colors md:hidden absolute left-4 z-10 p-1">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
         )}
@@ -228,6 +228,18 @@ const navSuporteActive = isActive('/app/suporte');
     left: var(--sidebar-w, 80px);
   }
 </style>
+
+<script>
+  import { navigateClientAreaBack, recordAppNavigationPath } from '../frontend/lib/app-nav-back.ts';
+
+  recordAppNavigationPath();
+
+  document.querySelectorAll('[data-nm-app-back]').forEach((el) => {
+    el.addEventListener('click', () => {
+      navigateClientAreaBack();
+    });
+  });
+</script>
 
 <script>
   (function () {
