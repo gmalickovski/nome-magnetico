@@ -61,6 +61,9 @@ export type MessageSender = 'assistant' | 'user';
 
 export type MessageType =
   | 'text'
+  | 'text_input'
+  | 'date_input'
+  | 'profile_confirm'
   | 'birth_card'
   | 'guess'
   | 'pills'
@@ -95,10 +98,11 @@ export interface DecideLiveResponse {
   next_step: string;
   remaining: number;
   reading: string;
-  radarAxes: RadarAxesData;
+  radarAxes: RadarAxesData | null;
   summary: ReadingSummaryItem[];
-  panel: ResultPanelData;
+  panel?: ResultPanelData;
   previewTop3: CandidateSuggestion[];
   analysisId?: string;
   next_question?: NextQuestionSpec;
+  providerUsed?: string;
 }

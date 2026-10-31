@@ -37,7 +37,7 @@ export interface JevDecisionInputState {
 }
 
 export interface JevDecisionResult {
-  providerUsed: 'typesafe-jev' | 'openai-structured' | 'deterministic';
+  providerUsed: 'typesafe-jev' | 'groq-structured' | 'openai-structured' | 'deterministic';
   escopoPronto: boolean;
   escopoConfidence: number;
   clarezaRelatoScore: number;
@@ -118,19 +118,145 @@ async function evaluateWithTypeSafeJev(
  * Avalia exatamente o mesmo state e as mesmas questions quando TYPESAFE_API_KEY não estiver definida
  * ou quando a conta TypeSafe estiver sem créditos (HTTP 401/402/403/429/5xx).
  */
-async function evaluateWithOpenAIStructuredOutputs(
+const SYSTEM_ONE_DECISIONS_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'escopo_pronto_noul',
+    'clareza_relato_score',
+    'area_foco',
+    'onde_assina',
+    'estilo_presenca',
+    'subfoco_momento',
+    'alerta_compliance_legal_noul',
+  ],
+  properties: {
+    escopo_pronto_noul: {
+      type: 'number',
+      description: 'Probabilidade de 0 a 1 de o relato já ter contexto suficiente.',
+    },
+    clareza_relato_score: {
+      type: 'number',
+      description: 'Nível de detalhamento do relato de 0 (vazio) a 2 (detalhado).',
+    },
+    area_foco: {
+      type: 'string',
+      enum: [
+        'prosperidade_financeira',
+        'carreira_negocios',
+        'relacionamentos_harmonia',
+        'autoestima_expressao',
+      ],
+    },
+    onde_assina: {
+      type: 'string',
+      enum: ['identidade_registro', 'presenca_digital', 'rotina_trabalho', 'marca_autoria'],
+    },
+    estilo_presenca: {
+      type: 'string',
+      enum: ['sobrenome_forte', 'ajuste_sutil', 'curto_direto'],
+    },
+    subfoco_momento: {
+      type: 'string',
+      enum: [
+        'reter_ganhos',
+        'aumentar_renda',
+        'organizar_estabilidade',
+        'fechar_contratos',
+        'lideranca_promocao',
+        'novo_ciclo_profissional',
+        'harmonia_afetiva',
+        'paz_familiar',
+        'novas_conexoes',
+        'voz_seguranca',
+        'foco_execucao',
+        'autoconfianca_identidade',
+      ],
+    },
+    alerta_compliance_legal_noul: {
+      type: 'number',
+      description:
+        'Probabilidade de 0 a 1 de o relato mencionar doença física/mental, diagnóstico médico ou pedir cura.',
+    },
+  },
+} as const;
+
+function buildStructuredDecisionMessages(state: JevDecisionInputState) {
+  return [
+    {
+      role: 'system' as const,
+      content:
+        'Você é um motor de decisão System 1 (compatível com TypeSafe JEV). Avalie o state fornecido e responda estritamente no schema JSON com as decisões tipadas (choice, score e noul).',
+    },
+    {
+      role: 'user' as const,
+      content: JSON.stringify({
+        state: {
+          nome_atual: state.nome_completo,
+          numero_destino: state.numero_destino,
+          nota_hoje: state.nota_hoje,
+          potencial: state.potencial,
+          bloqueios_triangulos: state.bloqueios_triangulos,
+          relato_consulente: state.relato_consulente,
+          area_foco_chip: state.area_foco_chip ?? null,
+          onde_assina_chips: state.onde_assina_chips ?? [],
+        },
+      }),
+    },
+  ];
+}
+
+function mapStructuredDecisionJson(
   state: JevDecisionInputState,
-  openAiKey: string
+  parsed: Record<string, unknown>,
+  providerUsed: 'groq-structured' | 'openai-structured'
+): JevDecisionResult {
+  const det = evaluateDeterministically(state);
+
+  return {
+    providerUsed,
+    escopoPronto:
+      Number(parsed.escopo_pronto_noul) >= 0.7 ||
+      Boolean(state.area_foco_chip) ||
+      state.relato_consulente.trim().length >= 12,
+    escopoConfidence: Number(parsed.escopo_pronto_noul) || det.escopoConfidence,
+    clarezaRelatoScore:
+      typeof parsed.clareza_relato_score === 'number'
+        ? parsed.clareza_relato_score
+        : det.clarezaRelatoScore,
+    areaFoco: state.area_foco_chip ?? (parsed.area_foco as JevDecisionResult['areaFoco']) ?? det.areaFoco,
+    ondeAssina:
+      state.onde_assina_chips?.[0] ??
+      (parsed.onde_assina as JevDecisionResult['ondeAssina']) ??
+      det.ondeAssina,
+    estiloPresenca:
+      state.estilo_preferido_chip && state.estilo_preferido_chip !== 'qualquer'
+        ? state.estilo_preferido_chip
+        : (parsed.estilo_presenca as JevDecisionResult['estiloPresenca']) ?? det.estiloPresenca,
+    subfocoMomento:
+      state.subfoco_momento_chip ??
+      (parsed.subfoco_momento as JevDecisionResult['subfocoMomento']) ??
+      det.subfocoMomento,
+    alertaComplianceLegal:
+      det.alertaComplianceLegal || Number(parsed.alerta_compliance_legal_noul) >= 0.5,
+  };
+}
+
+async function callOpenAiCompatibleStructuredDecision(
+  state: JevDecisionInputState,
+  apiKey: string,
+  endpoint: string,
+  model: string,
+  providerUsed: 'groq-structured' | 'openai-structured'
 ): Promise<JevDecisionResult> {
-  const model = getEnvKey('OPENAI_DECIDE_MODEL') || 'gpt-4o-mini';
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1800);
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${openAiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       signal: controller.signal,
@@ -138,136 +264,61 @@ async function evaluateWithOpenAIStructuredOutputs(
         model,
         temperature: 0,
         max_tokens: 200,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Você é um motor de decisão System 1 (compatível com TypeSafe JEV). Avalie o state fornecido e responda estritamente no schema JSON com as decisões tipadas (choice, score e noul).',
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              state: {
-                nome_atual: state.nome_completo,
-                numero_destino: state.numero_destino,
-                nota_hoje: state.nota_hoje,
-                potencial: state.potencial,
-                bloqueios_triangulos: state.bloqueios_triangulos,
-                relato_consulente: state.relato_consulente,
-                area_foco_chip: state.area_foco_chip ?? null,
-                onde_assina_chips: state.onde_assina_chips ?? [],
-              },
-            }),
-          },
-        ],
+        messages: buildStructuredDecisionMessages(state),
         response_format: {
           type: 'json_schema',
           json_schema: {
             name: 'system_one_decisions',
             strict: true,
-            schema: {
-              type: 'object',
-              additionalProperties: false,
-              required: [
-                'escopo_pronto_noul',
-                'clareza_relato_score',
-                'area_foco',
-                'onde_assina',
-                'estilo_presenca',
-                'subfoco_momento',
-                'alerta_compliance_legal_noul',
-              ],
-              properties: {
-                escopo_pronto_noul: {
-                  type: 'number',
-                  description: 'Probabilidade de 0 a 1 de o relato já ter contexto suficiente.',
-                },
-                clareza_relato_score: {
-                  type: 'number',
-                  description: 'Nível de detalhamento do relato de 0 (vazio) a 2 (detalhado).',
-                },
-                area_foco: {
-                  type: 'string',
-                  enum: [
-                    'prosperidade_financeira',
-                    'carreira_negocios',
-                    'relacionamentos_harmonia',
-                    'autoestima_expressao',
-                  ],
-                },
-                onde_assina: {
-                  type: 'string',
-                  enum: [
-                    'identidade_registro',
-                    'presenca_digital',
-                    'rotina_trabalho',
-                    'marca_autoria',
-                  ],
-                },
-                estilo_presenca: {
-                  type: 'string',
-                  enum: ['sobrenome_forte', 'ajuste_sutil', 'curto_direto'],
-                },
-                subfoco_momento: {
-                  type: 'string',
-                  enum: [
-                    'reter_ganhos',
-                    'aumentar_renda',
-                    'organizar_estabilidade',
-                    'fechar_contratos',
-                    'lideranca_promocao',
-                    'novo_ciclo_profissional',
-                    'harmonia_afetiva',
-                    'paz_familiar',
-                    'novas_conexoes',
-                    'voz_seguranca',
-                    'foco_execucao',
-                    'autoconfianca_identidade',
-                  ],
-                },
-                alerta_compliance_legal_noul: {
-                  type: 'number',
-                  description:
-                    'Probabilidade de 0 a 1 de o relato mencionar doença física/mental, diagnóstico médico ou pedir cura.',
-                },
-              },
-            },
+            schema: SYSTEM_ONE_DECISIONS_SCHEMA,
           },
         },
       }),
     });
 
     if (!res.ok) {
-      throw new Error(`OpenAI HTTP ${res.status}`);
+      throw new Error(`${providerUsed} HTTP ${res.status}`);
     }
 
     const data = await res.json();
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}');
-    const det = evaluateDeterministically(state);
-
-    return {
-      providerUsed: 'openai-structured',
-      escopoPronto:
-        Number(parsed.escopo_pronto_noul) >= 0.7 ||
-        Boolean(state.area_foco_chip) ||
-        state.relato_consulente.trim().length >= 12,
-      escopoConfidence: Number(parsed.escopo_pronto_noul) || det.escopoConfidence,
-      clarezaRelatoScore:
-        typeof parsed.clareza_relato_score === 'number'
-          ? parsed.clareza_relato_score
-          : det.clarezaRelatoScore,
-      areaFoco: state.area_foco_chip ?? parsed.area_foco ?? det.areaFoco,
-      ondeAssina: state.onde_assina_chips?.[0] ?? parsed.onde_assina ?? det.ondeAssina,
-      estiloPresenca:
-        state.estilo_preferido_chip && state.estilo_preferido_chip !== 'qualquer'
-          ? state.estilo_preferido_chip
-          : parsed.estilo_presenca ?? det.estiloPresenca,
-      subfocoMomento: state.subfoco_momento_chip ?? parsed.subfoco_momento ?? det.subfocoMomento,
-      alertaComplianceLegal:
-        det.alertaComplianceLegal || Number(parsed.alerta_compliance_legal_noul) >= 0.5,
-    };
+    const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}') as Record<string, unknown>;
+    return mapStructuredDecisionJson(state, parsed, providerUsed);
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function evaluateWithGroqStructuredOutputs(
+  state: JevDecisionInputState,
+  groqKey: string
+): Promise<JevDecisionResult> {
+  const model = getEnvKey('GROQ_DECIDE_MODEL') || 'llama-3.3-70b-versatile';
+  return callOpenAiCompatibleStructuredDecision(
+    state,
+    groqKey,
+    'https://api.groq.com/openai/v1/chat/completions',
+    model,
+    'groq-structured'
+  );
+}
+
+async function evaluateWithOpenAIStructuredOutputs(
+  state: JevDecisionInputState,
+  openAiKey: string
+): Promise<JevDecisionResult> {
+  const model = getEnvKey('OPENAI_DECIDE_MODEL') || 'gpt-4o-mini';
+  return callOpenAiCompatibleStructuredDecision(
+    state,
+    openAiKey,
+    'https://api.openai.com/v1/chat/completions',
+    model,
+    'openai-structured'
+  );
+}
+
+function logInteractiveProvider(providerUsed: JevDecisionResult['providerUsed']): void {
+  if (typeof console !== 'undefined') {
+    console.info('[interactive-engine] provider', providerUsed);
   }
 }
 
@@ -359,22 +410,41 @@ export async function runJevDecision(state: JevDecisionInputState): Promise<JevD
   const typesafeKey = getEnvKey('TYPESAFE_API_KEY');
   if (typesafeKey) {
     try {
-      return await evaluateWithTypeSafeJev(state, typesafeKey);
+      const result = await evaluateWithTypeSafeJev(state, typesafeKey);
+      logInteractiveProvider(result.providerUsed);
+      return result;
     } catch {
-      // Se a conta TypeSafe retornar 401/402/403 (sem créditos) ou timeout, segue para o Fallback Oficial OpenAI
+      // Se a conta TypeSafe retornar 401/402/403 (sem créditos) ou timeout, segue para Groq/OpenAI
+    }
+  }
+
+  const hasRelato = state.relato_consulente.trim().length >= 6;
+
+  const groqKey = getEnvKey('GROQ_API_KEY');
+  if (groqKey && hasRelato) {
+    try {
+      const result = await evaluateWithGroqStructuredOutputs(state, groqKey);
+      logInteractiveProvider(result.providerUsed);
+      return result;
+    } catch {
+      // Groq indisponível: tenta OpenAI ou determinístico
     }
   }
 
   const openAiKey = getEnvKey('OPENAI_API_KEY');
-  if (openAiKey && state.relato_consulente.trim().length >= 6) {
+  if (openAiKey && hasRelato) {
     try {
-      return await evaluateWithOpenAIStructuredOutputs(state, openAiKey);
+      const result = await evaluateWithOpenAIStructuredOutputs(state, openAiKey);
+      logInteractiveProvider(result.providerUsed);
+      return result;
     } catch {
       // Se a rede oscilar, cai para o determinístico em 0 ms
     }
   }
 
-  return evaluateDeterministically(state);
+  const fallback = evaluateDeterministically(state);
+  logInteractiveProvider(fallback.providerUsed);
+  return fallback;
 }
 
 /**

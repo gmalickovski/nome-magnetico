@@ -10,7 +10,7 @@ if (!user) return Astro.redirect('/auth/login');
 const client = createUserClient(Astro.locals.accessToken ?? '');
 const { data: profile } = await client
   .from('profiles')
-  .select('birth_name, birth_date, role')
+  .select('birth_name, birth_date, gender, role')
   .eq('id', user.id)
   .single();
 
@@ -27,6 +27,7 @@ function dbDateToInput(dbDate: string | null): string {
 
 const nomeInicial = profile?.birth_name ?? '';
 const dataInicial = dbDateToInput(profile?.birth_date ?? '');
+const generoInicial = profile?.gender ?? '';
 ---
 
 <AppLayout title="Análise de Nome Social">
@@ -35,6 +36,7 @@ const dataInicial = dbDateToInput(profile?.birth_date ?? '');
       client:load
       birthName={nomeInicial}
       birthDate={dataInicial}
+      profileGender={generoInicial}
       userId={user.id}
     />
   </div>

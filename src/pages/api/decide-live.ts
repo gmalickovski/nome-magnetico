@@ -277,6 +277,8 @@ export const POST: APIRoute = async ({ request }) => {
       palpiteStatus: palpite_status,
     });
 
+    console.info('[api/decide-live] providerUsed', decision.providerUsed);
+
     return new Response(
       JSON.stringify({
         notaHoje,

@@ -217,6 +217,64 @@ describe('DEV-235 · Motor Interativo JEV (@typesafe-ai/sdk) + Filtros Mobile-Fi
     }
   });
 
+  it('runJevDecision usa Groq structured quando sem TYPESAFE_API_KEY e GROQ responde', async () => {
+    const prevTsKey = process.env.TYPESAFE_API_KEY;
+    const prevGroqKey = process.env.GROQ_API_KEY;
+    const prevOaKey = process.env.OPENAI_API_KEY;
+    delete process.env.TYPESAFE_API_KEY;
+    process.env.GROQ_API_KEY = 'gsk-fake-key';
+    delete process.env.OPENAI_API_KEY;
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('api.groq.com')) {
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    escopo_pronto_noul: 0.82,
+                    clareza_relato_score: 2,
+                    area_foco: 'carreira_negocios',
+                    onde_assina: 'presenca_digital',
+                    estilo_presenca: 'curto_direto',
+                    subfoco_momento: 'fechar_contratos',
+                    alerta_compliance_legal_noul: 0.1,
+                  }),
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      return originalFetch(input, init);
+    }) as typeof fetch;
+
+    try {
+      const res = await runJevDecision({
+        nome_completo: 'Guilherme Malickovski Correa',
+        numero_destino: 8,
+        nota_hoje: 68,
+        potencial: 95,
+        bloqueios_triangulos: ['111'],
+        relato_consulente: 'Quero fechar mais contratos usando minha assinatura no Instagram',
+      });
+      assert.equal(res.providerUsed, 'groq-structured');
+      assert.equal(res.areaFoco, 'carreira_negocios');
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (prevTsKey === undefined) delete process.env.TYPESAFE_API_KEY;
+      else process.env.TYPESAFE_API_KEY = prevTsKey;
+      if (prevGroqKey === undefined) delete process.env.GROQ_API_KEY;
+      else process.env.GROQ_API_KEY = prevGroqKey;
+      if (prevOaKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = prevOaKey;
+    }
+  });
+
   it('evaluateDeterministically e runJevDecision inferem área, canal e subfoco corretamente', async () => {
     const prevTsKey = process.env.TYPESAFE_API_KEY;
     const prevOaKey = process.env.OPENAI_API_KEY;

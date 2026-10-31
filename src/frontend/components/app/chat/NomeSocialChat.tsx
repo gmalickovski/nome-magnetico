@@ -5,144 +5,219 @@ import type {
   RadarAxesData,
   ReadingSummaryItem,
   CandidateSuggestion,
-  NextQuestionSpec,
   DecideLiveResponse,
 } from './chat-types.js';
 import { ChatHeader } from './ChatHeader.js';
 import { ChatProgress } from './ChatProgress.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
-import { ChatInput } from './ChatInput.js';
-import { PillGroup, type PillOption } from './PillGroup.js';
+import { PillGroup } from './PillGroup.js';
 import { GuessButtons } from './GuessButtons.js';
-import { BirthNameCard } from './BirthNameCard.js';
-import { SummaryCard } from './SummaryCard.js';
-import { ReadingRadar } from './ReadingRadar.js';
 import { SummaryDrawer } from './SummaryDrawer.js';
-import { ResultPanel } from './ResultPanel.js';
+import { ChatInlineDateReply } from './ChatInlineDateReply.js';
+import { ChatProfileConfirmBlock } from './ChatProfileConfirmBlock.js';
+import {
+  validateBirthDate,
+  validateBirthName,
+  validateGender,
+} from './chat-onboarding-validation.js';
 import { SuggestionPicker } from './SuggestionPicker.js';
+import { ChatSidebarSection } from './ChatSidebarSection.js';
+import { ChatInlineTextReply } from './ChatInlineTextReply.js';
+import {
+  INITIAL_COLLECT_STATE,
+  applyAnswerToCollectState,
+  buildDecideLiveBody,
+  mapDecideLiveResponse,
+  mergeCollectFromApi,
+  shouldShowRadar,
+  shouldShowSummary,
+  type ChatCollectState,
+} from './decide-live-bridge.js';
 
 export interface NomeSocialChatProps {
   birthName?: string;
   birthDate?: string;
+  profileGender?: string;
   userId?: string;
 }
 
-const DEFAULT_AXES: RadarAxesData = {
-  momento: 0.3,
-  objetivo: 0.3,
-  uso: 0.3,
-  apego_sobrenome: 0.5,
-  urgencia: 0.3,
-};
+const GENDER_OPTIONS = [
+  { id: 'Feminino', label: 'Feminino' },
+  { id: 'Masculino', label: 'Masculino' },
+  { id: 'Neutro', label: 'Prefiro não informar / Outro' },
+];
 
-const DEFAULT_PANEL: ResultPanelData = {
-  nome: 'Aguardando confirmação',
-  score: 48,
-  expressao: 0,
-  destino: 0,
-  motivacao: 0,
-  impressao: 0,
-  potencial: 0,
-  bloqueiosCount: 0,
-  bloqueios: [],
-  trianguloVida: { topo: 0, base: [] },
-};
+function buildInitialOnboardingMessages(birthName: string, birthDate: string): ChatMessage[] {
+  const welcome: ChatMessage = {
+    id: 'msg-welcome',
+    sender: 'assistant',
+    type: 'text',
+    eyebrow: 'BEM-VINDO AO NOME MAGNÉTICO',
+    content:
+      'Olá. Vamos construir juntos uma assinatura equilibrada e sem bloqueios, feita sob medida para os seus objetivos.',
+  };
+
+  if (birthName.trim() && birthDate.trim()) {
+    return [
+      welcome,
+      {
+        id: 'msg-profile-confirm',
+        sender: 'assistant',
+        type: 'profile_confirm',
+        stepId: 'onboarding_confirm',
+        eyebrow: 'CERTIDÃO DE NASCIMENTO',
+        wide: true,
+        content: 'Antes de começarmos, vamos confirmar seus dados de certidão.',
+      },
+    ];
+  }
+
+  return [
+    welcome,
+    {
+      id: 'msg-ask-nome',
+      sender: 'assistant',
+      type: 'text_input',
+      stepId: 'onboarding_nome',
+      eyebrow: 'CERTIDÃO DE NASCIMENTO',
+      wide: true,
+      content: 'Como está seu nome completo exatamente na certidão de nascimento?',
+    },
+  ];
+}
+
+function isOnboardingStepId(stepId?: string): boolean {
+  return Boolean(stepId?.startsWith('onboarding_'));
+}
+
+function isInteractionPending(
+  msg: ChatMessage,
+  currentStepId: string,
+  answers: Record<string, string>,
+  birthConfirmed: boolean
+): boolean {
+  if (!msg.stepId || birthConfirmed) return false;
+  if (isOnboardingStepId(msg.stepId)) {
+    return !answers[msg.stepId];
+  }
+  if (!birthConfirmed) return false;
+  return msg.stepId === currentStepId && !answers[msg.stepId];
+}
 
 export function NomeSocialChat({
   birthName: initialBirthName = '',
   birthDate: initialBirthDate = '',
+  profileGender: initialProfileGender = '',
   userId = '',
 }: NomeSocialChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [confirmedName, setConfirmedName] = useState(initialBirthName);
   const [confirmedDate, setConfirmedDate] = useState(initialBirthDate);
+  const [draftNome, setDraftNome] = useState(initialBirthName);
+  const [draftDate, setDraftDate] = useState(initialBirthDate);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [currentStepId, setCurrentStepId] = useState('nome_data');
+  const [currentStepId, setCurrentStepId] = useState('nome_nascimento');
   const [remaining, setRemaining] = useState(7);
   const totalSteps = 8;
 
-  const [radarAxes, setRadarAxes] = useState<RadarAxesData>(DEFAULT_AXES);
+  const [birthConfirmed, setBirthConfirmed] = useState(false);
+  const [collectState, setCollectState] = useState<ChatCollectState>(INITIAL_COLLECT_STATE);
+  const [sobrenomesDetectados, setSobrenomesDetectados] = useState<string[]>([]);
+  const [radarAxes, setRadarAxes] = useState<RadarAxesData | null>(null);
   const [summaryItems, setSummaryItems] = useState<ReadingSummaryItem[]>([]);
-  const [basePanel, setBasePanel] = useState<ResultPanelData>(DEFAULT_PANEL);
+  const [basePanel, setBasePanel] = useState<ResultPanelData | null>(null);
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
 
-  const [activePillOptions, setActivePillOptions] = useState<PillOption[]>([]);
-  const [activeGuess, setActiveGuess] = useState<string | null>(null);
-  const [inputPlaceholder, setInputPlaceholder] = useState('Digite sua resposta...');
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [draftGender, setDraftGender] = useState(initialProfileGender);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll para o final da lista de mensagens
   const scrollToBottom = () => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, activePillOptions, activeGuess]);
+  }, [messages, loading]);
 
-  // Mensagem inicial de acolhimento e confirmação dos dados de certidão
   useEffect(() => {
-    setMessages([
+    setDraftNome(initialBirthName);
+    setDraftDate(initialBirthDate);
+    setDraftGender(initialProfileGender);
+    setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
+  }, [initialBirthName, initialBirthDate, initialProfileGender]);
+
+  const appendUserBubble = (content: string, stepId: string) => {
+    setMessages((prev) => [
+      ...prev,
       {
-        id: 'msg-welcome',
-        sender: 'assistant',
+        id: `user-${Date.now()}`,
+        sender: 'user',
         type: 'text',
-        eyebrow: 'BEM-VINDO AO NOME MAGNÉTICO',
-        content:
-          'Olá. Vamos construir juntos uma assinatura equilibrada e sem bloqueios, feita sob medida para os seus objetivos.',
-      },
-      {
-        id: 'msg-birth-card',
-        sender: 'assistant',
-        type: 'birth_card',
-        wide: true,
-        content: '',
+        content,
+        stepId,
       },
     ]);
-  }, []);
+  };
 
-  // Confirmação do nome e data de nascimento
-  const handleConfirmBirthData = async (data: { nome: string; dataNascimento: string }) => {
-    setConfirmedName(data.nome);
-    setConfirmedDate(data.dataNascimento);
+  const saveBaseProfile = async (nome: string, dataNascimento: string, gender: string) => {
+    const res = await fetch('/api/user/save-base-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        birth_name: nome.trim(),
+        birth_date: dataNascimento,
+        gender,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Erro ao salvar perfil');
+    }
+  };
 
-    // Adiciona balão do usuário confirmando
-    const userMsg: ChatMessage = {
-      id: `user-birth-${Date.now()}`,
-      sender: 'user',
-      type: 'text',
-      content: `${data.nome} · ${data.dataNascimento}`,
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+  const runDecideLive = async (nome: string, dataNascimento: string) => {
+    setConfirmedName(nome);
+    setConfirmedDate(dataNascimento);
     setLoading(true);
+    setOnboardingError(null);
 
     try {
       const res = await fetch('/api/decide-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthName: data.nome,
-          birthDate: data.dataNascimento,
-          currentStep: 'nome_data',
-          answers: {},
-          userId,
-        }),
+        body: JSON.stringify(
+          buildDecideLiveBody(nome, dataNascimento, {
+            ...INITIAL_COLLECT_STATE,
+            sobrenomesDecididos: false,
+          })
+        ),
       });
 
       if (!res.ok) throw new Error('Falha ao processar resposta inicial');
-      const responseData: DecideLiveResponse = await res.json();
+      const raw = await res.json();
+      if (raw.error) throw new Error(raw.error);
+      const responseData = mapDecideLiveResponse(raw);
+      if (Array.isArray(raw.sobrenomesDetectados)) {
+        setSobrenomesDetectados(raw.sobrenomesDetectados);
+      }
+      setBirthConfirmed(true);
+      const mergedCollect = mergeCollectFromApi(INITIAL_COLLECT_STATE, raw);
+      setCollectState(mergedCollect);
+      if (shouldShowRadar(mergedCollect) && responseData.radarAxes) {
+        setRadarAxes(responseData.radarAxes);
+      }
 
-      applyDecisionResponse(responseData, 'nome_data');
+      applyDecisionResponse(responseData);
     } catch (err) {
       console.error(err);
       setMessages((prev) => [
@@ -159,24 +234,178 @@ export function NomeSocialChat({
     }
   };
 
-  // Aplica o retorno de /api/decide-live no estado
-  const applyDecisionResponse = (data: DecideLiveResponse, previousStepId: string) => {
-    if (data.radarAxes) setRadarAxes(data.radarAxes);
+  const finalizeOnboarding = async (nome: string, dataNascimento: string, gender: string) => {
+    const genderErr = validateGender(gender);
+    if (genderErr) {
+      setOnboardingError(genderErr);
+      return;
+    }
+
+    setAnswers((prev) => ({
+      ...prev,
+      onboarding_confirm: 'ok',
+      onboarding_done: `${nome} · ${dataNascimento}`,
+    }));
+    setOnboardingError(null);
+
+    try {
+      const mustSave =
+        !initialBirthName ||
+        !initialBirthDate ||
+        gender !== initialProfileGender ||
+        nome.trim() !== initialBirthName.trim() ||
+        dataNascimento !== initialBirthDate;
+      if (mustSave) {
+        setLoading(true);
+        await saveBaseProfile(nome, dataNascimento, gender);
+      }
+      await runDecideLive(nome, dataNascimento);
+    } catch (err) {
+      setOnboardingError(err instanceof Error ? err.message : 'Erro ao salvar dados.');
+      setLoading(false);
+    }
+  };
+
+  const handleOnboardingNome = (text: string) => {
+    const err = validateBirthName(text);
+    if (err) {
+      setOnboardingError(err);
+      return;
+    }
+    setOnboardingError(null);
+    const nome = text.trim();
+    setConfirmedName(nome);
+    setDraftNome(nome);
+    setAnswers((prev) => ({ ...prev, onboarding_nome: nome }));
+    appendUserBubble(nome, 'onboarding_nome');
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ask-data-${Date.now()}`,
+        sender: 'assistant',
+        type: 'date_input',
+        stepId: 'onboarding_data',
+        eyebrow: 'DATA DE NASCIMENTO',
+        wide: true,
+        content: 'Qual a sua data de nascimento, no formato da certidão?',
+      },
+    ]);
+  };
+
+  const handleOnboardingData = (dataNascimento: string) => {
+    const err = validateBirthDate(dataNascimento);
+    if (err) {
+      setOnboardingError(err);
+      return;
+    }
+    setOnboardingError(null);
+    setConfirmedDate(dataNascimento);
+    setDraftDate(dataNascimento);
+    setAnswers((prev) => ({ ...prev, onboarding_data: dataNascimento }));
+    appendUserBubble(dataNascimento, 'onboarding_data');
+
+    const nomeAtual = (confirmedName || draftNome).trim();
+    const genderKnown = Boolean(draftGender || initialProfileGender);
+    if (genderKnown) {
+      void finalizeOnboarding(nomeAtual, dataNascimento, draftGender || initialProfileGender);
+      return;
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ask-gender-${Date.now()}`,
+        sender: 'assistant',
+        type: 'pills',
+        stepId: 'onboarding_gender',
+        eyebrow: 'SEXO / GÊNERO',
+        wide: true,
+        content: 'Por último, qual sexo / gênero você prefere usar nesta leitura?',
+        options: GENDER_OPTIONS,
+      },
+    ]);
+  };
+
+  const handleOnboardingGender = (label: string, genderId: string) => {
+    const err = validateGender(genderId);
+    if (err) {
+      setOnboardingError(err);
+      return;
+    }
+    setOnboardingError(null);
+    setDraftGender(genderId);
+    setAnswers((prev) => ({ ...prev, onboarding_gender: genderId }));
+    appendUserBubble(label, 'onboarding_gender');
+    void finalizeOnboarding((confirmedName || draftNome).trim(), draftDate, genderId);
+  };
+
+  const askOnboardingGender = () => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ask-gender-${Date.now()}`,
+        sender: 'assistant',
+        type: 'pills',
+        stepId: 'onboarding_gender',
+        eyebrow: 'SEXO / GÊNERO',
+        wide: true,
+        content: 'Por último, qual sexo / gênero você prefere usar nesta leitura?',
+        options: GENDER_OPTIONS,
+      },
+    ]);
+  };
+
+  const handleConfirmExistingProfile = () => {
+    setAnswers((prev) => ({ ...prev, onboarding_confirm: 'ok' }));
+    appendUserBubble(`${draftNome} · ${draftDate}`, 'onboarding_confirm');
+    const gender = draftGender || initialProfileGender;
+    if (!gender) {
+      askOnboardingGender();
+      return;
+    }
+    void finalizeOnboarding(draftNome.trim(), draftDate, gender);
+  };
+
+  const handleEditExistingProfile = () => {
+    setAnswers({});
+    setConfirmedName('');
+    setConfirmedDate('');
+    setDraftNome(initialBirthName);
+    setDraftDate(initialBirthDate);
+    setDraftGender(initialProfileGender);
+    setBirthConfirmed(false);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ask-nome-edit-${Date.now()}`,
+        sender: 'assistant',
+        type: 'text_input',
+        stepId: 'onboarding_nome',
+        eyebrow: 'CERTIDÃO DE NASCIMENTO',
+        wide: true,
+        content: 'Sem problemas. Digite novamente seu nome completo de certidão.',
+      },
+    ]);
+  };
+
+  const applyDecisionResponse = (data: DecideLiveResponse) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.panel) setBasePanel(data.panel);
     if (data.remaining !== undefined) setRemaining(data.remaining);
     if (data.analysisId) setAnalysisId(data.analysisId);
+    if (data.providerUsed) {
+      console.info('[chat] motor interativo:', data.providerUsed);
+    }
 
     if (data.previewTop3 && data.previewTop3.length > 0) {
       setSuggestions(data.previewTop3);
     }
 
     setCurrentStepId(data.next_step);
-    setStepIndex((prev) => prev + 1);
+    setStepIndex(Math.max(1, totalSteps - data.remaining));
 
     const newMsgs: ChatMessage[] = [];
 
-    // Se houve leitura ou hipótese retornada pelo motor
     if (data.reading) {
       newMsgs.push({
         id: `reading-${Date.now()}`,
@@ -187,36 +416,28 @@ export function NomeSocialChat({
       });
     }
 
-    // Pergunta ou conclusão subsequente
     if (data.next_question) {
       const q = data.next_question;
+      const msgType =
+        q.tipo === 'palpite' ? 'guess' : q.tipo === 'escolha' ? 'pills' : 'text_input';
+
       newMsgs.push({
         id: `q-${Date.now()}`,
         sender: 'assistant',
-        type: q.tipo === 'palpite' ? 'guess' : 'text',
+        type: msgType,
+        stepId: data.next_step,
         eyebrow: q.eyebrow,
         content: q.prompt,
         hypotheticalText: q.palpiteTexto,
+        options: q.options,
       });
-
-      if (q.options && q.options.length > 0) {
-        setActivePillOptions(q.options);
-      } else {
-        setActivePillOptions([]);
-      }
-
-      if (q.tipo === 'palpite') {
-        setActiveGuess(q.palpiteTexto || q.prompt);
-      } else {
-        setActiveGuess(null);
-      }
-    } else {
-      setActivePillOptions([]);
-      setActiveGuess(null);
     }
 
-    // Se atingiu o passo final com sugestões
-    if (data.next_step === 'conclusao' || (data.previewTop3 && data.previewTop3.length > 0)) {
+    if (
+      data.next_step === 'fim_coleta' ||
+      data.next_step === 'conclusao' ||
+      (data.previewTop3 && data.previewTop3.length > 0)
+    ) {
       newMsgs.push({
         id: `suggestions-${Date.now()}`,
         sender: 'assistant',
@@ -229,16 +450,9 @@ export function NomeSocialChat({
     setMessages((prev) => [...prev, ...newMsgs]);
   };
 
-  // Envio de resposta pelo usuário (texto digitado ou clique em pill)
   const handleUserAnswer = async (text: string, optionId?: string) => {
     if (!text.trim() || loading) return;
 
-    // Reseta pills e palpite ativos da rodada anterior
-    setActivePillOptions([]);
-    setActiveGuess(null);
-    setInputPlaceholder('Digite sua resposta...');
-
-    // Grava resposta no histórico do chat
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
@@ -253,26 +467,38 @@ export function NomeSocialChat({
       [currentStepId]: optionId || text,
     };
     setAnswers(updatedAnswers);
+
+    const nextCollect = applyAnswerToCollectState(
+      collectState,
+      currentStepId,
+      text,
+      optionId,
+      sobrenomesDetectados
+    );
+    setCollectState(nextCollect);
     setLoading(true);
 
     try {
       const res = await fetch('/api/decide-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthName: confirmedName,
-          birthDate: confirmedDate,
-          currentStep: currentStepId,
-          userInput: text,
-          answers: updatedAnswers,
-          userId,
-        }),
+        body: JSON.stringify(buildDecideLiveBody(confirmedName, confirmedDate, nextCollect)),
       });
 
       if (!res.ok) throw new Error('Erro ao processar etapa');
-      const responseData: DecideLiveResponse = await res.json();
+      const raw = await res.json();
+      if (raw.error) throw new Error(raw.error);
+      const responseData = mapDecideLiveResponse(raw);
+      if (Array.isArray(raw.sobrenomesDetectados)) {
+        setSobrenomesDetectados(raw.sobrenomesDetectados);
+      }
+      const mergedCollect = mergeCollectFromApi(nextCollect, raw);
+      setCollectState(mergedCollect);
+      if (shouldShowRadar(mergedCollect) && responseData.radarAxes) {
+        setRadarAxes(responseData.radarAxes);
+      }
 
-      applyDecisionResponse(responseData, currentStepId);
+      applyDecisionResponse(responseData);
     } catch (err) {
       console.error(err);
       setMessages((prev) => [
@@ -289,7 +515,6 @@ export function NomeSocialChat({
     }
   };
 
-  // Ações dos botões de palpite
   const handleGuessExact = () => {
     handleUserAnswer('Na mosca');
   };
@@ -298,12 +523,20 @@ export function NomeSocialChat({
     handleUserAnswer('Em parte');
   };
 
-  const handleGuessOther = () => {
-    setActiveGuess(null);
-    setInputPlaceholder('Então, o que é? Conta com as suas palavras...');
+  const handleGuessOther = (messageId: string) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageId
+          ? {
+              ...m,
+              type: 'text_input',
+              content: 'Então, o que é? Conta com as suas palavras...',
+            }
+          : m
+      )
+    );
   };
 
-  // Debounce de live-score enquanto digita
   const handleLiveScore = async (text: string) => {
     if (!text || text.length < 3) return;
     try {
@@ -311,24 +544,38 @@ export function NomeSocialChat({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          birthName: confirmedName,
-          birthDate: confirmedDate,
-          currentStep: currentStepId,
-          userInput: text,
-          answers,
+          text,
+          profile: {
+            nomeCompleto: confirmedName,
+            dataNascimento: confirmedDate,
+            areaFoco: collectState.areaFoco,
+            subfocoMomento: collectState.subfocoMomento,
+            ondeVaiUsar: collectState.ondeAssina,
+            sobrenomesObrigatorios: collectState.sobrenomesObrigatorios,
+            sobrenomesExcluidos: collectState.sobrenomesExcluidos,
+            estiloPreferido: collectState.estiloPreferido,
+            palpiteStatus: collectState.palpiteStatus,
+          },
         }),
       });
-      if (res.ok) {
+      if (res.ok && shouldShowRadar(collectState)) {
         const live = await res.json();
-        if (live.radarAxes) setRadarAxes(live.radarAxes);
-        if (live.summaryPreview) setSummaryItems(live.summaryPreview);
+        const axisList = live.radarAxes as Array<{ key: string; value: number }> | undefined;
+        if (axisList) {
+          setRadarAxes({
+            momento: axisList.find((a) => a.key === 'momento')?.value ?? 0.2,
+            objetivo: axisList.find((a) => a.key === 'objetivo')?.value ?? 0.2,
+            uso: axisList.find((a) => a.key === 'uso')?.value ?? 0.2,
+            apego_sobrenome: axisList.find((a) => a.key === 'apego_sobrenome')?.value ?? 0.5,
+            urgencia: axisList.find((a) => a.key === 'urgencia')?.value ?? 0.3,
+          });
+        }
       }
     } catch {
-      // Endpoint silencioso, falhas de digitação não interrompem a experiência
+      // silencioso
     }
   };
 
-  // Regenerar sugestões com outros filtros
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     try {
@@ -357,57 +604,36 @@ export function NomeSocialChat({
     }
   };
 
-  // Painel ativo: exibe o candidato selecionado ou a base do nome de nascimento
   const activeSuggestion = suggestions.find((s) => s.id === activeSuggestionId);
   const displayedPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
+  const showRadarPanel = shouldShowRadar(collectState);
+  const showSummaryPanel = shouldShowSummary(summaryItems);
 
   return (
-    <div className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between">
-      {/* Header com orbe mística e botão de resumo no mobile */}
+    <div className="w-full flex flex-col min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
       <ChatHeader
-        summaryCount={summaryItems.length}
+        summaryCount={
+          (displayedPanelData ? 1 : 0) + (showRadarPanel ? 1 : 0) + summaryItems.length
+        }
         onOpenSummary={() => setDrawerOpen(true)}
       />
 
-      {/* Barra de progresso contínua */}
-      <ChatProgress
-        currentStep={stepIndex}
-        totalSteps={totalSteps}
-        remaining={remaining}
-      />
+      <div className="flex-1 min-h-0 w-full max-w-5xl mx-auto px-4 lg:grid lg:grid-cols-[minmax(0,640px)_320px] lg:gap-8">
+        <main className="flex flex-col min-h-0 min-w-0 py-4 lg:py-6">
+          <ChatProgress
+            currentStep={stepIndex}
+            totalSteps={totalSteps}
+            remaining={remaining}
+            className="shrink-0 sticky top-0 z-10 -mx-4 px-4 bg-dark-deeper/95 backdrop-blur-md"
+          />
 
-      {/* Grid Principal: Chat à esquerda e Painel Sticky à direita no Desktop */}
-      <div className="w-full max-w-5xl mx-auto px-4 py-6 flex-1 lg:grid lg:grid-cols-[minmax(0,640px)_320px] lg:gap-8 items-start">
-        {/* Coluna Principal: Fluxo Conversacional */}
-        <main className="flex flex-col w-full min-h-[500px] justify-between">
-          <div className="flex-1 space-y-3 pb-24">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-6 pt-3">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
-                return (
-                  <UserBubble
-                    key={msg.id}
-                    content={msg.content}
-                    onEdit={() => {
-                      // Permite reeditar digitando novamente
-                      setInputPlaceholder(`Corrigindo: "${msg.content}"`);
-                    }}
-                  />
-                );
+                return <UserBubble key={msg.id} content={msg.content} />;
               }
 
-              // Mensagens do Assistente
-              if (msg.type === 'birth_card') {
-                return (
-                  <NmBubble key={msg.id} wide eyebrow="CERTIDÃO DE NASCIMENTO">
-                    <BirthNameCard
-                      initialName={confirmedName}
-                      initialDate={confirmedDate}
-                      onConfirm={handleConfirmBirthData}
-                      disabled={loading}
-                    />
-                  </NmBubble>
-                );
-              }
+              const pending = isInteractionPending(msg, currentStepId, answers, birthConfirmed);
 
               if (msg.type === 'suggestions') {
                 return (
@@ -425,25 +651,79 @@ export function NomeSocialChat({
               }
 
               return (
-                <NmBubble
-                  key={msg.id}
-                  wide={msg.wide}
-                  eyebrow={msg.eyebrow}
-                >
+                <NmBubble key={msg.id} wide={msg.wide} eyebrow={msg.eyebrow}>
                   <p className="text-chat-ink leading-relaxed">{msg.content}</p>
 
-                  {/* Botões do palpite renderizados dentro do balão quando for um palpite */}
-                  {msg.type === 'guess' && activeGuess && (
+                  {msg.hypotheticalText && msg.type === 'guess' && (
+                    <p className="mt-2 text-sm text-chat-muted italic leading-relaxed">
+                      {msg.hypotheticalText}
+                    </p>
+                  )}
+
+                  {pending && msg.type === 'guess' && (
                     <GuessButtons
                       onExact={handleGuessExact}
                       onPartial={handleGuessPartial}
-                      onOther={handleGuessOther}
+                      onOther={() => handleGuessOther(msg.id)}
                       disabled={loading}
+                    />
+                  )}
+
+                  {pending && msg.type === 'profile_confirm' && (
+                    <ChatProfileConfirmBlock
+                      nome={draftNome}
+                      dataNascimento={draftDate}
+                      onConfirm={handleConfirmExistingProfile}
+                      onEdit={handleEditExistingProfile}
+                      disabled={loading}
+                    />
+                  )}
+
+                  {pending && msg.type === 'pills' && msg.options && msg.options.length > 0 && (
+                    <PillGroup
+                      options={msg.options}
+                      onSelect={(opt) =>
+                        msg.stepId === 'onboarding_gender'
+                          ? handleOnboardingGender(opt.label, opt.id)
+                          : handleUserAnswer(opt.label, opt.id)
+                      }
+                      disabled={loading}
+                    />
+                  )}
+
+                  {pending && msg.type === 'date_input' && msg.stepId === 'onboarding_data' && (
+                    <ChatInlineDateReply onSubmit={handleOnboardingData} disabled={loading} />
+                  )}
+
+                  {pending && msg.type === 'text_input' && (
+                    <ChatInlineTextReply
+                      onSend={(text) => {
+                        if (msg.stepId === 'onboarding_nome') {
+                          handleOnboardingNome(text);
+                          return;
+                        }
+                        handleUserAnswer(text);
+                      }}
+                      onLiveScore={birthConfirmed ? handleLiveScore : undefined}
+                      disabled={loading}
+                      placeholder={
+                        msg.stepId === 'onboarding_nome'
+                          ? 'Ex.: Maria da Silva Souza'
+                          : msg.stepId === 'sobrenomes'
+                            ? 'Ex.: quero manter Malickovski e Correa...'
+                            : 'Digite sua resposta...'
+                      }
                     />
                   )}
                 </NmBubble>
               );
             })}
+
+            {onboardingError && (
+              <div className="text-brand-error text-xs p-2 rounded-lg bg-brand-error/10 border border-brand-error/20">
+                {onboardingError}
+              </div>
+            )}
 
             {loading && (
               <NmBubble>
@@ -456,49 +736,21 @@ export function NomeSocialChat({
 
             <div ref={chatBottomRef} />
           </div>
-
-          {/* Área de Entrada Fixa/Sticky Inferior com Pills ABAIXO da caixa */}
-          <div className="sticky bottom-4 z-10 w-full pt-2">
-            <div className="rounded-2xl bg-dark-deeper/90 backdrop-blur-md p-2 border border-white/5 shadow-2xl">
-              <ChatInput
-                onSend={(text) => handleUserAnswer(text)}
-                onLiveScore={handleLiveScore}
-                placeholder={inputPlaceholder}
-                disabled={loading || stepIndex === 0}
-              />
-
-              {/* Tags em formato de pílulas posicionadas ABAIXO da caixa de texto */}
-              {activePillOptions.length > 0 && (
-                <PillGroup
-                  options={activePillOptions}
-                  onSelect={(opt) => handleUserAnswer(opt.label, opt.id)}
-                  disabled={loading}
-                />
-              )}
-            </div>
-          </div>
         </main>
 
-        {/* Coluna Lateral no Desktop (>= lg) */}
-        <aside className="hidden lg:flex flex-col gap-4 sticky top-6">
-          <ResultPanel
-            data={displayedPanelData}
+        <aside className="hidden lg:flex flex-col min-h-0 py-6 overflow-y-auto">
+          <ChatSidebarSection
+            panelData={displayedPanelData}
             isSuggestion={Boolean(activeSuggestionId)}
             onResetToBase={() => setActiveSuggestionId(null)}
+            radarAxes={radarAxes}
+            showRadar={showRadarPanel}
+            summaryItems={summaryItems}
+            showSummary={showSummaryPanel}
           />
-
-          <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3 flex flex-col items-center">
-            <span className="text-[11px] font-cinzel font-semibold uppercase tracking-wider text-chat-muted mb-1 self-start">
-              Radar das Dimensões
-            </span>
-            <ReadingRadar axes={radarAxes} />
-          </div>
-
-          <SummaryCard items={summaryItems} />
         </aside>
       </div>
 
-      {/* Drawer móvel da direita (< lg) */}
       <SummaryDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -507,6 +759,8 @@ export function NomeSocialChat({
         onResetToBase={() => setActiveSuggestionId(null)}
         radarAxes={radarAxes}
         summaryItems={summaryItems}
+        showRadar={showRadarPanel}
+        showSummary={showSummaryPanel}
       />
     </div>
   );

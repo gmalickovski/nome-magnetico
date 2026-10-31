@@ -9,14 +9,8 @@ import {
   HARMONY_STAR_OUTER_INNER,
   HARMONY_STAR_INNER_R,
   HARMONY_STAR_INNER_INNER,
-  HARMONY_STAR_LABEL_RADIUS,
-  HARMONY_STAR_GOLD_NUM_RADIUS,
   HARMONY_STAR_TIP_LABELS,
-  HARMONY_STAR_LABEL_ANCHORS,
-  HARMONY_STAR_LABEL_DX,
-  HARMONY_STAR_LABEL_DY,
   harmonyStarPts,
-  harmonyStarTipXY,
 } from '../harmonizationStarGeometry.js';
 
 export interface ResultPanelProps {
@@ -105,12 +99,12 @@ export function ResultPanel({
           </div>
         </div>
 
-        {/* Estrela de Harmonização Compacta */}
-        <div className="w-full flex justify-center py-1">
+        {/* Estrela compacta: só contorno(s); rótulos e números abaixo em lista */}
+        <div className="w-full flex flex-col items-center py-1">
           <svg
             viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
             className="w-full max-w-[210px] h-auto overflow-visible"
-            aria-label="Estrela de harmonização cabalística"
+            aria-label="Estrela cabalística do nome"
           >
             <polygon
               points={outerPts}
@@ -118,49 +112,27 @@ export function ResultPanel({
               stroke="#D4AF37"
               strokeWidth="2"
             />
-            <polygon
-              points={innerPts}
-              fill="rgba(192, 132, 252, 0.15)"
-              stroke="#C084FC"
-              strokeWidth="1.5"
-            />
-
-            {HARMONY_STAR_TIP_LABELS.map((label, i) => {
-              const labelPos = harmonyStarTipXY(
-                HARMONY_STAR_CX,
-                HARMONY_STAR_CY,
-                HARMONY_STAR_LABEL_RADIUS,
-                i
-              );
-              const numPos = harmonyStarTipXY(
-                HARMONY_STAR_CX,
-                HARMONY_STAR_CY,
-                HARMONY_STAR_GOLD_NUM_RADIUS,
-                i
-              );
-
-              return (
-                <g key={`panel-tip-${i}`}>
-                  <text
-                    x={labelPos.x + HARMONY_STAR_LABEL_DX[i]}
-                    y={labelPos.y + HARMONY_STAR_LABEL_DY[i]}
-                    textAnchor={HARMONY_STAR_LABEL_ANCHORS[i] as any}
-                    className="font-inter text-[11px] fill-chat-muted"
-                  >
-                    {label}
-                  </text>
-                  <text
-                    x={numPos.x}
-                    y={numPos.y + 4}
-                    textAnchor="middle"
-                    className="font-cinzel text-sm font-bold fill-gold"
-                  >
-                    {numbers[i]}
-                  </text>
-                </g>
-              );
-            })}
+            {isSuggestion && (
+              <polygon
+                points={innerPts}
+                fill="rgba(192, 132, 252, 0.15)"
+                stroke="#C084FC"
+                strokeWidth="1.5"
+              />
+            )}
           </svg>
+
+          <ul className="mt-2 w-full space-y-1.5" aria-label="Números da estrela">
+            {HARMONY_STAR_TIP_LABELS.map((label, i) => (
+              <li
+                key={`panel-star-row-${i}`}
+                className="flex items-center justify-between gap-2 text-xs"
+              >
+                <span className="text-chat-muted">{label}</span>
+                <span className="font-cinzel font-bold text-gold tabular-nums">{numbers[i]}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Pontuação */}

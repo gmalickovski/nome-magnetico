@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
-import type { ResultPanelData, RadarAxesData, ReadingSummaryItem } from './chat-types.js';
-import { ResultPanel } from './ResultPanel.js';
-import { ReadingRadar } from './ReadingRadar.js';
-import { SummaryCard } from './SummaryCard.js';
+import type { RadarAxesData, ResultPanelData, ReadingSummaryItem } from './chat-types.js';
+import { ChatSidebarSection } from './ChatSidebarSection.js';
 
 export interface SummaryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  panelData: ResultPanelData;
+  panelData: ResultPanelData | null;
   isSuggestion?: boolean;
   onResetToBase?: () => void;
-  radarAxes: RadarAxesData;
+  radarAxes: RadarAxesData | null;
   summaryItems: ReadingSummaryItem[];
+  showRadar: boolean;
+  showSummary: boolean;
 }
 
 export function SummaryDrawer({
@@ -22,6 +22,8 @@ export function SummaryDrawer({
   onResetToBase,
   radarAxes,
   summaryItems,
+  showRadar,
+  showSummary,
 }: SummaryDrawerProps) {
   // Previne scroll do body quando o drawer estiver aberto
   useEffect(() => {
@@ -75,24 +77,16 @@ export function SummaryDrawer({
           </button>
         </div>
 
-        <div className="p-4 space-y-4 flex-1">
-          {/* Painel do Resultado (evoluindo ou com sugestão ativa) */}
-          <ResultPanel
-            data={panelData}
+        <div className="p-4 flex-1">
+          <ChatSidebarSection
+            panelData={panelData}
             isSuggestion={isSuggestion}
             onResetToBase={onResetToBase}
+            radarAxes={radarAxes}
+            showRadar={showRadar}
+            summaryItems={summaryItems}
+            showSummary={showSummary}
           />
-
-          {/* Radar Pentagonal dos 5 Eixos */}
-          <div className="rounded-2xl border border-white/10 bg-chat-bubble/60 p-3 flex flex-col items-center">
-            <span className="text-[11px] font-cinzel font-semibold uppercase tracking-wider text-chat-muted mb-1 self-start">
-              Radar das Dimensões
-            </span>
-            <ReadingRadar axes={radarAxes} />
-          </div>
-
-          {/* Card Resumo da Leitura */}
-          <SummaryCard items={summaryItems} />
         </div>
       </aside>
     </div>

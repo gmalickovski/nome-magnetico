@@ -101,13 +101,14 @@ export function ResultFullscreen({
               strokeWidth="2"
             />
 
-            {/* Estrela Roxa Interna */}
-            <polygon
-              points={innerPts}
-              fill="rgba(192, 132, 252, 0.15)"
-              stroke="#C084FC"
-              strokeWidth="1.5"
-            />
+            {isSuggestion && (
+              <polygon
+                points={innerPts}
+                fill="rgba(192, 132, 252, 0.15)"
+                stroke="#C084FC"
+                strokeWidth="1.5"
+              />
+            )}
 
             {/* Labels e Números nas pontas */}
             {HARMONY_STAR_TIP_LABELS.map((label, i) => {
