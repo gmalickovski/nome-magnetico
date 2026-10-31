@@ -1,9 +1,9 @@
 import React from 'react';
 import type { RadarAxesData, ReadingSummaryItem, ResultPanelData } from './chat-types.js';
-import { ResultPanel } from './ResultPanel.js';
 import { ReadingRadar } from './ReadingRadar.js';
 import { SummaryCard } from './SummaryCard.js';
 import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
+import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
 
 export interface ChatSidebarSectionProps {
   birthPanel: ResultPanelData | null;
@@ -36,7 +36,7 @@ export function ChatSidebarSection({
   className = '',
 }: ChatSidebarSectionProps) {
   const hasScore = showScoreCard && Boolean(birthPanel);
-  const hasStar = showStarDetail && Boolean(starPanelData);
+  const hasStar = showStarDetail && Boolean(starPanelData) && Boolean(birthPanel);
 
   if (!hasScore && !hasStar && !showRadar && !showSummary) {
     return null;
@@ -48,12 +48,12 @@ export function ChatSidebarSection({
         <ChatHarmonyScoreCard birthPanel={birthPanel} harmonizedPanel={harmonizedPanel} />
       )}
 
-      {hasStar && starPanelData && (
-        <ResultPanel
-          data={starPanelData}
+      {hasStar && birthPanel && (
+        <ChatHarmonyStarPanel
+          birthPanel={birthPanel}
+          harmonizedPanel={isSuggestion ? harmonizedPanel : null}
           isSuggestion={isSuggestion}
           onResetToBase={onResetToBase}
-          hideScoreBar={hasScore}
         />
       )}
 

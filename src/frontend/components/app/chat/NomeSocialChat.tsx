@@ -176,7 +176,13 @@ export function NomeSocialChat({
   };
 
   const restoreSession = (saved: PersistedChatSession) => {
-    setMessages(saved.messages);
+    const collectionComplete =
+      saved.currentStepId === 'fim_coleta' || saved.currentStepId === 'conclusao';
+    const messages = collectionComplete
+      ? saved.messages
+      : saved.messages.filter((m) => m.type !== 'suggestions');
+
+    setMessages(messages);
     setAnswers(saved.answers);
     setConfirmedName(saved.confirmedName);
     setConfirmedDate(saved.confirmedDate);
@@ -192,8 +198,8 @@ export function NomeSocialChat({
     setRadarAxes(saved.radarAxes);
     setSummaryItems(saved.summaryItems);
     setBasePanel(saved.basePanel);
-    setActiveSuggestionId(saved.activeSuggestionId);
-    setSuggestions(saved.suggestions);
+    setActiveSuggestionId(collectionComplete ? saved.activeSuggestionId : null);
+    setSuggestions(collectionComplete ? saved.suggestions : []);
     setAnalysisId(saved.analysisId);
   };
 
@@ -522,7 +528,10 @@ export function NomeSocialChat({
       console.info('[chat] motor interativo:', data.providerUsed);
     }
 
-    if (data.previewTop3 && data.previewTop3.length > 0) {
+    const collectionComplete =
+      data.next_step === 'fim_coleta' || data.next_step === 'conclusao';
+
+    if (collectionComplete && data.previewTop3 && data.previewTop3.length > 0) {
       setSuggestions(data.previewTop3);
     }
 
@@ -558,11 +567,7 @@ export function NomeSocialChat({
       });
     }
 
-    if (
-      data.next_step === 'fim_coleta' ||
-      data.next_step === 'conclusao' ||
-      (data.previewTop3 && data.previewTop3.length > 0)
-    ) {
+    if (collectionComplete) {
       newMsgs.push({
         id: `suggestions-${Date.now()}`,
         sender: 'assistant',
@@ -731,6 +736,8 @@ export function NomeSocialChat({
 
   const activeSuggestion = suggestions.find((s) => s.id === activeSuggestionId);
   const starPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
+  const profileCollectionComplete =
+    currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
   const showScoreCard = Boolean(basePanel);
   const showStarDetail = birthConfirmed && Boolean(basePanel);
   const showRadarPanel = shouldShowRadar(collectState);
@@ -777,6 +784,7 @@ export function NomeSocialChat({
               const pending = isInteractionPending(msg, currentStepId, answers, birthConfirmed);
 
               if (msg.type === 'suggestions') {
+                if (!profileCollectionComplete) return null;
                 return (
                   <NmBubble key={msg.id} wide eyebrow="OPÇÕES HARMONIZADAS">
                     <SuggestionPicker

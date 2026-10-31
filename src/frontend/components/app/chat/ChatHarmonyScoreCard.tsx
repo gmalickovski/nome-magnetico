@@ -1,6 +1,10 @@
 import React from 'react';
 import type { ResultPanelData } from './chat-types.js';
-import { ChatScoreLandingRow } from './chat-score-landing-row.js';
+import {
+  HarmonyScoreDivider,
+  HarmonyScoreRow,
+  HarmonyScoreStack,
+} from '../../landing/ProductResultFrame.js';
 
 export interface ChatHarmonyScoreCardProps {
   birthPanel: ResultPanelData;
@@ -9,7 +13,7 @@ export interface ChatHarmonyScoreCardProps {
 }
 
 /**
- * Card lateral de scores — 1 barra (nome atual) ou 2 após escolher harmonização (estilo landing).
+ * Painel lateral de scores — mesmo stack da landing (HarmonyScoreStack).
  */
 export function ChatHarmonyScoreCard({
   birthPanel,
@@ -19,26 +23,24 @@ export function ChatHarmonyScoreCard({
   const dual = Boolean(harmonizedPanel);
 
   return (
-    <div
-      className={`rounded-2xl border border-white/10 bg-chat-bubble/80 p-4 flex flex-col gap-4 transition-all duration-300 ${className}`}
-    >
-      <ChatScoreLandingRow
-        eyebrow="Nome de nascimento (Nota hoje)"
+    <HarmonyScoreStack className={className}>
+      <HarmonyScoreRow
+        eyebrow="Nome de nascimento (Nota Hoje)"
         nome={birthPanel.nome}
         score={birthPanel.score}
       />
-
       {dual && harmonizedPanel && (
         <>
-          <div className="border-t border-white/10" />
-          <ChatScoreLandingRow
+          <HarmonyScoreDivider />
+          <HarmonyScoreRow
             eyebrow="Nome harmonizado (Potencial)"
             nome={harmonizedPanel.nome}
             score={harmonizedPanel.score}
+            eyebrowTone="harmonized"
           />
         </>
       )}
-    </div>
+    </HarmonyScoreStack>
   );
 }
 

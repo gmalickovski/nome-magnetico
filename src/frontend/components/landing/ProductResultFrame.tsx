@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import CompatibilityBadge from '../app/CompatibilityBadge';
 import {
   HARMONY_STAR_CX,
@@ -50,7 +50,8 @@ const INNER_PTS = harmonyStarPts(
 
 type Compat = 'favoravel' | 'neutro' | 'desfavoravel';
 
-interface DemoSuggestion {
+/** Dados de um card de sugestão (landing + chat). */
+export interface HarmonySuggestionCardData {
   nome: string;
   score: number;
   compatibilidade: Compat;
@@ -61,6 +62,8 @@ interface DemoSuggestion {
   missao: number;
   bloqueios: number;
 }
+
+type DemoSuggestion = HarmonySuggestionCardData;
 
 /** System suggestions (IA) — mirrors "Nossas Sugestões". */
 const DEMO_SYSTEM_SUGGESTIONS: DemoSuggestion[] = [
@@ -117,20 +120,23 @@ const desktopStackClass = 'w-full min-w-0 flex flex-col gap-3 sm:gap-3.5 xl:gap-
  * Floating suggestion tile with clean single shadow and smooth stagger reveal.
  * Preserves the internal ProductAnimatedScore bar animation untouched.
  */
-function SuggestionCard({
+/** Card de sugestão harmonizada (landing + chat). */
+export function HarmonySuggestionCard({
   c,
   stagger,
   delayIndex,
+  className = '',
 }: {
-  c: DemoSuggestion;
+  c: HarmonySuggestionCardData;
   stagger: boolean;
   delayIndex: number;
+  className?: string;
 }) {
   return (
     <div
       className={`${landingMockupTileClass} px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 min-w-0 w-full transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         stagger ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}
+      } ${className}`}
       style={{ transitionDelay: stagger ? `${delayIndex * 80}ms` : '0ms' }}
     >
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -358,6 +364,84 @@ const LANDING_INNER_PATH = harmonyStarRoundedPath(
   4,
 );
 
+export interface HarmonyScoreRowProps {
+  eyebrow: string;
+  nome: string;
+  score: number;
+  /** Tom do eyebrow — harmonizado usa gray-400 como na landing. */
+  eyebrowTone?: 'birth' | 'harmonized';
+  className?: string;
+}
+
+/** Linha nome + nota + barra (token único da landing e do chat). */
+export function HarmonyScoreRow({
+  eyebrow,
+  nome,
+  score,
+  eyebrowTone = 'birth',
+  className = '',
+}: HarmonyScoreRowProps) {
+  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  const visual = getScoreTierVisual(clamped);
+  const eyebrowClass =
+    eyebrowTone === 'harmonized'
+      ? 'font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400 leading-snug'
+      : 'font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500 leading-snug';
+
+  return (
+    <div className={`flex flex-col gap-1.5 min-w-0 w-full ${className}`}>
+      <p className={eyebrowClass}>{eyebrow}</p>
+      <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0 w-full">
+        <h4
+          className="min-w-0 flex-1 font-cinzel text-sm sm:text-[15px] xl:text-base font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]"
+          title={nome}
+        >
+          {nome}
+        </h4>
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <span
+            className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
+            style={{ color: visual.text }}
+          >
+            {clamped}
+            <span className="text-xs font-inter font-normal text-gray-500 ml-0.5">/100</span>
+          </span>
+          <span
+            className={`text-[11px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-full ${visual.badgeClass} whitespace-nowrap`}
+          >
+            {visual.label}
+          </span>
+        </div>
+      </div>
+      <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
+        <div
+          className={`h-2 rounded-full bg-gradient-to-r ${visual.barGradient} transition-all duration-500`}
+          style={{ width: `${clamped}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Container empilhado (landing + chat lateral + sugestões). */
+export function HarmonyScoreStack({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`${landingMockupFloatClass} p-4 sm:p-5 w-full ${className}`}>
+      <div className="flex flex-col gap-4 min-w-0 w-full">{children}</div>
+    </div>
+  );
+}
+
+export function HarmonyScoreDivider() {
+  return <div className="border-t border-white/10" aria-hidden />;
+}
+
 /**
  * Card de Score (Antes × Depois) da Seção "A Harmonização".
  * Ocupa a largura total da coluna esquerda com barras de progresso contínuas,
@@ -370,8 +454,6 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
   const [harmScore, setHarmScore] = useState(0);
 
   const shouldPlay = play ?? internalPlay;
-  const birthVisual = getScoreTierVisual(DEMO_SCORE_BIRTH);
-  const harmVisual = getScoreTierVisual(DEMO_SCORE_HARMONIZED);
 
   useEffect(() => {
     if (play !== undefined) {
@@ -441,83 +523,47 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
   }, [shouldPlay]);
 
   return (
-    <section ref={rootRef} className={`${landingMockupFloatClass} p-4 sm:p-5 w-full`}>
-      <div className="flex flex-col gap-4 min-w-0 w-full">
-        {/* Item 1: Nome de Nascimento (Nota Hoje - N2 · Em Ajuste) */}
-        <div className="flex flex-col gap-1.5 min-w-0 w-full">
-          {/* Linha 1: Título cinza separado em cima */}
-          <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-500 leading-snug">
-            Nome de nascimento (Nota Hoje)
-          </p>
-
-          {/* Linha 2: Nome à esquerda + Pontuação sempre ao lado na mesma linha (quebra apenas por palavra inteira se necessário, nunca "...") */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0 w-full">
-            <h4 className="min-w-0 flex-1 font-cinzel text-sm sm:text-[15px] xl:text-base font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
-              {BIRTH_NAME}
-            </h4>
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              <span
-                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
-                style={{ color: birthVisual.text }}
-              >
-                {birthScore}
-                <span className="text-xs font-inter font-normal text-gray-500 ml-0.5">/100</span>
-              </span>
-              <span className={`text-[11px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-full ${birthVisual.badgeClass} whitespace-nowrap`}>
-                {birthVisual.label}
-              </span>
-            </div>
-          </div>
-
-          {/* Linha 3: Barra de progresso embaixo */}
-          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
-            <div
-              className={`h-2 rounded-full bg-gradient-to-r ${birthVisual.barGradient} transition-all duration-150`}
-              style={{ width: `${birthScore}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Linha divisória sutil */}
-        <div className="border-t border-white/10" />
-
-        {/* Item 2: Nome Harmonizado (Potencial - N4 · Alinhado) */}
-        <div className="flex flex-col gap-1.5 min-w-0 w-full">
-          {/* Linha 1: Título cinza separado em cima */}
-          <p className="font-cinzel text-[11px] sm:text-xs uppercase tracking-[0.14em] text-gray-400 leading-snug">
-            Nome harmonizado (Potencial)
-          </p>
-
-          {/* Linha 2: Nome à esquerda + Pontuação sempre ao lado na mesma linha */}
-          <div className="flex items-center justify-between gap-2 sm:gap-3 min-w-0 w-full">
-            <h4 className="min-w-0 flex-1 font-cinzel text-sm sm:text-[15px] xl:text-base font-bold text-[#e5e2e1] leading-snug whitespace-normal [overflow-wrap:normal] [word-break:normal] [hyphens:none]">
-              {INDICATED_NAME}
-            </h4>
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              <span
-                className="font-cinzel font-bold text-xl sm:text-2xl tabular-nums leading-none"
-                style={{ color: harmVisual.text }}
-              >
-                {harmScore}
-                <span className="text-xs font-inter font-normal text-gray-500 ml-0.5">/100</span>
-              </span>
-              <span className={`text-[11px] sm:text-xs font-semibold px-2.5 py-0.5 rounded-full ${harmVisual.badgeClass} whitespace-nowrap`}>
-                {harmVisual.label}
-              </span>
-            </div>
-          </div>
-
-          {/* Linha 3: Barra de progresso embaixo */}
-          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
-            <div
-              className={`h-2 rounded-full bg-gradient-to-r ${harmVisual.barGradient} transition-all duration-150`}
-              style={{ width: `${harmScore}%` }}
-            />
-          </div>
-        </div>
-      </div>
+    <section ref={rootRef} className="w-full">
+      <HarmonyScoreStack>
+        <HarmonyScoreRow
+          eyebrow="Nome de nascimento (Nota Hoje)"
+          nome={BIRTH_NAME}
+          score={birthScore}
+        />
+        <HarmonyScoreDivider />
+        <HarmonyScoreRow
+          eyebrow="Nome harmonizado (Potencial)"
+          nome={INDICATED_NAME}
+          score={harmScore}
+          eyebrowTone="harmonized"
+        />
+      </HarmonyScoreStack>
     </section>
   );
+}
+
+export type HarmonyStarVariant = 'demo' | 'birth-only' | 'dual';
+
+export interface ProductHarmonyStarProps {
+  play?: boolean;
+  variant?: HarmonyStarVariant;
+  birthName?: string;
+  birthScore?: number;
+  birthNums?: number[];
+  harmonizedName?: string;
+  harmonizedScore?: number;
+  harmonizedNums?: number[];
+}
+
+/** Ordem: Destino, Expressão, Motivação, Missão, Impressão. */
+export function harmonyStarNumsFromPanel(panel: {
+  destino: number;
+  expressao: number;
+  motivacao: number;
+  potencial: number;
+  impressao: number;
+}): number[] {
+  return [panel.destino, panel.expressao, panel.motivacao, panel.potencial, panel.impressao];
 }
 
 /**
@@ -525,16 +571,53 @@ export function ProductHarmonyScoreCard({ play }: { play?: boolean }) {
  * Renderizada sozinha com legenda no lado direito da seção, sem card/container escuro fechado.
  * Suporta animação fluida de entrada quando acionada pelo scroll (play).
  */
-export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
+export function ProductHarmonyStar({
+  play,
+  variant: variantProp,
+  birthName: birthNameProp,
+  birthScore: birthScoreProp,
+  birthNums: birthNumsProp,
+  harmonizedName: harmonizedNameProp,
+  harmonizedScore: harmonizedScoreProp,
+  harmonizedNums: harmonizedNumsProp,
+}: ProductHarmonyStarProps = {}) {
+  const auraId = useId().replace(/:/g, '');
   const rootRef = useRef<HTMLDivElement>(null);
   const [internalPlay, setInternalPlay] = useState(false);
-  // Reduced motion: estado final imediato, sem transições (definido após hidratar para evitar mismatch SSR).
   const [instant, setInstant] = useState(false);
-  const shouldPlay = play ?? internalPlay;
-  const birthVisual = getScoreTierVisual(DEMO_SCORE_BIRTH);
-  const harmVisual = getScoreTierVisual(DEMO_SCORE_HARMONIZED);
+
+  const variant: HarmonyStarVariant =
+    variantProp ??
+    (birthNameProp
+      ? harmonizedNameProp
+        ? 'dual'
+        : 'birth-only'
+      : 'demo');
+
+  const isDemo = variant === 'demo';
+  const isDual = variant === 'dual';
+  const isBirthOnly = variant === 'birth-only';
+
+  const birthName = isDemo ? BIRTH_NAME : (birthNameProp ?? '');
+  const harmonizedName = isDemo ? INDICATED_NAME : (harmonizedNameProp ?? '');
+  const birthScore = isDemo ? DEMO_SCORE_BIRTH : (birthScoreProp ?? 0);
+  const harmonizedScore = isDemo ? DEMO_SCORE_HARMONIZED : (harmonizedScoreProp ?? 0);
+  const birthNums = isDemo ? DEMO_RED_NUMS : (birthNumsProp ?? [0, 0, 0, 0, 0]);
+  const harmonizedNums = isDemo ? DEMO_GOLD_NUMS : (harmonizedNumsProp ?? [0, 0, 0, 0, 0]);
+
+  const birthVisual = getScoreTierVisual(birthScore);
+  const harmVisual = getScoreTierVisual(isBirthOnly ? birthScore : harmonizedScore);
+
+  const outerStrokeVisual = isBirthOnly ? birthVisual : harmVisual;
+  const outerNums = isBirthOnly ? birthNums : harmonizedNums;
 
   useEffect(() => {
+    if (!isDemo) {
+      setInstant(true);
+      setInternalPlay(play ?? true);
+      return;
+    }
+
     if (play !== undefined) {
       setInternalPlay(play);
       return;
@@ -549,8 +632,6 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
       return;
     }
 
-    // A estrela tem gatilho próprio: no mobile/tablet ela fica abaixo do texto e do card,
-    // então só desenha quando uma parte relevante dela está visível (desktop, widescreen e mobile).
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -563,7 +644,9 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [play]);
+  }, [play, isDemo]);
+
+  const shouldPlay = isDemo ? (play ?? internalPlay) : (play ?? true);
 
   return (
     <div ref={rootRef} className="w-full min-w-0 flex flex-col items-center justify-center">
@@ -575,19 +658,18 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
           aria-label="Estrela comparativa entre nome de nascimento e nome harmonizado"
         >
           <defs>
-            <radialGradient id="harmony-star-aura" cx="50%" cy="50%" r="50%">
+            <radialGradient id={`harmony-star-aura-${auraId}`} cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#84CC16" stopOpacity="0.12" />
               <stop offset="40%" stopColor="#F97316" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#111111" stopOpacity="0" />
             </radialGradient>
           </defs>
 
-          {/* Aura Mística ao Fundo (surge depois do traçado das linhas) */}
           <circle
             cx={LANDING_STAR_CX}
             cy={LANDING_STAR_CY}
             r={280}
-            fill="url(#harmony-star-aura)"
+            fill={`url(#harmony-star-aura-${auraId})`}
             style={{
               opacity: shouldPlay ? 1 : 0,
               transition: instant ? 'none' : 'opacity 1200ms ease-out 700ms',
@@ -595,18 +677,17 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
             className="pointer-events-none"
           />
 
-          {/* Estrela Externa (Harmonizada): linha desenhada progressivamente, depois preenchimento */}
           <path
             d={LANDING_OUTER_PATH}
             pathLength={1}
-            fill={harmVisual.stroke}
+            fill={outerStrokeVisual.stroke}
             fillOpacity={shouldPlay ? 0.12 : 0}
-            stroke={harmVisual.stroke}
+            stroke={outerStrokeVisual.stroke}
             strokeWidth={2.2}
             strokeLinejoin="round"
             strokeLinecap="round"
-            strokeDasharray={1}
-            strokeDashoffset={shouldPlay ? 0 : 1}
+            strokeDasharray={isDemo ? 1 : 0}
+            strokeDashoffset={shouldPlay || !isDemo ? 0 : 1}
             style={{
               opacity: shouldPlay ? 1 : 0,
               transition: instant
@@ -615,25 +696,26 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
             }}
           />
 
-          {/* Estrela Interna (Nascimento): traçado com leve defasagem */}
-          <path
-            d={LANDING_INNER_PATH}
-            pathLength={1}
-            fill={birthVisual.stroke}
-            fillOpacity={shouldPlay ? 0.14 : 0}
-            stroke={birthVisual.stroke}
-            strokeWidth={1.8}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            strokeDasharray={1}
-            strokeDashoffset={shouldPlay ? 0 : 1}
-            style={{
-              opacity: shouldPlay ? 1 : 0,
-              transition: instant
-                ? 'none'
-                : 'stroke-dashoffset 1100ms cubic-bezier(0.22,1,0.36,1) 250ms, fill-opacity 1000ms ease-out 1000ms, opacity 120ms linear 250ms',
-            }}
-          />
+          {(isDemo || isDual) && (
+            <path
+              d={LANDING_INNER_PATH}
+              pathLength={1}
+              fill={birthVisual.stroke}
+              fillOpacity={shouldPlay ? 0.14 : 0}
+              stroke={birthVisual.stroke}
+              strokeWidth={1.8}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeDasharray={isDemo ? 1 : 0}
+              strokeDashoffset={shouldPlay || !isDemo ? 0 : 1}
+              style={{
+                opacity: shouldPlay ? 1 : 0,
+                transition: instant
+                  ? 'none'
+                  : 'stroke-dashoffset 1100ms cubic-bezier(0.22,1,0.36,1) 250ms, fill-opacity 1000ms ease-out 1000ms, opacity 120ms linear 250ms',
+              }}
+            />
+          )}
 
           {HARMONY_STAR_TIP_LABELS.map((label, i) => {
             const labelPos = harmonyStarTipXY(
@@ -665,7 +747,6 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
                     : `opacity 700ms cubic-bezier(0.16,1,0.3,1) ${1000 + i * 110}ms, transform 700ms cubic-bezier(0.16,1,0.3,1) ${1000 + i * 110}ms`,
                 }}
               >
-                {/* Rótulo do Vértice (Destino, Expressão, etc.) */}
                 <text
                   className="harmony-star-label"
                   x={labelPos.x + LANDING_STAR_LABEL_DX[i]}
@@ -680,42 +761,41 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
                   {label}
                 </text>
 
-                {/* Número da Ponta Externa: reflete a cor do score harmonizado */}
                 <text
                   className="harmony-star-num-outer"
                   x={outerNumPos.x}
                   y={outerNumPos.y}
-                  fill={harmVisual.text}
+                  fill={outerStrokeVisual.text}
                   fontFamily="Inter, sans-serif"
                   fontSize={24}
                   fontWeight={700}
                   textAnchor="middle"
                   dominantBaseline="central"
                 >
-                  {DEMO_GOLD_NUMS[i]}
+                  {outerNums[i]}
                 </text>
 
-                {/* Número da Ponta Interna: reflete a cor do score de nascimento */}
-                <text
-                  className="harmony-star-num-inner"
-                  x={innerNumPos.x}
-                  y={innerNumPos.y}
-                  fill={birthVisual.text}
-                  fontFamily="Inter, sans-serif"
-                  fontSize={20}
-                  fontWeight={700}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                >
-                  {DEMO_RED_NUMS[i]}
-                </text>
+                {(isDemo || isDual) && (
+                  <text
+                    className="harmony-star-num-inner"
+                    x={innerNumPos.x}
+                    y={innerNumPos.y}
+                    fill={birthVisual.text}
+                    fontFamily="Inter, sans-serif"
+                    fontSize={20}
+                    fontWeight={700}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                  >
+                    {birthNums[i]}
+                  </text>
+                )}
               </g>
             );
           })}
         </svg>
       </div>
 
-      {/* Legenda comparativa posicionada mais abaixo */}
       <div
         style={{
           transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
@@ -735,21 +815,23 @@ export function ProductHarmonyStar({ play }: { play?: boolean } = {}) {
             }}
             aria-hidden="true"
           />
-          <span className="truncate text-[#e5e2e1] font-medium">{BIRTH_NAME}</span>
+          <span className="truncate text-[#e5e2e1] font-medium">{birthName}</span>
         </span>
-        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
-          <span
-            className="inline-block w-3 h-3 rounded-full shrink-0"
-            style={{
-              borderColor: harmVisual.stroke,
-              borderWidth: 1.5,
-              borderStyle: 'solid',
-              background: harmVisual.dotBg,
-            }}
-            aria-hidden="true"
-          />
-          <span className="truncate font-medium text-[#e5e2e1]">{INDICATED_NAME}</span>
-        </span>
+        {(isDemo || isDual) && harmonizedName && (
+          <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+            <span
+              className="inline-block w-3 h-3 rounded-full shrink-0"
+              style={{
+                borderColor: harmVisual.stroke,
+                borderWidth: 1.5,
+                borderStyle: 'solid',
+                background: harmVisual.dotBg,
+              }}
+              aria-hidden="true"
+            />
+            <span className="truncate font-medium text-[#e5e2e1]">{harmonizedName}</span>
+          </span>
+        )}
       </div>
 
       <style>{`
@@ -836,7 +918,7 @@ export function ProductSuggestionsFrame() {
     <div ref={rootRef} className={`@container/suggestions ${desktopFitClass}`}>
       <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
         {DEMO_SYSTEM_SUGGESTIONS.map((c, index) => (
-          <SuggestionCard
+          <HarmonySuggestionCard
             key={c.nome}
             c={c}
             stagger={stagger}

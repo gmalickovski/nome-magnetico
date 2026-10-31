@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { CandidateSuggestion } from './chat-types.js';
 import { Pill } from '../../ui/Pill.js';
 import { Button } from '../../ui/Button.js';
 import { toggleSelection } from './selection.js';
+import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
+import { landingMockupTileClass } from '../../landing/LandingSectionIntro.js';
+import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
 
 export interface SuggestionPickerProps {
   suggestions: CandidateSuggestion[];
@@ -15,6 +18,11 @@ export interface SuggestionPickerProps {
   className?: string;
 }
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 export function SuggestionPicker({
   suggestions,
   selectedId,
@@ -25,6 +33,21 @@ export function SuggestionPicker({
   onGenerateAnalysis,
   className = '',
 }: SuggestionPickerProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [stagger, setStagger] = useState(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    if (prefersReducedMotion()) {
+      setStagger(true);
+      return;
+    }
+
+    setStagger(true);
+  }, [suggestions.length]);
+
   const handleCardClick = (id: string) => {
     const nextSelected = toggleSelection(selectedId, id);
     onSelect(nextSelected);
@@ -37,7 +60,7 @@ export function SuggestionPicker({
   };
 
   return (
-    <div className={`w-full space-y-4 ${className}`}>
+    <div ref={rootRef} className={`w-full space-y-4 ${className}`}>
       <div className="space-y-1">
         <h3 className="nm-h3 text-gold">Suas assinaturas recomendadas</h3>
         <p className="text-xs sm:text-sm text-chat-ink leading-relaxed">
@@ -45,9 +68,10 @@ export function SuggestionPicker({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5">
-        {suggestions.map((sug) => {
+      <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+        {suggestions.map((sug, index) => {
           const isCurrentSelected = selectedId === sug.id;
+          const card = mapCandidateToHarmonySuggestion(sug);
           return (
             <div
               key={sug.id}
@@ -60,43 +84,20 @@ export function SuggestionPicker({
                   handleCardClick(sug.id);
                 }
               }}
-              className={`p-4 rounded-xl border text-left cursor-pointer transition-all duration-200 select-none ${
+              className={`min-w-0 w-full text-left cursor-pointer rounded-2xl transition-all duration-200 select-none ${
                 isCurrentSelected
-                  ? 'border-gold bg-gold/15 shadow-gold'
-                  : 'border-white/10 bg-black/40 hover:border-gold/50 hover:bg-white/5'
+                  ? `ring-1 ring-[#D4AF37]/45 ${landingMockupTileClass}`
+                  : 'hover:opacity-95'
               }`}
             >
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="font-cinzel font-bold text-base sm:text-lg text-chat-ink">
-                  {sug.nome}
-                </span>
-                <span className="font-cinzel font-bold text-sm text-gold px-2 py-0.5 rounded-full bg-gold/10 border border-gold/20">
-                  {sug.score} / 100
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-brand-spiritual font-medium">
-                  Expressão {sug.expressao}
-                </span>
-                <span className="text-chat-muted">·</span>
-                <span className="text-chat-ink">
-                  Compatibilidade: {sug.compatibilidade}
-                </span>
-                {sug.bloqueiosEliminados > 0 && (
-                  <>
-                    <span className="text-chat-muted">·</span>
-                    <span className="text-brand-success font-medium">
-                      {sug.bloqueiosEliminados} bloqueios eliminados
-                    </span>
-                  </>
-                )}
-              </div>
-
+              <HarmonySuggestionCard
+                c={card}
+                stagger={stagger}
+                delayIndex={index}
+                className={isCurrentSelected ? '!shadow-none' : ''}
+              />
               {sug.destaque && (
-                <div className="mt-2 text-xs text-chat-muted italic">
-                  {sug.destaque}
-                </div>
+                <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>
               )}
             </div>
           );

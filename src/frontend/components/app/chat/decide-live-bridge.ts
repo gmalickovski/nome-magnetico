@@ -23,6 +23,10 @@ export interface ChatCollectState {
   objetivoTexto: string;
 }
 
+export function isProfileCollectionComplete(nextStep: string): boolean {
+  return nextStep === 'fim_coleta' || nextStep === 'conclusao';
+}
+
 export const INITIAL_COLLECT_STATE: ChatCollectState = {
   sobrenomesDecididos: false,
   sobrenomesObrigatorios: [],

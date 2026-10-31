@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { ResultPanelData } from './chat-types.js';
+import { getScoreTierVisual } from '../../landing/ProductResultFrame.js';
 import { ResultFullscreen } from './ResultFullscreen.js';
 import {
   HARMONY_STAR_VIEWBOX,
@@ -15,6 +16,8 @@ import {
 
 export interface ResultPanelProps {
   data: ResultPanelData;
+  /** Nome de nascimento — estrela interna quando uma sugestão está ativa. */
+  nestedBirthPanel?: ResultPanelData | null;
   isSuggestion?: boolean;
   onResetToBase?: () => void;
   /** Oculta barras de pontuação (já exibidas no ChatHarmonyScoreCard). */
@@ -24,12 +27,20 @@ export interface ResultPanelProps {
 
 export function ResultPanel({
   data,
+  nestedBirthPanel = null,
   isSuggestion = false,
   onResetToBase,
   hideScoreBar = false,
   className = '',
 }: ResultPanelProps) {
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+
+  const showNestedBirth = isSuggestion && Boolean(nestedBirthPanel);
+  const outerVisual = getScoreTierVisual(data.score);
+  const innerVisual = getScoreTierVisual(
+    showNestedBirth && nestedBirthPanel ? nestedBirthPanel.score : data.score
+  );
+  const singleVisual = showNestedBirth ? outerVisual : innerVisual;
 
   const outerPts = harmonyStarPts(
     HARMONY_STAR_CX,
@@ -102,25 +113,25 @@ export function ResultPanel({
           </div>
         </div>
 
-        {/* Estrela compacta: só contorno(s); rótulos e números abaixo em lista */}
-        <div className="w-full flex flex-col items-center py-1">
+        {/* Estrela: uma (nascimento) ou dupla sobreposta (harmonizado + nascimento). */}
+        <div className="w-full flex flex-col items-center py-2">
           <svg
             viewBox={`0 0 ${HARMONY_STAR_VIEWBOX.width} ${HARMONY_STAR_VIEWBOX.height}`}
-            className="w-full max-w-[210px] h-auto overflow-visible"
+            className="w-full max-w-[min(100%,300px)] h-auto overflow-visible"
             aria-label="Estrela cabalística do nome"
           >
             <polygon
               points={outerPts}
-              fill="rgba(212, 175, 55, 0.12)"
-              stroke="#D4AF37"
-              strokeWidth="2"
+              fill={showNestedBirth ? outerVisual.fill : singleVisual.fill}
+              stroke={showNestedBirth ? outerVisual.stroke : singleVisual.stroke}
+              strokeWidth={showNestedBirth ? 2.2 : 2}
             />
-            {isSuggestion && (
+            {showNestedBirth && (
               <polygon
                 points={innerPts}
-                fill="rgba(192, 132, 252, 0.15)"
-                stroke="#C084FC"
-                strokeWidth="1.5"
+                fill={innerVisual.fill}
+                stroke={innerVisual.stroke}
+                strokeWidth={1.8}
               />
             )}
           </svg>
@@ -142,13 +153,16 @@ export function ResultPanel({
           <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-chat-muted font-medium">Pontuação geral</span>
-              <span className="font-cinzel font-bold text-gold text-sm">
+              <span
+                className="font-cinzel font-bold text-sm tabular-nums"
+                style={{ color: outerVisual.text }}
+              >
                 {data.score} / 100
               </span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-gold to-brand-spiritual rounded-full transition-all duration-500"
+                className={`h-full bg-gradient-to-r ${outerVisual.barGradient} rounded-full transition-all duration-500`}
                 style={{ width: `${Math.min(100, Math.max(5, data.score))}%` }}
               />
             </div>
