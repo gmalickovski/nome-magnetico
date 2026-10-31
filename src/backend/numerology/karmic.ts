@@ -1,7 +1,7 @@
 /**
  * Lições Kármicas e Tendências Ocultas.
  *
- * Lições Kármicas: números de 1 a 8 ausentes no nome completo.
+ * Lições Kármicas: números de 1 a 9 ausentes no nome completo.
  * Cada ausência indica uma qualidade que a alma ainda não desenvolveu
  * e que precisa ser trabalhada nesta encarnação.
  *
@@ -28,7 +28,7 @@ export interface TendenciaOculta {
 }
 
 // ================================================================
-// LIÇÕES CÁRMICAS (números 1–8 ausentes no nome)
+// LIÇÕES CÁRMICAS (números 1–9 ausentes no nome)
 // ================================================================
 export const LICOES_CARMICAS: Record<number, Omit<LicaoCarmica, 'numero'>> = {
   1: {
@@ -86,6 +86,12 @@ export const LICOES_CARMICAS: Record<number, Omit<LicaoCarmica, 'numero'>> = {
       'A ausência do 8 indica dificuldades com a gestão de recursos materiais, medo do sucesso ou do poder, tendência a sabotar conquistas ou a ter uma relação desequilibrada com o dinheiro.',
     comoTrabalhar:
       'Desenvolver consciência financeira. Trabalhar a relação com autoridade e liderança. Aprender que o poder material pode ser usado para o bem.',
+  },  9: {
+    titulo: 'Lição Kármica 9 — Compreensão Universal e Compaixão',
+    descricao:
+      'A ausência do 9 indica que a compaixão, o perdão e o amor desinteressado vêm sendo negligenciados desde encarnações passadas. Há um padrão endurecido de ego que ainda não aprendeu a olhar para o seu semelhante como uma extensão sua, com insensibilidade para com as dores alheias ou tendência a imputar culpa aos outros.',
+    comoTrabalhar:
+      'Aprender a ser generoso(a), bondoso(a), amoroso(a), compreensivo(a) e a ter compaixão pelo sofrimento alheio; praticar a caridade, desenvolver a tolerância, a compreensão e o perdão, superando o orgulhoso ego.',
   },
 };
 
@@ -148,6 +154,12 @@ export const TENDENCIAS_OCULTAS: Record<number, Omit<TendenciaOculta, 'numero' |
       'Quando o 8 aparece 4 ou mais vezes, há tendência à ambição desmedida, ao materialismo e à dificuldade de separar valor pessoal de valor financeiro.',
     comoEquilibrar:
       'Cultivar valores além do material. Praticar a generosidade. Lembrar que o poder é um meio, não um fim.',
+  },  9: {
+    titulo: 'Tendência Oculta 9 — Excesso de Doação ou Dramatização',
+    descricao:
+      'Quando o 9 aparece 4 ou mais vezes no nome, há tendência ao sacrifício excessivo, à ingenuidade em relação aos outros ou a assumir as dores do mundo como um fardo pessoal. Pode haver dramatização e apego a causas alheias em detrimento da própria vida.',
+    comoEquilibrar:
+      'Praticar o desapego saudável. Amar e ajudar sem se anular. Estabelecer limites claros entre a empatia e a responsabilidade alheia.',
   },
 };
 
@@ -161,19 +173,19 @@ export const TENDENCIAS_OCULTAS: Record<number, Omit<TendenciaOculta, 'numero' |
 export function detectarLicoesCarmicas(nomeCompleto: string): LicaoCarmica[] {
   const letras = extrairLetras(nomeCompleto);
 
-  // Mapear quais números (1–8) aparecem no nome
+  // Mapear quais números (1–9) aparecem no nome
   const numerosPresentes = new Set<number>();
   for (const letra of letras) {
     const v = calcularValor(letra);
     const reduzido = reduzirNumero(v, false);
-    if (reduzido >= 1 && reduzido <= 8) {
+    if (reduzido >= 1 && reduzido <= 9) {
       numerosPresentes.add(reduzido);
     }
   }
 
   // Números ausentes = lições kármics
   const licoes: LicaoCarmica[] = [];
-  for (let n = 1; n <= 8; n++) {
+  for (let n = 1; n <= 9; n++) {
     if (!numerosPresentes.has(n)) {
       const dados = LICOES_CARMICAS[n];
       if (dados) {
@@ -196,7 +208,7 @@ export function detectarTendenciasOcultas(nomeCompleto: string): TendenciaOculta
   for (const letra of letras) {
     const v = calcularValor(letra);
     const reduzido = reduzirNumero(v, false);
-    if (reduzido >= 1 && reduzido <= 8) {
+    if (reduzido >= 1 && reduzido <= 9) {
       frequencias[reduzido] = (frequencias[reduzido] ?? 0) + 1;
     }
   }
@@ -350,12 +362,12 @@ export function calcularDebitosCarmicos(
  */
 export function mapearFrequencias(nomeCompleto: string): Record<number, number> {
   const letras = extrairLetras(nomeCompleto);
-  const freq: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+  const freq: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
 
   for (const letra of letras) {
     const v = calcularValor(letra);
     const r = reduzirNumero(v, false);
-    if (r >= 1 && r <= 8) {
+    if (r >= 1 && r <= 9) {
       freq[r] = (freq[r] ?? 0) + 1;
     }
   }
