@@ -546,6 +546,11 @@
     bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
     --nm-mobile-nav-h: 3.75rem;
   }
+
+  .nm-chat-shell.nm-chat-shell--no-mobile-nav {
+    bottom: env(safe-area-inset-bottom, 0px);
+    --nm-mobile-nav-h: 0px;
+  }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -581,6 +586,56 @@
 
   .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn {
     animation: mobile-dock-btn-fade-in 120ms ease both;
+  }
+
+  @keyframes mobile-dock-pdf-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.55);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 20px 2px rgba(212, 175, 55, 0.35);
+    }
+  }
+
+  @keyframes mobile-dock-pdf-exit {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+
+  @keyframes mobile-dock-pdf-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .mobile-chat-dock-pdf-enter {
+    animation: mobile-dock-pdf-enter 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .mobile-chat-dock-pdf-exit {
+    animation: mobile-dock-pdf-exit 180ms ease both;
+  }
+
+  .mobile-chat-dock-pdf-enter-fade,
+  .mobile-chat-dock-pdf-exit-fade {
+    animation: mobile-dock-pdf-fade 120ms ease both;
   }
 }
 

@@ -13,57 +13,39 @@ const chatBase = {
   hasSuggestionsMessage: false,
   canRestart: true,
   canRegenerate: true,
-  hasAnalysisId: true,
   suggestionSelected: false,
 };
 
 describe('mobile-dock-screen', () => {
-  it('questionário: Resumo e Recomeçar, sem primária', () => {
+  it('questionário: Recomeçar no centro, sem PDF', () => {
     assert.equal(resolveChatDockScreen(chatBase), 'chat_questionnaire');
     const layout = buildChatDockLayout('chat_questionnaire', chatBase);
-    assert.equal(layout.primary, null);
+    assert.equal(layout.showPdfCircle, false);
     assert.deepEqual(
-      layout.secondaries.map((s) => s.id),
-      ['summary', 'restart']
+      layout.middleSecondaries.map((s) => s.id),
+      ['restart']
     );
   });
 
-  it('sugestões: Outras opções e primária Gerar PDF desabilitada sem escolha', () => {
+  it('sugestões: Outras opções no centro, PDF só com card escolhido', () => {
     const input = {
       ...chatBase,
       profileCollectionComplete: true,
       hasSuggestionsMessage: true,
     };
     assert.equal(resolveChatDockScreen(input), 'chat_suggestions');
-    const layout = buildChatDockLayout('chat_suggestions', input);
-    assert.ok(layout.primary);
-    assert.equal(layout.primary?.id, 'generate_pdf');
-    assert.equal(layout.primary?.disabled, true);
-    assert.equal(layout.primary?.disabledLabel, 'Escolha um nome');
+    const withoutPick = buildChatDockLayout('chat_suggestions', input);
+    assert.equal(withoutPick.showPdfCircle, false);
     assert.deepEqual(
-      layout.secondaries.map((s) => s.id),
-      ['summary', 'other_options']
+      withoutPick.middleSecondaries.map((s) => s.id),
+      ['other_options']
     );
-  });
 
-  it('sugestões: primária ativa com card escolhido', () => {
-    const layout = buildChatDockLayout('chat_suggestions', {
-      ...chatBase,
-      profileCollectionComplete: true,
-      hasSuggestionsMessage: true,
+    const withPick = buildChatDockLayout('chat_suggestions', {
+      ...input,
       suggestionSelected: true,
     });
-    assert.equal(layout.primary?.disabled, false);
-  });
-
-  it('sugestões: omite primária sem analysisId', () => {
-    const layout = buildChatDockLayout('chat_suggestions', {
-      ...chatBase,
-      profileCollectionComplete: true,
-      hasSuggestionsMessage: true,
-      hasAnalysisId: false,
-    });
-    assert.equal(layout.primary, null);
+    assert.equal(withPick.showPdfCircle, true);
   });
 
   it('resultado pago: Compartilhar, Refazer e Baixar PDF', () => {

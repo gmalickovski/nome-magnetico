@@ -10,9 +10,11 @@ export interface Props {
   title: string;
   description?: string;
   noPadding?: boolean;
+  /** Oculta a barra inferior mobile (ex.: chat conversacional com dock própria). */
+  hideMobileNav?: boolean;
 }
 
-const { title, description, noPadding = false } = Astro.props;
+const { title, description, noPadding = false, hideMobileNav = false } = Astro.props;
 
 const user = Astro.locals.user;
 if (!user) {
@@ -177,7 +179,7 @@ const navSuporteActive = isActive('/app/suporte');
       </div>
     </header>
 
-    <MobileNavBar isAdmin={isAdmin} showAnalisesNav={showAnalisesNav} />
+    {!hideMobileNav && <MobileNavBar isAdmin={isAdmin} showAnalisesNav={showAnalisesNav} />}
 
     <main class={noPadding ? "md:ml-20 h-full overflow-x-hidden" : "md:ml-20 px-3.5 sm:px-6 md:px-10 lg:px-14 py-6 sm:py-8 md:py-10 pb-24 md:pb-10 overflow-x-hidden"}>
       <div class={noPadding ? "h-full" : "max-w-[1440px] 2xl:max-w-[1600px] mx-auto w-full"}>

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { CandidateSuggestion } from './chat-types.js';
 import { Pill } from '../../ui/Pill.js';
-import { Button } from '../../ui/Button.js';
 import { toggleSelection } from './selection.js';
 import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
@@ -11,10 +10,8 @@ export interface SuggestionPickerProps {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onRegenerate: () => void;
-  analysisId?: string;
   isRegenerating?: boolean;
   regenerateNotice?: string | null;
-  onGenerateAnalysis?: () => void;
   className?: string;
 }
 
@@ -28,10 +25,8 @@ export function SuggestionPicker({
   selectedId,
   onSelect,
   onRegenerate,
-  analysisId,
   isRegenerating = false,
   regenerateNotice = null,
-  onGenerateAnalysis,
   className = '',
 }: SuggestionPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -51,12 +46,6 @@ export function SuggestionPicker({
     window.setTimeout(() => setTouchPulseId(null), 120);
     const nextSelected = toggleSelection(selectedId, id);
     onSelect(nextSelected);
-  };
-
-  const handleGenerateAnalysis = () => {
-    onGenerateAnalysis?.();
-    if (!analysisId) return;
-    window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
   };
 
   return (
@@ -126,25 +115,13 @@ export function SuggestionPicker({
         </p>
       )}
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 pt-2">
         <Pill
           label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
           size="lg"
           disabled={isRegenerating}
           onClick={onRegenerate}
         />
-
-        {analysisId && (
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            onClick={handleGenerateAnalysis}
-            className="!rounded-full font-semibold shadow-gold w-full sm:w-auto"
-          >
-            Gerar análise
-          </Button>
-        )}
       </div>
     </div>
   );

@@ -77,6 +77,10 @@ import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-e
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { Button } from '../../ui/Button.js';
 import { Modal } from '../../ui/Modal.js';
+import {
+  ChatPdfStickyDesktop,
+  useChatPdfCta,
+} from './ChatPdfCta.js';
 
 export interface NomeSocialChatProps {
   birthName?: string;
@@ -85,6 +89,9 @@ export interface NomeSocialChatProps {
   userId?: string;
   /** Painel SSR do nome de nascimento (score_v3 oficial). */
   initialBirthPanel?: ResultPanelData | null;
+  /** false = fluxo gratuito (CTA leva ao checkout existente). */
+  isSubscriber?: boolean;
+  emailConfirmed?: boolean;
 }
 
 const GENDER_OPTIONS = [
@@ -127,6 +134,8 @@ export function NomeSocialChat({
   profileGender: initialProfileGender = '',
   userId = '',
   initialBirthPanel = null,
+  isSubscriber = true,
+  emailConfirmed = true,
 }: NomeSocialChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [confirmedName, setConfirmedName] = useState(initialBirthName);
@@ -157,6 +166,7 @@ export function NomeSocialChat({
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
+  const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
 
   const [loading, setLoading] = useState(false);
@@ -471,11 +481,6 @@ export function NomeSocialChat({
   const handleConfirmBackToStart = () => {
     setBackToStartConfirmOpen(false);
     window.location.href = '/app';
-  };
-
-  const handleFinalizeAnalysis = () => {
-    clearChatSession(userId);
-    applyFreshSession();
   };
 
   const appendUserBubble = (content: string, stepId: string) => {
@@ -1147,6 +1152,12 @@ export function NomeSocialChat({
 
   const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
 
+  const suggestionSelected = Boolean(activeSuggestionId);
+  const suggestionRank =
+    activeSuggestionId != null
+      ? Math.max(1, suggestions.findIndex((s) => s.id === activeSuggestionId) + 1)
+      : 0;
+
   const chatDockScreen = resolveChatDockScreen({
     birthConfirmed,
     canShowSummary: birthConfirmed && Boolean(basePanel),
@@ -1154,8 +1165,7 @@ export function NomeSocialChat({
     hasSuggestionsMessage,
     canRestart: birthConfirmed,
     canRegenerate: profileCollectionComplete && suggestions.length > 0,
-    hasAnalysisId: Boolean(analysisId),
-    suggestionSelected: Boolean(activeSuggestionId),
+    suggestionSelected,
   });
 
   const chatDockLayout = chatDockScreen
@@ -1166,10 +1176,39 @@ export function NomeSocialChat({
         hasSuggestionsMessage,
         canRestart: birthConfirmed,
         canRegenerate: profileCollectionComplete && suggestions.length > 0,
-        hasAnalysisId: Boolean(analysisId),
-        suggestionSelected: Boolean(activeSuggestionId),
+        suggestionSelected,
       })
     : null;
+
+  const {
+    model: pdfCtaModel,
+    onDockClick: onPdfDockClick,
+    onStickyClick: onPdfStickyClick,
+    resendEmail: onPdfResendEmail,
+    resending: pdfResending,
+    toastUi: pdfToastUi,
+  } = useChatPdfCta({
+    suggestionSelected,
+    selectedNome: activeSuggestion?.nome ?? null,
+    selectedScore: activeSuggestion?.score ?? 0,
+    suggestionRank: suggestionRank || 1,
+    analysisId,
+    isFree: !isSubscriber,
+    emailConfirmed,
+    screen: chatDockScreen ?? 'chat_questionnaire',
+  });
+
+  const prevPdfVisibleRef = useRef(false);
+  useEffect(() => {
+    const nowVisible = pdfCtaModel.visible;
+    if (prevPdfVisibleRef.current && !nowVisible) {
+      setPdfCircleExiting(true);
+      const t = window.setTimeout(() => setPdfCircleExiting(false), 180);
+      return () => window.clearTimeout(t);
+    }
+    prevPdfVisibleRef.current = nowVisible;
+    return undefined;
+  }, [pdfCtaModel.visible]);
 
   const summarySnapshot = [
     summaryCount,
@@ -1209,11 +1248,6 @@ export function NomeSocialChat({
     setDrawerOpen(false);
   };
 
-  const handlePdfDownload = () => {
-    if (!analysisId) return;
-    window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
-  };
-
   const handleDockSecondary = (action: DockSecondaryActionId, position: number) => {
     capturePostHogEvent('dock_action_clicked', {
       screen: chatDockScreen ?? 'chat_questionnaire',
@@ -1242,11 +1276,8 @@ export function NomeSocialChat({
     capturePostHogEvent('dock_primary_clicked', {
       screen: chatDockScreen ?? 'chat_suggestions',
       action,
-      is_free: false,
+      is_free: !isSubscriber,
     });
-    if (action === 'generate_pdf') {
-      handlePdfDownload();
-    }
   };
 
   const sidebarSection = (
@@ -1294,11 +1325,11 @@ export function NomeSocialChat({
         }`}
       >
         <main
-          className={`flex flex-col min-h-0 min-w-0 py-3 md:py-3 lg:py-4 ${
+          className={`relative flex flex-col min-h-0 min-w-0 py-3 md:py-3 lg:py-4 ${
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[calc(80px+env(safe-area-inset-bottom,0px))]">
+          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[calc(88px+env(safe-area-inset-bottom,0px))] md:pb-24">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
@@ -1317,8 +1348,6 @@ export function NomeSocialChat({
                       onRegenerate={handleRegenerate}
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
-                      analysisId={analysisId}
-                      onGenerateAnalysis={handleFinalizeAnalysis}
                     />
                   </NmBubble>
                 );
@@ -1471,6 +1500,13 @@ export function NomeSocialChat({
 
             <div ref={chatBottomRef} />
           </div>
+
+          <ChatPdfStickyDesktop
+            model={pdfCtaModel}
+            onClick={onPdfStickyClick}
+            onResendEmail={onPdfResendEmail}
+            resending={pdfResending}
+          />
         </main>
 
         <aside
@@ -1492,10 +1528,15 @@ export function NomeSocialChat({
         summaryPanelOpen={drawerOpen}
         summaryBadge={summaryBadge}
         otherOptionsDisabled={isRegenerating}
+        pdfModel={pdfCtaModel}
+        pdfExiting={pdfCircleExiting}
+        onPdfClick={onPdfDockClick}
         onBack={handleChatDockBack}
         onSecondary={handleDockSecondary}
         onPrimary={handleDockPrimary}
       />
+
+      {pdfToastUi}
 
       <SummaryDrawer
         isOpen={drawerOpen}

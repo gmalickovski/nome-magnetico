@@ -40,8 +40,8 @@ if (nomeInicial.trim() && dataInicial.trim()) {
 }
 ---
 
-<AppLayout title="Análise de Nome Social" noPadding>
-  <div class="nm-chat-shell">
+<AppLayout title="Análise de Nome Social" noPadding hideMobileNav>
+  <div class="nm-chat-shell nm-chat-shell--no-mobile-nav">
     <NomeSocialChat
       client:load
       birthName={nomeInicial}
@@ -49,6 +49,8 @@ if (nomeInicial.trim() && dataInicial.trim()) {
       profileGender={generoInicial}
       initialBirthPanel={initialBirthPanel}
       userId={user.id}
+      isSubscriber
+      emailConfirmed={Boolean(user.email_confirmed_at)}
     />
   </div>
 </AppLayout>

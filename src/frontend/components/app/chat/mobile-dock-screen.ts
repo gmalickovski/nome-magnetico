@@ -28,8 +28,10 @@ export interface DockPrimarySpec {
 
 export interface ChatDockLayout {
   screen: ChatDockScreen;
-  secondaries: DockSecondarySpec[];
-  primary: DockPrimarySpec | null;
+  /** Ações centrais (sem Resumo). */
+  middleSecondaries: DockSecondarySpec[];
+  /** Botão circular de PDF quando há assinatura selecionada. */
+  showPdfCircle: boolean;
 }
 
 export interface ResultadoDockLayout {
@@ -47,7 +49,6 @@ export interface ChatDockInput {
   hasSuggestionsMessage: boolean;
   canRestart: boolean;
   canRegenerate: boolean;
-  hasAnalysisId: boolean;
   suggestionSelected: boolean;
 }
 
@@ -64,30 +65,23 @@ export function resolveChatDockScreen(input: ChatDockInput): ChatDockScreen | nu
 
 export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput): ChatDockLayout {
   if (screen === 'chat_questionnaire') {
-    const secondaries: DockSecondarySpec[] = [{ id: 'summary', label: 'Resumo', icon: 'panel-right' }];
+    const middleSecondaries: DockSecondarySpec[] = [];
     if (input.canRestart) {
-      secondaries.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
+      middleSecondaries.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
     }
-    return { screen, secondaries, primary: null };
+    return { screen, middleSecondaries, showPdfCircle: false };
   }
 
-  const secondaries: DockSecondarySpec[] = [{ id: 'summary', label: 'Resumo', icon: 'panel-right' }];
+  const middleSecondaries: DockSecondarySpec[] = [];
   if (input.canRegenerate) {
-    secondaries.push({ id: 'other_options', label: 'Outras opções', icon: 'sparkles' });
+    middleSecondaries.push({ id: 'other_options', label: 'Outras opções', icon: 'sparkles' });
   }
 
-  let primary: DockPrimarySpec | null = null;
-  if (input.hasAnalysisId) {
-    primary = {
-      id: 'generate_pdf',
-      label: 'Gerar PDF',
-      disabledLabel: 'Escolha um nome',
-      icon: 'file-down',
-      disabled: !input.suggestionSelected,
-    };
-  }
-
-  return { screen: 'chat_suggestions', secondaries, primary };
+  return {
+    screen: 'chat_suggestions',
+    middleSecondaries,
+    showPdfCircle: input.suggestionSelected,
+  };
 }
 
 export interface ResultadoDockInput {
@@ -123,10 +117,16 @@ export function buildResultadoDockLayout(input: ResultadoDockInput): ResultadoDo
   return { screen: 'resultado', secondaries, primary };
 }
 
-/** Máximo 4 itens além do Voltar (secundários + primária). */
+/** Máximo 4 itens além do Voltar (centro + resumo + pdf). */
 export function assertDockItemLimit(layout: MobileDockLayout): void {
-  const count = layout.secondaries.length + (layout.primary ? 1 : 0);
-  if (count > 4) {
-    throw new Error(`Dock excede 4 itens: ${count}`);
+  if (layout.screen === 'resultado') {
+    const count = layout.secondaries.length + 1;
+    if (count > 4) throw new Error(`Dock excede 4 itens: ${count}`);
+    return;
+  }
+  const count =
+    layout.middleSecondaries.length + (layout.showPdfCircle ? 1 : 0) + 1;
+  if (count > 5) {
+    throw new Error(`Dock chat excede limite de ações: ${count}`);
   }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { MobileDockLayout } from './mobile-dock-screen.js';
 import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { IconChevronLeft, dockIconFor } from './MobileChatDockIcons.js';
@@ -8,12 +8,16 @@ import {
   MOBILE_DOCK_ROOT_CLASS,
 } from './mobile-dock-layout.js';
 import { useDockBarWidth } from './useDockBarWidth.js';
+import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
 
 export interface MobileChatDockProps {
   layout: MobileDockLayout | null;
   summaryPanelOpen: boolean;
   summaryBadge: boolean;
   otherOptionsDisabled?: boolean;
+  pdfModel?: ChatPdfCtaModel | null;
+  pdfExiting?: boolean;
+  onPdfClick?: () => void;
   onBack: () => void;
   onSecondary: (action: DockSecondaryActionId, position: number) => void;
   onPrimary: (action: DockPrimaryActionId) => void;
@@ -29,6 +33,9 @@ export function MobileChatDock({
   summaryPanelOpen,
   summaryBadge,
   otherOptionsDisabled = false,
+  pdfModel = null,
+  pdfExiting = false,
+  onPdfClick,
   onBack,
   onSecondary,
   onPrimary,
@@ -37,15 +44,22 @@ export function MobileChatDock({
 
   const layoutMeasureKey = useMemo(() => {
     if (!layout) return '';
+    if (layout.screen === 'resultado') {
+      return [
+        layout.screen,
+        ...layout.secondaries.map((s) => s.id),
+        layout.primary.id,
+        layout.primary.disabled ? 'd' : 'e',
+      ].join('|');
+    }
     return [
       layout.screen,
-      ...layout.secondaries.map((s) => s.id),
-      layout.primary?.id ?? '',
-      layout.primary?.disabled ? 'd' : 'e',
-      layout.primary?.disabledLabel ?? '',
+      ...layout.middleSecondaries.map((s) => s.id),
+      layout.showPdfCircle ? 'pdf' : '',
+      pdfExiting ? 'pdf-x' : '',
       summaryPanelOpen ? 'open' : 'closed',
     ].join('|');
-  }, [layout, summaryPanelOpen]);
+  }, [layout, summaryPanelOpen, pdfExiting]);
 
   const { innerRef, widthPx } = useDockBarWidth(layoutMeasureKey);
 
@@ -70,6 +84,85 @@ export function MobileChatDock({
   const hiddenByKeyboard = keyboardOpen;
   const shellStyle = dockShellWidthStyle(widthPx, reduced);
 
+  if (layout.screen === 'resultado') {
+    return (
+      <div
+        className={`${MOBILE_DOCK_ROOT_CLASS} transition-opacity duration-[120ms] ${
+          hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{
+          bottom: 'calc(var(--nm-mobile-nav-h, 0px) + 12px + env(safe-area-inset-bottom, 0px))',
+        }}
+        role="toolbar"
+        aria-label="Ações"
+      >
+        <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
+          <div
+            ref={innerRef}
+            className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))]:bg-[#131313]`}
+          >
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Voltar"
+              className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]"
+            >
+              <IconChevronLeft />
+            </button>
+            <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
+            <div
+              className={`inline-flex shrink-0 items-center gap-1 ${
+                reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
+              }`}
+            >
+              {layout.secondaries.map((action, index) => {
+                const Icon = dockIconFor(action.icon);
+                return (
+                  <button
+                    key={action.id}
+                    type="button"
+                    aria-label={action.label}
+                    style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
+                    onClick={() => onSecondary(action.id, index)}
+                    className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06]"
+                  >
+                    <Icon />
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                disabled={layout.primary.disabled}
+                onClick={() => onPrimary(layout.primary.id)}
+                className={`mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(52vw,200px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] ${
+                  layout.primary.disabled
+                    ? 'border border-[rgba(212,175,55,0.3)] bg-transparent text-[rgba(212,175,55,0.5)]'
+                    : 'bg-[#D4AF37] text-[#111111]'
+                }`}
+              >
+                {(() => {
+                  const Icon = dockIconFor(layout.primary.icon);
+                  return (
+                    <>
+                      <Icon className={layout.primary.disabled ? 'opacity-50' : ''} />
+                      <span className="nm-caption truncate text-[11px] font-semibold leading-none text-[#111111]">
+                        {layout.primary.label}
+                      </span>
+                    </>
+                  );
+                })()}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const summarySpec = { id: 'summary' as const, label: 'Resumo', icon: 'panel-right' as const };
+  const SummaryIcon = dockIconFor(summarySpec.icon);
+  const isSummaryActive = summaryPanelOpen;
+
   return (
     <div
       className={`${MOBILE_DOCK_ROOT_CLASS} transition-opacity duration-[120ms] ${
@@ -84,13 +177,13 @@ export function MobileChatDock({
       <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
         <div
           ref={innerRef}
-          className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))]:bg-[#131313]`}
+          className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`}
         >
           <button
             type="button"
             onClick={onBack}
             aria-label="Voltar"
-            className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]"
+            className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
           >
             <IconChevronLeft />
           </button>
@@ -98,85 +191,61 @@ export function MobileChatDock({
           <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
 
           <div
-            className={`inline-flex shrink-0 items-center gap-1 ${
+            className={`flex min-w-0 flex-1 items-center justify-center gap-1 ${
               reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
             }`}
           >
-            {layout.secondaries.map((action, index) => {
+            {layout.middleSecondaries.map((action, index) => {
               const Icon = dockIconFor(action.icon);
-              const isSummary = action.id === 'summary';
-              const isActive = isSummary && summaryPanelOpen;
               const disabled = action.id === 'other_options' && otherOptionsDisabled;
-
               return (
                 <button
                   key={action.id}
                   type="button"
                   disabled={disabled}
-                  aria-label={isActive ? undefined : action.label}
-                  aria-pressed={isActive ? true : undefined}
+                  aria-label={action.label}
                   style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
                   onClick={() => onSecondary(action.id, index)}
-                  className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 disabled:opacity-[0.35] active:scale-[0.92] active:bg-white/[0.06] ${
-                    isActive ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37]' : ''
-                  }`}
+                  className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 disabled:opacity-[0.35] active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
                 >
-                  <span className="relative flex h-[22px] w-[22px] items-center justify-center">
-                    <Icon />
-                    {isSummary && summaryBadge && !summaryPanelOpen && (
-                      <span
-                        className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#D4AF37]"
-                        aria-hidden
-                      />
-                    )}
-                  </span>
-                  {isActive && (
-                    <span className="nm-caption mt-0.5 text-[11px] font-normal leading-none text-[#D4AF37]">
-                      {action.label}
-                    </span>
-                  )}
+                  <Icon />
                 </button>
               );
             })}
 
-            {layout.primary && (
-              <button
-                type="button"
-                disabled={layout.primary.disabled}
-                onClick={() => onPrimary(layout.primary!.id)}
-                style={
-                  reduced ? undefined : { animationDelay: `${layout.secondaries.length * 30}ms` }
-                }
-                className={`mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(52vw,200px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] ${
-                  layout.primary.disabled
-                    ? 'border border-[rgba(212,175,55,0.3)] bg-transparent text-[rgba(212,175,55,0.5)]'
-                    : 'bg-[#D4AF37] text-[#111111]'
-                }`}
-              >
-                {(() => {
-                  const Icon = dockIconFor(layout.primary!.icon);
-                  const label =
-                    layout.primary!.disabled && layout.primary!.disabledLabel
-                      ? layout.primary!.disabledLabel
-                      : layout.primary!.label;
-                  return (
-                    <>
-                      <Icon className={layout.primary!.disabled ? 'opacity-50' : ''} />
-                      <span
-                        className={`nm-caption truncate text-[11px] font-semibold leading-none ${
-                          layout.primary!.disabled
-                            ? 'text-[rgba(212,175,55,0.5)]'
-                            : 'text-[#111111]'
-                        }`}
-                      >
-                        {label}
-                      </span>
-                    </>
-                  );
-                })()}
-              </button>
+            {pdfModel && (pdfModel.visible || pdfExiting) && onPdfClick && (
+              <ChatPdfDockCircle
+                model={pdfModel}
+                onClick={onPdfClick}
+                exiting={pdfExiting}
+              />
             )}
           </div>
+
+          <button
+            type="button"
+            aria-label={isSummaryActive ? 'Fechar resumo' : summarySpec.label}
+            aria-pressed={isSummaryActive ? true : undefined}
+            onClick={() => onSecondary('summary', layout.middleSecondaries.length)}
+            className={`mobile-chat-dock-btn relative ml-1 flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] ${
+              isSummaryActive ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37]' : ''
+            }`}
+          >
+            <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+              <SummaryIcon />
+              {summaryBadge && !summaryPanelOpen && (
+                <span
+                  className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#D4AF37]"
+                  aria-hidden
+                />
+              )}
+            </span>
+            {isSummaryActive && (
+              <span className="nm-caption mt-0.5 text-[11px] font-normal leading-none text-[#D4AF37]">
+                {summarySpec.label}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </div>
