@@ -110,6 +110,7 @@ describe('request-refund · provider test', () => {
       productType: 'nome_social',
       productName: 'Nome Social',
       amount: 0,
+      amount_formatted: 'R$ 0,00',
       purchasedAt: '2026-10-25T00:00:00.000Z',
       requestedAt: firstNotify?.payload.requestedAt,
       reason: 'Insatisfação com o serviço',
@@ -147,5 +148,28 @@ describe('request-refund · provider test', () => {
     assert.equal(body.success, true);
     assert.ok(callOrder.includes('createRefund'), 'createRefund foi chamado com sucesso');
     assert.ok(callOrder.includes('refundSubscription'), 'refundSubscription foi chamado com sucesso');
+  });
+
+  it('DEV-259: amount_paid null vira amount 0 e amount_formatted R$ 0,00 nos 2 eventos', async () => {
+    (subscription as { amount_paid: number | null }).amount_paid = null;
+    try {
+      const res = await POST({
+        request: new Request('http://localhost/api/request-refund', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscriptionId: '00000000-0000-4000-8000-000000000001' }),
+        }),
+        locals: { user: { id: 'user-1', email: 'test@example.com' } },
+      } as never);
+      assert.equal(res.status, 200);
+      assert.equal(notifyCalls.length, 2);
+      for (const call of notifyCalls) {
+        assert.equal(call.payload.amount, 0);
+        assert.equal(String(call.payload.amount_formatted).replace(/\u00a0/g, ' '), 'R$ 0,00');
+      }
+      assert.equal(notifyCalls[1]?.payload.userId, 'user-1');
+    } finally {
+      subscription.amount_paid = 0;
+    }
   });
 });
