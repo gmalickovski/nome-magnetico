@@ -90,10 +90,6 @@ export function MobileChatDock({
     hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
   }`;
 
-  const rootStyle = {
-    bottom: 'calc(var(--nm-mobile-nav-h, 0px) + 12px + env(safe-area-inset-bottom, 0px))',
-  };
-
   const SummaryIcon = dockIconFor('panel-right');
 
   const dockSecondaryBtnClass = (actionId: string, base: string) =>
@@ -102,7 +98,7 @@ export function MobileChatDock({
   if (layout.screen === 'chat_free_paywall' && layout.primary) {
     const primary = layout.primary;
     return (
-      <div className={rootClass} style={rootStyle} role="toolbar" aria-label="Ações">
+      <div className={rootClass} role="toolbar" aria-label="Ações">
         <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
           <div
             ref={innerRef}
@@ -144,7 +140,7 @@ export function MobileChatDock({
 
   if (layout.screen === 'resultado') {
     return (
-      <div className={rootClass} style={rootStyle} role="toolbar" aria-label="Ações">
+      <div className={rootClass} role="toolbar" aria-label="Ações">
         <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
           <div
             ref={innerRef}
@@ -213,7 +209,7 @@ export function MobileChatDock({
   const pdfTooltip = pdfModel?.isFree ? 'Desbloquear análise' : 'Baixar PDF';
 
   return (
-    <div className={rootClass} style={rootStyle} role="toolbar" aria-label="Ações">
+    <div className={rootClass} role="toolbar" aria-label="Ações">
       <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
         <div
           ref={innerRef}

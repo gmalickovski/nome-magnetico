@@ -112,7 +112,7 @@ export function SummaryDrawer({
       className={panelClass}
       style={{
         top: 'var(--nm-chat-mobile-header-h, 52px)',
-        bottom: 'var(--nm-chat-dock-clearance, calc(88px + env(safe-area-inset-bottom, 0px)))',
+        bottom: 'var(--nm-chat-dock-clearance, var(--nm-mobile-dock-stacked-clearance))',
       }}
     >
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-3 py-2.5">

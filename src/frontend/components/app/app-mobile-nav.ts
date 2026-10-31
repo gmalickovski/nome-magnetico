@@ -108,10 +108,10 @@ export function buildAppNavDockItems(options: {
 /** Barra de progresso no topo ao trocar de rota interna (mesmo efeito da nav antiga). */
 export function showAppNavRouteLoadingBar(): void {
   if (typeof document === 'undefined') return;
-  if (document.getElementById('mobile-nav-loading-bar')) return;
+  if (document.getElementById('app-dock-route-loading-bar')) return;
 
   const bar = document.createElement('div');
-  bar.id = 'mobile-nav-loading-bar';
+  bar.id = 'app-dock-route-loading-bar';
   Object.assign(bar.style, {
     position: 'fixed',
     top: '0',

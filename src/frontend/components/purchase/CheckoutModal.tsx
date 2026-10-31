@@ -244,7 +244,7 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-visible px-5 pb-[calc(env(safe-area-inset-bottom)+3.75rem)] pt-5 sm:px-6 md:overflow-y-auto md:py-6 lg:overflow-visible lg:px-8 lg:py-8 xl:px-10">
+        <div className="min-h-0 flex-1 overflow-visible px-5 pb-[var(--nm-mobile-dock-clearance,5.5rem)] pt-5 sm:px-6 md:overflow-y-auto md:pb-6 md:py-6 lg:overflow-visible lg:px-8 lg:py-8 xl:px-10">
           {step === 'review' && (
             <div className="space-y-3.5 lg:space-y-5">
               <div className="hidden items-center justify-between gap-4 pr-14 lg:flex">

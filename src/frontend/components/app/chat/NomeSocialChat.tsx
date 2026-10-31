@@ -1594,7 +1594,7 @@ export function NomeSocialChat({
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[calc(88px+env(safe-area-inset-bottom,0px))] md:pb-24">
+          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-stacked-clearance)] md:pb-24">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;

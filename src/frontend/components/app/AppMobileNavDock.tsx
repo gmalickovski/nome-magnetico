@@ -70,14 +70,9 @@ export default function AppMobileNavDock({ pathname, isAdmin, showAnalisesNav }:
   const reduced = prefersReducedMotion();
   const shellStyle = dockShellWidthStyle(widthPx, reduced);
 
-  const rootStyle = {
-    bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-  };
-
   return (
     <div
       className={`${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-nav-dock`}
-      style={rootStyle}
       role="navigation"
       aria-label="Navegação principal"
     >
