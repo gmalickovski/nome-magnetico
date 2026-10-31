@@ -17,6 +17,13 @@ const chatBase = {
 };
 
 describe('mobile-dock-screen', () => {
+  it('antes da certidão: dock de questionário (Voltar), não null', () => {
+    assert.equal(
+      resolveChatDockScreen({ ...chatBase, birthConfirmed: false, canShowSummary: false }),
+      'chat_questionnaire'
+    );
+  });
+
   it('questionário: Recomeçar no centro, sem PDF', () => {
     assert.equal(resolveChatDockScreen(chatBase), 'chat_questionnaire');
     const layout = buildChatDockLayout('chat_questionnaire', chatBase);

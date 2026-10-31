@@ -9,7 +9,7 @@ Este documento estabelece as diretrizes arquiteturais e padrões de implementaç
 | Categoria | Viewport CSS Típico | Dispositivos de Referência | Desafios Principais |
 |---|---|---|---|
 | **Foldables Fechados / Compactos** | `280px` – `360px` | Galaxy Z Fold (Cover screen `280px–344px`), iPhone 12/13 Mini (`360px`), iPhone SE (`320px`) | Risco de overflow horizontal, botões quebrando em 2 linhas, paddings laterais engolindo área útil |
-| **Smartphones Padrão** | `375px` – `430px` | iPhone 14/15/16/Pro Max, Samsung Galaxy S23/S24 | Clearance da dock flutuante (`AppMobileNavDock`) e safe area |
+| **Smartphones Padrão** | `375px` – `430px` | iPhone 14/15/16/Pro Max, Samsung Galaxy S23/S24 | Clearance da dock flutuante (`AppMobileDock`) e safe area |
 | **Foldables Abertos / Quase Quadrados** | `712px` – `884px` (altura similar à largura) | Galaxy Z Fold aberto, Pixel Fold | Grids de 3 colunas em `md:` espremem cards para `<210px`. Modais altos podem cortar CTAs inferiores |
 | **Tablets / iPads** | `768px` – `1024px` (portrait) / `1024px` – `1366px` (landscape) | iPad Mini (`744x1133`), iPad Air (`820x1180`), iPad Pro (`1024x1366`) | Touch targets de 44px, transição ergonômica entre modo em pé e deitado |
 | **Notebooks 13" – 14"** | `1280x720`, `1366x768`, `1440x900`, `1512x982` | MacBook Air/Pro 13"/14", Laptops Windows com escala 125%/150% | Altura vertical limitada (`720px–800px` úteis). Evitar que o CTA fique enterrado abaixo da primeira dobra |
@@ -42,7 +42,7 @@ Em nenhuma hipótese um container de conteúdo deve se espalhar infinitamente se
 
 ### 2.2 Preservação de Área Útil em Telas Compactas (280px–360px)
 * **Padding Adaptativo**: Usar `px-3.5 sm:px-6` (14px nas bordas) em vez de `px-6` (24px nas bordas). Em uma tela de `280px`, `px-6` consome 48px (17% da tela), enquanto `px-3.5` consome apenas 28px, preservando 252px de área útil.
-* **Dock mobile (`AppMobileNavDock.tsx`)**:
+* **Dock mobile (`AppMobileDock.tsx`)** — instância única no layout; conteúdo por rota:
   * Barra flutuante (glass) com ícones circulares, tooltips e mesma linguagem visual da dock de ações do chat.
   * Variáveis CSS em `global.css` (`--nm-mobile-dock-clearance`, `--nm-mobile-dock-stacked-clearance`) definem padding inferior do conteúdo.
 

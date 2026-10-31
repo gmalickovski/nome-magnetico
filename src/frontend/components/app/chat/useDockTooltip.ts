@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
 const LONG_PRESS_MS = 400;
-const HIDE_AFTER_RELEASE_MS = 700;
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
@@ -16,7 +15,6 @@ function canHoverFinePointer(): boolean {
 export function useDockTooltip(tooltipLabel: string) {
   const [visible, setVisible] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressClickRef = useRef(false);
 
   const clearLongPress = useCallback(() => {
@@ -26,23 +24,14 @@ export function useDockTooltip(tooltipLabel: string) {
     }
   }, []);
 
-  const clearHide = useCallback(() => {
-    if (hideTimer.current) {
-      clearTimeout(hideTimer.current);
-      hideTimer.current = null;
-    }
-  }, []);
+  const hide = useCallback(() => {
+    clearLongPress();
+    setVisible(false);
+  }, [clearLongPress]);
 
   const show = useCallback(() => {
-    clearHide();
     setVisible(true);
-  }, [clearHide]);
-
-  const scheduleHide = useCallback(() => {
-    clearHide();
-    const delay = prefersReducedMotion() ? 0 : HIDE_AFTER_RELEASE_MS;
-    hideTimer.current = setTimeout(() => setVisible(false), delay);
-  }, [clearHide]);
+  }, []);
 
   const shouldSuppressClick = useCallback(() => {
     if (!suppressClickRef.current) return false;
@@ -66,21 +55,24 @@ export function useDockTooltip(tooltipLabel: string) {
 
   const onPointerUp = useCallback(() => {
     clearLongPress();
-    if (visible) scheduleHide();
-  }, [clearLongPress, visible, scheduleHide]);
+    hide();
+  }, [clearLongPress, hide]);
+
+  const onPointerLeave = useCallback(() => {
+    hide();
+  }, [hide]);
 
   const onPointerCancel = useCallback(() => {
-    clearLongPress();
-    scheduleHide();
-  }, [clearLongPress, scheduleHide]);
+    hide();
+  }, [hide]);
 
   const onMouseEnter = useCallback(() => {
     if (canHoverFinePointer()) show();
   }, [show]);
 
   const onMouseLeave = useCallback(() => {
-    if (canHoverFinePointer()) scheduleHide();
-  }, [scheduleHide]);
+    if (canHoverFinePointer()) hide();
+  }, [hide]);
 
   return {
     visible,
@@ -89,6 +81,7 @@ export function useDockTooltip(tooltipLabel: string) {
     handlers: {
       onPointerDown,
       onPointerUp,
+      onPointerLeave,
       onPointerCancel,
       onMouseEnter,
       onMouseLeave,

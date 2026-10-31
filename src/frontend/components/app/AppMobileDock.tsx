@@ -5,6 +5,7 @@ import {
   type AppNavDockItem,
 } from './app-mobile-nav.js';
 import { iconForNavItem } from './AppNavDockIcons.js';
+import { MobileChatDock } from './chat/MobileChatDock.js';
 import {
   dockShellWidthStyle,
   MOBILE_DOCK_BAR_CLASS,
@@ -12,8 +13,10 @@ import {
 } from './chat/mobile-dock-layout.js';
 import { useDockBarWidth } from './chat/useDockBarWidth.js';
 import { DockTooltipButton } from './chat/DockTooltipButton.js';
+import { resolveMobileDockContext } from '../../lib/mobile-dock-context.js';
+import { useMobileDockActionSnapshot } from '../../lib/mobile-dock-action-store.js';
 
-export interface AppMobileNavDockProps {
+export interface AppMobileDockProps {
   pathname: string;
   isAdmin: boolean;
   showAnalisesNav: boolean;
@@ -55,7 +58,11 @@ function navigateFromDock(item: AppNavDockItem) {
   window.location.href = item.href;
 }
 
-export default function AppMobileNavDock({ pathname, isAdmin, showAnalisesNav }: AppMobileNavDockProps) {
+function AppNavDockBar({
+  pathname,
+  isAdmin,
+  showAnalisesNav,
+}: AppMobileDockProps) {
   const items = useMemo(
     () => buildAppNavDockItems({ pathname, isAdmin, showAnalisesNav }),
     [pathname, isAdmin, showAnalisesNav]
@@ -72,7 +79,7 @@ export default function AppMobileNavDock({ pathname, isAdmin, showAnalisesNav }:
 
   return (
     <div
-      className={`${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-nav-dock`}
+      className={`${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-dock`}
       role="navigation"
       aria-label="Navegação principal"
     >
@@ -112,4 +119,35 @@ export default function AppMobileNavDock({ pathname, isAdmin, showAnalisesNav }:
       </div>
     </div>
   );
+}
+
+/** Única dock mobile do /app: mesma posição fixa; conteúdo por rota. */
+export default function AppMobileDock(props: AppMobileDockProps) {
+  const dockContext = resolveMobileDockContext(props.pathname);
+  const actionSnapshot = useMobileDockActionSnapshot();
+
+  if (dockContext === 'action') {
+    if (!actionSnapshot?.state.layout || !actionSnapshot.handlers) {
+      return null;
+    }
+    const { state, handlers } = actionSnapshot;
+    return (
+      <div className="nm-app-mobile-dock-host contents">
+        <MobileChatDock
+          layout={state.layout}
+          summaryPanelOpen={state.summaryPanelOpen}
+          restartExitActive={state.restartExitActive}
+          summaryBadge={state.summaryBadge}
+          pdfModel={state.pdfModel}
+          pdfExiting={state.pdfExiting}
+          onPdfClick={handlers.onPdfClick}
+          onBack={handlers.onBack}
+          onSecondary={handlers.onSecondary}
+          onPrimary={handlers.onPrimary}
+        />
+      </div>
+    );
+  }
+
+  return <AppNavDockBar {...props} />;
 }

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { buildResultadoDockLayout } from './mobile-dock-screen.js';
-import { MobileChatDock } from './MobileChatDock.js';
+import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { navigateClientAreaBack } from '../../../lib/app-nav-back.js';
@@ -80,7 +80,7 @@ export function ResultadoMobileDock({
   };
 
   return (
-    <MobileChatDock
+    <MobileDockActionBridge
       layout={layout}
       summaryPanelOpen={false}
       summaryBadge={false}

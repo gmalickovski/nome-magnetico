@@ -86,7 +86,7 @@ export function MobileChatDock({
   const hiddenByKeyboard = keyboardOpen;
   const shellStyle = dockShellWidthStyle(widthPx, reduced);
 
-  const rootClass = `${MOBILE_DOCK_ROOT_CLASS} transition-opacity duration-[120ms] ${
+  const rootClass = `${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-dock transition-opacity duration-[120ms] ${
     hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
   }`;
 

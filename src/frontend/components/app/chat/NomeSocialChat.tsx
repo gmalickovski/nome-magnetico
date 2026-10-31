@@ -12,7 +12,7 @@ import { fetchChatReadingSummary } from './chat-reading-summary-client.js';
 import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
-import { MobileChatDock } from './MobileChatDock.js';
+import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import { useDockRestartForSummary } from './useDockRestartForSummary.js';
 import {
   buildChatDockLayout,
@@ -1596,7 +1596,7 @@ export function NomeSocialChat({
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-stacked-clearance)] md:pb-24">
+          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-clearance)] md:pb-24">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
@@ -1842,7 +1842,7 @@ export function NomeSocialChat({
         </aside>
       </div>
 
-      <MobileChatDock
+      <MobileDockActionBridge
         layout={chatDockLayout}
         summaryPanelOpen={drawerOpen}
         restartExitActive={restartExitActive}

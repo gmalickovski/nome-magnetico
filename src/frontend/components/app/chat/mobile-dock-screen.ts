@@ -65,7 +65,9 @@ export interface ChatDockInput {
 }
 
 export function resolveChatDockScreen(input: ChatDockInput): ChatDockScreen | null {
-  if (!input.birthConfirmed || !input.canShowSummary) return null;
+  if (!input.birthConfirmed || !input.canShowSummary) {
+    return 'chat_questionnaire';
+  }
   if (input.freePaywallActive) {
     return 'chat_free_paywall';
   }

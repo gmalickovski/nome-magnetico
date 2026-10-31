@@ -3,8 +3,9 @@ import BaseLayout from './BaseLayout.astro';
 import { createUserClient } from '../backend/db/supabase';
 import { memoize } from '../backend/cache/memo';
 import AvatarMenu from '../frontend/components/app/AvatarMenu';
-import AppMobileNavDock from '../frontend/components/app/AppMobileNavDock';
+import AppMobileDock from '../frontend/components/app/AppMobileDock';
 import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
+import { resolveMobileDockContext } from '../frontend/lib/mobile-dock-context.ts';
 
 export interface Props {
   title: string;
@@ -78,6 +79,7 @@ const isActive = (path: string) =>
 const navAppActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte') && !isActive('/app/admin-analise') && !isActive('/app/sentry-test');
 const navAnalisesActive = isActive('/app/analises') || isActive('/app/resultado');
 const navSuporteActive = isActive('/app/suporte');
+const mobileDockContext = resolveMobileDockContext(pathname);
 ---
 
 <BaseLayout title={title} description={description} noIndex={true}>
@@ -93,7 +95,10 @@ const navSuporteActive = isActive('/app/suporte');
     identifyNmUser();
     window.addEventListener('nm-posthog-ready', identifyNmUser);
   </script>
-  <div class="min-h-screen bg-[#1a1a1a] nm-app-shell--with-mobile-dock">
+  <div class:list={[
+    'min-h-screen bg-[#1a1a1a] nm-app-shell--with-mobile-dock',
+    { 'nm-app-shell--dock-action-only': mobileDockContext === 'action' },
+  ]}>
     {false && isTest && (
       <div class="bg-[#D4AF37]/10 border-b border-[#D4AF37]/20 px-4 py-2 text-center text-sm text-[#D4AF37]">
         Você está usando um acesso de teste.
@@ -199,7 +204,7 @@ const navSuporteActive = isActive('/app/suporte');
       </div>
     </header>
 
-    <AppMobileNavDock
+    <AppMobileDock
       client:load
       pathname={pathname}
       isAdmin={isAdmin}
