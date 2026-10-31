@@ -73,6 +73,18 @@ export function loadChatSession(userId: string): PersistedChatSession | null {
   }
 }
 
+export type ChatSessionSnapshotFields = Omit<PersistedChatSession, 'version' | 'savedAt'>;
+
+export function buildPersistedChatSession(
+  fields: ChatSessionSnapshotFields
+): PersistedChatSession {
+  return {
+    version: STORAGE_VERSION,
+    savedAt: Date.now(),
+    ...fields,
+  };
+}
+
 export function saveChatSession(userId: string, session: PersistedChatSession): void {
   if (!userId || typeof localStorage === 'undefined') return;
   try {

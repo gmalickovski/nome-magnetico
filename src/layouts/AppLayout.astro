@@ -3,7 +3,7 @@ import BaseLayout from './BaseLayout.astro';
 import { createUserClient } from '../backend/db/supabase';
 import { memoize } from '../backend/cache/memo';
 import AvatarMenu from '../frontend/components/app/AvatarMenu';
-import MobileNavBar from '../frontend/components/app/MobileNavBar.astro';
+import AppMobileNavDock from '../frontend/components/app/AppMobileNavDock';
 import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
 
 export interface Props {
@@ -93,7 +93,7 @@ const navSuporteActive = isActive('/app/suporte');
     identifyNmUser();
     window.addEventListener('nm-posthog-ready', identifyNmUser);
   </script>
-  <div class="min-h-screen bg-[#1a1a1a]">
+  <div class:list={['min-h-screen bg-[#1a1a1a]', { 'nm-app-shell--with-mobile-dock': !hideMobileNav }]}>
     {false && isTest && (
       <div class="bg-[#D4AF37]/10 border-b border-[#D4AF37]/20 px-4 py-2 text-center text-sm text-[#D4AF37]">
         Você está usando um acesso de teste.
@@ -199,9 +199,16 @@ const navSuporteActive = isActive('/app/suporte');
       </div>
     </header>
 
-    {!hideMobileNav && <MobileNavBar isAdmin={isAdmin} showAnalisesNav={showAnalisesNav} />}
+    {!hideMobileNav && (
+      <AppMobileNavDock
+        client:load
+        pathname={pathname}
+        isAdmin={isAdmin}
+        showAnalisesNav={showAnalisesNav}
+      />
+    )}
 
-    <main class={noPadding ? "md:ml-20 h-full overflow-x-hidden" : "md:ml-20 px-3.5 sm:px-6 md:px-10 lg:px-14 py-6 sm:py-8 md:py-10 pb-24 md:pb-10 overflow-x-hidden"}>
+    <main class={noPadding ? "md:ml-20 h-full overflow-x-hidden nm-app-main" : "md:ml-20 px-3.5 sm:px-6 md:px-10 lg:px-14 py-6 sm:py-8 md:py-10 nm-app-main overflow-x-hidden md:pb-10"}>
       <div class={noPadding ? "h-full" : "max-w-[1440px] 2xl:max-w-[1600px] mx-auto w-full"}>
         <slot />
       </div>

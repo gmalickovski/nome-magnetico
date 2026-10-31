@@ -21,13 +21,6 @@ import {
   type DockSecondaryActionId,
 } from './mobile-dock-screen.js';
 import type { SummaryPanelCloseMethod } from './SummaryDrawer.js';
-import {
-  getPreviousFlowStep,
-  isFirstQuestionnaireStep,
-  POST_BIRTH_FLOW_STEPS,
-  rewindCollectStateToStep,
-  type PostBirthFlowStep,
-} from './chat-dock-step-back.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { GuessButtons } from './GuessButtons.js';
@@ -74,10 +67,12 @@ import {
 } from '../../../../shared/interactive-engine/motor-radar.js';
 import { buildQuestionnaireContextChips } from '../../../../shared/interactive-engine/questionnaire-context-chips.js';
 import {
+  buildPersistedChatSession,
   CHAT_SESSION_STORAGE_VERSION,
   clearChatSession,
   loadChatSession,
   saveChatSession,
+  type ChatSessionSnapshotFields,
   type PersistedChatSession,
 } from './chat-session-storage.js';
 import {
@@ -218,7 +213,6 @@ export function NomeSocialChat({
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
-  const [backToStartConfirmOpen, setBackToStartConfirmOpen] = useState(false);
   const [pendingPalpiteFeedback, setPendingPalpiteFeedback] = useState<'parcial' | 'nao' | null>(
     null
   );
@@ -356,39 +350,43 @@ export function NomeSocialChat({
     persistReady.current = true;
   }, [userId]);
 
+  const buildCurrentSessionSnapshot = (): ChatSessionSnapshotFields => ({
+    messages,
+    answers,
+    confirmedName,
+    confirmedDate,
+    draftNome,
+    draftDate,
+    draftGender,
+    stepIndex,
+    currentStepId,
+    remaining,
+    birthConfirmed,
+    collectState,
+    sobrenomesDetectados,
+    radarAxes,
+    summaryItems,
+    basePanel,
+    birthReadingSummary,
+    harmonizedSummaries,
+    activeSuggestionId,
+    suggestions,
+    analysisId,
+    chatPhase,
+    freePdfDownloaded,
+    freeAnalysisId,
+  });
+
+  const flushChatSessionToStorage = () => {
+    if (!userId) return;
+    saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
+  };
+
   useEffect(() => {
     if (!userId || !persistReady.current) return;
 
     const timer = window.setTimeout(() => {
-      const snapshot: PersistedChatSession = {
-        version: CHAT_SESSION_STORAGE_VERSION,
-        savedAt: Date.now(),
-        messages,
-        answers,
-        confirmedName,
-        confirmedDate,
-        draftNome,
-        draftDate,
-        draftGender,
-        stepIndex,
-        currentStepId,
-        remaining,
-        birthConfirmed,
-        collectState,
-        sobrenomesDetectados,
-        radarAxes,
-        summaryItems,
-        basePanel,
-        birthReadingSummary,
-        harmonizedSummaries,
-        activeSuggestionId,
-        suggestions,
-        analysisId,
-        chatPhase,
-        freePdfDownloaded,
-        freeAnalysisId,
-      };
-      saveChatSession(userId, snapshot);
+      saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
     }, 450);
 
     return () => window.clearTimeout(timer);
@@ -499,85 +497,10 @@ export function NomeSocialChat({
     resetChat();
   };
 
-  const trimMessagesForRewind = (targetStep: PostBirthFlowStep) => {
-    const targetIdx = POST_BIRTH_FLOW_STEPS.indexOf(targetStep);
-    setMessages((prev) =>
-      prev.filter((m) => {
-        if (m.type === 'suggestions') return false;
-        const sid = m.stepId;
-        if (!sid || sid.startsWith('onboarding')) return true;
-        if (sid === 'fim_coleta' || sid === 'conclusao') return false;
-        const idx = POST_BIRTH_FLOW_STEPS.indexOf(sid as PostBirthFlowStep);
-        if (idx === -1) return true;
-        return idx < targetIdx;
-      })
-    );
-    setAnswers((prev) => {
-      const next = { ...prev };
-      for (const s of POST_BIRTH_FLOW_STEPS.slice(targetIdx)) {
-        delete next[s];
-      }
-      delete next.fim_coleta;
-      delete next.conclusao;
-      return next;
-    });
-  };
-
-  const resyncAfterRewind = async (rew: ChatCollectState, targetStep: PostBirthFlowStep) => {
-    setCollectState(rew);
-    setLoading(true);
-    const submittedAt = Date.now();
-    setActiveSuggestionId(null);
-    setSuggestions([]);
-    try {
-      const res = await fetch('/api/decide-live', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildDecideLiveBody(confirmedName, confirmedDate, rew)),
-      });
-      if (!res.ok) throw new Error('Erro ao voltar etapa');
-      const raw = await res.json();
-      const responseData = mapDecideLiveResponse(raw, {
-        nomeCompleto: confirmedName,
-        collect: rew,
-        sobrenomesDetectados,
-      });
-      await sleepMs(computeChatRevealDelayMs(submittedAt));
-      applyDecisionResponse(responseData);
-      setCurrentStepId(raw.next_step ?? targetStep);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleChatDockBack = () => {
     const screen = chatDockScreen ?? 'chat_questionnaire';
-    capturePostHogEvent('back_clicked', { screen, step: currentStepId });
-
-    if (profileCollectionComplete && hasSuggestionsMessage) {
-      const target: PostBirthFlowStep = 'palpite';
-      const rew = rewindCollectStateToStep(collectState, target);
-      trimMessagesForRewind(target);
-      void resyncAfterRewind(rew, target);
-      return;
-    }
-
-    if (isFirstQuestionnaireStep(currentStepId)) {
-      setBackToStartConfirmOpen(true);
-      return;
-    }
-
-    const prev = getPreviousFlowStep(currentStepId);
-    if (!prev || prev === 'suggestions') return;
-    const rew = rewindCollectStateToStep(collectState, prev);
-    trimMessagesForRewind(prev);
-    void resyncAfterRewind(rew, prev);
-  };
-
-  const handleConfirmBackToStart = () => {
-    setBackToStartConfirmOpen(false);
+    capturePostHogEvent('back_clicked', { screen, step: currentStepId, destination: 'app_home' });
+    flushChatSessionToStorage();
     window.location.href = '/app';
   };
 
@@ -1953,32 +1876,6 @@ export function NomeSocialChat({
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
       />
-
-      <Modal
-        open={backToStartConfirmOpen}
-        onClose={() => setBackToStartConfirmOpen(false)}
-        title="Voltar ao início?"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-400 text-sm leading-relaxed">
-            Você sairá desta conversa e voltará ao painel inicial. O progresso desta sessão permanece
-            salvo até você recomeçar manualmente.
-          </p>
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-            <Button
-              variant="ghost"
-              size="md"
-              className="flex-1"
-              onClick={() => setBackToStartConfirmOpen(false)}
-            >
-              Continuar aqui
-            </Button>
-            <Button variant="primary" size="md" className="flex-1" onClick={handleConfirmBackToStart}>
-              Ir ao início
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         open={resetConfirmOpen}

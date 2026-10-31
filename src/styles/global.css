@@ -540,16 +540,18 @@
   }
 }
 @media (max-width: 767px) {
-  /* Smartphone / ~7": sidebar oculta; resumo via SummaryDrawer + dock */
-  .nm-chat-shell {
-    top: 73px;
-    bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
-    --nm-mobile-nav-h: 3.75rem;
-    --nm-chat-mobile-header-h: 73px;
-    --nm-chat-dock-clearance: calc(88px + env(safe-area-inset-bottom, 0px));
+  /* /app mobile: dock flutuante (substitui barra inferior fixa) */
+  .nm-app-shell--with-mobile-dock {
+    --nm-mobile-nav-h: 0px;
+    --nm-mobile-dock-clearance: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
-  .nm-chat-shell.nm-chat-shell--no-mobile-nav {
+  .nm-app-shell--with-mobile-dock .nm-app-main {
+    padding-bottom: var(--nm-mobile-dock-clearance, 6rem);
+  }
+
+  /* Chat conversacional: header compacto + dock própria (sem nav /app) */
+  .nm-chat-shell {
     top: var(--nm-chat-mobile-header-h, 52px);
     bottom: env(safe-area-inset-bottom, 0px);
     --nm-mobile-nav-h: 0px;
