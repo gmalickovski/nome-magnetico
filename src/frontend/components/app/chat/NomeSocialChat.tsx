@@ -7,8 +7,8 @@ import type {
   CandidateSuggestion,
   DecideLiveResponse,
 } from './chat-types.js';
-import { ChatHeader } from './ChatHeader.js';
 import { ChatProgress } from './ChatProgress.js';
+import { SummaryButton } from './SummaryButton.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { PillGroup } from './PillGroup.js';
@@ -40,6 +40,8 @@ export interface NomeSocialChatProps {
   birthDate?: string;
   profileGender?: string;
   userId?: string;
+  /** Painel SSR do nome de nascimento (score_v3 oficial). */
+  initialBirthPanel?: ResultPanelData | null;
 }
 
 const GENDER_OPTIONS = [
@@ -49,18 +51,8 @@ const GENDER_OPTIONS = [
 ];
 
 function buildInitialOnboardingMessages(birthName: string, birthDate: string): ChatMessage[] {
-  const welcome: ChatMessage = {
-    id: 'msg-welcome',
-    sender: 'assistant',
-    type: 'text',
-    eyebrow: 'BEM-VINDO AO NOME MAGNÉTICO',
-    content:
-      'Olá. Vamos construir juntos uma assinatura equilibrada e sem bloqueios, feita sob medida para os seus objetivos.',
-  };
-
   if (birthName.trim() && birthDate.trim()) {
     return [
-      welcome,
       {
         id: 'msg-profile-confirm',
         sender: 'assistant',
@@ -74,7 +66,6 @@ function buildInitialOnboardingMessages(birthName: string, birthDate: string): C
   }
 
   return [
-    welcome,
     {
       id: 'msg-ask-nome',
       sender: 'assistant',
@@ -110,6 +101,7 @@ export function NomeSocialChat({
   birthDate: initialBirthDate = '',
   profileGender: initialProfileGender = '',
   userId = '',
+  initialBirthPanel = null,
 }: NomeSocialChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [confirmedName, setConfirmedName] = useState(initialBirthName);
@@ -128,7 +120,7 @@ export function NomeSocialChat({
   const [sobrenomesDetectados, setSobrenomesDetectados] = useState<string[]>([]);
   const [radarAxes, setRadarAxes] = useState<RadarAxesData | null>(null);
   const [summaryItems, setSummaryItems] = useState<ReadingSummaryItem[]>([]);
-  const [basePanel, setBasePanel] = useState<ResultPanelData | null>(null);
+  const [basePanel, setBasePanel] = useState<ResultPanelData | null>(initialBirthPanel);
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
@@ -149,12 +141,22 @@ export function NomeSocialChat({
     scrollToBottom();
   }, [messages, loading]);
 
+  const hasRegisteredBirthName =
+    Boolean(initialBirthName.trim()) && Boolean(initialBirthDate.trim());
+
   useEffect(() => {
     setDraftNome(initialBirthName);
     setDraftDate(initialBirthDate);
     setDraftGender(initialProfileGender);
     setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
-  }, [initialBirthName, initialBirthDate, initialProfileGender]);
+    setBasePanel(hasRegisteredBirthName ? initialBirthPanel : null);
+  }, [
+    initialBirthName,
+    initialBirthDate,
+    initialProfileGender,
+    initialBirthPanel,
+    hasRegisteredBirthName,
+  ]);
 
   const appendUserBubble = (content: string, stepId: string) => {
     setMessages((prev) => [
@@ -609,23 +611,25 @@ export function NomeSocialChat({
   const showRadarPanel = shouldShowRadar(collectState);
   const showSummaryPanel = shouldShowSummary(summaryItems);
 
+  const summaryCount =
+    (displayedPanelData ? 1 : 0) + (showRadarPanel ? 1 : 0) + summaryItems.length;
+
   return (
     <div className="w-full flex flex-col min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
-      <ChatHeader
-        summaryCount={
-          (displayedPanelData ? 1 : 0) + (showRadarPanel ? 1 : 0) + summaryItems.length
+      <ChatProgress
+        currentStep={stepIndex}
+        totalSteps={totalSteps}
+        remaining={remaining}
+        className="shrink-0 sticky top-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
+        trailing={
+          <div className="lg:hidden">
+            <SummaryButton count={summaryCount} onClick={() => setDrawerOpen(true)} />
+          </div>
         }
-        onOpenSummary={() => setDrawerOpen(true)}
       />
 
       <div className="flex-1 min-h-0 w-full max-w-5xl mx-auto px-4 lg:grid lg:grid-cols-[minmax(0,640px)_320px] lg:gap-8">
         <main className="flex flex-col min-h-0 min-w-0 py-4 lg:py-6">
-          <ChatProgress
-            currentStep={stepIndex}
-            totalSteps={totalSteps}
-            remaining={remaining}
-            className="shrink-0 sticky top-0 z-10 -mx-4 px-4 bg-dark-deeper/95 backdrop-blur-md"
-          />
 
           <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-6 pt-3">
             {messages.map((msg) => {
@@ -741,6 +745,7 @@ export function NomeSocialChat({
         <aside className="hidden lg:flex flex-col min-h-0 py-6 overflow-y-auto">
           <ChatSidebarSection
             panelData={displayedPanelData}
+            showBirthStar={hasRegisteredBirthName}
             isSuggestion={Boolean(activeSuggestionId)}
             onResetToBase={() => setActiveSuggestionId(null)}
             radarAxes={radarAxes}
@@ -755,6 +760,7 @@ export function NomeSocialChat({
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         panelData={displayedPanelData}
+        showBirthStar={hasRegisteredBirthName}
         isSuggestion={Boolean(activeSuggestionId)}
         onResetToBase={() => setActiveSuggestionId(null)}
         radarAxes={radarAxes}

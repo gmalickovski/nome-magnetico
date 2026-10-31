@@ -6,6 +6,8 @@ import { SummaryCard } from './SummaryCard.js';
 
 export interface ChatSidebarSectionProps {
   panelData: ResultPanelData | null;
+  /** false = sem nome cadastrado — não renderiza card da estrela nem placeholder. */
+  showBirthStar?: boolean;
   isSuggestion: boolean;
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
@@ -17,6 +19,7 @@ export interface ChatSidebarSectionProps {
 
 export function ChatSidebarSection({
   panelData,
+  showBirthStar = true,
   isSuggestion,
   onResetToBase,
   radarAxes,
@@ -25,16 +28,10 @@ export function ChatSidebarSection({
   showSummary,
   className = '',
 }: ChatSidebarSectionProps) {
-  const hasPanel = Boolean(panelData);
+  const hasPanel = showBirthStar && Boolean(panelData);
 
   if (!hasPanel && !showRadar && !showSummary) {
-    return (
-      <div
-        className={`rounded-2xl border border-white/10 bg-chat-bubble/40 p-4 text-xs text-chat-muted leading-relaxed ${className}`}
-      >
-        Confirme nome e data para iniciar. O painel evolui conforme você responde.
-      </div>
-    );
+    return null;
   }
 
   return (
