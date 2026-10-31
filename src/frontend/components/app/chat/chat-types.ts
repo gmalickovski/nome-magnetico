@@ -10,6 +10,7 @@ export interface ResultPanelData {
   expressao: number;
   destino: number;
   motivacao: number;
+  missao: number;
   impressao: number;
   potencial: number;
   bloqueiosCount: number;

@@ -30,6 +30,7 @@ export interface ClientBirthNamePanel {
   expressao: number;
   destino: number;
   motivacao: number;
+  missao: number;
   impressao: number;
   potencial: number;
   bloqueiosCount: number;
@@ -69,6 +70,7 @@ export function toClientBirthNamePanel(panel: BirthNamePanelData): ClientBirthNa
     expressao: panel.expressao,
     destino: panel.destino,
     motivacao: panel.motivacao,
+    missao: panel.missao,
     impressao: panel.impressao,
     potencial: panel.potencial,
     bloqueiosCount: panel.bloqueiosCount,

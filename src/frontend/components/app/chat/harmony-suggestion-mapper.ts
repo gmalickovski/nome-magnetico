@@ -20,7 +20,7 @@ export function mapCandidateToHarmonySuggestion(
     destino: p.destino,
     motivacao: p.motivacao,
     impressao: p.impressao,
-    missao: p.potencial,
+    missao: p.missao,
     bloqueios: c.bloqueiosRestantes,
   };
 }

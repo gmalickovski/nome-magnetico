@@ -60,7 +60,7 @@ export function ResultPanel({
     data.destino,
     data.expressao,
     data.motivacao,
-    data.potencial,
+    data.missao,
     data.impressao,
   ];
 

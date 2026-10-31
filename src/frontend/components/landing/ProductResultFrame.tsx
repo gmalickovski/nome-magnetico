@@ -434,15 +434,15 @@ export interface ProductHarmonyStarProps {
   harmonizedNums?: number[];
 }
 
-/** Ordem: Destino, Expressão, Motivação, Missão, Impressão. */
+/** Ordem: Destino, Expressão, Motivação, Missão, Impressão (cabalísticos 1–9 / 11 / 22 — nunca score/potencial). */
 export function harmonyStarNumsFromPanel(panel: {
   destino: number;
   expressao: number;
   motivacao: number;
-  potencial: number;
+  missao: number;
   impressao: number;
 }): number[] {
-  return [panel.destino, panel.expressao, panel.motivacao, panel.potencial, panel.impressao];
+  return [panel.destino, panel.expressao, panel.motivacao, panel.missao, panel.impressao];
 }
 
 /**

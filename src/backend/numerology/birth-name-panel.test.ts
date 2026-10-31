@@ -16,5 +16,11 @@ describe('birth-name-panel · score inicial do chat', () => {
     assert.equal(client.score, 66);
     assert.equal(client.nome, nome);
     assert.equal(client.potencial, oficial.potencial);
+    assert.equal(panel.missao, 5);
+    assert.equal(client.missao, 5);
+    assert.equal(panel.destino, 8);
+    assert.equal(panel.expressao, 6);
+    assert.equal(panel.motivacao, 4);
+    assert.equal(panel.impressao, 2);
   });
 });

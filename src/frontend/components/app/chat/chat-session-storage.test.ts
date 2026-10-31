@@ -56,6 +56,7 @@ function minimalSession(): PersistedChatSession {
       expressao: 1,
       destino: 2,
       motivacao: 3,
+      missao: 5,
       impressao: 4,
       potencial: 80,
       bloqueiosCount: 1,
