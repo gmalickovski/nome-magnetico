@@ -575,10 +575,6 @@
     }
   }
 
-  .mobile-chat-dock-bar--animate-width {
-    transition: width 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
   .mobile-chat-dock-actions .mobile-chat-dock-btn {
     animation: mobile-dock-btn-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
