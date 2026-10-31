@@ -273,9 +273,71 @@ export function resolveNomeUsoLabel(
   return found?.label ?? otherText?.trim() ?? '';
 }
 
-export function buildEchoAfterStep(nomeCurto: string, _stepId: QuestionnaireStepId): string {
-  const nome = nomeCurto.trim().split(/\s+/)[0] || 'você';
-  return `Anotado, ${nome}...`;
+export type BlockTransitionId = 'after_nome_block' | 'before_area_foco' | 'before_suggestions';
+
+function firstName(nomeCurto: string): string {
+  return nomeCurto.trim().split(/\s+/)[0] || 'você';
+}
+
+/** Transições de bloco (máx. 3), uma vez cada por sessão de chat. */
+export function resolveBlockTransition(
+  completedStepId: string,
+  nextStepId: string,
+  nomeCurto: string,
+  alreadyShown: ReadonlySet<BlockTransitionId>
+): { id: BlockTransitionId; text: string } | null {
+  if (
+    !alreadyShown.has('after_nome_block') &&
+    completedStepId === 'relacao_nome' &&
+    nextStepId === 'onde_assina'
+  ) {
+    const nome = firstName(nomeCurto);
+    return {
+      id: 'after_nome_block',
+      text: `Perfeito, ${nome}. Agora quero entender onde a sua assinatura aparece.`,
+    };
+  }
+
+  if (!alreadyShown.has('before_area_foco') && nextStepId === 'area_foco') {
+    return {
+      id: 'before_area_foco',
+      text: 'Com isso já sei como você se apresenta. Agora vamos ao que mais pede a sua atenção.',
+    };
+  }
+
+  if (
+    !alreadyShown.has('before_suggestions') &&
+    (nextStepId === 'fim_coleta' || nextStepId === 'conclusao')
+  ) {
+    return {
+      id: 'before_suggestions',
+      text: 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
+    };
+  }
+
+  return null;
+}
+
+const TRANSITION_MARKERS: Record<BlockTransitionId, string> = {
+  after_nome_block: 'Agora quero entender onde a sua assinatura aparece.',
+  before_area_foco: 'Agora vamos ao que mais pede a sua atenção.',
+  before_suggestions: 'separei as assinaturas que mais combinam com você.',
+};
+
+/** Reconstrói transições já exibidas ao restaurar sessão persistida. */
+export function detectShownBlockTransitions(
+  messages: ReadonlyArray<{ content?: string }>
+): Set<BlockTransitionId> {
+  const shown = new Set<BlockTransitionId>();
+  for (const m of messages) {
+    const c = m.content ?? '';
+    for (const [id, marker] of Object.entries(TRANSITION_MARKERS) as Array<
+      [BlockTransitionId, string]
+    >) {
+      if (c.includes(marker)) shown.add(id);
+    }
+  }
+  return shown;
 }
 
 export function mapOndeAssinaToApi(ids: string[]): string[] {

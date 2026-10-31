@@ -59,9 +59,14 @@ import {
 } from './decide-live-bridge.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
 import {
-  buildEchoAfterStep,
-  isQuestionnaireStep,
+  detectShownBlockTransitions,
+  resolveBlockTransition,
+  type BlockTransitionId,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
+import {
+  computeChatRevealDelayMs,
+  sleepMs,
+} from './chat-reveal-delay.js';
 import {
   computeMotorRadarAxes,
   motorRadarToRecord,
@@ -211,9 +216,12 @@ export function NomeSocialChat({
   const paywallBubbleRef = useRef<HTMLDivElement>(null);
   const paywallShownRef = useRef(false);
   const paywallDismissTrackedRef = useRef(false);
+  const paywallPanelShownRef = useRef(false);
   const subscriberResumeRef = useRef(false);
   const sessionBootstrapped = useRef(false);
   const chatStartedAtRef = useRef<number | null>(null);
+  const stepViewedAtRef = useRef<number>(Date.now());
+  const blockTransitionsShown = useRef<Set<BlockTransitionId>>(new Set());
   const [nomeArtisticoDraft, setNomeArtisticoDraft] = useState('');
 
   useEffect(() => {
@@ -244,6 +252,7 @@ export function NomeSocialChat({
 
   useEffect(() => {
     if (!birthConfirmed || !currentStepId) return;
+    stepViewedAtRef.current = Date.now();
     capturePostHogEvent('chat_step_viewed', { step: currentStepId });
   }, [currentStepId, birthConfirmed]);
 
@@ -277,6 +286,8 @@ export function NomeSocialChat({
     setPaywallStickyVisible(false);
     setOnboardingError(null);
     setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
+    blockTransitionsShown.current = new Set();
+    chatStartedAtRef.current = null;
   };
 
   const restoreSession = (saved: PersistedChatSession) => {
@@ -312,6 +323,7 @@ export function NomeSocialChat({
     );
     setFreePdfDownloaded(Boolean(saved.freePdfDownloaded));
     setFreeAnalysisId(saved.freeAnalysisId);
+    blockTransitionsShown.current = detectShownBlockTransitions(messages);
   };
 
   useEffect(() => {
@@ -497,6 +509,7 @@ export function NomeSocialChat({
   const resyncAfterRewind = async (rew: ChatCollectState, targetStep: PostBirthFlowStep) => {
     setCollectState(rew);
     setLoading(true);
+    const submittedAt = Date.now();
     setActiveSuggestionId(null);
     setSuggestions([]);
     try {
@@ -512,7 +525,8 @@ export function NomeSocialChat({
         collect: rew,
         sobrenomesDetectados,
       });
-      applyDecisionResponse(responseData, undefined, rew.nomeUsoBase ?? confirmedName);
+      await sleepMs(computeChatRevealDelayMs(submittedAt));
+      applyDecisionResponse(responseData);
       setCurrentStepId(raw.next_step ?? targetStep);
     } catch (err) {
       console.error(err);
@@ -663,6 +677,7 @@ export function NomeSocialChat({
     setConfirmedDate(dataNascimento);
     setLoading(true);
     setOnboardingError(null);
+    const submittedAt = Date.now();
 
     try {
       const res = await fetch('/api/decide-live', {
@@ -695,6 +710,7 @@ export function NomeSocialChat({
         setRadarAxes(responseData.radarAxes);
       }
 
+      await sleepMs(computeChatRevealDelayMs(submittedAt));
       applyDecisionResponse(responseData);
     } catch (err) {
       console.error(err);
@@ -840,6 +856,8 @@ export function NomeSocialChat({
   useEffect(() => {
     if (!freePaywallActiveForFx || typeof window === 'undefined') return;
     if (!window.matchMedia('(min-width: 768px)').matches) return;
+    if (paywallPanelShownRef.current) return;
+    paywallPanelShownRef.current = true;
     trackPaywallShown('panel');
   }, [freePaywallActiveForFx]);
 
@@ -967,8 +985,8 @@ export function NomeSocialChat({
 
   const applyDecisionResponse = (
     data: DecideLiveResponse,
-    echoAfterStep?: string,
-    echoNome?: string | null
+    completedStepId?: string,
+    nomeCurto?: string | null
   ) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
@@ -991,14 +1009,23 @@ export function NomeSocialChat({
 
     const newMsgs: ChatMessage[] = [];
 
-    const ecoBase = echoNome ?? collectState.nomeUsoBase ?? confirmedName;
-    if (echoAfterStep && ecoBase && isQuestionnaireStep(echoAfterStep)) {
-      newMsgs.push({
-        id: `eco-${Date.now()}`,
-        sender: 'assistant',
-        type: 'text',
-        content: buildEchoAfterStep(ecoBase, echoAfterStep),
-      });
+    if (completedStepId) {
+      const nomeBase = nomeCurto ?? collectState.nomeUsoBase ?? confirmedName;
+      const transition = resolveBlockTransition(
+        completedStepId,
+        data.next_step,
+        nomeBase,
+        blockTransitionsShown.current
+      );
+      if (transition) {
+        blockTransitionsShown.current.add(transition.id);
+        newMsgs.push({
+          id: `block-${transition.id}-${Date.now()}`,
+          sender: 'assistant',
+          type: 'text',
+          content: transition.text,
+        });
+      }
     }
 
     if (data.next_question) {
@@ -1114,11 +1141,15 @@ export function NomeSocialChat({
     posthogAnswer?: Record<string, unknown>
   ) => {
     appendUserBubble(userLabel, stepId);
+    const stepStartedAt = stepViewedAtRef.current;
+    const stepDurationMs = Date.now() - stepStartedAt;
+    capturePostHogEvent('nm_chat_step_completed', { step: stepId, ms: stepDurationMs });
     if (posthogAnswer) {
       capturePostHogEvent('chat_answer', { step: stepId, ...posthogAnswer });
     }
     setCollectState(nextCollect);
     setLoading(true);
+    const submittedAt = Date.now();
 
     try {
       const res = await fetch('/api/decide-live', {
@@ -1144,6 +1175,7 @@ export function NomeSocialChat({
         setRadarAxes(responseData.radarAxes);
       }
 
+      await sleepMs(computeChatRevealDelayMs(submittedAt));
       applyDecisionResponse(responseData, stepId, nextCollect.nomeUsoBase ?? confirmedName);
     } catch (err) {
       console.error(err);
