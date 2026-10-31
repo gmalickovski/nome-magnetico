@@ -12,6 +12,8 @@ import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
 import { DockTooltipButton } from './DockTooltipButton.js';
 
 export interface MobileChatDockProps {
+  /** Quando true, só o conteúdo interno — o root fixo fica em AppMobileDock. */
+  omitRoot?: boolean;
   layout: MobileDockLayout | null;
   summaryPanelOpen: boolean;
   /** Recomeçar saindo da dock (Resumo aberto, antes de encolher). */
@@ -30,7 +32,50 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+function DockInnerWrap({
+  omitRoot,
+  hiddenByKeyboard,
+  shellStyle,
+  innerRef,
+  barClassName,
+  children,
+  role,
+  ariaLabel,
+}: {
+  omitRoot: boolean;
+  hiddenByKeyboard: boolean;
+  shellStyle: ReturnType<typeof dockShellWidthStyle>;
+  innerRef: React.RefObject<HTMLDivElement | null>;
+  barClassName: string;
+  children: React.ReactNode;
+  role: 'toolbar';
+  ariaLabel: string;
+}) {
+  const opacityClass = `transition-opacity duration-[120ms] ${
+    hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
+  }`;
+
+  const inner = (
+    <div className={`mobile-chat-dock-shell rounded-[28px] ${omitRoot ? opacityClass : ''}`} style={shellStyle}>
+      <div ref={innerRef} className={barClassName}>
+        {children}
+      </div>
+    </div>
+  );
+
+  if (omitRoot) return inner;
+
+  const rootClass = `${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-dock ${opacityClass}`;
+
+  return (
+    <div className={rootClass} role={role} aria-label={ariaLabel}>
+      {inner}
+    </div>
+  );
+}
+
 export function MobileChatDock({
+  omitRoot = false,
   layout,
   summaryPanelOpen,
   restartExitActive = false,
@@ -86,11 +131,8 @@ export function MobileChatDock({
   const hiddenByKeyboard = keyboardOpen;
   const shellStyle = dockShellWidthStyle(widthPx, reduced);
 
-  const rootClass = `${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-dock transition-opacity duration-[120ms] ${
-    hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
-  }`;
-
   const SummaryIcon = dockIconFor('panel-right');
+  const barClassName = `${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`;
 
   const dockSecondaryBtnClass = (actionId: string, base: string) =>
     `${base}${actionId === 'restart' && restartExitActive ? ' mobile-chat-dock-btn--exit' : ''}`;
@@ -98,54 +140,58 @@ export function MobileChatDock({
   if (layout.screen === 'chat_free_paywall' && layout.primary) {
     const primary = layout.primary;
     return (
-      <div className={rootClass} role="toolbar" aria-label="Ações">
-        <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
-          <div
-            ref={innerRef}
-            className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`}
-          >
-            <DockTooltipButton tooltip="Voltar" aria-label="Voltar" onClick={onBack} className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]">
-              <IconChevronLeft />
-            </DockTooltipButton>
-            <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
-            <div className={`inline-flex shrink-0 items-center gap-1 ${reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'}`}>
-              {layout.middleSecondaries.map((action, index) => {
-                const Icon = dockIconFor(action.icon);
-                return (
-                  <DockTooltipButton key={action.id} tooltip={action.label} aria-label={action.label} style={reduced ? undefined : { animationDelay: `${index * 30}ms` }} onClick={() => onSecondary(action.id, index)} className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]">
-                    <Icon />
-                  </DockTooltipButton>
-                );
-              })}
-              <DockTooltipButton tooltip="Resumo" aria-label={summaryPanelOpen ? 'Fechar resumo' : 'Resumo'} aria-pressed={summaryPanelOpen ? true : undefined} onClick={() => onSecondary('summary', layout.middleSecondaries.length)} className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] ${summaryPanelOpen ? 'bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)]' : ''}`}>
-                <SummaryIcon />
+      <DockInnerWrap
+        omitRoot={omitRoot}
+        hiddenByKeyboard={hiddenByKeyboard}
+        shellStyle={shellStyle}
+        innerRef={innerRef}
+        barClassName={barClassName}
+        role="toolbar"
+        ariaLabel="Ações"
+      >
+        <DockTooltipButton tooltip="Voltar" aria-label="Voltar" onClick={onBack} className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]">
+          <IconChevronLeft />
+        </DockTooltipButton>
+        <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
+        <div className={`inline-flex shrink-0 items-center gap-1 ${reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'}`}>
+          {layout.middleSecondaries.map((action, index) => {
+            const Icon = dockIconFor(action.icon);
+            return (
+              <DockTooltipButton key={action.id} tooltip={action.label} aria-label={action.label} style={reduced ? undefined : { animationDelay: `${index * 30}ms` }} onClick={() => onSecondary(action.id, index)} className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]">
+                <Icon />
               </DockTooltipButton>
-              <DockTooltipButton tooltip={primary.label} disabled={primary.disabled} onClick={() => onPrimary(primary.id)} className="mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(40vw,160px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] bg-[#D4AF37] text-[#111111]">
-                {(() => {
-                  const Icon = dockIconFor(primary.icon);
-                  return (
-                    <>
-                      <Icon className="text-[#111111]" />
-                      <span className="nm-caption truncate text-[11px] font-semibold leading-none text-[#111111]">{primary.label}</span>
-                    </>
-                  );
-                })()}
-              </DockTooltipButton>
-            </div>
-          </div>
+            );
+          })}
+          <DockTooltipButton tooltip="Resumo" aria-label={summaryPanelOpen ? 'Fechar resumo' : 'Resumo'} aria-pressed={summaryPanelOpen ? true : undefined} onClick={() => onSecondary('summary', layout.middleSecondaries.length)} className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] ${summaryPanelOpen ? 'bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)]' : ''}`}>
+            <SummaryIcon />
+          </DockTooltipButton>
+          <DockTooltipButton tooltip={primary.label} disabled={primary.disabled} onClick={() => onPrimary(primary.id)} className="mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(40vw,160px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] bg-[#D4AF37] text-[#111111]">
+            {(() => {
+              const Icon = dockIconFor(primary.icon);
+              return (
+                <>
+                  <Icon className="text-[#111111]" />
+                  <span className="nm-caption truncate text-[11px] font-semibold leading-none text-[#111111]">{primary.label}</span>
+                </>
+              );
+            })()}
+          </DockTooltipButton>
         </div>
-      </div>
+      </DockInnerWrap>
     );
   }
 
   if (layout.screen === 'resultado') {
     return (
-      <div className={rootClass} role="toolbar" aria-label="Ações">
-        <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
-          <div
-            ref={innerRef}
-            className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`}
-          >
+      <DockInnerWrap
+        omitRoot={omitRoot}
+        hiddenByKeyboard={hiddenByKeyboard}
+        shellStyle={shellStyle}
+        innerRef={innerRef}
+        barClassName={barClassName}
+        role="toolbar"
+        ariaLabel="Ações"
+      >
             <DockTooltipButton
               tooltip="Voltar"
               aria-label="Voltar"
@@ -198,9 +244,7 @@ export function MobileChatDock({
                 })()}
               </DockTooltipButton>
             </div>
-          </div>
-        </div>
-      </div>
+      </DockInnerWrap>
     );
   }
 
@@ -209,12 +253,15 @@ export function MobileChatDock({
   const pdfTooltip = pdfModel?.isFree ? 'Desbloquear análise' : 'Baixar PDF';
 
   return (
-    <div className={rootClass} role="toolbar" aria-label="Ações">
-      <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
-        <div
-          ref={innerRef}
-          className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`}
-        >
+    <DockInnerWrap
+      omitRoot={omitRoot}
+      hiddenByKeyboard={hiddenByKeyboard}
+      shellStyle={shellStyle}
+      innerRef={innerRef}
+      barClassName={barClassName}
+      role="toolbar"
+      ariaLabel="Ações"
+    >
           <DockTooltipButton
             tooltip="Voltar"
             aria-label="Voltar"
@@ -281,9 +328,7 @@ export function MobileChatDock({
               />
             )}
           </div>
-        </div>
-      </div>
-    </div>
+    </DockInnerWrap>
   );
 }
 

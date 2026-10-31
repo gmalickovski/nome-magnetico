@@ -74,6 +74,14 @@ export function useDockTooltip(tooltipLabel: string) {
     if (canHoverFinePointer()) hide();
   }, [hide]);
 
+  const onTouchEnd = useCallback(() => {
+    hide();
+  }, [hide]);
+
+  const onTouchCancel = useCallback(() => {
+    hide();
+  }, [hide]);
+
   return {
     visible,
     tooltipLabel,
@@ -85,6 +93,8 @@ export function useDockTooltip(tooltipLabel: string) {
       onPointerCancel,
       onMouseEnter,
       onMouseLeave,
+      onTouchEnd,
+      onTouchCancel,
     },
   };
 }

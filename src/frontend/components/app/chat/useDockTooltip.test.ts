@@ -11,5 +11,7 @@ describe('useDockTooltip', () => {
     assert.doesNotMatch(src, /700/);
     assert.match(src, /onPointerLeave/);
     assert.match(src, /onPointerCancel/);
+    assert.match(src, /onTouchEnd/);
+    assert.match(src, /onTouchCancel/);
   });
 });
