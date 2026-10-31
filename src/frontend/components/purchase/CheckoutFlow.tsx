@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { captureBeginCheckout, captureViewOffer, track, trackBeginCheckout } from '../../lib/analytics';
-import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import {
+  checkoutFailureMessage,
+  isCheckoutEmailNotConfirmed,
+  postCreateCheckoutWithPriceConfirm,
+} from '../../lib/checkout-api';
+import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
@@ -73,6 +78,7 @@ function PriceDisplay({ priceInfo, promotion, productId }: { priceInfo: PriceInf
 export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false, autoconhecimentoAviso }: Props) {
   const [loading, setLoading]   = useState<ProductType | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   // Produto selecionado para abrir o pré-checkout modal
   const [modalProduct, setModalProduct] = useState<ProductType | null>(
@@ -88,6 +94,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
   async function triggerCheckout(type: ProductType, couponCode?: string) {
     setLoading(type);
     setErrorMsg('');
+    setEmailNotConfirmed(false);
     try {
       const appliesToThis = promotionAppliesToProduct(promotion, type);
       const effectiveCoupon = couponCode || (promotion && appliesToThis ? promotion.stripePromoCode : null) || undefined;
@@ -123,6 +130,11 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         }
         if ('alreadyActive' in result && result.alreadyActive) {
           window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
+          return;
+        }
+        if (isCheckoutEmailNotConfirmed(result)) {
+          setEmailNotConfirmed(true);
+          setLoading(null);
           return;
         }
         throw new Error(checkoutFailureMessage(result));
@@ -366,6 +378,11 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
             <div className="hidden md:block">
               <PageHeader />
             </div>
+            {emailNotConfirmed && (
+              <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                <EmailConfirmationPrompt />
+              </div>
+            )}
             {errorMsg && (
               <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm text-center">
                 {errorMsg}

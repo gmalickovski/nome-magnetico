@@ -65,10 +65,7 @@ try {
 const refundable = isAdmin ? [] : await getRefundableSubscriptions(user.id);
 const showRefundButton = refundable.length > 0;
 
-const needsEmailConfirmation = !(
-  profileData?.email_verified_at ||
-  user.user_metadata?.email_verified_at
-);
+const needsEmailConfirmation = !user.email_confirmed_at;
 
 import { obterNivelV3 } from '../../shared/score-v3';
 

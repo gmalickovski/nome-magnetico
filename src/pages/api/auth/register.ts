@@ -36,8 +36,11 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: msg }, 400);
   }
 
-  const { nome, email, password, birth_name, birth_date } = parsed.data;
+  const { nome, email, password, birth_name, birth_date, produto, redirect } = parsed.data;
   const normalizedEmail = email.trim().toLowerCase();
+  const accountCreatedViaCheckout =
+    Boolean(produto?.trim()) ||
+    (typeof redirect === 'string' && redirect.includes('checkout='));
 
   if (isDisposableEmail(normalizedEmail)) {
     return json({
@@ -74,7 +77,10 @@ export const POST: APIRoute = async ({ request }) => {
     email: normalizedEmail,
     password,
     options: {
-      data: { nome },
+      data: {
+        nome,
+        ...(accountCreatedViaCheckout ? { account_created_via_checkout: true } : {}),
+      },
       emailRedirectTo: `${process.env.APP_URL}/auth/confirmar-email`,
     },
   });
