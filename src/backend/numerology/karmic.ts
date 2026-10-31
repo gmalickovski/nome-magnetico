@@ -321,16 +321,25 @@ export function calcularDebitosCarmicos(
   }
 
   // 2. Destino (fixo — deriva da data de nascimento)
-  const dDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroDestino, false)];
-  if (dDebito !== undefined) adicionar(dDebito, 'destino');
+  // DEV-260: 11 e 22 NÃO geram dívida
+  if (numeroDestino !== 11 && numeroDestino !== 22) {
+    const dDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroDestino, true)];
+    if (dDebito !== undefined) adicionar(dDebito, 'destino');
+  }
 
   // 3. Motivação (variável — depende das vogais do nome)
-  const mDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroMotivacao, false)];
-  if (mDebito !== undefined) adicionar(mDebito, 'motivacao');
+  // DEV-260: 11 e 22 NÃO geram dívida
+  if (numeroMotivacao !== 11 && numeroMotivacao !== 22) {
+    const mDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroMotivacao, true)];
+    if (mDebito !== undefined) adicionar(mDebito, 'motivacao');
+  }
 
   // 4. Expressão (variável — depende de todas as letras do nome)
-  const eDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroExpressao, false)];
-  if (eDebito !== undefined) adicionar(eDebito, 'expressao');
+  // DEV-260: 11 e 22 NÃO geram dívida
+  if (numeroExpressao !== 11 && numeroExpressao !== 22) {
+    const eDebito = NUMERO_PARA_DEBITO[reduzirNumero(numeroExpressao, true)];
+    if (eDebito !== undefined) adicionar(eDebito, 'expressao');
+  }
 
   const FONTES_DATA: DebitoFonte[] = ['dia_natalicio', 'destino'];
   const FONTES_NOME: DebitoFonte[] = ['motivacao', 'expressao'];
@@ -341,9 +350,8 @@ export function calcularDebitosCarmicos(
       const fontes = Array.from(fontesSet) as DebitoFonte[];
       const fontesData = fontes.filter(f => FONTES_DATA.includes(f));
       const fontesNome = fontes.filter(f => FONTES_NOME.includes(f));
-      const acentuada =
-        fontesNome.length >= 2 ||
-        (fontesNome.length >= 1 && fontesData.length >= 1);
+      // DEV-260: Acentuada em QUALQUER repetição (2 ou mais fontes quaisquer)
+      const acentuada = fontes.length >= 2;
       const fixo = fontesNome.length === 0;
       return {
         numero,
