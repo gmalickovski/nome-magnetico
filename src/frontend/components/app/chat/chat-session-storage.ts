@@ -4,6 +4,7 @@
 
 import type {
   ChatMessage,
+  ChatReadingSummary,
   CandidateSuggestion,
   RadarAxesData,
   ReadingSummaryItem,
@@ -11,7 +12,7 @@ import type {
 } from './chat-types.js';
 import type { ChatCollectState } from './decide-live-bridge.js';
 
-const STORAGE_VERSION = 1 as const;
+const STORAGE_VERSION = 2 as const;
 
 export interface PersistedChatSession {
   version: typeof STORAGE_VERSION;
@@ -32,6 +33,8 @@ export interface PersistedChatSession {
   radarAxes: RadarAxesData | null;
   summaryItems: ReadingSummaryItem[];
   basePanel: ResultPanelData | null;
+  birthReadingSummary?: ChatReadingSummary | null;
+  harmonizedSummaries?: Record<string, ChatReadingSummary>;
   activeSuggestionId: string | null;
   suggestions: CandidateSuggestion[];
   analysisId?: string;
@@ -47,10 +50,18 @@ export function loadChatSession(userId: string): PersistedChatSession | null {
     const raw = localStorage.getItem(storageKey(userId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedChatSession;
-    if (parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.messages)) {
+    if (!Array.isArray(parsed.messages)) {
       return null;
     }
-    return parsed;
+    if (parsed.version !== 1 && parsed.version !== STORAGE_VERSION) {
+      return null;
+    }
+    return {
+      ...parsed,
+      version: STORAGE_VERSION,
+      birthReadingSummary: parsed.birthReadingSummary ?? null,
+      harmonizedSummaries: parsed.harmonizedSummaries ?? {},
+    };
   } catch {
     return null;
   }

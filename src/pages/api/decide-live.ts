@@ -8,6 +8,7 @@ import {
 } from '../../backend/numerology/products/nome-social';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { buildBirthNamePanel } from '../../backend/numerology/birth-name-panel';
+import { buildChatReadingSummary } from '../../backend/numerology/chat-reading-summary';
 import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engine';
 import { determineNextStep } from '../../shared/interactive-engine/router';
 import { writeHypothesis } from '../../shared/interactive-engine/writer';
@@ -245,6 +246,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Painel de Resultado Base (Original)
     const basePanel = buildPanelData(nomeLimpo, dataPtBr, destino);
+    const readingSummary = buildChatReadingSummary(nomeLimpo, dataPtBr);
 
     // Sugestões Enriquecidas com seu respectivo panel (Seção 6C)
     const previewTop3Raw = [
@@ -303,6 +305,7 @@ export const POST: APIRoute = async ({ request }) => {
         diagramNodes: decision.diagramNodes,
         reading,
         panel: basePanel,
+        readingSummary,
         radarAxes,
         remaining: routerDecision.remainingSteps,
         next_step: routerDecision.nextStep,

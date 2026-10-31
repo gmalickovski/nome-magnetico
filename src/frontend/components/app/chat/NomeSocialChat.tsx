@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type {
   ChatMessage,
+  ChatReadingSummary,
   ResultPanelData,
   RadarAxesData,
   ReadingSummaryItem,
   CandidateSuggestion,
   DecideLiveResponse,
 } from './chat-types.js';
+import { fetchChatReadingSummary } from './chat-reading-summary-client.js';
 import { ChatProgress } from './ChatProgress.js';
-import { SummaryButton } from './SummaryButton.js';
+import { SummaryFab } from './SummaryFab.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { PillGroup } from './PillGroup.js';
@@ -127,6 +129,13 @@ export function NomeSocialChat({
   const [sobrenomesDetectados, setSobrenomesDetectados] = useState<string[]>([]);
   const [radarAxes, setRadarAxes] = useState<RadarAxesData | null>(null);
   const [summaryItems, setSummaryItems] = useState<ReadingSummaryItem[]>([]);
+  const [birthReadingSummary, setBirthReadingSummary] = useState<ChatReadingSummary | null>(
+    null
+  );
+  const [harmonizedSummaries, setHarmonizedSummaries] = useState<
+    Record<string, ChatReadingSummary>
+  >({});
+  const [readingSummaryLoading, setReadingSummaryLoading] = useState(false);
   const [basePanel, setBasePanel] = useState<ResultPanelData | null>(initialBirthPanel);
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
@@ -141,6 +150,19 @@ export function NomeSocialChat({
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const sessionBootstrapped = useRef(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const onChange = () => {
+      if (mq.matches) {
+        setDrawerOpen(false);
+      } else {
+        setSidebarExpanded(false);
+      }
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   const persistReady = useRef(false);
 
   const hasRegisteredBirthName =
@@ -169,6 +191,9 @@ export function NomeSocialChat({
     setSobrenomesDetectados([]);
     setRadarAxes(null);
     setSummaryItems([]);
+    setBirthReadingSummary(null);
+    setHarmonizedSummaries({});
+    setReadingSummaryLoading(false);
     setBasePanel(hasRegisteredBirthName ? initialBirthPanel : null);
     setActiveSuggestionId(null);
     setSuggestions([]);
@@ -199,6 +224,8 @@ export function NomeSocialChat({
     setSobrenomesDetectados(saved.sobrenomesDetectados);
     setRadarAxes(saved.radarAxes);
     setSummaryItems(saved.summaryItems);
+    setBirthReadingSummary(saved.birthReadingSummary ?? null);
+    setHarmonizedSummaries(saved.harmonizedSummaries ?? {});
     setBasePanel(saved.basePanel);
     setActiveSuggestionId(collectionComplete ? saved.activeSuggestionId : null);
     setSuggestions(collectionComplete ? saved.suggestions : []);
@@ -223,7 +250,7 @@ export function NomeSocialChat({
 
     const timer = window.setTimeout(() => {
       const snapshot: PersistedChatSession = {
-        version: 1,
+        version: 2,
         savedAt: Date.now(),
         messages,
         answers,
@@ -241,6 +268,8 @@ export function NomeSocialChat({
         radarAxes,
         summaryItems,
         basePanel,
+        birthReadingSummary,
+        harmonizedSummaries,
         activeSuggestionId,
         suggestions,
         analysisId,
@@ -267,10 +296,51 @@ export function NomeSocialChat({
     radarAxes,
     summaryItems,
     basePanel,
+    birthReadingSummary,
+    harmonizedSummaries,
     activeSuggestionId,
     suggestions,
     analysisId,
   ]);
+
+  useEffect(() => {
+    if (!birthConfirmed || !confirmedName.trim() || birthReadingSummary) return;
+    let cancelled = false;
+    void fetchChatReadingSummary(confirmedName, confirmedDate).then((summary) => {
+      if (!cancelled && summary) setBirthReadingSummary(summary);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [birthConfirmed, confirmedName, confirmedDate, birthReadingSummary]);
+
+  useEffect(() => {
+    if (!birthConfirmed || !activeSuggestionId) {
+      setReadingSummaryLoading(false);
+      return;
+    }
+    if (harmonizedSummaries[activeSuggestionId]) {
+      setReadingSummaryLoading(false);
+      return;
+    }
+    const sug = suggestions.find((s) => s.id === activeSuggestionId);
+    if (!sug?.nome) return;
+
+    let cancelled = false;
+    setReadingSummaryLoading(true);
+    void fetchChatReadingSummary(sug.nome, confirmedDate)
+      .then((summary) => {
+        if (cancelled || !summary) return;
+        setHarmonizedSummaries((prev) => ({ ...prev, [activeSuggestionId]: summary }));
+      })
+      .finally(() => {
+        if (!cancelled) setReadingSummaryLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [birthConfirmed, activeSuggestionId, confirmedDate, suggestions]);
 
   const resetChat = () => {
     clearChatSession(userId);
@@ -523,6 +593,7 @@ export function NomeSocialChat({
 
   const applyDecisionResponse = (data: DecideLiveResponse) => {
     if (data.summary) setSummaryItems(data.summary);
+    if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
     if (data.panel) setBasePanel(data.panel);
     if (data.remaining !== undefined) setRemaining(data.remaining);
     if (data.analysisId) setAnalysisId(data.analysisId);
@@ -744,12 +815,18 @@ export function NomeSocialChat({
   const showStarDetail = birthConfirmed && Boolean(basePanel);
   const showRadarPanel = shouldShowRadar(collectState);
   const showSummaryPanel = shouldShowSummary(summaryItems);
+  const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel);
+  const activeReadingSummary = activeSuggestionId
+    ? harmonizedSummaries[activeSuggestionId] ?? null
+    : birthReadingSummary;
+  const activeReadingLoading = Boolean(activeSuggestionId) && readingSummaryLoading;
 
   const summaryCount =
     (showScoreCard ? 1 : 0) +
     (showStarDetail ? 1 : 0) +
     (showRadarPanel ? 1 : 0) +
-    summaryItems.length;
+    summaryItems.length +
+    (showReadingSummaryPanel && (activeReadingSummary || activeReadingLoading) ? 1 : 0);
 
   const sidebarSection = (
     <ChatSidebarSection
@@ -764,6 +841,9 @@ export function NomeSocialChat({
       showRadar={showRadarPanel}
       summaryItems={summaryItems}
       showSummary={showSummaryPanel}
+      readingSummary={activeReadingSummary}
+      readingSummaryLoading={activeReadingLoading}
+      showReadingSummary={showReadingSummaryPanel}
     />
   );
 
@@ -783,22 +863,19 @@ export function NomeSocialChat({
             >
               Reiniciar
             </button>
-            <div className="lg:hidden">
-              <SummaryButton count={summaryCount} onClick={() => setDrawerOpen(true)} />
-            </div>
           </div>
         }
       />
 
       <div
-        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-3 sm:px-5 lg:px-6 xl:px-8 grid min-h-0 gap-4 lg:gap-6 xl:gap-8 ${
+        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 grid min-h-0 gap-3 md:gap-4 lg:gap-6 xl:gap-8 ${
           sidebarExpanded
-            ? 'lg:grid-cols-1'
-            : 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,36%)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,34%)]'
+            ? 'md:grid-cols-1'
+            : 'md:grid-cols-[minmax(0,1fr)_minmax(220px,44%)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,38%)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,34%)] 2xl:grid-cols-[minmax(0,1fr)_minmax(360px,32%)]'
         }`}
       >
         <main
-          className={`flex flex-col min-h-0 min-w-0 py-3 lg:py-4 ${
+          className={`flex flex-col min-h-0 min-w-0 py-3 md:py-3 lg:py-4 ${
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
@@ -916,7 +993,7 @@ export function NomeSocialChat({
         </main>
 
         <aside
-          className={`hidden lg:flex flex-col min-h-0 py-3 lg:py-4 ${
+          className={`hidden md:flex flex-col min-h-0 py-3 md:py-3 lg:py-4 ${
             sidebarExpanded ? 'max-w-4xl mx-auto w-full' : ''
           }`}
         >
@@ -928,6 +1005,8 @@ export function NomeSocialChat({
           </ChatSidebarPanelChrome>
         </aside>
       </div>
+
+      <SummaryFab count={summaryCount} onClick={() => setDrawerOpen(true)} />
 
       <SummaryDrawer
         isOpen={drawerOpen}
@@ -943,6 +1022,9 @@ export function NomeSocialChat({
         summaryItems={summaryItems}
         showRadar={showRadarPanel}
         showSummary={showSummaryPanel}
+        readingSummary={activeReadingSummary}
+        readingSummaryLoading={activeReadingLoading}
+        showReadingSummary={showReadingSummaryPanel}
       />
     </div>
   );

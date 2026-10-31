@@ -39,6 +39,81 @@ export interface ReadingSummaryItem {
   value: string;
 }
 
+/** Blocos numerológicos completos (painel lateral / drawer) — espelha buildChatReadingSummary. */
+export interface ChatReadingSummary {
+  nomeExibido: string;
+  triangulos: {
+    vida: ChatTrianguloData;
+    pessoal: ChatTrianguloData;
+    social: ChatTrianguloData;
+    destino: ChatTrianguloData;
+  };
+  bloqueios: ChatBloqueioData[];
+  licoesCarmicas: ChatLicaoCarmica[];
+  tendenciasOcultas: ChatTendenciaOculta[];
+  debitosCarmicos: ChatDebitoCarmico[];
+  frequencias: Record<number, number>;
+  arcanos: Record<
+    number,
+    {
+      numero: number;
+      nome: string;
+      palavraChave: string;
+      descricao: string;
+      desafio: string;
+    }
+  >;
+}
+
+export interface ChatTrianguloData {
+  tipo: string;
+  linhas: number[][];
+  arcanoRegente: number | null;
+  arcanosDoMinantes: number[];
+  sequenciasNegativas: string[];
+  arcanosDePassagem?: number[];
+  arcanoAtual?: {
+    numero: number | null;
+    periodo: string;
+    idadeInicio: number;
+    idadeFim: number;
+  } | null;
+  contagemSequencias?: Record<string, number>;
+}
+
+export interface ChatBloqueioData {
+  codigo: string;
+  titulo: string;
+  descricao: string;
+  triangulos: string[];
+  aspectoSaude?: string;
+  repeticoesPortriangulo?: Partial<Record<string, number>>;
+  totalOcorrencias?: number;
+}
+
+export interface ChatLicaoCarmica {
+  numero: number;
+  titulo: string;
+  descricao: string;
+  comoTrabalhar: string;
+}
+
+export interface ChatTendenciaOculta {
+  numero: number;
+  frequencia: number;
+  titulo: string;
+  descricao: string;
+  comoEquilibrar: string;
+}
+
+export interface ChatDebitoCarmico {
+  numero: number;
+  titulo: string;
+  descricao: string;
+  fontes?: string[];
+  fixo?: boolean;
+}
+
 export interface CandidateSuggestion {
   id: string;
   nome: string;
@@ -100,6 +175,7 @@ export interface DecideLiveResponse {
   reading: string;
   radarAxes: RadarAxesData | null;
   summary: ReadingSummaryItem[];
+  readingSummary?: ChatReadingSummary;
   panel?: ResultPanelData;
   previewTop3: CandidateSuggestion[];
   analysisId?: string;

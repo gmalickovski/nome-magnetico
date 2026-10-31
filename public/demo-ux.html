@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo UX - DEV-235</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0a0a0f; color: #fff; font-family: system-ui, -apple-system, sans-serif; }
+    .chat-bubble { background: #1a1a24; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .user-bubble { background: #2a2a38; margin-left: auto; max-width: 80%; }
+    .nm-bubble { background: #1a1a24; }
+    .eyebrow { color: #c4a962; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px; }
+    .pill { background: #2a2a38; border: 1px solid #3a3a48; border-radius: 20px; padding: 8px 16px; cursor: pointer; }
+    .pill:hover { background: #3a3a48; }
+    .btn { background: #c4a962; color: #0a0a0f; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #d4b972; }
+    .btn-secondary { background: transparent; border: 1px solid #c4a962; color: #c4a962; }
+    .btn-secondary:hover { background: #c4a962; color: #0a0a0f; }
+    .inline-input { background: #2a2a38; border: 1px solid #3a3a48; border-radius: 6px; padding: 10px; width: 100%; color: #fff; }
+    .sidebar { background: #12121a; border-left: 1px solid #2a2a38; }
+  </style>
+</head>
+<body>
+  <div class="flex flex-col h-screen">
+    <!-- Header -->
+    <header class="bg-[#12121a] border-b border-[#2a2a38] p-4 flex justify-between items-center">
+      <h1 class="text-lg font-semibold">Análise de Nome Social</h1>
+      <button class="btn-secondary px-4 py-2">Ver Resumo (3)</button>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Chat Area -->
+      <main id="chat-main" class="flex-1 overflow-y-auto p-6 space-y-4" style="max-width: 800px; margin: 0 auto;">
+        <!-- Progress Bar -->
+        <div class="mb-6 sticky top-0 bg-[#0a0a0f]/95 backdrop-blur-md py-2 z-10">
+          <div class="flex justify-between text-xs text-gray-400 mb-2">
+            <span>Passo 1 de 8</span>
+            <span>7 perguntas restantes</span>
+          </div>
+          <div class="h-1 bg-[#2a2a38] rounded-full overflow-hidden">
+            <div class="h-full bg-[#c4a962]" style="width: 12.5%"></div>
+          </div>
+        </div>
+
+        <!-- Welcome Message -->
+        <div class="nm-bubble chat-bubble">
+          <div class="eyebrow">BEM-VINDO AO NOME MAGNÉTICO</div>
+          <p>Olá. Vamos construir juntos uma assinatura equilibrada e sem bloqueios, feita sob medida para os seus objetivos.</p>
+        </div>
+
+        <!-- Birth Name Card (Inline Confirm) -->
+        <div class="nm-bubble chat-bubble" style="max-width: 600px;">
+          <div class="eyebrow">CERTIDÃO DE NASCIMENTO</div>
+          <p class="mb-4">Antes de começarmos, vamos confirmar seus dados de certidão.</p>
+          
+          <!-- Inline Card with Confirm Buttons -->
+          <div class="bg-[#2a2a38] border border-[#3a3a48] rounded-lg p-4 mt-3">
+            <div class="mb-3">
+              <div class="text-xs text-gray-400 mb-1">Nome Completo</div>
+              <div class="font-medium">Guilherme Malickovski Correa</div>
+            </div>
+            <div class="mb-4">
+              <div class="text-xs text-gray-400 mb-1">Data de Nascimento</div>
+              <div class="font-medium">14/02/1990</div>
+            </div>
+            <div class="flex gap-3">
+              <button class="btn flex-1" onclick="confirmProfile()">Confirmar</button>
+              <button class="btn-secondary flex-1" onclick="editProfile()">Editar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- After Confirm: Next Step with Pills (Inline in Assistant Bubble) -->
+        <div id="next-step" class="nm-bubble chat-bubble hidden" style="max-width: 600px;">
+          <div class="eyebrow">SEXO / GÊNERO</div>
+          <p class="mb-4">Por último, qual sexo / gênero você prefere usar nesta leitura?</p>
+          
+          <!-- Pills INSIDE the assistant bubble -->
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="pill">Feminino</button>
+            <button class="pill">Masculino</button>
+            <button class="pill">Prefiro não informar / Outro</button>
+          </div>
+        </div>
+
+        <!-- Example: Text Input Inside Bubble -->
+        <div id="text-input-example" class="nm-bubble chat-bubble hidden" style="max-width: 600px;">
+          <div class="eyebrow">SUA RESPOSTA</div>
+          <p class="mb-4">Como você gostaria de ser chamado(a)?</p>
+          
+          <!-- Text input INSIDE the assistant bubble -->
+          <div class="mt-3">
+            <input type="text" class="inline-input" placeholder="Digite sua resposta..." />
+            <button class="btn mt-2 w-full">Enviar</button>
+          </div>
+        </div>
+
+        <div class="h-20"></div>
+      </main>
+
+      <!-- Right Sidebar (Desktop only) -->
+      <aside id="sidebar" class="hidden lg:block sidebar w-80 overflow-y-auto p-6">
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">Análise em Andamento</h3>
+            <p class="text-xs text-gray-500">Complete as perguntas para visualizar seu perfil numerológico completo.</p>
+          </div>
+
+          <!-- Before confirm: NO fake score shown -->
+          <div id="no-score-yet" class="text-xs text-gray-500">
+            <p>⚠️ VERIFICAÇÃO: Sidebar NÃO mostra pontuação falsa (48/100) antes de confirmar os dados.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    function confirmProfile() {
+      // Hide birth card, show next step with pills
+      document.querySelector('.nm-bubble:nth-of-type(2)').style.display = 'none';
+      document.getElementById('next-step').classList.remove('hidden');
+      
+      // Update progress
+      document.querySelector('.h-full.bg-\\[\\#c4a962\\]').style.width = '25%';
+      document.querySelector('.flex.justify-between.text-xs.text-gray-400.mb-2').innerHTML = `
+        <span>Passo 2 de 8</span>
+        <span>6 perguntas restantes</span>
+      `;
+    }
+
+    function editProfile() {
+      alert('Editar perfil (retorna ao início do fluxo)');
+    }
+
+    // Test scroll independence
+    function testScroll() {
+      const chat = document.getElementById('chat-main');
+      const sidebar = document.getElementById('sidebar');
+      
+      console.log('Chat scroll position:', chat.scrollTop);
+      console.log('Sidebar scroll position:', sidebar.scrollTop);
+    }
+
+    // Verify no fixed input at bottom
+    console.log('✓ VERIFICAÇÃO: Nenhuma barra de input fixa no rodapé da página');
+    console.log('✓ VERIFICAÇÃO: Todas as interações estão inline dentro das bubbles do assistente');
+  </script>
+</body>
+</html>

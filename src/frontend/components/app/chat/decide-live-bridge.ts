@@ -4,6 +4,7 @@
 
 import type {
   CandidateSuggestion,
+  ChatReadingSummary,
   DecideLiveResponse,
   NextQuestionSpec,
   RadarAxesData,
@@ -89,6 +90,7 @@ type RawDecideLiveResponse = {
   subfocoMomento?: string;
   areaFoco?: string;
   providerUsed?: string;
+  readingSummary?: ChatReadingSummary;
   error?: string;
 };
 
@@ -228,6 +230,7 @@ export function mapDecideLiveResponse(raw: RawDecideLiveResponse): DecideLiveRes
         : '',
     radarAxes: mapRadarAxes(raw.radarAxes),
     summary,
+    readingSummary: raw.readingSummary,
     panel: raw.panel ? mapApiPanel(raw.panel) : undefined,
     previewTop3: (raw.previewTop3 ?? []).map(mapCandidate),
     providerUsed: raw.providerUsed,

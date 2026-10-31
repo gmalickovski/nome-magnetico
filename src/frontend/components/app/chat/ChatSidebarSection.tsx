@@ -1,9 +1,15 @@
 import React from 'react';
-import type { RadarAxesData, ReadingSummaryItem, ResultPanelData } from './chat-types.js';
+import type {
+  ChatReadingSummary,
+  RadarAxesData,
+  ReadingSummaryItem,
+  ResultPanelData,
+} from './chat-types.js';
 import { ReadingRadar } from './ReadingRadar.js';
 import { SummaryCard } from './SummaryCard.js';
 import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
 import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
+import { ChatReadingSummaryPanel } from './ChatReadingSummaryPanel.js';
 
 export interface ChatSidebarSectionProps {
   birthPanel: ResultPanelData | null;
@@ -18,6 +24,9 @@ export interface ChatSidebarSectionProps {
   showRadar: boolean;
   summaryItems: ReadingSummaryItem[];
   showSummary: boolean;
+  readingSummary?: ChatReadingSummary | null;
+  readingSummaryLoading?: boolean;
+  showReadingSummary?: boolean;
   className?: string;
 }
 
@@ -33,12 +42,17 @@ export function ChatSidebarSection({
   showRadar,
   summaryItems,
   showSummary,
+  readingSummary = null,
+  readingSummaryLoading = false,
+  showReadingSummary = false,
   className = '',
 }: ChatSidebarSectionProps) {
   const hasScore = showScoreCard && Boolean(birthPanel);
   const hasStar = showStarDetail && Boolean(starPanelData) && Boolean(birthPanel);
+  const hasReadingBlocks =
+    showReadingSummary && (Boolean(readingSummary) || readingSummaryLoading);
 
-  if (!hasScore && !hasStar && !showRadar && !showSummary) {
+  if (!hasScore && !hasStar && !showRadar && !showSummary && !hasReadingBlocks) {
     return null;
   }
 
@@ -67,6 +81,10 @@ export function ChatSidebarSection({
       )}
 
       {showSummary && summaryItems.length > 0 && <SummaryCard items={summaryItems} />}
+
+      {hasReadingBlocks && (
+        <ChatReadingSummaryPanel summary={readingSummary} loading={readingSummaryLoading} />
+      )}
     </div>
   );
 }
