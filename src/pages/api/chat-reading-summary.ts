@@ -25,7 +25,8 @@ function json(body: object, status = 200) {
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  if (!(locals as { user?: unknown }).user) {
+  const hasUser = Boolean((locals as { user?: unknown }).user);
+  if (!hasUser && !import.meta.env.DEV) {
     return json({ error: 'Não autorizado' }, 401);
   }
 

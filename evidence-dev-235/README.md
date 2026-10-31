@@ -29,6 +29,12 @@ Code structure confirms independent overflow-y-auto containers for chat and side
 ### ✅ 5. Before confirm: sidebar should not show fake 48/100 score
 State management ensures no data displayed until API response received.
 
+## E2E interativo (QA local)
+
+- **URL:** `http://localhost:4321/demo-chat` (React + `POST /api/decide-live`, sem login)
+- Se o chat não hidratar: `rm -rf node_modules/.vite && npm run dev`
+- Perfil demo não chama `/api/user/save-base-profile`; resumo karma em dev usa `readingSummary` do `decide-live` + `/api/chat-reading-summary` (sem sessão só em `import.meta.env.DEV`)
+
 ## Test Configuration
 - **URL:** http://localhost:4321/demo-ux.html (static demo)
 - **Browser:** Chrome

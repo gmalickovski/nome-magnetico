@@ -9,6 +9,7 @@ import type {
   DecideLiveResponse,
 } from './chat-types.js';
 import { fetchChatReadingSummary } from './chat-reading-summary-client.js';
+import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { SummaryFab } from './SummaryFab.js';
 import { NmBubble } from './NmBubble.js';
@@ -164,6 +165,7 @@ export function NomeSocialChat({
     return () => mq.removeEventListener('change', onChange);
   }, []);
   const persistReady = useRef(false);
+  const demoMode = isDemoChatUser(userId);
 
   const hasRegisteredBirthName =
     Boolean(initialBirthName.trim()) && Boolean(initialBirthDate.trim());
@@ -304,6 +306,7 @@ export function NomeSocialChat({
   ]);
 
   useEffect(() => {
+    if (demoMode) return;
     if (!birthConfirmed || !confirmedName.trim() || birthReadingSummary) return;
     let cancelled = false;
     void fetchChatReadingSummary(confirmedName, confirmedDate).then((summary) => {
@@ -312,7 +315,7 @@ export function NomeSocialChat({
     return () => {
       cancelled = true;
     };
-  }, [birthConfirmed, confirmedName, confirmedDate, birthReadingSummary]);
+  }, [demoMode, birthConfirmed, confirmedName, confirmedDate, birthReadingSummary]);
 
   useEffect(() => {
     if (!birthConfirmed || !activeSuggestionId) {
@@ -458,7 +461,7 @@ export function NomeSocialChat({
         gender !== initialProfileGender ||
         nome.trim() !== initialBirthName.trim() ||
         dataNascimento !== initialBirthDate;
-      if (mustSave) {
+      if (mustSave && !demoMode) {
         setLoading(true);
         await saveBaseProfile(nome, dataNascimento, gender);
       }
