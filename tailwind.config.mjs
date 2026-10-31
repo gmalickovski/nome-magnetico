@@ -24,6 +24,13 @@ export default {
           'text-primary': '#e5e7eb',
           'text-secondary': '#a0a0a0',
         },
+        chat: {
+          bubble: '#1C1C1C',
+          drawer: '#131313',
+          ink: '#E5E2E1',
+          muted: '#6B7280',
+          orb: '#F2CA50',
+        },
       },
       fontFamily: {
         cinzel: ['Cinzel', 'serif'],

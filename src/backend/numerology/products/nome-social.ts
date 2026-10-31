@@ -1,5 +1,5 @@
 /**
- * Lógica específica do produto Nome Social (Motor NM v3 · DEV-186).
+ * Lógica específica do produto Nome Social (Motor NM v3 · DEV-186 + DEV-235).
  *
  * Fluxo de geração em 3 etapas:
  * 1. Etapa 1 (Encurtar sem acento):
@@ -53,6 +53,61 @@ const ACENTOS_UPPER: Record<string, string[]> = {
 };
 const LETRAS_DUPLICAVEIS = 'bcdfghjklmnpqrstvwxyzaeiou';
 const VOGAIS_DIM = 'aeiouáàãâéêíóôõú';
+const PARTICULAS_SOBRENOME = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
+
+// ── Utilitários de normalização e sobrenomes (DEV-235) ────────────────────────
+
+/** Normaliza token removendo acentos/diacríticos para comparação insensível a acento sutil. */
+export function normalizarToken(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Extrai os sobrenomes principais do nome completo, ignorando o primeiro nome
+ * e partículas isoladas (de, da, do, dos, das, e).
+ */
+export function extrairSobrenomes(nomeCompleto: string): string[] {
+  const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
+  if (partes.length <= 1) return [];
+  const resultado: string[] = [];
+  for (let i = 1; i < partes.length; i++) {
+    const token = partes[i]!;
+    const norm = normalizarToken(token);
+    if (!norm || PARTICULAS_SOBRENOME.has(norm)) continue;
+    const formatado = token.charAt(0).toUpperCase() + token.slice(1);
+    if (!resultado.some(r => normalizarToken(r) === norm)) {
+      resultado.push(formatado);
+    }
+  }
+  return resultado;
+}
+
+function contarAcentos(texto: string): number {
+  return (texto.match(/[áàãâéêíóôõúÁÀÃÂÉÊÍÓÔÕÚ]/g) || []).length;
+}
+
+function contarSobrenomesSignificativos(nome: string): number {
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  if (partes.length <= 1) return 0;
+  let count = 0;
+  for (let i = 1; i < partes.length; i++) {
+    if (!PARTICULAS_SOBRENOME.has(normalizarToken(partes[i]!))) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function candidatoContemSobrenome(nomeCandidato: string, sobrenome: string): boolean {
+  const alvo = normalizarToken(sobrenome);
+  if (!alvo) return false;
+  const partes = nomeCandidato.trim().split(/\s+/);
+  return partes.slice(1).some(p => normalizarToken(p) === alvo);
+}
 
 // ── Helpers de variação ───────────────────────────────────────────────────────
 
@@ -236,6 +291,25 @@ export function etapaDoNivel(nivel: number): 1 | 2 | 3 {
 
 export type TipoOpcaoSugestao = 'mudanca_minima' | 'encurtado' | 'alternativa';
 
+export type EstiloAssinaturaPreferido =
+  | 'sobrenome_forte'    // Prioridade 1: Nome + 1 sobrenome forte sem acento extra
+  | 'ajuste_sutil'       // Prioridade 2: Nome atual com 1 acento discreto
+  | 'curto_direto'       // Prioridade 3: Assinatura curta ou primeiro nome
+  | 'qualquer';          // Padrão aberto ao melhor cálculo
+
+export type MotivoRefinamentoAssinatura =
+  | 'forcar_sobrenome'
+  | 'preferir_sem_acento'
+  | 'preferir_nome_curto'
+  | 'preferir_nome_completo'
+  | 'testar_variacao_propria';
+
+export interface AvisoSobrenomeExigido {
+  sobrenome: string;
+  precisouAcento: boolean;
+  notaAlcancada: number;
+}
+
 export interface AnaliseNomeSocial {
   nomeCompleto: string;
   expressao: number;
@@ -257,6 +331,9 @@ export interface AnaliseNomeSocial {
   /** Nível de prioridade da fase de geração (apenas sugestões do sistema). */
   nivelGerado?: number;
   etapa?: 1 | 2 | 3;
+  etapaGeracao?: 1 | 2 | 3;
+  temAcentoAdicionado?: boolean;
+  quantidadeSobrenomes?: number;
   tipoOpcao?: TipoOpcaoSugestao;
   explicacao?: string;
   semSequenciaVida?: boolean;
@@ -269,6 +346,7 @@ export interface ResultadoNomeSocial {
   nomesCandidatos: AnaliseNomeSocial[];
   melhorNome: AnaliseNomeSocial | null;
   top3: AnaliseNomeSocial[];
+  avisoSobrenomeExigido?: AvisoSobrenomeExigido | null;
 }
 
 // ── Análise de um nome ────────────────────────────────────────────────────────
@@ -307,6 +385,7 @@ export function analisarNomeSocial(
   // No v3, verifica ausência de sequências especificamente no Triângulo da Vida
   const sequenciasVida = todos.vida.contagemSequencias ?? {};
   const semSequenciaVida = Object.keys(sequenciasVida).length === 0;
+  const quantidadeSobrenomes = contarSobrenomesSignificativos(nomeCompleto);
 
   const justificativa: string[] = [];
   if (bloqueios.length === 0) {
@@ -328,6 +407,7 @@ export function analisarNomeSocial(
     licoesCarmicas: licoes, tendenciasOcultas: tendencias, debitosCarmicos: debitos,
     compatibilidade, score, scoreTeto, justificativa, origemSugerida: origem,
     semSequenciaVida,
+    quantidadeSobrenomes,
   };
 }
 
@@ -510,34 +590,83 @@ export interface OpcoesRankingNomeSocial {
    * Linha de base ("Como você assina hoje?"), incluída na avaliação comparativa se informada.
    */
   assinaturaAtual?: string;
+  /** Sobrenomes que o usuário fixou com 1 toque no mobile (devem estar presentes no candidato) */
+  sobrenomesObrigatorios?: string[];
+  /** Sobrenomes que o usuário marcou como "Pode sair" (não devem estar presentes no candidato) */
+  sobrenomesExcluidos?: string[];
+  /** Estilo preferido selecionado no formulário ou inferido pelo JEV */
+  estiloPreferido?: EstiloAssinaturaPreferido;
+  /** Lista de nomes já exibidos que devem ser filtrados ao pedir novas sugestões */
+  nomesExcluidos?: string[];
+  /** Motivo rápido clicado no drawer "Quero ver outras sugestões de assinatura" */
+  motivoRefinamento?: MotivoRefinamentoAssinatura;
+  /** Variação digitada manualmente pelo usuário no drawer do resultado */
+  variacaoPropria?: string;
 }
 
 /**
- * Função de ordenação do ranking v3 (DEV-186 + DEV-190 §6).
- * Dentro de cada etapa:
- * 1. Filtro sem sequência no Triângulo da Vida
- * 2. Corte em N5 (score v3 >= 85)
- * 3. Menor etapa (1 antes de 2, 2 antes de 3)
- * 4. Score v3 DESC
- * 5. Harmonia/Compatibilidade DESC (favoravel > neutro > desfavoravel)
- * 6. Preferência de contexto ("Onde vai usar o novo nome?" / "Topa encurtar?")
- * 7. Desempate a favor de acentos do português (pontuarOrtografiaPortugues)
- * 8. Menor nível de descaracterização
+ * Função de ordenação do ranking v3 (DEV-186 + DEV-190 §6 + DEV-235).
  */
 function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
+  const obrigatorios = (opcoes?.sobrenomesObrigatorios ?? []).map(normalizarToken).filter(Boolean);
+  const excluidos = (opcoes?.sobrenomesExcluidos ?? []).map(normalizarToken).filter(Boolean);
+  const estilo = opcoes?.estiloPreferido;
+  const motivo = opcoes?.motivoRefinamento;
+
+  const prefereSemAcento =
+    estilo === 'sobrenome_forte' || motivo === 'preferir_sem_acento';
+  const prefereCompletoComAcento =
+    estilo === 'ajuste_sutil' || motivo === 'preferir_nome_completo';
+  const prefereCurtoExplicito =
+    estilo === 'curto_direto' || motivo === 'preferir_nome_curto';
+
   const prefereCurto = Boolean(
-    opcoes?.aceitaEncurtarOuApelido ||
-      opcoes?.ondeVaiUsar?.some(u => ['redes_sociais', 'artistico', 'assinatura_diaria'].includes(u))
+    prefereCurtoExplicito ||
+      opcoes?.aceitaEncurtarOuApelido ||
+      opcoes?.ondeVaiUsar?.some(u =>
+        ['redes_sociais', 'artistico', 'assinatura_diaria', 'presenca_digital', 'marca_autoria'].includes(u)
+      )
   );
   const prefereFormal = Boolean(
-    !opcoes?.aceitaEncurtarOuApelido &&
-      opcoes?.ondeVaiUsar?.some(u => ['documentos', 'contratos', 'profissional'].includes(u))
+    !prefereCurto &&
+      (estilo === 'sobrenome_forte' ||
+        opcoes?.ondeVaiUsar?.some(u =>
+          ['documentos', 'contratos', 'profissional', 'identidade_registro', 'rotina_trabalho'].includes(u)
+        ))
   );
+
+  function contarObrigatoriosAtendidos(nome: string): number {
+    if (obrigatorios.length === 0) return 0;
+    let count = 0;
+    for (const sob of obrigatorios) {
+      if (candidatoContemSobrenome(nome, sob)) count++;
+    }
+    return count;
+  }
+
+  function temExcluido(nome: string): boolean {
+    if (excluidos.length === 0) return false;
+    return excluidos.some(sob => candidatoContemSobrenome(nome, sob));
+  }
 
   return function compararCandidatosV3(a: AnaliseNomeSocial, b: AnaliseNomeSocial): number {
     const vidaA = a.semSequenciaVida ? 1 : 0;
     const vidaB = b.semSequenciaVida ? 1 : 0;
     if (vidaA !== vidaB) return vidaB - vidaA;
+
+    // Se houver sobrenomes excluídos que ficaram no fallback, vão para o fim
+    if (excluidos.length > 0) {
+      const excA = temExcluido(a.nomeCompleto) ? 1 : 0;
+      const excB = temExcluido(b.nomeCompleto) ? 1 : 0;
+      if (excA !== excB) return excA - excB;
+    }
+
+    // Se houver sobrenomes obrigatórios fixados pelo usuário, priorizar quem os contém
+    if (obrigatorios.length > 0) {
+      const obrA = contarObrigatoriosAtendidos(a.nomeCompleto);
+      const obrB = contarObrigatoriosAtendidos(b.nomeCompleto);
+      if (obrA !== obrB) return obrB - obrA;
+    }
 
     const nivelA = a.nivelGerado ?? 999;
     const nivelB = b.nivelGerado ?? 999;
@@ -546,6 +675,28 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
 
     const n5A = a.score >= 85 ? 1 : 0;
     const n5B = b.score >= 85 ? 1 : 0;
+
+    // Preferências explícitas de estilo ou motivo de refinamento entre candidatos N5 (ou de mesmo patamar)
+    if (n5A === n5B) {
+      if (prefereSemAcento) {
+        const semAcentoForteA = !a.temAcentoAdicionado && (a.quantidadeSobrenomes ?? 0) >= 1 ? 1 : 0;
+        const semAcentoForteB = !b.temAcentoAdicionado && (b.quantidadeSobrenomes ?? 0) >= 1 ? 1 : 0;
+        if (semAcentoForteA !== semAcentoForteB) return semAcentoForteB - semAcentoForteA;
+      } else if (prefereCompletoComAcento) {
+        const sobsA = a.quantidadeSobrenomes ?? contarSobrenomesSignificativos(a.nomeCompleto);
+        const sobsB = b.quantidadeSobrenomes ?? contarSobrenomesSignificativos(b.nomeCompleto);
+        if (etapaA <= 2 && etapaB <= 2 && sobsA !== sobsB) {
+          return sobsB - sobsA;
+        }
+      } else if (prefereCurtoExplicito) {
+        const curtoA = (a.quantidadeSobrenomes ?? contarSobrenomesSignificativos(a.nomeCompleto)) <= 1 ? 1 : 0;
+        const curtoB = (b.quantidadeSobrenomes ?? contarSobrenomesSignificativos(b.nomeCompleto)) <= 1 ? 1 : 0;
+        if (curtoA !== curtoB) return curtoB - curtoA;
+        const wordsA = a.nomeCompleto.trim().split(/\s+/).length;
+        const wordsB = b.nomeCompleto.trim().split(/\s+/).length;
+        if (wordsA !== wordsB) return wordsA - wordsB;
+      }
+    }
 
     // Se ambos atingiram N5: a etapa menor vence (Etapa 1 vence Etapa 2, etc.)
     if (n5A && n5B) {
@@ -595,12 +746,54 @@ function gerarSugestoesAutoSocial(
   opcoes?: OpcoesRankingNomeSocial
 ): AnaliseNomeSocial[] {
   const todosCandidatos = gerarCandidatosComNivel(nomeNascimento);
-  const liberaEtapa3Apelido = Boolean(opcoes?.aceitaEncurtarOuApelido);
+  const liberaEtapa3Apelido = Boolean(
+    opcoes?.aceitaEncurtarOuApelido ||
+      opcoes?.estiloPreferido === 'curto_direto' ||
+      opcoes?.motivoRefinamento === 'preferir_nome_curto'
+  );
 
-  // Etapas 1 e 2 cobrem encurtamentos sem acento e acentuações sutis (níveis 10 a 85).
-  // Etapa 3 (níveis >= 90: letras dobradas 90-105, corte no meio 110 e apelido 120) só participa
-  // como último recurso caso as Etapas 1 e 2 juntas não encontrem candidatos viáveis, ou se o usuário
-  // tiver marcado explicitamente "Topa encurtar ou usar apelido?" (onde apenas 110 e 120 são liberados).
+  const nomesExcluidosSet = new Set(
+    (opcoes?.nomesExcluidos ?? []).map(n => n.trim().toLowerCase()).filter(Boolean)
+  );
+  const sobrenomesExcluidosNorm = (opcoes?.sobrenomesExcluidos ?? [])
+    .map(normalizarToken)
+    .filter(Boolean);
+
+  const acentosNascimento = contarAcentos(nomeNascimento);
+
+  function enriquecerCandidato({ nome, nivel }: { nome: string; nivel: number }): AnaliseNomeSocial {
+    const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
+    const etapa = etapaDoNivel(nivel);
+    const temAcentoAdicionado = contarAcentos(nome) > acentosNascimento;
+    const quantidadeSobrenomes = contarSobrenomesSignificativos(nome);
+    return {
+      ...analise,
+      nivelGerado: nivel,
+      etapa,
+      etapaGeracao: etapa,
+      temAcentoAdicionado,
+      quantidadeSobrenomes,
+      explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
+    };
+  }
+
+  function aplicarFiltrosPool(lista: AnaliseNomeSocial[]): AnaliseNomeSocial[] {
+    let filtrada = nomesExcluidosSet.size > 0
+      ? lista.filter(c => !nomesExcluidosSet.has(c.nomeCompleto.trim().toLowerCase()))
+      : [...lista];
+
+    if (sobrenomesExcluidosNorm.length > 0) {
+      const semSobrenomeExcluido = filtrada.filter(
+        c => !sobrenomesExcluidosNorm.some(sob => candidatoContemSobrenome(c.nomeCompleto, sob))
+      );
+      if (semSobrenomeExcluido.length >= 3) {
+        filtrada = semSobrenomeExcluido;
+      }
+    }
+
+    return filtrada;
+  }
+
   const candidatosEtapas1e2 = todosCandidatos.filter(c => c.nivel <= 85);
   const candidatosApelido = liberaEtapa3Apelido
     ? todosCandidatos.filter(c => c.nivel >= 110)
@@ -609,39 +802,17 @@ function gerarSugestoesAutoSocial(
   const candidatosIniciais = [...candidatosEtapas1e2, ...candidatosApelido];
   const poolBase = candidatosIniciais.length >= 3 ? candidatosIniciais : todosCandidatos;
 
-  const analisados: AnaliseNomeSocial[] = poolBase.map(({ nome, nivel }) => {
-    const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
-    const etapa = etapaDoNivel(nivel);
-    return {
-      ...analise,
-      nivelGerado: nivel,
-      etapa,
-      explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
-    };
-  });
-
+  const analisados = aplicarFiltrosPool(poolBase.map(enriquecerCandidato));
   const comparador = criarComparadorCandidatosV3(opcoes);
   analisados.sort(comparador);
 
-  // Se já temos pelo menos 3 candidatos sem sequência na Vida nas Etapas 1 e 2
-  // (incluindo pelo menos 1 candidato N5 ou viável), retornamos imediatamente sem chamar Etapa 3 de duplicação.
   const limpos = analisados.filter(a => a.semSequenciaVida);
   if (limpos.length >= 3) {
     return limpos.slice(0, maxSugestoes);
   }
 
-  // Se as etapas 1 e 2 não geraram pelo menos 3 opções limpas, recorremos à Etapa 3 completa (último recurso real)
   if (poolBase !== todosCandidatos) {
-    const analisadosComEtapa3: AnaliseNomeSocial[] = todosCandidatos.map(({ nome, nivel }) => {
-      const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
-      const etapa = etapaDoNivel(nivel);
-      return {
-        ...analise,
-        nivelGerado: nivel,
-        etapa,
-        explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
-      };
-    });
+    const analisadosComEtapa3 = aplicarFiltrosPool(todosCandidatos.map(enriquecerCandidato));
     analisadosComEtapa3.sort(comparador);
     const limposComEtapa3 = analisadosComEtapa3.filter(a => a.semSequenciaVida);
     if (limposComEtapa3.length >= 3) {
@@ -726,10 +897,20 @@ export function analisarNomesSocial(
     typeof opcoes === 'object' && opcoes !== null ? opcoes : undefined;
 
   const destino = calcularDestino(dataNascimento);
+  const acentosNascimento = contarAcentos(nomeNascimento);
+
+  const listaCandidatos = [...nomesCandidatos];
+  const variacaoPropria = resolvedOpcoes?.variacaoPropria?.trim();
+  if (
+    variacaoPropria &&
+    variacaoPropria.length >= 2 &&
+    !listaCandidatos.some(c => c.trim().toLowerCase() === variacaoPropria.toLowerCase())
+  ) {
+    listaCandidatos.unshift(variacaoPropria);
+  }
 
   // Se o usuário informou "Como você assina hoje?" e é diferente do nome de nascimento,
   // incluímos na lista avaliada como linha de base se ainda não estiver nos candidatos.
-  const listaCandidatos = [...nomesCandidatos];
   const assinaturaAtual = resolvedOpcoes?.assinaturaAtual?.trim();
   if (
     assinaturaAtual &&
@@ -751,6 +932,9 @@ export function analisarNomesSocial(
         ...a,
         nivelGerado: 0,
         etapa: 1,
+        etapaGeracao: 1,
+        temAcentoAdicionado: contarAcentos(n) > acentosNascimento,
+        quantidadeSobrenomes: contarSobrenomesSignificativos(n),
         explicacao: isAssinaturaAtual
           ? 'Sua assinatura atual (linha de base para comparação).'
           : 'Nome sugerido por você.',
@@ -791,6 +975,29 @@ export function analisarNomesSocial(
   const todasOrdenadas = [...analisesUsuario, ...sugestoesIA];
   const top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
 
+  // Verifica transparência de bloqueio nativo quando um sobrenome obrigatório precisou de acento sutil
+  let avisoSobrenomeExigido: AvisoSobrenomeExigido | null = null;
+  const sobrenomesObrig = resolvedOpcoes?.sobrenomesObrigatorios ?? [];
+  if (sobrenomesObrig.length > 0) {
+    const primeiroNome = nomeNascimento.trim().split(/\s+/)[0] ?? '';
+    for (const sobExigido of sobrenomesObrig) {
+      const candComSob = todasOrdenadas.find(c => candidatoContemSobrenome(c.nomeCompleto, sobExigido));
+      if (!candComSob) continue;
+      const avaliacaoPura = analisarNomeSocial(`${primeiroNome} ${sobExigido}`.trim(), dataNascimento, 'ia');
+      const precisouAcento = Boolean(
+        candComSob.temAcentoAdicionado && (!avaliacaoPura.semSequenciaVida || avaliacaoPura.score < 85)
+      );
+      if (precisouAcento) {
+        avisoSobrenomeExigido = {
+          sobrenome: sobExigido,
+          precisouAcento: true,
+          notaAlcancada: candComSob.score,
+        };
+        break;
+      }
+    }
+  }
+
   return {
     nomeNascimento,
     dataNascimento,
@@ -798,7 +1005,6 @@ export function analisarNomesSocial(
     nomesCandidatos: todasOrdenadas,
     melhorNome,
     top3,
+    avisoSobrenomeExigido,
   };
 }
-
-

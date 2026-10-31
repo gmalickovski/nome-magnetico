@@ -80,7 +80,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs = AI_TIMEOUT_MS): Promise
   });
 }
 
-function buildSelectedSocialSummary({
+export function buildSelectedSocialSummary({
   nomeNascimento,
   nomeSocial,
   score,
