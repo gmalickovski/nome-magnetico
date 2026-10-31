@@ -3,27 +3,65 @@ import type { RadarAxesData } from './chat-types.js';
 
 export interface ReadingRadarProps {
   axes: RadarAxesData;
+  overlayAxes?: RadarAxesData | null;
+  /** Notas 0–100 nos vértices — só após escolha de sugestão (spec). */
+  showNumericLabels?: boolean;
   className?: string;
 }
 
 const AXIS_CONFIG = [
-  { key: 'momento', label: 'Momento', angle: -Math.PI / 2, align: 'middle', dy: -6 },
-  { key: 'objetivo', label: 'Objetivo', angle: -Math.PI / 2 + (2 * Math.PI) / 5, align: 'start', dx: 4, dy: 0 },
-  { key: 'uso', label: 'Uso', angle: -Math.PI / 2 + (4 * Math.PI) / 5, align: 'start', dx: 4, dy: 8 },
-  { key: 'apego_sobrenome', label: 'Sobrenome', angle: -Math.PI / 2 + (6 * Math.PI) / 5, align: 'end', dx: -4, dy: 8 },
-  { key: 'urgencia', label: 'Urgência', angle: -Math.PI / 2 + (8 * Math.PI) / 5, align: 'end', dx: -4, dy: 0 },
+  { key: 'expressao', label: 'Expressão', angle: -Math.PI / 2, align: 'middle', dy: -6 },
+  {
+    key: 'motivacao',
+    label: 'Motivação',
+    angle: -Math.PI / 2 + (2 * Math.PI) / 5,
+    align: 'start',
+    dx: 4,
+    dy: 0,
+  },
+  {
+    key: 'destino',
+    label: 'Destino',
+    angle: -Math.PI / 2 + (4 * Math.PI) / 5,
+    align: 'start',
+    dx: 4,
+    dy: 8,
+  },
+  {
+    key: 'harmonia_triangulo',
+    label: 'Harmonia',
+    angle: -Math.PI / 2 + (6 * Math.PI) / 5,
+    align: 'end',
+    dx: -4,
+    dy: 8,
+  },
+  {
+    key: 'sequencias',
+    label: 'Sequências',
+    angle: -Math.PI / 2 + (8 * Math.PI) / 5,
+    align: 'end',
+    dx: -4,
+    dy: 0,
+  },
 ] as const;
 
-export function ReadingRadar({ axes, className = '' }: ReadingRadarProps) {
+function getVal(axes: RadarAxesData, key: string): number {
+  return axes[key as keyof RadarAxesData] ?? 0.35;
+}
+
+export function ReadingRadar({
+  axes,
+  overlayAxes = null,
+  showNumericLabels = false,
+  className = '',
+}: ReadingRadarProps) {
   const cx = 120;
   const cy = 100;
   const radius = 62;
   const rings = [0.25, 0.5, 0.75, 1.0];
 
-  // Helper para calcular coordenadas polares
   const getCoords = (val: number, angle: number) => {
-    // Normaliza para o raio mínimo visual de 0.15 para não colapsar o ponto no centro
-    const safeVal = Math.max(0.15, Math.min(1.0, val));
+    const safeVal = Math.max(0.08, Math.min(1.0, val));
     const r = radius * safeVal;
     return {
       x: cx + r * Math.cos(angle),
@@ -31,21 +69,23 @@ export function ReadingRadar({ axes, className = '' }: ReadingRadarProps) {
     };
   };
 
-  // Pontos do polígono preenchido do radar
-  const polygonPoints = AXIS_CONFIG.map((axis) => {
-    const val = axes[axis.key as keyof RadarAxesData] ?? 0.3;
-    const { x, y } = getCoords(val, axis.angle);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
+  const polygonPoints = (data: RadarAxesData) =>
+    AXIS_CONFIG.map((axis) => {
+      const val = getVal(data, axis.key);
+      const { x, y } = getCoords(val, axis.angle);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+  const basePoints = polygonPoints(axes);
+  const overlayPoints = overlayAxes ? polygonPoints(overlayAxes) : null;
 
   return (
     <div className={`w-full flex flex-col items-center select-none ${className}`}>
       <svg
         viewBox="0 0 240 200"
         className="w-full max-w-[240px] h-auto overflow-visible"
-        aria-label="Radar de leitura das dimensões do consulente"
+        aria-label="Radar do motor numerológico"
       >
-        {/* Anéis concêntricos de fundo */}
         {rings.map((ringVal) => {
           const ringPoints = AXIS_CONFIG.map((axis) => {
             const { x, y } = getCoords(ringVal, axis.angle);
@@ -62,7 +102,6 @@ export function ReadingRadar({ axes, className = '' }: ReadingRadarProps) {
           );
         })}
 
-        {/* Eixos radiais do centro até o perímetro */}
         {AXIS_CONFIG.map((axis) => {
           const { x, y } = getCoords(1.0, axis.angle);
           return (
@@ -78,33 +117,57 @@ export function ReadingRadar({ axes, className = '' }: ReadingRadarProps) {
           );
         })}
 
-        {/* Polígono dourado dos dados do consulente */}
         <polygon
-          points={polygonPoints}
+          points={basePoints}
           className="transition-all duration-300 ease-out"
-          fill="rgba(212, 175, 55, 0.22)"
-          stroke="#D4AF37"
-          strokeWidth="1.5"
+          fill="rgba(212, 175, 55, 0.28)"
+          stroke="rgba(212, 175, 55, 0.55)"
+          strokeWidth="1.25"
           strokeLinejoin="round"
         />
 
-        {/* Vértices dourados nos pontos */}
+        {overlayPoints && (
+          <polygon
+            points={overlayPoints}
+            className="transition-all duration-300 ease-out"
+            fill="none"
+            stroke="#D4AF37"
+            strokeWidth="2.25"
+            strokeLinejoin="round"
+          />
+        )}
+
         {AXIS_CONFIG.map((axis) => {
-          const val = axes[axis.key as keyof RadarAxesData] ?? 0.3;
+          const val = getVal(axes, axis.key);
           const { x, y } = getCoords(val, axis.angle);
           return (
             <circle
-              key={`dot-${axis.key}`}
+              key={`dot-base-${axis.key}`}
               cx={x}
               cy={y}
               r="2.5"
-              fill="#D4AF37"
+              fill="rgba(212, 175, 55, 0.75)"
               className="transition-all duration-300 ease-out"
             />
           );
         })}
 
-        {/* Legendas dos 5 eixos */}
+        {overlayAxes &&
+          AXIS_CONFIG.map((axis) => {
+            const val = getVal(overlayAxes, axis.key);
+            const { x, y } = getCoords(val, axis.angle);
+            return (
+              <circle
+                key={`dot-overlay-${axis.key}`}
+                cx={x}
+                cy={y}
+                r="3"
+                fill="#D4AF37"
+                className="transition-all duration-300 ease-out"
+              />
+            );
+          })}
+
         {AXIS_CONFIG.map((axis) => {
           const labelRadius = radius + 14;
           const lx = cx + labelRadius * Math.cos(axis.angle) + (axis.dx ?? 0);
@@ -114,13 +177,35 @@ export function ReadingRadar({ axes, className = '' }: ReadingRadarProps) {
               key={`label-${axis.key}`}
               x={lx}
               y={ly}
-              textAnchor={axis.align as any}
+              textAnchor={axis.align as 'middle' | 'start' | 'end'}
               className="font-inter text-[10px] fill-chat-muted tracking-tight"
             >
               {axis.label}
             </text>
           );
         })}
+
+        {showNumericLabels &&
+          overlayAxes &&
+          AXIS_CONFIG.map((axis) => {
+            const base = Math.round(getVal(axes, axis.key) * 100);
+            const over = Math.round(getVal(overlayAxes, axis.key) * 100);
+            const delta = over - base;
+            if (delta === 0) return null;
+            const val = getVal(overlayAxes, axis.key);
+            const { x, y } = getCoords(val, axis.angle);
+            return (
+              <text
+                key={`delta-${axis.key}`}
+                x={x}
+                y={y - 6}
+                textAnchor="middle"
+                className="font-inter text-[9px] fill-[#D4AF37] font-medium"
+              >
+                {delta > 0 ? `+${delta}` : delta}
+              </text>
+            );
+          })}
       </svg>
     </div>
   );

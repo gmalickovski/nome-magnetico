@@ -18,6 +18,9 @@ export interface SummaryDrawerProps {
   isSuggestion?: boolean;
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
+  radarOverlayAxes?: RadarAxesData | null;
+  radarShowNumericLabels?: boolean;
+  contextChips?: string[];
   summaryItems: ReadingSummaryItem[];
   showRadar: boolean;
   showSummary: boolean;
@@ -39,6 +42,9 @@ export function SummaryDrawer({
   isSuggestion = false,
   onResetToBase,
   radarAxes,
+  radarOverlayAxes = null,
+  radarShowNumericLabels = false,
+  contextChips = [],
   summaryItems,
   showRadar,
   showSummary,
@@ -156,6 +162,9 @@ export function SummaryDrawer({
             isSuggestion={isSuggestion}
             onResetToBase={onResetToBase}
             radarAxes={radarAxes}
+            radarOverlayAxes={radarOverlayAxes}
+            radarShowNumericLabels={radarShowNumericLabels}
+            contextChips={contextChips}
             showRadar={showRadar}
             summaryItems={summaryItems}
             showSummary={showSummary}

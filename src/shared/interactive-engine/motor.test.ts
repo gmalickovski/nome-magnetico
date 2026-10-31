@@ -10,6 +10,7 @@ import {
 } from './thresholds';
 import { determineNextStep } from './router';
 import { computeRadarAxes } from './radar-axes';
+import { MOTOR_RADAR_AXIS_ORDER, MOTOR_RADAR_LABELS } from './motor-radar';
 import { applyCorrectionJudge } from './judge';
 import { writeHypothesis } from './writer';
 import { PARTITURA_PASSOS } from './partitura';
@@ -99,8 +100,15 @@ describe('DEV-235 · Motor Interativo e Partitura (4 Camadas)', () => {
     });
 
     assert.equal(axes.length, 5);
-    for (const axis of axes) {
+    for (let i = 0; i < axes.length; i++) {
+      const axis = axes[i];
+      assert.equal(axis.key, MOTOR_RADAR_AXIS_ORDER[i]);
+      assert.equal(axis.label, MOTOR_RADAR_LABELS[axis.key]);
       assert.ok(axis.value >= 0 && axis.value <= 1);
+      assert.ok(
+        axis.valuePercent == null ||
+          (axis.valuePercent >= 0 && axis.valuePercent <= 100)
+      );
     }
   });
 

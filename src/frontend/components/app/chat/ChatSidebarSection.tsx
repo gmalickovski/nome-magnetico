@@ -21,6 +21,9 @@ export interface ChatSidebarSectionProps {
   isSuggestion: boolean;
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
+  radarOverlayAxes?: RadarAxesData | null;
+  radarShowNumericLabels?: boolean;
+  contextChips?: string[];
   showRadar: boolean;
   summaryItems: ReadingSummaryItem[];
   showSummary: boolean;
@@ -39,6 +42,9 @@ export function ChatSidebarSection({
   isSuggestion,
   onResetToBase,
   radarAxes,
+  radarOverlayAxes = null,
+  radarShowNumericLabels = false,
+  contextChips = [],
   showRadar,
   summaryItems,
   showSummary,
@@ -72,9 +78,28 @@ export function ChatSidebarSection({
       )}
 
       {showRadar && radarAxes && (
-        <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3 flex flex-col items-center">
-          <p className="nm-score-eyebrow mb-1 self-start">Radar das Dimensões</p>
-          <ReadingRadar axes={radarAxes} />
+        <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3 flex flex-col gap-3 w-full">
+          <p className="nm-score-eyebrow self-start">Radar do motor</p>
+          <ReadingRadar
+            axes={radarAxes}
+            overlayAxes={radarOverlayAxes}
+            showNumericLabels={radarShowNumericLabels}
+          />
+          {contextChips.length > 0 && (
+            <div className="w-full pt-1">
+              <p className="text-[10px] uppercase tracking-wider text-chat-muted mb-2">Seu contexto</p>
+              <div className="flex flex-wrap gap-1.5">
+                {contextChips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="inline-flex items-center rounded-full bg-[#1C1C1C] border border-[#D4AF37]/30 px-2.5 py-1 text-[11px] text-[#e5e2e1]"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

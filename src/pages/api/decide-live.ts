@@ -298,6 +298,8 @@ export const POST: APIRoute = async ({ request }) => {
     const radarAxes = computeRadarAxes({
       nomeCompleto: nomeLimpo,
       dataNascimento: dataPtBr,
+      notaHoje,
+      potencial,
       areaFoco: area_foco_chip,
       subfocoMomento:
         subfoco_momento ??
@@ -307,8 +309,6 @@ export const POST: APIRoute = async ({ request }) => {
       sobrenomesExcluidos: sobrenomes_excluidos,
       estiloPreferido: estilo_preferido ?? rankingOpcoes.estiloPreferido,
       objetivoTexto: objetivo_texto,
-      notaHoje,
-      potencial,
       palpiteStatus: palpite_status,
     });
 

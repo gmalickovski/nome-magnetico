@@ -28,11 +28,11 @@ export interface ResultPanelData {
 }
 
 export interface RadarAxesData {
-  momento: number;
-  objetivo: number;
-  uso: number;
-  apego_sobrenome: number;
-  urgencia: number;
+  expressao: number;
+  motivacao: number;
+  destino: number;
+  harmonia_triangulo: number;
+  sequencias: number;
 }
 
 export interface ReadingSummaryItem {

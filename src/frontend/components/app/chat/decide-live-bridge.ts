@@ -138,11 +138,11 @@ function mapRadarAxes(axes: RawDecideLiveResponse['radarAxes']): RadarAxesData |
   if (!axes || axes.length === 0) return null;
   const record = Object.fromEntries(axes.map((a) => [a.key, a.value])) as RadarAxesData;
   return {
-    momento: record.momento ?? 0.2,
-    objetivo: record.objetivo ?? 0.2,
-    uso: record.uso ?? 0.2,
-    apego_sobrenome: record.apego_sobrenome ?? 0.5,
-    urgencia: record.urgencia ?? 0.3,
+    expressao: record.expressao ?? 0.35,
+    motivacao: record.motivacao ?? 0.35,
+    destino: record.destino ?? 0.35,
+    harmonia_triangulo: record.harmonia_triangulo ?? 0.35,
+    sequencias: record.sequencias ?? 0.35,
   };
 }
 

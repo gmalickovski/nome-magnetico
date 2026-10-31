@@ -46,6 +46,11 @@ import {
   isQuestionnaireStep,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
 import {
+  computeMotorRadarAxes,
+  motorRadarToRecord,
+} from '../../../../shared/interactive-engine/motor-radar.js';
+import { buildQuestionnaireContextChips } from '../../../../shared/interactive-engine/questionnaire-context-chips.js';
+import {
   clearChatSession,
   loadChatSession,
   saveChatSession,
@@ -122,6 +127,7 @@ export function NomeSocialChat({
   const [collectState, setCollectState] = useState<ChatCollectState>(INITIAL_COLLECT_STATE);
   const [sobrenomesDetectados, setSobrenomesDetectados] = useState<string[]>([]);
   const [radarAxes, setRadarAxes] = useState<RadarAxesData | null>(null);
+  const [radarOverlayAxes, setRadarOverlayAxes] = useState<RadarAxesData | null>(null);
   const [summaryItems, setSummaryItems] = useState<ReadingSummaryItem[]>([]);
   const [birthReadingSummary, setBirthReadingSummary] = useState<ChatReadingSummary | null>(
     null
@@ -196,6 +202,7 @@ export function NomeSocialChat({
     setCollectState(INITIAL_COLLECT_STATE);
     setSobrenomesDetectados([]);
     setRadarAxes(null);
+    setRadarOverlayAxes(null);
     setSummaryItems([]);
     setBirthReadingSummary(null);
     setHarmonizedSummaries({});
@@ -929,12 +936,13 @@ export function NomeSocialChat({
         const live = await res.json();
         const axisList = live.radarAxes as Array<{ key: string; value: number }> | undefined;
         if (axisList) {
+          const record = Object.fromEntries(axisList.map((a) => [a.key, a.value])) as RadarAxesData;
           setRadarAxes({
-            momento: axisList.find((a) => a.key === 'momento')?.value ?? 0.2,
-            objetivo: axisList.find((a) => a.key === 'objetivo')?.value ?? 0.2,
-            uso: axisList.find((a) => a.key === 'uso')?.value ?? 0.2,
-            apego_sobrenome: axisList.find((a) => a.key === 'apego_sobrenome')?.value ?? 0.5,
-            urgencia: axisList.find((a) => a.key === 'urgencia')?.value ?? 0.3,
+            expressao: record.expressao ?? 0.35,
+            motivacao: record.motivacao ?? 0.35,
+            destino: record.destino ?? 0.35,
+            harmonia_triangulo: record.harmonia_triangulo ?? 0.35,
+            sequencias: record.sequencias ?? 0.35,
           });
         }
       }
@@ -972,6 +980,26 @@ export function NomeSocialChat({
   };
 
   const activeSuggestion = suggestions.find((s) => s.id === activeSuggestionId);
+
+  const contextChips = React.useMemo(
+    () => buildQuestionnaireContextChips(collectState),
+    [collectState]
+  );
+
+  React.useEffect(() => {
+    if (!activeSuggestion?.nome || !confirmedDate.trim()) {
+      setRadarOverlayAxes(null);
+      return;
+    }
+    try {
+      const record = motorRadarToRecord(
+        computeMotorRadarAxes(activeSuggestion.nome, confirmedDate)
+      );
+      setRadarOverlayAxes(record);
+    } catch {
+      setRadarOverlayAxes(null);
+    }
+  }, [activeSuggestionId, activeSuggestion?.nome, confirmedDate]);
   const starPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
   const profileCollectionComplete =
     currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
@@ -1002,6 +1030,9 @@ export function NomeSocialChat({
       isSuggestion={Boolean(activeSuggestionId)}
       onResetToBase={() => setActiveSuggestionId(null)}
       radarAxes={radarAxes}
+      radarOverlayAxes={radarOverlayAxes}
+      radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
+      contextChips={contextChips}
       showRadar={showRadarPanel}
       summaryItems={summaryItems}
       showSummary={showSummaryPanel}
@@ -1243,6 +1274,9 @@ export function NomeSocialChat({
         isSuggestion={Boolean(activeSuggestionId)}
         onResetToBase={() => setActiveSuggestionId(null)}
         radarAxes={radarAxes}
+        radarOverlayAxes={radarOverlayAxes}
+        radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
+        contextChips={contextChips}
         summaryItems={summaryItems}
         showRadar={showRadarPanel}
         showSummary={showSummaryPanel}
