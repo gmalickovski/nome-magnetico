@@ -7,7 +7,7 @@ export interface ChatProgressProps {
   /** Mantido por compatibilidade; não exibido no cabeçalho mínimo. */
   remaining?: number;
   className?: string;
-  /** Ex.: botão Resumo no mobile (lg:hidden). */
+  /** Ex.: botão Reiniciar no desktop (md+); mobile usa a dock. */
   trailing?: ReactNode;
 }
 

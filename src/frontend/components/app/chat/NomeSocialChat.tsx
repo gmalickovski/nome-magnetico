@@ -1310,7 +1310,12 @@ export function NomeSocialChat({
         totalSteps={totalSteps}
         remaining={remaining}
         className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
-        trailing={<ChatRestartButton onClick={handleRequestReset} />}
+        trailing={
+          <ChatRestartButton
+            onClick={handleRequestReset}
+            className="hidden md:inline-flex"
+          />
+        }
       />
 
       <div
