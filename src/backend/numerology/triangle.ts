@@ -16,7 +16,7 @@
  * - Sequências Negativas: 3 ou mais dígitos iguais consecutivos em qualquer linha.
  */
 
-import { calcularValor, reduzirNumero, calcularIdade } from './core';
+import { calcularValor, reduzirNumero, calcularIdade, extrairLetras } from './core';
 
 // ================================================================
 // TIPOS
@@ -219,8 +219,7 @@ export function calcularTrianguloVida(nome: string, dataNascimento?: string): Tr
   if (!nomeLimpo) return construirTriangulo('vida', [], dataNascimento);
 
   // Filtra letras sem valor e reduz cada valor de letra da linha base a dígito único (1-9)
-  const linhaBase = nomeLimpo
-    .split('')
+  const linhaBase = extrairLetras(nomeLimpo)
     .map(l => calcularValor(l))
     .filter(v => v > 0)
     .map(v => reduzirNumero(v, false));
@@ -239,8 +238,7 @@ export function calcularTrianguloPessoal(nome: string, dataNascimento: string): 
   const dia = parseInt(partes.slice(0, 2));
   const diaReduzido = reduzirNumero(dia, false);
 
-  const linhaBase = nomeLimpo
-    .split('')
+  const linhaBase = extrairLetras(nomeLimpo)
     .map(l => calcularValor(l))
     .filter(v => v > 0)
     .map(v => reduzirNumero(v + diaReduzido, false));
@@ -259,8 +257,7 @@ export function calcularTrianguloSocial(nome: string, dataNascimento: string): T
   const mes = parseInt(partes.slice(2, 4));
   const mesReduzido = reduzirNumero(mes, false);
 
-  const linhaBase = nomeLimpo
-    .split('')
+  const linhaBase = extrairLetras(nomeLimpo)
     .map(l => calcularValor(l))
     .filter(v => v > 0)
     .map(v => reduzirNumero(v + mesReduzido, false));
@@ -283,8 +280,7 @@ export function calcularTrianguloDestino(nome: string, dataNascimento: string): 
     false
   );
 
-  const linhaBase = nomeLimpo
-    .split('')
+  const linhaBase = extrairLetras(nomeLimpo)
     .map(l => calcularValor(l))
     .filter(v => v > 0)
     .map(v => reduzirNumero(v + modificador, false));
