@@ -74,7 +74,7 @@ export function ResultPanel({
           <div>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-              <span className="text-[11px] font-cinzel font-semibold uppercase tracking-wider text-gold">
+              <span className="nm-score-eyebrow">
                 {isSuggestion ? 'Sugestão Ativa' : 'Nome de Nascimento'}
               </span>
             </div>

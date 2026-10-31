@@ -22,6 +22,7 @@ Este documento registra a especificação oficial de classes CSS canônicas (`.n
 | Classe | Tag / Contexto | Mobile | sm (640px) | md (768px) | lg (1024px) | xl (1280px+) |
 |---|---|---|---|---|---|---|
 | `.nm-eyebrow` | Overlines acima de `h2`/`h3` | `12px` | `12px` | `13px` | `14px` | `14px` |
+| `.nm-score-eyebrow` | Rótulo Cinzel dos cards de score (harmonia / nota) | `11px` | `12px` | `12px` | `12px` | `12px` |
 | `.nm-h1` | `<h1>` do Hero | `28px` (`1.75rem`) | `34px` (`2.125rem`) | `38px` (`2.375rem`) | `40px` (`2.5rem`) | `44px` (`2.75rem`) |
 | `.nm-h2` | `<h2>` padrão de todas as seções | `24px` (`1.5rem`) | `28px` (`1.75rem`) | `32px` (`2rem`) | `36px` (`2.25rem`) | `40px` (`2.5rem`) |
 | `.nm-h3` | `<h3>` em blocos largos (usos, preço, votação) | `18px` (`1.125rem`) | `20px` (`1.25rem`) | `22px` (`1.375rem`) | `24px` (`1.5rem`) | `24px` |

@@ -569,6 +569,11 @@
     @apply font-inter text-xs sm:text-[13px] md:text-sm lg:text-sm font-bold uppercase tracking-[0.16em] text-[#D4AF37] leading-[1.4];
   }
 
+  /** Rótulo serifado dos cards de score (harmonia: nascimento, harmonizado, sugestões). */
+  .nm-score-eyebrow {
+    @apply font-cinzel text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-gold leading-snug;
+  }
+
   .nm-h1 {
     @apply font-cinzel text-[1.75rem] sm:text-[2.2rem] md:text-[2.5rem] lg:text-[2.5rem] xl:text-[2.75rem] font-bold text-[#E5E2E1] leading-[1.15] tracking-[-0.01em];
     text-wrap: balance;
