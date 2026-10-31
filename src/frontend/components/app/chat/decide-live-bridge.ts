@@ -11,8 +11,29 @@ import type {
   ReadingSummaryItem,
   ResultPanelData,
 } from './chat-types.js';
+import {
+  getQuestionSpec,
+  isQuestionnaireStep,
+  mapOndeAssinaToApi,
+  mapSubfocoToEnum,
+  type QuestionnaireStepId,
+} from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
+import type { AreaFocoNomeMagnetico } from '../../../../shared/interactive-engine/copy.js';
+import {
+  applySobrenomesUsoSelection,
+  mapAberturaToEstilo,
+  mergeContextoLeitura,
+} from '../../../../shared/interactive-engine/questionnaire-map.js';
 
 export interface ChatCollectState {
+  nomeUsoBase: string | null;
+  relacaoNome: string | null;
+  ondeAssinaRaw: string[];
+  estiloPresenca: string[];
+  subfocosOrdenados: string[];
+  aberturaMudanca: string | null;
+  nomeArtistico: string | null;
+  contextoLeitura: string[];
   sobrenomesDecididos: boolean;
   sobrenomesObrigatorios: string[];
   sobrenomesExcluidos: string[];
@@ -29,6 +50,14 @@ export function isProfileCollectionComplete(nextStep: string): boolean {
 }
 
 export const INITIAL_COLLECT_STATE: ChatCollectState = {
+  nomeUsoBase: null,
+  relacaoNome: null,
+  ondeAssinaRaw: [],
+  estiloPresenca: [],
+  subfocosOrdenados: [],
+  aberturaMudanca: null,
+  nomeArtistico: null,
+  contextoLeitura: [],
   sobrenomesDecididos: false,
   sobrenomesObrigatorios: [],
   sobrenomesExcluidos: [],
@@ -39,27 +68,6 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
   palpiteStatus: null,
   objetivoTexto: '',
 };
-
-const AREA_OPTIONS = [
-  { id: 'prosperidade_financeira', label: 'Finanças e prosperidade' },
-  { id: 'carreira_negocios', label: 'Carreira e negócios' },
-  { id: 'relacionamentos_harmonia', label: 'Relacionamentos' },
-  { id: 'autoestima_expressao', label: 'Autoestima e expressão' },
-] as const;
-
-const ONDE_OPTIONS = [
-  { id: 'identidade_registro', label: 'Documentos e Gov.br' },
-  { id: 'presenca_digital', label: 'Redes sociais' },
-  { id: 'rotina_trabalho', label: 'Trabalho e contratos' },
-  { id: 'marca_autoria', label: 'Marca pessoal e criação' },
-] as const;
-
-const ESTILO_OPTIONS = [
-  { id: 'sobrenome_forte', label: 'Sobrenome forte, sem acento extra' },
-  { id: 'ajuste_sutil', label: 'Ajuste sutil com acento' },
-  { id: 'curto_direto', label: 'Nome curto e direto' },
-  { id: 'qualquer', label: 'Tanto faz, o melhor score' },
-] as const;
 
 type ApiPanel = {
   nomeExibido: string;
@@ -76,7 +84,7 @@ type ApiPanel = {
   trianguloVidaLinhas?: number[][];
 };
 
-type RawDecideLiveResponse = {
+export type RawDecideLiveResponse = {
   next_step: string;
   remaining: number;
   reading?: string;
@@ -95,23 +103,12 @@ type RawDecideLiveResponse = {
   error?: string;
 };
 
+/** @deprecated use buildSobrenomesUsoOptions via questionário */
 export function buildSobrenomePillOptions(sobrenomes: string[]): Array<{ id: string; label: string }> {
-  const unique = sobrenomes.map((s) => s.trim()).filter(Boolean);
-  if (unique.length === 0) return [];
-
-  const options = unique.map((s) => ({
-    id: `sob_keep_${s.toLowerCase().replace(/\s+/g, '_')}`,
-    label: `Manter ${s}`,
+  return sobrenomes.map((s) => ({
+    id: `sob_${s.toLowerCase().replace(/\s+/g, '_')}`,
+    label: s,
   }));
-
-  if (unique.length > 1) {
-    options.push({
-      id: 'sob_keep_all',
-      label: `Manter ${unique.join(' e ')}`,
-    });
-  }
-
-  return options;
 }
 
 export function mapApiPanel(api: ApiPanel): ResultPanelData {
@@ -137,9 +134,7 @@ export function mapApiPanel(api: ApiPanel): ResultPanelData {
   };
 }
 
-function mapRadarAxes(
-  axes: RawDecideLiveResponse['radarAxes']
-): RadarAxesData | null {
+function mapRadarAxes(axes: RawDecideLiveResponse['radarAxes']): RadarAxesData | null {
   if (!axes || axes.length === 0) return null;
   const record = Object.fromEntries(axes.map((a) => [a.key, a.value])) as RadarAxesData;
   return {
@@ -166,22 +161,29 @@ function mapCandidate(
     bloqueiosRestantes: bloqueios.length,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
-    panel: raw.panel ? mapApiPanel(raw.panel) : mapApiPanel({
-      nomeExibido: raw.nomeCompleto,
-      score,
-      potencial: score,
-      destino: Number(raw.destino ?? 0),
-      expressao: Number(raw.expressao ?? 0),
-      motivacao: Number(raw.motivacao ?? 0),
-      missao: Number(raw.missao ?? 0),
-      impressao: Number(raw.impressao ?? 0),
-      bloqueiosCount: bloqueios.length,
-      bloqueiosCodigos: bloqueios.map((b: { codigo?: string }) => b.codigo ?? ''),
-    }),
+    panel: raw.panel
+      ? mapApiPanel(raw.panel)
+      : mapApiPanel({
+          nomeExibido: raw.nomeCompleto,
+          score,
+          potencial: score,
+          destino: Number(raw.destino ?? 0),
+          expressao: Number(raw.expressao ?? 0),
+          motivacao: Number(raw.motivacao ?? 0),
+          missao: Number(raw.missao ?? 0),
+          impressao: Number(raw.impressao ?? 0),
+          bloqueiosCount: bloqueios.length,
+          bloqueiosCodigos: bloqueios.map((b: { codigo?: string }) => b.codigo ?? ''),
+        }),
   };
 }
 
-function buildNextQuestion(api: RawDecideLiveResponse): NextQuestionSpec | undefined {
+export function buildNextQuestion(
+  api: RawDecideLiveResponse,
+  nomeCompleto: string,
+  collect: ChatCollectState,
+  sobrenomesDetectados: string[] = []
+): NextQuestionSpec | undefined {
   const step = api.next_step;
   if (step === 'fim_coleta') return undefined;
 
@@ -198,44 +200,34 @@ function buildNextQuestion(api: RawDecideLiveResponse): NextQuestionSpec | undef
     };
   }
 
-  if (step === 'onde_vai_usar') {
+  if (isQuestionnaireStep(step)) {
+    const spec = getQuestionSpec(step, {
+      nomeCompleto,
+      sobrenomes: sobrenomesDetectados,
+      areaFoco: (collect.areaFoco as AreaFocoNomeMagnetico) ?? null,
+    });
+    const caption =
+      spec.mode === 'multi'
+        ? spec.maxSelect != null && spec.captionMultiLimit
+          ? spec.captionMultiLimit(spec.maxSelect)
+          : spec.captionMulti
+        : undefined;
+
     return {
       id: step,
-      tipo: 'escolha',
-      prompt: basePrompt,
+      tipo: 'questionnaire',
+      prompt: basePrompt || spec.prompt,
       eyebrow: api.eyebrow,
-      options: ONDE_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
-    };
-  }
-
-  if (step === 'foco_momento') {
-    return {
-      id: step,
-      tipo: 'escolha',
-      prompt: basePrompt,
-      eyebrow: api.eyebrow || 'Uma pergunta para entendermos melhor',
-      options: AREA_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
-    };
-  }
-
-  if (step === 'formato_preferido') {
-    return {
-      id: step,
-      tipo: 'escolha',
-      prompt: basePrompt,
-      eyebrow: api.eyebrow || 'Só mais um detalhe',
-      options: ESTILO_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
-    };
-  }
-
-  if (step === 'sobrenomes') {
-    const pillOptions = buildSobrenomePillOptions(api.sobrenomesDetectados ?? []);
-    return {
-      id: step,
-      tipo: 'texto',
-      prompt: basePrompt,
-      eyebrow: api.eyebrow || 'Sobrenomes na assinatura',
-      options: pillOptions.length > 0 ? pillOptions : undefined,
+      options: spec.staticOptions,
+      mode: spec.mode,
+      maxSelect: spec.maxSelect,
+      minSelect: spec.minSelect,
+      allowOther: spec.allowOther,
+      otherMaxLength: spec.otherMaxLength,
+      caption,
+      needsArtisticName:
+        step === 'onde_assina' &&
+        collect.ondeAssinaRaw.some((id) => id === 'redes_sociais' || id === 'marca_negocio'),
     };
   }
 
@@ -247,7 +239,10 @@ function buildNextQuestion(api: RawDecideLiveResponse): NextQuestionSpec | undef
   };
 }
 
-export function mapDecideLiveResponse(raw: RawDecideLiveResponse): DecideLiveResponse {
+export function mapDecideLiveResponse(
+  raw: RawDecideLiveResponse,
+  ctx?: { nomeCompleto: string; collect: ChatCollectState; sobrenomesDetectados?: string[] }
+): DecideLiveResponse {
   const summary: ReadingSummaryItem[] =
     raw.diagramNodes?.map((node) => ({
       label: node.eyebrow,
@@ -264,7 +259,9 @@ export function mapDecideLiveResponse(raw: RawDecideLiveResponse): DecideLiveRes
     panel: raw.panel ? mapApiPanel(raw.panel) : undefined,
     previewTop3: (raw.previewTop3 ?? []).map(mapCandidate),
     providerUsed: raw.providerUsed,
-    next_question: buildNextQuestion(raw),
+    next_question: ctx
+      ? buildNextQuestion(raw, ctx.nomeCompleto, ctx.collect, ctx.sobrenomesDetectados ?? [])
+      : undefined,
   };
 }
 
@@ -277,8 +274,10 @@ export function buildDecideLiveBody(
     nome_completo: nome.trim(),
     data_nascimento: dataNascimento.trim(),
     objetivo_texto: collect.objetivoTexto,
+    contexto_leitura: collect.contextoLeitura.length ? collect.contextoLeitura : undefined,
     area_foco_chip: collect.areaFoco ?? undefined,
     onde_assina: collect.ondeAssina.length > 0 ? collect.ondeAssina : undefined,
+    onde_assina_raw: collect.ondeAssinaRaw.length ? collect.ondeAssinaRaw : undefined,
     sobrenomes_obrigatorios:
       collect.sobrenomesObrigatorios.length > 0 ? collect.sobrenomesObrigatorios : undefined,
     sobrenomes_excluidos:
@@ -287,7 +286,87 @@ export function buildDecideLiveBody(
     subfoco_momento: collect.subfocoMomento ?? undefined,
     palpite_status: collect.palpiteStatus ?? undefined,
     sobrenomes_decididos: collect.sobrenomesDecididos || undefined,
+    nome_uso_base: collect.nomeUsoBase ?? undefined,
+    relacao_nome: collect.relacaoNome ?? undefined,
+    estilo_presenca: collect.estiloPresenca.length ? collect.estiloPresenca : undefined,
+    subfocos_ordenados: collect.subfocosOrdenados.length ? collect.subfocosOrdenados : undefined,
+    abertura_mudanca: collect.aberturaMudanca ?? undefined,
+    nome_artistico: collect.nomeArtistico ?? undefined,
   };
+}
+
+export function applyQuestionnaireStep(
+  prev: ChatCollectState,
+  stepId: QuestionnaireStepId,
+  payload: {
+    optionIds?: string[];
+    labels?: string[];
+    otherText?: string;
+  },
+  sobrenomesDetectados: string[] = []
+): ChatCollectState {
+  const next = { ...prev };
+  const labels = payload.labels ?? [];
+  const ids = payload.optionIds ?? [];
+
+  if (stepId === 'nome_uso') {
+    const label = labels[0] ?? payload.otherText?.trim() ?? '';
+    next.nomeUsoBase = label || next.nomeUsoBase;
+    if (payload.otherText?.trim()) {
+      next.contextoLeitura = mergeContextoLeitura(
+        next.contextoLeitura,
+        stepId,
+        payload.otherText
+      );
+    }
+    return next;
+  }
+
+  if (stepId === 'sobrenomes_uso') {
+    const { obrigatorios, excluidos } = applySobrenomesUsoSelection(
+      labels,
+      sobrenomesDetectados
+    );
+    next.sobrenomesObrigatorios = obrigatorios;
+    next.sobrenomesExcluidos = excluidos;
+    next.sobrenomesDecididos = obrigatorios.length > 0;
+    return next;
+  }
+
+  if (stepId === 'relacao_nome') {
+    next.relacaoNome = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'onde_assina') {
+    next.ondeAssinaRaw = ids;
+    next.ondeAssina = mapOndeAssinaToApi(ids);
+    return next;
+  }
+
+  if (stepId === 'estilo_presenca') {
+    next.estiloPresenca = ids;
+    return next;
+  }
+
+  if (stepId === 'area_foco') {
+    next.areaFoco = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'subfoco') {
+    next.subfocosOrdenados = ids;
+    next.subfocoMomento = ids[0] ? mapSubfocoToEnum(ids[0]) : null;
+    return next;
+  }
+
+  if (stepId === 'abertura_mudanca') {
+    next.aberturaMudanca = ids[0] ?? null;
+    next.estiloPreferido = mapAberturaToEstilo(next.aberturaMudanca, next.relacaoNome);
+    return next;
+  }
+
+  return next;
 }
 
 export function applyAnswerToCollectState(
@@ -297,52 +376,16 @@ export function applyAnswerToCollectState(
   optionId?: string,
   sobrenomesDetectados: string[] = []
 ): ChatCollectState {
+  if (isQuestionnaireStep(stepId)) {
+    return applyQuestionnaireStep(
+      prev,
+      stepId,
+      { optionIds: optionId ? [optionId] : [], labels: [text] },
+      sobrenomesDetectados
+    );
+  }
+
   const next = { ...prev };
-
-  if (stepId === 'sobrenomes') {
-    next.sobrenomesDecididos = true;
-    const lower = text.toLowerCase();
-    for (const sob of sobrenomesDetectados) {
-      const sobLower = sob.toLowerCase();
-      if (
-        lower.includes(`sem ${sobLower}`) ||
-        lower.includes(`retirar ${sobLower}`) ||
-        lower.includes(`tirar ${sobLower}`)
-      ) {
-        if (!next.sobrenomesExcluidos.includes(sob)) next.sobrenomesExcluidos.push(sob);
-      } else if (lower.includes(sobLower)) {
-        if (!next.sobrenomesObrigatorios.includes(sob)) next.sobrenomesObrigatorios.push(sob);
-      }
-    }
-    if (text.trim().length > 2) {
-      next.objetivoTexto = text.trim();
-    }
-    return next;
-  }
-
-  if (stepId === 'onde_vai_usar') {
-    const id = optionId ?? text;
-    const canal = ONDE_OPTIONS.find((o) => o.id === id || o.label === text)?.id;
-    if (canal && !next.ondeAssina.includes(canal)) {
-      next.ondeAssina = [...next.ondeAssina, canal];
-    }
-    return next;
-  }
-
-  if (stepId === 'foco_momento') {
-    const id = optionId ?? text;
-    const area = AREA_OPTIONS.find((o) => o.id === id || o.label === text)?.id;
-    if (area) next.areaFoco = area;
-    if (text.trim().length > 2) next.objetivoTexto = text.trim();
-    return next;
-  }
-
-  if (stepId === 'formato_preferido') {
-    const id = optionId ?? text;
-    const estilo = ESTILO_OPTIONS.find((o) => o.id === id || o.label === text)?.id;
-    if (estilo) next.estiloPreferido = estilo;
-    return next;
-  }
 
   if (stepId === 'palpite' || stepId === 'resposta_palpite') {
     const normalized = text.trim().toLowerCase();
@@ -376,11 +419,13 @@ export function mergeCollectFromApi(
 }
 
 export function shouldShowRadar(collect: ChatCollectState): boolean {
-  return collect.ondeAssina.length > 0 || Boolean(collect.areaFoco) || Boolean(collect.palpiteStatus);
+  return (
+    collect.ondeAssina.length > 0 ||
+    Boolean(collect.areaFoco) ||
+    Boolean(collect.palpiteStatus)
+  );
 }
 
 export function shouldShowSummary(items: ReadingSummaryItem[]): boolean {
   return items.length > 0;
 }
-
-export { buildNextQuestion };

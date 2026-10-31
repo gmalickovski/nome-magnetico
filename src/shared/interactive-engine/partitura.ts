@@ -5,6 +5,14 @@
 
 export type PassoChatId =
   | 'nome_nascimento'
+  | 'nome_uso'
+  | 'sobrenomes_uso'
+  | 'relacao_nome'
+  | 'onde_assina'
+  | 'estilo_presenca'
+  | 'area_foco'
+  | 'subfoco'
+  | 'abertura_mudanca'
   | 'sobrenomes'
   | 'onde_vai_usar'
   | 'foco_momento'

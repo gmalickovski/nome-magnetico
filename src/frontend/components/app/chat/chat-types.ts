@@ -143,6 +143,7 @@ export type MessageType =
   | 'birth_card'
   | 'guess'
   | 'pills'
+  | 'questionnaire'
   | 'suggestions'
   | 'custom';
 
@@ -162,12 +163,19 @@ export interface ChatMessage {
 
 export interface NextQuestionSpec {
   id: string;
-  tipo: 'texto' | 'escolha' | 'palpite' | 'nome_data' | 'conclusao';
+  tipo: 'texto' | 'escolha' | 'palpite' | 'nome_data' | 'conclusao' | 'questionnaire';
   prompt: string;
   eyebrow?: string;
   wide?: boolean;
   options?: Array<{ id: string; label: string; p?: number }>;
   palpiteTexto?: string;
+  mode?: 'single' | 'multi';
+  maxSelect?: number;
+  minSelect?: number;
+  allowOther?: boolean;
+  otherMaxLength?: number;
+  caption?: string;
+  needsArtisticName?: boolean;
 }
 
 export interface DecideLiveResponse {

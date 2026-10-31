@@ -602,6 +602,10 @@ export interface OpcoesRankingNomeSocial {
   motivoRefinamento?: MotivoRefinamentoAssinatura;
   /** Variação digitada manualmente pelo usuário no drawer do resultado */
   variacaoPropria?: string;
+  /** Contratos/documentos: só variações legais (etapas 1–2, sem apelido) */
+  restricaoDocumentosLegais?: boolean;
+  /** Teto de nível de geração (ex.: 50 = só acento sutil) — filtro, não altera score */
+  maxNivelGeracao?: number;
 }
 
 /**
@@ -747,10 +751,13 @@ function gerarSugestoesAutoSocial(
 ): AnaliseNomeSocial[] {
   const todosCandidatos = gerarCandidatosComNivel(nomeNascimento);
   const liberaEtapa3Apelido = Boolean(
-    opcoes?.aceitaEncurtarOuApelido ||
-      opcoes?.estiloPreferido === 'curto_direto' ||
-      opcoes?.motivoRefinamento === 'preferir_nome_curto'
+    !opcoes?.restricaoDocumentosLegais &&
+      (opcoes?.aceitaEncurtarOuApelido ||
+        opcoes?.estiloPreferido === 'curto_direto' ||
+        opcoes?.motivoRefinamento === 'preferir_nome_curto')
   );
+
+  const maxNivel = opcoes?.maxNivelGeracao;
 
   const nomesExcluidosSet = new Set(
     (opcoes?.nomesExcluidos ?? []).map(n => n.trim().toLowerCase()).filter(Boolean)
@@ -789,6 +796,16 @@ function gerarSugestoesAutoSocial(
       if (semSobrenomeExcluido.length >= 3) {
         filtrada = semSobrenomeExcluido;
       }
+    }
+
+    if (opcoes?.restricaoDocumentosLegais) {
+      const legais = filtrada.filter(c => (c.etapa ?? etapaDoNivel(c.nivelGerado ?? 999)) <= 2);
+      if (legais.length >= 1) filtrada = legais;
+    }
+
+    if (maxNivel != null && Number.isFinite(maxNivel)) {
+      const capped = filtrada.filter(c => (c.nivelGerado ?? 999) <= maxNivel);
+      if (capped.length >= 1) filtrada = capped;
     }
 
     return filtrada;

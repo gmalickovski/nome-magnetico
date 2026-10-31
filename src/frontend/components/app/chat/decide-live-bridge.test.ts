@@ -1,26 +1,34 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildNextQuestion, buildSobrenomePillOptions } from './decide-live-bridge.ts';
+import {
+  buildNextQuestion,
+  buildSobrenomePillOptions,
+  INITIAL_COLLECT_STATE,
+} from './decide-live-bridge.js';
 
-describe('buildSobrenomePillOptions', () => {
-  it('gera chip por sobrenome detectado', () => {
-    const opts = buildSobrenomePillOptions(['Malickovski', 'Correa']);
-    assert.ok(opts.some((o) => o.label.includes('Malickovski')));
-    assert.ok(opts.some((o) => o.label.includes('Correa')));
-    assert.ok(opts.some((o) => o.label.includes(' e ')));
+describe('buildNextQuestion · sobrenomes_uso', () => {
+  it('labels só conteúdo, sem verbo Manter', () => {
+    const pills = buildSobrenomePillOptions(['Malickovski', 'Correa']);
+    assert.deepEqual(
+      pills.map((p) => p.label),
+      ['Malickovski', 'Correa']
+    );
   });
-});
 
-describe('buildNextQuestion · sobrenomes', () => {
-  it('inclui options a partir de sobrenomesDetectados', () => {
-    const q = buildNextQuestion({
-      next_step: 'sobrenomes',
-      remaining: 5,
-      promptSugestao: 'Quais sobrenomes manter?',
-      sobrenomesDetectados: ['Malickovski', 'Correa'],
-    });
-    assert.equal(q?.id, 'sobrenomes');
-    assert.equal(q?.tipo, 'texto');
-    assert.ok(q?.options && q.options.length >= 2);
+  it('questionário nome_uso inclui options', () => {
+    const q = buildNextQuestion(
+      {
+        next_step: 'nome_uso',
+        remaining: 8,
+        promptSugestao: 'Como as pessoas te chamam no dia a dia?',
+      },
+      'Guilherme Malickovski Correa',
+      INITIAL_COLLECT_STATE,
+      ['Malickovski', 'Correa']
+    );
+    assert.equal(q?.id, 'nome_uso');
+    assert.equal(q?.tipo, 'questionnaire');
+    assert.ok(q?.options?.some((o) => o.label === 'Guilherme'));
+    assert.ok(q?.options?.some((o) => o.label === 'Outro jeito'));
   });
 });

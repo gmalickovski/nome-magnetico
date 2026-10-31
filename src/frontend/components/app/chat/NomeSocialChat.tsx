@@ -32,6 +32,7 @@ import { ChatStepInteraction, ChatChoicePills } from './ChatStepInteraction.js';
 import {
   INITIAL_COLLECT_STATE,
   applyAnswerToCollectState,
+  applyQuestionnaireStep,
   buildDecideLiveBody,
   mapDecideLiveResponse,
   mergeCollectFromApi,
@@ -39,6 +40,11 @@ import {
   shouldShowSummary,
   type ChatCollectState,
 } from './decide-live-bridge.js';
+import { ChatAdaptivePills } from './ChatAdaptivePills.js';
+import {
+  buildEchoAfterStep,
+  isQuestionnaireStep,
+} from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
 import {
   clearChatSession,
   loadChatSession,
@@ -110,7 +116,7 @@ export function NomeSocialChat({
   const [stepIndex, setStepIndex] = useState(0);
   const [currentStepId, setCurrentStepId] = useState('nome_nascimento');
   const [remaining, setRemaining] = useState(7);
-  const totalSteps = 8;
+  const totalSteps = 9;
 
   const [birthConfirmed, setBirthConfirmed] = useState(false);
   const [collectState, setCollectState] = useState<ChatCollectState>(INITIAL_COLLECT_STATE);
@@ -142,6 +148,8 @@ export function NomeSocialChat({
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const sessionBootstrapped = useRef(false);
+  const chatStartedAtRef = useRef<number | null>(null);
+  const [nomeArtisticoDraft, setNomeArtisticoDraft] = useState('');
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
@@ -411,7 +419,12 @@ export function NomeSocialChat({
       if (!res.ok) throw new Error('Falha ao processar resposta inicial');
       const raw = await res.json();
       if (raw.error) throw new Error(raw.error);
-      const responseData = mapDecideLiveResponse(raw);
+      chatStartedAtRef.current = Date.now();
+      const responseData = mapDecideLiveResponse(raw, {
+        nomeCompleto: nome,
+        collect: INITIAL_COLLECT_STATE,
+        sobrenomesDetectados: raw.sobrenomesDetectados ?? [],
+      });
       if (Array.isArray(raw.sobrenomesDetectados)) {
         setSobrenomesDetectados(raw.sobrenomesDetectados);
       }
@@ -593,7 +606,11 @@ export function NomeSocialChat({
     ]);
   };
 
-  const applyDecisionResponse = (data: DecideLiveResponse) => {
+  const applyDecisionResponse = (
+    data: DecideLiveResponse,
+    echoAfterStep?: string,
+    echoNome?: string | null
+  ) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
     if (data.panel) setBasePanel(data.panel);
@@ -615,11 +632,21 @@ export function NomeSocialChat({
 
     const newMsgs: ChatMessage[] = [];
 
+    const ecoBase = echoNome ?? collectState.nomeUsoBase ?? confirmedName;
+    if (echoAfterStep && ecoBase && isQuestionnaireStep(echoAfterStep)) {
+      newMsgs.push({
+        id: `eco-${Date.now()}`,
+        sender: 'assistant',
+        type: 'text',
+        content: buildEchoAfterStep(ecoBase, echoAfterStep),
+      });
+    }
+
     if (data.next_question) {
       const q = data.next_question;
       const msgType =
-        data.next_step === 'sobrenomes' || (q.options?.length && q.tipo === 'texto')
-          ? 'text_input'
+        q.tipo === 'questionnaire'
+          ? 'questionnaire'
           : q.tipo === 'palpite'
             ? 'guess'
             : q.tipo === 'escolha'
@@ -634,10 +661,25 @@ export function NomeSocialChat({
         eyebrow: q.eyebrow,
         content: q.prompt,
         options: q.options,
+        hypotheticalText: JSON.stringify({
+          mode: q.mode,
+          maxSelect: q.maxSelect,
+          minSelect: q.minSelect,
+          allowOther: q.allowOther,
+          otherMaxLength: q.otherMaxLength,
+          caption: q.caption,
+        }),
       });
     }
 
     if (collectionComplete) {
+      const started = chatStartedAtRef.current;
+      if (started) {
+        capturePostHogEvent('chat_completed', {
+          duration_s: Math.round((Date.now() - started) / 1000),
+          steps: totalSteps,
+        });
+      }
       newMsgs.push({
         id: `suggestions-${Date.now()}`,
         sender: 'assistant',
@@ -661,13 +703,30 @@ export function NomeSocialChat({
     });
   };
 
+  const scoreBucket = (score: number) => {
+    if (score >= 90) return '90-100';
+    if (score >= 70) return '70-89';
+    if (score >= 40) return '40-69';
+    if (score >= 20) return '20-39';
+    return '0-19';
+  };
+
   const handleSuggestionSelect = (id: string | null) => {
+    if (!id && activeSuggestionId) {
+      const prev = suggestions.find((s) => s.id === activeSuggestionId);
+      const rank = suggestions.findIndex((s) => s.id === activeSuggestionId) + 1;
+      capturePostHogEvent('suggestion_deselected', {
+        rank,
+        score_bucket: prev ? scoreBucket(prev.score) : undefined,
+      });
+    }
     if (id && basePanel) {
       const sug = suggestions.find((s) => s.id === id);
       if (sug && id !== activeSuggestionId && sug.panel) {
+        const rank = suggestions.findIndex((s) => s.id === id) + 1;
         capturePostHogEvent('suggestion_selected', {
-          suggestion_id: id,
-          nota_escolhida: sug.score,
+          rank,
+          score_bucket: scoreBucket(sug.score),
         });
         setMessages((prev) => [
           ...prev,
@@ -689,38 +748,15 @@ export function NomeSocialChat({
     setActiveSuggestionId(id);
   };
 
-  const handleUserAnswer = async (text: string, optionId?: string) => {
-    if (!text.trim() || loading) return;
-
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      type: 'text',
-      content: text,
-      stepId: currentStepId,
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
-    const updatedAnswers = {
-      ...answers,
-      [currentStepId]: optionId || text,
-    };
-    setAnswers(updatedAnswers);
-
-    let nextCollect = applyAnswerToCollectState(
-      collectState,
-      currentStepId,
-      text,
-      optionId,
-      sobrenomesDetectados
-    );
-    if (currentStepId === 'palpite' && pendingPalpiteFeedback) {
-      nextCollect = {
-        ...nextCollect,
-        palpiteStatus: pendingPalpiteFeedback,
-        objetivoTexto: text.trim(),
-      };
-      setPendingPalpiteFeedback(null);
+  const pushDecideLive = async (
+    nextCollect: ChatCollectState,
+    userLabel: string,
+    stepId: string,
+    posthogAnswer?: Record<string, unknown>
+  ) => {
+    appendUserBubble(userLabel, stepId);
+    if (posthogAnswer) {
+      capturePostHogEvent('chat_answer', { step: stepId, ...posthogAnswer });
     }
     setCollectState(nextCollect);
     setLoading(true);
@@ -735,7 +771,11 @@ export function NomeSocialChat({
       if (!res.ok) throw new Error('Erro ao processar etapa');
       const raw = await res.json();
       if (raw.error) throw new Error(raw.error);
-      const responseData = mapDecideLiveResponse(raw);
+      const responseData = mapDecideLiveResponse(raw, {
+        nomeCompleto: confirmedName,
+        collect: nextCollect,
+        sobrenomesDetectados,
+      });
       if (Array.isArray(raw.sobrenomesDetectados)) {
         setSobrenomesDetectados(raw.sobrenomesDetectados);
       }
@@ -745,7 +785,7 @@ export function NomeSocialChat({
         setRadarAxes(responseData.radarAxes);
       }
 
-      applyDecisionResponse(responseData);
+      applyDecisionResponse(responseData, stepId, nextCollect.nomeUsoBase ?? confirmedName);
     } catch (err) {
       console.error(err);
       setMessages((prev) => [
@@ -762,13 +802,78 @@ export function NomeSocialChat({
     }
   };
 
+  const handleQuestionnaireSingle = (stepId: string, optionId: string, label: string, otherText?: string) => {
+    if (loading) return;
+    const nextCollect = applyQuestionnaireStep(
+      collectState,
+      stepId as Parameters<typeof applyQuestionnaireStep>[1],
+      { optionIds: [optionId], labels: [label], otherText },
+      sobrenomesDetectados
+    );
+    setAnswers((prev) => ({ ...prev, [stepId]: label }));
+    void pushDecideLive(nextCollect, label, stepId, {
+      options: [optionId],
+      primary: optionId,
+      count: 1,
+      has_other: Boolean(otherText?.trim()),
+    });
+  };
+
+  const handleQuestionnaireMulti = (
+    stepId: string,
+    ordered: Array<{ id: string; label: string }>,
+    otherText?: string
+  ) => {
+    if (loading) return;
+    let nextCollect = applyQuestionnaireStep(
+      collectState,
+      stepId as Parameters<typeof applyQuestionnaireStep>[1],
+      { optionIds: ordered.map((o) => o.id), labels: ordered.map((o) => o.label), otherText },
+      sobrenomesDetectados
+    );
+    if (stepId === 'onde_assina' && nomeArtisticoDraft.trim()) {
+      nextCollect = { ...nextCollect, nomeArtistico: nomeArtisticoDraft.trim() };
+    }
+    const userLabel = ordered.map((o) => o.label).join(', ');
+    setAnswers((prev) => ({ ...prev, [stepId]: userLabel }));
+    setNomeArtisticoDraft('');
+    void pushDecideLive(nextCollect, userLabel, stepId, {
+      options: ordered.map((o) => o.id),
+      primary: ordered[0]?.id,
+      count: ordered.length,
+      has_other: Boolean(otherText?.trim()),
+    });
+  };
+
+  const handleUserAnswer = async (text: string, optionId?: string) => {
+    if (!text.trim() || loading) return;
+
+    let nextCollect = applyAnswerToCollectState(
+      collectState,
+      currentStepId,
+      text,
+      optionId,
+      sobrenomesDetectados
+    );
+    if (currentStepId === 'palpite' && pendingPalpiteFeedback) {
+      nextCollect = {
+        ...nextCollect,
+        palpiteStatus: pendingPalpiteFeedback,
+        objetivoTexto: text.trim(),
+      };
+      setPendingPalpiteFeedback(null);
+    }
+    setAnswers((prev) => ({ ...prev, [currentStepId]: optionId || text }));
+    await pushDecideLive(nextCollect, text, currentStepId);
+  };
+
   const handleGuessExact = () => {
-    capturePostHogEvent('chat_palpite_response', { response: 'acertou' });
+    capturePostHogEvent('chat_guess_answered', { result: 'acertou' });
     handleUserAnswer('Na mosca');
   };
 
   const handleGuessPartial = (messageId: string) => {
-    capturePostHogEvent('chat_palpite_response', { response: 'parcial' });
+    capturePostHogEvent('chat_guess_answered', { result: 'parcial' });
     setPendingPalpiteFeedback('parcial');
     setMessages((prev) =>
       prev.map((m) =>
@@ -784,7 +889,7 @@ export function NomeSocialChat({
   };
 
   const handleGuessOther = (messageId: string) => {
-    capturePostHogEvent('chat_palpite_response', { response: 'nao' });
+    capturePostHogEvent('chat_guess_answered', { result: 'nao' });
     setPendingPalpiteFeedback('nao');
     setMessages((prev) =>
       prev.map((m) =>
@@ -979,6 +1084,65 @@ export function NomeSocialChat({
                       onEdit={handleEditExistingProfile}
                       disabled={loading}
                     />
+                  )}
+
+                  {pending && msg.type === 'questionnaire' && msg.options && msg.stepId && (
+                    <>
+                      {msg.stepId === 'onde_assina' && (
+                        <input
+                          type="text"
+                          maxLength={60}
+                          value={nomeArtisticoDraft}
+                          disabled={loading}
+                          onChange={(e) => setNomeArtisticoDraft(e.target.value.slice(0, 60))}
+                          placeholder="Nome artístico (opcional)"
+                          className="mt-3 w-full rounded-2xl bg-[#1C1C1C] border border-[#D4AF37]/30 px-4 py-2.5 text-sm text-chat-ink focus:outline-none focus:border-[#D4AF37]/60"
+                        />
+                      )}
+                      <ChatAdaptivePills
+                        mode={
+                          (JSON.parse(msg.hypotheticalText || '{}') as { mode?: 'single' | 'multi' })
+                            .mode ?? 'single'
+                        }
+                        options={msg.options}
+                        maxSelect={
+                          (JSON.parse(msg.hypotheticalText || '{}') as { maxSelect?: number })
+                            .maxSelect
+                        }
+                        minSelect={
+                          (JSON.parse(msg.hypotheticalText || '{}') as { minSelect?: number }).minSelect ??
+                          1
+                        }
+                        allowOther={
+                          (JSON.parse(msg.hypotheticalText || '{}') as { allowOther?: boolean })
+                            .allowOther
+                        }
+                        otherMaxLength={
+                          (JSON.parse(msg.hypotheticalText || '{}') as { otherMaxLength?: number })
+                            .otherMaxLength ?? 60
+                        }
+                        caption={
+                          (JSON.parse(msg.hypotheticalText || '{}') as { caption?: string }).caption
+                        }
+                        disabled={loading}
+                        onSubmitSingle={(id, label, other) =>
+                          handleQuestionnaireSingle(msg.stepId!, id, label, other)
+                        }
+                        onSubmitMulti={(ordered, other) =>
+                          handleQuestionnaireMulti(msg.stepId!, ordered, other)
+                        }
+                        onToggleTrack={(option, selected) =>
+                          capturePostHogEvent('chat_option_toggled', {
+                            step: msg.stepId,
+                            option,
+                            selected,
+                          })
+                        }
+                        onLimitReached={() =>
+                          capturePostHogEvent('chat_limit_reached', { step: msg.stepId })
+                        }
+                      />
+                    </>
                   )}
 
                   {pending && msg.type === 'pills' && msg.options && msg.options.length > 0 && (

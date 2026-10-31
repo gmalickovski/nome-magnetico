@@ -22,16 +22,18 @@ export function Pill({
   title,
 }: PillProps) {
   const baseClasses =
-    'inline-flex items-center justify-center rounded-full font-inter transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center rounded-full font-inter transition-all duration-150 focus-visible:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] disabled:cursor-not-allowed';
 
   const sizeClasses =
     size === 'lg'
-      ? 'min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] font-medium bg-chat-bubble border border-white/15 text-chat-ink hover:border-gold/60 hover:bg-gold/10'
-      : 'min-h-[44px] lg:min-h-0 lg:h-8 px-3 text-sm bg-chat-bubble border border-white/10 text-chat-ink hover:border-gold/60 hover:bg-gold/10';
+      ? 'min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] font-medium'
+      : 'min-h-[44px] lg:min-h-0 lg:h-8 px-3 text-sm';
 
-  const selectedClasses = selected
-    ? '!bg-gold !text-dark-deeper !border-gold hover:!bg-gold-light hover:!border-gold-light font-semibold'
-    : '';
+  const unselectedClasses =
+    'bg-[#1C1C1C] border border-[#D4AF37]/40 text-[#e5e2e1] hover:border-[#D4AF37] disabled:opacity-50';
+
+  const selectedClasses =
+    '!bg-[#D4AF37] !text-[#111111] !border-[#D4AF37] font-semibold hover:!bg-[#D4AF37] hover:!border-[#D4AF37]';
 
   return (
     <button
@@ -40,7 +42,9 @@ export function Pill({
       disabled={disabled}
       onClick={onClick}
       title={title}
-      className={`${baseClasses} ${sizeClasses} ${selectedClasses} ${className}`}
+      className={`${baseClasses} ${sizeClasses} ${
+        selected ? selectedClasses : unselectedClasses
+      } ${className}`}
     >
       {children ?? label}
     </button>

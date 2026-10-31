@@ -73,9 +73,7 @@ export function ChatSidebarSection({
 
       {showRadar && radarAxes && (
         <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3 flex flex-col items-center">
-          <span className="text-[11px] font-cinzel font-semibold uppercase tracking-wider text-chat-muted mb-1 self-start">
-            Radar das Dimensões
-          </span>
+          <p className="nm-score-eyebrow mb-1 self-start">Radar das Dimensões</p>
           <ReadingRadar axes={radarAxes} />
         </div>
       )}

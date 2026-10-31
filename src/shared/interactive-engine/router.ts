@@ -1,21 +1,66 @@
 /**
- * Roteador Determinístico em Código (DEV-235 · Seção 5A).
- * Regra obrigatória: O roteamento é sempre em código; o Jev nunca decide a rota, só julga.
+ * Roteador Determinístico em Código (DEV-235 · questionário adaptativo 8 + palpite).
  */
 
 import type { PassoChatId } from './partitura';
 import type { AreaFocoNomeMagnetico } from './copy';
+import {
+  QUESTIONNAIRE_STEP_ORDER,
+  type QuestionnaireStepId,
+} from './questionnaire-adaptive';
 
 export interface RouterState {
   nomeCompleto?: string;
   dataNascimento?: string;
+  nomeUsoDefinido?: boolean;
   sobrenomesDecididos?: boolean;
-  ondeVaiUsar?: string[];
+  relacaoNome?: string | null;
+  ondeAssinaDecidido?: boolean;
+  estiloPresencaDecidido?: boolean;
   areaFoco?: AreaFocoNomeMagnetico | null;
-  subfocoMomento?: string | null;
+  subfocoDecidido?: boolean;
+  aberturaMudanca?: string | null;
   palpiteStatus?: 'acertou' | 'parcial' | 'nao' | null;
+  /** Legado — preenchido pelo mapeamento da abertura_mudanca */
   estiloPreferido?: string | null;
   detalheInformado?: string | null;
+}
+
+function nextQuestionnaireStep(state: RouterState): QuestionnaireStepId | null {
+  if (!state.nomeUsoDefinido) return 'nome_uso';
+  if (!state.sobrenomesDecididos) return 'sobrenomes_uso';
+  if (!state.relacaoNome) return 'relacao_nome';
+  if (!state.ondeAssinaDecidido) return 'onde_assina';
+  if (!state.estiloPresencaDecidido) return 'estilo_presenca';
+  if (!state.areaFoco) return 'area_foco';
+  if (!state.subfocoDecidido) return 'subfoco';
+  if (!state.aberturaMudanca) return 'abertura_mudanca';
+  return null;
+}
+
+const PROMPTS: Record<QuestionnaireStepId, string> = {
+  nome_uso: 'Como as pessoas te chamam no dia a dia?',
+  sobrenomes_uso: 'Quais sobrenomes você usa quando assina?',
+  relacao_nome: 'Como você se sente com o seu nome hoje?',
+  onde_assina: 'Onde você mais usa a sua assinatura?',
+  estilo_presenca: 'Como você quer que te percebam?',
+  area_foco: 'O que mais pede a sua atenção agora?',
+  subfoco: 'O que mais combina com esse foco agora?',
+  abertura_mudanca: 'Quanto você topa mudar na assinatura?',
+};
+
+export function questionnaireStepsRemaining(state: RouterState): number {
+  let n = 0;
+  if (!state.nomeUsoDefinido) n++;
+  if (!state.sobrenomesDecididos) n++;
+  if (!state.relacaoNome) n++;
+  if (!state.ondeAssinaDecidido) n++;
+  if (!state.estiloPresencaDecidido) n++;
+  if (!state.areaFoco) n++;
+  if (!state.subfocoDecidido) n++;
+  if (!state.aberturaMudanca) n++;
+  if (!state.palpiteStatus) n++;
+  return n;
 }
 
 export interface NextStepDecision {
@@ -26,64 +71,37 @@ export interface NextStepDecision {
 }
 
 export function determineNextStep(state: RouterState): NextStepDecision {
-  // Passo 1: Nome e Data
-  if (!state.nomeCompleto || state.nomeCompleto.trim().split(/\s+/).length < 2 || !state.dataNascimento) {
+  if (
+    !state.nomeCompleto ||
+    state.nomeCompleto.trim().split(/\s+/).length < 2 ||
+    !state.dataNascimento
+  ) {
     return {
       nextStep: 'nome_nascimento',
-      remainingSteps: 6,
+      remainingSteps: QUESTIONNAIRE_STEP_ORDER.length + 1,
       promptSugestao: 'Como está seu nome completo na certidão de nascimento?',
     };
   }
 
-  // Passo 2: Sobrenomes
-  if (!state.sobrenomesDecididos) {
+  const qStep = nextQuestionnaireStep(state);
+  if (qStep) {
+    const remaining = questionnaireStepsRemaining(state);
     return {
-      nextStep: 'sobrenomes',
-      remainingSteps: 5,
-      promptSugestao: 'Olhando para os seus sobrenomes, quais você faz questão de manter na sua assinatura?',
+      nextStep: qStep as PassoChatId,
+      remainingSteps: remaining,
+      promptSugestao: PROMPTS[qStep],
     };
   }
 
-  // Passo 3: Onde vai usar
-  if (!state.ondeVaiUsar || state.ondeVaiUsar.length === 0) {
-    return {
-      nextStep: 'onde_vai_usar',
-      remainingSteps: 4,
-      promptSugestao: 'Onde você pretende usar essa nova assinatura primeiro no dia a dia?',
-    };
-  }
-
-  // Passo 4: Foco / Momento
-  if (!state.areaFoco) {
-    return {
-      nextStep: 'foco_momento',
-      remainingSteps: 3,
-      promptSugestao: 'Qual área da sua vida você mais quer movimentar agora com a nova assinatura?',
-      eyebrow: 'Uma pergunta para entendermos melhor',
-    };
-  }
-
-  // Passo 5 & 6: Palpite e Subfoco
   if (!state.palpiteStatus) {
     return {
       nextStep: 'palpite',
-      remainingSteps: 2,
+      remainingSteps: 1,
       promptSugestao: 'Calculando a sua leitura.',
       eyebrow: 'Será que é isso?',
     };
   }
 
-  // Passo 7: Formato / Estilo
-  if (!state.estiloPreferido) {
-    return {
-      nextStep: 'formato_preferido',
-      remainingSteps: 1,
-      promptSugestao: 'Como você prefere ser chamado e assinar no dia a dia?',
-      eyebrow: 'Só mais um detalhe',
-    };
-  }
-
-  // Passo 8: Conclusão / Revelação
   return {
     nextStep: 'fim_coleta',
     remainingSteps: 0,

@@ -14,6 +14,11 @@ import { determineNextStep } from '../../shared/interactive-engine/router';
 import { buildProfilePalpiteText } from '../../shared/interactive-engine/chat-profile-copy';
 import { computeRadarAxes } from '../../shared/interactive-engine/radar-axes';
 import type { AreaFocoNomeMagnetico } from '../../shared/interactive-engine/copy';
+import {
+  profileToRankingOpcoes,
+  type QuestionnaireProfile,
+} from '../../shared/interactive-engine/questionnaire-map';
+import { mapSubfocoToEnum } from '../../shared/interactive-engine/questionnaire-adaptive';
 
 export interface ResultPanelData {
   nomeExibido: string;
@@ -79,6 +84,14 @@ const decideLiveSchema = z.object({
     .optional(),
   palpite_status: z.enum(['acertou', 'parcial', 'nao']).optional(),
   sobrenomes_decididos: z.boolean().optional(),
+  nome_uso_base: z.string().max(80).optional(),
+  relacao_nome: z.string().max(40).optional(),
+  onde_assina_raw: z.array(z.string().max(40)).max(5).optional(),
+  estilo_presenca: z.array(z.string().max(40)).max(2).optional(),
+  subfocos_ordenados: z.array(z.string().max(40)).max(2).optional(),
+  abertura_mudanca: z.string().max(40).optional(),
+  nome_artistico: z.string().max(80).optional(),
+  contexto_leitura: z.array(z.string().max(120)).max(20).optional(),
 });
 
 function normalizeDateToPtBr(raw: string): string | null {
@@ -154,6 +167,14 @@ export const POST: APIRoute = async ({ request }) => {
     subfoco_momento,
     palpite_status,
     sobrenomes_decididos,
+    nome_uso_base,
+    relacao_nome,
+    onde_assina_raw,
+    estilo_presenca,
+    subfocos_ordenados,
+    abertura_mudanca,
+    nome_artistico,
+    contexto_leitura,
   } = parsed.data;
 
   const dataPtBr = normalizeDateToPtBr(data_nascimento);
@@ -171,13 +192,25 @@ export const POST: APIRoute = async ({ request }) => {
     const bloqueios = detectarBloqueios(triangulos);
     const sobrenomesDetectados = extrairSobrenomes(nomeLimpo);
 
-    const resultadoSocial = analisarNomesSocial([], nomeLimpo, dataPtBr, {
-      ondeVaiUsar: onde_assina,
-      sobrenomesObrigatorios: sobrenomes_obrigatorios,
-      sobrenomesExcluidos: sobrenomes_excluidos,
+    const questionnaireProfile: QuestionnaireProfile = {
+      nomeUsoBase: nome_uso_base ?? null,
+      sobrenomesObrigatorios: sobrenomes_obrigatorios ?? [],
+      sobrenomesExcluidos: sobrenomes_excluidos ?? [],
+      relacaoNome: relacao_nome ?? null,
+      ondeAssinaRaw: onde_assina_raw ?? [],
+      estiloPresenca: estilo_presenca ?? [],
+      areaFoco: area_foco_chip ?? null,
+      subfocosOrdenados: subfocos_ordenados ?? [],
+      aberturaMudanca: abertura_mudanca ?? null,
+      nomeArtistico: nome_artistico ?? null,
+      contextoLeituraOutros: contexto_leitura ?? [],
+    };
+
+    const rankingOpcoes = profileToRankingOpcoes(questionnaireProfile, {
       estiloPreferido: estilo_preferido,
-      aceitaEncurtarOuApelido: estilo_preferido === 'curto_direto',
     });
+
+    const resultadoSocial = analisarNomesSocial([], nomeLimpo, dataPtBr, rankingOpcoes);
 
     const notaHoje = avaliacaoHoje.score_v3;
     const potencial = Math.max(
@@ -196,10 +229,14 @@ export const POST: APIRoute = async ({ request }) => {
     const routerDecision = determineNextStep({
       nomeCompleto: nomeLimpo,
       dataNascimento: dataPtBr,
+      nomeUsoDefinido: Boolean(nome_uso_base?.trim()),
       sobrenomesDecididos: Boolean(sobrenomes_decididos),
-      ondeVaiUsar: onde_assina,
+      relacaoNome: relacao_nome ?? null,
+      ondeAssinaDecidido: Boolean(onde_assina_raw?.length || onde_assina?.length),
+      estiloPresencaDecidido: Boolean(estilo_presenca?.length),
       areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? null,
-      subfocoMomento: subfoco_momento ?? null,
+      subfocoDecidido: Boolean(subfocos_ordenados?.length),
+      aberturaMudanca: abertura_mudanca ?? null,
       palpiteStatus: palpite_status ?? null,
       estiloPreferido: estilo_preferido ?? null,
       detalheInformado: objetivo_texto,
@@ -230,7 +267,7 @@ export const POST: APIRoute = async ({ request }) => {
         ondeAssina: onde_assina ?? [],
         sobrenomesObrigatorios: sobrenomes_obrigatorios,
         sobrenomesExcluidos: sobrenomes_excluidos,
-        relatoUsuario: objetivo_texto,
+        relatoUsuario: [objetivo_texto, ...(contexto_leitura ?? [])].filter(Boolean).join(' '),
         alertaComplianceLegal: decision.alertaComplianceLegal,
         textoCorrecao:
           (palpite_status === 'nao' || palpite_status === 'parcial') && objetivo_texto
@@ -262,11 +299,13 @@ export const POST: APIRoute = async ({ request }) => {
       nomeCompleto: nomeLimpo,
       dataNascimento: dataPtBr,
       areaFoco: area_foco_chip,
-      subfocoMomento: subfoco_momento,
+      subfocoMomento:
+        subfoco_momento ??
+        (subfocos_ordenados?.[0] ? mapSubfocoToEnum(subfocos_ordenados[0]) : undefined),
       ondeVaiUsar: onde_assina,
       sobrenomesObrigatorios: sobrenomes_obrigatorios,
       sobrenomesExcluidos: sobrenomes_excluidos,
-      estiloPreferido: estilo_preferido,
+      estiloPreferido: estilo_preferido ?? rankingOpcoes.estiloPreferido,
       objetivoTexto: objetivo_texto,
       notaHoje,
       potencial,

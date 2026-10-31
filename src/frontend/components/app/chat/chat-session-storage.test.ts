@@ -33,7 +33,7 @@ function installLocalStorageMock() {
 
 function minimalSession(): PersistedChatSession {
   return {
-    version: 3,
+    version: 4,
     savedAt: Date.now(),
     messages: [{ id: 'm1', sender: 'assistant', type: 'text', content: 'Olá' }],
     answers: { onboarding_confirm: 'ok' },
@@ -43,7 +43,7 @@ function minimalSession(): PersistedChatSession {
     draftDate: '01/01/1990',
     draftGender: 'Feminino',
     stepIndex: 2,
-    currentStepId: 'sobrenomes',
+    currentStepId: 'nome_uso',
     remaining: 5,
     birthConfirmed: true,
     collectState: INITIAL_COLLECT_STATE,

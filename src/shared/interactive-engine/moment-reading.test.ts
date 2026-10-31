@@ -2,7 +2,10 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildInitialMomentReadingText } from './copy.ts';
 import { validateMomentReadingText } from './moment-reading-validation.ts';
-import { mapDecideLiveResponse } from '../../frontend/components/app/chat/decide-live-bridge.ts';
+import {
+  INITIAL_COLLECT_STATE,
+  mapDecideLiveResponse,
+} from '../../frontend/components/app/chat/decide-live-bridge.ts';
 
 describe('Leitura do momento (pré seleção)', () => {
   it('template prosperidade não cita potencial harmonizado', () => {
@@ -45,11 +48,17 @@ describe('Leitura do momento (pré seleção)', () => {
     const off = mapDecideLiveResponse(base);
     assert.equal(off.reading, '');
 
-    const on = mapDecideLiveResponse({
-      ...base,
-      next_step: 'palpite',
-      reading: 'Guilherme, pelo que você contou até aqui: seu foco agora é carreira.',
-    });
+    const on = mapDecideLiveResponse(
+      {
+        ...base,
+        next_step: 'palpite',
+        reading: 'Guilherme, pelo que você contou até aqui: seu foco agora é carreira.',
+      },
+      {
+        nomeCompleto: 'Guilherme Malickovski Correa',
+        collect: { ...INITIAL_COLLECT_STATE, areaFoco: 'carreira_negocios' },
+      }
+    );
     assert.ok(on.next_question?.prompt.includes('carreira'));
     assert.equal(on.next_question?.palpiteTexto, '');
   });
