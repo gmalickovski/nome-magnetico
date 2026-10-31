@@ -45,6 +45,8 @@ import {
   saveChatSession,
   type PersistedChatSession,
 } from './chat-session-storage.js';
+import { Button } from '../../ui/Button.js';
+import { Modal } from '../../ui/Modal.js';
 
 export interface NomeSocialChatProps {
   birthName?: string;
@@ -131,6 +133,7 @@ export function NomeSocialChat({
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const sessionBootstrapped = useRef(false);
@@ -334,10 +337,12 @@ export function NomeSocialChat({
   };
 
   const handleRequestReset = () => {
-    const ok = window.confirm(
-      'Reiniciar o chat? Todo o progresso desta conversa será apagado. Você pode começar de novo em seguida.'
-    );
-    if (ok) resetChat();
+    setResetConfirmOpen(true);
+  };
+
+  const handleConfirmReset = () => {
+    setResetConfirmOpen(false);
+    resetChat();
   };
 
   const handleFinalizeAnalysis = () => {
@@ -1025,6 +1030,32 @@ export function NomeSocialChat({
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
       />
+
+      <Modal
+        open={resetConfirmOpen}
+        onClose={() => setResetConfirmOpen(false)}
+        title="Reiniciar conversa?"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Todo o progresso desta conversa será apagado. Você poderá começar de novo em seguida,
+            mas as respostas e etapas já concluídas não serão recuperadas.
+          </p>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+            <Button
+              variant="ghost"
+              size="md"
+              className="flex-1"
+              onClick={() => setResetConfirmOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button variant="danger" size="md" className="flex-1" onClick={handleConfirmReset}>
+              Reiniciar
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
