@@ -38,14 +38,14 @@ export function ScoreCardRow({
 
   return (
     <div className={`@container/score-card w-full min-w-0 ${className}`}>
-      <div className="flex flex-col gap-1.5 min-w-0 w-full">
+      <div className="flex flex-col gap-2.5 min-w-0 w-full">
         {showEyebrow && <p className="nm-score-eyebrow">{eyebrow}</p>}
 
         <div
-          className={`flex flex-col gap-1.5 min-w-0 w-full ${SCORE_CARD_WIDE}:flex-row ${SCORE_CARD_WIDE}:items-center ${SCORE_CARD_WIDE}:justify-between ${SCORE_CARD_WIDE}:gap-3`}
+          className={`flex flex-col gap-2 min-w-0 w-full ${SCORE_CARD_WIDE}:flex-row ${SCORE_CARD_WIDE}:items-center ${SCORE_CARD_WIDE}:justify-between ${SCORE_CARD_WIDE}:gap-3`}
         >
           <h4
-            className={`min-w-0 w-full max-w-full font-cinzel text-sm font-bold text-[#e5e2e1] leading-tight truncate ${SCORE_CARD_WIDE}:flex-1 ${SCORE_CARD_WIDE}:text-[15px]`}
+            className={`min-w-0 w-full max-w-full font-cinzel text-sm font-bold text-[#e5e2e1] leading-normal truncate ${SCORE_CARD_WIDE}:flex-1 ${SCORE_CARD_WIDE}:text-[15px]`}
             title={nome}
           >
             {nome}
@@ -70,7 +70,7 @@ export function ScoreCardRow({
           </div>
         </div>
 
-        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden mt-0.5">
+        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
           <div
             className={`h-2 rounded-full bg-gradient-to-r ${visual.barGradient} transition-all duration-500`}
             style={{ width: `${shown}%` }}

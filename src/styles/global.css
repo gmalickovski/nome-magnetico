@@ -571,7 +571,7 @@
 
   /** Rótulo serifado dos cards de score (harmonia: nascimento, harmonizado, sugestões). */
   .nm-score-eyebrow {
-    @apply font-cinzel text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-gold leading-snug;
+    @apply font-cinzel text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-gold leading-normal;
   }
 
   .nm-h1 {
