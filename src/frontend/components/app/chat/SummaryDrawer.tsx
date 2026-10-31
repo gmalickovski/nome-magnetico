@@ -9,7 +9,7 @@ import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { useFocusTrap } from './useFocusTrap.js';
 import { IconChevronRight } from './MobileChatDockIcons.js';
 
-export type SummaryPanelCloseMethod = 'toggle' | 'arrow' | 'overlay' | 'swipe' | 'escape';
+export type SummaryPanelCloseMethod = 'dock' | 'x' | 'backdrop' | 'swipe' | 'escape';
 
 export interface SummaryDrawerProps {
   isOpen: boolean;
@@ -85,7 +85,7 @@ export function SummaryDrawer({
   useEffect(() => {
     if (!mounted) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose('escape');
+      if (e.key === 'Escape') onClose('x');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -124,7 +124,7 @@ export function SummaryDrawer({
       className="fixed inset-0 z-[64] md:hidden"
     >
       <div
-        onClick={() => onClose('overlay')}
+        onClick={() => onClose('backdrop')}
         className="fixed inset-0 bg-black/50 backdrop-blur-[4px] transition-opacity duration-[240ms]"
         style={{
           opacity: overlayOpacity,
@@ -156,7 +156,7 @@ export function SummaryDrawer({
         >
           <button
             type="button"
-            onClick={() => onClose('arrow')}
+            onClick={() => onClose('x')}
             aria-label="Fechar resumo"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] hover:bg-white/5 hover:text-[#e5e2e1]"
           >

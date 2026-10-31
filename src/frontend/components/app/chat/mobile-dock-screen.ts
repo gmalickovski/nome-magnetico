@@ -1,69 +1,132 @@
-export type MobileDockScreen = 'questionnaire' | 'suggestions' | 'result';
+export type ChatDockScreen = 'chat_questionnaire' | 'chat_suggestions';
 
-export type MobileDockActionId =
-  | 'summary'
-  | 'restart'
-  | 'regenerate'
-  | 'pdf'
-  | 'share';
+export type DockSecondaryActionId = 'summary' | 'restart' | 'other_options' | 'share' | 'redo_analysis';
 
-export interface MobileDockActionSpec {
-  id: MobileDockActionId;
+export type DockPrimaryActionId = 'generate_pdf' | 'download_pdf' | 'unlock_nome_social';
+
+export type DockIconKind =
+  | 'panel-right'
+  | 'rotate-ccw'
+  | 'sparkles'
+  | 'file-down'
+  | 'share'
+  | 'lock-open';
+
+export interface DockSecondarySpec {
+  id: DockSecondaryActionId;
   label: string;
-  icon: 'panel-right' | 'rotate-ccw' | 'sparkles' | 'file-down' | 'share';
+  icon: DockIconKind;
 }
 
-export interface MobileDockScreenInput {
+export interface DockPrimarySpec {
+  id: DockPrimaryActionId;
+  label: string;
+  disabledLabel?: string;
+  icon: DockIconKind;
+  disabled: boolean;
+}
+
+export interface ChatDockLayout {
+  screen: ChatDockScreen;
+  secondaries: DockSecondarySpec[];
+  primary: DockPrimarySpec | null;
+}
+
+export interface ResultadoDockLayout {
+  screen: 'resultado';
+  secondaries: DockSecondarySpec[];
+  primary: DockPrimarySpec;
+}
+
+export type MobileDockLayout = ChatDockLayout | ResultadoDockLayout;
+
+export interface ChatDockInput {
   birthConfirmed: boolean;
+  canShowSummary: boolean;
   profileCollectionComplete: boolean;
   hasSuggestionsMessage: boolean;
-  activeSuggestionId: string | null;
-  canShowSummary: boolean;
   canRestart: boolean;
   canRegenerate: boolean;
-  canPdf: boolean;
-  canShare: boolean;
+  hasAnalysisId: boolean;
+  suggestionSelected: boolean;
 }
 
-export function resolveMobileDockScreen(input: MobileDockScreenInput): MobileDockScreen | null {
+export function resolveChatDockScreen(input: ChatDockInput): ChatDockScreen | null {
   if (!input.birthConfirmed || !input.canShowSummary) return null;
-  if (!input.profileCollectionComplete) return 'questionnaire';
-  if (input.activeSuggestionId) return 'result';
-  if (input.hasSuggestionsMessage) return 'suggestions';
-  return 'questionnaire';
+  if (input.profileCollectionComplete && input.hasSuggestionsMessage) {
+    return 'chat_suggestions';
+  }
+  if (!input.profileCollectionComplete) {
+    return 'chat_questionnaire';
+  }
+  return null;
 }
 
-export function buildMobileDockActions(
-  screen: MobileDockScreen,
-  input: MobileDockScreenInput
-): MobileDockActionSpec[] {
-  const actions: MobileDockActionSpec[] = [];
-
-  if (screen === 'questionnaire') {
-    actions.push({ id: 'summary', label: 'Resumo', icon: 'panel-right' });
+export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput): ChatDockLayout {
+  if (screen === 'chat_questionnaire') {
+    const secondaries: DockSecondarySpec[] = [{ id: 'summary', label: 'Resumo', icon: 'panel-right' }];
     if (input.canRestart) {
-      actions.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
+      secondaries.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
     }
-    return actions;
+    return { screen, secondaries, primary: null };
   }
 
-  if (screen === 'suggestions') {
-    actions.push({ id: 'summary', label: 'Resumo', icon: 'panel-right' });
-    if (input.canRegenerate) {
-      actions.push({ id: 'regenerate', label: 'Gerar outras', icon: 'sparkles' });
-    }
-    if (input.canPdf) {
-      actions.push({ id: 'pdf', label: 'PDF', icon: 'file-down' });
-    }
-    return actions;
+  const secondaries: DockSecondarySpec[] = [{ id: 'summary', label: 'Resumo', icon: 'panel-right' }];
+  if (input.canRegenerate) {
+    secondaries.push({ id: 'other_options', label: 'Outras opções', icon: 'sparkles' });
   }
 
-  actions.push({ id: 'summary', label: 'Resumo', icon: 'panel-right' });
-  if (input.canPdf) {
-    actions.push({ id: 'pdf', label: 'PDF', icon: 'file-down' });
+  let primary: DockPrimarySpec | null = null;
+  if (input.hasAnalysisId) {
+    primary = {
+      id: 'generate_pdf',
+      label: 'Gerar PDF',
+      disabledLabel: 'Escolha um nome',
+      icon: 'file-down',
+      disabled: !input.suggestionSelected,
+    };
   }
+
+  return { screen: 'chat_suggestions', secondaries, primary };
+}
+
+export interface ResultadoDockInput {
+  canShare: boolean;
+  canRedo: boolean;
+  canDownloadPdf: boolean;
+  isFree: boolean;
+}
+
+export function buildResultadoDockLayout(input: ResultadoDockInput): ResultadoDockLayout {
+  const secondaries: DockSecondarySpec[] = [];
   if (input.canShare) {
-    actions.push({ id: 'share', label: 'Compartilhar', icon: 'share' });
+    secondaries.push({ id: 'share', label: 'Compartilhar', icon: 'share' });
   }
-  return actions;
+  if (input.canRedo) {
+    secondaries.push({ id: 'redo_analysis', label: 'Refazer análise', icon: 'rotate-ccw' });
+  }
+
+  const primary: DockPrimarySpec = input.isFree
+    ? {
+        id: 'unlock_nome_social',
+        label: 'Desbloquear Nome Social',
+        icon: 'lock-open',
+        disabled: false,
+      }
+    : {
+        id: 'download_pdf',
+        label: 'Baixar PDF',
+        icon: 'file-down',
+        disabled: !input.canDownloadPdf,
+      };
+
+  return { screen: 'resultado', secondaries, primary };
+}
+
+/** Máximo 4 itens além do Voltar (secundários + primária). */
+export function assertDockItemLimit(layout: MobileDockLayout): void {
+  const count = layout.secondaries.length + (layout.primary ? 1 : 0);
+  if (count > 4) {
+    throw new Error(`Dock excede 4 itens: ${count}`);
+  }
 }

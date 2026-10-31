@@ -13,8 +13,20 @@ import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
 import { MobileChatDock } from './MobileChatDock.js';
-import type { MobileDockActionId, MobileDockScreen } from './mobile-dock-screen.js';
+import {
+  buildChatDockLayout,
+  resolveChatDockScreen,
+  type DockPrimaryActionId,
+  type DockSecondaryActionId,
+} from './mobile-dock-screen.js';
 import type { SummaryPanelCloseMethod } from './SummaryDrawer.js';
+import {
+  getPreviousFlowStep,
+  isFirstQuestionnaireStep,
+  POST_BIRTH_FLOW_STEPS,
+  rewindCollectStateToStep,
+  type PostBirthFlowStep,
+} from './chat-dock-step-back.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { GuessButtons } from './GuessButtons.js';
@@ -152,6 +164,7 @@ export function NomeSocialChat({
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [backToStartConfirmOpen, setBackToStartConfirmOpen] = useState(false);
   const [pendingPalpiteFeedback, setPendingPalpiteFeedback] = useState<'parcial' | 'nao' | null>(
     null
   );
@@ -371,8 +384,89 @@ export function NomeSocialChat({
   };
 
   const handleConfirmReset = () => {
+    capturePostHogEvent('restart_confirmed', { step: currentStepId });
     setResetConfirmOpen(false);
     resetChat();
+  };
+
+  const trimMessagesForRewind = (targetStep: PostBirthFlowStep) => {
+    const targetIdx = POST_BIRTH_FLOW_STEPS.indexOf(targetStep);
+    setMessages((prev) =>
+      prev.filter((m) => {
+        if (m.type === 'suggestions') return false;
+        const sid = m.stepId;
+        if (!sid || sid.startsWith('onboarding')) return true;
+        if (sid === 'fim_coleta' || sid === 'conclusao') return false;
+        const idx = POST_BIRTH_FLOW_STEPS.indexOf(sid as PostBirthFlowStep);
+        if (idx === -1) return true;
+        return idx < targetIdx;
+      })
+    );
+    setAnswers((prev) => {
+      const next = { ...prev };
+      for (const s of POST_BIRTH_FLOW_STEPS.slice(targetIdx)) {
+        delete next[s];
+      }
+      delete next.fim_coleta;
+      delete next.conclusao;
+      return next;
+    });
+  };
+
+  const resyncAfterRewind = async (rew: ChatCollectState, targetStep: PostBirthFlowStep) => {
+    setCollectState(rew);
+    setLoading(true);
+    setActiveSuggestionId(null);
+    setSuggestions([]);
+    try {
+      const res = await fetch('/api/decide-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildDecideLiveBody(confirmedName, confirmedDate, rew)),
+      });
+      if (!res.ok) throw new Error('Erro ao voltar etapa');
+      const raw = await res.json();
+      const responseData = mapDecideLiveResponse(raw, {
+        nomeCompleto: confirmedName,
+        collect: rew,
+        sobrenomesDetectados,
+      });
+      applyDecisionResponse(responseData, undefined, rew.nomeUsoBase ?? confirmedName);
+      setCurrentStepId(raw.next_step ?? targetStep);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChatDockBack = () => {
+    const screen = chatDockScreen ?? 'chat_questionnaire';
+    capturePostHogEvent('back_clicked', { screen, step: currentStepId });
+
+    if (profileCollectionComplete && hasSuggestionsMessage) {
+      const target: PostBirthFlowStep = 'palpite';
+      const rew = rewindCollectStateToStep(collectState, target);
+      trimMessagesForRewind(target);
+      void resyncAfterRewind(rew, target);
+      return;
+    }
+
+    if (isFirstQuestionnaireStep(currentStepId)) {
+      setBackToStartConfirmOpen(true);
+      return;
+    }
+
+    const prev = getPreviousFlowStep(currentStepId);
+    if (!prev || prev === 'suggestions') return;
+    const rew = rewindCollectStateToStep(collectState, prev);
+    trimMessagesForRewind(prev);
+    void resyncAfterRewind(rew, prev);
+  };
+
+  const handleConfirmBackToStart = () => {
+    setBackToStartConfirmOpen(false);
+    window.location.href = '/app';
   };
 
   const handleFinalizeAnalysis = () => {
@@ -1026,16 +1120,29 @@ export function NomeSocialChat({
 
   const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
 
-  const mobileDockScreen: MobileDockScreen | null =
-    birthConfirmed && Boolean(basePanel)
-      ? !profileCollectionComplete
-        ? 'questionnaire'
-        : activeSuggestionId
-          ? 'result'
-          : hasSuggestionsMessage
-            ? 'suggestions'
-            : 'questionnaire'
-      : null;
+  const chatDockScreen = resolveChatDockScreen({
+    birthConfirmed,
+    canShowSummary: birthConfirmed && Boolean(basePanel),
+    profileCollectionComplete,
+    hasSuggestionsMessage,
+    canRestart: birthConfirmed,
+    canRegenerate: profileCollectionComplete && suggestions.length > 0,
+    hasAnalysisId: Boolean(analysisId),
+    suggestionSelected: Boolean(activeSuggestionId),
+  });
+
+  const chatDockLayout = chatDockScreen
+    ? buildChatDockLayout(chatDockScreen, {
+        birthConfirmed,
+        canShowSummary: birthConfirmed && Boolean(basePanel),
+        profileCollectionComplete,
+        hasSuggestionsMessage,
+        canRestart: birthConfirmed,
+        canRegenerate: profileCollectionComplete && suggestions.length > 0,
+        hasAnalysisId: Boolean(analysisId),
+        suggestionSelected: Boolean(activeSuggestionId),
+      })
+    : null;
 
   const summarySnapshot = [
     summaryCount,
@@ -1054,11 +1161,11 @@ export function NomeSocialChat({
     lastSummarySnapshotRef.current = summarySnapshot;
   }, [summarySnapshot, drawerOpen, birthConfirmed, basePanel]);
 
-  const openSummaryPanel = (source: 'dock' | 'toggle') => {
+  const openSummaryPanel = () => {
     if (!drawerOpen) {
-      capturePostHogEvent('summary_panel_opened', {
-        screen: mobileDockScreen ?? 'questionnaire',
-        source,
+      capturePostHogEvent('summary_drawer_opened', {
+        screen: chatDockScreen ?? 'chat_questionnaire',
+        step: currentStepId,
       });
       setSummaryBadge(false);
     }
@@ -1066,40 +1173,13 @@ export function NomeSocialChat({
   };
 
   const closeSummaryPanel = (method: SummaryPanelCloseMethod) => {
-    capturePostHogEvent('summary_panel_closed', { method });
-    setDrawerOpen(false);
-  };
-
-  const handleMobileDockBack = () => {
-    capturePostHogEvent('mobile_dock_action', {
-      screen: mobileDockScreen ?? 'questionnaire',
-      action: 'back',
+    const mapped =
+      method === 'escape' ? 'x' : method;
+    capturePostHogEvent('summary_drawer_closed', {
+      screen: chatDockScreen ?? 'chat_questionnaire',
+      method: mapped,
     });
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/app';
-    }
-  };
-
-  const handleShareResult = async () => {
-    const sug = activeSuggestion;
-    const title = 'Nome Magnético — minha assinatura harmonizada';
-    const text = sug
-      ? `Assinatura escolhida: ${sug.nome} (score ${sug.score}/100).`
-      : 'Minha análise de Nome Social no Nome Magnético.';
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-      } catch (err) {
-        if ((err as DOMException).name !== 'AbortError') {
-          await navigator.clipboard?.writeText?.(url);
-        }
-      }
-    } else {
-      await navigator.clipboard?.writeText?.(url);
-    }
+    setDrawerOpen(false);
   };
 
   const handlePdfDownload = () => {
@@ -1107,14 +1187,18 @@ export function NomeSocialChat({
     window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
   };
 
-  const handleMobileDockAction = (action: MobileDockActionId, screen: MobileDockScreen) => {
-    capturePostHogEvent('mobile_dock_action', { screen, action });
+  const handleDockSecondary = (action: DockSecondaryActionId, position: number) => {
+    capturePostHogEvent('dock_action_clicked', {
+      screen: chatDockScreen ?? 'chat_questionnaire',
+      action,
+      position,
+    });
 
     if (action === 'summary') {
       if (drawerOpen) {
-        closeSummaryPanel('toggle');
+        closeSummaryPanel('dock');
       } else {
-        openSummaryPanel('dock');
+        openSummaryPanel();
       }
       return;
     }
@@ -1122,16 +1206,19 @@ export function NomeSocialChat({
       handleRequestReset();
       return;
     }
-    if (action === 'regenerate') {
+    if (action === 'other_options') {
       void handleRegenerate();
-      return;
     }
-    if (action === 'pdf') {
+  };
+
+  const handleDockPrimary = (action: DockPrimaryActionId) => {
+    capturePostHogEvent('dock_primary_clicked', {
+      screen: chatDockScreen ?? 'chat_suggestions',
+      action,
+      is_free: false,
+    });
+    if (action === 'generate_pdf') {
       handlePdfDownload();
-      return;
-    }
-    if (action === 'share') {
-      void handleShareResult();
     }
   };
 
@@ -1373,20 +1460,13 @@ export function NomeSocialChat({
       </div>
 
       <MobileChatDock
-        birthConfirmed={birthConfirmed}
-        profileCollectionComplete={profileCollectionComplete}
-        hasSuggestionsMessage={hasSuggestionsMessage}
-        activeSuggestionId={activeSuggestionId}
-        canShowSummary={birthConfirmed && Boolean(basePanel)}
-        canRestart={birthConfirmed}
-        canRegenerate={profileCollectionComplete && suggestions.length > 0}
-        canPdf={Boolean(analysisId)}
-        canShare={profileCollectionComplete && Boolean(activeSuggestionId)}
+        layout={chatDockLayout}
         summaryPanelOpen={drawerOpen}
         summaryBadge={summaryBadge}
-        onBack={handleMobileDockBack}
-        onAction={handleMobileDockAction}
-        regenerateDisabled={isRegenerating}
+        otherOptionsDisabled={isRegenerating}
+        onBack={handleChatDockBack}
+        onSecondary={handleDockSecondary}
+        onPrimary={handleDockPrimary}
       />
 
       <SummaryDrawer
@@ -1410,6 +1490,32 @@ export function NomeSocialChat({
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
       />
+
+      <Modal
+        open={backToStartConfirmOpen}
+        onClose={() => setBackToStartConfirmOpen(false)}
+        title="Voltar ao início?"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Você sairá desta conversa e voltará ao painel inicial. O progresso desta sessão permanece
+            salvo até você recomeçar manualmente.
+          </p>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+            <Button
+              variant="ghost"
+              size="md"
+              className="flex-1"
+              onClick={() => setBackToStartConfirmOpen(false)}
+            >
+              Continuar aqui
+            </Button>
+            <Button variant="primary" size="md" className="flex-1" onClick={handleConfirmBackToStart}>
+              Ir ao início
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={resetConfirmOpen}

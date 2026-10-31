@@ -88,8 +88,23 @@ export function IconShare(props: IconProps) {
   );
 }
 
+export function IconLockOpen(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </Svg>
+  );
+}
+
 export function dockIconFor(
-  icon: 'panel-right' | 'rotate-ccw' | 'sparkles' | 'file-down' | 'share'
+  icon:
+    | 'panel-right'
+    | 'rotate-ccw'
+    | 'sparkles'
+    | 'file-down'
+    | 'share'
+    | 'lock-open'
 ): React.FC<IconProps> {
   switch (icon) {
     case 'panel-right':
@@ -102,6 +117,8 @@ export function dockIconFor(
       return IconFileDown;
     case 'share':
       return IconShare;
+    case 'lock-open':
+      return IconLockOpen;
     default:
       return IconPanelRight;
   }

@@ -1,6 +1,7 @@
 ---
 import AppLayout from './AppLayout.astro';
 import { PDFFeedbackButton } from '../frontend/components/app/PDFFeedbackButton';
+import ResultadoMobileDock from '../frontend/components/app/chat/ResultadoMobileDock';
 
 export interface Props {
   title: string;
@@ -42,7 +43,25 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
   </div>
 
   {showActions && (
-    <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} fabOnly isAnalyst={isAnalyst} />
+    <PDFFeedbackButton
+      client:load
+      analysisId={analysisId}
+      productType={productType}
+      isFree={isFree}
+      fabOnly
+      showFab={false}
+      isAnalyst={isAnalyst}
+    />
+  )}
+
+  {showActions && (
+    <ResultadoMobileDock
+      client:load
+      analysisId={analysisId}
+      productType={productType}
+      isFree={isFree}
+      redoHref={`/app/analise/${productType.replace('_', '-')}`}
+    />
   )}
 
 </AppLayout>

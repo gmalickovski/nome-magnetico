@@ -1,83 +1,92 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildMobileDockActions,
-  resolveMobileDockScreen,
+  buildChatDockLayout,
+  buildResultadoDockLayout,
+  resolveChatDockScreen,
 } from './mobile-dock-screen.ts';
 
-const base = {
+const chatBase = {
   birthConfirmed: true,
+  canShowSummary: true,
   profileCollectionComplete: false,
   hasSuggestionsMessage: false,
-  activeSuggestionId: null,
-  canShowSummary: true,
   canRestart: true,
   canRegenerate: true,
-  canPdf: true,
-  canShare: true,
+  hasAnalysisId: true,
+  suggestionSelected: false,
 };
 
 describe('mobile-dock-screen', () => {
-  it('resolveMobileDockScreen retorna null sem certidão ou resumo', () => {
-    assert.equal(resolveMobileDockScreen({ ...base, birthConfirmed: false }), null);
-    assert.equal(resolveMobileDockScreen({ ...base, canShowSummary: false }), null);
-  });
-
-  it('questionário: Resumo e Recomeçar', () => {
-    assert.equal(resolveMobileDockScreen(base), 'questionnaire');
-    const actions = buildMobileDockActions('questionnaire', base);
+  it('questionário: Resumo e Recomeçar, sem primária', () => {
+    assert.equal(resolveChatDockScreen(chatBase), 'chat_questionnaire');
+    const layout = buildChatDockLayout('chat_questionnaire', chatBase);
+    assert.equal(layout.primary, null);
     assert.deepEqual(
-      actions.map((a) => a.id),
+      layout.secondaries.map((s) => s.id),
       ['summary', 'restart']
     );
   });
 
-  it('sugestões: Resumo, Gerar outras e PDF quando disponível', () => {
-    const screen = resolveMobileDockScreen({
-      ...base,
+  it('sugestões: Outras opções e primária Gerar PDF desabilitada sem escolha', () => {
+    const input = {
+      ...chatBase,
       profileCollectionComplete: true,
       hasSuggestionsMessage: true,
-    });
-    assert.equal(screen, 'suggestions');
-    const actions = buildMobileDockActions('suggestions', {
-      ...base,
-      profileCollectionComplete: true,
-      hasSuggestionsMessage: true,
-    });
+    };
+    assert.equal(resolveChatDockScreen(input), 'chat_suggestions');
+    const layout = buildChatDockLayout('chat_suggestions', input);
+    assert.ok(layout.primary);
+    assert.equal(layout.primary?.id, 'generate_pdf');
+    assert.equal(layout.primary?.disabled, true);
+    assert.equal(layout.primary?.disabledLabel, 'Escolha um nome');
     assert.deepEqual(
-      actions.map((a) => a.id),
-      ['summary', 'regenerate', 'pdf']
+      layout.secondaries.map((s) => s.id),
+      ['summary', 'other_options']
     );
   });
 
-  it('resultado: Resumo, PDF e Compartilhar', () => {
-    const screen = resolveMobileDockScreen({
-      ...base,
+  it('sugestões: primária ativa com card escolhido', () => {
+    const layout = buildChatDockLayout('chat_suggestions', {
+      ...chatBase,
       profileCollectionComplete: true,
       hasSuggestionsMessage: true,
-      activeSuggestionId: 's1',
+      suggestionSelected: true,
     });
-    assert.equal(screen, 'result');
-    const actions = buildMobileDockActions('result', {
-      ...base,
+    assert.equal(layout.primary?.disabled, false);
+  });
+
+  it('sugestões: omite primária sem analysisId', () => {
+    const layout = buildChatDockLayout('chat_suggestions', {
+      ...chatBase,
       profileCollectionComplete: true,
-      activeSuggestionId: 's1',
+      hasSuggestionsMessage: true,
+      hasAnalysisId: false,
     });
+    assert.equal(layout.primary, null);
+  });
+
+  it('resultado pago: Compartilhar, Refazer e Baixar PDF', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: true,
+      canRedo: true,
+      canDownloadPdf: true,
+      isFree: false,
+    });
+    assert.equal(layout.primary.id, 'download_pdf');
     assert.deepEqual(
-      actions.map((a) => a.id),
-      ['summary', 'pdf', 'share']
+      layout.secondaries.map((s) => s.id),
+      ['share', 'redo_analysis']
     );
   });
 
-  it('omite PDF quando canPdf é false', () => {
-    const actions = buildMobileDockActions('suggestions', {
-      ...base,
-      profileCollectionComplete: true,
-      canPdf: false,
+  it('resultado gratuito: primária Desbloquear', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: true,
+      canRedo: true,
+      canDownloadPdf: false,
+      isFree: true,
     });
-    assert.deepEqual(
-      actions.map((a) => a.id),
-      ['summary', 'regenerate']
-    );
+    assert.equal(layout.primary.id, 'unlock_nome_social');
   });
 });
