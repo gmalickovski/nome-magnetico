@@ -75,6 +75,7 @@ import {
 } from './chat-session-storage.js';
 import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-engine/chat-profile-copy.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
+import { fetchWithAuth } from '../../../lib/auth-fetch.js';
 import { Button } from '../../ui/Button.js';
 import { Modal } from '../../ui/Modal.js';
 import {
@@ -1064,7 +1065,7 @@ export function NomeSocialChat({
     setRegenerateNotice(null);
     try {
       const nomesExcluidos = suggestions.map((s) => s.nome);
-      const res = await fetch('/api/regenerate-suggestions', {
+      const res = await fetchWithAuth('/api/regenerate-suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
@@ -1527,7 +1528,6 @@ export function NomeSocialChat({
         layout={chatDockLayout}
         summaryPanelOpen={drawerOpen}
         summaryBadge={summaryBadge}
-        otherOptionsDisabled={isRegenerating}
         pdfModel={pdfCtaModel}
         pdfExiting={pdfCircleExiting}
         onPdfClick={onPdfDockClick}

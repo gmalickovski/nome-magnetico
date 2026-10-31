@@ -73,8 +73,8 @@ export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput
   }
 
   const middleSecondaries: DockSecondarySpec[] = [];
-  if (input.canRegenerate) {
-    middleSecondaries.push({ id: 'other_options', label: 'Outras opções', icon: 'sparkles' });
+  if (input.canRestart) {
+    middleSecondaries.push({ id: 'restart', label: 'Recomeçar', icon: 'rotate-ccw' });
   }
 
   return {

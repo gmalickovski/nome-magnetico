@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import type { MobileDockLayout } from './mobile-dock-screen.js';
 import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { IconChevronLeft, dockIconFor } from './MobileChatDockIcons.js';
@@ -9,12 +9,12 @@ import {
 } from './mobile-dock-layout.js';
 import { useDockBarWidth } from './useDockBarWidth.js';
 import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
+import { DockTooltipButton } from './DockTooltipButton.js';
 
 export interface MobileChatDockProps {
   layout: MobileDockLayout | null;
   summaryPanelOpen: boolean;
   summaryBadge: boolean;
-  otherOptionsDisabled?: boolean;
   pdfModel?: ChatPdfCtaModel | null;
   pdfExiting?: boolean;
   onPdfClick?: () => void;
@@ -32,7 +32,6 @@ export function MobileChatDock({
   layout,
   summaryPanelOpen,
   summaryBadge,
-  otherOptionsDisabled = false,
   pdfModel = null,
   pdfExiting = false,
   onPdfClick,
@@ -84,31 +83,30 @@ export function MobileChatDock({
   const hiddenByKeyboard = keyboardOpen;
   const shellStyle = dockShellWidthStyle(widthPx, reduced);
 
+  const rootClass = `${MOBILE_DOCK_ROOT_CLASS} transition-opacity duration-[120ms] ${
+    hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
+  }`;
+
+  const rootStyle = {
+    bottom: 'calc(var(--nm-mobile-nav-h, 0px) + 12px + env(safe-area-inset-bottom, 0px))',
+  };
+
   if (layout.screen === 'resultado') {
     return (
-      <div
-        className={`${MOBILE_DOCK_ROOT_CLASS} transition-opacity duration-[120ms] ${
-          hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{
-          bottom: 'calc(var(--nm-mobile-nav-h, 0px) + 12px + env(safe-area-inset-bottom, 0px))',
-        }}
-        role="toolbar"
-        aria-label="Ações"
-      >
+      <div className={rootClass} style={rootStyle} role="toolbar" aria-label="Ações">
         <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
           <div
             ref={innerRef}
-            className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))]:bg-[#131313]`}
+            className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`}
           >
-            <button
-              type="button"
-              onClick={onBack}
+            <DockTooltipButton
+              tooltip="Voltar"
               aria-label="Voltar"
+              onClick={onBack}
               className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]"
             >
               <IconChevronLeft />
-            </button>
+            </DockTooltipButton>
             <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
             <div
               className={`inline-flex shrink-0 items-center gap-1 ${
@@ -118,20 +116,20 @@ export function MobileChatDock({
               {layout.secondaries.map((action, index) => {
                 const Icon = dockIconFor(action.icon);
                 return (
-                  <button
+                  <DockTooltipButton
                     key={action.id}
-                    type="button"
+                    tooltip={action.label}
                     aria-label={action.label}
                     style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
                     onClick={() => onSecondary(action.id, index)}
                     className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06]"
                   >
                     <Icon />
-                  </button>
+                  </DockTooltipButton>
                 );
               })}
-              <button
-                type="button"
+              <DockTooltipButton
+                tooltip={layout.primary.label}
                 disabled={layout.primary.disabled}
                 onClick={() => onPrimary(layout.primary.id)}
                 className={`mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(52vw,200px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] ${
@@ -151,7 +149,7 @@ export function MobileChatDock({
                     </>
                   );
                 })()}
-              </button>
+              </DockTooltipButton>
             </div>
           </div>
         </div>
@@ -162,90 +160,81 @@ export function MobileChatDock({
   const summarySpec = { id: 'summary' as const, label: 'Resumo', icon: 'panel-right' as const };
   const SummaryIcon = dockIconFor(summarySpec.icon);
   const isSummaryActive = summaryPanelOpen;
+  const pdfTooltip = pdfModel?.isFree ? 'Desbloquear análise' : 'Baixar PDF';
 
   return (
-    <div
-      className={`${MOBILE_DOCK_ROOT_CLASS} transition-opacity duration-[120ms] ${
-        hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
-      }`}
-      style={{
-        bottom: 'calc(var(--nm-mobile-nav-h, 0px) + 12px + env(safe-area-inset-bottom, 0px))',
-      }}
-      role="toolbar"
-      aria-label="Ações"
-    >
+    <div className={rootClass} style={rootStyle} role="toolbar" aria-label="Ações">
       <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
         <div
           ref={innerRef}
           className={`${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`}
         >
-          <button
-            type="button"
-            onClick={onBack}
+          <DockTooltipButton
+            tooltip="Voltar"
             aria-label="Voltar"
+            onClick={onBack}
             className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
           >
             <IconChevronLeft />
-          </button>
+          </DockTooltipButton>
 
           <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
 
           <div
-            className={`flex min-w-0 flex-1 items-center justify-center gap-1 ${
+            className={`inline-flex shrink-0 items-center gap-1 ${
               reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
             }`}
           >
             {layout.middleSecondaries.map((action, index) => {
               const Icon = dockIconFor(action.icon);
-              const disabled = action.id === 'other_options' && otherOptionsDisabled;
               return (
-                <button
+                <DockTooltipButton
                   key={action.id}
-                  type="button"
-                  disabled={disabled}
+                  tooltip={action.label}
                   aria-label={action.label}
                   style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
                   onClick={() => onSecondary(action.id, index)}
-                  className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 disabled:opacity-[0.35] active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
+                  className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
                 >
                   <Icon />
-                </button>
+                </DockTooltipButton>
               );
             })}
+
+            <DockTooltipButton
+              tooltip="Resumo"
+              aria-label={isSummaryActive ? 'Fechar resumo' : summarySpec.label}
+              aria-pressed={isSummaryActive ? true : undefined}
+              onClick={() => onSecondary('summary', layout.middleSecondaries.length)}
+              className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] ${
+                isSummaryActive ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37]' : ''
+              }`}
+            >
+              <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+                <SummaryIcon />
+                {summaryBadge && !summaryPanelOpen && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#D4AF37]"
+                    aria-hidden
+                  />
+                )}
+              </span>
+              {isSummaryActive && (
+                <span className="nm-caption mt-0.5 text-[11px] font-normal leading-none text-[#D4AF37]">
+                  {summarySpec.label}
+                </span>
+              )}
+            </DockTooltipButton>
 
             {pdfModel && (pdfModel.visible || pdfExiting) && onPdfClick && (
               <ChatPdfDockCircle
                 model={pdfModel}
                 onClick={onPdfClick}
                 exiting={pdfExiting}
+                tooltip={pdfTooltip}
               />
             )}
           </div>
-
-          <button
-            type="button"
-            aria-label={isSummaryActive ? 'Fechar resumo' : summarySpec.label}
-            aria-pressed={isSummaryActive ? true : undefined}
-            onClick={() => onSecondary('summary', layout.middleSecondaries.length)}
-            className={`mobile-chat-dock-btn relative ml-1 flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] ${
-              isSummaryActive ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37]' : ''
-            }`}
-          >
-            <span className="relative flex h-[22px] w-[22px] items-center justify-center">
-              <SummaryIcon />
-              {summaryBadge && !summaryPanelOpen && (
-                <span
-                  className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#D4AF37]"
-                  aria-hidden
-                />
-              )}
-            </span>
-            {isSummaryActive && (
-              <span className="nm-caption mt-0.5 text-[11px] font-normal leading-none text-[#D4AF37]">
-                {summarySpec.label}
-              </span>
-            )}
-          </button>
         </div>
       </div>
     </div>

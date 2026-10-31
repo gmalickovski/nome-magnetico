@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
+import { fetchWithAuth } from '../../../lib/auth-fetch.js';
 import { useToast, ToastContainer } from '../../ui/Toast.js';
 import { IconFileDown, IconLockOpen } from './MobileChatDockIcons.js';
+import { DockTooltipButton } from './DockTooltipButton.js';
 import {
   buildNomeSocialCheckoutHref,
   scoreBucket,
@@ -135,7 +137,7 @@ export function useChatPdfCta(input: {
     const started = performance.now();
     try {
       const url = `/api/generate-pdf?id=${encodeURIComponent(input.analysisId)}&t=${Date.now()}`;
-      const res = await fetch(url, { credentials: 'include' });
+      const res = await fetchWithAuth(url);
       if (!res.ok) throw new Error('pdf_error');
       const blob = await res.blob();
       const cd = res.headers.get('content-disposition') ?? '';
@@ -216,7 +218,7 @@ export function useChatPdfCta(input: {
   const resendEmail = useCallback(async () => {
     setResending(true);
     try {
-      const res = await fetch('/api/auth/resend-confirmation', {
+      const res = await fetchWithAuth('/api/auth/resend-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ redirect: '/app/analise/nome-social' }),
@@ -363,9 +365,16 @@ export interface ChatPdfDockCircleProps {
   onClick: () => void;
   exiting?: boolean;
   onGlowDone?: () => void;
+  tooltip?: string;
 }
 
-export function ChatPdfDockCircle({ model, onClick, exiting = false, onGlowDone }: ChatPdfDockCircleProps) {
+export function ChatPdfDockCircle({
+  model,
+  onClick,
+  exiting = false,
+  onGlowDone,
+  tooltip = 'Baixar PDF',
+}: ChatPdfDockCircleProps) {
   if (!model.visible && !exiting) return null;
   const reduced = prefersReducedMotion();
   const Icon = model.isFree ? IconLockOpen : IconFileDown;
@@ -379,8 +388,8 @@ export function ChatPdfDockCircle({ model, onClick, exiting = false, onGlowDone 
         : 'Gerar análise completa em PDF';
 
   return (
-    <button
-      type="button"
+    <DockTooltipButton
+      tooltip={tooltip}
       onClick={onClick}
       disabled={isLoading || !model.emailConfirmed}
       aria-label={label}
@@ -416,6 +425,6 @@ export function ChatPdfDockCircle({ model, onClick, exiting = false, onGlowDone 
       ) : (
         <Icon className="text-[#111111]" />
       )}
-    </button>
+    </DockTooltipButton>
   );
 }

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 /** Mede a largura natural do conteúdo e expõe valor para animar o shell sem pulo. */
 export function useDockBarWidth(depsKey: string): {
-  innerRef: RefObject<HTMLDivElement | null>;
+  innerRef: RefObject<HTMLDivElement>;
   widthPx: number | null;
 } {
   const innerRef = useRef<HTMLDivElement>(null);

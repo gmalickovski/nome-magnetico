@@ -27,7 +27,7 @@ describe('mobile-dock-screen', () => {
     );
   });
 
-  it('sugestões: Outras opções no centro, PDF só com card escolhido', () => {
+  it('sugestões: Recomeçar no centro, sem estrela Outras opções; PDF só com seleção', () => {
     const input = {
       ...chatBase,
       profileCollectionComplete: true,
@@ -38,8 +38,9 @@ describe('mobile-dock-screen', () => {
     assert.equal(withoutPick.showPdfCircle, false);
     assert.deepEqual(
       withoutPick.middleSecondaries.map((s) => s.id),
-      ['other_options']
+      ['restart']
     );
+    assert.ok(!withoutPick.middleSecondaries.some((s) => s.id === 'other_options'));
 
     const withPick = buildChatDockLayout('chat_suggestions', {
       ...input,
