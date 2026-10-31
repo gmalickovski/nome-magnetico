@@ -91,8 +91,28 @@ type RawDecideLiveResponse = {
   areaFoco?: string;
   providerUsed?: string;
   readingSummary?: ChatReadingSummary;
+  sobrenomesDetectados?: string[];
   error?: string;
 };
+
+export function buildSobrenomePillOptions(sobrenomes: string[]): Array<{ id: string; label: string }> {
+  const unique = sobrenomes.map((s) => s.trim()).filter(Boolean);
+  if (unique.length === 0) return [];
+
+  const options = unique.map((s) => ({
+    id: `sob_keep_${s.toLowerCase().replace(/\s+/g, '_')}`,
+    label: `Manter ${s}`,
+  }));
+
+  if (unique.length > 1) {
+    options.push({
+      id: 'sob_keep_all',
+      label: `Manter ${unique.join(' e ')}`,
+    });
+  }
+
+  return options;
+}
 
 export function mapApiPanel(api: ApiPanel): ResultPanelData {
   return {
@@ -203,6 +223,17 @@ function buildNextQuestion(api: RawDecideLiveResponse): NextQuestionSpec | undef
       prompt: basePrompt,
       eyebrow: api.eyebrow || 'Só mais um detalhe',
       options: ESTILO_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
+    };
+  }
+
+  if (step === 'sobrenomes') {
+    const pillOptions = buildSobrenomePillOptions(api.sobrenomesDetectados ?? []);
+    return {
+      id: step,
+      tipo: 'texto',
+      prompt: basePrompt,
+      eyebrow: api.eyebrow || 'Sobrenomes na assinatura',
+      options: pillOptions.length > 0 ? pillOptions : undefined,
     };
   }
 

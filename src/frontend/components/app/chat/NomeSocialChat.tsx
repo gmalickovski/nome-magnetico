@@ -11,10 +11,10 @@ import type {
 import { fetchChatReadingSummary } from './chat-reading-summary-client.js';
 import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
+import { ChatRestartButton } from './ChatRestartButton.js';
 import { SummaryFab } from './SummaryFab.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
-import { PillGroup } from './PillGroup.js';
 import { GuessButtons } from './GuessButtons.js';
 import { SummaryDrawer } from './SummaryDrawer.js';
 import { ChatInlineDateReply } from './ChatInlineDateReply.js';
@@ -27,7 +27,8 @@ import {
 import { SuggestionPicker } from './SuggestionPicker.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { ChatSidebarPanelChrome } from './ChatSidebarPanelChrome.js';
-import { ChatInlineTextReply } from './ChatInlineTextReply.js';
+import { isInteractionPending } from './chat-interaction-pending.js';
+import { ChatStepInteraction, ChatChoicePills } from './ChatStepInteraction.js';
 import {
   INITIAL_COLLECT_STATE,
   applyAnswerToCollectState,
@@ -86,24 +87,6 @@ function buildInitialOnboardingMessages(birthName: string, birthDate: string): C
       content: 'Como está seu nome completo exatamente na certidão de nascimento?',
     },
   ];
-}
-
-function isOnboardingStepId(stepId?: string): boolean {
-  return Boolean(stepId?.startsWith('onboarding_'));
-}
-
-function isInteractionPending(
-  msg: ChatMessage,
-  currentStepId: string,
-  answers: Record<string, string>,
-  birthConfirmed: boolean
-): boolean {
-  if (!msg.stepId || birthConfirmed) return false;
-  if (isOnboardingStepId(msg.stepId)) {
-    return !answers[msg.stepId];
-  }
-  if (!birthConfirmed) return false;
-  return msg.stepId === currentStepId && !answers[msg.stepId];
 }
 
 export function NomeSocialChat({
@@ -629,7 +612,13 @@ export function NomeSocialChat({
     if (data.next_question) {
       const q = data.next_question;
       const msgType =
-        q.tipo === 'palpite' ? 'guess' : q.tipo === 'escolha' ? 'pills' : 'text_input';
+        data.next_step === 'sobrenomes' || (q.options?.length && q.tipo === 'texto')
+          ? 'text_input'
+          : q.tipo === 'palpite'
+            ? 'guess'
+            : q.tipo === 'escolha'
+              ? 'pills'
+              : 'text_input';
 
       newMsgs.push({
         id: `q-${Date.now()}`,
@@ -857,17 +846,7 @@ export function NomeSocialChat({
         totalSteps={totalSteps}
         remaining={remaining}
         className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
-        trailing={
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={handleRequestReset}
-              className="text-[11px] font-inter text-chat-muted hover:text-chat-ink transition-colors px-1 py-0.5 rounded-md hover:bg-white/5"
-            >
-              Reiniciar
-            </button>
-          </div>
-        }
+        trailing={<ChatRestartButton onClick={handleRequestReset} />}
       />
 
       <div
@@ -942,7 +921,7 @@ export function NomeSocialChat({
                   )}
 
                   {pending && msg.type === 'pills' && msg.options && msg.options.length > 0 && (
-                    <PillGroup
+                    <ChatChoicePills
                       options={msg.options}
                       onSelect={(opt) =>
                         msg.stepId === 'onboarding_gender'
@@ -958,14 +937,10 @@ export function NomeSocialChat({
                   )}
 
                   {pending && msg.type === 'text_input' && (
-                    <ChatInlineTextReply
-                      onSend={(text) => {
-                        if (msg.stepId === 'onboarding_nome') {
-                          handleOnboardingNome(text);
-                          return;
-                        }
-                        handleUserAnswer(text);
-                      }}
+                    <ChatStepInteraction
+                      showText
+                      showPills={Boolean(msg.options?.length)}
+                      options={msg.options}
                       onLiveScore={birthConfirmed ? handleLiveScore : undefined}
                       disabled={loading}
                       placeholder={
@@ -974,6 +949,18 @@ export function NomeSocialChat({
                           : msg.stepId === 'sobrenomes'
                             ? 'Ex.: quero manter Malickovski e Correa...'
                             : 'Digite sua resposta...'
+                      }
+                      onSendText={(text) => {
+                        if (msg.stepId === 'onboarding_nome') {
+                          handleOnboardingNome(text);
+                          return;
+                        }
+                        handleUserAnswer(text);
+                      }}
+                      onSelectPill={(opt) =>
+                        msg.stepId === 'onboarding_gender'
+                          ? handleOnboardingGender(opt.label, opt.id)
+                          : handleUserAnswer(opt.label, opt.id)
                       }
                     />
                   )}

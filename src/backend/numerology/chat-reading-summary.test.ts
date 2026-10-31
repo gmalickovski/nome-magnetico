@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildChatReadingSummary } from './chat-reading-summary';
+import { buildChatReadingSummary } from './chat-reading-summary.ts';
 
 describe('buildChatReadingSummary', () => {
   it('retorna triângulos, bloqueios e blocos kármicos serializáveis', () => {
