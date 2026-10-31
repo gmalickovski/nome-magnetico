@@ -51,12 +51,12 @@ describe('DEV-187 (F3ab) & DEV-188 (F4) · Superfícies v3 e Página Como Calcul
     const r = avaliarNome('Guilherme Malickovski Correa', '14/02/1990', { calcularPotencial: true });
 
     // 1. Score base v3 e nível
-    assert.equal(r.score_v3, 66);
+    assert.equal(r.score_v3, 64); // DEV-260: regra do curso (Lição Cármica 9)
     assert.equal(r.nivel.codigo, 'N3');
     assert.equal(r.nivel.rotulo, 'Equilíbrio Parcial');
 
     // 2. Potencial dinâmico
-    assert.equal(r.potencial, 95);
+    assert.equal(r.potencial, 93); // DEV-260: regra do curso (Lição Cármica 9)
     assert.equal(getScoreV3Level(r.potencial), 'N5');
 
     // 3. Sequências no Triângulo da Vida: 444 presente
@@ -85,10 +85,10 @@ describe('DEV-187 (F3ab) & DEV-188 (F4) · Superfícies v3 e Página Como Calcul
     const antes = avaliarNome('Guilherme Malickovski Correa', '14/02/1990', { calcularPotencial: true });
     const depois = avaliarNome('Guilherme Málickovski', '14/02/1990');
 
-    assert.equal(antes.score_v3, 66);
+    assert.equal(antes.score_v3, 64); // DEV-260: regra do curso (Lição Cármica 9)
     assert.equal(antes.nivel.codigo, 'N3');
 
-    assert.equal(depois.score_v3, 95);
+    assert.equal(depois.score_v3, 93); // DEV-260: regra do curso (Lição Cármica 9)
     assert.equal(depois.nivel.codigo, 'N5');
 
     // Antes tem desconto de bloqueio 444 na Vida; depois tem 0 bloqueios na Vida
@@ -112,13 +112,13 @@ describe('DEV-187 (F3ab) & DEV-188 (F4) · Superfícies v3 e Página Como Calcul
   it('F3d: PDF pago completo no motor v3 mapeia níveis N1-N5 e pontuações do caso de ouro', () => {
     const avaliacaoNasc = avaliarNome('Guilherme Malickovski Correa', '14/02/1990');
     const nivelNasc = obterNivelV3(avaliacaoNasc.score_v3);
-    assert.equal(avaliacaoNasc.score_v3, 66);
+    assert.equal(avaliacaoNasc.score_v3, 64); // DEV-260: regra do curso (Lição Cármica 9)
     assert.equal(nivelNasc.codigo, 'N3');
     assert.equal(nivelNasc.rotulo, 'Equilíbrio Parcial');
 
     const avaliacaoSocial = avaliarNome('Guilherme Málickovski', '14/02/1990');
     const nivelSocial = obterNivelV3(avaliacaoSocial.score_v3);
-    assert.equal(avaliacaoSocial.score_v3, 95);
+    assert.equal(avaliacaoSocial.score_v3, 93); // DEV-260: regra do curso (Lição Cármica 9)
     assert.equal(nivelSocial.codigo, 'N5');
     assert.equal(nivelSocial.rotulo, 'Harmonioso');
 
