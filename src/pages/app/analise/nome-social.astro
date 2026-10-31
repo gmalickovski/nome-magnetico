@@ -3,6 +3,7 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
 import { createUserClient } from '../../../backend/db/supabase';
 import NomeSocialChat from '../../../frontend/components/app/chat/NomeSocialChat';
+import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
@@ -28,6 +29,15 @@ function dbDateToInput(dbDate: string | null): string {
 const nomeInicial = profile?.birth_name ?? '';
 const dataInicial = dbDateToInput(profile?.birth_date ?? '');
 const generoInicial = profile?.gender ?? '';
+
+let initialBirthPanel = null;
+if (nomeInicial.trim() && dataInicial.trim()) {
+  try {
+    initialBirthPanel = buildClientBirthNamePanel(nomeInicial, dataInicial);
+  } catch (e) {
+    console.warn('[nome-social] painel inicial do nome de nascimento:', e);
+  }
+}
 ---
 
 <AppLayout title="Análise de Nome Social">
@@ -37,6 +47,7 @@ const generoInicial = profile?.gender ?? '';
       birthName={nomeInicial}
       birthDate={dataInicial}
       profileGender={generoInicial}
+      initialBirthPanel={initialBirthPanel}
       userId={user.id}
     />
   </div>

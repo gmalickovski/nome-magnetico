@@ -7,7 +7,7 @@ import {
   extrairSobrenomes,
 } from '../../backend/numerology/products/nome-social';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
-import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
+import { buildBirthNamePanel } from '../../backend/numerology/birth-name-panel';
 import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engine';
 import { determineNextStep } from '../../shared/interactive-engine/router';
 import { writeHypothesis } from '../../shared/interactive-engine/writer';
@@ -92,34 +92,33 @@ function normalizeDateToPtBr(raw: string): string | null {
 }
 
 function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): ResultPanelData {
-  const avaliacao = avaliarNome(nome, dataPtBr, { calcularPotencial: true });
-  const triangulos = calcularTodosTriangulos(nome, dataPtBr);
-  const bloqueios = detectarBloqueios(triangulos);
-  const cinco = calcularCincoNumeros(nome, dataPtBr);
+  const core = buildBirthNamePanel(nome, dataPtBr);
+  const triangulos = calcularTodosTriangulos(nome.trim(), dataPtBr);
   const sequenciasVida = Object.keys(triangulos.vida.contagemSequencias ?? {});
+  const destino = core.destino || baseDestino;
 
   const cincoNumerosList = [
-    { label: 'Destino', sublabel: 'Caminho e aprendizado de vida', value: cinco.destino ?? baseDestino, icon: '🧭' },
-    { label: 'Expressão', sublabel: 'Talentos e como você se projeta', value: cinco.expressao, icon: '✨' },
-    { label: 'Motivação', sublabel: 'Desejos da alma e valores íntimos', value: cinco.motivacao, icon: '🔥' },
-    { label: 'Missão', sublabel: 'Propósito maior e legado', value: cinco.missao, icon: '🌟' },
-    { label: 'Impressão', sublabel: 'Primeira impressão que você causa', value: cinco.impressao, icon: '👁️' },
+    { label: 'Destino', sublabel: 'Caminho e aprendizado de vida', value: destino, icon: '🧭' },
+    { label: 'Expressão', sublabel: 'Talentos e como você se projeta', value: core.expressao, icon: '✨' },
+    { label: 'Motivação', sublabel: 'Desejos da alma e valores íntimos', value: core.motivacao, icon: '🔥' },
+    { label: 'Missão', sublabel: 'Propósito maior e legado', value: core.missao, icon: '🌟' },
+    { label: 'Impressão', sublabel: 'Primeira impressão que você causa', value: core.impressao, icon: '👁️' },
   ];
 
   return {
-    nomeExibido: nome,
-    score: avaliacao.score_v3,
-    potencial: avaliacao.potencial ?? avaliacao.score_v3,
-    destino: cinco.destino ?? baseDestino,
-    expressao: cinco.expressao,
-    motivacao: cinco.motivacao,
-    missao: cinco.missao,
-    impressao: cinco.impressao,
+    nomeExibido: core.nomeExibido,
+    score: core.score,
+    potencial: core.potencial,
+    destino,
+    expressao: core.expressao,
+    motivacao: core.motivacao,
+    missao: core.missao,
+    impressao: core.impressao,
     cincoNumeros: cincoNumerosList,
-    trianguloVidaLinhas: triangulos.vida.linhas,
-    bloqueiosCount: bloqueios.length,
-    bloqueiosCodigos: bloqueios.map(b => b.codigo),
-    compatibilidade: avaliarCompatibilidade(cinco.expressao, cinco.destino ?? baseDestino),
+    trianguloVidaLinhas: core.trianguloVidaLinhas,
+    bloqueiosCount: core.bloqueiosCount,
+    bloqueiosCodigos: core.bloqueiosCodigos,
+    compatibilidade: core.compatibilidade,
     temBloqueiosVida: sequenciasVida.length > 0,
   };
 }
