@@ -22,7 +22,7 @@ export function ChatInlineTextReply({
       placeholder={placeholder}
       disabled={disabled}
       autoFocus
-      className="mt-3 !p-1.5 !shadow-none !bg-black/20"
+      className="mt-3 w-full min-w-0 !p-1.5 !shadow-none !bg-black/20"
     />
   );
 }

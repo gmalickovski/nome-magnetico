@@ -18,26 +18,44 @@ import { NOME_MAGNETICO_COPY } from '../../shared/interactive-engine/presets/nom
 import { buildSelectedSocialSummary } from './analyze';
 import type { ResultPanelData } from './decide-live';
 
-const regenerateSchema = z.object({
-  analysisId: z.string().min(1),
-  nomesExcluidos: z.array(z.string().max(150)).max(50).optional(),
-  sobrenomesObrigatorios: z.array(z.string().max(80)).max(10).optional(),
-  sobrenomesExcluidos: z.array(z.string().max(80)).max(10).optional(),
-  estiloPreferido: z
-    .enum(['sobrenome_forte', 'ajuste_sutil', 'curto_direto', 'qualquer'])
-    .optional(),
-  motivoRefinamento: z
-    .enum([
-      'forcar_sobrenome',
-      'preferir_sem_acento',
-      'preferir_nome_curto',
-      'preferir_nome_completo',
-      'testar_variacao_propria',
-    ])
-    .optional(),
-  variacaoPropria: z.string().max(150).optional(),
-  selecionarComoPrincipal: z.string().max(150).optional(),
+const rankingChatSchema = z.object({
+  aceitaEncurtarOuApelido: z.boolean().optional(),
+  ondeVaiUsar: z.array(z.string().max(80)).max(20).optional(),
+  assinaturaAtual: z.string().max(150).optional(),
+  restricaoDocumentosLegais: z.boolean().optional(),
+  maxNivelGeracao: z.number().finite().optional(),
 });
+
+const regenerateSchema = z
+  .object({
+    analysisId: z.string().min(1).optional(),
+    nomeNascimento: z.string().max(200).optional(),
+    dataNascimento: z.string().max(30).optional(),
+    nomesExcluidos: z.array(z.string().max(150)).max(50).optional(),
+    sobrenomesObrigatorios: z.array(z.string().max(80)).max(10).optional(),
+    sobrenomesExcluidos: z.array(z.string().max(80)).max(10).optional(),
+    estiloPreferido: z
+      .enum(['sobrenome_forte', 'ajuste_sutil', 'curto_direto', 'qualquer'])
+      .optional(),
+    motivoRefinamento: z
+      .enum([
+        'forcar_sobrenome',
+        'preferir_sem_acento',
+        'preferir_nome_curto',
+        'preferir_nome_completo',
+        'testar_variacao_propria',
+      ])
+      .optional(),
+    variacaoPropria: z.string().max(150).optional(),
+    selecionarComoPrincipal: z.string().max(150).optional(),
+    rankingChat: rankingChatSchema.optional(),
+  })
+  .refine(
+    data =>
+      Boolean(data.analysisId?.trim()) ||
+      (Boolean(data.nomeNascimento?.trim()) && Boolean(data.dataNascimento?.trim())),
+    { message: 'Informe analysisId ou nomeNascimento e dataNascimento' }
+  );
 
 function toPtBrDate(raw: string): string {
   const trimmed = raw.trim();
@@ -123,6 +141,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const {
     analysisId,
+    nomeNascimento: nomeNascimentoBody,
+    dataNascimento: dataNascimentoBody,
     nomesExcluidos,
     sobrenomesObrigatorios,
     sobrenomesExcluidos,
@@ -130,26 +150,37 @@ export const POST: APIRoute = async ({ request, locals }) => {
     motivoRefinamento,
     variacaoPropria,
     selecionarComoPrincipal,
+    rankingChat,
   } = parsed.data;
 
-  const analysis = await getAnalysis(analysisId);
-  if (!analysis || analysis.user_id !== user.id) {
-    return new Response(JSON.stringify({ error: 'Análise não encontrada' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  const chatOnly = !analysisId?.trim();
+  let analysis: Awaited<ReturnType<typeof getAnalysis>> = null;
+
+  if (!chatOnly) {
+    analysis = await getAnalysis(analysisId!);
+    if (!analysis || analysis.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Análise não encontrada' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
   }
 
-  const freqData = (analysis.frequencias_numeros as Record<string, any> | null) ?? {};
+  const freqData = chatOnly
+    ? {}
+    : ((analysis!.frequencias_numeros as Record<string, any> | null) ?? {});
   const rankingAnterior = freqData.ranking ?? {};
   const parametrosAnteriores = freqData.parametros_usuario ?? {};
 
-  const nomeNascimento: string =
-    (rankingAnterior.nomeNascimento as string | undefined)?.trim() ||
-    analysis.nome_completo.trim();
-  const dataNascimento = toPtBrDate(
-    (rankingAnterior.dataNascimento as string | undefined) || analysis.data_nascimento
-  );
+  const nomeNascimento: string = chatOnly
+    ? nomeNascimentoBody!.trim()
+    : (rankingAnterior.nomeNascimento as string | undefined)?.trim() ||
+      analysis!.nome_completo.trim();
+  const dataNascimento = chatOnly
+    ? toPtBrDate(dataNascimentoBody!)
+    : toPtBrDate(
+        (rankingAnterior.dataNascimento as string | undefined) || analysis!.data_nascimento
+      );
 
   const sobrenomesObrigEfetivos =
     sobrenomesObrigatorios ?? parametrosAnteriores.sobrenomesObrigatorios ?? [];
@@ -158,19 +189,42 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const estiloEfetivo =
     estiloPreferido ?? parametrosAnteriores.estiloPreferido ?? 'qualquer';
 
+  const rankingChatMerged = {
+    aceitaEncurtarOuApelido:
+      rankingChat?.aceitaEncurtarOuApelido ??
+      Boolean(parametrosAnteriores.aceitaEncurtarApelido),
+    ondeVaiUsar:
+      rankingChat?.ondeVaiUsar ??
+      parametrosAnteriores.ondeVaiUsar ??
+      freqData.ondeVaiUsar ??
+      [],
+    assinaturaAtual:
+      rankingChat?.assinaturaAtual ??
+      parametrosAnteriores.assinaturaAtual ??
+      freqData.assinaturaAtual ??
+      undefined,
+    restricaoDocumentosLegais:
+      rankingChat?.restricaoDocumentosLegais ??
+      Boolean(parametrosAnteriores.restricaoDocumentosLegais),
+    maxNivelGeracao:
+      rankingChat?.maxNivelGeracao ?? parametrosAnteriores.maxNivelGeracao,
+  };
+
   const resultado = analisarNomesSocial([], nomeNascimento, dataNascimento, {
     aceitaEncurtarOuApelido:
-      Boolean(parametrosAnteriores.aceitaEncurtarApelido) ||
+      rankingChatMerged.aceitaEncurtarOuApelido ||
       estiloEfetivo === 'curto_direto' ||
       motivoRefinamento === 'preferir_nome_curto',
-    ondeVaiUsar: parametrosAnteriores.ondeVaiUsar ?? freqData.ondeVaiUsar ?? [],
-    assinaturaAtual: parametrosAnteriores.assinaturaAtual ?? freqData.assinaturaAtual ?? undefined,
+    ondeVaiUsar: rankingChatMerged.ondeVaiUsar,
+    assinaturaAtual: rankingChatMerged.assinaturaAtual,
     sobrenomesObrigatorios: sobrenomesObrigEfetivos,
     sobrenomesExcluidos: sobrenomesExclEfetivos,
     estiloPreferido: estiloEfetivo,
     nomesExcluidos: selecionarComoPrincipal ? undefined : nomesExcluidos,
     motivoRefinamento,
     variacaoPropria,
+    restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais || undefined,
+    maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
   });
 
   if (selecionarComoPrincipal && selecionarComoPrincipal.trim().length >= 2) {
@@ -219,6 +273,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     sobrenomesExcluidos: sobrenomesExclEfetivos,
     estiloPreferido: estiloEfetivo,
     motivoRefinamento: motivoRefinamento ?? null,
+    aceitaEncurtarApelido: rankingChatMerged.aceitaEncurtarOuApelido,
+    ondeVaiUsar: rankingChatMerged.ondeVaiUsar,
+    assinaturaAtual: rankingChatMerged.assinaturaAtual,
+    restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais,
+    maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
   };
 
   const resumoAtualizado = buildSelectedSocialSummary({
@@ -229,7 +288,49 @@ export const POST: APIRoute = async ({ request, locals }) => {
     compatibilidade: melhor?.compatibilidade,
   });
 
-  await updateAnalysis(analysis.id, {
+  const excluidosNorm = new Set(
+    (nomesExcluidos ?? []).map(n => n.trim().toLowerCase()).filter(Boolean)
+  );
+  const nomesRetorno = [
+    ...(resultado.melhorNome ? [resultado.melhorNome.nomeCompleto] : []),
+    ...resultado.top3.map(c => c.nomeCompleto),
+    ...resultado.nomesCandidatos.map(c => c.nomeCompleto),
+  ];
+  const poolEsgotado =
+    !selecionarComoPrincipal &&
+    excluidosNorm.size > 0 &&
+    nomesRetorno.length > 0 &&
+    nomesRetorno.every(n => excluidosNorm.has(n.trim().toLowerCase()));
+
+  if (chatOnly) {
+    const melhor = resultado.melhorNome;
+    const melhorComPanel = melhor
+      ? { ...melhor, panel: buildPanelData(melhor.nomeCompleto, dataNascimento, resultado.destino) }
+      : null;
+    const top3ComPanel = resultado.top3.map(c => ({
+      ...c,
+      panel: buildPanelData(c.nomeCompleto, dataNascimento, resultado.destino),
+    }));
+    const melhorNorm = (melhor?.nomeCompleto ?? '').trim().toLowerCase();
+    const nossasSugestoes = resultado.nomesCandidatos
+      .filter(c => c.origemSugerida === 'ia' && c.nomeCompleto.trim().toLowerCase() !== melhorNorm)
+      .map(c => ({
+        ...c,
+        panel: buildPanelData(c.nomeCompleto, dataNascimento, resultado.destino),
+      }));
+
+    return new Response(
+      JSON.stringify({
+        melhorNome: melhorComPanel,
+        top3: top3ComPanel,
+        nossasSugestoes,
+        poolEsgotado,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  await updateAnalysis(analysis!.id, {
     frequencias_numeros: {
       ...freqData,
       ranking: resultado,
@@ -298,6 +399,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       avaliacaoVariacaoPropria,
       avisoSobrenomeExigido: aviso,
       feedbackMensagem,
+      poolEsgotado,
     }),
     {
       status: 200,

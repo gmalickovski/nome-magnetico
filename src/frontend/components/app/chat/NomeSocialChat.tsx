@@ -48,7 +48,10 @@ import {
   applyAnswerToCollectState,
   applyQuestionnaireStep,
   buildDecideLiveBody,
+  buildRegenerateRequestBody,
+  isRegeneratePoolExhausted,
   mapDecideLiveResponse,
+  mapRegenerateApiToCandidates,
   mergeCollectFromApi,
   shouldShowRadar,
   shouldShowSummary,
@@ -153,6 +156,7 @@ export function NomeSocialChat({
   const [basePanel, setBasePanel] = useState<ResultPanelData | null>(initialBirthPanel);
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
+  const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
 
   const [loading, setLoading] = useState(false);
@@ -1050,28 +1054,51 @@ export function NomeSocialChat({
   };
 
   const handleRegenerate = async () => {
+    if (!confirmedName.trim() || !confirmedDate.trim()) return;
     setIsRegenerating(true);
+    setRegenerateNotice(null);
     try {
+      const nomesExcluidos = suggestions.map((s) => s.nome);
       const res = await fetch('/api/regenerate-suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthName: confirmedName,
-          birthDate: confirmedDate,
-          userId,
-          answers,
-        }),
+        body: JSON.stringify(
+          buildRegenerateRequestBody({
+            analysisId,
+            nomeNascimento: confirmedName,
+            dataNascimento: confirmedDate,
+            collect: collectState,
+            nomesExcluidos,
+          })
+        ),
       });
 
-      if (!res.ok) throw new Error('Erro ao regenerar opções');
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao regenerar opções');
+      }
 
-      if (data.candidates && data.candidates.length > 0) {
-        setSuggestions(data.candidates);
+      if (isRegeneratePoolExhausted(data, nomesExcluidos)) {
+        setRegenerateNotice(
+          'Não encontramos outras assinaturas diferentes dentro dos filtros do seu questionário. Você pode revisar sobrenomes ou abertura para mudança, ou escolher uma das opções acima.'
+        );
+        return;
+      }
+
+      const novos = mapRegenerateApiToCandidates(data, 3);
+      if (novos.length > 0) {
+        setSuggestions(novos);
         setActiveSuggestionId(null);
+      } else {
+        setRegenerateNotice(
+          'Não há novas combinações disponíveis agora. Tente ajustar sobrenomes ou o quanto você topa mudar o nome.'
+        );
       }
     } catch (err) {
       console.error(err);
+      setRegenerateNotice(
+        err instanceof Error ? err.message : 'Não foi possível gerar novas opções. Tente de novo.'
+      );
     } finally {
       setIsRegenerating(false);
     }
@@ -1289,6 +1316,7 @@ export function NomeSocialChat({
                       onSelect={handleSuggestionSelect}
                       onRegenerate={handleRegenerate}
                       isRegenerating={isRegenerating}
+                      regenerateNotice={regenerateNotice}
                       analysisId={analysisId}
                       onGenerateAnalysis={handleFinalizeAnalysis}
                     />

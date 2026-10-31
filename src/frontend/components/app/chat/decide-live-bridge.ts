@@ -18,11 +18,16 @@ import {
   mapSubfocoToEnum,
   type QuestionnaireStepId,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
-import type { AreaFocoNomeMagnetico } from '../../../../shared/interactive-engine/copy.js';
+import type {
+  AreaFocoNomeMagnetico,
+  EstiloAssinaturaPreferido,
+} from '../../../../shared/interactive-engine/copy.js';
 import {
   applySobrenomesUsoSelection,
   mapAberturaToEstilo,
   mergeContextoLeitura,
+  profileToRankingOpcoes,
+  type RankingOpcoesPatch,
 } from '../../../../shared/interactive-engine/questionnaire-map.js';
 
 export interface ChatCollectState {
@@ -146,7 +151,7 @@ function mapRadarAxes(axes: RawDecideLiveResponse['radarAxes']): RadarAxesData |
   };
 }
 
-function mapCandidate(
+export function mapCandidate(
   raw: Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }
 ): CandidateSuggestion {
   const score = Number(raw.score ?? 0);
@@ -428,4 +433,99 @@ export function shouldShowRadar(collect: ChatCollectState): boolean {
 
 export function shouldShowSummary(items: ReadingSummaryItem[]): boolean {
   return items.length > 0;
+}
+
+export function collectStateToRankingPatch(collect: ChatCollectState): RankingOpcoesPatch {
+  return profileToRankingOpcoes({
+    nomeUsoBase: collect.nomeUsoBase,
+    sobrenomesObrigatorios: collect.sobrenomesObrigatorios,
+    sobrenomesExcluidos: collect.sobrenomesExcluidos,
+    relacaoNome: collect.relacaoNome,
+    ondeAssinaRaw: collect.ondeAssinaRaw,
+    estiloPresenca: collect.estiloPresenca,
+    areaFoco: collect.areaFoco,
+    subfocosOrdenados: collect.subfocosOrdenados,
+    aberturaMudanca: collect.aberturaMudanca,
+    nomeArtistico: collect.nomeArtistico,
+    contextoLeituraOutros: collect.contextoLeitura,
+  });
+}
+
+export type RegenerateSuggestionsApiPayload = {
+  melhorNome?: Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel };
+  top3?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
+  nossasSugestoes?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
+  poolEsgotado?: boolean;
+};
+
+/** Flatten API regenerate response into up to 3 unique candidates (chat cards). */
+export function mapRegenerateApiToCandidates(
+  data: RegenerateSuggestionsApiPayload,
+  limit = 3
+): CandidateSuggestion[] {
+  const vistos = new Set<string>();
+  const out: CandidateSuggestion[] = [];
+  const rawList = [
+    ...(data.melhorNome ? [data.melhorNome] : []),
+    ...(Array.isArray(data.top3) ? data.top3 : []),
+    ...(Array.isArray(data.nossasSugestoes) ? data.nossasSugestoes : []),
+  ];
+  for (const raw of rawList) {
+    if (!raw?.nomeCompleto) continue;
+    const key = raw.nomeCompleto.trim().toLowerCase();
+    if (vistos.has(key)) continue;
+    vistos.add(key);
+    out.push(mapCandidate(raw));
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+export function buildRegenerateRequestBody(input: {
+  analysisId?: string;
+  nomeNascimento: string;
+  dataNascimento: string;
+  collect: ChatCollectState;
+  nomesExcluidos: string[];
+}): Record<string, unknown> {
+  const ranking = collectStateToRankingPatch(input.collect);
+  const estilo =
+    (input.collect.estiloPreferido as EstiloAssinaturaPreferido | null) ??
+    ranking.estiloPreferido ??
+    'qualquer';
+
+  const body: Record<string, unknown> = {
+    nomesExcluidos: input.nomesExcluidos,
+    sobrenomesObrigatorios: input.collect.sobrenomesObrigatorios,
+    sobrenomesExcluidos: input.collect.sobrenomesExcluidos,
+    estiloPreferido: estilo,
+    rankingChat: {
+      aceitaEncurtarOuApelido: ranking.aceitaEncurtarOuApelido,
+      ondeVaiUsar: ranking.ondeVaiUsar,
+      assinaturaAtual: ranking.assinaturaAtual,
+      restricaoDocumentosLegais: ranking.restricaoDocumentosLegais,
+      maxNivelGeracao: ranking.maxNivelGeracao,
+    },
+  };
+
+  if (input.analysisId) {
+    body.analysisId = input.analysisId;
+  } else {
+    body.nomeNascimento = input.nomeNascimento.trim();
+    body.dataNascimento = input.dataNascimento.trim();
+  }
+
+  return body;
+}
+
+/** True when API says pool is exhausted or every returned name was already shown. */
+export function isRegeneratePoolExhausted(
+  data: RegenerateSuggestionsApiPayload,
+  nomesJaMostrados: string[]
+): boolean {
+  if (data.poolEsgotado) return true;
+  const shown = new Set(nomesJaMostrados.map((n) => n.trim().toLowerCase()).filter(Boolean));
+  const novos = mapRegenerateApiToCandidates(data, 50);
+  if (novos.length === 0) return true;
+  return novos.every((c) => shown.has(c.nome.trim().toLowerCase()));
 }

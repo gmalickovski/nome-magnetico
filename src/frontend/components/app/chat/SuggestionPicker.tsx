@@ -13,6 +13,7 @@ export interface SuggestionPickerProps {
   onRegenerate: () => void;
   analysisId?: string;
   isRegenerating?: boolean;
+  regenerateNotice?: string | null;
   onGenerateAnalysis?: () => void;
   className?: string;
 }
@@ -29,6 +30,7 @@ export function SuggestionPicker({
   onRegenerate,
   analysisId,
   isRegenerating = false,
+  regenerateNotice = null,
   onGenerateAnalysis,
   className = '',
 }: SuggestionPickerProps) {
@@ -117,6 +119,12 @@ export function SuggestionPicker({
           );
         })}
       </div>
+
+      {regenerateNotice && (
+        <p className="text-sm text-amber-300/90 leading-relaxed px-0.5" role="status">
+          {regenerateNotice}
+        </p>
+      )}
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
         <Pill
