@@ -2,7 +2,14 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createUserClient, supabase as globalSupabase } from '../../backend/db/supabase';
 import { hasActiveSubscription } from '../../backend/db/subscriptions';
-import { createAnalysis, updateAnalysis, saveMagneticNames, hasUsedFreeAnalysis } from '../../backend/db/analyses';
+import {
+  createAnalysis,
+  updateAnalysis,
+  saveMagneticNames,
+  hasUsedFreeAnalysis,
+  findRecentNomeSocialAnalysisForPdf,
+  findReusableFreeAnalysisForUser,
+} from '../../backend/db/analyses';
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
@@ -80,7 +87,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs = AI_TIMEOUT_MS): Promise
   });
 }
 
-function buildSelectedSocialSummary({
+export function buildSelectedSocialSummary({
   nomeNascimento,
   nomeSocial,
   score,
@@ -179,9 +186,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // Verificar acesso
   if (isGratuita) {
+    if (nome_ja_escolhido === true) {
+      const existingFree = await findReusableFreeAnalysisForUser(user.id);
+      if (existingFree) {
+        return new Response(JSON.stringify({ analysisId: existingFree.id, reused: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Análise gratuita: verificar se já foi utilizada (admin e dev isentos para fins de teste)
     const jaUsou = await hasUsedFreeAnalysis(user.id);
-    const isDev = import.meta.env.DEV;
+    const isDev = import.meta.env?.DEV === true;
     
     if (jaUsou && !isAdmin && !isDev) {
       return new Response(JSON.stringify({ error: 'Análise gratuita já utilizada. Acesse "Minhas Análises" para ver seu relatório.' }), {
@@ -229,6 +246,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
+  const isChatPdfChosenSocial =
+    product_type === 'nome_social' &&
+    nome_ja_escolhido === true &&
+    Boolean(nome_social_principal?.trim());
+
+  if (isChatPdfChosenSocial) {
+    const existing = await findRecentNomeSocialAnalysisForPdf(
+      user.id,
+      nome_social_principal!.trim()
+    );
+    if (existing) {
+      return new Response(JSON.stringify({ analysisId: existing.id, reused: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   // Criar análise no banco
   const analysisDisplayName =
     product_type === 'nome_social' && nome_social_principal
@@ -264,8 +299,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         debitosCarmicos: 0,
       };
 
-      if (product_type === 'nome_social' && !nome_ja_escolhido) {
-        // ── Produto: Nome Social (novo fluxo) ──
+      if (
+        product_type === 'nome_social' &&
+        (!nome_ja_escolhido || Boolean(nome_social_principal?.trim()))
+      ) {
+        // ── Produto: Nome Social (sem LLM quando o nome social já foi escolhido no chat) ──
         const candidatos = nomes_candidatos ?? [];
 
         const resultado = analisarNomesSocial(
@@ -367,10 +405,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
           nomes_candidatos: candidatos,
         });
 
-        if (nome_social_principal) {
+        if (nome_social_principal || nome_ja_escolhido) {
           analiseTexto = buildSelectedSocialSummary({
             nomeNascimento: nome_completo,
-            nomeSocial: melhor?.nomeCompleto ?? nome_social_principal,
+            nomeSocial: melhor?.nomeCompleto ?? nome_social_principal ?? nome_completo,
             score: melhor?.score,
             bloqueios: melhor?.bloqueios?.length ?? 0,
             compatibilidade: melhor?.compatibilidade,

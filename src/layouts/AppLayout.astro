@@ -3,16 +3,25 @@ import BaseLayout from './BaseLayout.astro';
 import { createUserClient } from '../backend/db/supabase';
 import { memoize } from '../backend/cache/memo';
 import AvatarMenu from '../frontend/components/app/AvatarMenu';
-import MobileNavBar from '../frontend/components/app/MobileNavBar.astro';
+import AppMobileHeader from '../frontend/components/app/AppMobileHeader';
+import AppMobileDock from '../frontend/components/app/AppMobileDock';
 import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
+import { resolveMobileDockContext } from '../frontend/lib/mobile-dock-context.ts';
 
 export interface Props {
   title: string;
   description?: string;
   noPadding?: boolean;
+  /** Shell full-viewport no mobile (chat): clearance fica no conteúdo interno, não no main. */
+  mobileFullViewport?: boolean;
 }
 
-const { title, description, noPadding = false } = Astro.props;
+const {
+  title,
+  description,
+  noPadding = false,
+  mobileFullViewport = false,
+} = Astro.props;
 
 const user = Astro.locals.user;
 if (!user) {
@@ -68,9 +77,10 @@ const isActive = (path: string) =>
 const navAppActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte') && !isActive('/app/admin-analise') && !isActive('/app/sentry-test');
 const navAnalisesActive = isActive('/app/analises') || isActive('/app/resultado');
 const navSuporteActive = isActive('/app/suporte');
+const mobileDockContext = resolveMobileDockContext(pathname);
 ---
 
-<BaseLayout title={title} description={description} noIndex={true} hasBottomNav={true}>
+<BaseLayout title={title} description={description} noIndex={true}>
   <script is:inline define:vars={{ analyticsUserId: isAdmin ? '' : user.id, analyticsEmail: isAdmin ? '' : (user.email ?? '') }}>
     function identifyNmUser() {
       if (!analyticsUserId) return;
@@ -83,7 +93,10 @@ const navSuporteActive = isActive('/app/suporte');
     identifyNmUser();
     window.addEventListener('nm-posthog-ready', identifyNmUser);
   </script>
-  <div class="min-h-screen bg-[#1a1a1a]">
+  <div class:list={[
+    'min-h-screen bg-[#1a1a1a] nm-app-shell--with-mobile-dock',
+    { 'nm-app-shell--dock-action-only': mobileDockContext === 'action' },
+  ]}>
     {false && isTest && (
       <div class="bg-[#D4AF37]/10 border-b border-[#D4AF37]/20 px-4 py-2 text-center text-sm text-[#D4AF37]">
         Você está usando um acesso de teste.
@@ -152,34 +165,20 @@ const navSuporteActive = isActive('/app/suporte');
       </nav>
     </aside>
 
-    <header class="md:hidden border-b border-[#D4AF37]/20 bg-[#111111]/80 backdrop-blur-md sticky top-0 z-40 h-[73px]">
-      <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12 py-4 h-full flex items-center relative">
-        {pathname !== '/app' && pathname !== '/app/' && (
-          <button onclick="window.history.length > 1 ? window.history.back() : window.location.href='/app'" class="text-[#D4AF37] hover:text-[#f2ca50] transition-colors md:hidden absolute left-4 z-10 p-1">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-          </button>
-        )}
+    <AppMobileHeader client:load nome={userNome} isAdmin={isAdmin} />
 
-        <a 
-          href="/app" 
-          class="hover:opacity-80 transition-all duration-500 absolute"
-          style={pathname !== '/app' && pathname !== '/app/' ? "left: 50%; transform: translateX(-50%);" : "left: 1rem; transform: translateX(0);"}
-        >
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-9 sm:h-10 w-auto" />
-        </a>
+    <AppMobileDock
+      client:load
+      pathname={pathname}
+      isAdmin={isAdmin}
+      showAnalisesNav={showAnalisesNav}
+    />
 
-        <div class="md:hidden flex items-center justify-end gap-2 absolute right-4">
-
-          <div class="w-8 flex justify-center">
-            <AvatarMenu client:load nome={userNome} isAdmin={isAdmin} />
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <MobileNavBar isAdmin={isAdmin} showAnalisesNav={showAnalisesNav} />
-
-    <main class={noPadding ? "md:ml-20 h-full overflow-x-hidden" : "md:ml-20 px-3.5 sm:px-6 md:px-10 lg:px-14 py-6 sm:py-8 md:py-10 pb-24 md:pb-10 overflow-x-hidden"}>
+    <main class:list={[
+      'nm-app-main md:ml-20 overflow-x-hidden md:pb-10',
+      noPadding ? 'h-full overflow-x-hidden' : 'px-3.5 sm:px-6 md:px-10 lg:px-14 py-6 sm:py-8 md:py-10',
+      mobileFullViewport ? 'nm-app-main--flush' : '',
+    ]}>
       <div class={noPadding ? "h-full" : "max-w-[1440px] 2xl:max-w-[1600px] mx-auto w-full"}>
         <slot />
       </div>
@@ -197,6 +196,12 @@ const navSuporteActive = isActive('/app/suporte');
     left: var(--sidebar-w, 80px);
   }
 </style>
+
+<script>
+  import { recordAppNavigationPath } from '../frontend/lib/app-nav-back.ts';
+
+  recordAppNavigationPath();
+</script>
 
 <script>
   (function () {

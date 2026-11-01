@@ -1,0 +1,35 @@
+---
+import '../styles/global.css';
+import NomeSocialChat from '../frontend/components/app/chat/NomeSocialChat';
+import { buildClientBirthNamePanel } from '../backend/numerology/birth-name-panel';
+
+const birthName = 'Guilherme Malickovski Correa';
+const birthDate = '14/02/1990';
+let initialBirthPanel = null;
+try {
+  initialBirthPanel = buildClientBirthNamePanel(birthName, birthDate);
+} catch {
+  initialBirthPanel = null;
+}
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo - Chat Interface</title>
+</head>
+<body class="bg-dark-deeper">
+  <div class="nm-chat-shell">
+    <NomeSocialChat
+      client:load
+      birthName={birthName}
+      birthDate={birthDate}
+      profileGender="Masculino"
+      initialBirthPanel={initialBirthPanel}
+      userId="demo-user-123"
+    />
+  </div>
+</body>
+</html>

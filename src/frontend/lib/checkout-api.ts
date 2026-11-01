@@ -4,6 +4,11 @@ export interface CreateCheckoutBody {
   product_type: string;
   couponCode?: string;
   expected_final_cents?: number;
+  chosen_signature?: string;
+  analysis_id?: string;
+  source?: 'card_pdf' | 'paywall_free';
+  utm_source?: string;
+  utm_campaign?: string;
 }
 
 export type CreateCheckoutResult =

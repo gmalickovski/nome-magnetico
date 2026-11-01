@@ -15,7 +15,7 @@ import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoG
 import { MailWarning } from '../../frontend/components/app/MailWarning';
 import { DashboardCheckoutButton } from '../../frontend/components/app/DashboardCheckoutButton';
 import { getPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
-import { InitialAnalysisModal } from '../../frontend/components/app/InitialAnalysisModal';
+import FreeAnalysisOnboardingChat from '../../frontend/components/app/chat/FreeAnalysisOnboardingChat';
 
 // Funções de numerologia locais para cálculo instantâneo da análise gratuita do lead
 import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
@@ -44,6 +44,11 @@ import { getScoreVersion } from '../../backend/numerology/score-version';
 const showFreeUsedModal   = Astro.url.searchParams.get('free_used') === 'true';
 const showCheckoutSuccess = Astro.url.searchParams.get('checkout') === 'success';
 const checkoutProduct     = Astro.url.searchParams.get('produto') ?? null;
+const resumeChat          = Astro.url.searchParams.get('resume') === '1';
+
+if (showCheckoutSuccess && resumeChat && (checkoutProduct === null || checkoutProduct === 'nome_social')) {
+  return Astro.redirect('/app/analise/nome-social?checkout=success&produto=nome_social&resume=1');
+}
 
 // Verificar admin e dados do perfil
 let isAdmin     = false;
@@ -673,6 +678,10 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
       </div>
     )}
 
+    {showOnboardingModal && (
+      <FreeAnalysisOnboardingChat client:load />
+    )}
+
     {(freeAnalysisStatus === 'pending' || freeAnalysisStatus === 'processing') && (
       <section
         class="rounded-3xl border bg-white/[0.03] p-6 md:p-8 text-center flex flex-col items-center justify-center min-h-[220px]"
@@ -962,8 +971,6 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
   </div>
   
   {showFreeUsedModal && <FreeUsedModal client:only="react" />}
-  {showOnboardingModal && <InitialAnalysisModal client:only="react" />}
-
 
   <script define:vars={{ isAdmin }}>
     (function () {

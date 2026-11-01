@@ -11,7 +11,6 @@ export interface Props {
   ogType?: string;
   noIndex?: boolean;
   noIndexFollow?: boolean;
-  hasBottomNav?: boolean;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
   opsShell?: boolean;
@@ -25,7 +24,6 @@ const {
   ogType = 'website',
   noIndex = false,
   noIndexFollow = false,
-  hasBottomNav = false,
   articlePublishedTime,
   articleModifiedTime,
   opsShell = false,
@@ -211,7 +209,7 @@ const sentry = getSentryRuntimeConfig();
       captureFirstTouchUtm();
     </script>
   </head>
-  <body class:list={['bg-[#1a1a1a] text-gray-200 font-inter antialiased', opsShell ? 'overflow-hidden' : 'min-h-screen', { 'has-bottom-nav': hasBottomNav }]}>
+  <body class:list={['bg-[#1a1a1a] text-gray-200 font-inter antialiased', opsShell ? 'overflow-hidden' : 'min-h-screen']}>
     <slot />
     {!opsShell && <CookieBanner client:only="react" />}
   </body>
