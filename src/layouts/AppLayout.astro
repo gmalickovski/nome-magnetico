@@ -14,6 +14,8 @@ export interface Props {
   noPadding?: boolean;
   /** Shell full-viewport no mobile (chat): clearance fica no conteúdo interno, não no main. */
   mobileFullViewport?: boolean;
+  /** Oculta o header desktop padrão quando a página usa header integrado próprio (ex.: chat). */
+  hideDesktopHeader?: boolean;
 }
 
 const {
@@ -21,6 +23,7 @@ const {
   description,
   noPadding = false,
   mobileFullViewport = false,
+  hideDesktopHeader = false,
 } = Astro.props;
 
 const user = Astro.locals.user;
@@ -174,6 +177,17 @@ const mobileDockContext = resolveMobileDockContext(pathname);
       showAnalisesNav={showAnalisesNav}
     />
 
+    {!hideDesktopHeader && (
+      <>
+        <header class="app-fixed-header fixed top-0 right-0 left-20 z-30 hidden h-14 border-b border-[#D4AF37]/15 bg-[#111111]/95 backdrop-blur-md md:flex md:items-center">
+          <div class="flex w-full items-center justify-end gap-3 px-5 md:px-6">
+            <slot name="header-actions" />
+          </div>
+        </header>
+        <div class="hidden md:block h-14 shrink-0" aria-hidden="true"></div>
+      </>
+    )}
+
     <main class:list={[
       'nm-app-main md:ml-20 overflow-x-hidden md:pb-10',
       noPadding ? 'h-full overflow-x-hidden' : 'px-3.5 sm:px-6 md:px-10 lg:px-14 py-6 sm:py-8 md:py-10',
@@ -190,10 +204,8 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 </BaseLayout>
 
 <style is:global>
-  :root { --sidebar-w: 80px; }
   .app-fixed-header {
-    transition: left 300ms ease-out;
-    left: var(--sidebar-w, 80px);
+    left: 5rem;
   }
 </style>
 
@@ -203,15 +215,4 @@ const mobileDockContext = resolveMobileDockContext(pathname);
   recordAppNavigationPath();
 </script>
 
-<script>
-  (function () {
-    const sidebar = document.getElementById('app-sidebar');
-    if (!sidebar) return;
-    const COLLAPSED = '80px';   /* w-20 */
-    const EXPANDED  = '288px';  /* w-72 */
-    sidebar.addEventListener('mouseenter', () =>
-      document.documentElement.style.setProperty('--sidebar-w', EXPANDED));
-    sidebar.addEventListener('mouseleave', () =>
-      document.documentElement.style.setProperty('--sidebar-w', COLLAPSED));
-  })();
-</script>
+

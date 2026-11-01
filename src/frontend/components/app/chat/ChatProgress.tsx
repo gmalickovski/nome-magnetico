@@ -7,7 +7,9 @@ export interface ChatProgressProps {
   /** Mantido por compatibilidade; não exibido no cabeçalho mínimo. */
   remaining?: number;
   className?: string;
-  /** Ex.: botão Reiniciar no desktop (md+); mobile usa a dock. */
+  /** Navegação esquerda no desktop (opcional). */
+  leading?: ReactNode;
+  /** Ações direitas no desktop (ex.: Gerar Análise / Baixar Análise + Reiniciar). */
   trailing?: ReactNode;
 }
 
@@ -15,6 +17,7 @@ export function ChatProgress({
   currentStep,
   totalSteps,
   className = '',
+  leading,
   trailing,
 }: ChatProgressProps) {
   const percent = Math.min(
@@ -25,33 +28,40 @@ export function ChatProgress({
   const visual = getScoreTierVisual(displayPercent);
 
   return (
-    <div className={`w-full px-4 py-2.5 ${className}`}>
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="flex-1 min-w-0 flex items-center gap-3 rounded-full bg-[#131313] border border-white/10 px-3 sm:px-4 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
-          <span
-            className="shrink-0 text-xs sm:text-sm font-semibold tabular-nums w-9 sm:w-10 text-right"
-            style={{ color: visual.text }}
-            aria-live="polite"
-          >
-            {percent}%
-          </span>
-          <div
-            className="h-2.5 sm:h-3 min-w-0 flex-1 rounded-full bg-white/10 overflow-hidden"
-            role="progressbar"
-            aria-valuenow={percent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label="Progresso da análise"
-          >
+    <header
+      className={`w-full px-4 py-2.5 md:h-14 md:px-6 md:py-0 md:flex md:items-center ${className}`}
+    >
+      <div className="flex w-full items-center gap-3 md:gap-5 min-w-0">
+        {leading ? <div className="hidden md:flex items-center shrink-0">{leading}</div> : null}
+
+        <div className="flex-1 min-w-0 flex items-center justify-center">
+          <div className="w-full max-w-2xl flex items-center gap-3 rounded-full bg-[#131313] border border-[#D4AF37]/25 px-3 sm:px-4 py-2 md:py-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300">
+            <span
+              className="shrink-0 text-xs sm:text-sm font-semibold tabular-nums w-9 sm:w-10 text-right"
+              style={{ color: visual.text }}
+              aria-live="polite"
+            >
+              {percent}%
+            </span>
             <div
-              className={`h-full rounded-full bg-gradient-to-r ${visual.barGradient} transition-all duration-500 ease-out`}
-              style={{ width: `${percent === 0 ? 0 : Math.max(displayPercent, 2)}%` }}
-            />
+              className="h-2.5 sm:h-3 min-w-0 flex-1 rounded-full bg-white/10 overflow-hidden"
+              role="progressbar"
+              aria-valuenow={percent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Progresso da análise"
+            >
+              <div
+                className={`h-full rounded-full bg-gradient-to-r ${visual.barGradient} transition-all duration-500 ease-out`}
+                style={{ width: `${percent === 0 ? 0 : Math.max(displayPercent, 2)}%` }}
+              />
+            </div>
           </div>
         </div>
-        {trailing ? <div className="shrink-0">{trailing}</div> : null}
+
+        {trailing ? <div className="shrink-0 flex items-center gap-2.5">{trailing}</div> : null}
       </div>
-    </div>
+    </header>
   );
 }
 

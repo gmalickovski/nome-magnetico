@@ -8,7 +8,10 @@ import { getArquetipo } from '../../../backend/numerology/archetypes';
 import ScoreDisplay from '../../../frontend/components/app/ScoreDisplay';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import { marked } from 'marked';
-import NomeSocialResultado from '../../../frontend/components/app/resultado/NomeSocialResultado.astro';
+import { ChatSidebarSection } from '../../../frontend/components/app/chat/ChatSidebarSection';
+import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
+import { buildChatReadingSummary } from '../../../backend/numerology/chat-reading-summary';
+import { computeMotorRadarAxes, motorRadarToRecord } from '../../../shared/interactive-engine/motor-radar';
 import NomeAtualResultado from '../../../frontend/components/app/resultado/NomeAtualResultado.astro';
 import NomeBebResultado from '../../../frontend/components/app/resultado/NomeBebResultado.astro';
 import NomeEmpresaResultado from '../../../frontend/components/app/resultado/NomeEmpresaResultado.astro';
@@ -88,7 +91,7 @@ const isFree        = isAnaliseGratuita || (analysis as any).is_free === true;
 
 const { data: profile } = await supabase
   .from('profiles')
-  .select('role')
+  .select('role, birth_name, birth_date')
   .eq('id', user.id)
   .maybeSingle();
 const isAdmin = profile?.role === 'admin';
@@ -157,11 +160,13 @@ function toScoreDate(value?: string | null): string {
 // Certificado Nome Social: nome de nascimento + score, depois nome harmonizado + score
 const nomeNascimentoCertificado =
   (rankingSocial?.nomeNascimento as string | undefined)?.trim()
+  || (profile?.birth_name as string | undefined)?.trim()
   || (analysis.nome_completo as string | undefined)?.trim()
   || '';
 const dataScoreSocial =
   toScoreDate((rankingSocial?.dataNascimento as string | undefined) ?? null)
-  || toScoreDate(analysis.data_nascimento ?? null);
+  || toScoreDate(analysis.data_nascimento ?? null)
+  || toScoreDate((profile?.birth_date as string | undefined) ?? null);
 const showDualCertificate =
   isNomeSocial
   && !isFree
@@ -208,6 +213,36 @@ const cinco_numeros_empresa = isNomeEmpresa && rankingEmpresa?.melhorNome ? [
 ] : cinco_numeros;
 
 const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
+
+const isSocialSummaryView = isNomeSocial && !isFree;
+const socialBirthPanel =
+  isSocialSummaryView && nomeNascimentoCertificado && dataScoreSocial
+    ? buildClientBirthNamePanel(nomeNascimentoCertificado, dataScoreSocial)
+    : null;
+const socialHarmonizedPanel =
+  isSocialSummaryView && showDualCertificate && nomeExibido && dataScoreSocial
+    ? buildClientBirthNamePanel(nomeExibido, dataScoreSocial)
+    : null;
+const socialReadingSummary =
+  isSocialSummaryView && nomeExibido && dataScoreSocial
+    ? buildChatReadingSummary(nomeExibido, dataScoreSocial)
+    : null;
+const socialRadarAxes =
+  isSocialSummaryView && nomeNascimentoCertificado && dataScoreSocial
+    ? motorRadarToRecord(computeMotorRadarAxes(nomeNascimentoCertificado, dataScoreSocial))
+    : null;
+const socialRadarOverlayAxes =
+  isSocialSummaryView && showDualCertificate && nomeExibido && dataScoreSocial
+    ? motorRadarToRecord(computeMotorRadarAxes(nomeExibido, dataScoreSocial))
+    : null;
+const socialContextChips: string[] = [
+  ...(typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
+    ? [rankingSocial.assinaturaAtual.trim()]
+    : []),
+  ...(Array.isArray(rankingSocial?.ondeVaiUsar)
+    ? rankingSocial.ondeVaiUsar.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0)
+    : []),
+];
 ---
 
 <ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
@@ -442,7 +477,8 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
           })();
         </script>
 
-        {/* ── SEÇÃO 1: HEADER / CERTIFICADO ── */}
+        {/* ── SEÇÃO 1: HEADER / CERTIFICADO (legado / outros produtos) ── */}
+        {!isSocialSummaryView && (
         <section class="rounded-2xl bg-white/5 p-6 md:p-8 mb-6">
           <div class="flex items-center justify-between gap-3 mb-4">
             <p class="font-cinzel text-xs uppercase tracking-[0.2em] text-[#76746a]">
@@ -545,6 +581,7 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
             </div>
           )}
         </section>
+        )}
 
         {/* ══════════════════════════════════════════════════
             NOME ATUAL (análise gratuita) — ESTRUTURA SEPARADA
@@ -572,30 +609,26 @@ const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
         )}
 
         {/* ══════════════════════════════════════════════════
-            NOME SOCIAL — ESTRUTURA PRINCIPAL (pago)
+            NOME SOCIAL — RESUMO PÓS-ESCOLHA UNIFICADO (mobile + desktop, sem sugestões)
         ══════════════════════════════════════════════════ */}
-        {isNomeSocial && !isFree && (
-          <NomeSocialResultado
-            analysis={analysis}
-            nomeExibido={nomeExibido}
-            cincoNumeros={cinco_numeros}
-            expressao={analysis.numero_expressao}
-            arquetipoData={arquetipoData}
-            tVida={tVida}
-            tPessoal={tPessoal}
-            tSocial={tSocial}
-            tDestino={tDestino}
-            hasTriangulos={hasTriangulos}
-            bloqueios={bloqueios}
-            arcanoData={arcanoData}
-            licoesRaw={licoesRaw}
-            debitosRaw={debitosRaw}
-            tendenciasRaw={tendenciasRaw}
-            frequenciasRaw={frequenciasRaw}
-            analiseHtml={analiseHtml}
-            topNames={topNames}
-            rankingSocial={rankingSocial}
-            canGenerateCandidateReports={canGenerateSocialCandidateReports}
+        {isSocialSummaryView && socialBirthPanel && (
+          <ChatSidebarSection
+            client:load
+            birthPanel={socialBirthPanel}
+            harmonizedPanel={socialHarmonizedPanel}
+            showScoreCard={true}
+            showStarDetail={true}
+            starPanelData={socialHarmonizedPanel ?? socialBirthPanel}
+            isSuggestion={Boolean(socialHarmonizedPanel)}
+            radarAxes={socialRadarAxes}
+            radarOverlayAxes={socialRadarOverlayAxes}
+            radarShowNumericLabels={Boolean(socialHarmonizedPanel)}
+            contextChips={socialContextChips}
+            showRadar={Boolean(socialRadarAxes)}
+            summaryItems={[]}
+            showSummary={false}
+            readingSummary={socialReadingSummary}
+            showReadingSummary={Boolean(socialReadingSummary)}
           />
         )}
 

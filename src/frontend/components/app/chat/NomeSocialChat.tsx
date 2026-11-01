@@ -248,6 +248,7 @@ export function NomeSocialChat({
   const paywallPanelShownRef = useRef(false);
   const subscriberResumeRef = useRef(false);
   const sessionBootstrapped = useRef(false);
+  const sessionClearedRef = useRef(false);
   const chatStartedAtRef = useRef<number | null>(null);
   const stepViewedAtRef = useRef<number>(Date.now());
   const blockTransitionsShown = useRef<Set<BlockTransitionId>>(new Set());
@@ -402,20 +403,40 @@ export function NomeSocialChat({
     freeAnalysisId,
   });
 
+  const hasChatProgress =
+    !sessionClearedRef.current &&
+    !analysisId &&
+    (birthConfirmed || Object.keys(answers).length > 0 || messages.length > 1 || stepIndex > 0);
+
   const flushChatSessionToStorage = () => {
-    if (!userId) return;
+    if (!userId || !persistReady.current) return;
+    if (!hasChatProgress) {
+      clearChatSession(userId);
+      return;
+    }
     saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
   };
 
   useEffect(() => {
     if (!userId || !persistReady.current) return;
+    if (!hasChatProgress) {
+      clearChatSession(userId);
+      return;
+    }
+    saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
 
-    const timer = window.setTimeout(() => {
+    const handleBeforeLeave = () => {
       saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
-    }, 450);
+    };
+    window.addEventListener('pagehide', handleBeforeLeave);
+    window.addEventListener('beforeunload', handleBeforeLeave);
+    return () => {
+      window.removeEventListener('pagehide', handleBeforeLeave);
+      window.removeEventListener('beforeunload', handleBeforeLeave);
+    };
 
-    return () => window.clearTimeout(timer);
   }, [
+    hasChatProgress,
     userId,
     messages,
     answers,
@@ -508,6 +529,7 @@ export function NomeSocialChat({
   }, [birthConfirmed, activeSuggestionId, confirmedDate, suggestions]);
 
   const resetChat = () => {
+    sessionClearedRef.current = true;
     clearChatSession(userId);
     applyFreshSession();
   };
@@ -1642,6 +1664,7 @@ export function NomeSocialChat({
     suggestionRank: suggestionRank || 1,
     analysisId,
     ensureAnalysisId: paidAccessActive ? ensurePaidAnalysisIdForPdf : undefined,
+    onPdfSuccess: resetChat,
     isFree: !paidAccessActive,
     emailConfirmed,
     screen: chatDockScreen ?? 'chat_questionnaire',
@@ -1813,12 +1836,27 @@ export function NomeSocialChat({
         currentStep={stepIndex}
         totalSteps={totalSteps}
         remaining={remaining}
-        className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
+        className="shrink-0 z-20 bg-dark-deeper/95 md:bg-[#111111]/95 backdrop-blur-md border-b border-white/5 md:border-[#D4AF37]/15"
         trailing={
-          <ChatRestartButton
-            onClick={handleRequestReset}
-            className="hidden md:inline-flex"
-          />
+          <>
+            {freePaywallActive ? (
+              <ChatPaywallStickyDesktop
+                visible={paywallStickyVisible}
+                onClick={() => goPaywallCheckout('sticky')}
+              />
+            ) : (
+              <ChatPdfStickyDesktop
+                model={pdfCtaModel}
+                onClick={onPdfStickyClick}
+                onResendEmail={onPdfResendEmail}
+                resending={pdfResending}
+              />
+            )}
+            <ChatRestartButton
+              onClick={handleRequestReset}
+              className="hidden md:inline-flex"
+            />
+          </>
         }
       />
 
@@ -1839,7 +1877,7 @@ export function NomeSocialChat({
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-clearance)] md:pb-24">
+          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-clearance)] md:pb-6">
             {messages.map((msg) => {
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
@@ -2062,12 +2100,6 @@ export function NomeSocialChat({
             <div ref={chatBottomRef} />
           </div>
 
-          {freePaywallActive ? (
-            <ChatPaywallStickyDesktop
-              visible={paywallStickyVisible}
-              onClick={() => goPaywallCheckout('sticky')}
-            />
-          ) : null}
         </main>
 
         <aside
@@ -2083,15 +2115,6 @@ export function NomeSocialChat({
           </ChatSidebarPanelChrome>
         </aside>
       </div>
-
-      {!freePaywallActive && (
-        <ChatPdfStickyDesktop
-          model={pdfCtaModel}
-          onClick={onPdfStickyClick}
-          onResendEmail={onPdfResendEmail}
-          resending={pdfResending}
-        />
-      )}
 
       <MobileDockActionBridge
         layout={chatDockLayout}

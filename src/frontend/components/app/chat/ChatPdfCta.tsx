@@ -109,6 +109,8 @@ export function useChatPdfCta(input: {
   analysisId?: string;
   /** Cria/persiste análise paga quando o chat ainda não tem analysisId. */
   ensureAnalysisId?: (signal: AbortSignal) => Promise<string | undefined>;
+  /** Callback acionado após a geração e download bem-sucedidos da análise/PDF. */
+  onPdfSuccess?: () => void;
   isFree: boolean;
   emailConfirmed: boolean;
   screen: string;
@@ -127,9 +129,9 @@ export function useChatPdfCta(input: {
   const [priceLabel, setPriceLabel] = useState('');
   const [resending, setResending] = useState(false);
   const shownRef = useRef(false);
-  const glowDoneRef = useRef(false);
   const pdfRunLockRef = useRef(false);
   const pdfAbortRef = useRef<AbortController | null>(null);
+  const prevDisplayNameRef = useRef('');
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -148,6 +150,8 @@ export function useChatPdfCta(input: {
   }, [input.isFree]);
 
   useEffect(() => {
+    const nameChanged = prevDisplayNameRef.current !== displayName;
+    prevDisplayNameRef.current = displayName;
     if (!visible) {
       shownRef.current = false;
       setPhase('idle');
@@ -155,6 +159,8 @@ export function useChatPdfCta(input: {
     }
     if (!input.emailConfirmed) {
       setPhase('email_gate');
+    } else if (nameChanged) {
+      setPhase('idle');
     } else {
       setPhase((p) => (p === 'loading' || p === 'ready' || p === 'error' ? p : 'idle'));
     }
@@ -231,7 +237,7 @@ export function useChatPdfCta(input: {
       const blob = await res.blob();
       const cd = res.headers.get('content-disposition') ?? '';
       const match = cd.match(/filename="?([^";]+)"?/i);
-      let filename = match?.[1] ?? 'analise-nome-social.pdf';
+      const filename = match?.[1] ?? 'analise-nome-social.pdf';
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objectUrl;
@@ -245,6 +251,7 @@ export function useChatPdfCta(input: {
         suggestion_rank: input.suggestionRank,
         ...(opts?.auto ? { auto: true } : {}),
       });
+      input.onPdfSuccess?.();
       return true;
     } catch (err) {
       if (signal.aborted) {
@@ -261,7 +268,7 @@ export function useChatPdfCta(input: {
     } finally {
       pdfRunLockRef.current = false;
     }
-  }, [input.analysisId, input.ensureAnalysisId, input.suggestionRank, addToast]);
+  }, [input.analysisId, input.ensureAnalysisId, input.onPdfSuccess, input.suggestionRank, addToast]);
 
   const triggerAutoPdf = useCallback(async (): Promise<boolean> => {
     if (input.isFree || !input.emailConfirmed) return false;
@@ -411,85 +418,64 @@ export function ChatPdfStickyDesktop({
 
   if (!model.emailConfirmed || model.phase === 'email_gate') {
     return (
-      <div className="hidden md:flex fixed bottom-6 left-1/2 z-[75] w-full max-w-xl -translate-x-1/2 px-4 pointer-events-none justify-center">
-        <div
-          className="pointer-events-auto w-full max-w-lg rounded-full border-2 border-[#F59E0B] bg-[#131313]/95 px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
-          role="status"
+      <div
+        className="hidden md:inline-flex items-center gap-2 rounded-full border border-[#F59E0B]/70 bg-[#131313]/95 px-3 py-1.5"
+        role="status"
+      >
+        <span className="text-xs font-semibold text-[#F59E0B] whitespace-nowrap">
+          Confirme seu e-mail
+        </span>
+        <button
+          type="button"
+          onClick={onResendEmail}
+          disabled={resending}
+          className="shrink-0 rounded-full border border-[#F59E0B]/60 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#F59E0B] hover:bg-[#F59E0B]/10 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[2px]"
         >
-          <p className="text-sm font-semibold text-[#F59E0B] flex-1 text-center sm:text-left">
-            Confirme seu e-mail para gerar o PDF
-          </p>
-          <button
-            type="button"
-            onClick={onResendEmail}
-            disabled={resending}
-            className="shrink-0 rounded-full border border-[#F59E0B]/60 px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#F59E0B] hover:bg-[#F59E0B]/10 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
-          >
-            {resending ? 'Enviando…' : 'Reenviar e-mail'}
-          </button>
-        </div>
+          {resending ? 'Enviando…' : 'Reenviar'}
+        </button>
       </div>
     );
   }
 
   const title = model.isFree
-    ? `Desbloquear análise de ${nomeTrunc}${model.priceLabel ? ` · ${model.priceLabel}` : ''}`
+    ? `Desbloquear Análise${model.priceLabel ? ` · ${model.priceLabel}` : ''}`
     : model.phase === 'ready'
-      ? 'Baixar PDF'
-      : isLoading
-        ? 'Preparando o seu PDF'
-        : `Gerar análise completa de ${nomeTrunc}`;
+      ? 'Baixar Análise'
+      : 'Gerar Análise';
+
+  const Icon = model.isFree ? IconLockOpen : IconFileDown;
 
   return (
-    <div className="hidden md:flex fixed bottom-6 left-1/2 z-[75] w-full max-w-xl -translate-x-1/2 px-4 pointer-events-none justify-center">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={isLoading}
-        aria-busy={isLoading}
-        className={`pointer-events-auto w-full max-w-xl min-h-[52px] rounded-full bg-[#D4AF37] px-6 py-3 text-left shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition-opacity duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] disabled:opacity-90 ${
-          isError ? 'ring-2 ring-[#FF6B6B]' : ''
-        } ${reduced ? 'transition-opacity duration-[120ms]' : ''}`}
-      >
-        <span className="flex items-center justify-center gap-2">
-          {isLoading && (
-            <svg
-              className="h-4 w-4 animate-spin text-[#111111]"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          )}
-          <span
-            key={nomeTrunc}
-            className={`font-semibold text-[#111111] text-sm sm:text-base ${
-              reduced ? 'transition-opacity duration-[120ms]' : 'transition-opacity duration-150'
-            }`}
-          >
-            {title}
-          </span>
-        </span>
-        {!model.isFree && model.phase !== 'ready' && !isLoading && (
-          <span className="nm-caption block text-center text-[#111111]/80 mt-0.5">
-            PDF com a assinatura {truncateDisplayName(model.assinaturaLabel, 32)}, pronto para salvar e
-            imprimir.
-          </span>
-        )}
-        {isError && (
-          <span className="nm-caption block text-center text-[#FF6B6B] mt-0.5 font-semibold">
-            Tentar de novo
-          </span>
-        )}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isLoading}
+      aria-busy={isLoading}
+      title={nomeTrunc ? `${title} — ${nomeTrunc}` : title}
+      className={`hidden md:inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-4 py-2 min-h-[36px] text-xs font-bold uppercase tracking-wider text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[2px] disabled:opacity-85 ${
+        isError ? 'ring-2 ring-[#FF6B6B]' : ''
+      } ${reduced ? 'transition-opacity duration-[120ms]' : ''}`}
+    >
+      {isLoading ? (
+        <svg
+          className="h-3.5 w-3.5 animate-spin text-[#131313] shrink-0"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          aria-hidden
+        >
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      ) : (
+        <Icon className="h-3.5 w-3.5 shrink-0 text-[#131313]" />
+      )}
+      <span>{title}</span>
+    </button>
   );
 }
 
@@ -506,23 +492,22 @@ export function ChatPdfDockCircle({
   onClick,
   exiting = false,
   onGlowDone,
-  tooltip = 'Baixar PDF',
+  tooltip,
 }: ChatPdfDockCircleProps) {
   if (!model.visible && !exiting) return null;
   const reduced = prefersReducedMotion();
   const Icon = model.isFree ? IconLockOpen : IconFileDown;
   const isLoading = model.phase === 'loading';
-  const label = model.isFree
-    ? 'Desbloquear análise completa'
+  const defaultActionLabel = model.isFree
+    ? 'Desbloquear Análise'
     : model.phase === 'ready'
-      ? 'Baixar PDF'
-      : isLoading
-        ? 'Preparando o seu PDF'
-        : 'Gerar análise completa em PDF';
+      ? 'Baixar Análise'
+      : 'Gerar Análise';
+  const label = isLoading ? 'Preparando o seu PDF' : defaultActionLabel;
 
   return (
     <DockTooltipButton
-      tooltip={tooltip}
+      tooltip={tooltip ?? defaultActionLabel}
       onClick={onClick}
       disabled={isLoading || !model.emailConfirmed}
       aria-label={label}
