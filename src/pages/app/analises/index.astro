@@ -46,8 +46,8 @@ const analysesWithMeta = paidAnalyses.map(a => {
   const rankingSocial  = (a.product_type === 'nome_social'  ? freqData?.ranking : null) as any;
 
   const nomeExibido =
-    (a.product_type === 'nome_social' && rankingSocial?.melhorNome?.nomeCompleto)
-      ? rankingSocial.melhorNome.nomeCompleto
+    (a.product_type === 'nome_social' && (freqData?.selectedNomeSocial || rankingSocial?.melhorNome?.nomeCompleto))
+      ? (freqData?.selectedNomeSocial ?? rankingSocial.melhorNome.nomeCompleto)
     : (a.product_type === 'nome_bebe' && rankingBebe?.melhorNome?.nomeCompleto)
       ? rankingBebe.melhorNome.nomeCompleto
     : (a.product_type === 'nome_empresa' && rankingEmpresa?.melhorNome?.nomeEmpresa)
@@ -65,8 +65,8 @@ const analysesWithMeta = paidAnalyses.map(a => {
     } else if (version === 'v3' && a.nome_completo && a.data_nascimento) {
       const parts = String(a.data_nascimento).split('-');
       const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : a.data_nascimento;
-      const targetName = (a.product_type === 'nome_social' && rankingSocial?.melhorNome?.nomeCompleto)
-        ? rankingSocial.melhorNome.nomeCompleto
+      const targetName = (a.product_type === 'nome_social' && (freqData?.selectedNomeSocial || rankingSocial?.melhorNome?.nomeCompleto))
+        ? (freqData?.selectedNomeSocial ?? rankingSocial.melhorNome.nomeCompleto)
         : a.nome_completo;
       score = avaliarNome(targetName, dataPt).score_v3;
     } else if (a.score != null) {
@@ -92,7 +92,20 @@ const uniqueProducts = [...new Set(analysesWithMeta.map(a => a.product_type ?? '
 const hasMultipleProducts = uniqueProducts.length > 1;
 ---
 
-<AppLayout title="Minhas Análises">
+<AppLayout
+  title="Minhas Análises"
+  headerBackHref="/app"
+  headerBackLabel="Voltar para o início"
+>
+  {!isLocked && hasAnyPaidAccess && (
+    <a
+      slot="header-actions"
+      href="/app/analise/nome-social"
+      class="hidden md:inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-300"
+    >
+      + Nova Análise
+    </a>
+  )}
   <div class="space-y-6 max-w-[1440px] mx-auto w-full">
     {isLocked ? (
       <section class="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center opacity-75 md:p-12">
@@ -121,7 +134,7 @@ const hasMultipleProducts = uniqueProducts.length > 1;
       {hasAnyPaidAccess && (
         <a
           href="/app"
-          class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
+          class="md:hidden inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
         >
           + Nova Análise
         </a>

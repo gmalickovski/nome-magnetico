@@ -15,44 +15,26 @@ export interface Props {
 const { title, analysisId, productType = 'nome_social', isFree = false, showActions = true, isAnalyst = false } = Astro.props;
 ---
 
-<AppLayout title={title}>
-  <div class="md:-mx-10 md:-mt-10 lg:-mx-14">
-    <!-- Header fixo: left acompanha sidebar via --sidebar-w (z-39 < sidebar z-40) -->
-    <div class="app-fixed-header fixed top-0 right-0 z-30 hidden border-b border-[#D4AF37]/15 bg-[#111111]/95 backdrop-blur-md md:block">
-      <div class="flex w-full items-center justify-between gap-4 px-5 py-2 md:px-6">
-        <a href="/app/analises" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-400 transition-colors hover:text-[#D4AF37]">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          <span class="hidden sm:inline">Voltar para minhas análises</span>
-          <span class="sm:hidden">Voltar</span>
-        </a>
-
-        {showActions && (
-          <PDFFeedbackButton client:load analysisId={analysisId} productType={productType} isFree={isFree} showFab={false} isAnalyst={isAnalyst} />
-        )}
-      </div>
-    </div>
-
-    <!-- Spacer: compensates fixed header height (~36px) -->
-    <div class="hidden md:block h-9"></div>
-
-    <div class="mx-auto max-w-4xl px-2 sm:px-4 nm-mobile-dock-pad-action md:px-6 md:py-12 md:pb-24">
-      <slot />
-    </div>
-  </div>
-
+<AppLayout
+  title={title}
+  headerBackHref="/app/analises"
+  headerBackLabel="Voltar para minhas análises"
+>
   {showActions && (
     <PDFFeedbackButton
+      slot="header-actions"
       client:load
       analysisId={analysisId}
       productType={productType}
       isFree={isFree}
-      fabOnly
       showFab={false}
       isAnalyst={isAnalyst}
     />
   )}
+
+  <div class="mx-auto max-w-4xl nm-mobile-dock-pad-action md:pb-20">
+    <slot />
+  </div>
 
   {showActions && (
     <ResultadoMobileDock
