@@ -9,6 +9,7 @@ import { getProfile } from '../../backend/db/users';
 import { notify, publishAccessAttributes } from '../../backend/notifications/notify';
 import { shouldNotifyAdminSlackForProvider } from '../../backend/payments/admin-slack';
 import type { ProductType } from '../../backend/payments/stripe';
+import { formatBRLFromCents } from '../../backend/money/format-brl-cents';
 
 const schema = z.object({
   subscriptionId: z.string().uuid(),
@@ -49,6 +50,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // Buscar perfil para notificações
   const profile = await getProfile(user.id);
+  // Sempre numérico (centavos) para o template do n8n não receber vazio.
+  const amount = subscription.amount_paid ?? 0;
+  const amountFormatted = formatBRLFromCents(amount);
   if (profile) {
     await notify('refund.requested', {
       email: profile.email,
@@ -57,7 +61,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       subscriptionId: subscription.id,
       productType: subscription.product_type,
       productName: PRODUCT_NAMES[subscription.product_type as ProductType],
-      amount: subscription.amount_paid ?? undefined,
+      amount,
+      amount_formatted: amountFormatted,
       purchasedAt: subscription.starts_at,
       requestedAt: new Date().toISOString(),
       reason: body.reason ?? null,
@@ -98,9 +103,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     await notify('payment.refunded', {
       email: profile.email,
       firstName: profile.nome ?? profile.email.split('@')[0],
+      userId: user.id,
       productType: subscription.product_type,
       productName: PRODUCT_NAMES[subscription.product_type as ProductType],
-      amount: subscription.amount_paid ?? undefined,
+      amount,
+      amount_formatted: amountFormatted,
       skipAdminSlack: !shouldNotifyAdminSlackForProvider(subscription.payment_provider),
     });
   }
