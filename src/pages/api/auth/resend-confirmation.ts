@@ -13,28 +13,17 @@ export const POST: APIRoute = async ({ locals, request }) => {
     return json({ error: 'Configuração do servidor inválida' }, 500);
   }
 
-  let redirect = '/app';
-  try {
-    const body = await request.json();
-    if (typeof body?.redirect === 'string' && body.redirect.startsWith('/')) {
-      redirect = body.redirect;
-    }
-  } catch {}
-
   const appUrl = process.env.APP_URL ?? 'http://localhost:4321';
-  const confirmationUrl = new URL('/auth/confirmar-email', appUrl);
-  confirmationUrl.searchParams.set('redirect', redirect);
+  const emailRedirectTo = new URL('/auth/confirmar-email', appUrl).toString();
 
   const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const { error } = await supabaseAnon.auth.signInWithOtp({
+  const { error } = await supabaseAnon.auth.resend({
+    type: 'signup',
     email: user.email,
-    options: {
-      emailRedirectTo: confirmationUrl.toString(),
-      shouldCreateUser: false,
-    },
+    options: { emailRedirectTo },
   });
 
   if (error) {

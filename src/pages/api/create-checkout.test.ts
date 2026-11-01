@@ -128,14 +128,21 @@ mock.module('../../utils/public-url', {
 
 const { createCheckoutResponse } = await import('./create-checkout');
 
-function post(body: object) {
+function post(body: object, userOverrides: { email_confirmed_at?: string | null } = {}) {
   return createCheckoutResponse({
     request: new Request('http://localhost/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
-    user: { id: 'user-1', email: 'buyer@example.com' },
+    user: {
+      id: 'user-1',
+      email: 'buyer@example.com',
+      email_confirmed_at:
+        'email_confirmed_at' in userOverrides
+          ? userOverrides.email_confirmed_at
+          : '2026-10-01T00:00:00.000Z',
+    },
     url: new URL('http://localhost/api/create-checkout'),
   });
 }
@@ -170,6 +177,15 @@ describe('create-checkout · DEV-239', () => {
     assert.equal(data.bypass, true);
     assert.equal(testCheckoutCalls.length, 1);
     assert.equal(notifyCalls.some((c) => c.event === 'admin.new_payment'), false);
+  });
+
+  it('e-mail não confirmado retorna 403 email_not_confirmed', async () => {
+    const res = await post({ product_type: 'nome_social' }, { email_confirmed_at: null });
+    const data = await res.json();
+
+    assert.equal(res.status, 403);
+    assert.equal(data.error, 'email_not_confirmed');
+    assert.equal(testCheckoutCalls.length, 0);
   });
 
   it('perfil is_test com assinatura test ativa retorna 409', async () => {

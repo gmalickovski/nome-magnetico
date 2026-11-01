@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabase, createUserClient } from '../../../backend/db/supabase';
+import { syncVerifiedEmailMarker } from '../../../backend/auth/confirmEmail';
+import type { User } from '@supabase/supabase-js';
 
 const TAG = '[ensure-profile]';
 
@@ -26,6 +28,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   let userId: string;
   let userEmail: string;
   let userNome: string | null = null;
+  let authUser: User | null = null;
 
   if (headerToken) {
     // Verificar token com o cliente autenticado
@@ -40,11 +43,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    authUser = user;
     userId = user.id;
     userEmail = user.email ?? '';
     userNome = user.user_metadata?.nome ?? null;
     console.log(`${TAG} usuário autenticado via header: ${userEmail} (${userId})`);
   } else if (locals.user) {
+    authUser = locals.user;
     userId = locals.user.id;
     userEmail = locals.user.email ?? '';
     userNome = locals.user.user_metadata?.nome ?? null;
@@ -96,6 +101,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     console.log(`${TAG} perfil garantido:`, JSON.stringify(profile));
+
+    if (authUser?.email_confirmed_at) {
+      const sync = await syncVerifiedEmailMarker(userId);
+      if (!sync.ok && sync.status !== 409) {
+        console.warn(`${TAG} sync email marker:`, sync.error);
+      }
+    }
 
     return new Response(JSON.stringify({ profile, created: !existing }), {
       status: 200,

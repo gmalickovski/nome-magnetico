@@ -3,7 +3,8 @@ import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analy
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
 import {
   landingSectionShellClass,
@@ -66,6 +67,7 @@ export function PricingSection({
   isLoggedIn = false,
 }: PricingSectionProps) {
   const [checkoutProduct, setCheckoutProduct] = useState<ProductType | null>(null);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
   const reveal = useLandingSectionReveal();
 
   useEffect(() => {
@@ -173,7 +175,11 @@ export function PricingSection({
           window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
           return;
         }
-        throw new Error(checkoutFailureMessage(result));
+        if (isCheckoutEmailNotConfirmed(result)) {
+          setEmailNotConfirmed(true);
+          return;
+        }
+        throw new Error('Erro ao criar checkout');
       }
       if ('bypass' in result && result.bypass) {
         window.location.href = result.redirectUrl;
@@ -324,6 +330,21 @@ export function PricingSection({
           </div>
         </div>
       </div>
+
+      {emailNotConfirmed && (
+        <div className="fixed inset-0 z-[100002] flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[#D4AF37]/30 bg-slate-900 p-6 shadow-2xl">
+            <EmailConfirmationPrompt />
+            <button
+              type="button"
+              onClick={() => setEmailNotConfirmed(false)}
+              className="mt-4 w-full rounded-full border border-[#D4AF37]/40 px-4 py-2 text-sm font-semibold text-[#D4AF37]"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {checkoutProduct && (
         <CheckoutModal

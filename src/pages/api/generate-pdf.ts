@@ -8,6 +8,7 @@ import { NomeBebePDF } from '../../frontend/components/pdf/NomeBebePDF';
 import { NomeEmpresaPDF } from '../../frontend/components/pdf/NomeEmpresaPDF';
 import { logError } from '../../backend/utils/error-logger';
 import { getEffectivePrice } from '../../backend/payments/prices';
+import { guardConfirmedEmail } from '../../backend/auth/requireConfirmedEmail';
 
 // Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile)
 const pdfCache = new Map<string, { buffer: Buffer; expiresAt: number }>();
@@ -22,6 +23,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
       headers: { 'Location': '/auth/login?redirect=' + encodeURIComponent(url.pathname + url.search) },
     });
   }
+
+  const emailGate = guardConfirmedEmail(user);
+  if (emailGate) return emailGate;
 
   const analysisId = url.searchParams.get('id');
   if (!analysisId) return new Response('ID ausente', { status: 400 });

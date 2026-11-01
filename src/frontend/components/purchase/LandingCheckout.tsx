@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from './CheckoutModal';
 import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
-import { checkoutFailureMessage, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
 
 type ProductType = SellableProductType;
@@ -37,6 +38,7 @@ export function LandingCheckout({
   ctaPosition,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   // Auto-abre o modal se o usuário voltou do cadastro com ?checkout=PRODUCT na URL
   useEffect(() => {
@@ -111,7 +113,11 @@ export function LandingCheckout({
           window.location.href = result.redirectUrl ?? analysisPath;
           return;
         }
-        throw new Error(checkoutFailureMessage(result));
+        if (isCheckoutEmailNotConfirmed(result)) {
+          setEmailNotConfirmed(true);
+          return;
+        }
+        throw new Error('Erro ao criar checkout');
       }
       if ('bypass' in result && result.bypass) {
         window.location.href = result.redirectUrl;
@@ -162,6 +168,21 @@ export function LandingCheckout({
       >
         {label ?? 'Comprar Agora'}
       </button>
+
+      {emailNotConfirmed && (
+        <div className="fixed inset-0 z-[100002] flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[#D4AF37]/30 bg-slate-900 p-6 shadow-2xl">
+            <EmailConfirmationPrompt />
+            <button
+              type="button"
+              onClick={() => setEmailNotConfirmed(false)}
+              className="mt-4 w-full rounded-full border border-[#D4AF37]/40 px-4 py-2 text-sm font-semibold text-[#D4AF37]"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {modalOpen && (
         <CheckoutModal
