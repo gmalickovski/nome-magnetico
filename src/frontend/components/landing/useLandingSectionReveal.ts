@@ -31,7 +31,7 @@ export interface LandingSectionRevealOptions {
  */
 export function useLandingSectionReveal(options: LandingSectionRevealOptions = {}) {
   const { startRevealed = true, threshold = 0.08, rootMargin = '0px 0px -40px 0px' } = options;
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement & HTMLDivElement>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
   // Padrão: true no SSR/hidratação para evitar flash vazio. Com startRevealed=false, inicia oculto.
   const [revealed, setRevealed] = useState(startRevealed);

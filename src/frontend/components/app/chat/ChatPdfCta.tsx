@@ -32,6 +32,52 @@ export interface ChatPdfCtaModel {
   screen: string;
 }
 
+const PDF_STATUS_POLL_DELAYS_MS = [1500, 2500, 4000, 5000] as const;
+
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+    const timer = window.setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        window.clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+  });
+}
+
+export async function waitAnalysisCompleteForPdf(
+  analysisId: string,
+  signal: AbortSignal,
+  delaysMs: readonly number[] = PDF_STATUS_POLL_DELAYS_MS
+): Promise<boolean> {
+  for (const delay of delaysMs) {
+    if (signal.aborted) return false;
+    const statusRes = await fetchWithAuth(
+      `/api/analysis-status?id=${encodeURIComponent(analysisId)}`,
+      { signal }
+    );
+    if (signal.aborted) return false;
+    if (statusRes.ok) {
+      const statusData = (await statusRes.json()) as { status?: string };
+      if (statusData.status === 'complete' || statusData.status === 'done') {
+        return true;
+      }
+      if (statusData.status === 'error') {
+        throw new Error('pdf_error');
+      }
+    }
+    await abortableSleep(delay, signal);
+  }
+  return false;
+}
+
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -168,9 +214,17 @@ export function useChatPdfCta(input: {
         return;
       }
       setOverlayPhase('generating');
-      const url = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}&t=${Date.now()}`;
-      const res = await fetchWithAuth(url, { signal });
+      const buildPdfUrl = () =>
+        `/api/generate-pdf?id=${encodeURIComponent(analysisId!)}&t=${Date.now()}`;
+      let res = await fetchWithAuth(buildPdfUrl(), { signal });
       if (signal.aborted) return;
+      if (res.status === 202) {
+        const ready = await waitAnalysisCompleteForPdf(analysisId, signal);
+        if (signal.aborted) return;
+        if (!ready) throw new Error('pdf_not_ready');
+        res = await fetchWithAuth(buildPdfUrl(), { signal });
+        if (signal.aborted) return;
+      }
       if (res.status === 202) throw new Error('pdf_not_ready');
       if (!res.ok) throw new Error('pdf_error');
       const blob = await res.blob();

@@ -57,7 +57,7 @@ function DockInnerWrap({
 
   const inner = (
     <div className={`mobile-chat-dock-shell rounded-[28px] ${omitRoot ? opacityClass : ''}`} style={shellStyle}>
-      <div ref={innerRef} className={barClassName}>
+      <div ref={innerRef as React.RefObject<HTMLDivElement>} className={barClassName}>
         {children}
       </div>
     </div>

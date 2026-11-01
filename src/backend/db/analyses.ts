@@ -171,6 +171,23 @@ export async function findRecentNomeSocialAnalysisForPdf(
   return data[0] as Analysis;
 }
 
+/** Reutiliza análise gratuita existente para o PDF gratuito do chat. */
+export async function findReusableFreeAnalysisForUser(
+  userId: string
+): Promise<Analysis | null> {
+  const { data, error } = await supabase
+    .from('analyses')
+    .select('*')
+    .eq('user_id', userId)
+    .or('is_free.eq.true,product_type.eq.analise_gratuita')
+    .in('status', ['complete', 'processing', 'pending'])
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error || !data?.length) return null;
+  return data[0] as Analysis;
+}
+
 export async function getAnalysis(analysisId: string): Promise<Analysis | null> {
   const { data, error } = await supabase
     

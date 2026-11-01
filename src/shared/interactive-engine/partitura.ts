@@ -34,7 +34,7 @@ export interface PassoConfig {
   limiar?: string;
 }
 
-export const PARTITURA_PASSOS: Record<PassoChatId, PassoConfig> = {
+export const PARTITURA_PASSOS: Partial<Record<PassoChatId, PassoConfig>> & Record<string, PassoConfig> = {
   nome_nascimento: {
     id: 'nome_nascimento',
     ordem: 1,

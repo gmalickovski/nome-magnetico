@@ -10,7 +10,7 @@ export interface ReadingRadarProps {
 }
 
 const AXIS_CONFIG = [
-  { key: 'expressao', label: 'Expressão', angle: -Math.PI / 2, align: 'middle', dy: -6 },
+  { key: 'expressao', label: 'Expressão', angle: -Math.PI / 2, align: 'middle', dx: 0, dy: -6 },
   {
     key: 'motivacao',
     label: 'Motivação',
