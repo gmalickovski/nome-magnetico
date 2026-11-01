@@ -23,6 +23,7 @@ export interface SummaryDrawerProps {
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
   radarOverlayAxes?: RadarAxesData | null;
+  radarLabels?: Record<string, string>;
   radarShowNumericLabels?: boolean;
   contextChips?: string[];
   summaryItems: ReadingSummaryItem[];
@@ -50,6 +51,7 @@ export function SummaryDrawer({
   onResetToBase,
   radarAxes,
   radarOverlayAxes = null,
+  radarLabels,
   radarShowNumericLabels = false,
   contextChips = [],
   summaryItems,
@@ -141,6 +143,7 @@ export function SummaryDrawer({
           onResetToBase={onResetToBase}
           radarAxes={radarAxes}
           radarOverlayAxes={radarOverlayAxes}
+          radarLabels={radarLabels}
           radarShowNumericLabels={radarShowNumericLabels}
           contextChips={contextChips}
           showRadar={showRadar}

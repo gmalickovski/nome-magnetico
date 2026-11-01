@@ -22,6 +22,7 @@ export interface ChatSidebarSectionProps {
   onResetToBase?: () => void;
   radarAxes: RadarAxesData | null;
   radarOverlayAxes?: RadarAxesData | null;
+  radarLabels?: Record<string, string>;
   radarShowNumericLabels?: boolean;
   contextChips?: string[];
   showRadar: boolean;
@@ -43,6 +44,7 @@ export function ChatSidebarSection({
   onResetToBase,
   radarAxes,
   radarOverlayAxes = null,
+  radarLabels,
   radarShowNumericLabels = false,
   contextChips = [],
   showRadar,
@@ -78,21 +80,27 @@ export function ChatSidebarSection({
       )}
 
       {showRadar && radarAxes && (
-        <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3 flex flex-col gap-3 w-full">
-          <p className="nm-score-eyebrow self-start">Radar do motor</p>
+        <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3.5 sm:p-4 flex flex-col gap-3.5 w-full">
+          <div className="flex flex-col gap-0.5 self-start">
+            <p className="nm-score-eyebrow text-[#D4AF37]">Mapa de Alinhamento Vibracional</p>
+            <p className="text-[11px] font-inter text-[#A0A0A0]">Ressonância da assinatura com o seu momento</p>
+          </div>
           <ReadingRadar
             axes={radarAxes}
             overlayAxes={radarOverlayAxes}
+            birthScore={birthPanel?.score ?? 60}
+            overlayScore={harmonizedPanel?.score ?? null}
+            labels={radarLabels}
             showNumericLabels={radarShowNumericLabels}
           />
           {contextChips.length > 0 && (
-            <div className="w-full pt-1">
-              <p className="text-[10px] uppercase tracking-wider text-chat-muted mb-2">Seu contexto</p>
+            <div className="w-full pt-1.5 border-t border-white/[0.06]">
+              <p className="text-[10px] uppercase font-cinzel tracking-wider text-chat-muted mb-2">Seu contexto</p>
               <div className="flex flex-wrap gap-1.5">
                 {contextChips.map((chip) => (
                   <span
                     key={chip}
-                    className="inline-flex items-center rounded-full bg-[#1C1C1C] border border-[#D4AF37]/30 px-2.5 py-1 text-[11px] text-[#e5e2e1]"
+                    className="inline-flex items-center rounded-full bg-[#1C1C1C] border border-[#D4AF37]/35 px-2.5 py-1 text-[11px] font-medium text-[#e5e2e1]"
                   >
                     {chip}
                   </span>
