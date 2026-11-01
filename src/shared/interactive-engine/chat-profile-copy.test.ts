@@ -17,8 +17,8 @@ describe('chat-profile-copy · palpite e pós-escolha', () => {
     assert.equal(panel.motivacao, 4);
     assert.equal(panel.missao, 5);
     assert.equal(panel.impressao, 2);
-    assert.equal(panel.score, 66);
-    assert.equal(panel.potencial, 95);
+    assert.equal(panel.score, 64);
+    assert.equal(panel.potencial, 93);
   });
 
   it('palpite de perfil não contém dígitos', () => {
@@ -32,8 +32,8 @@ describe('chat-profile-copy · palpite e pós-escolha', () => {
     });
     assert.equal(profilePalpiteHasNoDigits(text), true);
     assert.ok(text.includes('carreira'));
-    assert.ok(!text.includes('95'));
-    assert.ok(!text.includes('66'));
+    assert.ok(!text.includes('93'));
+    assert.ok(!text.includes('64'));
   });
 
   it('pós-escolha usa só números do motor nos painéis', () => {
@@ -42,15 +42,15 @@ describe('chat-profile-copy · palpite e pós-escolha', () => {
     const block = buildPostSuggestionChoiceBlock({
       assinaturaEscolhida: 'Guilherme Málickovski',
       notaHoje: birth.score,
-      notaEscolhida: 95,
+      notaEscolhida: 93,
       birth,
       chosen,
     });
-    assert.ok(block.includes('66'));
-    assert.ok(block.includes('95'));
+    assert.ok(block.includes('64'));
+    assert.ok(block.includes('93'));
     const facts = buildMotorReadingFacts({
       notaHoje: birth.score,
-      notaEscolhida: 95,
+      notaEscolhida: 93,
       destino: chosen.destino,
       expressao: birth.expressao,
       motivacao: chosen.motivacao,

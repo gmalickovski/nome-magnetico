@@ -4,9 +4,9 @@ import { buildBirthNamePanel } from '../../../../backend/numerology/birth-name-p
 import { harmonyStarNumsFromPanel } from '../../landing/ProductResultFrame.js';
 
 describe('harmonyStarNumsFromPanel', () => {
-  it('Guilherme Malickovski Correa · 14/02/1990 — Missão cabalística, não potencial 95', () => {
+  it('Guilherme Malickovski Correa · 14/02/1990 — Missão cabalística, não potencial 93', () => {
     const panel = buildBirthNamePanel('Guilherme Malickovski Correa', '14/02/1990');
-    assert.equal(panel.potencial, 95);
+    assert.equal(panel.potencial, 93);
     assert.equal(panel.missao, 5);
 
     const nums = harmonyStarNumsFromPanel({

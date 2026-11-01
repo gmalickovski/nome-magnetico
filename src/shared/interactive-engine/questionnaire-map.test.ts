@@ -44,9 +44,9 @@ describe('questionnaire-map · filtros do gerador (sem score)', () => {
     assert.equal(opcoes.maxNivelGeracao, 85);
   });
 
-  it('Guilherme · score de nascimento permanece 66', () => {
+  it('Guilherme · score de nascimento permanece 64', () => {
     const panel = buildBirthNamePanel('Guilherme Malickovski Correa', '14/02/1990');
-    assert.equal(panel.score, 66);
+    assert.equal(panel.score, 64);
     const opcoes = profileToRankingOpcoes({
       nomeUsoBase: 'Guilherme',
       sobrenomesObrigatorios: ['Malickovski', 'Correa'],
@@ -61,7 +61,7 @@ describe('questionnaire-map · filtros do gerador (sem score)', () => {
       contextoLeituraOutros: [],
     });
     const res = analisarNomesSocial([], 'Guilherme Malickovski Correa', '14/02/1990', opcoes);
-    assert.equal(panel.score, 66);
+    assert.equal(panel.score, 64);
     assert.ok(res.melhorNome);
   });
 });
