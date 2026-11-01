@@ -92,12 +92,18 @@ import {
   type PaywallSurface,
 } from './chat-paywall-utils.js';
 import {
+  CHAT_RESUME_POLL_DELAYS_MS,
+  fetchChatResumeState,
   fetchNomeSocialAccessActive,
+  isChatResumeReturn,
   isCheckoutSuccessReturn,
+  markChatResumePdfGenerated,
+  pollChatResumePaid,
   pollProductAccessActive,
   PAYMENT_ACCESS_POLL_DELAYS_MS,
   resolveChatPhaseFromSession,
   stripCheckoutSuccessQuery,
+  type ChatResumeChoicePayload,
 } from './chat-free-access.js';
 import { ChatFreeBirthAnalysisBody } from './ChatFreeBirthAnalysisBody.js';
 import { ChatFreePaywallBubble } from './ChatFreePaywallBubble.js';
@@ -202,6 +208,9 @@ export function NomeSocialChat({
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
   const [paidAccessActive, setPaidAccessActive] = useState(isSubscriber);
   const [paymentConfirming, setPaymentConfirming] = useState(false);
+  const [paymentPendingNotice, setPaymentPendingNotice] = useState<string | null>(null);
+  const [resumeChoice, setResumeChoice] = useState<ChatResumeChoicePayload | null>(null);
+  const autoPdfTriggeredRef = useRef<Set<string>>(new Set());
   const [chatPhase, setChatPhase] = useState<'onboarding' | 'free_paywall' | 'subscriber'>(
     isSubscriber ? 'subscriber' : 'onboarding'
   );
@@ -714,7 +723,11 @@ export function NomeSocialChat({
 
   const goPaywallCheckout = (surface: PaywallSurface) => {
     trackPaywallCtaClicked(surface);
-    window.location.href = buildPaywallCheckoutHref();
+    const chosenSug = suggestions.find((s) => s.id === activeSuggestionId);
+    window.location.href = buildPaywallCheckoutHref({
+      chosenSignature: chosenSug?.nome ?? null,
+      analysisId: analysisId ?? freeAnalysisId ?? null,
+    });
   };
 
   const ensureFreeAnalysisRecord = async (): Promise<string> => {
@@ -802,19 +815,63 @@ export function NomeSocialChat({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (paidAccessActive) {
-      stripCheckoutSuccessQuery();
+    const params = new URLSearchParams(window.location.search);
+    const isResume = isChatResumeReturn(params);
+    const isCheckoutReturn = isCheckoutSuccessReturn(params);
+
+    if (!isCheckoutReturn && !isResume) {
+      if (paidAccessActive) {
+        void fetchChatResumeState().then((resumed) => {
+          if (resumed.paid && resumed.choice && !resumed.choice.pdf_generated) {
+            setResumeChoice(resumed.choice);
+          }
+        });
+      }
       return;
     }
-    if (!birthConfirmed || chatPhase !== 'free_paywall') return;
-    const params = new URLSearchParams(window.location.search);
-    if (!isCheckoutSuccessReturn(params)) return;
 
     stripCheckoutSuccessQuery();
     let cancelled = false;
+    setPaymentPendingNotice(null);
     setPaymentConfirming(true);
 
     void (async () => {
+      if (isResume) {
+        const resumed = await pollChatResumePaid(
+          fetchChatResumeState,
+          CHAT_RESUME_POLL_DELAYS_MS,
+          { isVisible: () => !document.hidden }
+        );
+        if (cancelled) return;
+        setPaymentConfirming(false);
+        if (resumed.paid) {
+          setPaidAccessActive(true);
+          if (resumed.choice) {
+            setResumeChoice(resumed.choice);
+          }
+        } else {
+          setPaymentPendingNotice(
+            'Assim que o pagamento for confirmado, sua análise aparece aqui.'
+          );
+        }
+        return;
+      }
+
+      if (paidAccessActive) {
+        const resumed = await fetchChatResumeState();
+        if (cancelled) return;
+        setPaymentConfirming(false);
+        if (resumed.paid && resumed.choice) {
+          setResumeChoice(resumed.choice);
+        }
+        return;
+      }
+
+      if (!birthConfirmed || chatPhase !== 'free_paywall') {
+        setPaymentConfirming(false);
+        return;
+      }
+
       const ok = await pollProductAccessActive(
         fetchNomeSocialAccessActive,
         PAYMENT_ACCESS_POLL_DELAYS_MS,
@@ -822,7 +879,13 @@ export function NomeSocialChat({
       );
       if (cancelled) return;
       setPaymentConfirming(false);
-      if (ok) setPaidAccessActive(true);
+      if (ok) {
+        setPaidAccessActive(true);
+      } else {
+        setPaymentPendingNotice(
+          'Assim que o pagamento for confirmado, sua análise aparece aqui.'
+        );
+      }
     })();
 
     return () => {
@@ -1500,6 +1563,7 @@ export function NomeSocialChat({
     model: pdfCtaModel,
     onDockClick: onPdfDockClick,
     onStickyClick: onPdfStickyClick,
+    triggerAutoPdf,
     resendEmail: onPdfResendEmail,
     resending: pdfResending,
     toastUi: pdfToastUi,
@@ -1515,6 +1579,47 @@ export function NomeSocialChat({
     emailConfirmed,
     screen: chatDockScreen ?? 'chat_questionnaire',
   });
+
+  useEffect(() => {
+    if (!paidAccessActive || !resumeChoice) return;
+    if (resumeChoice.analysis_id && !analysisId) {
+      setAnalysisId(resumeChoice.analysis_id);
+    }
+    const chosenName = resumeChoice.chosen_signature?.trim();
+    if (!chosenName || suggestions.length === 0) return;
+
+    const matched = suggestions.find(
+      (s) => s.nome.trim().toLowerCase() === chosenName.toLowerCase()
+    );
+    if (!matched) return;
+
+    if (activeSuggestionId !== matched.id) {
+      setActiveSuggestionId(matched.id);
+      return;
+    }
+
+    if (resumeChoice.pdf_generated || autoPdfTriggeredRef.current.has(resumeChoice.id)) {
+      return;
+    }
+
+    autoPdfTriggeredRef.current.add(resumeChoice.id);
+    void (async () => {
+      const marked = await markChatResumePdfGenerated(resumeChoice.id);
+      if (!marked) {
+        setResumeChoice((prev) => (prev ? { ...prev, pdf_generated: true } : null));
+        return;
+      }
+      setResumeChoice((prev) => (prev ? { ...prev, pdf_generated: true } : null));
+      await triggerAutoPdf();
+    })();
+  }, [
+    paidAccessActive,
+    resumeChoice,
+    analysisId,
+    suggestions,
+    activeSuggestionId,
+    triggerAutoPdf,
+  ]);
 
   const prevPdfVisibleRef = useRef(false);
   useEffect(() => {
@@ -1863,12 +1968,18 @@ export function NomeSocialChat({
               </div>
             )}
 
-            {paymentConfirming && freePaywallActive && (
+            {paymentConfirming && (
               <NmBubble>
                 <div className="flex items-center gap-2 text-xs text-chat-muted py-1">
                   <span className="w-2 h-2 rounded-full bg-gold animate-ping" />
                   <span>Confirmando seu pagamento...</span>
                 </div>
+              </NmBubble>
+            )}
+
+            {!paymentConfirming && paymentPendingNotice && !paidAccessActive && (
+              <NmBubble>
+                <p className="text-xs text-chat-muted py-1">{paymentPendingNotice}</p>
               </NmBubble>
             )}
 

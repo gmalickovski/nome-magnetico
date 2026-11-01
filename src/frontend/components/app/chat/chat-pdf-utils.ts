@@ -13,12 +13,30 @@ export function scoreBucket(score: number | undefined | null): string {
   return '0_19';
 }
 
-export function buildNomeSocialCheckoutHref(): string {
+export type ChatCheckoutSource = 'card_pdf' | 'paywall_free';
+
+export interface BuildNomeSocialCheckoutHrefOptions {
+  campaign?: ChatCheckoutSource;
+  chosenSignature?: string | null;
+  analysisId?: string | null;
+}
+
+export function buildNomeSocialCheckoutHref(options?: BuildNomeSocialCheckoutHrefOptions): string {
+  const campaign: ChatCheckoutSource = options?.campaign ?? 'card_pdf';
   const params = new URLSearchParams({
     produto: 'nome_social',
     utm_source: 'app_chat',
-    utm_campaign: 'card_pdf',
+    utm_campaign: campaign,
+    source: campaign,
   });
+  const chosen = options?.chosenSignature?.trim();
+  if (chosen) {
+    params.set('chosen_signature', chosen.slice(0, 80));
+  }
+  const analysisId = options?.analysisId?.trim();
+  if (analysisId) {
+    params.set('analysis_id', analysisId);
+  }
   return `/comprar?${params.toString()}`;
 }
 

@@ -9,8 +9,11 @@ type ProfileRow = {
 
 let profile: ProfileRow = { role: 'user', is_test: false, test_ends_at: null };
 let hasActiveProductSubscription = false;
+let ownedAnalysisId: string | null = null;
 const testCheckoutCalls: unknown[] = [];
 const notifyCalls: { event: string; payload: Record<string, unknown> }[] = [];
+const stripeSessionCalls: Record<string, unknown>[] = [];
+let allowStripeSession = false;
 
 function profileFrom() {
   const builder = {
@@ -27,11 +30,43 @@ function profileFrom() {
   return builder;
 }
 
+function analysesFrom() {
+  let queriedId = '';
+  let queriedUser = '';
+  const builder = {
+    select() {
+      return builder;
+    },
+    eq(col: string, val: string) {
+      if (col === 'id') queriedId = val;
+      if (col === 'user_id') queriedUser = val;
+      return builder;
+    },
+    maybeSingle() {
+      if (ownedAnalysisId && queriedId === ownedAnalysisId && queriedUser === 'user-1') {
+        return Promise.resolve({ data: { id: ownedAnalysisId }, error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    },
+  };
+  return builder;
+}
+
+function chatChoicesFrom() {
+  return {
+    upsert() {
+      return Promise.resolve({ data: null, error: null });
+    },
+  };
+}
+
 mock.module('../../backend/db/supabase', {
   namedExports: {
     supabase: {
       from(table: string) {
         if (table === 'profiles') return profileFrom();
+        if (table === 'analyses') return analysesFrom();
+        if (table === 'chat_checkout_choices') return chatChoicesFrom();
         throw new Error(`unexpected table ${table}`);
       },
     },
@@ -64,8 +99,12 @@ mock.module('../../backend/notifications/notify', {
 mock.module('../../backend/payments/stripe', {
   namedExports: {
     stripe: { promotionCodes: { list: async () => ({ data: [] }) } },
-    createCheckoutSession: async () => {
-      throw new Error('stripe should not run in these tests');
+    createCheckoutSession: async (params: Record<string, unknown>) => {
+      if (!allowStripeSession) {
+        throw new Error('stripe should not run in these tests');
+      }
+      stripeSessionCalls.push(params);
+      return { url: 'https://checkout.stripe.com/pay/cs_test_123' };
     },
   },
 });
@@ -144,8 +183,11 @@ describe('create-checkout · DEV-239', () => {
   beforeEach(() => {
     profile = { role: 'user', is_test: false, test_ends_at: null };
     hasActiveProductSubscription = false;
+    ownedAnalysisId = null;
+    allowStripeSession = false;
     testCheckoutCalls.length = 0;
     notifyCalls.length = 0;
+    stripeSessionCalls.length = 0;
   });
 
   it('comprador real com produto ativo retorna 409 already_active', async () => {
@@ -182,5 +224,62 @@ describe('create-checkout · DEV-239', () => {
     assert.equal(res.status, 409);
     assert.equal(data.code, 'already_active');
     assert.equal(testCheckoutCalls.length, 0);
+  });
+
+  it('DEV-261: repassa chosen_signature, analysis_id validado, source e successUrl com resume=1 sem forçar brevo', async () => {
+    allowStripeSession = true;
+    ownedAnalysisId = '550e8400-e29b-41d4-a716-446655440000';
+
+    const res = await post({
+      product_type: 'nome_social',
+      chosen_signature: '  Maria Clara Luz  ',
+      analysis_id: ownedAnalysisId,
+      source: 'card_pdf',
+      utm_source: 'app_chat',
+      utm_campaign: 'card_pdf',
+    });
+    const data = await res.json();
+
+    assert.equal(res.status, 200);
+    assert.equal(data.url, 'https://checkout.stripe.com/pay/cs_test_123');
+    assert.equal(stripeSessionCalls.length, 1);
+    const call = stripeSessionCalls[0];
+    assert.equal(call.chosenSignature, 'Maria Clara Luz');
+    assert.equal(call.analysisId, ownedAnalysisId);
+    assert.equal(call.source, 'card_pdf');
+    assert.equal(call.utmSource, 'app_chat');
+    assert.equal(call.utmCampaign, 'card_pdf');
+    assert.equal(call.utmMedium, undefined);
+    assert.equal(
+      call.successUrl,
+      'https://www.nomemagnetico.com.br/app?checkout=success&produto=nome_social&resume=1'
+    );
+  });
+
+  it('DEV-261: descarta analysis_id que não pertence ao usuário sem falhar o checkout', async () => {
+    allowStripeSession = true;
+    ownedAnalysisId = '550e8400-e29b-41d4-a716-446655440000';
+
+    const res = await post({
+      product_type: 'nome_social',
+      chosen_signature: 'Maria Clara Luz',
+      analysis_id: '11111111-2222-4333-8444-555555555555',
+      source: 'paywall_free',
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(stripeSessionCalls.length, 1);
+    const call = stripeSessionCalls[0];
+    assert.equal(call.analysisId, undefined);
+    assert.equal(call.chosenSignature, 'Maria Clara Luz');
+    assert.equal(call.source, 'paywall_free');
+  });
+
+  it('DEV-261: rejeita chosen_signature acima de 80 caracteres', async () => {
+    const res = await post({
+      product_type: 'nome_social',
+      chosen_signature: 'X'.repeat(81),
+    });
+    assert.equal(res.status, 400);
   });
 });

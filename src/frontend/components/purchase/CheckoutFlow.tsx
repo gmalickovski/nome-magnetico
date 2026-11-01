@@ -107,11 +107,26 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         currency: 'BRL',
         payment_method: 'stripe',
       });
+      const searchParams =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const chosenSignatureParam = searchParams?.get('chosen_signature')?.trim() || undefined;
+      const analysisIdParam = searchParams?.get('analysis_id')?.trim() || undefined;
+      const rawSource = searchParams?.get('source')?.trim() || searchParams?.get('utm_campaign')?.trim();
+      const sourceParam =
+        rawSource === 'card_pdf' || rawSource === 'paywall_free' ? rawSource : undefined;
+      const utmSourceParam = searchParams?.get('utm_source')?.trim() || undefined;
+      const utmCampaignParam = searchParams?.get('utm_campaign')?.trim() || undefined;
+
       const result = await postCreateCheckoutWithPriceConfirm(
         {
           product_type: type,
           couponCode: effectiveCoupon ?? undefined,
           expected_final_cents: priceInfo.cents,
+          ...(chosenSignatureParam ? { chosen_signature: chosenSignatureParam.slice(0, 80) } : {}),
+          ...(analysisIdParam ? { analysis_id: analysisIdParam } : {}),
+          ...(sourceParam ? { source: sourceParam } : {}),
+          ...(utmSourceParam ? { utm_source: utmSourceParam } : {}),
+          ...(utmCampaignParam ? { utm_campaign: utmCampaignParam } : {}),
         },
         (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
       );
