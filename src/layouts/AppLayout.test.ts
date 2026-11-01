@@ -46,4 +46,17 @@ describe('AppLayout.astro e unificação DEV-263', () => {
     assert.match(src, /trailing=\{[\s\S]*?<ChatPdfStickyDesktop/);
     assert.doesNotMatch(src, /leading=\{[\s\S]*?Minhas análises/);
   });
+
+  it('ChatProgress usa container flex centralizado e ChatRestartButton usa IconRotateCcw com tons dourados', () => {
+    const progressFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatProgress.tsx');
+    const progressSrc = readFileSync(progressFile, 'utf8');
+    assert.match(progressSrc, /flex-1 min-w-0 flex items-center justify-center/);
+    assert.match(progressSrc, /max-w-2xl/);
+
+    const restartFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatRestartButton.tsx');
+    const restartSrc = readFileSync(restartFile, 'utf8');
+    assert.match(restartSrc, /import \{ IconRotateCcw \} from '\.\/MobileChatDockIcons/);
+    assert.match(restartSrc, /border-\[\#D4AF37\]/);
+    assert.match(restartSrc, /text-\[\#D4AF37\]/);
+  });
 });
