@@ -288,7 +288,7 @@ export function PublicAnalysisForm() {
                 {/* Placar comparativo: Nota Hoje vs Potencial Harmonizado */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-4 text-center">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">
+                    <p className="nm-score-eyebrow mb-1">
                       Sua Nota Hoje
                     </p>
                     <p className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1]">
@@ -300,7 +300,7 @@ export function PublicAnalysisForm() {
                   </div>
 
                   <div className="rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/[0.08] p-4 text-center">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#D4AF37] mb-1">
+                    <p className="nm-score-eyebrow mb-1">
                       Potencial da Assinatura
                     </p>
                     <p className="font-cinzel text-2xl sm:text-3xl font-bold text-[#f2ca50]">

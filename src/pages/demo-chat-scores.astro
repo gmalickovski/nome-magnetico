@@ -1,0 +1,67 @@
+---
+import '../styles/global.css';
+import { buildClientBirthNamePanel } from '../backend/numerology/birth-name-panel';
+import DemoChatScoresView from '../frontend/components/app/chat/DemoChatScores';
+
+const birthPanel = buildClientBirthNamePanel(
+  'Guilherme Malickovski Correa',
+  '14/02/1990'
+);
+
+const mockSuggestions = [
+  {
+    id: '1',
+    nome: 'Guilherme Málickovski',
+    score: 95,
+    expressao: 6,
+    compatibilidade: 'favoravel',
+    bloqueiosEliminados: 2,
+    bloqueiosRestantes: 0,
+    arcanosPositivos: 0,
+    dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
+    panel: { ...birthPanel, nome: 'Guilherme Málickovski', score: 95 },
+  },
+  {
+    id: '2',
+    nome: 'Guilherme Malickovski Correã',
+    score: 83,
+    expressao: 11,
+    compatibilidade: 'neutro',
+    bloqueiosEliminados: 1,
+    bloqueiosRestantes: 1,
+    arcanosPositivos: 0,
+    dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
+    panel: { ...birthPanel, nome: 'Guilherme Malickovski Correã', score: 83 },
+  },
+  {
+    id: '3',
+    nome: 'Guilherme Correa',
+    score: 77,
+    expressao: 9,
+    compatibilidade: 'desfavoravel',
+    bloqueiosEliminados: 0,
+    bloqueiosRestantes: 2,
+    arcanosPositivos: 0,
+    dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
+    panel: { ...birthPanel, nome: 'Guilherme Correa', score: 77 },
+  },
+];
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo - Score cards chat</title>
+</head>
+<body class="bg-[#1a1a1a] overflow-hidden">
+  <div class="nm-chat-shell !left-0 !top-0 !bottom-0">
+    <DemoChatScores
+      client:load
+      birthPanel={birthPanel}
+      suggestions={mockSuggestions}
+    />
+  </div>
+</body>
+</html>

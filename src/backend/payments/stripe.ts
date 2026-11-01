@@ -53,10 +53,14 @@ export interface CreateCheckoutParams {
   phDistinctId?: string;
   /** 'renewal' estende o acesso; omissão grava 'new'. product_type não muda. */
   purchaseKind?: 'new' | 'renewal';
-  /** Campanha Brevo da etapa (nmrenovd7, nmrenovdp7, ...). */
+  /** Campanha Brevo da etapa (nmrenovd7, nmrenovdp7, ...) ou origem do chat. */
   utmCampaign?: string;
   utmSource?: string;
   utmMedium?: string;
+  /** Contexto do chat do Nome Social (DEV-261). */
+  chosenSignature?: string;
+  analysisId?: string;
+  source?: 'card_pdf' | 'paywall_free';
 }
 
 /**
@@ -103,7 +107,23 @@ export async function createCheckoutSession(
   if (params.utmCampaign) {
     metadata.utm_campaign = params.utmCampaign;
     metadata.utm_source = params.utmSource || 'brevo';
-    metadata.utm_medium = params.utmMedium || 'email';
+    if (params.utmMedium) {
+      metadata.utm_medium = params.utmMedium;
+    } else if (!params.utmSource || params.utmSource === 'brevo') {
+      metadata.utm_medium = 'email';
+    }
+  } else if (params.utmSource) {
+    metadata.utm_source = params.utmSource;
+    if (params.utmMedium) metadata.utm_medium = params.utmMedium;
+  }
+  if (params.chosenSignature) {
+    metadata.chosen_signature = params.chosenSignature.trim().slice(0, 80);
+  }
+  if (params.analysisId) {
+    metadata.analysis_id = params.analysisId.trim();
+  }
+  if (params.source) {
+    metadata.source = params.source;
   }
 
   return stripe.checkout.sessions.create({

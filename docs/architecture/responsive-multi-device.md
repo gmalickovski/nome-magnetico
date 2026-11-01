@@ -9,7 +9,7 @@ Este documento estabelece as diretrizes arquiteturais e padrões de implementaç
 | Categoria | Viewport CSS Típico | Dispositivos de Referência | Desafios Principais |
 |---|---|---|---|
 | **Foldables Fechados / Compactos** | `280px` – `360px` | Galaxy Z Fold (Cover screen `280px–344px`), iPhone 12/13 Mini (`360px`), iPhone SE (`320px`) | Risco de overflow horizontal, botões quebrando em 2 linhas, paddings laterais engolindo área útil |
-| **Smartphones Padrão** | `375px` – `430px` | iPhone 14/15/16/Pro Max, Samsung Galaxy S23/S24 | Altura do FAB em relação à barra de navegação inferior (`MobileNavBar`), safe area do sistema operacional |
+| **Smartphones Padrão** | `375px` – `430px` | iPhone 14/15/16/Pro Max, Samsung Galaxy S23/S24 | Clearance da dock flutuante (`AppMobileDock`) e safe area |
 | **Foldables Abertos / Quase Quadrados** | `712px` – `884px` (altura similar à largura) | Galaxy Z Fold aberto, Pixel Fold | Grids de 3 colunas em `md:` espremem cards para `<210px`. Modais altos podem cortar CTAs inferiores |
 | **Tablets / iPads** | `768px` – `1024px` (portrait) / `1024px` – `1366px` (landscape) | iPad Mini (`744x1133`), iPad Air (`820x1180`), iPad Pro (`1024x1366`) | Touch targets de 44px, transição ergonômica entre modo em pé e deitado |
 | **Notebooks 13" – 14"** | `1280x720`, `1366x768`, `1440x900`, `1512x982` | MacBook Air/Pro 13"/14", Laptops Windows com escala 125%/150% | Altura vertical limitada (`720px–800px` úteis). Evitar que o CTA fique enterrado abaixo da primeira dobra |
@@ -42,10 +42,9 @@ Em nenhuma hipótese um container de conteúdo deve se espalhar infinitamente se
 
 ### 2.2 Preservação de Área Útil em Telas Compactas (280px–360px)
 * **Padding Adaptativo**: Usar `px-3.5 sm:px-6` (14px nas bordas) em vez de `px-6` (24px nas bordas). Em uma tela de `280px`, `px-6` consome 48px (17% da tela), enquanto `px-3.5` consome apenas 28px, preservando 252px de área útil.
-* **Mobile Navigation Bar (`MobileNavBar.astro`)**:
-  * Utiliza `flex-1 min-w-0 flex flex-col items-center py-1.5 px-0.5 sm:px-1`.
-  * Ícones com `w-5 h-5 sm:w-6 sm:h-6` e rótulos com `text-[9px] sm:text-[10px] truncate max-w-full`.
-  * Garante que 4 ou 5 abas caibam com perfeição sem overflow horizontal mesmo a 280px.
+* **Dock mobile (`AppMobileDock.tsx`)** — instância única no layout; conteúdo por rota:
+  * Barra flutuante (glass) com ícones circulares, tooltips e mesma linguagem visual da dock de ações do chat.
+  * Variáveis CSS em `global.css` (`--nm-mobile-dock-clearance`, `--nm-mobile-dock-stacked-clearance`) definem padding inferior do conteúdo.
 
 ### 2.3 Tipografia Fluida com `clamp()`
 Para evitar truncamento ou quebras bizarras de palavras em telas pequenas sem prejudicar o impacto em telas grandes:
@@ -68,9 +67,13 @@ Para evitar truncamento ou quebras bizarras de palavras em telas pequenas sem pr
 * **Pirâmides SVG**: Devem sempre usar `overflow-x-auto touch-scroll-container` e `preserveAspectRatio="xMidYMid meet"`.
 * **Abas do Triângulo**: Em telas estreitas, abas de navegação utilizam `min-w-[105px] sm:min-w-[130px]` e `px-2.5 sm:px-3` para que se ajustem em 2 colunas perfeitamente alinhadas sem quebra de texto.
 
-### 2.5 Floating Action Buttons e Safe Area
+### 2.5 Scrollbars (touch / tablet vs desktop)
+* **≤1023px ou `pointer: coarse`**: nenhuma barra de rolagem visível em todo o sistema (`global.css`); scroll por toque/gesto.
+* **`min-width: 1024px` e `pointer: fine`**: barras douradas globais; panes `.chat-scroll-pane` exibem thumb no hover.
+
+### 2.6 Floating Action Buttons e Safe Area
 * O botão flutuante mobile de download de PDF (`PDFFeedbackButton.tsx`):
-  * Fica ancorado com `bottom: calc(88px + max(0.5rem, env(safe-area-inset-bottom)))`, flutuando com folga acima da `MobileNavBar`.
+  * Usa `--nm-mobile-dock-stacked-clearance` quando há dock de ações + nav empilhadas.
   * Largura responsiva `left-3 right-3 sm:left-4 sm:right-4 max-w-md mx-auto` com `text-xs sm:text-sm font-bold`, impedindo que o texto "BAIXAR ANÁLISE COMPLETA" quebre em duas linhas em telas de `280px–340px`.
 
 ---

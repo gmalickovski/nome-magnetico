@@ -43,7 +43,7 @@ Para garantir que o sistema legado e os produtos em produção continuem intacto
 
 ### Componentes de Interface (React Islands & UI)
 * **`src/frontend/components/app/AdminGeneralAnalysis.tsx`**: O cérebro do frontend do painel. Gerencia estados de tabs, inputs, debounces, listagem e exclusão de relatórios recentes gerados pelo analista.
-* **`src/frontend/components/app/MobileNavBar.astro`**: Barra de navegação móvel. Adicionada a aba "Analista" com o ícone correspondente, visível apenas para administradores.
+* **`src/frontend/components/app/AppMobileDock.tsx`**: Dock flutuante mobile única; inclui "Área do Analista" (roxo) apenas para administradores.
 
 ### Endpoints da API (Backend & Astro API)
 Todos os endpoints novos ficam isolados sob a pasta `src/pages/api/admin/` e verificam a role `'admin'` no Supabase:

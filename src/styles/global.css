@@ -26,38 +26,6 @@
     font-family: 'Cinzel', serif;
   }
 
-  /* Scrollbar customizada */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #1a1a1a;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: #D4AF37;
-    border-radius: 10px;
-    border: 2px solid #1a1a1a;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: #E8C84A;
-  }
-
-  /* Oculta scrollbar vertical no mobile (estilo app nativo) */
-  @media (max-width: 768px) {
-    ::-webkit-scrollbar {
-      display: none;
-      width: 0;
-      height: 0;
-    }
-    * {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-  }
 }
 
 /* =============================================
@@ -314,15 +282,6 @@
   background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Scrollbar adaptada para light */
-[data-blog-theme="light"] ::-webkit-scrollbar-track {
-  background: #f0ede8;
-}
-
-[data-blog-theme="light"] ::-webkit-scrollbar-thumb {
-  border-color: #f0ede8;
-}
-
 /* Prose (artigo) — inverte cores mesmo com utility classes do Tailwind Typography configuradas fixas */
 [data-blog-theme="light"] .prose-invert :is(h1, h2, h3, h4, h5, h6, strong) {
   color: #1c1917 !important;
@@ -485,13 +444,371 @@
 [data-blog-theme="light"] .blog-main .text-violet-300 { color: #6d28d9 !important; }
 [data-blog-theme="light"] .blog-main .bg-violet-500\/15 { background-color: rgba(109, 40, 217, 0.15) !important; }
 
-/* Ocultar barra de scroll mantendo funcionalidade de swipe */
+/* Ocultar barra de scroll mantendo swipe (ex.: chips horizontais no desktop) */
 .hide-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
+}
+
+/* Chat v2 / drawers: scroll só nos panes internos */
+.chat-scroll-pane {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Scrollbars visíveis SOMENTE em desktop com mouse (fine pointer, ≥1024px).
+ * Touch / tablet: nunca exibir barra (scroll por gesto).
+ */
+@media (max-width: 1023px), (pointer: coarse) {
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .chat-scroll-pane {
+    scrollbar-gutter: auto;
+    padding-right: 0;
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1024px) and (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #d4af37;
+    border-radius: 10px;
+    border: 2px solid #1a1a1a;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #e8c84a;
+  }
+
+  [data-blog-theme='light'] ::-webkit-scrollbar-track {
+    background: #f0ede8;
+  }
+
+  [data-blog-theme='light'] ::-webkit-scrollbar-thumb {
+    border-color: #f0ede8;
+  }
+
+  .chat-scroll-pane {
+    scrollbar-gutter: stable;
+    padding-right: 0.625rem;
+    margin-right: -0.125rem;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .chat-scroll-pane:hover {
+    scrollbar-color: rgba(229, 226, 225, 0.28) transparent;
+  }
+
+  .chat-scroll-pane::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+  }
+
+  .chat-scroll-pane::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 6px;
+  }
+
+  .chat-scroll-pane::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .chat-scroll-pane:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(229, 226, 225, 0.28);
+  }
+}
+
+/* Shell full-viewport do chat (sem scroll global da página) */
+.nm-chat-shell {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+@media (min-width: 768px) {
+  .nm-chat-shell {
+    left: 5rem;
+  }
+}
+@media (max-width: 767px) {
+  /* /app mobile: dock flutuante única (nav global) */
+  .nm-app-shell--with-mobile-dock {
+    --nm-mobile-dock-margin: 12px;
+    --nm-mobile-dock-bar-h: 3.5rem;
+    --nm-mobile-dock-clearance: calc(
+      var(--nm-mobile-dock-bar-h) + var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .nm-app-shell--with-mobile-dock .nm-app-main:not(.nm-app-main--flush) {
+    padding-bottom: var(--nm-mobile-dock-clearance);
+  }
+
+  .nm-app-shell--with-mobile-dock .nm-app-mobile-dock {
+    bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Dock de ações (chat, resultado): colada no rodapé, sem nav global empilhada */
+  .nm-app-shell--with-mobile-dock .mobile-chat-dock-root {
+    bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .nm-app-shell--with-mobile-dock .nm-mobile-dock-pad-action {
+    padding-bottom: var(--nm-mobile-dock-clearance);
+  }
+
+  .nm-app-shell--dock-action-only .nm-chat-shell {
+    top: var(--nm-chat-mobile-header-h, 52px);
+    bottom: env(safe-area-inset-bottom, 0px);
+    --nm-chat-mobile-header-h: 52px;
+    --nm-chat-dock-clearance: var(--nm-mobile-dock-clearance);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mobile-chat-dock-bar {
+    background: #131313 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  @keyframes mobile-dock-btn-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mobile-dock-btn-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .mobile-chat-dock-actions .mobile-chat-dock-btn {
+    animation: mobile-dock-btn-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn {
+    animation: mobile-dock-btn-fade-in 120ms ease both;
+  }
+
+  @keyframes mobile-dock-btn-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+      max-width: 44px;
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.82);
+      max-width: 0;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .mobile-chat-dock-btn--exit {
+    pointer-events: none;
+    animation: mobile-dock-btn-out 180ms ease both;
+    overflow: hidden;
+  }
+
+  .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn--exit {
+    animation: none;
+    opacity: 0;
+    max-width: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  @keyframes mobile-dock-pdf-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.55);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 20px 2px rgba(212, 175, 55, 0.35);
+    }
+  }
+
+  @keyframes mobile-dock-pdf-exit {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+
+  @keyframes mobile-dock-pdf-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .mobile-chat-dock-pdf-enter {
+    animation: mobile-dock-pdf-enter 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .mobile-chat-dock-pdf-exit {
+    animation: mobile-dock-pdf-exit 180ms ease both;
+  }
+
+  .mobile-chat-dock-pdf-enter-fade,
+  .mobile-chat-dock-pdf-exit-fade {
+    animation: mobile-dock-pdf-fade 120ms ease both;
+  }
+
+  @keyframes mobile-dock-tooltip-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, calc(-100% + 4px));
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -100%);
+    }
+  }
+
+  .mobile-chat-dock-tooltip {
+    animation: mobile-dock-tooltip-in 120ms ease both;
+    border-radius: 9999px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: rgba(229, 226, 225, 0.92);
+    background: rgba(26, 26, 26, 0.92);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+  }
+
+  .mobile-chat-dock-tooltip--portal {
+    animation: mobile-dock-tooltip-fade 100ms ease both;
+  }
+
+  @keyframes mobile-dock-tooltip-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .mobile-chat-dock-tooltip--portal::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    margin-left: -4px;
+    border: 4px solid transparent;
+    border-top-color: rgba(26, 26, 26, 0.92);
+  }
+
+  @keyframes mobile-summary-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobile-summary-exit {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  .mobile-summary-fullscreen {
+    pointer-events: auto;
+  }
+
+  .mobile-summary-fullscreen--open:not(.mobile-summary-fullscreen--reduced) {
+    animation: mobile-summary-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .mobile-summary-fullscreen--closed:not(.mobile-summary-fullscreen--reduced) {
+    animation: mobile-summary-exit 180ms ease both;
+  }
+
+  .mobile-summary-fullscreen--reduced.mobile-summary-fullscreen--open,
+  .mobile-summary-fullscreen--reduced.mobile-summary-fullscreen--closed {
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-chat-dock-tooltip {
+      animation: none;
+    }
+
+    .mobile-summary-fullscreen--open,
+    .mobile-summary-fullscreen--closed {
+      animation: none;
+    }
+  }
 }
 
 /* =============================================
@@ -514,6 +831,11 @@
 @layer components {
   .nm-eyebrow {
     @apply font-inter text-xs sm:text-[13px] md:text-sm lg:text-sm font-bold uppercase tracking-[0.16em] text-[#D4AF37] leading-[1.4];
+  }
+
+  /** Rótulo serifado dos cards de score (harmonia: nascimento, harmonizado, sugestões). */
+  .nm-score-eyebrow {
+    @apply font-cinzel text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-gold leading-normal;
   }
 
   .nm-h1 {
