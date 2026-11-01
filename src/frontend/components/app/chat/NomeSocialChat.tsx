@@ -68,7 +68,9 @@ import {
   sleepMs,
 } from './chat-reveal-delay.js';
 import {
+  computeContextualRadarAxes,
   computeMotorRadarAxes,
+  getRadarAxisLabels,
   motorRadarToRecord,
 } from '../../../../shared/interactive-engine/motor-radar.js';
 import { buildQuestionnaireContextChips } from '../../../../shared/interactive-engine/questionnaire-context-chips.js';
@@ -1523,6 +1525,23 @@ export function NomeSocialChat({
     [collectState]
   );
 
+  const radarLabels = React.useMemo(
+    () => getRadarAxisLabels(collectState.areaFoco),
+    [collectState.areaFoco]
+  );
+
+  React.useEffect(() => {
+    if (!confirmedName.trim() || !confirmedDate.trim()) return;
+    try {
+      const record = motorRadarToRecord(
+        computeContextualRadarAxes(confirmedName, confirmedDate, collectState)
+      );
+      setRadarAxes(record);
+    } catch {
+      // silencioso
+    }
+  }, [confirmedName, confirmedDate, collectState]);
+
   React.useEffect(() => {
     if (!activeSuggestion?.nome || !confirmedDate.trim()) {
       setRadarOverlayAxes(null);
@@ -1530,13 +1549,13 @@ export function NomeSocialChat({
     }
     try {
       const record = motorRadarToRecord(
-        computeMotorRadarAxes(activeSuggestion.nome, confirmedDate)
+        computeContextualRadarAxes(activeSuggestion.nome, confirmedDate, collectState)
       );
       setRadarOverlayAxes(record);
     } catch {
       setRadarOverlayAxes(null);
     }
-  }, [activeSuggestionId, activeSuggestion?.nome, confirmedDate]);
+  }, [activeSuggestionId, activeSuggestion?.nome, confirmedDate, collectState]);
   const starPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
   const profileCollectionComplete =
     currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
@@ -1812,6 +1831,7 @@ export function NomeSocialChat({
         onResetToBase={() => setActiveSuggestionId(null)}
         radarAxes={radarAxes}
         radarOverlayAxes={radarOverlayAxes}
+        radarLabels={radarLabels}
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
         showRadar={showRadarPanel && paidAccessActive}
@@ -2152,6 +2172,7 @@ export function NomeSocialChat({
         onResetToBase={() => setActiveSuggestionId(null)}
         radarAxes={radarAxes}
         radarOverlayAxes={radarOverlayAxes}
+        radarLabels={radarLabels}
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
         summaryItems={summaryItems}

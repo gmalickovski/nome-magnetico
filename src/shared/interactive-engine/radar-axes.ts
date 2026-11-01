@@ -1,5 +1,5 @@
 /**
- * Radar pentagonal do chat — eixos do motor (Expressão, Motivação, Destino, Harmonia, Sequências).
+ * Radar pentagonal do chat — Mapa de Alinhamento Vibracional.
  * Valores normalizados 0–1 para SVG (origem: motor-radar.ts, score v3 já calculado).
  */
 
@@ -17,12 +17,12 @@ export interface RadarAxis {
   label: string;
   value: number; // 0..1
   valuePercent?: number;
+  description?: string;
 }
 
 export interface ProfileInputForRadar {
   nomeCompleto?: string;
   dataNascimento?: string;
-  /** Legado — ignorado quando nome + data presentes */
   areaFoco?: string | null;
   subfocoMomento?: string | null;
   ondeVaiUsar?: string[];
@@ -47,10 +47,14 @@ export function computeRadarAxes(profile: ProfileInputForRadar): RadarAxis[] {
     }));
   }
 
-  return computeMotorRadarAxes(nome, data).map((a) => ({
+  return computeMotorRadarAxes(nome, data, {
+    areaFoco: profile.areaFoco,
+    ondeAssinaRaw: profile.ondeVaiUsar,
+  }).map((a) => ({
     key: a.key,
     label: a.label,
     value: a.value,
     valuePercent: a.valuePercent,
+    description: a.description,
   }));
 }

@@ -11,7 +11,13 @@ import { marked } from 'marked';
 import { ChatSidebarSection } from '../../../frontend/components/app/chat/ChatSidebarSection';
 import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
 import { buildChatReadingSummary } from '../../../backend/numerology/chat-reading-summary';
-import { computeMotorRadarAxes, motorRadarToRecord } from '../../../shared/interactive-engine/motor-radar';
+import {
+  computeContextualRadarAxes,
+  computeMotorRadarAxes,
+  getRadarAxisLabels,
+  motorRadarToRecord,
+} from '../../../shared/interactive-engine/motor-radar';
+import type { AreaFoco } from '../../../shared/interactive-engine/questionnaire-adaptive';
 import NomeAtualResultado from '../../../frontend/components/app/resultado/NomeAtualResultado.astro';
 import NomeBebResultado from '../../../frontend/components/app/resultado/NomeBebResultado.astro';
 import NomeEmpresaResultado from '../../../frontend/components/app/resultado/NomeEmpresaResultado.astro';
@@ -227,14 +233,32 @@ const socialReadingSummary =
   isSocialSummaryView && nomeExibido && dataScoreSocial
     ? buildChatReadingSummary(nomeExibido, dataScoreSocial)
     : null;
+const socialAreaFoco = (
+  typeof rankingSocial?.areaFoco === 'string'
+    ? rankingSocial.areaFoco
+    : typeof rankingSocial?.area_foco === 'string'
+      ? rankingSocial.area_foco
+      : null
+) as AreaFoco | null;
+
+const socialRadarContext = {
+  areaFoco: socialAreaFoco,
+  ondeAssinaRaw: Array.isArray(rankingSocial?.ondeVaiUsar)
+    ? rankingSocial.ondeVaiUsar
+    : Array.isArray(rankingSocial?.onde_vai_usar)
+      ? rankingSocial.onde_vai_usar
+      : [],
+};
+
 const socialRadarAxes =
   isSocialSummaryView && nomeNascimentoCertificado && dataScoreSocial
-    ? motorRadarToRecord(computeMotorRadarAxes(nomeNascimentoCertificado, dataScoreSocial))
+    ? motorRadarToRecord(computeContextualRadarAxes(nomeNascimentoCertificado, dataScoreSocial, socialRadarContext))
     : null;
 const socialRadarOverlayAxes =
   isSocialSummaryView && showDualCertificate && nomeExibido && dataScoreSocial
-    ? motorRadarToRecord(computeMotorRadarAxes(nomeExibido, dataScoreSocial))
+    ? motorRadarToRecord(computeContextualRadarAxes(nomeExibido, dataScoreSocial, socialRadarContext))
     : null;
+const socialRadarLabels = getRadarAxisLabels(socialAreaFoco);
 const socialContextChips: string[] = [
   ...(typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
     ? [rankingSocial.assinaturaAtual.trim()]
@@ -622,6 +646,7 @@ const socialContextChips: string[] = [
             isSuggestion={Boolean(socialHarmonizedPanel)}
             radarAxes={socialRadarAxes}
             radarOverlayAxes={socialRadarOverlayAxes}
+            radarLabels={socialRadarLabels}
             radarShowNumericLabels={Boolean(socialHarmonizedPanel)}
             contextChips={socialContextChips}
             showRadar={Boolean(socialRadarAxes)}
