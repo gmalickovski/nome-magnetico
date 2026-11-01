@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { track } from '../../lib/analytics';
+import { EmailConfirmationPrompt } from './EmailConfirmationPrompt';
 
 interface Props {
   analysisId: string;
@@ -21,7 +22,7 @@ interface Props {
   isAnalyst?: boolean;
 }
 
-type Status = 'idle' | 'loading' | 'done' | 'error';
+type Status = 'idle' | 'loading' | 'done' | 'error' | 'email_not_confirmed';
 
 export function PDFFeedbackButton({
   analysisId,
@@ -142,8 +143,21 @@ export function PDFFeedbackButton({
         headers: {
           'Cache-Control': 'no-cache',
           Pragma: 'no-cache',
+          Accept: 'application/json, application/pdf',
         },
       });
+      if (res.status === 403) {
+        let payload: { error?: string } = {};
+        try {
+          payload = await res.json();
+        } catch {
+          payload = {};
+        }
+        if (payload.error === 'email_not_confirmed') {
+          setStatus('email_not_confirmed');
+          return;
+        }
+      }
       if (!res.ok) throw new Error('pdf_error');
 
       const disposition = res.headers.get('Content-Disposition') ?? '';
@@ -257,8 +271,8 @@ export function PDFFeedbackButton({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             )}
-            {status === 'error' && (
-              <svg style={{ width: '32px', height: '32px', color: '#f87171' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {(status === 'error' || status === 'email_not_confirmed') && (
+              <svg style={{ width: '32px', height: '32px', color: status === 'email_not_confirmed' ? '#fbbf24' : '#f87171' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             )}
@@ -285,6 +299,11 @@ export function PDFFeedbackButton({
                   {isAnalyst ? 'Download realizado com sucesso.' : 'Download iniciado automaticamente.'}
                 </p>
               </>
+            )}
+            {status === 'email_not_confirmed' && (
+              <div style={{ marginTop: 4 }}>
+                <EmailConfirmationPrompt compact />
+              </div>
             )}
             {status === 'error' && (
               <>

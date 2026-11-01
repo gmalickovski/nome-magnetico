@@ -28,6 +28,8 @@ import {
   productAnalysisAppPath,
   shouldBlockCheckoutForActiveProduct,
 } from '../../backend/payments/checkout-access';
+import { guardConfirmedEmail } from '../../backend/auth/requireConfirmedEmail';
+import type { User } from '@supabase/supabase-js';
 
 const schema = z.object({
   product_type: z.enum(PRODUCT_TYPES),
@@ -52,7 +54,7 @@ function json(body: object, status: number): Response {
 
 export async function createCheckoutResponse(args: {
   request: Request;
-  user: { id: string; email?: string | null } | null;
+  user: Pick<User, 'id' | 'email' | 'email_confirmed_at'> | null;
   url: URL;
   renewal?: boolean;
   etapa?: string | null;
@@ -65,6 +67,9 @@ export async function createCheckoutResponse(args: {
   if (!user) {
     return json({ error: 'Autenticação necessária' }, 401);
   }
+
+  const emailGate = guardConfirmedEmail(user);
+  if (emailGate) return emailGate;
 
   let payload: unknown = {};
   if (!args.productType) {

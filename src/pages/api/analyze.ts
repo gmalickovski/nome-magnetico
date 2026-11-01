@@ -8,6 +8,7 @@ import {
   saveMagneticNames,
   hasUsedFreeAnalysis,
   findRecentNomeSocialAnalysisForPdf,
+  findReusableFreeAnalysisForUser,
 } from '../../backend/db/analyses';
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
@@ -185,9 +186,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // Verificar acesso
   if (isGratuita) {
+    if (nome_ja_escolhido === true) {
+      const existingFree = await findReusableFreeAnalysisForUser(user.id);
+      if (existingFree) {
+        return new Response(JSON.stringify({ analysisId: existingFree.id, reused: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Análise gratuita: verificar se já foi utilizada (admin e dev isentos para fins de teste)
     const jaUsou = await hasUsedFreeAnalysis(user.id);
-    const isDev = import.meta.env.DEV;
+    const isDev = import.meta.env?.DEV === true;
     
     if (jaUsou && !isAdmin && !isDev) {
       return new Response(JSON.stringify({ error: 'Análise gratuita já utilizada. Acesse "Minhas Análises" para ver seu relatório.' }), {

@@ -141,7 +141,7 @@ export function mapApiPanel(api: ApiPanel): ResultPanelData {
 
 function mapRadarAxes(axes: RawDecideLiveResponse['radarAxes']): RadarAxesData | null {
   if (!axes || axes.length === 0) return null;
-  const record = Object.fromEntries(axes.map((a) => [a.key, a.value])) as RadarAxesData;
+  const record = Object.fromEntries(axes.map((a) => [a.key, a.value])) as unknown as RadarAxesData;
   return {
     expressao: record.expressao ?? 0.35,
     motivacao: record.motivacao ?? 0.35,

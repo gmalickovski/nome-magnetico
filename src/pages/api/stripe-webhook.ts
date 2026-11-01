@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import type Stripe from 'stripe';
+import { buildPaymentConfirmedPayload } from '../../backend/notifications/payment-confirmed-payload';
 import { constructWebhookEvent, PRODUCT_NAMES } from '../../backend/payments/stripe';
 import {
   createSubscription,
@@ -256,39 +257,23 @@ export const POST: APIRoute = async ({ request }) => {
       purchaseKind,
     });
 
-    const n8nUrl = process.env.N8N_WEBHOOK_TRANSACIONAL;
-    if (n8nUrl) {
-      fetch(n8nUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stripeEvent: event,
-          userId,
-          productType,
-          customerEmail: session.customer_email,
-          amountPaid: session.amount_total,
-          currency: session.currency,
-          stripeSessionId: session.id,
-        }),
-      }).catch(err => {
-        console.error('[stripe-webhook] Falha ao notificar n8n:', err);
-        captureFluxoException('stripe_webhook', new Error('Falha ao notificar n8n'));
-      });
-    }
-
     const profile = await getProfile(userId);
     const baseUrl = getPublicBaseUrl();
     const accessUrl = `${baseUrl}${productAnalysisAppPath(productType)}`;
 
-    if (profile) {
-      const paymentConfirmedOk = await notify('payment.confirmed', {
-        email: profile.email,
-        firstName: profile.nome ?? profile.email.split('@')[0],
-        accessUrl,
-        productType,
-        productName: PRODUCT_NAMES[productType],
-        amount: session.amount_total ?? undefined,
-      });
+    // Único envio ao n8n: notify() monta o envelope { event, payload, timestamp } com Authorization.
+    const paymentPayload = buildPaymentConfirmedPayload({
+      session,
+      profile,
+      userId,
+      productType,
+      productName: PRODUCT_NAMES[productType],
+      accessUrl,
+      paymentIntentId,
+    });
+
+    if (paymentPayload) {
+      const paymentConfirmedOk = await notify('payment.confirmed', paymentPayload);
       if (!paymentConfirmedOk) {
         console.error(
           JSON.stringify({
@@ -310,7 +295,7 @@ export const POST: APIRoute = async ({ request }) => {
           scope: 'stripe-webhook',
           event: 'payment.confirmed',
           ok: false,
-          reason: 'profile_not_found',
+          reason: 'no_recipient_email',
           userId,
           stripeSessionId: session.id,
         }),

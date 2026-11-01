@@ -90,7 +90,7 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
       const data = await profileRes.json();
       if (!profileRes.ok) throw new Error(data.error ?? 'Erro ao carregar cadastro.');
       setProfile({ ...EMPTY_PROFILE, ...data.profile });
-      setEmailConfirmed(Boolean(data.profile?.email_verified_at));
+      setEmailConfirmed(Boolean(authRes.data.user?.email_confirmed_at));
       if (authRes.error) {
         console.warn('[AvatarMenu] falha ao carregar status de e-mail:', authRes.error.message);
       }

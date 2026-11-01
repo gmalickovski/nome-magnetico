@@ -14,7 +14,7 @@ export interface CreateCheckoutBody {
 export type CreateCheckoutResult =
   | { ok: true; url: string }
   | { ok: true; bypass: true; redirectUrl: string }
-  | { ok: false; error: string; alreadyActive?: boolean; redirectUrl?: string }
+  | { ok: false; error: string; alreadyActive?: boolean; redirectUrl?: string; emailNotConfirmed?: boolean }
   | {
       ok: false;
       priceChanged: true;
@@ -63,6 +63,13 @@ export async function postCreateCheckout(body: CreateCheckoutBody): Promise<Crea
         redirectUrl: data.redirectUrl,
       };
     }
+    if (res.status === 403 && data.error === 'email_not_confirmed') {
+      return {
+        ok: false,
+        error: 'Confirme seu e-mail antes de concluir o pagamento.',
+        emailNotConfirmed: true,
+      };
+    }
     return { ok: false, error: data.error ?? 'Erro ao criar sessão' };
   }
   if (data.bypass && data.redirectUrl) {
@@ -79,8 +86,17 @@ export function checkoutFailureMessage(
   result: Extract<CreateCheckoutResult, { ok: false }>,
 ): string {
   if ('priceChanged' in result && result.priceChanged) return result.message;
+  if ('emailNotConfirmed' in result && result.emailNotConfirmed) {
+    return result.error ?? 'Confirme seu e-mail antes de concluir o pagamento.';
+  }
   if ('error' in result) return result.error;
   return 'Erro ao criar sessão';
+}
+
+export function isCheckoutEmailNotConfirmed(
+  result: Extract<CreateCheckoutResult, { ok: false }>,
+): boolean {
+  return Boolean('emailNotConfirmed' in result && result.emailNotConfirmed);
 }
 
 export async function postCreateCheckoutWithPriceConfirm(

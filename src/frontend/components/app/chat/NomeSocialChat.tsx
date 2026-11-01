@@ -118,7 +118,12 @@ import { Modal } from '../../ui/Modal.js';
 import {
   ChatPdfStickyDesktop,
   useChatPdfCta,
+  waitAnalysisCompleteForPdf,
 } from './ChatPdfCta.js';
+import {
+  ChatPdfPreparingOverlay,
+  type ChatPdfOverlayPhase,
+} from './ChatPdfPreparingOverlay.js';
 
 export interface NomeSocialChatProps {
   birthName?: string;
@@ -219,6 +224,9 @@ export function NomeSocialChat({
   const [paywallPriceLabel, setPaywallPriceLabel] = useState('');
   const [paywallStickyVisible, setPaywallStickyVisible] = useState(false);
   const [freePdfLoading, setFreePdfLoading] = useState(false);
+  const [freePdfOverlayPhase, setFreePdfOverlayPhase] = useState<ChatPdfOverlayPhase>('idle');
+  const freePdfRunLockRef = useRef(false);
+  const freePdfAbortRef = useRef<AbortController | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -307,6 +315,7 @@ export function NomeSocialChat({
     setAnalysisId(undefined);
     setFreeAnalysisId(undefined);
     setFreePdfDownloaded(false);
+    setFreePdfOverlayPhase('idle');
     setChatPhase(isSubscriber ? 'subscriber' : 'onboarding');
     setPaywallStickyVisible(false);
     setOnboardingError(null);
@@ -730,39 +739,86 @@ export function NomeSocialChat({
     });
   };
 
-  const ensureFreeAnalysisRecord = async (): Promise<string> => {
-    const existing = freeAnalysisId ?? analysisId;
-    if (existing) return existing;
+  const ensureFreeAnalysisRecord = useCallback(
+    async (signal: AbortSignal): Promise<string | undefined> => {
+      const existing = freeAnalysisId ?? analysisId;
+      if (existing) return existing;
+      if (!confirmedName.trim() || !confirmedDate.trim()) return undefined;
 
-    const res = await fetchWithAuth('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        product_type: 'analise_gratuita',
-        nome_completo: confirmedName.trim(),
-        data_nascimento: confirmedDate.trim(),
-        nome_ja_escolhido: true,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao gerar análise gratuita');
-    }
-    const id = String(data.analysisId ?? data.id ?? '');
-    if (!id) throw new Error('Análise gratuita sem identificador');
-    setFreeAnalysisId(id);
-    setAnalysisId(id);
-    return id;
-  };
+      const key = buildChatPdfEnsureKey(
+        confirmedName,
+        confirmedDate,
+        '__analise_gratuita__'
+      );
 
-  const handleFreePdfDownload = async (surface: PaywallSurface) => {
-    if (freePdfLoading) return;
-    trackFreePdfClicked(surface);
+      return runChatPdfEnsureOnce(
+        key,
+        async (innerSignal) => {
+          if (innerSignal.aborted) return undefined;
+          const res = await fetchWithAuth('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: innerSignal,
+            body: JSON.stringify({
+              product_type: 'analise_gratuita',
+              nome_completo: confirmedName.trim(),
+              data_nascimento: confirmedDate.trim(),
+              nome_ja_escolhido: true,
+              is_free: true,
+            }),
+          });
+          const data = (await res.json()) as {
+            analysisId?: string;
+            id?: string;
+            error?: string;
+          };
+          if (!res.ok) {
+            throw new Error(
+              typeof data.error === 'string' ? data.error : 'Erro ao gerar análise gratuita'
+            );
+          }
+          const id = String(data.analysisId ?? data.id ?? '').trim();
+          if (!id) throw new Error('Análise gratuita sem identificador');
+          setFreeAnalysisId(id);
+          setAnalysisId(id);
+          return id;
+        },
+        signal
+      );
+    },
+    [freeAnalysisId, analysisId, confirmedName, confirmedDate]
+  );
+
+  const runFreePdf = useCallback(async () => {
+    if (freePdfRunLockRef.current) return;
+    freePdfRunLockRef.current = true;
+    freePdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    freePdfAbortRef.current = controller;
+    const { signal } = controller;
+
     setFreePdfLoading(true);
+    setFreePdfOverlayPhase('preparing');
     try {
-      const id = await ensureFreeAnalysisRecord();
-      const url = `/api/generate-pdf?id=${encodeURIComponent(id)}&t=${Date.now()}`;
-      const res = await fetchWithAuth(url);
+      const id = await ensureFreeAnalysisRecord(signal);
+      if (signal.aborted) return;
+      if (!id) {
+        setFreePdfOverlayPhase('error');
+        return;
+      }
+      setFreePdfOverlayPhase('generating');
+      const buildPdfUrl = () =>
+        `/api/generate-pdf?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+      let res = await fetchWithAuth(buildPdfUrl(), { signal });
+      if (signal.aborted) return;
+      if (res.status === 202) {
+        const ready = await waitAnalysisCompleteForPdf(id, signal);
+        if (signal.aborted) return;
+        if (!ready) throw new Error('pdf_not_ready');
+        res = await fetchWithAuth(buildPdfUrl(), { signal });
+        if (signal.aborted) return;
+      }
+      if (res.status === 202) throw new Error('pdf_not_ready');
       if (!res.ok) throw new Error('pdf_error');
       const blob = await res.blob();
       const cd = res.headers.get('content-disposition') ?? '';
@@ -775,6 +831,7 @@ export function NomeSocialChat({
       a.click();
       URL.revokeObjectURL(objectUrl);
 
+      setFreePdfOverlayPhase('idle');
       if (!freePdfDownloaded) {
         setFreePdfDownloaded(true);
         setMessages((prev) => [
@@ -789,13 +846,22 @@ export function NomeSocialChat({
         ]);
       }
     } catch (err) {
+      if (signal.aborted) {
+        setFreePdfOverlayPhase('idle');
+        return;
+      }
       console.error(err);
-      setOnboardingError(
-        err instanceof Error ? err.message : 'Não foi possível baixar o PDF gratuito.'
-      );
+      setFreePdfOverlayPhase('error');
     } finally {
+      freePdfRunLockRef.current = false;
       setFreePdfLoading(false);
     }
+  }, [ensureFreeAnalysisRecord, freePdfDownloaded]);
+
+  const handleFreePdfDownload = (surface: PaywallSurface) => {
+    if (freePdfRunLockRef.current || freePdfLoading) return;
+    trackFreePdfClicked(surface);
+    void runFreePdf();
   };
 
   useEffect(() => {
@@ -1362,7 +1428,7 @@ export function NomeSocialChat({
         const live = await res.json();
         const axisList = live.radarAxes as Array<{ key: string; value: number }> | undefined;
         if (axisList) {
-          const record = Object.fromEntries(axisList.map((a) => [a.key, a.value])) as RadarAxesData;
+          const record = Object.fromEntries(axisList.map((a) => [a.key, a.value])) as unknown as RadarAxesData;
           setRadarAxes({
             expressao: record.expressao ?? 0.35,
             motivacao: record.motivacao ?? 0.35,
@@ -1498,6 +1564,7 @@ export function NomeSocialChat({
 
   useEffect(() => {
     return () => {
+      freePdfAbortRef.current?.abort();
       clearChatPdfEnsureInflight();
     };
   }, []);
@@ -2041,6 +2108,14 @@ export function NomeSocialChat({
 
       {pdfToastUi}
       {pdfOverlayUi}
+      <ChatPdfPreparingOverlay
+        phase={freePdfOverlayPhase}
+        onRetry={() => {
+          setFreePdfOverlayPhase('idle');
+          void runFreePdf();
+        }}
+        onDismissError={() => setFreePdfOverlayPhase('idle')}
+      />
 
       <SummaryDrawer
         isOpen={drawerOpen}

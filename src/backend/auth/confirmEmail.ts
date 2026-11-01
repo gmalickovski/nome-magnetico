@@ -60,48 +60,48 @@ export async function syncVerifiedEmailMarker(
   return { ok: true, verifiedAt };
 }
 
-export async function confirmEmailAfterPayment(userId: string) {
-  if (!userId) return;
-  const verifiedAt = new Date().toISOString();
+export function isAccountCreatedViaCheckout(user: {
+  user_metadata?: Record<string, unknown> | null;
+}): boolean {
+  return user.user_metadata?.account_created_via_checkout === true;
+}
 
-  const { data, error: fetchError } = await supabase.auth.admin.getUserById(userId);
+/**
+ * Após pagamento: sincroniza marcadores se o Auth já confirmou.
+ * Só usa email_confirm admin quando a conta foi criada no fluxo de compra (cadastro → checkout).
+ */
+export async function confirmEmailAfterPayment(
+  userId: string,
+  client: SupabaseClient = supabase,
+) {
+  if (!userId) return;
+
+  const { data, error: fetchError } = await client.auth.admin.getUserById(userId);
   if (fetchError) {
     console.error('[confirm-email-after-payment] Falha ao buscar usuario:', fetchError.message);
     return;
   }
 
-  if (!data.user?.email_confirmed_at) {
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      email_confirm: true,
-      user_metadata: {
-        ...(data.user.user_metadata ?? {}),
-        email_verified_at: verifiedAt,
-      },
-    });
+  const authUser = data.user;
+  if (!authUser) return;
 
-    if (error) {
-      console.error('[confirm-email-after-payment] Falha ao confirmar email:', error.message);
-    }
-  } else {
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      user_metadata: {
-        ...(data.user.user_metadata ?? {}),
-        email_verified_at: verifiedAt,
-      },
-    });
-
-    if (error) {
-      console.error('[confirm-email-after-payment] Falha ao marcar metadata:', error.message);
-    }
+  if (authUser.email_confirmed_at) {
+    await syncVerifiedEmailMarker(userId, client);
+    return;
   }
 
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .update({ email_verified_at: verifiedAt })
-    .eq('id', userId)
-    .is('email_verified_at', null);
-
-  if (profileError) {
-    console.warn('[confirm-email-after-payment] Profile marker skipped:', profileError.message);
+  if (!isAccountCreatedViaCheckout(authUser)) {
+    return;
   }
+
+  const { error: confirmError } = await client.auth.admin.updateUserById(userId, {
+    email_confirm: true,
+  });
+
+  if (confirmError) {
+    console.error('[confirm-email-after-payment] Falha ao confirmar email (checkout):', confirmError.message);
+    return;
+  }
+
+  await syncVerifiedEmailMarker(userId, client);
 }

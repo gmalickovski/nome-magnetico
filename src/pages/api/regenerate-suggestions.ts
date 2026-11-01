@@ -95,7 +95,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
     trianguloVidaLinhas: triangulos.vida.linhas,
     bloqueiosCount: bloqueios.length,
     bloqueiosCodigos: bloqueios.map(b => b.codigo),
-    compatibilidade: avaliacao.compatibilidade ?? 'neutro',
+    compatibilidade: (avaliacao as { compatibilidade?: 'favoravel' | 'neutro' | 'desfavoravel' }).compatibilidade ?? 'neutro',
     temBloqueiosVida: sequenciasVida.length > 0,
   };
 }
@@ -351,9 +351,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     licoes_carmicas: (melhor?.licoesCarmicas ?? []) as unknown[],
     tendencias_ocultas: (melhor?.tendenciasOcultas ?? []) as unknown[],
     debitos_carmicos: (melhor?.debitosCarmicos ?? []) as unknown[],
-    analise_texto: analysis.analise_texto?.startsWith('# Relatorio do Nome Social:')
+    analise_texto: analysis!.analise_texto?.startsWith('# Relatorio do Nome Social:')
       ? resumoAtualizado
-      : analysis.analise_texto ?? resumoAtualizado,
+      : analysis!.analise_texto ?? resumoAtualizado,
     ...scoreFieldsSocial,
   });
 
