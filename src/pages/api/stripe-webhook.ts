@@ -25,6 +25,8 @@ import { invalidateUserSubscriptionsCache } from '../../backend/cache/memo';
 import { getPublicBaseUrl } from '../../utils/public-url';
 import { productAnalysisAppPath } from '../../backend/payments/checkout-access';
 import { shouldNotifyAdminSlackForProvider } from '../../backend/payments/admin-slack';
+import { supabase } from '../../backend/db/supabase';
+import { parseChatCheckoutMetadata } from '../../backend/payments/chat-checkout-metadata';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -54,6 +56,9 @@ export const POST: APIRoute = async ({ request }) => {
       ga_client_id?: string;
       ph_distinct_id?: string;
       purchase_kind?: string;
+      chosen_signature?: string;
+      analysis_id?: string;
+      source?: string;
     };
     id: string;
     payment_intent?: string | { id: string } | null;
@@ -108,6 +113,10 @@ export const POST: APIRoute = async ({ request }) => {
       if (plan) properties.plan = plan;
       if (eventName === 'purchase') {
         properties.purchase_kind = parsePurchaseKind(session.metadata?.purchase_kind);
+        const parsedChatMeta = parseChatCheckoutMetadata(session.metadata);
+        if (parsedChatMeta?.source) {
+          properties.source = parsedChatMeta.source;
+        }
       }
 
       await captureServerEvent({
@@ -157,6 +166,29 @@ export const POST: APIRoute = async ({ request }) => {
     if (!created) {
       console.log('[stripe-webhook] Sessão já processada:', session.id);
       return;
+    }
+
+    const chatChoice = parseChatCheckoutMetadata(session.metadata);
+    if (chatChoice) {
+      try {
+        const { error: choiceErr } = await supabase
+          .from('chat_checkout_choices')
+          .upsert(
+            {
+              user_id: userId,
+              analysis_id: chatChoice.analysisId,
+              chosen_signature: chatChoice.chosenSignature,
+              source: chatChoice.source,
+              stripe_session_id: session.id,
+            },
+            { onConflict: 'stripe_session_id', ignoreDuplicates: true },
+          );
+        if (choiceErr) {
+          console.error('[stripe-webhook] Falha ao gravar chat_checkout_choices:', choiceErr);
+        }
+      } catch (err) {
+        console.error('[stripe-webhook] Erro ao gravar chat_checkout_choices:', err);
+      }
     }
 
     // Atributos do Brevo logo após a linha nova. Falha aqui não interrompe o resto.

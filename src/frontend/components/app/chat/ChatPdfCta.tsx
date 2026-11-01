@@ -116,6 +116,7 @@ export function useChatPdfCta(input: {
   model: ChatPdfCtaModel;
   onDockClick: () => void;
   onStickyClick: () => void;
+  triggerAutoPdf: () => Promise<boolean>;
   resendEmail: () => Promise<void>;
   resending: boolean;
   toastUi: React.ReactNode;
@@ -190,8 +191,8 @@ export function useChatPdfCta(input: {
     [input.screen, input.isFree, input.suggestionRank, input.selectedScore]
   );
 
-  const runPaidPdf = useCallback(async () => {
-    if (pdfRunLockRef.current) return;
+  const runPaidPdf = useCallback(async (opts?: { auto?: boolean }): Promise<boolean> => {
+    if (pdfRunLockRef.current) return false;
     pdfRunLockRef.current = true;
     pdfAbortRef.current?.abort();
     const controller = new AbortController();
@@ -206,24 +207,24 @@ export function useChatPdfCta(input: {
       if (!analysisId && input.ensureAnalysisId) {
         analysisId = await input.ensureAnalysisId(signal);
       }
-      if (signal.aborted) return;
+      if (signal.aborted) return false;
       if (!analysisId) {
         setPhase('error');
         setOverlayPhase('error');
         addToast('Salve ou conclua a análise antes de gerar o PDF.', 'warning');
-        return;
+        return false;
       }
       setOverlayPhase('generating');
       const buildPdfUrl = () =>
         `/api/generate-pdf?id=${encodeURIComponent(analysisId!)}&t=${Date.now()}`;
       let res = await fetchWithAuth(buildPdfUrl(), { signal });
-      if (signal.aborted) return;
+      if (signal.aborted) return false;
       if (res.status === 202) {
         const ready = await waitAnalysisCompleteForPdf(analysisId, signal);
-        if (signal.aborted) return;
+        if (signal.aborted) return false;
         if (!ready) throw new Error('pdf_not_ready');
         res = await fetchWithAuth(buildPdfUrl(), { signal });
-        if (signal.aborted) return;
+        if (signal.aborted) return false;
       }
       if (res.status === 202) throw new Error('pdf_not_ready');
       if (!res.ok) throw new Error('pdf_error');
@@ -242,22 +243,30 @@ export function useChatPdfCta(input: {
       capturePostHogEvent('nm_pdf_generated', {
         duration_ms: Math.round(performance.now() - started),
         suggestion_rank: input.suggestionRank,
+        ...(opts?.auto ? { auto: true } : {}),
       });
+      return true;
     } catch (err) {
       if (signal.aborted) {
         setOverlayPhase('idle');
         setPhase('idle');
-        return;
+        return false;
       }
       setPhase('error');
       setOverlayPhase('error');
       capturePostHogEvent('nm_pdf_failed', {
         error: err instanceof Error ? err.message : 'unknown',
       });
+      return false;
     } finally {
       pdfRunLockRef.current = false;
     }
   }, [input.analysisId, input.ensureAnalysisId, input.suggestionRank, addToast]);
+
+  const triggerAutoPdf = useCallback(async (): Promise<boolean> => {
+    if (input.isFree || !input.emailConfirmed) return false;
+    return runPaidPdf({ auto: true });
+  }, [input.isFree, input.emailConfirmed, runPaidPdf]);
 
   const onStickyClick = useCallback(() => {
     if (!visible) return;
@@ -269,7 +278,11 @@ export function useChatPdfCta(input: {
         surface: 'sticky',
         suggestion_rank: input.suggestionRank,
       });
-      window.location.href = buildNomeSocialCheckoutHref();
+      window.location.href = buildNomeSocialCheckoutHref({
+        campaign: 'card_pdf',
+        chosenSignature: displayName,
+        analysisId: input.analysisId,
+      });
       return;
     }
 
@@ -281,6 +294,8 @@ export function useChatPdfCta(input: {
     input.emailConfirmed,
     input.isFree,
     input.suggestionRank,
+    input.analysisId,
+    displayName,
     trackClick,
     runPaidPdf,
   ]);
@@ -295,7 +310,11 @@ export function useChatPdfCta(input: {
         surface: 'dock',
         suggestion_rank: input.suggestionRank,
       });
-      window.location.href = buildNomeSocialCheckoutHref();
+      window.location.href = buildNomeSocialCheckoutHref({
+        campaign: 'card_pdf',
+        chosenSignature: displayName,
+        analysisId: input.analysisId,
+      });
       return;
     }
 
@@ -307,6 +326,8 @@ export function useChatPdfCta(input: {
     input.emailConfirmed,
     input.isFree,
     input.suggestionRank,
+    input.analysisId,
+    displayName,
     trackClick,
     runPaidPdf,
   ]);
@@ -361,6 +382,7 @@ export function useChatPdfCta(input: {
     model,
     onDockClick,
     onStickyClick,
+    triggerAutoPdf,
     resendEmail,
     resending,
     toastUi: <ToastContainer toasts={toasts} onRemove={removeToast} />,

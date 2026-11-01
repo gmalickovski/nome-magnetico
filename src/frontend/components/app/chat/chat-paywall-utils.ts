@@ -1,4 +1,5 @@
 import { capturePostHogEvent } from '../../../lib/analytics.js';
+import { buildNomeSocialCheckoutHref } from './chat-pdf-utils.js';
 
 export type PaywallSurface = 'bubble' | 'sticky' | 'panel' | 'dock';
 export type PaywallDevice = 'mobile' | 'desktop';
@@ -8,13 +9,15 @@ export function paywallDevice(): PaywallDevice {
   return window.matchMedia('(min-width: 768px)').matches ? 'desktop' : 'mobile';
 }
 
-export function buildPaywallCheckoutHref(): string {
-  const params = new URLSearchParams({
-    produto: 'nome_social',
-    utm_source: 'app_chat',
-    utm_campaign: 'paywall_free',
+export function buildPaywallCheckoutHref(options?: {
+  chosenSignature?: string | null;
+  analysisId?: string | null;
+}): string {
+  return buildNomeSocialCheckoutHref({
+    campaign: 'paywall_free',
+    chosenSignature: options?.chosenSignature,
+    analysisId: options?.analysisId,
   });
-  return `/comprar?${params.toString()}`;
 }
 
 export async function fetchNomeSocialPriceLabel(): Promise<string> {

@@ -39,6 +39,11 @@ const schema = z.object({
   etapa: z.string().max(32).optional(),
   /** Centavos exibidos na página — se divergir, devolve price_changed antes do Stripe */
   expected_final_cents: z.number().int().positive().optional(),
+  chosen_signature: z.string().trim().max(80).optional(),
+  analysis_id: z.string().uuid().optional(),
+  source: z.enum(['card_pdf', 'paywall_free']).optional(),
+  utm_source: z.string().trim().max(64).optional(),
+  utm_campaign: z.string().trim().max(64).optional(),
 });
 
 const jsonHeaders = { 'Content-Type': 'application/json' };
@@ -94,7 +99,36 @@ export async function createCheckoutResponse(args: {
     return json({ error: 'Produto inválido' }, 400);
   }
 
-  const { product_type, couponCode, expected_final_cents: expectedFinalCents } = parsed.data;
+  const {
+    product_type,
+    couponCode,
+    expected_final_cents: expectedFinalCents,
+    chosen_signature: rawChosenSignature,
+    analysis_id: rawAnalysisId,
+    source: rawSource,
+    utm_source: rawUtmSource,
+    utm_campaign: rawUtmCampaign,
+  } = parsed.data;
+  const chosenSignature = rawChosenSignature?.trim() ? rawChosenSignature.trim().slice(0, 80) : undefined;
+  const chatSource = rawSource;
+  const isFromAppChat = Boolean(chatSource || rawUtmSource === 'app_chat');
+
+  let verifiedAnalysisId: string | undefined;
+  if (rawAnalysisId) {
+    try {
+      const { data: ownedAnalysis } = await supabase
+        .from('analyses')
+        .select('id')
+        .eq('id', rawAnalysisId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (ownedAnalysis?.id) {
+        verifiedAnalysisId = ownedAnalysis.id;
+      }
+    } catch {
+      verifiedAnalysisId = undefined;
+    }
+  }
   const isRenewal =
     args.renewal === true ||
     queryRenewal ||
@@ -166,7 +200,28 @@ export async function createCheckoutResponse(args: {
       amountPaid: 0,
     });
 
-    return json({ bypass: true, redirectUrl: '/app?acesso=liberado' }, 200);
+    if (isFromAppChat && (chosenSignature || verifiedAnalysisId || chatSource)) {
+      try {
+        await supabase.from('chat_checkout_choices').upsert(
+          {
+            user_id: user.id,
+            analysis_id: verifiedAnalysisId ?? null,
+            chosen_signature: chosenSignature ?? null,
+            source: chatSource ?? null,
+            stripe_session_id: stripeSessionId,
+          },
+          { onConflict: 'stripe_session_id', ignoreDuplicates: true },
+        );
+      } catch (err) {
+        console.error('[create-checkout] Falha ao gravar chat_checkout_choices no bypass:', err);
+      }
+    }
+
+    const bypassRedirect =
+      isFromAppChat && product_type === 'nome_social'
+        ? '/app/analise/nome-social?checkout=success&produto=nome_social&resume=1'
+        : '/app?acesso=liberado';
+    return json({ bypass: true, redirectUrl: bypassRedirect }, 200);
   }
 
   try {
@@ -249,6 +304,15 @@ export async function createCheckoutResponse(args: {
 
     const campaign = isRenewal && etapa ? renewalUtmCampaign(etapa) : undefined;
     const renewalQuery = etapa ? `?etapa=${encodeURIComponent(etapa)}` : '';
+    const resolvedUtmCampaign = campaign ?? (rawUtmCampaign?.trim() || chatSource || undefined);
+    const resolvedUtmSource = campaign
+      ? 'brevo'
+      : rawUtmSource?.trim() || (chatSource ? 'app_chat' : undefined);
+    const resolvedUtmMedium = campaign ? 'email' : undefined;
+    const successUrl =
+      isFromAppChat && product_type === 'nome_social'
+        ? `${baseUrl}/app?checkout=success&produto=nome_social&resume=1`
+        : `${baseUrl}/app?checkout=success&produto=${product_type}`;
 
     const distinctId =
       phDistinctId ??
@@ -277,7 +341,7 @@ export async function createCheckoutResponse(args: {
       baseCents: effective.base_cents,
       promoId: effective.promo_id,
       discountSource: effective.discountSource,
-      successUrl: `${baseUrl}/app?checkout=success&produto=${product_type}`,
+      successUrl,
       cancelUrl: isRenewal
         ? `${baseUrl}/app/renovar${renewalQuery}`
         : `${baseUrl}/comprar?checkout=cancel`,
@@ -287,9 +351,12 @@ export async function createCheckoutResponse(args: {
       gaClientId: getGaClientIdFromRequest(request),
       phDistinctId,
       purchaseKind: isRenewal ? 'renewal' : 'new',
-      utmCampaign: campaign,
-      utmSource: campaign ? 'brevo' : undefined,
-      utmMedium: campaign ? 'email' : undefined,
+      utmCampaign: resolvedUtmCampaign,
+      utmSource: resolvedUtmSource,
+      utmMedium: resolvedUtmMedium,
+      chosenSignature,
+      analysisId: verifiedAnalysisId,
+      source: chatSource,
     });
 
     return json({ url: session.url, final_cents: unitAmount, base_cents: effective.base_cents }, 200);

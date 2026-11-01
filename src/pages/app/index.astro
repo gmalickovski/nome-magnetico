@@ -44,6 +44,11 @@ import { getScoreVersion } from '../../backend/numerology/score-version';
 const showFreeUsedModal   = Astro.url.searchParams.get('free_used') === 'true';
 const showCheckoutSuccess = Astro.url.searchParams.get('checkout') === 'success';
 const checkoutProduct     = Astro.url.searchParams.get('produto') ?? null;
+const resumeChat          = Astro.url.searchParams.get('resume') === '1';
+
+if (showCheckoutSuccess && resumeChat && (checkoutProduct === null || checkoutProduct === 'nome_social')) {
+  return Astro.redirect('/app/analise/nome-social?checkout=success&produto=nome_social&resume=1');
+}
 
 // Verificar admin e dados do perfil
 let isAdmin     = false;
