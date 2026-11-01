@@ -4,6 +4,7 @@ import {
   clearChatSession,
   loadChatSession,
   saveChatSession,
+  CHAT_SESSION_STORAGE_VERSION,
   type PersistedChatSession,
 } from './chat-session-storage.ts';
 import { INITIAL_COLLECT_STATE } from './decide-live-bridge.ts';
@@ -33,7 +34,7 @@ function installLocalStorageMock() {
 
 function minimalSession(): PersistedChatSession {
   return {
-    version: 5,
+    version: CHAT_SESSION_STORAGE_VERSION,
     savedAt: Date.now(),
     messages: [{ id: 'm1', sender: 'assistant', type: 'text', content: 'Olá' }],
     answers: { onboarding_confirm: 'ok' },
@@ -88,6 +89,20 @@ describe('chat-session-storage', () => {
     assert.equal(loaded!.stepIndex, 2);
     assert.equal(loaded!.basePanel?.score, 66);
     assert.equal(loaded!.messages.length, 1);
+  });
+
+  it('descarta sessão de versão anterior', () => {
+    const session = { ...minimalSession(), version: 5 as unknown as typeof CHAT_SESSION_STORAGE_VERSION };
+    saveChatSession(USER, session);
+    assert.equal(loadChatSession(USER), null);
+    assert.equal(memoryStore.get(`nm-chat-v2:${USER}`), undefined);
+  });
+
+  it('descarta sessão com analysisId gerada para reiniciar do zero em nova análise', () => {
+    const session = { ...minimalSession(), analysisId: 'analise-concluida-123' };
+    saveChatSession(USER, session);
+    assert.equal(loadChatSession(USER), null);
+    assert.equal(memoryStore.get(`nm-chat-v2:${USER}`), undefined);
   });
 
   it('clear remove persistência', () => {

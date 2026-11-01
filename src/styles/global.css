@@ -558,8 +558,7 @@
 }
 @media (min-width: 768px) {
   .nm-chat-shell {
-    left: var(--sidebar-w, 80px);
-    transition: left 300ms ease-out;
+    left: 5rem;
   }
 }
 @media (max-width: 767px) {

@@ -248,6 +248,7 @@ export function NomeSocialChat({
   const paywallPanelShownRef = useRef(false);
   const subscriberResumeRef = useRef(false);
   const sessionBootstrapped = useRef(false);
+  const sessionClearedRef = useRef(false);
   const chatStartedAtRef = useRef<number | null>(null);
   const stepViewedAtRef = useRef<number>(Date.now());
   const blockTransitionsShown = useRef<Set<BlockTransitionId>>(new Set());
@@ -403,7 +404,9 @@ export function NomeSocialChat({
   });
 
   const hasChatProgress =
-    birthConfirmed || Object.keys(answers).length > 0 || messages.length > 1 || stepIndex > 0;
+    !sessionClearedRef.current &&
+    !analysisId &&
+    (birthConfirmed || Object.keys(answers).length > 0 || messages.length > 1 || stepIndex > 0);
 
   const flushChatSessionToStorage = () => {
     if (!userId || !persistReady.current) return;
@@ -526,6 +529,7 @@ export function NomeSocialChat({
   }, [birthConfirmed, activeSuggestionId, confirmedDate, suggestions]);
 
   const resetChat = () => {
+    sessionClearedRef.current = true;
     clearChatSession(userId);
     applyFreshSession();
   };
@@ -1833,18 +1837,6 @@ export function NomeSocialChat({
         totalSteps={totalSteps}
         remaining={remaining}
         className="shrink-0 z-20 bg-dark-deeper/95 md:bg-[#111111]/95 backdrop-blur-md border-b border-white/5 md:border-[#D4AF37]/15"
-        leading={
-          <a
-            href={paidAccessActive ? '/app/analises' : '/app'}
-            onClick={() => flushChatSessionToStorage()}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-400 transition-colors hover:text-[#D4AF37]"
-          >
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>{paidAccessActive ? 'Minhas análises' : 'Voltar para o início'}</span>
-          </a>
-        }
         trailing={
           <>
             {freePaywallActive ? (

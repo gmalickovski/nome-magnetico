@@ -14,10 +14,6 @@ export interface Props {
   noPadding?: boolean;
   /** Shell full-viewport no mobile (chat): clearance fica no conteúdo interno, não no main. */
   mobileFullViewport?: boolean;
-  /** Link de retorno à esquerda no header desktop unificado (/app). */
-  headerBackHref?: string;
-  /** Rótulo do link de retorno no header desktop unificado. */
-  headerBackLabel?: string;
   /** Oculta o header desktop padrão quando a página usa header integrado próprio (ex.: chat). */
   hideDesktopHeader?: boolean;
 }
@@ -27,8 +23,6 @@ const {
   description,
   noPadding = false,
   mobileFullViewport = false,
-  headerBackHref,
-  headerBackLabel,
   hideDesktopHeader = false,
 } = Astro.props;
 
@@ -185,32 +179,9 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 
     {!hideDesktopHeader && (
       <>
-        <header class="app-fixed-header fixed top-0 right-0 z-30 hidden h-14 border-b border-[#D4AF37]/15 bg-[#111111]/95 backdrop-blur-md md:flex md:items-center">
-          <div class="flex w-full items-center justify-between gap-4 px-5 md:px-6">
-            <div class="flex min-w-0 items-center gap-4">
-              {headerBackHref ? (
-                <a
-                  href={headerBackHref}
-                  class="inline-flex items-center gap-2 text-sm font-semibold text-gray-400 transition-colors hover:text-[#D4AF37]"
-                >
-                  <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                  </svg>
-                  <span>{headerBackLabel ?? 'Voltar'}</span>
-                </a>
-              ) : (
-                <div class="flex items-center gap-2.5">
-                  <span class="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" aria-hidden="true"></span>
-                  <span class="font-cinzel text-xs font-bold uppercase tracking-[0.18em] text-[#e5e2e1]">
-                    {title}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div class="flex shrink-0 items-center gap-3">
-              <slot name="header-actions" />
-            </div>
+        <header class="app-fixed-header fixed top-0 right-0 left-20 z-30 hidden h-14 border-b border-[#D4AF37]/15 bg-[#111111]/95 backdrop-blur-md md:flex md:items-center">
+          <div class="flex w-full items-center justify-end gap-3 px-5 md:px-6">
+            <slot name="header-actions" />
           </div>
         </header>
         <div class="hidden md:block h-14 shrink-0" aria-hidden="true"></div>
@@ -233,10 +204,8 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 </BaseLayout>
 
 <style is:global>
-  :root { --sidebar-w: 80px; }
   .app-fixed-header {
-    transition: left 300ms ease-out;
-    left: var(--sidebar-w, 80px);
+    left: 5rem;
   }
 </style>
 
@@ -246,15 +215,4 @@ const mobileDockContext = resolveMobileDockContext(pathname);
   recordAppNavigationPath();
 </script>
 
-<script>
-  (function () {
-    const sidebar = document.getElementById('app-sidebar');
-    if (!sidebar) return;
-    const COLLAPSED = '80px';   /* w-20 */
-    const EXPANDED  = '288px';  /* w-72 */
-    sidebar.addEventListener('mouseenter', () =>
-      document.documentElement.style.setProperty('--sidebar-w', EXPANDED));
-    sidebar.addEventListener('mouseleave', () =>
-      document.documentElement.style.setProperty('--sidebar-w', COLLAPSED));
-  })();
-</script>
+
