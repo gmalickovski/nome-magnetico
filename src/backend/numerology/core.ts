@@ -8,9 +8,9 @@ export const TABELA_CONVERSAO: Record<string, number> = {
   A: 1, I: 1, Q: 1, J: 1, Y: 1,
   B: 2, K: 2, R: 2,
   C: 3, G: 3, L: 3, S: 3,
-  D: 4, M: 4, T: 4, X: 4,
+  D: 4, M: 4, T: 4,
   E: 5, H: 5, N: 5,
-  U: 6, V: 6, W: 6, Ç: 6,
+  U: 6, V: 6, W: 6, X: 6, Ç: 6, // DEV-260: X = 6 (regra do curso)
   O: 7, Z: 7,
   F: 8, P: 8,
 };
@@ -21,13 +21,24 @@ const DIACRITICO_TIL = '\u0303';         // ~ → +3
 const DIACRITICO_GRAVE = '\u0300';       // ` → ×2
 const DIACRITICO_TREMA = '\u0308';       // ¨ → ×2
 const DIACRITICO_CIRCUNFLEXO = '\u0302'; // ^ → +7
+const DIACRITICO_ANEL = '\u030A';        // ° (ex.: Å) → +7
+
+// Apóstrofos (' e ’): somam +2 na letra anterior (ex.: D'Angelo = 30)
+const APOSTROFOS = /['\u2019]/g;
+const APOSTROFO_SOMA = 2;
 
 /**
  * Calcula o valor numerológico de uma única letra.
  * Aplica os modificadores de acento conforme as regras cabalísticas.
  */
 export function calcularValor(letra: string): number {
-  if (letra.toUpperCase() === 'Ç') return 6;
+  // Apóstrofo(s) colados na letra (ver extrairLetras): +2 cada, na letra anterior.
+  const apostrofos = (letra.match(APOSTROFOS) ?? []).length;
+  const bonusApostrofo = apostrofos * APOSTROFO_SOMA;
+  letra = letra.replace(APOSTROFOS, '');
+  if (!letra) return 0;
+
+  if (letra.normalize('NFC').toUpperCase() === 'Ç') return 6 + bonusApostrofo;
 
   const decomposto = letra.normalize('NFD');
   const base = decomposto.charAt(0).toUpperCase();
@@ -52,10 +63,14 @@ export function calcularValor(letra: string): number {
       case DIACRITICO_CIRCUNFLEXO:
         valor += 7;
         break;
+      case DIACRITICO_ANEL:
+        valor += 7;
+        break;
     }
   }
 
-  return valor;
+  // Letra sem valor na tabela (símbolo, dígito) não recebe bônus de apóstrofo.
+  return valor > 0 ? valor + bonusApostrofo : 0;
 }
 
 /**
@@ -92,12 +107,19 @@ export function ehConsoante(letra: string): boolean {
 
 /**
  * Extrai apenas letras (sem espaços) do nome completo.
+ * Apóstrofos ficam colados na letra anterior (ex.: "D'"), para somar +2 nela.
  */
 export function extrairLetras(nome: string): string[] {
-  return nome
-    .replace(/\s+/g, '')
-    .split('')
-    .filter(l => /\S/.test(l));
+  const letras: string[] = [];
+  for (const ch of nome.normalize('NFC').replace(/\s+/g, '')) {
+    if (/['\u2019]/.test(ch)) {
+      // DEV-260: apóstrofo gruda na letra anterior (calcularValor soma +2). Sem letra antes, descarta.
+      if (letras.length > 0) letras[letras.length - 1] += ch;
+      continue;
+    }
+    letras.push(ch);
+  }
+  return letras;
 }
 
 /**

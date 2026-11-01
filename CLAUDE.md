@@ -123,9 +123,9 @@ src/backend/ai/prompts/               → system prompts e user prompts
 A I Q J Y = 1
 B K R     = 2
 C G L S   = 3
-D M T X   = 4
+D M T     = 4
 E H N     = 5
-U V W Ç   = 6
+U V W X Ç = 6
 O Z       = 7
 F P       = 8
 ```
@@ -133,17 +133,24 @@ F P       = 8
 ### Tratamento de acentos
 - Agudo (´): +2 ao valor base
 - Til (~): +3 ao valor base
-- Grave (`): ×3 do valor base
+- Grave (`): ×2 do valor base
+- Trema (¨): ×2 do valor base
+- Circunflexo (^): +7 ao valor base (mantém, ex.: Antônio Araújo soma 57)
+- Anel ° (Å): +7 ao valor base
+- Apóstrofo (' e ’): soma +2 na letra anterior (ex.: D'Angelo = 30)
 
-### Números preservados (masters)
-- 11 e 22 NÃO são reduzidos (em contextos que usam masters)
+### Números preservados (masters) e Regra do 2/4
+- 11 e 22 NÃO são reduzidos em Expressão, Destino, Motivação e Missão.
+- Impressão NÃO preserva masters (sempre 1–9).
+- Regra do 2/4 (DEV-260): Se Destino, Motivação ou Expressão reduzir a 2 ou 4, recalcula por partes mantendo 11 e 22 em cada parte (Destino: dia, mês e ano; Motivação e Expressão: palavra por palavra). Impressão e Missão não usam essa regra.
+- 11 e 22 não geram dívida cármica (22 não vira 4 para gerar 13).
 
 ### 5 números principais
-1. **Expressão**: todas as letras do nome completo
-2. **Destino**: soma dígitos da data de nascimento
-3. **Motivação/Alma**: apenas vogais
-4. **Missão/Impressão**: apenas consoantes
-5. **Personalidade**: primeiro nome apenas
+1. **Expressão**: todas as letras do nome completo (mantém 11/22, regra 2/4)
+2. **Destino**: soma dos dígitos da data de nascimento (mantém 11/22, regra 2/4)
+3. **Motivação/Alma**: apenas vogais do nome completo (mantém 11/22, regra 2/4)
+4. **Impressão**: apenas consoantes do nome completo, SEMPRE 1–9 (sem 11/22)
+5. **Missão**: Destino + Expressão (mantém 11/22)
 
 ### Os 4 Triângulos Numerológicos
 Cada análise calcula TODOS os 4 triângulos (não apenas o Triângulo da Vida):
@@ -165,9 +172,10 @@ Bloqueios são detectados em **todos os 4 triângulos** e consolidados. Cada blo
 Cada bloqueio tem: `codigo`, `titulo`, `descricao`, `aspectoSaude`, `triangulos[]`
 
 ### Lições Kármics e Tendências Ocultas
-- **Lições Kármics**: números 1–8 **ausentes** no nome → qualidades a desenvolver nesta encarnação
-- **Tendências Ocultas**: número que aparece **≥4 vezes** no nome → excesso daquela qualidade
-- Funções: `detectarLicoesCarmicas(nome)`, `detectarTendenciasOcultas(nome)`, `mapearFrequencias(nome)`
+- **Lições Kármicas**: números 1–9 **ausentes** no nome → qualidades a desenvolver nesta encarnação
+- **Tendências Ocultas**: número que aparece **≥4 vezes** no nome → excesso daquela qualidade (1–9)
+- **Dívidas Kármicas**: 13, 14, 16, 19. Acentuadas em QUALQUER repetição (2+ fontes quaisquer, inclusive dia natalício + Destino). 11 e 22 não geram dívida.
+- Funções: `detectarLicoesCarmicas(nome)`, `detectarTendenciasOcultas(nome)`, `mapearFrequencias(nome)`, `calcularDebitosCarmicos`
 - Módulo: `src/backend/numerology/karmic.ts`
 
 ### Harmonização de Nomes — Score e Compatibilidade

@@ -70,14 +70,15 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
 
 
   describe('Golden do Growth (16/10)', () => {
-    it('Guilherme Malickovski Correa · 14/02/1990: melhor na etapa 2a é "Guilherme Málickovski" 95 N5', () => {
+    it('Guilherme Malickovski Correa · 14/02/1990: melhor na etapa 2a é "Guilherme Málickovski" 93 N5 (DEV-260: Lição 9)', () => {
       const res = analisarNomesSocial([], 'Guilherme Malickovski Correa', '14/02/1990');
       assert.ok(res.melhorNome);
       assert.equal(res.melhorNome!.nomeCompleto, 'Guilherme Málickovski');
-      assert.equal(res.melhorNome!.score, 95);
+      // DEV-260: regra do curso (Lição 9 ausente desconta 2 pts: 95 -> 93)
+      assert.equal(res.melhorNome!.score, 93);
       assert.equal(res.melhorNome!.etapa, 2);
 
-      // Na etapa 1, o melhor disponível entre todas as opções de corte é Guilherme Correa (score 77, N4)
+      // Na etapa 1, o melhor disponível entre todas as opções de corte é Guilherme Correa (score 75, N4)
       const candEtapa1 = gerarCandidatosComNivel('Guilherme Malickovski Correa')
         .filter(c => etapaDoNivel(c.nivel) === 1)
         .map(c => analisarNomeSocial(c.nome, '14/02/1990'));
@@ -85,31 +86,35 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
       const melhorEtapa1 = candEtapa1[0];
       assert.ok(melhorEtapa1);
       assert.equal(melhorEtapa1!.nomeCompleto, 'Guilherme Correa');
-      assert.equal(melhorEtapa1!.score, 77);
+      // DEV-260: regra do curso (Lição 9 ausente desconta 2 pts: 77 -> 75)
+      assert.equal(melhorEtapa1!.score, 75);
     });
 
 
-    it('Juliana Martins Rocha · 18/03/1992: melhor na etapa 1 é "Juliana Rocha" 93 N5 (sem acento)', () => {
+    it('Juliana Martins Rocha · 18/03/1992: melhor na etapa 1 é "Juliana Rocha" 91 N5 (DEV-260: Lição 9)', () => {
       const res = analisarNomesSocial([], 'Juliana Martins Rocha', '18/03/1992');
       assert.ok(res.melhorNome);
       assert.equal(res.melhorNome!.nomeCompleto, 'Juliana Rocha');
-      assert.equal(res.melhorNome!.score, 93);
+      // DEV-260: regra do curso (Lição 9 ausente desconta 2 pts: 93 -> 91)
+      assert.equal(res.melhorNome!.score, 91);
       assert.equal(res.melhorNome!.etapa, 1);
     });
 
-    it('Lucas Henrique Barbosa · 27/04/1991: melhor na etapa 2 é "Lucas Hénrique" 96 N5', () => {
+    it('Lucas Henrique Barbosa · 27/04/1991: melhor na etapa 2 é "Lucas Hénrique" 94 N5 (DEV-260: Lição 9)', () => {
       const res = analisarNomesSocial([], 'Lucas Henrique Barbosa', '27/04/1991');
       assert.ok(res.melhorNome);
       assert.equal(res.melhorNome!.nomeCompleto, 'Lucas Hénrique');
-      assert.equal(res.melhorNome!.score, 96);
+      // DEV-260: regra do curso (Lição 9 ausente desconta 2 pts: 96 -> 94)
+      assert.equal(res.melhorNome!.score, 94);
       assert.equal(res.melhorNome!.etapa, 2);
     });
 
-    it('Ana Paula Ferreira Lima · 23/07/1988: melhor na etapa 2 é "Ana Paula Férreira" 95 N5', () => {
+    it('Ana Paula Ferreira Lima · 23/07/1988: melhor na etapa 2 é "Ana Paula Férreira" 93 N5 (DEV-260: Lição 9)', () => {
       const res = analisarNomesSocial([], 'Ana Paula Ferreira Lima', '23/07/1988');
       assert.ok(res.melhorNome);
       assert.equal(res.melhorNome!.nomeCompleto, 'Ana Paula Férreira');
-      assert.equal(res.melhorNome!.score, 95);
+      // DEV-260: regra do curso (Lição 9 ausente desconta 2 pts: 95 -> 93)
+      assert.equal(res.melhorNome!.score, 93);
       assert.equal(res.melhorNome!.etapa, 2);
     });
   });

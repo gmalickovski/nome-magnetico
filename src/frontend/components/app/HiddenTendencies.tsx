@@ -79,7 +79,7 @@ function TendenciaCard({ tendencia, showSolution }: { tendencia: TendenciaOculta
 
 export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto, showSolution = true }: Props) {
   const primeiroNome = nomeCompleto.split(' ')[0] ?? nomeCompleto;
-  const numeros = [1, 2, 3, 4, 5, 6, 7, 8];
+  const numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const maxFreq = Math.max(...numeros.map(n => frequencias[n] ?? 0), 1);
 
   return (

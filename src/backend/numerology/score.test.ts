@@ -17,34 +17,38 @@ import { avaliarCompatibilidade } from './harmonization.ts';
 import { getScoreVersion } from './score-version.ts';
 
 describe('score v3 · golden (DEV-185)', () => {
-  it('Guilherme Malickovski Correa · 14/02/1990 → 66 N3, potencial 95', () => {
+  it('Guilherme Malickovski Correa · 14/02/1990 → 64 N3, potencial 93 (DEV-260: Lição 9)', () => {
     const r = avaliarNome('Guilherme Malickovski Correa', '14/02/1990');
-    assert.equal(r.score_v3, 66);
+    // DEV-260: regra do curso (Lições Kármicas 1–9 adiciona Lição 9, desconto -2 pts: 66 -> 64)
+    assert.equal(r.score_v3, 64);
     assert.equal(r.nivel.codigo, 'N3');
     assert.equal(r.nivel.rotulo, 'Equilíbrio Parcial');
-    assert.equal(calcularPotencialV3('Guilherme Malickovski Correa', '14/02/1990'), 95);
+    assert.equal(calcularPotencialV3('Guilherme Malickovski Correa', '14/02/1990'), 93);
     assert.equal(r.potencial, r.score_v3);
   });
 
-  it('Lucas Henrique Barbosa · 27/04/1991 → 25 Em Tensão', () => {
+  it('Lucas Henrique Barbosa · 27/04/1991 → 23 Em Tensão (DEV-260: Lição 9)', () => {
     const r = avaliarNome('Lucas Henrique Barbosa', '27/04/1991');
-    assert.equal(r.score_v3, 25);
+    // DEV-260: regra do curso (Lições Kármicas 1–9 adiciona Lição 9, desconto -2 pts: 25 -> 23)
+    assert.equal(r.score_v3, 23);
     assert.equal(r.nivel.codigo, 'N1');
     assert.equal(r.nivel.rotulo, 'Em Tensão');
   });
 
-  it('Ana Paula Ferreira Lima · 23/07/1988 → 42 Pede Atenção', () => {
+  it('Ana Paula Ferreira Lima · 23/07/1988 → 40 Pede Atenção (DEV-260: Lição 9)', () => {
     const r = avaliarNome('Ana Paula Ferreira Lima', '23/07/1988');
-    assert.equal(r.score_v3, 42);
+    // DEV-260: regra do curso (Lições Kármicas 1–9 adiciona Lição 9, desconto -2 pts: 42 -> 40)
+    assert.equal(r.score_v3, 40);
     assert.equal(r.nivel.codigo, 'N2');
     assert.equal(r.nivel.rotulo, 'Pede Atenção');
   });
 
-  it('Juliana Martins Rocha · 18/03/1992 → 81 Favorável', () => {
+  it('Juliana Martins Rocha · 18/03/1992 → 67 N3 (DEV-260: 11 desfavorável com Destino 6)', () => {
     const r = avaliarNome('Juliana Martins Rocha', '18/03/1992');
-    assert.equal(r.score_v3, 81);
-    assert.equal(r.nivel.codigo, 'N4');
-    assert.equal(r.nivel.rotulo, 'Favorável');
+    // DEV-260: regra do curso (Expressão 11 com Destino 6 não é mais neutro, agora é desfavorável: -14 pts)
+    assert.equal(r.score_v3, 67);
+    assert.equal(r.nivel.codigo, 'N3');
+    assert.equal(r.nivel.rotulo, 'Equilíbrio Parcial');
   });
 });
 
