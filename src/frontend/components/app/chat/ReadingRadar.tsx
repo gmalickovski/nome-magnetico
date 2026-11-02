@@ -162,11 +162,19 @@ export function ReadingRadar({
           let valueColor: string;
           if (showDelta && overlayAxes && overlayVisual) {
             const delta = Math.round(getVal(overlayAxes, axis.key) * 100) - base;
-            valueText = delta > 0 ? `+${delta}%` : `${delta}%`;
-            valueColor = overlayVisual.text;
+            if (delta > 0) {
+              valueText = `+${delta}%`;
+              valueColor = overlayVisual.text;
+            } else if (delta < 0) {
+              valueText = `${delta}%`;
+              valueColor = '#ef4444'; // Vermelho para variação negativa
+            } else {
+              valueText = '0%';
+              valueColor = '#f2ca50'; // Dourado quando não mudar (0%)
+            }
           } else {
             valueText = `${base}%`;
-            valueColor = birthVisual.text;
+            valueColor = '#f2ca50'; // Dourado para valores base
           }
 
           // Valor do lado do vértice; rótulo do lado de fora.
