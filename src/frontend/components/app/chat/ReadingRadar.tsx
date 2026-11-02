@@ -22,12 +22,12 @@ export interface ReadingRadarProps {
  * Rótulo + valor ficam empilhados FORA do pentágono; o valor fica sempre
  * do lado mais próximo do vértice, então nunca cruza linha nem texto.
  */
-const VB_W = 880;
+const VB_W = 800;
 const VB_H = 640;
-const CX = 440;
-const CY = 330;
+const CX = 400;
+const CY = 320;
 const RADIUS = 190;
-const LINE_GAP = 28;
+const LINE_GAP = 32;
 
 type Placement = 'top' | 'side' | 'bottom';
 
@@ -198,8 +198,8 @@ export function ReadingRadar({
                 dominantBaseline="central"
                 fill="#d0d5de"
                 fontFamily="Inter, sans-serif"
-                fontSize={21}
-                fontWeight={600}
+                fontSize={25}
+                fontWeight={700}
               >
                 {labelText}
               </text>
@@ -210,8 +210,8 @@ export function ReadingRadar({
                 dominantBaseline="central"
                 fill={valueColor}
                 fontFamily="Inter, sans-serif"
-                fontSize={24}
-                fontWeight={700}
+                fontSize={28}
+                fontWeight={800}
               >
                 {valueText}
               </text>

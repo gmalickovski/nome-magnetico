@@ -14,31 +14,45 @@ export function ChatSidebarPanelChrome({
   className = '',
 }: ChatSidebarPanelChromeProps) {
   return (
-    <div className={`flex flex-col min-h-0 h-full ${className}`}>
-      {/* Header com padding bottom aprimorado para separar do conteúdo */}
-      <div className="shrink-0 flex items-center justify-between gap-3 pb-5 sm:pb-6 pt-1 px-1">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span
-            className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
-            aria-hidden="true"
-          />
-          <h2 className="font-cinzel text-base sm:text-lg md:text-xl font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate">
-            Painel de leitura
-          </h2>
-        </div>
+    <div className={`flex flex-col min-h-0 h-full w-full relative ${className}`}>
+      {/* Header bar fixo no topo, com botão permanentemente fixado no canto superior direito sem transição de posição */}
+      <div className="shrink-0 relative w-full pb-5 sm:pb-6 pt-1 px-1 min-h-[44px] flex items-center">
+        {expanded ? (
+          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
+            <div className="flex items-center gap-2.5 min-w-0 pr-12">
+              <span
+                className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
+                aria-hidden="true"
+              />
+              <h2 className="font-cinzel text-base sm:text-lg md:text-xl font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate">
+                Painel de leitura
+              </h2>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 min-w-0 pr-12">
+            <span
+              className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
+              aria-hidden="true"
+            />
+            <h2 className="font-cinzel text-base sm:text-lg md:text-xl font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate">
+              Painel de leitura
+            </h2>
+          </div>
+        )}
 
-        {/* Botão de expansão/recolhimento fixo em dimensões (w-10 h-10) com ícones canônicos */}
+        {/* Botão permanentemente fixo no canto superior direito (mesma posição exata em ambos os estados, sem transição de coordenadas) */}
         <button
           type="button"
           onClick={onToggleExpand}
-          className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-all duration-200 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
+          className="absolute right-1 sm:right-2 top-1 z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-colors duration-150 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
           title={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de leitura'}
           aria-label={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de leitura'}
         >
           {expanded ? (
-            /* Ícone canônico de recolher/fechar: 4 setas apontando para dentro (Heroicons ArrowsPointingIn) */
+            /* Ícone de fechar/recolher: setas apontando para dentro */
             <svg
-              className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-200"
+              className="w-4 h-4 sm:w-[18px] sm:h-[18px]"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -53,9 +67,9 @@ export function ChatSidebarPanelChrome({
               <path d="M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
             </svg>
           ) : (
-            /* Ícone canônico de expandir/abrir: 4 setas apontando para fora (Heroicons ArrowsPointingOut) */
+            /* Ícone de expandir/abrir: setas apontando para fora */
             <svg
-              className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-200"
+              className="w-4 h-4 sm:w-[18px] sm:h-[18px]"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -73,7 +87,16 @@ export function ChatSidebarPanelChrome({
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 chat-scroll-pane pt-0.5">{children}</div>
+      {/* Conteúdo com scrollbar colada na borda da tela */}
+      <div className="flex-1 min-h-0 chat-scroll-pane pt-0.5">
+        {expanded ? (
+          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
+            {children}
+          </div>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }

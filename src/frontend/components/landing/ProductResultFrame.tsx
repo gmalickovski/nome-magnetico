@@ -633,8 +633,8 @@ export function ProductHarmonyStar({
                   y={labelPos.y + LANDING_STAR_LABEL_DY[i]}
                   fill="#d0d5de"
                   fontFamily="Inter, sans-serif"
-                  fontSize={21}
-                  fontWeight={600}
+                  fontSize={25}
+                  fontWeight={700}
                   textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
                   dominantBaseline="central"
                 >
@@ -647,8 +647,8 @@ export function ProductHarmonyStar({
                   y={outerNumPos.y}
                   fill={outerStrokeVisual.text}
                   fontFamily="Inter, sans-serif"
-                  fontSize={24}
-                  fontWeight={700}
+                  fontSize={28}
+                  fontWeight={800}
                   textAnchor="middle"
                   dominantBaseline="central"
                 >
@@ -662,8 +662,8 @@ export function ProductHarmonyStar({
                     y={innerNumPos.y}
                     fill={birthVisual.text}
                     fontFamily="Inter, sans-serif"
-                    fontSize={20}
-                    fontWeight={700}
+                    fontSize={24}
+                    fontWeight={800}
                     textAnchor="middle"
                     dominantBaseline="central"
                   >
@@ -733,15 +733,15 @@ export function ProductHarmonyStar({
         }
         .harmony-star-label {
           fill: #d0d5de;
-          font-size: 21px;
+          font-size: 25px;
           font-weight: 600;
         }
         .harmony-star-num-outer {
-          font-size: 24px;
+          font-size: 28px;
           font-weight: 700;
         }
         .harmony-star-num-inner {
-          font-size: 20px;
+          font-size: 24px;
           font-weight: 700;
         }
       `}</style>
