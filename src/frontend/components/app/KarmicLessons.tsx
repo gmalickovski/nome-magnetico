@@ -26,7 +26,7 @@ function LicaoCard({ licao, showSolution }: { licao: LicaoCarmica; showSolution:
   return (
     <div className={`rounded-xl border overflow-hidden ${cor}`}>
       <div className="w-full text-left p-4 flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold font-mono shrink-0 border text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10`}>
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border text-[#f2ca50] border-[#f2ca50]/30 bg-[#f2ca50]/10`}>
           {licao.numero}
         </div>
         <div className="flex-1 min-w-0">

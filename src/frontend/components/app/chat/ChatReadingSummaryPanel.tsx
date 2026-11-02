@@ -18,10 +18,10 @@ function SectionIntro({
   return (
     <section className="space-y-3">
       <div className="px-0.5">
-        <p className="font-cinzel text-[10px] uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">
+        <p className="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">
           {eyebrow}
         </p>
-        <h3 className="font-cinzel text-base font-bold text-white">{title}</h3>
+        <h3 className="font-cinzel text-base sm:text-lg font-bold text-white">{title}</h3>
       </div>
       {children}
     </section>

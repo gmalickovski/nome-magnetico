@@ -33,7 +33,7 @@ function DebitoCard({ debito }: { debito: DebitoCarmico }) {
         : 'border-purple-500/30 bg-purple-500/10'
     }`}>
       <div className="w-full text-left p-4 flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold font-mono shrink-0 border ${
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border ${
           isFixo
             ? 'bg-amber-500/20 border-amber-500/30 text-amber-300'
             : 'bg-purple-500/20 border-purple-500/30 text-purple-300'

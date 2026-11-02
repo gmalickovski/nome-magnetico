@@ -55,7 +55,7 @@ function TendenciaCard({ tendencia, showSolution }: { tendencia: TendenciaOculta
   return (
     <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 overflow-hidden">
       <div className="w-full text-left p-4 flex items-start gap-4">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold font-mono shrink-0 bg-blue-500/20 border border-blue-500/30 text-blue-300">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 bg-blue-500/20 border border-blue-500/30 text-blue-300">
           {tendencia.numero}
         </div>
         <div className="flex-1 min-w-0">
@@ -109,7 +109,7 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
       {/* Tendências */}
       {tendencias.length === 0 ? (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5 flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
             ✓
           </div>
           <div>
