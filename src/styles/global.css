@@ -835,7 +835,7 @@
 
   /** Rótulo serifado dos cards de score (harmonia: nascimento, harmonizado, sugestões). */
   .nm-score-eyebrow {
-    @apply font-cinzel text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-gold leading-normal;
+    @apply font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] leading-normal;
   }
 
   .nm-h1 {
@@ -871,6 +871,13 @@
   .nm-caption {
     @apply font-inter text-xs md:text-[13px] font-normal text-[#6B7280] leading-[1.5];
     text-wrap: pretty;
+  /** Texto padrao de cards de leitura (resumo, arcanos, bloqueios, debitos, licoes, tendencias):
+   * Alinhado a esquerda no mobile (<640px) para evitar espacamentos irregulares entre palavras,
+   * e justificado em telas maiores (sm+) com a ultima linha alinhada a esquerda. */
+  .nm-card-text {
+    @apply font-inter text-sm font-normal text-gray-300 leading-relaxed text-left sm:text-justify [text-align-last:left];
+    text-wrap: pretty;
+  }
   }
 }
 
@@ -942,17 +949,17 @@
 .nm-floating-card {
   position: relative;
   border-radius: 1rem;
-  background-color: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 10px 14px 20px -10px rgba(0, 0, 0, 0.5);
+  background-color: #1c1c1c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
 }
 
 .nm-floating-card-interactive {
   position: relative;
   border-radius: 1rem;
-  background-color: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 10px 14px 20px -10px rgba(0, 0, 0, 0.5);
+  background-color: #1c1c1c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
   transition:
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -962,7 +969,7 @@
 
 .nm-floating-card-interactive:hover {
   transform: translateY(-3px);
-  background-color: #1d1d1d;
+  background-color: #222222;
   border-color: rgba(212, 175, 55, 0.4);
   box-shadow: 12px 18px 24px -10px rgba(0, 0, 0, 0.65);
 }

@@ -311,7 +311,8 @@ export function HarmonyScoreStack({
   className?: string;
 }) {
   return (
-    <div className={`${landingMockupFloatClass} p-4 sm:p-5 w-full ${className}`}>
+    <div className={`${landingMockupFloatClass} bg-[#1c1c1c] border border-white/10 rounded-2xl shadow-xl shadow-black/40 p-4 sm:p-5 w-full ${className}`}>
+
       <div className="flex flex-col gap-4 min-w-0 w-full">{children}</div>
     </div>
   );
@@ -632,8 +633,8 @@ export function ProductHarmonyStar({
                   y={labelPos.y + LANDING_STAR_LABEL_DY[i]}
                   fill="#d0d5de"
                   fontFamily="Inter, sans-serif"
-                  fontSize={21}
-                  fontWeight={600}
+                  fontSize={25}
+                  fontWeight={700}
                   textAnchor={HARMONY_STAR_LABEL_ANCHORS[i]}
                   dominantBaseline="central"
                 >
@@ -646,8 +647,8 @@ export function ProductHarmonyStar({
                   y={outerNumPos.y}
                   fill={outerStrokeVisual.text}
                   fontFamily="Inter, sans-serif"
-                  fontSize={24}
-                  fontWeight={700}
+                  fontSize={28}
+                  fontWeight={800}
                   textAnchor="middle"
                   dominantBaseline="central"
                 >
@@ -661,8 +662,8 @@ export function ProductHarmonyStar({
                     y={innerNumPos.y}
                     fill={birthVisual.text}
                     fontFamily="Inter, sans-serif"
-                    fontSize={20}
-                    fontWeight={700}
+                    fontSize={24}
+                    fontWeight={800}
                     textAnchor="middle"
                     dominantBaseline="central"
                   >
@@ -679,11 +680,11 @@ export function ProductHarmonyStar({
         style={{
           transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
         }}
-        className={`flex flex-col sm:flex-row justify-center items-center gap-2.5 sm:gap-6 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
+        className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
           shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >
-        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+        <span className="inline-flex items-center gap-2 min-w-0 max-w-full justify-center">
           <span
             className="inline-block w-3 h-3 rounded-full shrink-0"
             style={{
@@ -697,7 +698,7 @@ export function ProductHarmonyStar({
           <span className="truncate text-[#e5e2e1] font-medium">{birthName}</span>
         </span>
         {(isDemo || isDual) && harmonizedName && (
-          <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+          <span className="inline-flex items-center gap-2 min-w-0 max-w-full justify-center">
             <span
               className="inline-block w-3 h-3 rounded-full shrink-0"
               style={{
@@ -732,15 +733,15 @@ export function ProductHarmonyStar({
         }
         .harmony-star-label {
           fill: #d0d5de;
-          font-size: 21px;
+          font-size: 25px;
           font-weight: 600;
         }
         .harmony-star-num-outer {
-          font-size: 24px;
+          font-size: 28px;
           font-weight: 700;
         }
         .harmony-star-num-inner {
-          font-size: 20px;
+          font-size: 24px;
           font-weight: 700;
         }
       `}</style>

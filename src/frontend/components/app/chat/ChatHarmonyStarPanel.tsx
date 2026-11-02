@@ -25,17 +25,6 @@ export function ChatHarmonyStarPanel({
 
   return (
     <div className={`w-full min-w-0 flex flex-col gap-3 ${className}`}>
-      {dual && onResetToBase && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onResetToBase}
-            className="text-[11px] font-inter text-chat-muted hover:text-chat-ink transition-colors px-2 py-1 rounded-md hover:bg-white/5"
-          >
-            Voltar ao nome de nascimento
-          </button>
-        </div>
-      )}
 
       {dual && harmonizedPanel ? (
         <ProductHarmonyStar

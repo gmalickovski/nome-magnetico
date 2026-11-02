@@ -45,7 +45,7 @@ export function ScoreCardRow({
           className={`flex flex-col gap-2 min-w-0 w-full ${SCORE_CARD_WIDE}:flex-row ${SCORE_CARD_WIDE}:items-center ${SCORE_CARD_WIDE}:justify-between ${SCORE_CARD_WIDE}:gap-3`}
         >
           <h4
-            className={`min-w-0 w-full max-w-full font-cinzel text-sm font-bold text-[#e5e2e1] leading-normal truncate ${SCORE_CARD_WIDE}:flex-1 ${SCORE_CARD_WIDE}:text-[15px]`}
+            className={`min-w-0 w-full max-w-full font-cinzel text-base sm:text-lg font-bold text-white tracking-wide leading-snug truncate ${SCORE_CARD_WIDE}:flex-1 ${SCORE_CARD_WIDE}:text-xl`}
             title={nome}
           >
             {nome}
