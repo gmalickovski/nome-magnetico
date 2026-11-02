@@ -82,7 +82,7 @@ export function ChatSidebarSection({
       {showRadar && radarAxes && (
         <div className="rounded-2xl border border-white/10 bg-chat-bubble/70 p-3.5 sm:p-4 flex flex-col gap-3.5 w-full">
           <div className="flex flex-col gap-0.5 self-start">
-            <p className="nm-score-eyebrow text-[#D4AF37]">Mapa de Alinhamento Vibracional</p>
+            <p className="nm-score-eyebrow">Mapa de Alinhamento Vibracional</p>
             <p className="text-[11px] font-inter text-[#A0A0A0]">Ressonância da assinatura com o seu momento</p>
           </div>
           <ReadingRadar
