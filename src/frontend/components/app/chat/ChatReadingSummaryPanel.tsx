@@ -84,9 +84,10 @@ export function ChatReadingSummaryPanel({
         </p>
       )}
 
-      <SectionIntro eyebrow="Anatomia vibratória" title="Os 4 triângulos">
+      <SectionIntro eyebrow="Anatomia vibratória" title="O Triângulo da Vida">
         <div className="rounded-2xl bg-white/[0.03] p-3 sm:p-4">
           <TriangleVisualization
+            onlyVida
             nome={nomeExibido}
             vida={triangulos.vida as never}
             pessoal={triangulos.pessoal as never}

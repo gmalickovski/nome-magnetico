@@ -871,6 +871,13 @@
   .nm-caption {
     @apply font-inter text-xs md:text-[13px] font-normal text-[#6B7280] leading-[1.5];
     text-wrap: pretty;
+  /** Texto padrao de cards de leitura (resumo, arcanos, bloqueios, debitos, licoes, tendencias):
+   * Alinhado a esquerda no mobile (<640px) para evitar espacamentos irregulares entre palavras,
+   * e justificado em telas maiores (sm+) com a ultima linha alinhada a esquerda. */
+  .nm-card-text {
+    @apply font-inter text-sm font-normal text-gray-300 leading-relaxed text-left sm:text-justify [text-align-last:left];
+    text-wrap: pretty;
+  }
   }
 }
 

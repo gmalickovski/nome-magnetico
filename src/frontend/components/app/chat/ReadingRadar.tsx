@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { RadarAxesData } from './chat-types.js';
 import { getScoreTierVisual } from '../../landing/score-tier-visual.js';
 
@@ -11,49 +11,50 @@ export interface ReadingRadarProps {
   overlayScore?: number | null;
   /** Rótulos dinâmicos dos eixos (ex.: Foco: Carreira) */
   labels?: Record<string, string>;
-  /** Exibe deltas numéricos (+30, etc.) nas pontas ativas */
+  /** Exibe deltas numéricos (+30, etc.) nas pontas quando há sobreposição */
   showNumericLabels?: boolean;
   className?: string;
 }
 
-const AXIS_CONFIG = [
-  { key: 'expressao', label: 'Foco do Momento', angle: -Math.PI / 2, align: 'middle', dx: 0, dy: -6 },
-  {
-    key: 'motivacao',
-    label: 'Equilíbrio da Alma',
-    angle: -Math.PI / 2 + (2 * Math.PI) / 5,
-    align: 'start',
-    dx: 6,
-    dy: 0,
-  },
-  {
-    key: 'destino',
-    label: 'Sintonia de Destino',
-    angle: -Math.PI / 2 + (4 * Math.PI) / 5,
-    align: 'start',
-    dx: 4,
-    dy: 8,
-  },
-  {
-    key: 'harmonia_triangulo',
-    label: 'Magnetismo Social',
-    angle: -Math.PI / 2 + (6 * Math.PI) / 5,
-    align: 'end',
-    dx: -4,
-    dy: 8,
-  },
-  {
-    key: 'sequencias',
-    label: 'Fluidez',
-    angle: -Math.PI / 2 + (8 * Math.PI) / 5,
-    align: 'end',
-    dx: -6,
-    dy: 0,
-  },
-] as const;
+/**
+ * DEV-265: mesma escala e proporção da Estrela de Harmonização
+ * (viewBox largo, raio ~190, rótulo 21px, número 24px, max-width 580px).
+ * Rótulo + valor ficam empilhados FORA do pentágono; o valor fica sempre
+ * do lado mais próximo do vértice, então nunca cruza linha nem texto.
+ */
+const VB_W = 880;
+const VB_H = 640;
+const CX = 440;
+const CY = 330;
+const RADIUS = 190;
+const LINE_GAP = 28;
+
+type Placement = 'top' | 'side' | 'bottom';
+
+const AXIS_CONFIG: ReadonlyArray<{
+  key: string;
+  label: string;
+  angle: number;
+  anchor: 'middle' | 'start' | 'end';
+  placement: Placement;
+  offset: number;
+  dx: number;
+}> = [
+  { key: 'expressao', label: 'Foco do Momento', angle: -Math.PI / 2, anchor: 'middle', placement: 'top', offset: 36, dx: 0 },
+  { key: 'motivacao', label: 'Equilíbrio da Alma', angle: -Math.PI / 2 + (2 * Math.PI) / 5, anchor: 'start', placement: 'side', offset: 26, dx: 10 },
+  { key: 'destino', label: 'Sintonia de Destino', angle: -Math.PI / 2 + (4 * Math.PI) / 5, anchor: 'start', placement: 'bottom', offset: 34, dx: 4 },
+  { key: 'harmonia_triangulo', label: 'Magnetismo Social', angle: -Math.PI / 2 + (6 * Math.PI) / 5, anchor: 'end', placement: 'bottom', offset: 34, dx: -4 },
+  { key: 'sequencias', label: 'Fluidez', angle: -Math.PI / 2 + (8 * Math.PI) / 5, anchor: 'end', placement: 'side', offset: 26, dx: -10 },
+];
 
 function getVal(axes: RadarAxesData, key: string): number {
   return axes[key as keyof RadarAxesData] ?? 0.35;
+}
+
+function getCoords(val: number, angle: number) {
+  const safeVal = Math.max(0.08, Math.min(1.0, val));
+  const r = RADIUS * safeVal;
+  return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
 }
 
 export function ReadingRadar({
@@ -65,28 +66,16 @@ export function ReadingRadar({
   showNumericLabels = false,
   className = '',
 }: ReadingRadarProps) {
-  const cx = 120;
-  const cy = 100;
-  const radius = 62;
+  const glowId = `radar-glow-${useId().replace(/:/g, '')}`;
   const rings = [0.25, 0.5, 0.75, 1.0];
 
-  // Cores sincronizadas com o Score Tier Visual (N1 a N5)
   const birthVisual = getScoreTierVisual(birthScore);
-  const overlayVisual = overlayScore != null ? getScoreTierVisual(overlayScore) : null;
-
-  const getCoords = (val: number, angle: number) => {
-    const safeVal = Math.max(0.08, Math.min(1.0, val));
-    const r = radius * safeVal;
-    return {
-      x: cx + r * Math.cos(angle),
-      y: cy + r * Math.sin(angle),
-    };
-  };
+  const overlayVisual = overlayAxes && overlayScore != null ? getScoreTierVisual(overlayScore) : null;
+  const showDelta = Boolean(showNumericLabels && overlayAxes && overlayVisual);
 
   const polygonPoints = (data: RadarAxesData) =>
     AXIS_CONFIG.map((axis) => {
-      const val = getVal(data, axis.key);
-      const { x, y } = getCoords(val, axis.angle);
+      const { x, y } = getCoords(getVal(data, axis.key), axis.angle);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(' ');
 
@@ -94,155 +83,133 @@ export function ReadingRadar({
   const overlayPoints = overlayAxes ? polygonPoints(overlayAxes) : null;
 
   return (
-    <div className={`w-full flex flex-col items-center select-none ${className}`}>
+    <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
-        viewBox="0 0 250 210"
-        className="w-full max-w-[260px] h-auto overflow-visible"
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        className="w-full max-w-[580px] h-auto overflow-visible"
+        role="img"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
         <defs>
-          {overlayVisual && (
-            <filter id="radar-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          )}
+          <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
         </defs>
 
-        {/* Anéis de teia */}
-        {rings.map((ringVal) => {
-          const ringPoints = AXIS_CONFIG.map((axis) => {
-            const { x, y } = getCoords(ringVal, axis.angle);
-            return `${x.toFixed(1)},${y.toFixed(1)}`;
-          }).join(' ');
-          return (
-            <polygon
-              key={`ring-${ringVal}`}
-              points={ringPoints}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.08)"
-              strokeWidth="1"
-            />
-          );
-        })}
+        {rings.map((ringVal) => (
+          <polygon
+            key={`ring-${ringVal}`}
+            points={AXIS_CONFIG.map((axis) => {
+              const { x, y } = getCoords(ringVal, axis.angle);
+              return `${x.toFixed(1)},${y.toFixed(1)}`;
+            }).join(' ')}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.6"
+          />
+        ))}
 
-        {/* Linhas radiais dos 5 eixos */}
         {AXIS_CONFIG.map((axis) => {
           const { x, y } = getCoords(1.0, axis.angle);
           return (
-            <line
-              key={`axis-line-${axis.key}`}
-              x1={cx}
-              y1={cy}
-              x2={x}
-              y2={y}
-              stroke="rgba(255, 255, 255, 0.12)"
-              strokeWidth="1"
-            />
+            <line key={`axis-${axis.key}`} x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1.6" />
           );
         })}
 
-        {/* Polígono Base: Nome de Nascimento (cor sincronizada com o nível do score) */}
         <polygon
           points={basePoints}
           className="transition-all duration-300 ease-out"
           fill={birthVisual.fill}
           stroke={birthVisual.stroke}
-          strokeWidth="1.5"
+          strokeWidth="2.4"
           strokeLinejoin="round"
           strokeOpacity="0.85"
         />
 
-        {/* Polígono de Sobreposição: Nome Harmonizado (cor sincronizada com o nível do score) */}
         {overlayPoints && overlayVisual && (
           <polygon
             points={overlayPoints}
             className="transition-all duration-300 ease-out"
             fill={overlayVisual.fill}
             stroke={overlayVisual.stroke}
-            strokeWidth="2.25"
+            strokeWidth="3.4"
             strokeLinejoin="round"
-            filter="url(#radar-glow)"
+            filter={`url(#${glowId})`}
           />
         )}
 
-        {/* Vértices do polígono base */}
         {AXIS_CONFIG.map((axis) => {
-          const val = getVal(axes, axis.key);
-          const { x, y } = getCoords(val, axis.angle);
-          return (
-            <circle
-              key={`dot-base-${axis.key}`}
-              cx={x}
-              cy={y}
-              r="2.5"
-              fill={birthVisual.stroke}
-              className="transition-all duration-300 ease-out"
-            />
-          );
+          const { x, y } = getCoords(getVal(axes, axis.key), axis.angle);
+          return <circle key={`dot-b-${axis.key}`} cx={x} cy={y} r="5" fill={birthVisual.stroke} />;
         })}
 
-        {/* Vértices do polígono harmonizado */}
         {overlayAxes && overlayVisual &&
           AXIS_CONFIG.map((axis) => {
-            const val = getVal(overlayAxes, axis.key);
-            const { x, y } = getCoords(val, axis.angle);
-            return (
-              <circle
-                key={`dot-overlay-${axis.key}`}
-                cx={x}
-                cy={y}
-                r="3.5"
-                fill={overlayVisual.stroke}
-                className="transition-all duration-300 ease-out"
-              />
-            );
+            const { x, y } = getCoords(getVal(overlayAxes, axis.key), axis.angle);
+            return <circle key={`dot-o-${axis.key}`} cx={x} cy={y} r="7" fill={overlayVisual.stroke} />;
           })}
 
-        {/* Rótulos dos eixos */}
+        {/* Rótulo + valor empilhados fora do pentágono (valor sempre visível nas 5 pontas) */}
         {AXIS_CONFIG.map((axis) => {
-          const labelRadius = radius + 15;
-          const lx = cx + labelRadius * Math.cos(axis.angle) + (axis.dx ?? 0);
-          const ly = cy + labelRadius * Math.sin(axis.angle) + (axis.dy ?? 0);
+          const r = RADIUS + axis.offset;
+          const gx = CX + r * Math.cos(axis.angle) + axis.dx;
+          const gy = CY + r * Math.sin(axis.angle);
           const labelText = labels?.[axis.key] ?? axis.label;
 
+          const base = Math.round(getVal(axes, axis.key) * 100);
+          let valueText: string;
+          let valueColor: string;
+          if (showDelta && overlayAxes && overlayVisual) {
+            const delta = Math.round(getVal(overlayAxes, axis.key) * 100) - base;
+            valueText = delta > 0 ? `+${delta}%` : `${delta}%`;
+            valueColor = overlayVisual.text;
+          } else {
+            valueText = `${base}%`;
+            valueColor = birthVisual.text;
+          }
+
+          // Valor do lado do vértice; rótulo do lado de fora.
+          let valueY = gy;
+          let labelY = gy;
+          if (axis.placement === 'top') {
+            labelY = gy - LINE_GAP - 2;
+          } else if (axis.placement === 'bottom') {
+            labelY = gy + LINE_GAP;
+          } else {
+            labelY = gy - LINE_GAP / 2;
+            valueY = gy + LINE_GAP / 2 + 2;
+          }
+
           return (
-            <text
-              key={`label-${axis.key}`}
-              x={lx}
-              y={ly}
-              textAnchor={axis.align as 'middle' | 'start' | 'end'}
-              className="font-inter text-[9.5px] font-medium tracking-tight fill-[#A0A0A0]"
-            >
-              {labelText}
-            </text>
+            <g key={`lbl-${axis.key}`}>
+              <text
+                x={gx}
+                y={labelY}
+                textAnchor={axis.anchor}
+                dominantBaseline="central"
+                fill="#d0d5de"
+                fontFamily="Inter, sans-serif"
+                fontSize={21}
+                fontWeight={600}
+              >
+                {labelText}
+              </text>
+              <text
+                x={gx}
+                y={valueY}
+                textAnchor={axis.anchor}
+                dominantBaseline="central"
+                fill={valueColor}
+                fontFamily="Inter, sans-serif"
+                fontSize={24}
+                fontWeight={700}
+              >
+                {valueText}
+              </text>
+            </g>
           );
         })}
-
-        {/* Variações numéricas nos vértices (+delta) */}
-        {showNumericLabels &&
-          overlayAxes &&
-          overlayVisual &&
-          AXIS_CONFIG.map((axis) => {
-            const base = Math.round(getVal(axes, axis.key) * 100);
-            const over = Math.round(getVal(overlayAxes, axis.key) * 100);
-            const delta = over - base;
-            if (delta === 0) return null;
-            const val = getVal(overlayAxes, axis.key);
-            const { x, y } = getCoords(val, axis.angle);
-            return (
-              <text
-                key={`delta-${axis.key}`}
-                x={x}
-                y={y - 7}
-                textAnchor="middle"
-                className="font-inter text-[9px] font-bold"
-                style={{ fill: overlayVisual.stroke }}
-              >
-                {delta > 0 ? `+${delta}%` : `${delta}%`}
-              </text>
-            );
-          })}
       </svg>
     </div>
   );

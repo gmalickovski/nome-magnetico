@@ -35,11 +35,11 @@ function LicaoCard({ licao, showSolution }: { licao: LicaoCarmica; showSolution:
       </div>
 
       <div className="px-4 pb-4 space-y-4 border-t border-white/5">
-        <p className="text-gray-300 text-sm leading-relaxed pt-4">{licao.descricao}</p>
+        <p className="nm-card-text pt-4">{licao.descricao}</p>
         {showSolution && (
           <div className="rounded-lg p-3 bg-emerald-500/10 border border-emerald-500/20">
             <p className="text-xs text-emerald-400 uppercase tracking-wider mb-2">Como Trabalhar</p>
-            <p className="text-emerald-200 text-sm leading-relaxed">{licao.comoTrabalhar}</p>
+            <p className="nm-card-text !text-emerald-200">{licao.comoTrabalhar}</p>
           </div>
         )}
       </div>
@@ -66,7 +66,7 @@ export default function KarmicLessons({ licoes, nomeCompleto, showSolution = tru
   return (
     <div className="space-y-4">
       <div className="glass rounded-xl p-4">
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="nm-card-text">
           <strong className="text-[#D4AF37]">{licoes.length} {licoes.length === 1 ? 'Lição Kármica' : 'Lições Kármicas'}</strong> — números ausentes de 1 a 9 no nome de {primeiroNome}.
           Cada ausência indica uma qualidade a ser desenvolvida nesta encarnação.
         </p>
@@ -77,7 +77,7 @@ export default function KarmicLessons({ licoes, nomeCompleto, showSolution = tru
       {!showSolution && (
         <div className="mt-4 rounded-xl border border-[#bea5ff]/25 bg-[#bea5ff]/5 p-4">
           <p className="text-xs text-[#c084fc] uppercase tracking-wider font-semibold mb-2">Como a Harmonização Resolve as Lições Kármicas</p>
-          <p className="text-gray-300 text-sm leading-relaxed">
+          <p className="nm-card-text">
             O Nome Social Harmonizado pode introduzir as vibrações ausentes no seu campo energético. Quando o nome passa a conter esses números, a qualidade que estava em falta começa a ser cultivada naturalmente — sem depender exclusivamente de esforço consciente.
           </p>
         </div>

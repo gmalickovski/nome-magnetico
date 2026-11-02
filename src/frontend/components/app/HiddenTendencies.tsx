@@ -65,11 +65,11 @@ function TendenciaCard({ tendencia, showSolution }: { tendencia: TendenciaOculta
       </div>
 
       <div className="px-4 pb-4 space-y-4 border-t border-blue-500/10">
-        <p className="text-gray-300 text-sm leading-relaxed pt-4">{tendencia.descricao}</p>
+        <p className="nm-card-text pt-4">{tendencia.descricao}</p>
         {showSolution && (
           <div className="rounded-lg p-3 bg-blue-500/10 border border-blue-500/20">
             <p className="text-xs text-blue-400 uppercase tracking-wider mb-2">Como Equilibrar</p>
-            <p className="text-blue-200 text-sm leading-relaxed">{tendencia.comoEquilibrar}</p>
+            <p className="nm-card-text !text-blue-200">{tendencia.comoEquilibrar}</p>
           </div>
         )}
       </div>
@@ -114,7 +114,7 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
           </div>
           <div>
             <p className="text-sm font-semibold text-emerald-300 mb-1">Campo Vibracional Equilibrado</p>
-            <p className="text-sm text-emerald-200/70 leading-relaxed">
+            <p className="nm-card-text !text-emerald-200/80">
               {primeiroNome} não possui tendências ocultas — nenhum número se repete excessivamente no nome. As frequências estão bem distribuídas, sem padrões de excesso que criem ciclos compulsivos.
             </p>
           </div>
@@ -122,7 +122,7 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
       ) : (
         <div className="space-y-3">
           <div className="glass rounded-xl p-4">
-            <p className="text-sm text-gray-400 leading-relaxed">
+            <p className="nm-card-text">
               <strong className="text-blue-300">{tendencias.length} tendência(s) oculta(s)</strong> — números
               que aparecem 4 ou mais vezes indicam um excesso daquela qualidade. Quando bem canalizada,
               pode ser um superpoder. Quando não, torna-se um padrão limitante.
@@ -133,7 +133,7 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
           {!showSolution && (
             <div className="mt-4 rounded-xl border border-[#bea5ff]/25 bg-[#bea5ff]/5 p-4">
               <p className="text-xs text-[#c084fc] uppercase tracking-wider font-semibold mb-2">Como a Harmonização Reequilibra as Tendências</p>
-              <p className="text-gray-300 text-sm leading-relaxed">
+              <p className="nm-card-text">
                 A redistribuição vibracional do Nome Social ajusta a proporção dos números em excesso na raiz do campo energético. O que hoje cria ciclos repetitivos encontra contrapeso natural no novo campo vibracional — algo que esforço consciente sozinho não consegue alcançar.
               </p>
             </div>

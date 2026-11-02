@@ -407,14 +407,14 @@ export function ContractMockup({ className = '' }: MockupProps) {
 
         {/* Texto de cláusula em escala real de folha A4 (12pt/14pt reduzido proporcionalmente à lauda) */}
         <div className="space-y-2 mb-3.5">
-          <p className="text-[6.5px] sm:text-[7.5px] md:text-[8.5px] text-gray-400/90 leading-[1.45] font-serif text-justify">
+          <p className="text-[6.5px] sm:text-[7.5px] md:text-[8.5px] text-gray-400/90 leading-[1.45] font-serif text-left sm:text-justify [text-align-last:left]">
             <span className="font-bold text-gray-300 uppercase tracking-wider font-sans mr-1">
               Cláusula 8ª:
             </span>
             As partes reconhecem a validade plena das comunicações, propostas e instrumentos firmados sob o padrão visual adotado pela titular em suas entregas técnicas e comerciais.
           </p>
 
-          <p className="text-[6.5px] sm:text-[7.5px] md:text-[8.5px] text-gray-400/90 leading-[1.45] font-serif text-justify">
+          <p className="text-[6.5px] sm:text-[7.5px] md:text-[8.5px] text-gray-400/90 leading-[1.45] font-serif text-left sm:text-justify [text-align-last:left]">
             <span className="font-bold text-gray-300 uppercase tracking-wider font-sans mr-1">
               Cláusula 9ª:
             </span>

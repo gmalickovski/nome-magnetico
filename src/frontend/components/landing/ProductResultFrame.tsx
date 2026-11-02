@@ -679,11 +679,11 @@ export function ProductHarmonyStar({
         style={{
           transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
         }}
-        className={`flex flex-col sm:flex-row justify-center items-center gap-2.5 sm:gap-6 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
+        className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
           shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >
-        <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+        <span className="inline-flex items-center gap-2 min-w-0 max-w-full justify-center">
           <span
             className="inline-block w-3 h-3 rounded-full shrink-0"
             style={{
@@ -697,7 +697,7 @@ export function ProductHarmonyStar({
           <span className="truncate text-[#e5e2e1] font-medium">{birthName}</span>
         </span>
         {(isDemo || isDual) && harmonizedName && (
-          <span className="inline-flex items-center gap-2 min-w-0 justify-center sm:justify-start">
+          <span className="inline-flex items-center gap-2 min-w-0 max-w-full justify-center">
             <span
               className="inline-block w-3 h-3 rounded-full shrink-0"
               style={{
