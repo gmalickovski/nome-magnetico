@@ -17,15 +17,15 @@ export function ChatSidebarPanelChrome({
     <div className={`flex flex-col min-h-0 h-full ${className}`}>
       <div className="shrink-0 flex items-center justify-between gap-3 pb-3 px-0.5">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" aria-hidden />
-          <h2 className="font-cinzel text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-chat-muted truncate">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0" aria-hidden />
+          <h2 className="font-cinzel text-base sm:text-lg md:text-xl font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate">
             Painel de leitura
           </h2>
         </div>
         <button
           type="button"
           onClick={onToggleExpand}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#131313] px-3 py-1.5 text-[11px] font-inter text-chat-muted hover:text-chat-ink hover:border-gold/40 transition-colors"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#1c1c1c] px-3.5 py-1.5 text-xs font-inter text-[#e5e2e1] hover:text-white hover:border-[#f2ca50]/50 hover:bg-[#242424] transition-all shadow-sm"
           aria-label={expanded ? 'Voltar à vista com chat' : 'Expandir painel de leitura'}
         >
           {expanded ? (
