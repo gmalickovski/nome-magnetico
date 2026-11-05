@@ -26,6 +26,7 @@ import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
+import { getScoreTierVisual } from '../landing/score-tier-visual';
 import { getArcano } from '../../../backend/numerology/arcanos';
 import { getArquetipo } from '../../../backend/numerology/archetypes';
 import { calcularTodosTriangulos, detectarBloqueios } from '../../../backend/numerology/triangle';
@@ -266,8 +267,7 @@ function extractConclusao(text: string): string | null {
 
 function scoreColor(score: number, isV3: boolean = false): string {
   if (isV3) {
-    const nivel = obterNivelV3(score);
-    return nivel.cor;
+    return getScoreTierVisual(score).stroke;
   }
   if (score >= 90) return '#10B981'; // Excelente
   if (score >= 70) return '#84CC16'; // Bom
