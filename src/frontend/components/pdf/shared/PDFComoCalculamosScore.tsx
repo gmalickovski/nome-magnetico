@@ -5,16 +5,32 @@ import { BODY_FONT_BOLD } from './PDFFonts';
 const GRAY = '#4B5563';
 const DARK = '#131313';
 
-/** Bloco «Como Calculamos» alinhado a SCORE_CONFIG_V3 e landing /como-funciona-o-score. */
+/** Bloco «Como Calculamos» alinhado a SCORE_CONFIG_V3 (`src/shared/score-v3.ts`). */
 export function PDFComoCalculamosScore({ isV3 }: { isV3: boolean }) {
   const cfg = SCORE_CONFIG_V3;
+  const seq = cfg.sequenciasVida;
+  const compat = cfg.compatibilidade;
+  const tend = cfg.tendenciasOcultas;
+  const lic = cfg.licoesCarmicas;
+
+  const textoSequenciasVida =
+    `Sequências repetidas (111..999) no Triângulo da Vida subtraem −${seq.pontosPorCodigo} pontos por código distinto; −${seq.pontosPorLinhaExtra} pontos por linha extra do mesmo código; teto da categoria −${seq.teto} pontos. Os triângulos Pessoal, Social e Destino são leituras complementares e não descontam pontos.`;
+
+  const textoCompatibilidade =
+    `Relação Favorável (0 pts), Neutro (−${compat.descontoNeutro} pts) ou Tensão Vibracional (−${compat.descontoTensaoVibracional} pts).`;
+
+  const textoTendencias =
+    `−${tend.pontosPorTendencia} pontos por tendência (números com 4+ repetições), teto de −${tend.teto} pontos na categoria.`;
+
+  const textoLicoes =
+    `−${lic.pontosPorLicao} pontos por lição (vibrações ausentes no nome), teto de −${lic.teto} pontos na categoria.`;
 
   return (
     <>
       <Text style={{ fontSize: 9.5, color: GRAY, lineHeight: 1.6, marginBottom: 12, textAlign: 'justify' }}>
         O Score do Nome Magnético é um modelo estritamente matemático e determinístico, fundamentado nos critérios
-        objetivos da Numerologia Cabalística tradicional. A avaliação parte da pontuação máxima (100 pontos) e aplica
-        regras claras e auditáveis:
+        objetivos da Numerologia Cabalística tradicional. A avaliação parte da pontuação máxima ({cfg.base} pontos) e
+        aplica regras claras e auditáveis:
       </Text>
 
       <View style={{ gap: 8, marginBottom: 14 }}>
@@ -23,8 +39,7 @@ export function PDFComoCalculamosScore({ isV3 }: { isV3: boolean }) {
             1. Base de Cálculo e Piso
           </Text>
           <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-            Todo nome inicia em {cfg.base} pontos. Nenhum nome recebe nota menor que {cfg.piso} pontos (piso de
-            dignidade vibracional).
+            {`Todo nome inicia em ${cfg.base} pontos. Nenhum nome recebe nota menor que ${cfg.piso} pontos (piso de dignidade vibracional).`}
           </Text>
         </View>
 
@@ -32,24 +47,14 @@ export function PDFComoCalculamosScore({ isV3 }: { isV3: boolean }) {
           <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
             2. Sequências no Triângulo da Vida
           </Text>
-          <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-            Sequências repetidas (111..999) no Triângulo da Vida subtraem {cfg.sequenciasVida.porCodigoDistinto} pontos
-            por padrão distinto. Ocorrências adicionais do mesmo código em linhas extras: −
-            {cfg.sequenciasVida.porLinhaExtraMesmoCodigo} pontos por linha extra (teto de −
-            {cfg.sequenciasVida.maxExtraPorCodigo} extras por código). Teto da categoria: −
-            {cfg.sequenciasVida.tetoCategoria} pontos. Os triângulos Pessoal, Social e Destino são leituras
-            complementares e não descontam pontos.
-          </Text>
+          <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>{textoSequenciasVida}</Text>
         </View>
 
         <View wrap={false} style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
           <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
             3. Harmonia Expressão × Destino
           </Text>
-          <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-            Relação Favorável (0 pts), Neutro (−{cfg.compatibilidade.neutro} pts) ou Tensão Vibracional (−
-            {cfg.compatibilidade.desfavoravel} pts).
-          </Text>
+          <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>{textoCompatibilidade}</Text>
         </View>
 
         <View wrap={false} style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
@@ -68,20 +73,14 @@ export function PDFComoCalculamosScore({ isV3 }: { isV3: boolean }) {
               <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
                 5. Tendências Ocultas
               </Text>
-              <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-                −{cfg.tendenciasOcultas.porItem} pontos por tendência (números com 4+ repetições), teto de −
-                {cfg.tendenciasOcultas.tetoCategoria} pontos na categoria.
-              </Text>
+              <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>{textoTendencias}</Text>
             </View>
 
             <View wrap={false} style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
               <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
                 6. Lições Kármicas
               </Text>
-              <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-                −{cfg.licoesCarmicas.porItem} pontos por lição (vibrações ausentes no nome), teto de −
-                {cfg.licoesCarmicas.tetoCategoria} pontos na categoria.
-              </Text>
+              <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>{textoLicoes}</Text>
             </View>
           </>
         )}
