@@ -32,7 +32,9 @@ describe('pdfTocCatalog', () => {
       'pdf-guia',
       'pdf-score',
       'pdf-treino',
-      'pdf-essencia-cinco-numeros',
+      'pdf-essencia-expressao',
+      'pdf-essencia-triangulo-vida',
+      'pdf-essencia-debitos',
       'pdf-harmonizacao-corpo',
       'pdf-arquetipo',
     ]) {

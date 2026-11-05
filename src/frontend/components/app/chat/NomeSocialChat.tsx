@@ -219,6 +219,7 @@ export function NomeSocialChat({
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
   const lastAnalyzeSuggestionsFingerprintRef = useRef<string | null>(null);
+  const lastAnalyzeSelectedNameRef = useRef<string | null>(null);
   const [paidAccessActive, setPaidAccessActive] = useState(isSubscriber);
   const [paymentConfirming, setPaymentConfirming] = useState(false);
   const [paymentPendingNotice, setPaymentPendingNotice] = useState<string | null>(null);
@@ -367,8 +368,11 @@ export function NomeSocialChat({
       lastAnalyzeSuggestionsFingerprintRef.current = chatSuggestionsExportFingerprint(
         chatSuggestionsToExportNames(saved.suggestions),
       );
+      const sel = saved.suggestions.find((s) => s.id === saved.activeSuggestionId);
+      lastAnalyzeSelectedNameRef.current = sel?.nome.trim().toLowerCase() ?? null;
     } else {
       lastAnalyzeSuggestionsFingerprintRef.current = null;
+      lastAnalyzeSelectedNameRef.current = null;
     }
     setChatPhase(
       resolveChatPhaseFromSession(isSubscriber, saved.chatPhase, saved.birthConfirmed)
@@ -1275,6 +1279,12 @@ export function NomeSocialChat({
         ]);
       }
     }
+    if (id && id !== activeSuggestionId) {
+      setAnalysisId(undefined);
+      clearChatPdfEnsureInflight();
+      lastAnalyzeSuggestionsFingerprintRef.current = null;
+      lastAnalyzeSelectedNameRef.current = null;
+    }
     setActiveSuggestionId(id);
   };
 
@@ -1629,19 +1639,21 @@ export function NomeSocialChat({
       );
 
       if (
-        analysisId &&
-        lastAnalyzeSuggestionsFingerprintRef.current === suggestionsFingerprint
-      ) {
-        return analysisId;
-      }
-
-      if (
         !paidAccessActive ||
         !activeSuggestion?.nome?.trim() ||
         !confirmedName.trim() ||
         !confirmedDate.trim()
       ) {
         return undefined;
+      }
+
+      const selectedKey = activeSuggestion.nome.trim().toLowerCase();
+      if (
+        analysisId &&
+        lastAnalyzeSuggestionsFingerprintRef.current === suggestionsFingerprint &&
+        lastAnalyzeSelectedNameRef.current === selectedKey
+      ) {
+        return analysisId;
       }
 
       const key = buildChatPdfEnsureKey(
@@ -1676,6 +1688,7 @@ export function NomeSocialChat({
           const id = data.analysisId?.trim();
           if (!id) return undefined;
           lastAnalyzeSuggestionsFingerprintRef.current = suggestionsFingerprint;
+          lastAnalyzeSelectedNameRef.current = selectedKey;
           setAnalysisId(id);
           return id;
         },
@@ -1696,14 +1709,18 @@ export function NomeSocialChat({
   useEffect(() => {
     if (!analysisId || !paidAccessActive) return;
     const fp = chatSuggestionsExportFingerprint(chatSuggestionsToExportNames(suggestions));
+    const selKey = activeSuggestion?.nome?.trim().toLowerCase() ?? null;
     if (
-      lastAnalyzeSuggestionsFingerprintRef.current != null &&
-      lastAnalyzeSuggestionsFingerprintRef.current !== fp
+      (lastAnalyzeSuggestionsFingerprintRef.current != null &&
+        lastAnalyzeSuggestionsFingerprintRef.current !== fp) ||
+      (lastAnalyzeSelectedNameRef.current != null &&
+        selKey != null &&
+        lastAnalyzeSelectedNameRef.current !== selKey)
     ) {
       setAnalysisId(undefined);
       clearChatPdfEnsureInflight();
     }
-  }, [suggestions, analysisId, paidAccessActive]);
+  }, [suggestions, analysisId, paidAccessActive, activeSuggestion?.nome]);
 
   const {
     model: pdfCtaModel,
@@ -1721,7 +1738,10 @@ export function NomeSocialChat({
     suggestionRank: suggestionRank || 1,
     analysisId,
     ensureAnalysisId: paidAccessActive ? ensurePaidAnalysisIdForPdf : undefined,
-    onPdfSuccess: resetChat,
+    onPdfSuccess: () => {
+      sessionClearedRef.current = false;
+      flushChatSessionToStorage();
+    },
     isFree: !paidAccessActive,
     emailConfirmed,
     screen: chatDockScreen ?? 'chat_questionnaire',

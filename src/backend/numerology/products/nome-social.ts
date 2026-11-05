@@ -921,26 +921,33 @@ export function analisarNomesSocial(
   const destino = calcularDestino(dataNascimento);
   const acentosNascimento = contarAcentos(nomeNascimento);
 
-  const listaCandidatos = [...nomesCandidatos];
-  const variacaoPropria = resolvedOpcoes?.variacaoPropria?.trim();
-  if (
-    variacaoPropria &&
-    variacaoPropria.length >= 2 &&
-    !listaCandidatos.some(c => c.trim().toLowerCase() === variacaoPropria.toLowerCase())
-  ) {
-    listaCandidatos.unshift(variacaoPropria);
-  }
-
-  // Se o usuário informou "Como você assina hoje?" e é diferente do nome de nascimento,
-  // incluímos na lista avaliada como linha de base se ainda não estiver nos candidatos.
+  const somenteChat = Boolean(resolvedOpcoes?.somenteCandidatosInformados);
   const assinaturaAtual = resolvedOpcoes?.assinaturaAtual?.trim();
-  if (
-    assinaturaAtual &&
-    assinaturaAtual.length >= 2 &&
-    assinaturaAtual.toLowerCase() !== nomeNascimento.trim().toLowerCase() &&
-    !listaCandidatos.some(c => c.trim().toLowerCase() === assinaturaAtual.toLowerCase())
-  ) {
-    listaCandidatos.unshift(assinaturaAtual);
+
+  const listaCandidatos = somenteChat
+    ? nomesCandidatos.map((n) => n.trim()).filter((n) => n.length >= 2)
+    : [...nomesCandidatos];
+
+  if (!somenteChat) {
+    const variacaoPropria = resolvedOpcoes?.variacaoPropria?.trim();
+    if (
+      variacaoPropria &&
+      variacaoPropria.length >= 2 &&
+      !listaCandidatos.some((c) => c.trim().toLowerCase() === variacaoPropria.toLowerCase())
+    ) {
+      listaCandidatos.unshift(variacaoPropria);
+    }
+
+    // Se o usuário informou "Como você assina hoje?" e é diferente do nome de nascimento,
+    // incluímos na lista avaliada como linha de base se ainda não estiver nos candidatos.
+    if (
+      assinaturaAtual &&
+      assinaturaAtual.length >= 2 &&
+      assinaturaAtual.toLowerCase() !== nomeNascimento.trim().toLowerCase() &&
+      !listaCandidatos.some((c) => c.trim().toLowerCase() === assinaturaAtual.toLowerCase())
+    ) {
+      listaCandidatos.unshift(assinaturaAtual);
+    }
   }
 
   // Candidatos do usuário

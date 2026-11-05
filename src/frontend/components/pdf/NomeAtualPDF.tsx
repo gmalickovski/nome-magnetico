@@ -512,6 +512,10 @@ export function NomeAtualPDF({
 
         {/* ── O Destino: A Estrada Imutável ── */}
         <View wrap={false}>
+          <PDFSectionAnchor
+            id="pdf-essencia-destino"
+            bookmark={{ title: 'Destino', fit: true }}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, marginTop: 4 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: '#6d28d9', opacity: 0.3 }} />
             <Text style={{ fontSize: 9, color: '#6d28d9', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
@@ -539,10 +543,7 @@ export function NomeAtualPDF({
 
         {/* ── Os 4 números do nome de nascimento ── */}
         <View wrap={false}>
-          <PDFSectionAnchor
-            id="pdf-essencia-cinco-numeros"
-            bookmark={{ title: 'Essência — cinco números', fit: true }}
-          />
+          <PDFSectionAnchor id="pdf-essencia-expressao" bookmark={{ title: 'Expressão', fit: true }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
             <Text style={{ fontSize: 9, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
@@ -555,12 +556,15 @@ export function NomeAtualPDF({
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
             {[
-              { label: 'Expressão', sublabel: 'O Dom Natural', value: cincoNumNasc.expressao, color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
-              { label: 'Motivação', sublabel: 'A Alma', value: cincoNumNasc.motivacao, color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
-              { label: 'Impressão', sublabel: 'A Máscara', value: cincoNumNasc.impressao, color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
-              { label: 'Missão', sublabel: 'A Vocação', value: cincoNumNasc.missao, color: '#7C3AED', border: '#7C3AED', bg: '#F5F3FF' },
+              { label: 'Expressão', anchor: 'pdf-essencia-expressao', sublabel: 'O Dom Natural', value: cincoNumNasc.expressao, color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
+              { label: 'Motivação', anchor: 'pdf-essencia-motivacao', sublabel: 'A Alma', value: cincoNumNasc.motivacao, color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
+              { label: 'Impressão', anchor: 'pdf-essencia-impressao', sublabel: 'A Máscara', value: cincoNumNasc.impressao, color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
+              { label: 'Missão', anchor: 'pdf-essencia-missao', sublabel: 'A Vocação', value: cincoNumNasc.missao, color: '#7C3AED', border: '#7C3AED', bg: '#F5F3FF' },
             ].map((n, i) => (
               <View key={i} style={{ flex: 1, borderWidth: 1.5, borderColor: n.border, borderRadius: 8, padding: 10, alignItems: 'center', backgroundColor: n.bg }}>
+                {i > 0 ? (
+                  <PDFSectionAnchor id={n.anchor} bookmark={{ title: n.label, fit: true }} />
+                ) : null}
                 <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: n.color, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>{n.label}</Text>
                 <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: n.color, lineHeight: 1 }}>{n.value ?? '?'}</Text>
                 <Text style={{ fontSize: 7, color: n.color, textAlign: 'center', marginTop: 4 }}>{n.sublabel}</Text>
@@ -621,10 +625,6 @@ export function NomeAtualPDF({
             <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
           </View>
           <View style={{ marginBottom: 14 }}>
-            <PDFSectionAnchor
-              id="pdf-essencia-triangulos"
-              bookmark={{ title: 'Essência — triângulos', fit: true }}
-            />
             <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
           </View>
 
@@ -670,6 +670,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO DA VIDA ─── */}
           {tVida && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-vida"
+                bookmark={{ title: 'Triângulo da Vida', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo da Vida (Nascimento)
               </Text>
@@ -708,6 +712,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO PESSOAL ─── */}
           {tPessoal && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-pessoal"
+                bookmark={{ title: 'Triângulo Pessoal', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo Pessoal (Nascimento)
               </Text>
@@ -746,6 +754,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO SOCIAL ─── */}
           {tSocial && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-social"
+                bookmark={{ title: 'Triângulo Social', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo Social (Nascimento)
               </Text>
@@ -784,6 +796,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO DO DESTINO ─── */}
           {tDestino && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-destino"
+                bookmark={{ title: 'Triângulo do Destino', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo do Destino (Nascimento)
               </Text>
@@ -833,10 +849,6 @@ export function NomeAtualPDF({
           <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
         </View>
         <View style={{ marginBottom: 8 }}>
-          <PDFSectionAnchor
-            id="pdf-essencia-karma"
-            bookmark={{ title: 'Essência — karma', fit: true }}
-          />
           <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
         </View>
 
@@ -846,6 +858,7 @@ export function NomeAtualPDF({
 
         {/* Débitos Kármicos */}
         <View style={{ ...styles.section, marginTop: 0 }}>
+          <PDFSectionAnchor id="pdf-essencia-debitos" bookmark={{ title: 'Débitos kármicos', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
             Débitos Kármicos
           </Text>
@@ -867,6 +880,7 @@ export function NomeAtualPDF({
 
         {/* Lições Kármicas */}
         <View style={{ ...styles.section, marginTop: 0 }}>
+          <PDFSectionAnchor id="pdf-essencia-licoes" bookmark={{ title: 'Lições kármicas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
             Lições Kármicas
           </Text>
@@ -878,6 +892,7 @@ export function NomeAtualPDF({
 
         {/* Tendências Ocultas */}
         <View style={{ ...styles.section, marginTop: 0 }}>
+          <PDFSectionAnchor id="pdf-essencia-tendencias" bookmark={{ title: 'Tendências ocultas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
             Tendências Ocultas
           </Text>
@@ -887,12 +902,6 @@ export function NomeAtualPDF({
           <TendenciasBlock tendencias={tendencias} frequencias={frequencias} />
         </View>
 
-        {/* Gancho sutil pós-karma */}
-        <View style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginTop: 4, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-          <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, textAlign: 'center', fontStyle: 'italic' }}>
-            Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
-          </Text>
-        </View>
       </View>
 
         <PDFFooter bgColor="#FEF2F2" />
@@ -969,6 +978,10 @@ export function NomeAtualPDF({
 
         <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginTop: 16, textAlign: 'justify' }}>
           No Nome Social você compara outras formas de assinar; o convite e o passo a passo estão na seção final deste PDF.
+        </Text>
+
+        <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, marginTop: 12, textAlign: 'center', fontStyle: 'italic' }}>
+          Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
         </Text>
 
         <PDFFooter />

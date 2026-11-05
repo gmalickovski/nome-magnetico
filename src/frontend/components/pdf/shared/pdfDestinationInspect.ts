@@ -75,6 +75,11 @@ async function inspectNamedDestinationsPdfJs(
   }
 }
 
+/** Quando `1`, não usa fallback Python (testes/prova de caminho pdfjs). */
+export function pdfInspectPrefersPdfJsOnly(): boolean {
+  return process.env.NM_PDF_INSPECT_PDFJS_ONLY === '1';
+}
+
 /** Inspeção de destinos nomeados — pdfjs-dist no Node; fallback python+pypdf (CI/dev). */
 export async function inspectNamedDestinations(
   pdfBuffer: Buffer,
@@ -82,6 +87,9 @@ export async function inspectNamedDestinations(
   const fromPdfJs = await inspectNamedDestinationsPdfJs(pdfBuffer);
   if (!('error' in fromPdfJs) && Object.keys(fromPdfJs).length > 0) {
     return fromPdfJs;
+  }
+  if (pdfInspectPrefersPdfJsOnly()) {
+    return 'error' in fromPdfJs ? fromPdfJs : { error: 'pdfjs_empty_destinations' };
   }
   const fromPython = inspectNamedDestinationsPython(pdfBuffer);
   if (!('error' in fromPython)) return fromPython;
