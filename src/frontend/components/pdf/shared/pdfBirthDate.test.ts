@@ -28,6 +28,16 @@ describe('pdfBirthDate · equivalência PT vs ISO na fronteira PDF', () => {
       },
     );
     assert.equal(detectarBloqueios(triNorm)[0]?.codigo, detectarBloqueios(triPt)[0]?.codigo);
-    assert.equal(detectarBloqueios(triNorm)[0]?.codigo, '333');
+    const codigos = detectarBloqueios(triNorm).map((b) => b.codigo).sort();
+    assert.deepEqual(codigos, ['333', '555', '888', '999']);
+    assert.deepEqual(
+      {
+        vida: triNorm.vida.arcanoRegente,
+        pessoal: triNorm.pessoal.arcanoRegente,
+        social: triNorm.social.arcanoRegente,
+        destino: triNorm.destino.arcanoRegente,
+      },
+      { vida: 8, pessoal: 6, social: 2, destino: 9 },
+    );
   });
 });

@@ -23,6 +23,7 @@ import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
 import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
 import { PDFTableOfContents, type PdfTocEntry } from './shared/PDFTableOfContents';
+import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
@@ -454,12 +455,8 @@ export function NomeAtualPDF({
        *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
        *  (Bloco completo — idêntico à seção "A Essência" do NomeSocialPDF)
        * ═══════════════════════════════════════════════════════════════════════ */}
-      <Page
-        size="A4"
-        style={styles.pageEssencia}
-        id="pdf-essencia"
-        bookmark={{ title: 'A Essência', fit: true }}
-      >
+      <Page size="A4" style={styles.pageEssencia}>
+        <PDFSectionAnchor id="pdf-essencia" bookmark={{ title: 'A Essência', fit: true }} />
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
         {/* Badge de seção */}
@@ -687,7 +684,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('vida'))}hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -725,7 +722,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -763,7 +760,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -801,7 +798,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -888,12 +885,8 @@ export function NomeAtualPDF({
        * ═══════════════════════════════════════════════════════════════════════ */}
 
       {/* ── PÁGINA: O QUE ESTE MAPA MOSTROU (FUNDO ESCURO) ───────────────── */}
-      <Page
-        size="A4"
-        style={styles.darkPage}
-        id="pdf-mapa"
-        bookmark={{ title: 'O que este mapa mostrou', fit: true }}
-      >
+      <Page size="A4" style={styles.darkPage}>
+        <PDFSectionAnchor id="pdf-mapa" bookmark={{ title: 'O que este mapa mostrou', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Resumo do mapa`} />
 
         <View style={{ marginTop: 28, marginBottom: 24 }}>
@@ -952,7 +945,7 @@ export function NomeAtualPDF({
           borderColor: 'rgba(255,255,255,0.1)',
         }}>
           <Text style={{ fontSize: 10, color: '#C9C5C0', lineHeight: 1.7, textAlign: 'center' }}>
-            Nenhum desses padrões responde a esforço ou mudança de comportamento — a origem está na frequência que a assinatura emite. A harmonização reorganiza as letras do nome para eliminar os bloqueios, minimizar os débitos variáveis e introduzir as vibrações ausentes. O resultado é uma assinatura que trabalha a favor do Destino, não contra.
+            Esses padrões são descritos pela numerologia cabalística como tensões vibracionais no nome atual — não como diagnóstico ou promessa de cura. A harmonização propõe outras formas de assinar para você comparar scores, bloqueios e triângulos lado a lado, sem garantia de eliminação ou melhora automática.
           </Text>
         </View>
 
@@ -975,12 +968,8 @@ export function NomeAtualPDF({
       </Page>
 
       {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
-      <Page
-        size="A4"
-        style={styles.page}
-        id="pdf-score"
-        bookmark={{ title: 'Como calculamos o score', fit: true }}
-      >
+      <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como calculamos o score', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
 
         <View style={{ marginTop: 24, marginBottom: 14 }}>
@@ -1058,12 +1047,8 @@ export function NomeAtualPDF({
       </Page>
 
       {/* ── PÁGINA FINAL: CTA NOME SOCIAL (FUNDO ESCURO) ───────────────────── */}
-      <Page
-        size="A4"
-        style={styles.darkPage}
-        id="pdf-nome-social"
-        bookmark={{ title: 'Compare outras formas de assinar', fit: true }}
-      >
+      <Page size="A4" style={styles.darkPage}>
+        <PDFSectionAnchor id="pdf-nome-social" bookmark={{ title: 'Compare outras formas de assinar', fit: true }} />
         <View style={{ marginTop: 24, marginBottom: 16 }}>
           <Text style={[styles.hugeTitle, { color: GOLD, fontSize: 17 }]}>
             Compare outras formas de assinar

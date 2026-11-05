@@ -46,9 +46,18 @@ interface IntroProps {
   entityName: string;
   isFreeAnalysis?: boolean;
   isScoreV3?: boolean;
+  /** Evita duplicar o bloco de score quando o PDF já tem seção dedicada + sumário. */
+  skipScoreExplainer?: boolean;
 }
 
-export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysis = false, isScoreV3 = false }: IntroProps) {
+export function PDFStandardIntro({
+  theme,
+  productType,
+  entityName,
+  isFreeAnalysis = false,
+  isScoreV3 = false,
+  skipScoreExplainer = false,
+}: IntroProps) {
 
   const isLightBackground = productType === 'nome_bebe';
   const textColor = isLightBackground ? '#5C2D1E' : '#e5e2e1';
@@ -163,6 +172,12 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
             </Text>
           )}
 
+          {skipScoreExplainer ? (
+            <Text style={[styles.bodyText, { color: textColor, marginTop: 8 }]}>
+              A explicação completa do Score Cabalístico (Motor v3) está na seção «Como calculamos o score» do sumário deste PDF.
+            </Text>
+          ) : (
+            <>
           <Text style={[styles.subHead, { color: textColor }]}>
             Como Funciona o Cálculo do Score? (A Nota de 0 a 100)
           </Text>
@@ -198,6 +213,8 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
               {'\n\n'}
               Retire dos ombros a busca pelos 100 pontos. Um score <Text style={[styles.bold, { color: boldColor }]}>acima de 70</Text> já indica um nome Bom (sólido). Acima de <Text style={[styles.bold, { color: boldColor }]}>80 pontos</Text>, um "Nome de Ouro" (máximo alinhamento com mínima alteração). Acima de <Text style={[styles.bold, { color: boldColor }]}>90 pontos</Text>, um alinhamento excepcional e raro.
             </Text>
+          )}
+            </>
           )}
 
           <Text style={[styles.subHead, { color: textColor }]}>

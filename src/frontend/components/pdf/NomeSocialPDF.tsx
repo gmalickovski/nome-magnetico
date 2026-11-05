@@ -22,6 +22,7 @@ import { PDFDoubleStar, type DoubleStarNumbers } from './shared/PDFDoubleStar';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
 import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
 import { PDFTableOfContents, type PdfTocEntry } from './shared/PDFTableOfContents';
+import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
@@ -333,16 +334,9 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
     );
     return {
       ...base,
-      ...c,
-      nomeCompleto: c.nomeCompleto ?? base.nomeCompleto,
-      score: c.score ?? base.score,
-      expressao: c.expressao ?? base.expressao,
-      motivacao: c.motivacao ?? base.motivacao,
-      impressao: c.impressao ?? base.impressao,
-      compatibilidade: c.compatibilidade ?? base.compatibilidade,
-      temBloqueio: c.temBloqueio ?? base.temBloqueio,
-      bloqueios: c.bloqueios ?? base.bloqueios,
-      nivelV3: c.nivelV3 ?? undefined,
+      nomeCompleto: String(c.nomeCompleto ?? base.nomeCompleto),
+      nivelV3: c.nivelV3 ?? base.nivelV3,
+      origemSugerida: c.origemSugerida ?? base.origemSugerida,
     };
   });
   const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
@@ -633,16 +627,18 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       <PDFTableOfContents entries={paidToc} subtitle={`${nomeParaExibir} — Sumário`} />
 
       {/* ── PÁGINA INTRODUTÓRIA: GUIA DE LEITURA ────────────────────────── */}
-      <PDFStandardIntro theme={theme} productType="nome_social" entityName={nomeParaExibir} isScoreV3={isV3} />
+      <PDFStandardIntro
+        theme={theme}
+        productType="nome_social"
+        entityName={nomeParaExibir}
+        isScoreV3={isV3}
+        skipScoreExplainer
+      />
 
       {/* ── PÁGINA: RANKING DOS CANDIDATOS (novo fluxo) ─────────────────────── */}
       {nomesCandidatos.length > 0 && (
-        <Page
-          size="A4"
-          style={styles.page}
-          id="pdf-ranking"
-          bookmark={{ title: 'Opções avaliadas', fit: true }}
-        >
+        <Page size="A4" style={styles.page}>
+          <PDFSectionAnchor id="pdf-ranking" bookmark={{ title: 'Opções avaliadas', fit: true }} />
           <PDFPageHeader subtitle={`${nomeParaExibir} — Opções avaliadas`} />
 
           <View style={styles.section}>
@@ -659,7 +655,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
               const isRecomendadoMotor =
                 Boolean(melhorNomeMotor) &&
                 c.nomeCompleto.trim().toLowerCase() === melhorNomeMotor!.trim().toLowerCase() &&
-                !isAssinaturaSelecionada;
+                !isAssinaturaSelecionada &&
+                c.score >= 85 &&
+                !c.temBloqueio &&
+                (c as { semSequenciaVida?: boolean }).semSequenciaVida !== false;
               const isIA = c.origemSugerida === 'ia';
               return (
                 <View key={i} style={{
@@ -739,12 +738,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       )}
 
       {/* ── SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original ─────────────── */}
-      <Page
-        size="A4"
-        style={styles.pageEssencia}
-        id="pdf-essencia"
-        bookmark={{ title: 'A Essência', fit: true }}
-      >
+      <Page size="A4" style={styles.pageEssencia}>
+        <PDFSectionAnchor id="pdf-essencia" bookmark={{ title: 'A Essência', fit: true }} />
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
         {/* Badge de seção */}
@@ -1150,12 +1145,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── BLOCO: A ENGENHARIA DA HARMONIZAÇÃO ────────────────────────────── */}
-      <Page
-        size="A4"
-        style={styles.pageHarmonizacao}
-        id="pdf-harmonizacao"
-        bookmark={{ title: 'Assinatura e estrela comparativa', fit: true }}
-      >
+      <Page size="A4" style={styles.pageHarmonizacao}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
 
         {/* Badge de seção */}
@@ -1174,7 +1164,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           <Text style={[styles.hugeTitle, { color: '#C89000' }]}>A Engenharia da Harmonização</Text>
         </View>
 
-        {/* Estrela Dupla — comparativo visual */}
+        <PDFSectionAnchor
+          id="pdf-harmonizacao"
+          bookmark={{ title: 'Assinatura e estrela comparativa', fit: true }}
+        />
         <PDFDoubleStar
           nascimento={nascStarNumbers}
           harmonizado={socialStarNumbers}
@@ -1244,7 +1237,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             O nome de nascimento é o campo vibracional que você recebeu ao chegar nesta encarnação — sua semente de origem. Ele carrega padrões genuínos de força, mas também pode conter sequências de energia que criam resistência e ciclos difíceis de romper. Não é um defeito: é simplesmente o ponto de partida ainda sem o refinamento que apenas a intenção consciente pode trazer.
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7 }}>
-            A Harmonização cria uma segunda camada — um escudo vibracional que se sobrepõe ao campo original sem apagá-lo. Quando você adota o Nome Social Harmonizado na assinatura, nas redes sociais e nas apresentações do dia a dia, você não substitui quem você é: você eleva a frequência que emana do seu nome. A estrela interna (nascimento) permanece, envolvida e protegida pela estrela dourada externa (harmonização). Os bloqueios são neutralizados; as qualidades positivas, amplificadas.
+            Quando você adota a assinatura selecionada no dia a dia, você não substitui quem você é: você escolhe qual forma de assinar usar nas situações em que prefere se apresentar com esse nome. Compare os valores calculados na estrela e no card de score acima — eles refletem o motor v3, sem promessa de resultado.
           </Text>
         </View>
 
@@ -1257,7 +1250,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             A intensidade da transformação é diretamente proporcional ao uso. Quanto mais frequente e consistente for a adoção do novo nome, mais profunda será a reconfiguração do campo magnético pessoal. A frequência vibracional do seu nome age 24 horas por dia — e cada uso consciente reforça a nova âncora energética, semana após semana, mês após mês.
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 8 }}>
-            No comparativo vibracional da estrela acima, a estrela vermelha representa os números calculados pelo nome de nascimento — incluindo os padrões de bloqueio que operam nesse campo. A estrela dourada representa os números do Nome Social Harmonizado escolhido. Onde os valores divergem, há uma mudança real de frequência: é nessa divergência que a transformação acontece. O <Text style={{ fontFamily: BODY_FONT_BOLD }}>Destino</Text> — único número que vem da data de nascimento e jamais muda — permanece igual em ambas as estrelas, ancorando a identidade mais profunda enquanto o restante se reorganiza.
+            Na estrela acima, a camada interna usa os números do nome de nascimento e a externa os da assinatura selecionada, com cores conforme a faixa de score de cada nome (legenda). O <Text style={{ fontFamily: BODY_FONT_BOLD }}>Destino</Text> vem da data de nascimento e permanece o mesmo nos dois lados quando calculado para a mesma data.
           </Text>
         </View>
 
@@ -2040,25 +2033,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           </View>
 
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
-            Calculados a partir do nome harmonizado escolhido, estes quatro triângulos revelam a nova geometria vibracional do seu campo. As células em vermelho indicam bloqueios ainda presentes — padrões que o novo nome não conseguiu dissolver completamente. Onde antes havia resistência e agora não há células vermelhas, a harmonização foi efetiva naquela dimensão.
+            Calculados a partir da assinatura selecionada, estes quatro triângulos mostram a geometria numérica do nome. Células em vermelho marcam bloqueios detectados pelo motor (três ou mais repetições consecutivas); compare com a seção A Essência para ver o que muda em relação ao nascimento.
           </Text>
 
-          {/* Arcanos info box */}
-          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED', padding: 12, marginBottom: 10 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#7C3AED', marginBottom: 6 }}>O Que São os Arcanos</Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 6 }}>
-              A Numerologia Cabalística é a ciência que decodifica as vibrações ocultas por trás do seu nome. Para revelar as forças que regem o seu destino, ela utiliza os <Text style={{ fontFamily: BODY_FONT_BOLD }}>Arcanos</Text> — arquétipos profundos de energia. Embora a estrutura principal da vida seja governada por 22 Arcanos Maiores (as forças primordiais), a sua jornada diária desdobra-se em ciclos menores e mais sutis, expandindo essa roda para até 99 vibrações numerológicas para mapear o dia a dia. Dentro de cada triângulo, você encontrará três tipos de Arcanos atuando em conjunto:
-            </Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>1. Arcano Regente:</Text> É a grande força dominante. Sempre um dos 22 Arcanos Maiores, ele é o "sol" que ilumina e governa aquela dimensão da sua vida desde o nascimento. É a fundação do seu cenário.
-            </Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>2. Sequência de Passagem:</Text> É a sua linha do tempo. Representa os capítulos cronológicos da sua estrada. Utilizando as vibrações menores (até 99), ela revela por onde a sua energia vai caminhar, ciclo após ciclo.
-            </Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>3. Arcano de Trânsito:</Text> É o seu "aqui e agora". É o capítulo específico e a vibração exata de provação, renovação ou colheita que você está atravessando neste exato momento.
-            </Text>
-          </View>
+          <Text style={{ fontSize: 9, color: GRAY, fontStyle: 'italic', marginBottom: 10, lineHeight: 1.5 }}>
+            Regente, Sequência de Passagem e Arcano de Trânsito estão explicados na seção A Essência deste PDF.
+          </Text>
 
           {/* Bloqueios info box */}
           <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', padding: 12, marginBottom: 8 }}>
@@ -2192,7 +2172,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                 O Triângulo do Destino (Harmonizado)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — O ápice das suas realizações e a consagração do seu legado de alma, agora impulsionados pela frequência límpida do seu nome harmonizado. Ao realinhar as correntes de energia do Destino, esta pirâmide atua como um acelerador de colheitas, convertendo o seu trabalho e dedicação em resultados duradouros e abundância tangível. O Triângulo do Destino Harmonizado garante que a sua caminhada material caminhe lado a lado com o seu propósito divino superior, assegurando que o seu esforço se traduza em prosperidade sólida e duradoura.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — Descreve o arco de realização ligado ao triângulo do Destino para a assinatura selecionada. Os números e regentes exibidos vêm do cálculo; interpretação de propósito ou resultado material fica a seu critério.
               </Text>
               <TrianguloPiramideInline data={triangulosSocial.destino} label="TRIÂNGULO DO DESTINO" cellSize={triCellSizeHarm} letras={letrasNome} />
               {triangulosSocial.destino.arcanoRegente != null && (() => {
@@ -2451,12 +2431,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── ANEXO III: GUIA DE ATIVAÇÃO — 30 DIAS ──────────────────────────── */}
-      <Page
-        size="A4"
-        style={styles.page}
-        id="pdf-guia"
-        bookmark={{ title: 'Guia de uso da assinatura', fit: true }}
-      >
+      <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-guia" bookmark={{ title: 'Guia de uso da assinatura', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
@@ -2538,12 +2514,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
-      <Page
-        size="A4"
-        style={styles.page}
-        id="pdf-score"
-        bookmark={{ title: 'Como calculamos o score', fit: true }}
-      >
+      <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como calculamos o score', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
 
         <View style={{ marginTop: 24, marginBottom: 14 }}>
@@ -2621,12 +2593,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── FOLHA DE TREINO DE ASSINATURA ─────────────────────────────────── */}
-      <Page
-        size="A4"
-        style={styles.assinaturaPage}
-        id="pdf-treino"
-        bookmark={{ title: 'Folha de treino de assinatura', fit: true }}
-      >
+      <Page size="A4" style={styles.assinaturaPage}>
+        <PDFSectionAnchor id="pdf-treino" bookmark={{ title: 'Folha de treino de assinatura', fit: true }} />
         <Text style={styles.assinaturaTitle}>Folha de Treino de Assinatura</Text>
 
         <View style={styles.assinaturaInstrucoesBox}>
