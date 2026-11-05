@@ -22,8 +22,8 @@ export function buildGratuitoTocEntries(): PdfTocEntry[] {
     { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
     ...essenciaSubassuntos,
     { id: 'pdf-mapa', title: 'O que este mapa mostrou', level: 0 },
-    { id: 'pdf-score', title: 'Como calculamos o score', level: 0 },
-    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar', level: 0 },
+    { id: 'pdf-score', title: 'Como calculamos o score', level: 1 },
+    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar', level: 1 },
   ];
 }
 
@@ -37,12 +37,13 @@ export function buildPaidTocEntries(hasRanking: boolean): PdfTocEntry[] {
     { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
     ...essenciaSubassuntos,
     { id: 'pdf-harmonizacao', title: 'Harmonização — assinatura e estrela', level: 0 },
+    { id: 'pdf-mapa-alinhamento', title: 'Mapa de Alinhamento Vibracional', level: 1 },
     { id: 'pdf-harmonizacao-comparativa', title: 'Harmonização — leitura comparativa', level: 1 },
     { id: 'pdf-harmonizacao-corpo', title: 'Corpo da assinatura harmonizada', level: 1 },
     { id: 'pdf-arquetipo', title: 'Arquétipo da expressão', level: 1 },
     { id: 'pdf-guia', title: 'Guia de uso da assinatura', level: 0 },
-    { id: 'pdf-score', title: 'Como calculamos o score', level: 0 },
-    { id: 'pdf-treino', title: 'Folha de treino de assinatura', level: 0 },
+    { id: 'pdf-score', title: 'Como calculamos o score', level: 1 },
+    { id: 'pdf-treino', title: 'Folha de treino de assinatura', level: 1 },
   ];
 }
 

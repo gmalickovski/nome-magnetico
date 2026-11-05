@@ -24,6 +24,8 @@ import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
 import { PDFTableOfContents } from './shared/PDFTableOfContents';
 import { buildPaidTocEntries } from './shared/pdfTocCatalog.ts';
 import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
+import { PDFComoCalculamosScore } from './shared/PDFComoCalculamosScore';
+import { PDFMapaAlinhamentoVibracional } from './shared/PDFMapaAlinhamentoVibracional';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
@@ -1242,6 +1244,27 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </View>
         </View>
 
+        <PDFFooter />
+      </Page>
+
+      {/* Mapa de Alinhamento — assunto novo, após Estrela/score (Growth t279s) */}
+      <Page size="A4" style={styles.pageHarmonizacao}>
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Harmonização`} bgColor="#FEFCE8" />
+        <View style={{ marginTop: 12 }}>
+          <PDFMapaAlinhamentoVibracional
+            nomeNascimento={nomeNascimento}
+            nomeHarmonizado={nomeParaExibir}
+            dataNascimento={dataNascimentoRaw}
+            scoreNascimento={scoreNasc}
+            scoreHarmonizado={scoreSocial}
+          />
+        </View>
+        <PDFFooter />
+      </Page>
+
+      <Page size="A4" style={styles.pageHarmonizacao}>
+        <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
+
         {/* ── 2.1. O Escudo Magnético ────────────────────────────────────── */}
         <View style={{ marginTop: 16, marginBottom: 12 }}>
           <Text style={[styles.sectionTitle, { color: '#8A661C', borderBottomColor: '#8A661C', fontSize: 12, borderBottomWidth: 0.5, paddingBottom: 3, marginBottom: 8 }]}>
@@ -2448,7 +2471,13 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </Text>
         </View>
 
+        <PDFFooter />
+      </Page>
+
+      {/* Guia — assunto novo (Growth t273u); copy aprovada intacta */}
+      <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-guia" bookmark={{ title: 'Guia de uso da assinatura', fit: true }} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Guia de uso`} />
 
         <View style={{ marginTop: 18, marginBottom: 14 }}>
           <Text style={styles.hugeTitle}>Cuide do traçado da sua assinatura</Text>
@@ -2467,13 +2496,13 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <Text style={[styles.sectionTitle, { fontSize: 11, marginBottom: 8 }]}>
           Para contratos e documentos
         </Text>
-        <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 7, padding: 12, marginBottom: 14 }}>
+        <View wrap={false} style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 7, padding: 12, marginBottom: 14 }}>
           <Text style={{ fontSize: 9.5, color: '#374151', lineHeight: 1.65, textAlign: 'justify' }}>
             Antes de adotar uma assinatura diferente, confirme as exigências da instituição ou do cartório. Uma mudança significativa no traço pode tornar necessária a atualização da identidade ou da firma cadastrada. O uso do nome em redes, cartões e apresentações não altera seu nome civil.
           </Text>
         </View>
 
-        <View style={{ backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 7, padding: 12 }}>
+        <View wrap={false} style={{ backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 7, padding: 12 }}>
           <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#92400E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             Sugestão (opcional) — primeiros 30 dias
           </Text>
@@ -2496,63 +2525,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </Text>
         </View>
 
-        <Text style={{ fontSize: 9.5, color: GRAY, lineHeight: 1.6, marginBottom: 12, textAlign: 'justify' }}>
-          O Score do Nome Magnético é um modelo estritamente matemático e determinístico, fundamentado nos critérios objetivos da Numerologia Cabalística tradicional. A avaliação parte da pontuação máxima (100 pontos) e aplica regras claras e auditáveis:
-        </Text>
-
-        <View style={{ gap: 8, marginBottom: 14 }}>
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              1. Base de Cálculo e Piso
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Todo nome inicia em 100 pontos. Nenhum nome recebe nota menor que 5 pontos (piso de dignidade vibracional).
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              2. Sequências no Triângulo da Vida
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Sequências repetidas (111..999) no Triângulo da Vida subtraem 15 pontos por padrão distinto, com desconto de até 45 pontos no total. Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não subtraem pontos.
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              3. Harmonia Expressão × Destino
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Relação Favorável (0 pts), Neutro (-6 pts) ou Tensão Vibracional (-18 pts).
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              4. Débitos Kármicos do Nome e Marca da Data
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Apenas débitos variáveis (originados na Expressão ou Motivação) descontam pontos. Débitos originados no dia do nascimento ou no Destino pertencem à sua data natalícia e têm desconto zero na nota do nome.
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              5. Escala de 5 Níveis (N1 a N5)
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              N5 (85–100 Harmonioso), N4 (70–84 Favorável), N3 (50–69 Equilíbrio Parcial), N2 (30–49 Pede Atenção) e N1 (0–29 Em Tensão).
-            </Text>
-          </View>
-        </View>
-
-        {/* Link para página pública */}
-        <View style={{ borderRadius: 6, backgroundColor: 'rgba(212,175,55,0.08)', borderWidth: 1, borderColor: '#D4AF37', padding: 8, marginBottom: 12 }}>
-          <Text style={{ fontSize: 8, color: '#92640F', textAlign: 'center', fontFamily: BODY_FONT_BOLD }}>
-            Consulte o detalhamento completo das fórmulas em: nomemagnetico.com.br/como-funciona-o-score
-          </Text>
-        </View>
+        <PDFComoCalculamosScore isV3={isV3} />
 
         <PDFFooter />
       </Page>

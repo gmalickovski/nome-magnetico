@@ -25,6 +25,7 @@ import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
 import { PDFTableOfContents } from './shared/PDFTableOfContents';
 import { buildGratuitoTocEntries } from './shared/pdfTocCatalog.ts';
 import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
+import { PDFComoCalculamosScore } from './shared/PDFComoCalculamosScore';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
@@ -837,6 +838,13 @@ export function NomeAtualPDF({
         </View>
       )}
 
+        <PDFFooter bgColor="#FEF2F2" />
+      </Page>
+
+      {/* Karma — página dedicada (evita fragmento de card na p.18) */}
+      <Page size="A4" style={styles.pageEssencia}>
+        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
+
       {/* ── SEÇÃO A ESSÊNCIA: O PESO DO PASSADO ───────────────────── */}
       <View>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
@@ -857,7 +865,7 @@ export function NomeAtualPDF({
         </Text>
 
         {/* Débitos Kármicos */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
+        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
           <PDFSectionAnchor id="pdf-essencia-debitos" bookmark={{ title: 'Débitos kármicos', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
             Débitos Kármicos
@@ -879,7 +887,7 @@ export function NomeAtualPDF({
         </View>
 
         {/* Lições Kármicas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
+        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
           <PDFSectionAnchor id="pdf-essencia-licoes" bookmark={{ title: 'Lições kármicas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
             Lições Kármicas
@@ -891,7 +899,7 @@ export function NomeAtualPDF({
         </View>
 
         {/* Tendências Ocultas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
+        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
           <PDFSectionAnchor id="pdf-essencia-tendencias" bookmark={{ title: 'Tendências ocultas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
             Tendências Ocultas
@@ -961,8 +969,8 @@ export function NomeAtualPDF({
 
         </View>
 
-        {/* Card de conclusão */}
-        <View style={{
+        {/* Card de conclusão — card inteiro na mesma página (Growth t271u) */}
+        <View wrap={false} style={{
           marginTop: 20,
           marginHorizontal: 8,
           backgroundColor: '#F9FAFB',
@@ -998,63 +1006,7 @@ export function NomeAtualPDF({
           </Text>
         </View>
 
-        <Text style={{ fontSize: 9.5, color: GRAY, lineHeight: 1.6, marginBottom: 12, textAlign: 'justify' }}>
-          O Score do Nome Magnético é um modelo estritamente matemático e determinístico, fundamentado nos critérios objetivos da Numerologia Cabalística tradicional. A avaliação parte da pontuação máxima (100 pontos) e aplica regras claras e auditáveis:
-        </Text>
-
-        <View style={{ gap: 8, marginBottom: 14 }}>
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              1. Base de Cálculo e Piso
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Todo nome inicia em 100 pontos. Nenhum nome recebe nota menor que 5 pontos (piso de dignidade vibracional).
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              2. Sequências no Triângulo da Vida
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Sequências repetidas (111..999) no Triângulo da Vida subtraem 15 pontos por padrão distinto, com desconto de até 45 pontos no total. Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não subtraem pontos.
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              3. Harmonia Expressão × Destino
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Relação Favorável (0 pts), Neutro (-6 pts) ou Tensão Vibracional (-18 pts).
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              4. Débitos Kármicos do Nome e Marca da Data
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Apenas débitos variáveis (originados na Expressão ou Motivação) descontam pontos. Débitos originados no dia do nascimento ou no Destino pertencem à sua data natalícia e têm desconto zero na nota do nome.
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              5. Escala de 5 Níveis (N1 a N5)
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              N5 (85–100 Harmonioso), N4 (70–84 Favorável), N3 (50–69 Equilíbrio Parcial), N2 (30–49 Pede Atenção) e N1 (0–29 Em Tensão).
-            </Text>
-          </View>
-        </View>
-
-        {/* Link para página pública */}
-        <View style={{ borderRadius: 6, backgroundColor: 'rgba(212,175,55,0.08)', borderWidth: 1, borderColor: '#D4AF37', padding: 8, marginBottom: 12 }}>
-          <Text style={{ fontSize: 8, color: '#92640F', textAlign: 'center', fontFamily: BODY_FONT_BOLD }}>
-            Consulte o detalhamento completo das fórmulas em: nomemagnetico.com.br/como-funciona-o-score
-          </Text>
-        </View>
+        <PDFComoCalculamosScore isV3={isV3} />
 
         <PDFFooter />
       </Page>

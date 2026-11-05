@@ -198,9 +198,9 @@ export function PDFStandardIntro({
               {'\n'}
               • <Text style={[styles.bold, { color: boldColor }]}>Débitos Kármicos do Nome:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-12 pontos</Text> apenas para débitos originados no nome (Expressão/Motivação). Débitos originados na data de nascimento ou Destino são imutáveis e têm desconto zero na nota do nome.
               {'\n'}
-              • <Text style={[styles.bold, { color: boldColor }]}>Tendências Ocultas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text> cada (números que aparecem 4+ vezes).
+              • <Text style={[styles.bold, { color: boldColor }]}>Tendências Ocultas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-3 pontos</Text> cada (teto −9; números que aparecem 4+ vezes).
               {'\n'}
-              • <Text style={[styles.bold, { color: boldColor }]}>Lições Kármicas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-1 ponto</Text> cada (números ausentes no nome).
+              • <Text style={[styles.bold, { color: boldColor }]}>Lições Kármicas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text> cada (teto −8; números ausentes no nome).
               {'\n\n'}
               Escala de 5 Níveis: <Text style={[styles.bold, { color: boldColor }]}>N5 Harmonioso</Text> (85–100), <Text style={[styles.bold, { color: boldColor }]}>N4 Favorável</Text> (70–84), <Text style={[styles.bold, { color: boldColor }]}>N3 Equilíbrio Parcial</Text> (50–69), <Text style={[styles.bold, { color: boldColor }]}>N2 Pede Atenção</Text> (30–49) e <Text style={[styles.bold, { color: boldColor }]}>N1 Em Tensão</Text> (0–29). Piso de dignidade vibracional: 5 pontos.
             </Text>
@@ -234,7 +234,7 @@ export function PDFStandardIntro({
             {'\n'}
             • <Text style={[styles.bold, { color: boldColor }]}>Neutra:</Text> Relação harmoniosa e sem conflito direto. Não há conflito ativo entre as forças da Expressão e do Destino. A vida flui de forma equilibrada, exigindo esforço consciente, mas sem bloqueios ou tensões vibracionais ativas de compatibilidade.
             {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>). Ocorre quando a vibração ativa do nome (Expressão) entra em atrito direto com o caminho de nascimento (Destino). Funciona como um "freio de mão puxado": exige esforço gigantesco para obter resultados mínimos, gerando atrasos e estagnação. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
+            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-18 pontos</Text>). Ocorre quando a vibração ativa do nome (Expressão) entra em atrito direto com o caminho de nascimento (Destino). Funciona como um "freio de mão puxado": exige esforço gigantesco para obter resultados mínimos, gerando atrasos e estagnação. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
           </Text>
         </View>
 

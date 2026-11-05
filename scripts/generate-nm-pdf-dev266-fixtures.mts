@@ -298,6 +298,7 @@ writeFileSync(`${OUT}/calculated.json`, JSON.stringify(calculatedJson, null, 2))
 writeFileSync(`${OUT}/fixture.json`, JSON.stringify({ ...FIXTURE_META, profile }, null, 2));
 
 const destManual = await inspectNamedDestinations(Buffer.from(pagoManualBuf));
+const destChat = await inspectNamedDestinations(Buffer.from(pagoChatBuf));
 const destGratuito = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
 
 const manifest = {
@@ -319,6 +320,7 @@ const manifest = {
   namedDestinations: {
     gratuito: destGratuito,
     pagoAssinaturaManual: destManual,
+    pagoChatExport6: destChat,
   },
   labels: {
     pagoAssinaturaManual: 'Alexandra M. Vale (manual 73→50)',
