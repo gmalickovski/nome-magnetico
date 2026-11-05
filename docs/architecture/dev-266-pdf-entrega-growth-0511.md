@@ -21,4 +21,4 @@ Reverter merge do PR #124 e redeploy tag anterior em produção (ação humana).
 
 ## SHA
 
-Preencher com `git rev-parse HEAD` após push desta rodada (ver `manifest.json` gerado).
+`429e8475fd69726a55f2d747147835cd2ebc8442` (manifest em `/opt/cursor/artifacts/nm-pdf-dev266-round2/manifest.json`).
