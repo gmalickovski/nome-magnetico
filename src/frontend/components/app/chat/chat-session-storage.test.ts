@@ -98,11 +98,31 @@ describe('chat-session-storage', () => {
     assert.equal(memoryStore.get(`nm-chat-v2:${USER}`), undefined);
   });
 
-  it('descarta sessão com analysisId gerada para reiniciar do zero em nova análise', () => {
-    const session = { ...minimalSession(), analysisId: 'analise-concluida-123' };
+  it('restaura sessão com analysisId para reabertura local (export atualiza depois)', () => {
+    const session = {
+      ...minimalSession(),
+      analysisId: 'analise-concluida-123',
+      currentStepId: 'conclusao',
+      suggestions: [
+        {
+          id: 's1',
+          nome: 'Ana Vale',
+          score: 80,
+          expressao: 1,
+          compatibilidade: 'neutro',
+          bloqueiosEliminados: 0,
+          bloqueiosRestantes: 0,
+          arcanosPositivos: 0,
+          dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
+          panel: minimalSession().basePanel!,
+        },
+      ],
+    };
     saveChatSession(USER, session);
-    assert.equal(loadChatSession(USER), null);
-    assert.equal(memoryStore.get(`nm-chat-v2:${USER}`), undefined);
+    const loaded = loadChatSession(USER);
+    assert.ok(loaded);
+    assert.equal(loaded!.analysisId, 'analise-concluida-123');
+    assert.equal(loaded!.suggestions.length, 1);
   });
 
   it('clear remove persistência', () => {

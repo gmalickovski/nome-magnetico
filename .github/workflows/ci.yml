@@ -24,6 +24,12 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Ferramentas PDF offline (DEV-266 harness)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils python3-pip
+          pip install -r scripts/pdf-offline-requirements.txt
+
       - name: Linter de Polling / Reload em loop (DEV-251)
         run: npm run lint:polling
 

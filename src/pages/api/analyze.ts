@@ -60,6 +60,10 @@ const schema = z.object({
   nome_social_principal: z.string().min(2).max(150).optional(),
   // indica que o nome social já foi escolhido (análise sem ranking de candidatos)
   nome_ja_escolhido: z.boolean().optional(),
+  /** Export PDF/chat: ranking só com nomes já exibidos no chat (sem gerar sugestões do motor). */
+  ranking_somente_chat: z.boolean().optional(),
+  /** Histórico de sugestões vazio no export — não autogerar candidatos. */
+  ranking_vazio_sem_autogeracao: z.boolean().optional(),
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
   gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
@@ -164,6 +168,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     assinatura_atual, onde_vai_usar, aceita_encurtar_apelido,
     nome_social_principal,
     nome_ja_escolhido,
+    ranking_somente_chat,
+    ranking_vazio_sem_autogeracao,
     is_free,
     gender: inputGender,
     opt_in,
@@ -306,6 +312,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         // ── Produto: Nome Social (sem LLM quando o nome social já foi escolhido no chat) ──
         const candidatos = nomes_candidatos ?? [];
 
+        const somenteChat =
+          Boolean(ranking_somente_chat) || Boolean(ranking_vazio_sem_autogeracao);
+
         const resultado = analisarNomesSocial(
           candidatos,
           nome_completo,
@@ -314,6 +323,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             aceitaEncurtarOuApelido: Boolean(aceita_encurtar_apelido),
             ondeVaiUsar: onde_vai_usar,
             assinaturaAtual: assinatura_atual,
+            somenteCandidatosInformados: somenteChat,
           }
         );
 
@@ -325,15 +335,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
             ) ?? analisarNomeSocial(nome_social_principal, data_nascimento, 'usuario');
 
           resultado.melhorNome = nomeEscolhido;
-          resultado.nomesCandidatos = [
-            nomeEscolhido,
-            ...resultado.nomesCandidatos.filter(
-              candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado
-            ),
-          ];
-          resultado.top3 = resultado.nomesCandidatos
-            .filter(candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado)
-            .slice(0, 3);
+          if (!somenteChat) {
+            resultado.nomesCandidatos = [
+              nomeEscolhido,
+              ...resultado.nomesCandidatos.filter(
+                candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado
+              ),
+            ];
+            resultado.top3 = resultado.nomesCandidatos
+              .filter(candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado)
+              .slice(0, 3);
+          }
         }
 
         const melhor = resultado.melhorNome;
@@ -366,6 +378,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         await updateAnalysis(analysis.id, {
           frequencias_numeros: {
             ranking: resultado,
+            rankingSomenteChat: somenteChat,
             frequencias: freqMapSocial,
             selectedNomeSocial: nome_social_principal ? melhor?.nomeCompleto ?? nome_social_principal : null,
             assinaturaAtual: assinatura_atual?.trim() || null,

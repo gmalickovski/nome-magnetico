@@ -1,0 +1,4 @@
+# Pré-requisito Python para inspeção offline de PDFs (destinos nomeados).
+# Instalação explícita — nunca durante npm test / render:
+#   pip install -r scripts/pdf-offline-requirements.txt
+pypdf==5.1.0

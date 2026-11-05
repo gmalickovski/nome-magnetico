@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, Svg, Polygon, Text as SvgText, G } from '@react-pdf/renderer';
+import { getScoreTierVisual } from '../../landing/score-tier-visual';
 import { PDF_COLORS } from './PDFTheme';
+import { BODY_FONT } from './PDFFonts';
 
-const GOLD = '#D4AF37';
-const RED = '#DC2626';
 const GRAY = PDF_COLORS.gray;
 
 const styles = StyleSheet.create({
@@ -22,25 +22,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  legendDotRed: {
+  legendDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FEE2E2',
     borderWidth: 1.5,
-    borderColor: RED,
-  },
-  legendDotGold: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FEF9C3',
-    borderWidth: 1.5,
-    borderColor: GOLD,
   },
   legendText: {
     fontSize: 9,
     color: GRAY,
+    fontFamily: BODY_FONT,
+  },
+  supportText: {
+    fontSize: 9,
+    color: GRAY,
+    fontFamily: BODY_FONT,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 1.45,
+    maxWidth: 420,
   },
 });
 
@@ -55,10 +55,11 @@ export interface DoubleStarNumbers {
 interface PDFDoubleStarProps {
   nascimento: DoubleStarNumbers;
   harmonizado: DoubleStarNumbers;
+  /** Scores v3 para cores por faixa (HTML / getScoreTierVisual) — não altera geometria */
+  scoreNascimento?: number | null;
+  scoreHarmonizado?: number | null;
 }
 
-// Gera os pontos do pentagrama (estrela de 5 pontas)
-// starts at top (-90°), clockwise
 function getStarPoints(cx: number, cy: number, outerR: number, innerR: number): string {
   const pts: string[] = [];
   for (let i = 0; i < 5; i++) {
@@ -70,29 +71,31 @@ function getStarPoints(cx: number, cy: number, outerR: number, innerR: number): 
   return pts.join(' ');
 }
 
-// Retorna a posição XY da ponta i (0=topo, 1=direita-cima, 2=direita-baixo, 3=esquerda-baixo, 4=esquerda-cima)
 function tipPosition(cx: number, cy: number, r: number, i: number) {
   const angle = ((-90 + i * 72) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), deg: -90 + i * 72 };
+  return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
 }
 
-export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
-  // Canvas precisa ter espaço extra para labels fora da estrela maior
+export function PDFDoubleStar({
+  nascimento,
+  harmonizado,
+  scoreNascimento,
+  scoreHarmonizado,
+}: PDFDoubleStarProps) {
   const W = 510;
   const H = 430;
-  const cx = W / 2; // 255
-  const cy = H / 2 + 8; // 223
+  const cx = W / 2;
+  const cy = H / 2 + 8;
 
-  // ── Raios ─────────────────────────────────────────────────────────────────
-  const innerOuterR = 72;               // ponta da estrela interna (vermelha)
+  const innerOuterR = 72;
   const innerInnerR = innerOuterR * 0.382;
-  const outerOuterR = 145;             // ponta da estrela externa (dourada)
+  const outerOuterR = 145;
   const outerInnerR = outerOuterR * 0.382;
 
-  // Onde os números ficam: exatamente na ponta mas ligeiramente para fora
-  const numRadiusInner = innerOuterR + 12; // números vermelhos: fora da ponta da estrela menor
-  const numRadiusOuter = outerOuterR + 14; // números dourados: fora da ponta da estrela maior
-  const labelRadius    = outerOuterR + 32; // labels de texto: ainda mais fora
+  const birthVisual =
+    scoreNascimento != null ? getScoreTierVisual(scoreNascimento) : { stroke: '#DC2626', text: '#DC2626', fill: 'rgba(220,38,38,0.12)' };
+  const harmVisual =
+    scoreHarmonizado != null ? getScoreTierVisual(scoreHarmonizado) : { stroke: '#D4AF37', text: '#D4AF37', fill: 'rgba(212,175,55,0.12)' };
 
   const keys: (keyof DoubleStarNumbers)[] = ['destino', 'expressao', 'motivacao', 'missao', 'impressao'];
   const labels = ['Destino', 'Expressão', 'Motivação', 'Missão', 'Impressão'];
@@ -103,49 +106,51 @@ export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
   return (
     <View style={styles.container} wrap={false}>
       <Svg width={W} height={H}>
-
-        {/* ── Estrela externa (Dourada — Harmonização) ── */}
         <Polygon
           points={outerPts}
-          fill={GOLD}
+          fill={harmVisual.stroke}
           fillOpacity={0.12}
-          stroke={GOLD}
+          stroke={harmVisual.stroke}
           strokeWidth={2}
         />
-
-        {/* ── Estrela interna (Vermelha — Nascimento) ── */}
         <Polygon
           points={innerPts}
-          fill={RED}
+          fill={birthVisual.stroke}
           fillOpacity={0.15}
-          stroke={RED}
+          stroke={birthVisual.stroke}
           strokeWidth={1.5}
         />
 
-        {/* ── Números e Labels nas 5 pontas ── */}
         {keys.map((key, i) => {
           const nNasc = nascimento[key];
           const nHarm = harmonizado[key];
-
-          // Ponta da estrela externa (dourada) — número fica logo fora da ponta
           const outerTip = tipPosition(cx, cy, outerOuterR + 14, i);
-          // Ponta da estrela interna (vermelha) — número fica logo fora da ponta, dentro do espaço entre as estrelas
           const innerTip = tipPosition(cx, cy, innerOuterR + 14, i);
-          // Label do nome da ponta — fica bem fora da estrela dourada
           const labelPos = tipPosition(cx, cy, outerOuterR + 32, i);
 
-          // Alinhamento do label
           let anchor: 'middle' | 'start' | 'end' = 'middle';
-          let ldx = 0, ldy = 0;
-          if (i === 0) { ldy = -4; }
-          else if (i === 1) { anchor = 'start'; ldx = 4; }
-          else if (i === 2) { anchor = 'start'; ldx = 4; ldy = 6; }
-          else if (i === 3) { anchor = 'end';   ldx = -4; ldy = 6; }
-          else if (i === 4) { anchor = 'end';   ldx = -4; }
+          let ldx = 0;
+          let ldy = 0;
+          if (i === 0) {
+            ldy = -4;
+          } else if (i === 1) {
+            anchor = 'start';
+            ldx = 4;
+          } else if (i === 2) {
+            anchor = 'start';
+            ldx = 4;
+            ldy = 6;
+          } else if (i === 3) {
+            anchor = 'end';
+            ldx = -4;
+            ldy = 6;
+          } else if (i === 4) {
+            anchor = 'end';
+            ldx = -4;
+          }
 
           return (
             <G key={`star-tip-${i}`}>
-              {/* Label da ponta */}
               <SvgText
                 x={labelPos.x + ldx}
                 y={labelPos.y + ldy}
@@ -155,29 +160,22 @@ export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
               >
                 {labels[i]}
               </SvgText>
-
-              {/* Número dourado (harmonizado) — fora da ponta da estrela maior */}
               {nHarm !== null && (
-                <G>
-                  {/* Círculo de fundo para legibilidade */}
-                  <SvgText
-                    x={outerTip.x}
-                    y={outerTip.y + 4}
-                    fill={GOLD}
-                    style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}
-                    textAnchor="middle"
-                  >
-                    {nHarm}
-                  </SvgText>
-                </G>
+                <SvgText
+                  x={outerTip.x}
+                  y={outerTip.y + 4}
+                  fill={harmVisual.text}
+                  style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}
+                  textAnchor="middle"
+                >
+                  {nHarm}
+                </SvgText>
               )}
-
-              {/* Número vermelho (nascimento) — entre as duas estrelas, na ponta da interna */}
               {nNasc !== null && (
                 <SvgText
                   x={innerTip.x}
                   y={innerTip.y + 3}
-                  fill={RED}
+                  fill={birthVisual.text}
                   style={{ fontSize: 10, fontFamily: 'Helvetica-Bold' }}
                   textAnchor="middle"
                 >
@@ -189,17 +187,19 @@ export function PDFDoubleStar({ nascimento, harmonizado }: PDFDoubleStarProps) {
         })}
       </Svg>
 
-      {/* Legenda */}
       <View style={styles.legendContainer}>
         <View style={styles.legendItem}>
-          <View style={styles.legendDotRed} />
-          <Text style={styles.legendText}>Essência de Nascimento</Text>
+          <View style={[styles.legendDot, { backgroundColor: birthVisual.fill, borderColor: birthVisual.stroke }]} />
+          <Text style={styles.legendText}>Nome de nascimento</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={styles.legendDotGold} />
-          <Text style={styles.legendText}>Harmonização Social (Proteção)</Text>
+          <View style={[styles.legendDot, { backgroundColor: harmVisual.fill, borderColor: harmVisual.stroke }]} />
+          <Text style={styles.legendText}>Assinatura selecionada</Text>
         </View>
       </View>
+      <Text style={styles.supportText}>
+        Compare os valores calculados para cada nome na legenda do gráfico.
+      </Text>
     </View>
   );
 }
