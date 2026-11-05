@@ -124,8 +124,8 @@ function RadarChart({
   const cy = 105;
   const radius = 58;
   const rings = [0.25, 0.5, 0.75, 1];
-  const birthColor = getScoreTierVisual(birthScore).stroke;
-  const overlayColor = getScoreTierVisual(overlayScore).stroke;
+  const birthVisual = getScoreTierVisual(birthScore);
+  const overlayVisual = getScoreTierVisual(overlayScore);
 
   return (
     <View style={{ alignItems: 'center' }}>
@@ -148,14 +148,16 @@ function RadarChart({
         })}
         <Polygon
           points={polygonPoints(birth, cx, cy, radius)}
-          fill={getScoreTierVisual(birthScore).fill}
-          stroke={birthColor}
+          fill={birthVisual.stroke}
+          fillOpacity={0.15}
+          stroke={birthVisual.stroke}
           strokeWidth={1.2}
         />
         <Polygon
           points={polygonPoints(overlay, cx, cy, radius)}
-          fill={getScoreTierVisual(overlayScore).fill}
-          stroke={overlayColor}
+          fill={overlayVisual.stroke}
+          fillOpacity={0.12}
+          stroke={overlayVisual.stroke}
           strokeWidth={1.4}
         />
         {AXIS_CONFIG.map((axis, i) => {
@@ -179,11 +181,11 @@ function RadarChart({
       </Svg>
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: birthColor }]} />
+          <View style={[styles.legendDot, { backgroundColor: birthVisual.stroke }]} />
           <Text style={styles.legendText}>Nome de nascimento</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: overlayColor }]} />
+          <View style={[styles.legendDot, { backgroundColor: overlayVisual.stroke }]} />
           <Text style={styles.legendText}>Assinatura sugerida</Text>
         </View>
       </View>
