@@ -44,7 +44,6 @@ import {
   MISSAO_DESC,
 } from '../../../backend/numerology/interpretations';
 
-import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 import {
   getScoreV3Level,
   getScoreV3LevelBadgeClass,
@@ -312,6 +311,7 @@ export function NomeAtualPDF({
   magneticNames: _magneticNames,
   userName: _userName,
   upgradeOfferLabel,
+  pdfRender,
 }: ProductPDFProps) {
   const upgradePrice = upgradeOfferLabel ?? 'nomemagnetico.com.br/precos';
   const logoSrc = loadLogoSrc();
@@ -429,10 +429,10 @@ export function NomeAtualPDF({
   }
 
   const tocEntries: PdfTocEntry[] = [
-    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento' },
-    { id: 'pdf-mapa', title: 'O que este mapa mostrou' },
-    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar' },
-    { id: 'pdf-score', title: 'Como calculamos o score' },
+    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
+    { id: 'pdf-mapa', title: 'O que este mapa mostrou', level: 0 },
+    { id: 'pdf-score', title: 'Como calculamos o score', level: 0 },
+    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar', level: 0 },
   ];
 
   return (
@@ -449,7 +449,13 @@ export function NomeAtualPDF({
         titleFont={TITLE_FONT}
       />
 
-      <PDFTableOfContents entries={tocEntries} subtitle={`${nomeParaExibir} — Sumário`} />
+      {!pdfRender?.omitTableOfContents && (
+        <PDFTableOfContents
+          entries={tocEntries}
+          subtitle={`${nomeParaExibir} — Sumário`}
+          pageNumbers={pdfRender?.tocPageNumbers}
+        />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
        *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
@@ -884,13 +890,13 @@ export function NomeAtualPDF({
        *  PÁGINAS FINAIS — mantidas do PDF gratuito original
        * ═══════════════════════════════════════════════════════════════════════ */}
 
-      {/* ── PÁGINA: O QUE ESTE MAPA MOSTROU (FUNDO ESCURO) ───────────────── */}
-      <Page size="A4" style={styles.darkPage}>
+      {/* ── PÁGINA: O QUE ESTE MAPA MOSTROU (fundo claro) ───────────────── */}
+      <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-mapa" bookmark={{ title: 'O que este mapa mostrou', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Resumo do mapa`} />
 
         <View style={{ marginTop: 28, marginBottom: 24 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 22 }]}>O que este mapa mostrou</Text>
+          <Text style={[styles.hugeTitle, { fontSize: 22, color: DARK }]}>O que este mapa mostrou</Text>
         </View>
 
         {/* Bullets */}
@@ -899,7 +905,7 @@ export function NomeAtualPDF({
           {/* Bloqueios */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{bloqueios.length} bloqueio{bloqueios.length !== 1 ? 's' : ''} {bloqueios.length !== 1 ? 'energéticos' : 'energético'}</Text>
               {' '}detectado{bloqueios.length !== 1 ? 's' : ''} nos 4 triângulos do nome de nascimento — loops vibracionais ativos 24h/dia, independente de esforço ou força de vontade.
             </Text>
@@ -908,7 +914,7 @@ export function NomeAtualPDF({
           {/* Débitos */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{debitos.length} débito{debitos.length !== 1 ? 's' : ''} kármico{debitos.length !== 1 ? 's' : ''}</Text>
               {' '}ativo{debitos.length !== 1 ? 's' : ''} — padrões de encarnações passadas que criam ciclos de resistência em áreas específicas da vida.
             </Text>
@@ -917,7 +923,7 @@ export function NomeAtualPDF({
           {/* Lições */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{licoes.length} lição{licoes.length !== 1 ? 'ões' : ''} kármica{licoes.length !== 1 ? 's' : ''}</Text>
               {' '}identificada{licoes.length !== 1 ? 's' : ''} — vibrações ausentes no nome que criam pontos cegos e lacunas de talento.
             </Text>
@@ -926,7 +932,7 @@ export function NomeAtualPDF({
           {/* Tendências */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{tendencias.length} tendência{tendencias.length !== 1 ? 's' : ''} oculta{tendencias.length !== 1 ? 's' : ''}</Text>
               {' '}— frequências em excesso que operam como compulsão automática, sabotando exatamente onde você mais quer prosperar.
             </Text>
@@ -934,34 +940,23 @@ export function NomeAtualPDF({
 
         </View>
 
-        {/* Card cinza escuro de conclusão */}
+        {/* Card de conclusão */}
         <View style={{
-          marginTop: 28,
-          marginHorizontal: 24,
-          backgroundColor: 'rgba(255,255,255,0.05)',
+          marginTop: 20,
+          marginHorizontal: 8,
+          backgroundColor: '#F9FAFB',
           borderRadius: 10,
           padding: 18,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.1)',
+          borderColor: '#E5E7EB',
         }}>
-          <Text style={{ fontSize: 10, color: '#C9C5C0', lineHeight: 1.7, textAlign: 'center' }}>
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, textAlign: 'center' }}>
             Esses padrões são descritos pela numerologia cabalística como tensões vibracionais no nome atual — não como diagnóstico ou promessa de cura. A harmonização propõe outras formas de assinar para você comparar scores, bloqueios e triângulos lado a lado, sem garantia de eliminação ou melhora automática.
           </Text>
         </View>
 
-        <PDFFooter />
-      </Page>
-
-      {/* ── PÁGINA: PRÓXIMO PASSO (sem priorizar sequência) ───────────────── */}
-      <Page size="A4" style={styles.darkPage}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Próximo passo`} />
-
-        <View style={{ marginTop: 28, marginBottom: 18 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 20, color: GOLD }]}>Nome Social</Text>
-        </View>
-
-        <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
-          Você pode comparar outras formas de assinar no Nome Social. Veja os detalhes ao final deste PDF.
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginTop: 16, textAlign: 'justify' }}>
+          No Nome Social você compara outras formas de assinar; o convite e o passo a passo estão na seção final deste PDF.
         </Text>
 
         <PDFFooter />
@@ -1036,32 +1031,25 @@ export function NomeAtualPDF({
           </Text>
         </View>
 
-        {/* Aviso Legal Autoconhecimento */}
-        <View style={{ marginTop: 'auto', borderTopWidth: 0.5, borderTopColor: '#E5E7EB', paddingTop: 8 }}>
-          <Text style={{ fontSize: 7, color: '#9CA3AF', lineHeight: 1.4, textAlign: 'justify' }}>
-            {AVISO_AUTOCONHECIMENTO}
-          </Text>
-        </View>
-
         <PDFFooter />
       </Page>
 
-      {/* ── PÁGINA FINAL: CTA NOME SOCIAL (FUNDO ESCURO) ───────────────────── */}
-      <Page size="A4" style={styles.darkPage}>
+      {/* ── PÁGINA FINAL: CTA NOME SOCIAL (fundo claro) ───────────────────── */}
+      <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-nome-social" bookmark={{ title: 'Compare outras formas de assinar', fit: true }} />
         <View style={{ marginTop: 24, marginBottom: 16 }}>
-          <Text style={[styles.hugeTitle, { color: GOLD, fontSize: 17 }]}>
+          <Text style={[styles.hugeTitle, { color: DARK, fontSize: 17 }]}>
             Compare outras formas de assinar
           </Text>
         </View>
 
-        <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
           No Nome Social, você compara as opções calculadas para o seu nome e escolhe qual deseja analisar.
         </Text>
 
         {rawScore != null && (
-          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: 12, marginBottom: 16 }}>
-            <Text style={{ fontSize: 9, color: '#C9C5C0', textAlign: 'center', lineHeight: 1.5 }}>
+          <View style={{ backgroundColor: '#F9FAFB', borderRadius: 8, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#E5E7EB' }}>
+            <Text style={{ fontSize: 9, color: GRAY, textAlign: 'center', lineHeight: 1.5 }}>
               Nota calculada deste mapa (nome de nascimento): {rawScore}/100{nivelV3 ? ` · ${nivelV3}` : ''}.
               {potencialV3 != null ? ` Potencial explorável pelo motor: até ${potencialV3}/100 (referência de cálculo, não resultado garantido).` : ''}
             </Text>

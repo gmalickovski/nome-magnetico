@@ -1,7 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
+import {
+  PDF_TOC_ANCHOR_IDS,
+  renderProductPdfBuffer,
+} from './pdfDynamicRender.ts';
 import { writeFileSync, mkdtempSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -91,16 +94,19 @@ describe('DEV-266 · PDF integração offline', () => {
       },
     };
 
-    const gratuitoBuf = await renderToBuffer(
-      React.createElement(NomeAtualPDF, {
+    const gratuitoBuf = await renderProductPdfBuffer(
+      NomeAtualPDF,
+      {
         analysis: { ...built.record, analise_texto: null } as never,
         magneticNames: [],
         userName: 'Alexandra',
         upgradeOfferLabel: 'FIXTURE',
-      }) as never,
+      },
+      PDF_TOC_ANCHOR_IDS.gratuito,
     );
-    const pagoBuf = await renderToBuffer(
-      React.createElement(NomeSocialPDF, {
+    const pagoBuf = await renderProductPdfBuffer(
+      NomeSocialPDF,
+      {
         analysis: paidRecord as never,
         magneticNames: [
           {
@@ -113,7 +119,8 @@ describe('DEV-266 · PDF integração offline', () => {
           },
         ] as never,
         userName: 'Alexandra',
-      }) as never,
+      },
+      PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
     const gDest = inspectNamedDestinations(Buffer.from(gratuitoBuf));
@@ -122,8 +129,21 @@ describe('DEV-266 · PDF integração offline', () => {
     assert.ok(!('error' in pDest), `pago destinos: ${'error' in pDest ? pDest.error : ''}`);
 
     assert.ok(gDest['pdf-essencia'] >= 1, 'pdf-essencia gratuito');
+    assert.ok(gDest['pdf-sumario'] >= 1, 'pdf-sumario gratuito');
     assert.ok(pDest['pdf-essencia'] >= 1, 'pdf-essencia pago');
     assert.ok(pDest['pdf-harmonizacao'] >= 1, 'pdf-harmonizacao pago');
+    assert.ok(pDest['pdf-harmonizacao-comparativa'] >= 1, 'pdf-harmonizacao-comparativa pago');
+
+    for (const [label, dests, ids] of [
+      ['gratuito', gDest, PDF_TOC_ANCHOR_IDS.gratuito],
+      ['pago', pDest, PDF_TOC_ANCHOR_IDS.nome_social],
+    ] as const) {
+      const sumarioPage = dests['pdf-sumario'];
+      for (const id of ids) {
+        const p = dests[id];
+        assert.ok(p != null && p >= sumarioPage, `${label}: destino ${id} após sumário (p${p})`);
+      }
+    }
 
     assert.ok(
       gDest['pdf-essencia'] <= 8,
@@ -157,6 +177,22 @@ describe('DEV-266 · PDF integração offline', () => {
     const joined = fonts.join(' ').toLowerCase();
     assert.ok(joined.includes('inter'), `Inter embutida esperada; got: ${fonts.join(', ')}`);
     assert.ok(joined.includes('cinzel'), `Cinzel embutida esperada; got: ${fonts.join(', ')}`);
+  });
+
+  it('ranking somente chat não gera sugestões extras do motor', () => {
+    const ordem = ['Maria Silva Vale', 'Alexandra M. Vale', 'Alêxandra Mendes'];
+    const resultado = analisarNomesSocial(ordem, profile.nomeCompleto, profile.dataNascimentoPt, {
+      somenteCandidatosInformados: true,
+    });
+    assert.equal(resultado.nomesCandidatos.length, 3);
+    assert.deepEqual(
+      resultado.nomesCandidatos.map((c) => c.nomeCompleto),
+      ordem,
+    );
+    assert.equal(
+      resultado.nomesCandidatos.some((c) => c.origemSugerida === 'ia'),
+      false,
+    );
   });
 
   it('candidato do motor (Alêxandra) recalcula score auditável sem herdar fixture stale', () => {

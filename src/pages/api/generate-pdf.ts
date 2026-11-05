@@ -4,6 +4,10 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeSocialPDF } from '../../frontend/components/pdf/NomeSocialPDF';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
+import {
+  PDF_TOC_ANCHOR_IDS,
+  renderProductPdfBuffer,
+} from '../../frontend/components/pdf/shared/pdfDynamicRender';
 import { NomeBebePDF } from '../../frontend/components/pdf/NomeBebePDF';
 import { NomeEmpresaPDF } from '../../frontend/components/pdf/NomeEmpresaPDF';
 import { logError } from '../../backend/utils/error-logger';
@@ -133,14 +137,29 @@ export const GET: APIRoute = async ({ url, locals }) => {
     pdfBuffer = cached.buffer;
   } else {
     try {
-      pdfBuffer = await renderToBuffer(
-        React.createElement(PDFComponent, {
-          analysis: analysis as any,
-          magneticNames,
-          userName: firstName,
-          upgradeOfferLabel,
-        }) as any
-      );
+      const pdfProps = {
+        analysis: analysis as any,
+        magneticNames,
+        userName: firstName,
+        upgradeOfferLabel,
+      };
+      if (isGratuita) {
+        pdfBuffer = await renderProductPdfBuffer(
+          NomeAtualPDF,
+          pdfProps,
+          PDF_TOC_ANCHOR_IDS.gratuito,
+        );
+      } else if (productType === 'nome_social') {
+        pdfBuffer = await renderProductPdfBuffer(
+          NomeSocialPDF,
+          pdfProps,
+          PDF_TOC_ANCHOR_IDS.nome_social,
+        );
+      } else {
+        pdfBuffer = await renderToBuffer(
+          React.createElement(PDFComponent, pdfProps) as any,
+        );
+      }
       
       // Salva no cache
       pdfCache.set(cacheKey, {

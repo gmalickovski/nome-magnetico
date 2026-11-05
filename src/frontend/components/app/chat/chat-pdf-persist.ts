@@ -1,16 +1,21 @@
 import type { ChatCollectState } from './decide-live-bridge.js';
 import { collectStateToRankingPatch } from './decide-live-bridge.js';
+import type { CandidateSuggestion } from './chat-types.js';
+import { chatSuggestionsToExportNames } from './chat-export-suggestions.js';
 
 export function buildChatPdfAnalyzePayload(input: {
   birthName: string;
   birthDate: string;
   selectedSocialName: string;
   collect: ChatCollectState;
+  /** Sugestões já exibidas no chat desta sessão (ordem cumulativa). */
+  suggestions: CandidateSuggestion[];
 }): Record<string, unknown> {
   const ranking = collectStateToRankingPatch(input.collect);
   const birthName = input.birthName.trim();
   const birthDate = input.birthDate.trim();
   const selected = input.selectedSocialName.trim();
+  const exportNames = chatSuggestionsToExportNames(input.suggestions);
 
   return {
     product_type: 'nome_social',
@@ -22,5 +27,7 @@ export function buildChatPdfAnalyzePayload(input: {
     onde_vai_usar: input.collect.ondeAssina.length > 0 ? input.collect.ondeAssina : undefined,
     assinatura_atual: ranking.assinaturaAtual ?? input.collect.nomeUsoBase ?? undefined,
     objetivo_apresentacao: input.collect.objetivoTexto.trim() || undefined,
+    nomes_candidatos: exportNames.length > 0 ? exportNames : undefined,
+    ranking_somente_chat: exportNames.length > 0,
   };
 }

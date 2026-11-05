@@ -85,6 +85,13 @@ export interface AnalysisRecord {
   created_at: string;
 }
 
+export interface PdfRenderOptions {
+  /** Passo 1 do render dinâmico: documento sem páginas de sumário */
+  omitTableOfContents?: boolean;
+  /** Números de página por id de destino (paginação final, two-pass) */
+  tocPageNumbers?: Record<string, number>;
+}
+
 /** Props comuns a todos os PDFs de produto */
 export interface ProductPDFProps {
   analysis: AnalysisRecord;
@@ -92,4 +99,5 @@ export interface ProductPDFProps {
   userName?: string;
   /** Preço efetivo do Nome Social no momento da geração (DEV-178). */
   upgradeOfferLabel?: string;
+  pdfRender?: PdfRenderOptions;
 }

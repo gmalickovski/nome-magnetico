@@ -606,6 +606,11 @@ export interface OpcoesRankingNomeSocial {
   restricaoDocumentosLegais?: boolean;
   /** Teto de nível de geração (ex.: 50 = só acento sutil) — filtro, não altera score */
   maxNivelGeracao?: number;
+  /**
+   * Export/chat: usa somente os nomes informados em `nomesCandidatos`, na ordem recebida,
+   * sem gerar sugestões automáticas do motor (gerarSugestoesAutoSocial).
+   */
+  somenteCandidatosInformados?: boolean;
 }
 
 /**
@@ -958,11 +963,25 @@ export function analisarNomesSocial(
       };
     });
 
-  analisesUsuario.sort((a, b) => {
-    if (a.score !== b.score) return b.score - a.score;
-    const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
-    return (compRank[b.compatibilidade] ?? 1) - (compRank[a.compatibilidade] ?? 1);
-  });
+  if (!resolvedOpcoes?.somenteCandidatosInformados) {
+    analisesUsuario.sort((a, b) => {
+      if (a.score !== b.score) return b.score - a.score;
+      const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+      return (compRank[b.compatibilidade] ?? 1) - (compRank[a.compatibilidade] ?? 1);
+    });
+  }
+
+  if (resolvedOpcoes?.somenteCandidatosInformados) {
+    return {
+      nomeNascimento,
+      dataNascimento,
+      destino,
+      nomesCandidatos: analisesUsuario,
+      melhorNome: analisesUsuario[0] ?? null,
+      top3: analisesUsuario.slice(0, 3),
+      avisoSobrenomeExigido: null,
+    };
+  }
 
   // Sugestões do sistema
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));

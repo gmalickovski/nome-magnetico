@@ -1642,6 +1642,7 @@ export function NomeSocialChat({
                 birthDate: confirmedDate,
                 selectedSocialName: activeSuggestion.nome,
                 collect: collectState,
+                suggestions,
               })
             ),
           });
@@ -1664,6 +1665,7 @@ export function NomeSocialChat({
       confirmedName,
       confirmedDate,
       collectState,
+      suggestions,
     ]
   );
 

@@ -290,7 +290,7 @@ function extractSelectedSocialName(text?: string | null): string | null {
   return match?.[1]?.trim() || null;
 }
 
-export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFProps) {
+export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: ProductPDFProps) {
   const logoSrc = loadLogoSrc();
   const freqData = analysis.frequencias_numeros as any;
   const selectedNomeSocial =
@@ -317,9 +317,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
     .toUpperCase()
     .split('');
 
+  const rankingSomenteChat = freqData?.rankingSomenteChat === true;
   const nomesCandidatosRaw: any[] = freqData?.ranking?.nomesCandidatos ?? [];
-  const melhorNomeMotor: string | undefined =
-    freqData?.ranking?.melhorNome?.nomeCompleto ?? undefined;
+  const melhorNomeMotor: string | undefined = rankingSomenteChat
+    ? undefined
+    : (freqData?.ranking?.melhorNome?.nomeCompleto ?? undefined);
 
   // ── Dados do NOME DE NASCIMENTO (para a seção "A ESSÊNCIA") ──────────────────────
   const dataNascimentoRaw = normalizeBirthDateForNumerology(
@@ -595,12 +597,15 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
   const sortedArcanos = Array.from(allArcanoNums).sort((a, b) => a - b);
 
   const paidToc: PdfTocEntry[] = [
-    ...(nomesCandidatos.length > 0 ? [{ id: 'pdf-ranking', title: 'Opções avaliadas' }] : []),
-    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento' },
-    { id: 'pdf-harmonizacao', title: 'Assinatura selecionada e estrela comparativa' },
-    { id: 'pdf-guia', title: 'Guia de uso da assinatura' },
-    { id: 'pdf-score', title: 'Como calculamos o score' },
-    { id: 'pdf-treino', title: 'Folha de treino de assinatura' },
+    ...(nomesCandidatos.length > 0
+      ? [{ id: 'pdf-ranking', title: 'Opções avaliadas no chat', level: 0 as const }]
+      : []),
+    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
+    { id: 'pdf-harmonizacao', title: 'Harmonização — assinatura e estrela', level: 0 },
+    { id: 'pdf-harmonizacao-comparativa', title: 'Harmonização — leitura comparativa', level: 1 },
+    { id: 'pdf-guia', title: 'Guia de uso da assinatura', level: 0 },
+    { id: 'pdf-score', title: 'Como calculamos o score', level: 0 },
+    { id: 'pdf-treino', title: 'Folha de treino de assinatura', level: 0 },
   ];
 
   return (
@@ -617,7 +622,13 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         titleFont={TITLE_FONT}
       />
 
-      <PDFTableOfContents entries={paidToc} subtitle={`${nomeParaExibir} — Sumário`} />
+      {!pdfRender?.omitTableOfContents && (
+        <PDFTableOfContents
+          entries={paidToc}
+          subtitle={`${nomeParaExibir} — Sumário`}
+          pageNumbers={pdfRender?.tocPageNumbers}
+        />
+      )}
 
       {/* ── PÁGINA INTRODUTÓRIA: GUIA DE LEITURA ────────────────────────── */}
       <PDFStandardIntro
@@ -637,10 +648,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           <View style={styles.section}>
             <Text style={styles.hugeTitle}>Opções avaliadas</Text>
             <Text style={{ ...styles.bodyText, marginBottom: 12 }}>
-              Nomes calculados para comparação. A assinatura em análise neste PDF é a que você selecionou; outras opções aparecem apenas como referência numérica.
+              {rankingSomenteChat
+                ? 'Sugestões que você viu neste chat, na mesma ordem. A assinatura em análise neste PDF é a que você selecionou.'
+                : 'Nomes calculados para comparação. A assinatura em análise neste PDF é a que você selecionou; outras opções aparecem apenas como referência numérica.'}
             </Text>
 
-            {nomesCandidatos.slice(0, 10).map((c: any, i: number) => {
+            {(rankingSomenteChat ? nomesCandidatos : nomesCandidatos.slice(0, 10)).map((c: any, i: number) => {
               const sc = scoreColor(c.score, isV3);
               const nivel = isV3 ? (c.nivelV3 ? { codigo: c.nivelV3, rotulo: getScoreV3LevelDescription(c.nivelV3 as any) } : obterNivelV3(c.score)) : null;
               const isAssinaturaSelecionada =
@@ -1245,6 +1258,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         </View>
 
         {/* ── A Leitura Comparativa ─── */}
+        <PDFSectionAnchor
+          id="pdf-harmonizacao-comparativa"
+          bookmark={{ title: 'Leitura comparativa', fit: true }}
+        />
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
           <View style={{ flex: 1, height: 1, backgroundColor: '#8A661C', opacity: 0.3 }} />
           <View style={{ backgroundColor: '#8A661C', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>

@@ -5,7 +5,10 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
 import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
+import {
+  PDF_TOC_ANCHOR_IDS,
+  renderProductPdfBuffer,
+} from '../src/frontend/components/pdf/shared/pdfDynamicRender.ts';
 import { buildFreeLeadAnalysisRecord } from '../src/backend/public-free-analysis/generate-free-lead-pdf.ts';
 import { NomeAtualPDF } from '../src/frontend/components/pdf/NomeAtualPDF.tsx';
 import { NomeSocialPDF } from '../src/frontend/components/pdf/NomeSocialPDF.tsx';
@@ -184,17 +187,55 @@ const freeRecord = { ...built.record, analise_texto: null };
 const paidManual = buildPaidRecord(profile.nomeHarmonizado);
 const paidCandidato = buildPaidRecord(melhorMotor.nomeCompleto);
 
-const gratuitoBuf = await renderToBuffer(
-  React.createElement(NomeAtualPDF, {
+const chatExportNames = [
+  profile.nomeHarmonizado,
+  melhorMotor.nomeCompleto,
+  'Maria Silva Vale',
+  'Alexandra Mendes',
+  'Alexandra M.',
+  'Alêxandra Vale',
+];
+const rankingChat = analisarNomesSocial(
+  chatExportNames,
+  profile.nomeCompleto,
+  profile.dataNascimentoPt,
+  { somenteCandidatosInformados: true },
+);
+const paidChatOnly = {
+  ...buildPaidRecord(profile.nomeHarmonizado),
+  frequencias_numeros: {
+    ...(buildPaidRecord(profile.nomeHarmonizado).frequencias_numeros as object),
+    rankingSomenteChat: true,
+    ranking: {
+      nomeNascimento: profile.nomeCompleto,
+      dataNascimento: profile.dataNascimentoDb,
+      melhorNome: rankingChat.nomesCandidatos.find(
+        (c) => c.nomeCompleto === profile.nomeHarmonizado,
+      ) ?? rankingChat.nomesCandidatos[0],
+      nomesCandidatos: rankingChat.nomesCandidatos.map((a) => ({
+        nomeCompleto: a.nomeCompleto,
+        score: a.score,
+        origemSugerida: a.origemSugerida,
+        nivelV3: a.nivelV3,
+      })),
+    },
+  },
+};
+
+const gratuitoBuf = await renderProductPdfBuffer(
+  NomeAtualPDF,
+  {
     analysis: freeRecord as never,
     magneticNames: [],
     userName: profile.primeiroNome,
     upgradeOfferLabel: 'EXEMPLO — não comercial',
-  }) as never,
+  },
+  PDF_TOC_ANCHOR_IDS.gratuito,
 );
 
-const pagoManualBuf = await renderToBuffer(
-  React.createElement(NomeSocialPDF, {
+const pagoManualBuf = await renderProductPdfBuffer(
+  NomeSocialPDF,
+  {
     analysis: paidManual as never,
     magneticNames: [
       {
@@ -207,11 +248,32 @@ const pagoManualBuf = await renderToBuffer(
       },
     ] as never,
     userName: profile.primeiroNome,
-  }) as never,
+  },
+  PDF_TOC_ANCHOR_IDS.nome_social,
 );
 
-const pagoCandidatoBuf = await renderToBuffer(
-  React.createElement(NomeSocialPDF, {
+const pagoChatBuf = await renderProductPdfBuffer(
+  NomeSocialPDF,
+  {
+    analysis: paidChatOnly as never,
+    magneticNames: [
+      {
+        id: 'mn-chat',
+        analysis_id: paidChatOnly.id,
+        nome_proposto: profile.nomeHarmonizado,
+        score_v3: avalHarm.score_v3,
+        nivel_v3: avalHarm.nivel.codigo,
+        origem: 'fixture_chat_export',
+      },
+    ] as never,
+    userName: profile.primeiroNome,
+  },
+  PDF_TOC_ANCHOR_IDS.nome_social,
+);
+
+const pagoCandidatoBuf = await renderProductPdfBuffer(
+  NomeSocialPDF,
+  {
     analysis: paidCandidato as never,
     magneticNames: [
       {
@@ -224,11 +286,13 @@ const pagoCandidatoBuf = await renderToBuffer(
       },
     ] as never,
     userName: profile.primeiroNome,
-  }) as never,
+  },
+  PDF_TOC_ANCHOR_IDS.nome_social,
 );
 
 writeFileSync(`${OUT}/gratuito.pdf`, gratuitoBuf);
 writeFileSync(`${OUT}/pago-assinatura-manual-73-50.pdf`, pagoManualBuf);
+writeFileSync(`${OUT}/pago-chat-export-6-sugestoes.pdf`, pagoChatBuf);
 writeFileSync(`${OUT}/pago-candidato-motor-validado.pdf`, pagoCandidatoBuf);
 writeFileSync(`${OUT}/calculated.json`, JSON.stringify(calculatedJson, null, 2));
 writeFileSync(`${OUT}/fixture.json`, JSON.stringify({ ...FIXTURE_META, profile }, null, 2));
@@ -241,12 +305,14 @@ const manifest = {
   outputs: {
     gratuito: `${OUT}/gratuito.pdf`,
     pagoAssinaturaManual: `${OUT}/pago-assinatura-manual-73-50.pdf`,
+    pagoChatExport6: `${OUT}/pago-chat-export-6-sugestoes.pdf`,
     pagoCandidatoMotor: `${OUT}/pago-candidato-motor-validado.pdf`,
     calculatedJson: `${OUT}/calculated.json`,
   },
   sha256: {
     gratuito: sha256(Buffer.from(gratuitoBuf)),
     pagoAssinaturaManual: sha256(Buffer.from(pagoManualBuf)),
+    pagoChatExport6: sha256(Buffer.from(pagoChatBuf)),
     pagoCandidatoMotor: sha256(Buffer.from(pagoCandidatoBuf)),
     calculatedJson: sha256(Buffer.from(JSON.stringify(calculatedJson, null, 2))),
   },
