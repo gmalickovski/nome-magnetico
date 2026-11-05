@@ -13,15 +13,20 @@ import { analisarNomesSocial } from '../../../../backend/numerology/products/nom
 import { analisarNomeSocial } from '../../../../backend/numerology/products/nome-social.ts';
 import { assertPdfBodyFontsEmbedded, pdfFontRegistration } from './PDFFonts.ts';
 import { inspectNamedDestinations, inspectEmbeddedFonts } from './pdfDestinationInspect.ts';
+import { assertPdfOfflineHarnessReady } from './pdfOfflinePrerequisites.ts';
 
 const FORBIDDEN_SNIPPETS = [
   'Os bloqueios são neutralizados',
   'protegida pela estrela dourada',
   'eliminar os bloqueios',
   'prosperidade sólida e duradoura',
+  'diretamente proporcional ao uso',
+  'padrão compulsivo que perde força',
+  'eliminando os padrões compulsivos',
+  'A harmonização neutralizou',
 ];
 
-function pdfToText(buf: Buffer): string | { error: string } {
+function pdfToText(buf: Buffer): string {
   const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-txt-'));
   const path = join(dir, 't.pdf');
   writeFileSync(path, buf);
@@ -31,7 +36,7 @@ function pdfToText(buf: Buffer): string | { error: string } {
   } catch {
     /* ignore */
   }
-  if (run.status !== 0) return { error: 'pdftotext_unavailable' };
+  assert.equal(run.status, 0, 'pdftotext deve estar disponível (poppler-utils)');
   return run.stdout;
 }
 
@@ -49,7 +54,9 @@ describe('DEV-266 · PDF integração offline', () => {
     assert.equal(pdfFontRegistration.interBoldOk, true);
   });
 
-  it('named destinations de Essência/Harmonização alinham com início da seção (não última página do bloco)', async () => {
+  it('named destinations, copy proibida e fontes embutidas (exige harness pré-instalado)', async () => {
+    assertPdfOfflineHarnessReady();
+
     const ts = '2026-11-05T12:00:00.000Z';
     const built = buildFreeLeadAnalysisRecord({
       nomeCompleto: profile.nomeCompleto,
@@ -111,12 +118,8 @@ describe('DEV-266 · PDF integração offline', () => {
 
     const gDest = inspectNamedDestinations(Buffer.from(gratuitoBuf));
     const pDest = inspectNamedDestinations(Buffer.from(pagoBuf));
-    if ('error' in gDest) {
-      assert.fail(`gratuito destinos: ${gDest.error} (instale pypdf para validar)`);
-    }
-    if ('error' in pDest) {
-      assert.fail(`pago destinos: ${pDest.error} (instale pypdf para validar)`);
-    }
+    assert.ok(!('error' in gDest), `gratuito destinos: ${'error' in gDest ? gDest.error : ''}`);
+    assert.ok(!('error' in pDest), `pago destinos: ${'error' in pDest ? pDest.error : ''}`);
 
     assert.ok(gDest['pdf-essencia'] >= 1, 'pdf-essencia gratuito');
     assert.ok(pDest['pdf-essencia'] >= 1, 'pdf-essencia pago');
@@ -137,7 +140,6 @@ describe('DEV-266 · PDF integração offline', () => {
 
     for (const buf of [gratuitoBuf, pagoBuf]) {
       const text = pdfToText(Buffer.from(buf));
-      if (typeof text !== 'string') continue;
       for (const snippet of FORBIDDEN_SNIPPETS) {
         assert.equal(
           text.includes(snippet),
@@ -151,13 +153,10 @@ describe('DEV-266 · PDF integração offline', () => {
     const pPath = join(dir, 'pago.pdf');
     writeFileSync(pPath, Buffer.from(pagoBuf));
     const fonts = inspectEmbeddedFonts(pPath);
-    if (!('error' in fonts)) {
-      const joined = fonts.join(' ').toLowerCase();
-      assert.ok(
-        joined.includes('inter'),
-        `Inter embutida esperada em pdffonts; got: ${fonts.join(', ')}`,
-      );
-    }
+    assert.ok(!('error' in fonts), `pdffonts: ${'error' in fonts ? fonts.error : ''}`);
+    const joined = fonts.join(' ').toLowerCase();
+    assert.ok(joined.includes('inter'), `Inter embutida esperada; got: ${fonts.join(', ')}`);
+    assert.ok(joined.includes('cinzel'), `Cinzel embutida esperada; got: ${fonts.join(', ')}`);
   });
 
   it('candidato do motor (Alêxandra) recalcula score auditável sem herdar fixture stale', () => {
@@ -168,7 +167,7 @@ describe('DEV-266 · PDF integração offline', () => {
     assert.ok(melhor, 'motor deve retornar melhorNome');
     const recalc = analisarNomeSocial(melhor!.nomeCompleto, profile.dataNascimentoPt, 'usuario');
     assert.equal(recalc.score, melhor!.score);
-    assert.ok(recalc.score >= 85, 'candidato validado pelo motor deve ter score alto');
+    assert.equal(recalc.score, 94);
     assert.match(melhor!.nomeCompleto, /[Aa]l[eê]xandra/i);
   });
 });

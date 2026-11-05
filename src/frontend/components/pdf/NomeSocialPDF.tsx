@@ -546,14 +546,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
     if (!isDifferentName) return null;
     const antes = tendenciasNasc.length;
     const depois = tendenciasSocial.length;
-    const neutralizadas = tendenciasEliminadas.length;
-    const novas = tendenciasNovas.length;
-    if (antes === 0 && depois === 0) return `Nenhum excesso vibracional foi identificado no campo de nascimento — as frequências numéricas estão bem distribuídas. A harmonização preserva esse equilíbrio.`;
-    if (neutralizadas > 0 && depois === 0) return `A harmonização neutralizou todos os ${neutralizadas} excesso${neutralizadas > 1 ? 's' : ''} vibracional${neutralizadas > 1 ? 'is' : ''} presentes. O nome harmonizado distribui as frequências de forma equilibrada, eliminando os padrões compulsivos.`;
-    if (neutralizadas > 0 && novas === 0) return `A harmonização neutralizou ${neutralizadas} de ${antes} excesso${antes > 1 ? 's' : ''} vibracional${antes > 1 ? 'is' : ''}, reduzindo para ${depois}. Cada tendência neutralizada representa um padrão compulsivo que perde força no novo campo.`;
-    if (neutralizadas > 0 && novas > 0) return `A harmonização neutralizou ${neutralizadas} excesso${neutralizadas > 1 ? 's' : ''} e introduziu ${novas} novo${novas > 1 ? 's' : ''} — saldo ${antes >= depois ? 'favorável' : 'desfavorável'} de ${Math.abs(antes - depois)} excesso${Math.abs(antes - depois) !== 1 ? 's' : ''}. Os novos excessos indicam números que passaram a se repetir no novo campo.`;
-    if (novas > 0) return `A harmonização não neutralizou excessos existentes e introduziu ${novas} novo${novas > 1 ? 's' : ''}, elevando de ${antes} para ${depois}. Isso indica que o nome escolhido amplificou certas frequências — avalie se os demais benefícios compensam.`;
-    return `Os ${antes} excesso${antes > 1 ? 's' : ''} vibracional${antes > 1 ? 'is' : ''} do campo de nascimento se mantêm no nome harmonizado. A redistribuição das letras não alterou as frequências dominantes — esses padrões permanecem como campo de atenção consciente.`;
+    return `Contagem de tendências ocultas no nome de nascimento: ${antes}. Na assinatura selecionada: ${depois}.`;
   })();
 
   const arcanosIntro = (() => {
@@ -1247,9 +1240,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             A Transformação
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 8 }}>
-            A intensidade da transformação é diretamente proporcional ao uso. Quanto mais frequente e consistente for a adoção do novo nome, mais profunda será a reconfiguração do campo magnético pessoal. A frequência vibracional do seu nome age 24 horas por dia — e cada uso consciente reforça a nova âncora energética, semana após semana, mês após mês.
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 8 }}>
             Na estrela acima, a camada interna usa os números do nome de nascimento e a externa os da assinatura selecionada, com cores conforme a faixa de score de cada nome (legenda). O <Text style={{ fontFamily: BODY_FONT_BOLD }}>Destino</Text> vem da data de nascimento e permanece o mesmo nos dois lados quando calculado para a mesma data.
           </Text>
         </View>
@@ -1777,12 +1767,13 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                         <Text style={{ fontSize: 11, fontFamily: TITLE_FONT, color: '#7C3D0E', borderBottomWidth: 1, borderBottomColor: '#7C3D0E', paddingBottom: 4, marginBottom: 10, letterSpacing: 0.5 }}>
                           Tendências Ocultas
                         </Text>
-                        {(extractIntro('TENDENCIAS') ?? tendenciasIntro)
-                          ? <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 10 }}>{extractIntro('TENDENCIAS') ?? tendenciasIntro}</Text>
-                          : <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 10 }}>
-                              As <Text style={{ fontFamily: BODY_FONT_BOLD }}>Tendências Ocultas</Text> surgem quando um número aparece 4 ou mais vezes no nome, criando um excesso daquela vibração. A Harmonização pode neutralizar esses excessos — ao alterar as letras, redistribui as frequências, eliminando padrões de comportamento compulsivo.
-                            </Text>
-                        }
+                        {tendenciasIntro ? (
+                          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 10 }}>{tendenciasIntro}</Text>
+                        ) : (
+                          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 10 }}>
+                            As <Text style={{ fontFamily: BODY_FONT_BOLD }}>Tendências Ocultas</Text> surgem quando um número aparece 4 ou mais vezes no nome. Compare as contagens abaixo.
+                          </Text>
+                        )}
                       </View>
                       <View wrap={false} style={{ flexDirection: 'row', alignItems: 'stretch', marginBottom: 12 }}>
                         <View style={{ flex: 1, alignItems: 'center', backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 8, paddingVertical: 10 }}>
@@ -1813,10 +1804,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                         <Text style={{ fontSize: 9, color: '#059669', marginBottom: 4 }}>✓ Nenhum excesso vibracional no nome de nascimento.</Text>
                       )}
                       
-                      {/* 3.1 Tendências Eliminadas/Neutralizadas (Verde) */}
+                      {/* 3.1 Tendências presentes no nascimento e ausentes na assinatura */}
                       {tendenciasEliminadas.map((t, i) => (
                         <View key={`tend-el-${i}`} wrap={false} style={{ borderLeftWidth: 3, borderLeftColor: '#059669', backgroundColor: '#F0FDF4', borderRadius: 6, padding: 10, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>✓ Neutralizada: Tendência Oculta {t.numero} — {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
+                          <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: '#059669', marginBottom: 3 }}>No nascimento, não na assinatura: Tendência Oculta {t.numero} — {t.titulo.replace(/Tendência Oculta \d+ — /, '')}</Text>
                           {t.descricao && <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>{t.descricao}</Text>}
                         </View>
                       ))}
