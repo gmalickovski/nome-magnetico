@@ -21,7 +21,8 @@ import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { PDFDoubleStar, type DoubleStarNumbers } from './shared/PDFDoubleStar';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
 import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
-import { PDFTableOfContents, type PdfTocEntry } from './shared/PDFTableOfContents';
+import { PDFTableOfContents } from './shared/PDFTableOfContents';
+import { buildPaidTocEntries } from './shared/pdfTocCatalog.ts';
 import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
@@ -44,7 +45,6 @@ import {
 import { isScoreV3 } from '../../../backend/numerology/score-version';
 import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '../../../backend/numerology/score';
 import { avaliarCompatibilidade } from '../../../backend/numerology/harmonization';
-import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 import {
   obterNivelV3,
   getScoreV3Level,
@@ -596,17 +596,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
   }
   const sortedArcanos = Array.from(allArcanoNums).sort((a, b) => a - b);
 
-  const paidToc: PdfTocEntry[] = [
-    ...(nomesCandidatos.length > 0
-      ? [{ id: 'pdf-ranking', title: 'Opções avaliadas no chat', level: 0 as const }]
-      : []),
-    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
-    { id: 'pdf-harmonizacao', title: 'Harmonização — assinatura e estrela', level: 0 },
-    { id: 'pdf-harmonizacao-comparativa', title: 'Harmonização — leitura comparativa', level: 1 },
-    { id: 'pdf-guia', title: 'Guia de uso da assinatura', level: 0 },
-    { id: 'pdf-score', title: 'Como calculamos o score', level: 0 },
-    { id: 'pdf-treino', title: 'Folha de treino de assinatura', level: 0 },
-  ];
+  const paidToc = buildPaidTocEntries(nomesCandidatos.length > 0);
 
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
@@ -819,6 +809,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         <View wrap={false}>
+          <PDFSectionAnchor
+            id="pdf-essencia-cinco-numeros"
+            bookmark={{ title: 'Essência — cinco números', fit: true }}
+          />
           {/* Os 4 números do nome de nascimento — cards menores lado a lado */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
@@ -898,6 +892,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
           </View>
           <View style={{ marginBottom: 14 }}>
+            <PDFSectionAnchor
+              id="pdf-essencia-triangulos"
+              bookmark={{ title: 'Essência — triângulos', fit: true }}
+            />
             <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
           </View>
 
@@ -1096,6 +1094,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
         </View>
         <View style={{ marginBottom: 8 }}>
+          <PDFSectionAnchor
+            id="pdf-essencia-karma"
+            bookmark={{ title: 'Essência — karma', fit: true }}
+          />
           <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
         </View>
 
@@ -1285,6 +1287,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </Text>
         )}
 
+        <PDFSectionAnchor
+          id="pdf-harmonizacao-corpo"
+          bookmark={{ title: 'Corpo da assinatura', fit: true }}
+        />
         {/* ─── CARD: Os 5 Números Fundamentais ─────────────────────────────── */}
         <View style={{ marginHorizontal: 0, marginBottom: 16 }}>
           {/* Card header */}
@@ -2349,6 +2355,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
 
       {/* ── ANEXO II: ARQUÉTIPO VIBRACIONAL ─────────────────────────────────── */}
       <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-arquetipo" bookmark={{ title: 'Arquétipo da expressão', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
@@ -2435,86 +2442,37 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </Text>
         </View>
 
-        <PDFFooter />
-      </Page>
-
-      {/* ── ANEXO III: GUIA DE ATIVAÇÃO — 30 DIAS ──────────────────────────── */}
-      <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-guia" bookmark={{ title: 'Guia de uso da assinatura', fit: true }} />
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
-          <View style={{ backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              Anexos
-            </Text>
-          </View>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
+        <View style={{ marginTop: 18, marginBottom: 14 }}>
+          <Text style={styles.hugeTitle}>Cuide do traçado da sua assinatura</Text>
         </View>
 
-        <View style={{ marginBottom: 10 }}>
-          <Text style={styles.hugeTitle}>Guia de Ativação</Text>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>
-            Uso da assinatura no dia a dia
-          </Text>
-        </View>
-
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 12 }}>
-          Este guia trata do uso da assinatura no dia a dia. Não inclui alteração de registro civil.
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10, textAlign: 'justify' }}>
+          Pratique a grafia escolhida com movimentos naturais, buscando legibilidade, conforto e fluidez. Se preferir a escrita cursiva, conecte as letras de maneira clara, respeitando seu jeito de escrever.
+        </Text>
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10, textAlign: 'justify' }}>
+          Em algumas abordagens da numerologia cabalística, riscos adicionais atravessando o nome são interpretados simbolicamente como interrupções. Seguindo essa orientação, evite rabiscos que cortem ou encubram a assinatura, sem alterar os traços próprios das letras.
+        </Text>
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14, textAlign: 'justify' }}>
+          Traga o nome escolhido para as situações do cotidiano em que você deseja se apresentar dessa forma. A prática pode ajudar a tornar a assinatura mais familiar e consistente.
         </Text>
 
-        {/* Semana 1 */}
-        <View style={{ marginBottom: 10 }}>
-          <Text style={[styles.sectionTitle, { fontSize: 10, color: GOLD, borderBottomColor: GOLD }]}>
-            Semana 1 (Dias 1–7) — Plantio
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6, marginBottom: 3 }}>
-            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>Dia 1:</Text> Escreva seu nome à mão 21 vezes seguidas com intenção clara — essa é a âncora inicial da reprogramação vibracional.
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
-            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>Dias 2–7:</Text> Atualize seus perfis digitais principais (Instagram, LinkedIn, WhatsApp). Peça às pessoas próximas que passem a te chamar pelo novo nome — a forma como os outros nos chamam reforça (ou enfraquece) a identidade vibracional.
+        <Text style={[styles.sectionTitle, { fontSize: 11, marginBottom: 8 }]}>
+          Para contratos e documentos
+        </Text>
+        <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 7, padding: 12, marginBottom: 14 }}>
+          <Text style={{ fontSize: 9.5, color: '#374151', lineHeight: 1.65, textAlign: 'justify' }}>
+            Antes de adotar uma assinatura diferente, confirme as exigências da instituição ou do cartório. Uma mudança significativa no traço pode tornar necessária a atualização da identidade ou da firma cadastrada. O uso do nome em redes, cartões e apresentações não altera seu nome civil.
           </Text>
         </View>
 
-        {/* Semana 2 */}
-        <View style={{ marginBottom: 10 }}>
-          <Text style={[styles.sectionTitle, { fontSize: 10, color: '#0369a1', borderBottomColor: '#0369a1' }]}>
-            Semana 2 (Dias 8–14) — Expansão Digital
+        <View style={{ backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 7, padding: 12 }}>
+          <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#92400E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            Sugestão (opcional) — primeiros 30 dias
           </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {[
-              ['E-mail profissional', 'Assine todos os e-mails com o novo nome.'],
-              ['Redes sociais', 'YouTube, TikTok, X — perfil e @handle.'],
-              ['Cartão de visitas', 'O próximo lote já com o nome harmonizado.'],
-              ['Apresentações', '"Me chamo [Nome Social]" — reuniões e calls.'],
-              ['Site / portfólio', 'Domínio ou seção com o nome magnético.'],
-              ['Assinatura digital', 'E-mails, contratos informais e postagens.'],
-            ].map(([titulo, desc], i) => (
-              <View key={i} style={{ width: '47%', backgroundColor: '#F0F9FF', borderRadius: 6, padding: 10, borderWidth: 1, borderColor: '#BAE6FD' }}>
-                <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#0369a1', marginBottom: 3 }}>• {titulo}</Text>
-                <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.55 }}>{desc}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Semanas 3-4 */}
-        <View style={{ marginBottom: 10 }}>
-          <Text style={[styles.sectionTitle, { fontSize: 10, color: '#166534', borderBottomColor: '#166534' }]}>
-            Semanas 3–4 (Dias 15–30) — Consolidação
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6, marginBottom: 3 }}>
-            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>Documentos oficiais:</Text> CPF, RG e passaporte continuam com o nome de nascimento. Use a assinatura escolhida em apresentações pessoais, redes sociais e comunicações informais, conforme fizer sentido para você.
-          </Text>
-        </View>
-
-        <View wrap={false} style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 7, padding: 12, marginTop: 8 }}>
-          <Text style={{ fontSize: 11, fontFamily: TITLE_FONT, color: DARK, marginBottom: 6 }}>
-            Depois dos primeiros 30 dias
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
-            Observe em quais situações você usou a assinatura e se ela combina com a forma como prefere se apresentar. Você pode continuar praticando no seu ritmo.
+          <Text style={{ fontSize: 9.5, color: GRAY, lineHeight: 1.65, textAlign: 'justify' }}>
+            Se quiser, experimente a assinatura em redes, e-mails ou apresentações no seu ritmo — sem cronograma fixo nem repetição obrigatória. Observe em quais situações ela combina com a forma como prefere se apresentar.
           </Text>
         </View>
 
@@ -2587,13 +2545,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <View style={{ borderRadius: 6, backgroundColor: 'rgba(212,175,55,0.08)', borderWidth: 1, borderColor: '#D4AF37', padding: 8, marginBottom: 12 }}>
           <Text style={{ fontSize: 8, color: '#92640F', textAlign: 'center', fontFamily: BODY_FONT_BOLD }}>
             Consulte o detalhamento completo das fórmulas em: nomemagnetico.com.br/como-funciona-o-score
-          </Text>
-        </View>
-
-        {/* Aviso Legal Autoconhecimento */}
-        <View style={{ marginTop: 'auto', borderTopWidth: 0.5, borderTopColor: '#E5E7EB', paddingTop: 8 }}>
-          <Text style={{ fontSize: 7, color: '#9CA3AF', lineHeight: 1.4, textAlign: 'justify' }}>
-            {AVISO_AUTOCONHECIMENTO}
           </Text>
         </View>
 

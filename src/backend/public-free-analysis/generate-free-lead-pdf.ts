@@ -1,6 +1,8 @@
-import { renderToBuffer } from '@react-pdf/renderer';
-import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
+import {
+  PDF_TOC_ANCHOR_IDS,
+  renderProductPdfBuffer,
+} from '../../frontend/components/pdf/shared/pdfDynamicRender.ts';
 import { calcularTodosTriangulos, detectarBloqueios } from '../numerology/triangle';
 import {
   calcularExpressao,
@@ -121,12 +123,14 @@ export async function renderFreeLeadPdfBase64(
   analysis: FreeLeadAnalysisRecord,
   userName: string,
 ): Promise<string> {
-  const pdfBuffer = await renderToBuffer(
-    React.createElement(NomeAtualPDF, {
+  const pdfBuffer = await renderProductPdfBuffer(
+    NomeAtualPDF,
+    {
       analysis: analysis as never,
       magneticNames: [],
       userName,
-    }) as never,
+    },
+    PDF_TOC_ANCHOR_IDS.gratuito,
   );
   return Buffer.from(pdfBuffer).toString('base64');
 }

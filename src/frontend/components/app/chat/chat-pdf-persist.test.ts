@@ -45,5 +45,19 @@ describe('buildChatPdfAnalyzePayload', () => {
       'Guilherme Málickovski',
       'Gui Málickovski',
     ]);
+    assert.equal(body.ranking_vazio_sem_autogeracao, false);
+  });
+
+  it('histórico vazio marca contrato sem autogeração', () => {
+    const body = buildChatPdfAnalyzePayload({
+      birthName: 'Maria Silva',
+      birthDate: '01/01/1990',
+      selectedSocialName: 'Guilherme Málickovski',
+      collect: INITIAL_COLLECT_STATE,
+      suggestions: [],
+    });
+    assert.equal(body.ranking_somente_chat, true);
+    assert.equal(body.ranking_vazio_sem_autogeracao, true);
+    assert.equal(body.nomes_candidatos, undefined);
   });
 });

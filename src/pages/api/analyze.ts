@@ -62,6 +62,8 @@ const schema = z.object({
   nome_ja_escolhido: z.boolean().optional(),
   /** Export PDF/chat: ranking só com nomes já exibidos no chat (sem gerar sugestões do motor). */
   ranking_somente_chat: z.boolean().optional(),
+  /** Histórico de sugestões vazio no export — não autogerar candidatos. */
+  ranking_vazio_sem_autogeracao: z.boolean().optional(),
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
   gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
@@ -167,6 +169,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     nome_social_principal,
     nome_ja_escolhido,
     ranking_somente_chat,
+    ranking_vazio_sem_autogeracao,
     is_free,
     gender: inputGender,
     opt_in,
@@ -309,7 +312,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         // ── Produto: Nome Social (sem LLM quando o nome social já foi escolhido no chat) ──
         const candidatos = nomes_candidatos ?? [];
 
-        const somenteChat = Boolean(ranking_somente_chat);
+        const somenteChat =
+          Boolean(ranking_somente_chat) || Boolean(ranking_vazio_sem_autogeracao);
 
         const resultado = analisarNomesSocial(
           candidatos,

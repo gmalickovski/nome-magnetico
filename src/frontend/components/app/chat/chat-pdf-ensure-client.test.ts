@@ -12,9 +12,11 @@ describe('chat-pdf-ensure-client', () => {
   });
 
   it('buildChatPdfEnsureKey normaliza e concatena', () => {
-    const a = buildChatPdfEnsureKey('  Maria  ', '01/01/1990', 'Ana Silva');
-    const b = buildChatPdfEnsureKey('maria', '01/01/1990', 'ana silva');
+    const a = buildChatPdfEnsureKey('  Maria  ', '01/01/1990', 'Ana Silva', 'fp-a');
+    const b = buildChatPdfEnsureKey('maria', '01/01/1990', 'ana silva', 'fp-a');
     assert.equal(a, b);
+    const c = buildChatPdfEnsureKey('maria', '01/01/1990', 'ana silva', 'fp-b');
+    assert.notEqual(a, c);
   });
 
   it('runChatPdfEnsureOnce deduplica POST paralelo com mesma chave', async () => {

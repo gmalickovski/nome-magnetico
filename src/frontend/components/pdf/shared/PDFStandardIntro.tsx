@@ -4,6 +4,7 @@ import { PDFPageHeader } from './PDFPageHeader';
 import { PDFFooter } from './PDFFooter';
 import type { ProductTheme, ProductType } from './PDFTheme';
 import { TITLE_FONT } from './PDFFonts';
+import { PDFSectionAnchor } from './PDFSectionAnchor';
 
 const styles = StyleSheet.create({
   page: {
@@ -59,9 +60,11 @@ export function PDFStandardIntro({
   skipScoreExplainer = false,
 }: IntroProps) {
 
-  const isLightBackground = productType === 'nome_bebe';
-  const textColor = isLightBackground ? '#5C2D1E' : '#e5e2e1';
-  const boldColor = isLightBackground ? theme.primaryColor : '#ffffff';
+  const isLightBackground =
+    productType === 'nome_bebe' || (productType === 'nome_social' && skipScoreExplainer);
+  const textColor = isLightBackground ? '#334155' : '#e5e2e1';
+  const boldColor = isLightBackground ? '#1E293B' : '#ffffff';
+  const introPageBg = isLightBackground ? '#FFFFFF' : theme.coverBgColor;
 
   // Textos Históricos e Holísticos da Página 1
   const getHolisticText = () => {
@@ -85,7 +88,11 @@ export function PDFStandardIntro({
   return (
     <>
       {/* ── PÁGINA 1: HOLÍSTICA / BENEFÍCIOS ────────────────────────────── */}
-      <Page size="A4" style={[styles.page, { backgroundColor: theme.coverBgColor }]}>
+      <Page size="A4" style={[styles.page, { backgroundColor: introPageBg }]}>
+        <PDFSectionAnchor
+          id="pdf-intro-leitura"
+          bookmark={{ title: 'Como ler este relatório', fit: true }}
+        />
         <PDFPageHeader subtitle={`${entityName} — ${introTitleSubtitleP1}`} />
 
         <View style={styles.section}>
@@ -135,7 +142,7 @@ export function PDFStandardIntro({
       </Page>
 
       {/* ── PÁGINA 2: O MÉTODO E O SCORE ────────────────────────────────── */}
-      <Page size="A4" style={[styles.page, { backgroundColor: theme.coverBgColor }]}>
+      <Page size="A4" style={[styles.page, { backgroundColor: introPageBg }]}>
         <PDFPageHeader subtitle={`${entityName} — Como Ler a Análise`} />
         
         <View style={styles.section}>

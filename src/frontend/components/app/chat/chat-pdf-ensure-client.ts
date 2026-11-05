@@ -5,9 +5,10 @@ let inflight: { key: string; promise: Promise<string | undefined> } | null = nul
 export function buildChatPdfEnsureKey(
   birthName: string,
   birthDate: string,
-  socialName: string
+  socialName: string,
+  suggestionsFingerprint = '',
 ): string {
-  return `${birthName.trim().toLowerCase()}|${birthDate.trim()}|${socialName.trim().toLowerCase()}`;
+  return `${birthName.trim().toLowerCase()}|${birthDate.trim()}|${socialName.trim().toLowerCase()}|${suggestionsFingerprint}`;
 }
 
 export function runChatPdfEnsureOnce(

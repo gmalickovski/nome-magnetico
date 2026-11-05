@@ -10,8 +10,9 @@ const INSPECTOR = join(REPO_ROOT, 'scripts/pdf-named-destinations.py');
 
 export type NamedDestinations = Record<string, number>;
 
-/** Inspeção de destinos — exige pypdf já instalado (sem pip/rede neste fluxo). */
-export function inspectNamedDestinations(pdfBuffer: Buffer): NamedDestinations | { error: string } {
+function inspectNamedDestinationsPython(
+  pdfBuffer: Buffer,
+): NamedDestinations | { error: string } {
   const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-'));
   const pdfPath = join(dir, 'inspect.pdf');
   writeFileSync(pdfPath, pdfBuffer);
@@ -41,6 +42,51 @@ export function inspectNamedDestinations(pdfBuffer: Buffer): NamedDestinations |
   } catch {
     return { error: 'invalid_json' };
   }
+}
+
+async function inspectNamedDestinationsPdfJs(
+  pdfBuffer: Buffer,
+): Promise<NamedDestinations | { error: string }> {
+  try {
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const loadingTask = pdfjs.getDocument({
+      data: new Uint8Array(pdfBuffer),
+      useSystemFonts: true,
+      disableFontFace: true,
+      isEvalSupported: false,
+    });
+    const doc = await loadingTask.promise;
+    const rawDests = await doc.getDestinations();
+    const out: NamedDestinations = {};
+
+    for (const [name, destArray] of Object.entries(rawDests)) {
+      if (!destArray || !Array.isArray(destArray)) continue;
+      try {
+        const pageIndex = await doc.getPageIndex(destArray[0]);
+        out[name] = pageIndex + 1;
+      } catch {
+        continue;
+      }
+    }
+    await doc.destroy();
+    return out;
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'pdfjs_inspect_failed' };
+  }
+}
+
+/** Inspeção de destinos nomeados — pdfjs-dist no Node; fallback python+pypdf (CI/dev). */
+export async function inspectNamedDestinations(
+  pdfBuffer: Buffer,
+): Promise<NamedDestinations | { error: string }> {
+  const fromPdfJs = await inspectNamedDestinationsPdfJs(pdfBuffer);
+  if (!('error' in fromPdfJs) && Object.keys(fromPdfJs).length > 0) {
+    return fromPdfJs;
+  }
+  const fromPython = inspectNamedDestinationsPython(pdfBuffer);
+  if (!('error' in fromPython)) return fromPython;
+  if ('error' in fromPdfJs) return fromPdfJs;
+  return fromPython;
 }
 
 /** Fontes embutidas via pdffonts (Poppler), se o binário existir no PATH. */

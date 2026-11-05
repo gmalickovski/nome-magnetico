@@ -123,8 +123,8 @@ describe('DEV-266 · PDF integração offline', () => {
       PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
-    const gDest = inspectNamedDestinations(Buffer.from(gratuitoBuf));
-    const pDest = inspectNamedDestinations(Buffer.from(pagoBuf));
+    const gDest = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
+    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     assert.ok(!('error' in gDest), `gratuito destinos: ${'error' in gDest ? gDest.error : ''}`);
     assert.ok(!('error' in pDest), `pago destinos: ${'error' in pDest ? pDest.error : ''}`);
 

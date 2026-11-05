@@ -14,3 +14,32 @@ export function chatSuggestionsToExportNames(suggestions: CandidateSuggestion[])
   }
   return out;
 }
+
+/** Ordem cumulativa: mantém rodadas anteriores e acrescenta novas (dedupe por nome). */
+export function mergeChatSuggestionsCumulative(
+  previous: CandidateSuggestion[],
+  incoming: CandidateSuggestion[],
+): CandidateSuggestion[] {
+  const byKey = new Map<string, CandidateSuggestion>();
+  for (const s of previous) {
+    const key = s.nome.trim().toLowerCase();
+    if (key.length >= 2) byKey.set(key, s);
+  }
+  for (const s of incoming) {
+    const key = s.nome.trim().toLowerCase();
+    if (key.length >= 2) byKey.set(key, s);
+  }
+  const order: CandidateSuggestion[] = [];
+  const seen = new Set<string>();
+  for (const s of [...previous, ...incoming]) {
+    const key = s.nome.trim().toLowerCase();
+    if (key.length < 2 || seen.has(key)) continue;
+    seen.add(key);
+    order.push(byKey.get(key)!);
+  }
+  return order;
+}
+
+export function chatSuggestionsExportFingerprint(names: string[]): string {
+  return names.map((n) => n.trim().toLowerCase()).join('\u001f');
+}

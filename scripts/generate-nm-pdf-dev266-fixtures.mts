@@ -297,8 +297,8 @@ writeFileSync(`${OUT}/pago-candidato-motor-validado.pdf`, pagoCandidatoBuf);
 writeFileSync(`${OUT}/calculated.json`, JSON.stringify(calculatedJson, null, 2));
 writeFileSync(`${OUT}/fixture.json`, JSON.stringify({ ...FIXTURE_META, profile }, null, 2));
 
-const destManual = inspectNamedDestinations(Buffer.from(pagoManualBuf));
-const destGratuito = inspectNamedDestinations(Buffer.from(gratuitoBuf));
+const destManual = await inspectNamedDestinations(Buffer.from(pagoManualBuf));
+const destGratuito = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
 
 const manifest = {
   ...FIXTURE_META,

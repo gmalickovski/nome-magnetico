@@ -28,6 +28,8 @@ export function buildChatPdfAnalyzePayload(input: {
     assinatura_atual: ranking.assinaturaAtual ?? input.collect.nomeUsoBase ?? undefined,
     objetivo_apresentacao: input.collect.objetivoTexto.trim() || undefined,
     nomes_candidatos: exportNames.length > 0 ? exportNames : undefined,
-    ranking_somente_chat: exportNames.length > 0,
+    /** Com histórico vazio: não pedir ranking do motor (lista vazia explícita). */
+    ranking_somente_chat: true,
+    ranking_vazio_sem_autogeracao: exportNames.length === 0,
   };
 }

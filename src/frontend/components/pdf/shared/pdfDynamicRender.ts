@@ -2,18 +2,12 @@ import React from 'react';
 import { renderToBuffer } from '@react-pdf/renderer';
 import type { ProductPDFProps } from './PDFTypes.ts';
 import { inspectNamedDestinations } from './pdfDestinationInspect.ts';
+import { gratuitoTocAnchorIds, paidTocAnchorIds } from './pdfTocCatalog.ts';
 
+/** Ids usados no two-pass (superset: pago com ranking). */
 export const PDF_TOC_ANCHOR_IDS = {
-  gratuito: ['pdf-essencia', 'pdf-mapa', 'pdf-score', 'pdf-nome-social'],
-  nome_social: [
-    'pdf-ranking',
-    'pdf-essencia',
-    'pdf-harmonizacao',
-    'pdf-harmonizacao-comparativa',
-    'pdf-guia',
-    'pdf-score',
-    'pdf-treino',
-  ],
+  gratuito: gratuitoTocAnchorIds(),
+  nome_social: paidTocAnchorIds(true),
 } as const;
 
 type PdfComponent = React.ComponentType<ProductPDFProps>;
@@ -57,7 +51,7 @@ export async function renderProductPdfBuffer(
       pdfRender: { omitTableOfContents: true },
     }) as React.ReactElement,
   );
-  const pass1Dests = inspectNamedDestinations(Buffer.from(pass1));
+  const pass1Dests = await inspectNamedDestinations(Buffer.from(pass1));
   if ('error' in pass1Dests) {
     throw new Error(`pdf pass1 destinos: ${pass1Dests.error}`);
   }
@@ -74,7 +68,7 @@ export async function renderProductPdfBuffer(
       }) as React.ReactElement,
     );
     lastBuf = pass2;
-    const pass2Dests = inspectNamedDestinations(Buffer.from(pass2));
+    const pass2Dests = await inspectNamedDestinations(Buffer.from(pass2));
     if ('error' in pass2Dests) {
       throw new Error(`pdf pass2 destinos: ${pass2Dests.error}`);
     }

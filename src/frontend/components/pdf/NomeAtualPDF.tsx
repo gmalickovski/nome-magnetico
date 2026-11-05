@@ -22,7 +22,8 @@ import { BloqueiosBlock, DebitosBlock, LicoesBlock, TendenciasBlock } from './sh
 import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
 import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
-import { PDFTableOfContents, type PdfTocEntry } from './shared/PDFTableOfContents';
+import { PDFTableOfContents } from './shared/PDFTableOfContents';
+import { buildGratuitoTocEntries } from './shared/pdfTocCatalog.ts';
 import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
@@ -428,12 +429,7 @@ export function NomeAtualPDF({
     }
   }
 
-  const tocEntries: PdfTocEntry[] = [
-    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
-    { id: 'pdf-mapa', title: 'O que este mapa mostrou', level: 0 },
-    { id: 'pdf-score', title: 'Como calculamos o score', level: 0 },
-    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar', level: 0 },
-  ];
+  const tocEntries = buildGratuitoTocEntries();
 
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
@@ -462,6 +458,10 @@ export function NomeAtualPDF({
        *  (Bloco completo — idêntico à seção "A Essência" do NomeSocialPDF)
        * ═══════════════════════════════════════════════════════════════════════ */}
       <Page size="A4" style={styles.pageEssencia}>
+        <PDFSectionAnchor
+          id="pdf-intro-leitura"
+          bookmark={{ title: 'Como ler este relatório', fit: true }}
+        />
         <PDFSectionAnchor id="pdf-essencia" bookmark={{ title: 'A Essência', fit: true }} />
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
@@ -539,6 +539,10 @@ export function NomeAtualPDF({
 
         {/* ── Os 4 números do nome de nascimento ── */}
         <View wrap={false}>
+          <PDFSectionAnchor
+            id="pdf-essencia-cinco-numeros"
+            bookmark={{ title: 'Essência — cinco números', fit: true }}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
             <Text style={{ fontSize: 9, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
@@ -617,6 +621,10 @@ export function NomeAtualPDF({
             <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
           </View>
           <View style={{ marginBottom: 14 }}>
+            <PDFSectionAnchor
+              id="pdf-essencia-triangulos"
+              bookmark={{ title: 'Essência — triângulos', fit: true }}
+            />
             <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
           </View>
 
@@ -825,6 +833,10 @@ export function NomeAtualPDF({
           <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
         </View>
         <View style={{ marginBottom: 8 }}>
+          <PDFSectionAnchor
+            id="pdf-essencia-karma"
+            bookmark={{ title: 'Essência — karma', fit: true }}
+          />
           <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
         </View>
 
@@ -876,7 +888,7 @@ export function NomeAtualPDF({
         </View>
 
         {/* Gancho sutil pós-karma */}
-        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginTop: 4, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
+        <View style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginTop: 4, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
           <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, textAlign: 'center', fontStyle: 'italic' }}>
             Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
           </Text>
@@ -895,7 +907,7 @@ export function NomeAtualPDF({
         <PDFSectionAnchor id="pdf-mapa" bookmark={{ title: 'O que este mapa mostrou', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Resumo do mapa`} />
 
-        <View style={{ marginTop: 28, marginBottom: 24 }}>
+        <View style={{ marginTop: 12, marginBottom: 16 }}>
           <Text style={[styles.hugeTitle, { fontSize: 22, color: DARK }]}>O que este mapa mostrou</Text>
         </View>
 

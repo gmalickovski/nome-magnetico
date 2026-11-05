@@ -15,6 +15,11 @@ import { ChatRestartButton } from './ChatRestartButton.js';
 import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import { buildChatPdfAnalyzePayload } from './chat-pdf-persist.js';
 import {
+  chatSuggestionsToExportNames,
+  chatSuggestionsExportFingerprint,
+  mergeChatSuggestionsCumulative,
+} from './chat-export-suggestions.js';
+import {
   buildChatPdfEnsureKey,
   clearChatPdfEnsureInflight,
   runChatPdfEnsureOnce,
@@ -213,6 +218,7 @@ export function NomeSocialChat({
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
+  const lastAnalyzeSuggestionsFingerprintRef = useRef<string | null>(null);
   const [paidAccessActive, setPaidAccessActive] = useState(isSubscriber);
   const [paymentConfirming, setPaymentConfirming] = useState(false);
   const [paymentPendingNotice, setPaymentPendingNotice] = useState<string | null>(null);
@@ -357,6 +363,13 @@ export function NomeSocialChat({
     setActiveSuggestionId(collectionComplete ? saved.activeSuggestionId : null);
     setSuggestions(collectionComplete ? saved.suggestions : []);
     setAnalysisId(saved.analysisId);
+    if (collectionComplete && saved.suggestions.length > 0) {
+      lastAnalyzeSuggestionsFingerprintRef.current = chatSuggestionsExportFingerprint(
+        chatSuggestionsToExportNames(saved.suggestions),
+      );
+    } else {
+      lastAnalyzeSuggestionsFingerprintRef.current = null;
+    }
     setChatPhase(
       resolveChatPhaseFromSession(isSubscriber, saved.chatPhase, saved.birthConfirmed)
     );
@@ -407,7 +420,6 @@ export function NomeSocialChat({
 
   const hasChatProgress =
     !sessionClearedRef.current &&
-    !analysisId &&
     (birthConfirmed || Object.keys(answers).length > 0 || messages.length > 1 || stepIndex > 0);
 
   const flushChatSessionToStorage = () => {
@@ -1501,7 +1513,7 @@ export function NomeSocialChat({
 
       const novos = mapRegenerateApiToCandidates(data, 3);
       if (novos.length > 0) {
-        setSuggestions(novos);
+        setSuggestions((prev) => mergeChatSuggestionsCumulative(prev, novos));
         setActiveSuggestionId(null);
       } else {
         setRegenerateNotice(
@@ -1612,7 +1624,17 @@ export function NomeSocialChat({
 
   const ensurePaidAnalysisIdForPdf = useCallback(
     async (signal: AbortSignal): Promise<string | undefined> => {
-      if (analysisId) return analysisId;
+      const suggestionsFingerprint = chatSuggestionsExportFingerprint(
+        chatSuggestionsToExportNames(suggestions),
+      );
+
+      if (
+        analysisId &&
+        lastAnalyzeSuggestionsFingerprintRef.current === suggestionsFingerprint
+      ) {
+        return analysisId;
+      }
+
       if (
         !paidAccessActive ||
         !activeSuggestion?.nome?.trim() ||
@@ -1625,7 +1647,8 @@ export function NomeSocialChat({
       const key = buildChatPdfEnsureKey(
         confirmedName,
         confirmedDate,
-        activeSuggestion.nome
+        activeSuggestion.nome,
+        suggestionsFingerprint,
       );
 
       return runChatPdfEnsureOnce(
@@ -1652,6 +1675,7 @@ export function NomeSocialChat({
           }
           const id = data.analysisId?.trim();
           if (!id) return undefined;
+          lastAnalyzeSuggestionsFingerprintRef.current = suggestionsFingerprint;
           setAnalysisId(id);
           return id;
         },
@@ -1668,6 +1692,18 @@ export function NomeSocialChat({
       suggestions,
     ]
   );
+
+  useEffect(() => {
+    if (!analysisId || !paidAccessActive) return;
+    const fp = chatSuggestionsExportFingerprint(chatSuggestionsToExportNames(suggestions));
+    if (
+      lastAnalyzeSuggestionsFingerprintRef.current != null &&
+      lastAnalyzeSuggestionsFingerprintRef.current !== fp
+    ) {
+      setAnalysisId(undefined);
+      clearChatPdfEnsureInflight();
+    }
+  }, [suggestions, analysisId, paidAccessActive]);
 
   const {
     model: pdfCtaModel,
