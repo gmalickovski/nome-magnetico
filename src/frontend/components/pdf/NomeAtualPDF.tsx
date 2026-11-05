@@ -21,6 +21,8 @@ import { TrianguloPiramideInline } from './shared/PDFMarkdownRenderer';
 import { BloqueiosBlock, DebitosBlock, LicoesBlock, TendenciasBlock } from './shared/PDFKarmicBlock';
 import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
+import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
+import { PDFTableOfContents, type PdfTocEntry } from './shared/PDFTableOfContents';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
@@ -321,7 +323,9 @@ export function NomeAtualPDF({
   const dataGeracao = formatDate(analysis.completed_at ?? analysis.created_at);
 
   // ── Dados calculados em tempo real a partir do nome de nascimento ──────────
-  const dataNascimentoRaw = freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '';
+  const dataNascimentoRaw = normalizeBirthDateForNumerology(
+    freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '',
+  );
   const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
   const triangulosNasc = calcularTodosTriangulos(nomeNascimento, dataNascimentoRaw);
   const bloqueios = detectarBloqueios(triangulosNasc);
@@ -423,6 +427,13 @@ export function NomeAtualPDF({
     }
   }
 
+  const tocEntries: PdfTocEntry[] = [
+    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento' },
+    { id: 'pdf-mapa', title: 'O que este mapa mostrou' },
+    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar' },
+    { id: 'pdf-score', title: 'Como calculamos o score' },
+  ];
+
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
 
@@ -437,11 +448,18 @@ export function NomeAtualPDF({
         titleFont={TITLE_FONT}
       />
 
+      <PDFTableOfContents entries={tocEntries} subtitle={`${nomeParaExibir} — Sumário`} />
+
       {/* ═══════════════════════════════════════════════════════════════════════
        *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
        *  (Bloco completo — idêntico à seção "A Essência" do NomeSocialPDF)
        * ═══════════════════════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.pageEssencia}>
+      <Page
+        size="A4"
+        style={styles.pageEssencia}
+        id="pdf-essencia"
+        bookmark={{ title: 'A Essência', fit: true }}
+      >
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
         {/* Badge de seção */}
@@ -869,13 +887,17 @@ export function NomeAtualPDF({
        *  PÁGINAS FINAIS — mantidas do PDF gratuito original
        * ═══════════════════════════════════════════════════════════════════════ */}
 
-      {/* ── PÁGINA: DIAGNÓSTICO É CLARO (FUNDO ESCURO) ──────────────────── */}
-      <Page size="A4" style={styles.darkPage}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — O Diagnóstico`} />
+      {/* ── PÁGINA: O QUE ESTE MAPA MOSTROU (FUNDO ESCURO) ───────────────── */}
+      <Page
+        size="A4"
+        style={styles.darkPage}
+        id="pdf-mapa"
+        bookmark={{ title: 'O que este mapa mostrou', fit: true }}
+      >
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Resumo do mapa`} />
 
-        {/* Título dourado */}
         <View style={{ marginTop: 28, marginBottom: 24 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 22 }]}>O Diagnóstico É Claro</Text>
+          <Text style={[styles.hugeTitle, { fontSize: 22 }]}>O que este mapa mostrou</Text>
         </View>
 
         {/* Bullets */}
@@ -937,66 +959,28 @@ export function NomeAtualPDF({
         <PDFFooter />
       </Page>
 
-      {/* ── PÁGINA: A PEQUENA VITÓRIA (BRIDGE PAGE) ────────────────────── */}
+      {/* ── PÁGINA: PRÓXIMO PASSO (sem priorizar sequência) ───────────────── */}
       <Page size="A4" style={styles.darkPage}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — O Primeiro Passo`} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Próximo passo`} />
 
         <View style={{ marginTop: 28, marginBottom: 18 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 22, color: GOLD }]}>Ação Imediata: O Escudo Provisório</Text>
+          <Text style={[styles.hugeTitle, { fontSize: 20, color: GOLD }]}>Nome Social</Text>
         </View>
 
         <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
-          Antes de mergulhar na Harmonização completa do seu nome, existe um passo imediato que você pode tomar hoje. Ao aplicar as orientações para amenizar o bloqueio primário da sua assinatura atual, você ergue um "Escudo Provisório" que ajuda a estancar a perda de energia vital.
-        </Text>
-
-        {bloqueios.length > 0 ? (
-          <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderRadius: 10, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: '#f2ca50', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>O Que Fazer Agora?</Text>
-            <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
-              Sua primeira ação prática deve ser neutralizar a repetição primária do {bloqueios[0].titulo}.
-            </Text>
-            {(escudoTexto || SUGESTOES_AMENIZAR[bloqueios[0].codigo]) && (
-              <View style={{ backgroundColor: 'rgba(242, 202, 80, 0.1)', padding: 12, borderRadius: 6, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: '#f2ca50' }}>
-                <Text style={{ fontSize: 10, color: '#f2ca50', fontFamily: BODY_FONT_BOLD, marginBottom: 6 }}>Ação Recomendada (Próximas 72h):</Text>
-                <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.5, marginBottom: escudoTexto ? 0 : 6 }}>
-                  {escudoTexto
-                    ? escudoTexto
-                    : `Para neutralizar provisoriamente essa vibração e restabelecer o equilíbrio do seu campo, você pode adotar atitudes práticas imediatas. Escolha pelo menos uma das ações abaixo para aplicar nos próximos dias:`
-                  }
-                </Text>
-                {!escudoTexto && (SUGESTOES_AMENIZAR[bloqueios[0].codigo] || []).map((sugestao, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 4, paddingLeft: 4 }}>
-                    <Text style={{ color: '#f2ca50', fontSize: 9, marginRight: 6, marginTop: 1 }}>✦</Text>
-                    <Text style={{ fontSize: 9.5, color: '#e5e2e1', lineHeight: 1.45, flex: 1 }}>{sugestao}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
-              Nota: Este é apenas um exercício simbólico provisório de autoconhecimento. Para integrar este padrão de forma mais profunda na sua assinatura, a Harmonização de Assinatura reorganiza a vibração do nome e sustenta uma proteção energética alinhada ao seu destino.
-            </Text>
-          </View>
-        ) : (
-          <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderRadius: 10, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: '#f2ca50', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>O Que Fazer Agora?</Text>
-            <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
-              Sua primeira ação prática deve ser alinhar sua assinatura para evitar futuras resistências vibracionais. Este pequeno ajuste já é capaz de otimizar a sua energia nas próximas 72 horas.
-            </Text>
-            <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
-              Nota: Este é apenas um passo preventivo. Para o alinhamento completo do seu propósito, a análise profunda de todos os triângulos é indispensável.
-            </Text>
-          </View>
-        )}
-
-        <Text style={{ fontSize: 10, color: '#C9C5C0', lineHeight: 1.7, textAlign: 'center', marginTop: 'auto', marginBottom: 20 }}>
-          Descubra na próxima página como iniciar a sua Harmonização Completa e transformar definitivamente a vibração que rege os seus resultados.
+          Você pode comparar outras formas de assinar no Nome Social. Veja os detalhes ao final deste PDF.
         </Text>
 
         <PDFFooter />
       </Page>
 
       {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
-      <Page size="A4" style={styles.page}>
+      <Page
+        size="A4"
+        style={styles.page}
+        id="pdf-score"
+        bookmark={{ title: 'Como calculamos o score', fit: true }}
+      >
         <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
 
         <View style={{ marginTop: 24, marginBottom: 14 }}>
@@ -1073,130 +1057,44 @@ export function NomeAtualPDF({
         <PDFFooter />
       </Page>
 
-      {/* ── PÁGINA FINAL: CTA — DIAGNÓSTICO DEFINITIVO (FUNDO ESCURO) ──────── */}
-      <Page size="A4" style={styles.darkPage}>
-
-        {/* Título */}
-        <View style={{ marginTop: 18, marginBottom: 16 }}>
-          <Text style={[styles.hugeTitle, { color: bloqueios.length > 0 ? '#EF4444' : scoreNivel === 'aceitavel' ? '#F59E0B' : GOLD, fontSize: 17 }]}>
-            O Diagnóstico É Definitivo — A Assinatura Continua Emitindo
+      {/* ── PÁGINA FINAL: CTA NOME SOCIAL (FUNDO ESCURO) ───────────────────── */}
+      <Page
+        size="A4"
+        style={styles.darkPage}
+        id="pdf-nome-social"
+        bookmark={{ title: 'Compare outras formas de assinar', fit: true }}
+      >
+        <View style={{ marginTop: 24, marginBottom: 16 }}>
+          <Text style={[styles.hugeTitle, { color: GOLD, fontSize: 17 }]}>
+            Compare outras formas de assinar
           </Text>
         </View>
 
-        {/* Comparação lado a lado */}
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }} wrap={false}>
-          {/* Coluna Atual */}
-          <View style={{ flex: 1, backgroundColor: 'rgba(220,38,38,0.12)', borderWidth: 1.5, borderColor: '#EF4444', borderRadius: 8, padding: 12 }}>
-            <Text style={{ fontSize: 8, color: '#EF4444', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, textAlign: 'center' }}>
-              Assinatura Atual {nivelV3 ? `(${nivelV3})` : ''}
-            </Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 26, color: rawScore != null ? scoreColor(rawScore) : '#EF4444', textAlign: 'center', marginBottom: 8, lineHeight: 1 }}>
-              {rawScore != null ? `${rawScore}` : '--'}/100
-            </Text>
-            {nivelV3 && (
-              <Text style={{ fontSize: 7.5, color: '#FCA5A5', textAlign: 'center', marginBottom: 4 }}>
-                Nível {nivelV3}: {getScoreV3LevelDescription(nivelV3)}
-              </Text>
-            )}
-            {bloqueios.length > 0 && (
-              <Text style={{ fontSize: 8, color: '#FCA5A5', marginBottom: 2 }}>
-                - {bloqueios.length} bloqueio{bloqueios.length > 1 ? 's' : ''} ativo{bloqueios.length > 1 ? 's' : ''} na assinatura
-              </Text>
-            )}
-            <Text style={{ fontSize: 8, color: '#9CA3AF', marginBottom: 2 }}>- Frequência de resistência 24h/dia</Text>
-            <Text style={{ fontSize: 8, color: '#9CA3AF', marginBottom: 2 }}>- Campo vibracional parcialmente travado</Text>
-            <Text style={{ fontSize: 8, color: '#9CA3AF' }}>- Esforço desproporcional ao resultado</Text>
-          </View>
-          {/* Seta */}
-          <View style={{ justifyContent: 'center', alignItems: 'center', width: 24 }}>
-            <Text style={{ fontSize: 14, color: GOLD, fontFamily: 'Helvetica-Bold' }}>{'>>'}</Text>
-          </View>
-          {/* Coluna Harmonizado */}
-          <View style={{ flex: 1, backgroundColor: 'rgba(5,150,105,0.12)', borderWidth: 1.5, borderColor: '#10B981', borderRadius: 8, padding: 12 }}>
-            <Text style={{ fontSize: 8, color: '#10B981', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, textAlign: 'center' }}>
-              Seu Potencial Harmonizado {nivelPotencialV3 ? `(${nivelPotencialV3})` : ''}
-            </Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 26, color: '#10B981', textAlign: 'center', marginBottom: 8, lineHeight: 1 }}>
-              {potencialV3 != null ? `Até ${potencialV3}/100` : '85-98/100'}
-            </Text>
-            {nivelPotencialV3 && (
-              <Text style={{ fontSize: 7.5, color: '#6EE7B7', textAlign: 'center', marginBottom: 4 }}>
-                Nível {nivelPotencialV3}: {getScoreV3LevelDescription(nivelPotencialV3)}
-              </Text>
-            )}
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Zero bloqueios no Triângulo da Vida</Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Frequência magnética constante</Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Expressão alinhada ao Destino</Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7' }}>+ Campo vibracional recalibrado</Text>
-          </View>
-        </View>
-
-        {/* O Que Você Recebe */}
-        <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)', borderRadius: 8, padding: 12, marginBottom: 14 }} wrap={false}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: GOLD, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            O Que Você Recebe na Harmonização de Assinatura
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1, gap: 6 }}>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Comparativo completo dos 4 triângulos'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Nascimento vs. Harmonizado lado a lado</Text>
-              </View>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Variações de assinatura sem bloqueios'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Score acima de 70 garantido</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, gap: 6 }}>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Todos os arcanos reorganizados'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Novas forças governando cada dimensão</Text>
-              </View>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Guia de implementação'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Como aplicar a nova assinatura imediatamente</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Depoimentos */}
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }} wrap={false}>
-          {[
-            { texto: '"Os bloqueios que o relatório mostrou explicavam ciclos de 10 anos. Harmonizei e o padrão mudou."', autor: 'Ricardo T. — empresário, MG' },
-            { texto: '"Em 3 meses vieram 2 contratos que eu nem buscava. Assinar diferente foi o divisor de águas."', autor: 'Fernanda M. — consultora, SP' },
-            { texto: '"Parecia pequena coisa — mudar uma letra na assinatura. Não era."', autor: 'Ana Paula C. — terapeuta, RJ' },
-          ].map((dep, i) => (
-            <View key={i} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 8 }}>
-              <Text style={{ fontSize: 7, color: '#D1D5DB', lineHeight: 1.5, fontStyle: 'italic', marginBottom: 5 }}>{dep.texto}</Text>
-              <Text style={{ fontSize: 7, color: '#6B7280' }}>{dep.autor}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Âncora de preço */}
-        <Text style={{ fontSize: 9, color: '#92640F', fontStyle: 'italic', textAlign: 'center', lineHeight: 1.6, marginBottom: 12 }}>
-          {bloqueios.length > 0
-            ? `Quanto custa mais um ano com ${bloqueios.length} bloqueio${bloqueios.length > 1 ? 's' : ''} na sua assinatura repelindo resultados?`
-            : 'Quanto custa mais um ano com uma frequência que pode ser muito mais poderosa?'}{'\n'}
-          Harmonização de Assinatura ({upgradePrice}) — a assinatura muda. A frequência muda. Os resultados mudam.
+        <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
+          No Nome Social, você compara as opções calculadas para o seu nome e escolhe qual deseja analisar.
         </Text>
 
-        {/* CTA Button */}
+        {rawScore != null && (
+          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+            <Text style={{ fontSize: 9, color: '#C9C5C0', textAlign: 'center', lineHeight: 1.5 }}>
+              Nota calculada deste mapa (nome de nascimento): {rawScore}/100{nivelV3 ? ` · ${nivelV3}` : ''}.
+              {potencialV3 != null ? ` Potencial explorável pelo motor: até ${potencialV3}/100 (referência de cálculo, não resultado garantido).` : ''}
+            </Text>
+          </View>
+        )}
+
         <View style={{ alignItems: 'center', marginBottom: 10 }}>
           <Link src="https://www.nomemagnetico.com.br/nome-social?utm_source=pdf_gratis&utm_medium=pdf&utm_campaign=upsell_nome_social" style={{ textDecoration: 'none', marginBottom: 8 }}>
-            <View style={{ backgroundColor: '#10B981', paddingVertical: 18, paddingHorizontal: 44, borderRadius: 32 }}>
-              <Text style={{ color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 15, textAlign: 'center' }}>
-                Harmonizar Minha Assinatura Agora
+            <View style={{ backgroundColor: '#10B981', paddingVertical: 16, paddingHorizontal: 36, borderRadius: 32 }}>
+              <Text style={{ color: '#FFFFFF', fontFamily: BODY_FONT_BOLD, fontSize: 14, textAlign: 'center' }}>
+                Conhecer o Nome Social
               </Text>
             </View>
           </Link>
           <Text style={{ fontSize: 9, color: GOLD, marginBottom: 2 }}>nomemagnetico.com.br/nome-social</Text>
-          <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-            <Text style={{ fontSize: 8, color: '#6B7280' }}>Acesso imediato após confirmação</Text>
-            <Text style={{ fontSize: 8, color: '#9CA3AF' }}>|</Text>
-            <Text style={{ fontSize: 8, color: '#6B7280' }}>{upgradePrice}</Text>
-          </View>
+          {upgradePrice && !upgradeOfferLabel?.includes('EXEMPLO') && (
+            <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 4 }}>{upgradePrice}</Text>
+          )}
         </View>
 
         {/* Selos de segurança */}

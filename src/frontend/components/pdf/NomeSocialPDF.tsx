@@ -20,6 +20,9 @@ import { BloqueiosBlock, DebitosBlock, LicoesBlock, TendenciasBlock } from './sh
 import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { PDFDoubleStar, type DoubleStarNumbers } from './shared/PDFDoubleStar';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
+import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
+import { PDFTableOfContents, type PdfTocEntry } from './shared/PDFTableOfContents';
+import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
@@ -313,10 +316,35 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
     .toUpperCase()
     .split('');
 
-  const nomesCandidatos: any[] = freqData?.ranking?.nomesCandidatos ?? [];
+  const nomesCandidatosRaw: any[] = freqData?.ranking?.nomesCandidatos ?? [];
+  const melhorNomeMotor: string | undefined =
+    freqData?.ranking?.melhorNome?.nomeCompleto ?? undefined;
 
   // ── Dados do NOME DE NASCIMENTO (para a seção "A ESSÊNCIA") ──────────────────────
-  const dataNascimentoRaw = freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '';
+  const dataNascimentoRaw = normalizeBirthDateForNumerology(
+    freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '',
+  );
+
+  const nomesCandidatos = nomesCandidatosRaw.map((c) => {
+    const base = analisarNomeSocial(
+      String(c.nomeCompleto ?? ''),
+      dataNascimentoRaw,
+      c.origemSugerida === 'ia' ? 'ia' : 'usuario',
+    );
+    return {
+      ...base,
+      ...c,
+      nomeCompleto: c.nomeCompleto ?? base.nomeCompleto,
+      score: c.score ?? base.score,
+      expressao: c.expressao ?? base.expressao,
+      motivacao: c.motivacao ?? base.motivacao,
+      impressao: c.impressao ?? base.impressao,
+      compatibilidade: c.compatibilidade ?? base.compatibilidade,
+      temBloqueio: c.temBloqueio ?? base.temBloqueio,
+      bloqueios: c.bloqueios ?? base.bloqueios,
+      nivelV3: c.nivelV3 ?? undefined,
+    };
+  });
   const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
   const triangulosNasc = calcularTodosTriangulos(nomeNascimento, dataNascimentoRaw);
   const bloqueiosNasc = detectarBloqueios(triangulosNasc);
@@ -579,6 +607,15 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
   }
   const sortedArcanos = Array.from(allArcanoNums).sort((a, b) => a - b);
 
+  const paidToc: PdfTocEntry[] = [
+    ...(nomesCandidatos.length > 0 ? [{ id: 'pdf-ranking', title: 'Opções avaliadas' }] : []),
+    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento' },
+    { id: 'pdf-harmonizacao', title: 'Assinatura selecionada e estrela comparativa' },
+    { id: 'pdf-guia', title: 'Guia de uso da assinatura' },
+    { id: 'pdf-score', title: 'Como calculamos o score' },
+    { id: 'pdf-treino', title: 'Folha de treino de assinatura' },
+  ];
+
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
 
@@ -593,38 +630,58 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         titleFont={TITLE_FONT}
       />
 
+      <PDFTableOfContents entries={paidToc} subtitle={`${nomeParaExibir} — Sumário`} />
+
       {/* ── PÁGINA INTRODUTÓRIA: GUIA DE LEITURA ────────────────────────── */}
       <PDFStandardIntro theme={theme} productType="nome_social" entityName={nomeParaExibir} isScoreV3={isV3} />
 
       {/* ── PÁGINA: RANKING DOS CANDIDATOS (novo fluxo) ─────────────────────── */}
       {nomesCandidatos.length > 0 && (
-        <Page size="A4" style={styles.page}>
-          <PDFPageHeader subtitle={`${nomeParaExibir} — Ranking dos Candidatos`} />
+        <Page
+          size="A4"
+          style={styles.page}
+          id="pdf-ranking"
+          bookmark={{ title: 'Opções avaliadas', fit: true }}
+        >
+          <PDFPageHeader subtitle={`${nomeParaExibir} — Opções avaliadas`} />
 
           <View style={styles.section}>
-            <Text style={styles.hugeTitle}>Ranking Numerológico dos Candidatos</Text>
+            <Text style={styles.hugeTitle}>Opções avaliadas</Text>
             <Text style={{ ...styles.bodyText, marginBottom: 12 }}>
-              Abaixo está a classificação vibratória de todos os nomes avaliados, ordenados do maior para o menor potencial de fluidez. A pontuação reflete a harmonia entre as frequências do nome social candidato e o seu Destino imutável. O nome no topo é a recomendação de ouro — o que entrega maior compatibilidade, clareza de fluxo e ausência de bloqueios.
+              Nomes calculados para comparação. A assinatura em análise neste PDF é a que você selecionou; outras opções aparecem apenas como referência numérica.
             </Text>
 
             {nomesCandidatos.slice(0, 10).map((c: any, i: number) => {
               const sc = scoreColor(c.score, isV3);
               const nivel = isV3 ? (c.nivelV3 ? { codigo: c.nivelV3, rotulo: getScoreV3LevelDescription(c.nivelV3 as any) } : obterNivelV3(c.score)) : null;
-              const isTop = i === 0;
+              const isAssinaturaSelecionada =
+                c.nomeCompleto.trim().toLowerCase() === nomeParaExibir.trim().toLowerCase();
+              const isRecomendadoMotor =
+                Boolean(melhorNomeMotor) &&
+                c.nomeCompleto.trim().toLowerCase() === melhorNomeMotor!.trim().toLowerCase() &&
+                !isAssinaturaSelecionada;
               const isIA = c.origemSugerida === 'ia';
               return (
-                <View key={i} style={isTop ? {
-                  marginBottom: 8, padding: 10, backgroundColor: '#FFFDF0',
-                  borderWidth: 1.5, borderColor: GOLD, borderRadius: 6,
-                } : {
+                <View key={i} style={{
                   marginBottom: 8, padding: 10, backgroundColor: '#F9FAFB',
                   borderWidth: 1, borderColor: LIGHT_GRAY, borderRadius: 6,
                 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      {isTop && <Text style={{ fontSize: 8, color: GOLD, fontFamily: 'Helvetica-Bold' }}>★ RECOMENDADO{'  '}</Text>}
-                      {isIA && !isTop && <Text style={{ fontSize: 7, color: '#7c3aed', fontFamily: 'Helvetica-Bold' }}>(*) SUGESTÃO{'  '}</Text>}
-                      <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: isTop ? DARK : '#374151' }}>{c.nomeCompleto}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                      {isAssinaturaSelecionada && (
+                        <Text style={{ fontSize: 8, color: '#0369a1', fontFamily: BODY_FONT_BOLD }}>
+                          Assinatura selecionada para análise{'  '}
+                        </Text>
+                      )}
+                      {isRecomendadoMotor && (
+                        <Text style={{ fontSize: 7, color: '#6B7280', fontFamily: BODY_FONT_BOLD }}>
+                          Destaque do motor (regra N5){'  '}
+                        </Text>
+                      )}
+                      {isIA && !isAssinaturaSelecionada && (
+                        <Text style={{ fontSize: 7, color: '#7c3aed', fontFamily: BODY_FONT_BOLD }}>(*) SUGESTÃO{'  '}</Text>
+                      )}
+                      <Text style={{ fontSize: 12, fontFamily: BODY_FONT_BOLD, color: DARK }}>{c.nomeCompleto}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       {nivel && (
@@ -643,17 +700,33 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: 14, marginBottom: 5, flexWrap: 'wrap' }}>
-                    <Text style={{ fontSize: 9, color: GRAY }}>Expressão: <Text style={{ fontFamily: 'Helvetica-Bold', color: GOLD }}>{c.expressao}</Text></Text>
-                    <Text style={{ fontSize: 9, color: GRAY }}>Motivação: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{c.motivacao}</Text></Text>
-                    <Text style={{ fontSize: 9, color: GRAY }}>Impressão: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{c.impressao ?? '?'}</Text></Text>
+                    {c.expressao != null && (
+                      <Text style={{ fontSize: 9, color: GRAY }}>
+                        Expressão: <Text style={{ fontFamily: BODY_FONT_BOLD, color: GOLD }}>{c.expressao}</Text>
+                      </Text>
+                    )}
+                    {c.motivacao != null && (
+                      <Text style={{ fontSize: 9, color: GRAY }}>
+                        Motivação: <Text style={{ fontFamily: BODY_FONT_BOLD }}>{c.motivacao}</Text>
+                      </Text>
+                    )}
+                    {c.impressao != null && (
+                      <Text style={{ fontSize: 9, color: GRAY }}>
+                        Impressão: <Text style={{ fontFamily: BODY_FONT_BOLD }}>{c.impressao}</Text>
+                      </Text>
+                    )}
                   </View>
 
-                  <View style={{ flexDirection: 'row', gap: 14 }}>
-                    <Text style={{ fontSize: 9, color: compatColor(c.compatibilidade) }}>
-                      Compatibilidade c/ Destino: {compatLabel(c.compatibilidade)}
-                    </Text>
-                    <Text style={{ fontSize: 9, color: c.temBloqueio ? '#DC2626' : '#059669' }}>
-                      {c.temBloqueio ? `${c.bloqueios?.length ?? 1} bloqueio(s)` : 'Sem bloqueios'}
+                  <View style={{ flexDirection: 'row', gap: 14, flexWrap: 'wrap' }}>
+                    {c.compatibilidade && (
+                      <Text style={{ fontSize: 9, color: compatColor(c.compatibilidade) }}>
+                        Compatibilidade c/ Destino: {compatLabel(c.compatibilidade)}
+                      </Text>
+                    )}
+                    <Text style={{ fontSize: 9, color: c.temBloqueio ? '#DC2626' : GRAY }}>
+                      {c.temBloqueio
+                        ? `${c.bloqueios?.length ?? 1} sequência(s) calculada(s) nos triângulos`
+                        : 'Nenhuma sequência 111–999 no Triângulo da Vida (cálculo atual)'}
                     </Text>
                   </View>
                 </View>
@@ -666,7 +739,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       )}
 
       {/* ── SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original ─────────────── */}
-      <Page size="A4" style={styles.pageEssencia}>
+      <Page
+        size="A4"
+        style={styles.pageEssencia}
+        id="pdf-essencia"
+        bookmark={{ title: 'A Essência', fit: true }}
+      >
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
         {/* Badge de seção */}
@@ -1072,7 +1150,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── BLOCO: A ENGENHARIA DA HARMONIZAÇÃO ────────────────────────────── */}
-      <Page size="A4" style={styles.pageHarmonizacao}>
+      <Page
+        size="A4"
+        style={styles.pageHarmonizacao}
+        id="pdf-harmonizacao"
+        bookmark={{ title: 'Assinatura e estrela comparativa', fit: true }}
+      >
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
 
         {/* Badge de seção */}
@@ -1095,6 +1178,8 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         <PDFDoubleStar
           nascimento={nascStarNumbers}
           harmonizado={socialStarNumbers}
+          scoreNascimento={scoreNasc}
+          scoreHarmonizado={scoreSocial}
         />
 
         {/* ── CARD: SCORE CABALÍSTICO ANTES × DEPOIS ───────────────────────── */}
@@ -1111,41 +1196,38 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
-            {/* Nascimento */}
-            <View style={{ flex: 1, backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 6, padding: 10, alignItems: 'center' }}>
-              <Text style={{ fontSize: 8, color: '#DC2626', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Nascimento {nivelNasc ? `(${nivelNasc.codigo})` : ''}
+            <View style={{ flex: 1, backgroundColor: '#F9FAFB', borderRadius: 6, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' }}>
+              <Text style={{ fontSize: 8, color: GRAY, fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Nome de nascimento {nivelNasc ? `(${nivelNasc.codigo})` : ''}
               </Text>
               <Text style={{ fontSize: 24, fontFamily: BODY_FONT_BOLD, color: scoreColor(scoreNasc, isV3), lineHeight: 1 }}>
                 {scoreNasc}/100
               </Text>
               {nivelNasc && (
-                <Text style={{ fontSize: 7.5, color: '#DC2626', fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>
+                <Text style={{ fontSize: 7.5, color: GRAY, fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>
                   {nivelNasc.codigo} · {nivelNasc.rotulo}
                 </Text>
               )}
             </View>
 
-            {/* Seta de evolução */}
             <View style={{ justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10 }}>
-              <Text style={{ fontSize: 16, color: scoreSocial >= scoreNasc ? '#8A661C' : GRAY }}>»</Text>
-              {scoreSocial > scoreNasc && (
-                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#059669', marginTop: 2 }}>
-                  +{scoreSocial - scoreNasc} pts
+              <Text style={{ fontSize: 16, color: GRAY }}>»</Text>
+              {scoreSocial !== scoreNasc && (
+                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: GRAY, marginTop: 2 }}>
+                  {scoreSocial > scoreNasc ? '+' : ''}{scoreSocial - scoreNasc} pts
                 </Text>
               )}
             </View>
 
-            {/* Harmonizado */}
-            <View style={{ flex: 1, backgroundColor: 'rgba(5,150,105,0.08)', borderRadius: 6, padding: 10, alignItems: 'center' }}>
-              <Text style={{ fontSize: 8, color: '#059669', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Harmonizado {nivelSocial ? `(${nivelSocial.codigo})` : ''}
+            <View style={{ flex: 1, backgroundColor: '#F9FAFB', borderRadius: 6, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' }}>
+              <Text style={{ fontSize: 8, color: GRAY, fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Assinatura selecionada {nivelSocial ? `(${nivelSocial.codigo})` : ''}
               </Text>
               <Text style={{ fontSize: 24, fontFamily: BODY_FONT_BOLD, color: scoreColor(scoreSocial, isV3), lineHeight: 1 }}>
                 {scoreSocial}/100
               </Text>
               {nivelSocial && (
-                <Text style={{ fontSize: 7.5, color: '#059669', fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>
+                <Text style={{ fontSize: 7.5, color: GRAY, fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>
                   {nivelSocial.codigo} · {nivelSocial.rotulo}
                 </Text>
               )}
@@ -2369,7 +2451,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── ANEXO III: GUIA DE ATIVAÇÃO — 30 DIAS ──────────────────────────── */}
-      <Page size="A4" style={styles.page}>
+      <Page
+        size="A4"
+        style={styles.page}
+        id="pdf-guia"
+        bookmark={{ title: 'Guia de uso da assinatura', fit: true }}
+      >
         <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
@@ -2385,12 +2472,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         <View style={{ marginBottom: 10 }}>
           <Text style={styles.hugeTitle}>Guia de Ativação</Text>
           <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>
-            Os Primeiros 30 Dias: Do Plantio à Colheita Vibracional
+            Uso da assinatura no dia a dia
           </Text>
         </View>
 
         <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 12 }}>
-          O Nome Social não exige mudança legal ou documental — ele é a identidade vibracional que você escolhe projetar ao mundo. A ativação começa no instante em que você passa a usá-lo com consciência e consistência. Quanto mais contextos do seu cotidiano ele habitar, mais rápida será a reorganização do seu campo magnético.
+          Este guia trata do uso da assinatura no dia a dia. Não inclui alteração de registro civil.
         </Text>
 
         {/* Semana 1 */}
@@ -2434,23 +2521,16 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
             Semanas 3–4 (Dias 15–30) — Consolidação
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6, marginBottom: 3 }}>
-            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>Documentos legais:</Text> O Nome Social <Text style={{ fontFamily: BODY_FONT_BOLD }}>não substitui</Text> CPF, RG ou passaporte — esses permanecem com o nome de nascimento. Em apresentações pessoais, marketing, redes sociais e contratos informais, o Nome Social é soberano. A retificação em cartório é juridicamente possível, mas opcional — a ativação vibracional começa no uso cotidiano consciente.
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
-            Ao final de 30 dias de uso consistente, observe: novas oportunidades, mudanças na forma como as pessoas te percebem e uma crescente naturalidade com o novo campo são sinais de que a reorganização vibracional está em curso.
+            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>Documentos oficiais:</Text> CPF, RG e passaporte continuam com o nome de nascimento. Use a assinatura escolhida em apresentações pessoais, redes sociais e comunicações informais, conforme fizer sentido para você.
           </Text>
         </View>
 
-        {/* Box 90 dias */}
-        <View wrap={false} style={{ backgroundColor: 'rgba(212, 175, 55, 0.04)', borderWidth: 1, borderColor: GOLD, borderRadius: 7, padding: 12 }}>
-          <Text style={{ fontSize: 10, fontFamily: TITLE_FONT, color: GOLD, marginBottom: 6 }}>
-            Do 30º ao 90º Dia — A Colheita Vibracional
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
-            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>30–60 dias:</Text> É comum sentir estranheza ao ser chamado pelo novo nome — esse é o sinal de que a reprogramação está ativa. O campo antigo ainda opera em paralelo enquanto o novo padrão se consolida. Anote em um diário as mudanças que observa.
+        <View wrap={false} style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 7, padding: 12, marginTop: 8 }}>
+          <Text style={{ fontSize: 11, fontFamily: TITLE_FONT, color: DARK, marginBottom: 6 }}>
+            Depois dos primeiros 30 dias
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
-            <Text style={{ fontFamily: BODY_FONT_BOLD, color: DARK }}>60–90 dias:</Text> O campo vibracional do Nome Social começa a se estabilizar como frequência dominante. Novas conexões, convites e reconhecimentos que surgem neste período são reflexos diretos da nova frequência que você está emitindo.
+            Observe em quais situações você usou a assinatura e se ela combina com a forma como prefere se apresentar. Você pode continuar praticando no seu ritmo.
           </Text>
         </View>
 
@@ -2458,7 +2538,12 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
       </Page>
 
       {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
-      <Page size="A4" style={styles.page}>
+      <Page
+        size="A4"
+        style={styles.page}
+        id="pdf-score"
+        bookmark={{ title: 'Como calculamos o score', fit: true }}
+      >
         <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
 
         <View style={{ marginTop: 24, marginBottom: 14 }}>
@@ -2535,31 +2620,21 @@ export function NomeSocialPDF({ analysis, magneticNames, userName }: ProductPDFP
         <PDFFooter />
       </Page>
 
-      {/* ── FOLHA DE TREINO DE ASSINATURA (mantida igual) ───────────────────── */}
-      <Page size="A4" style={styles.assinaturaPage}>
+      {/* ── FOLHA DE TREINO DE ASSINATURA ─────────────────────────────────── */}
+      <Page
+        size="A4"
+        style={styles.assinaturaPage}
+        id="pdf-treino"
+        bookmark={{ title: 'Folha de treino de assinatura', fit: true }}
+      >
         <Text style={styles.assinaturaTitle}>Folha de Treino de Assinatura</Text>
 
         <View style={styles.assinaturaInstrucoesBox}>
           <Text style={styles.assinaturaInstrucoesTitle}>
-            Como criar uma assinatura de alto poder energético
+            Prática de escrita
           </Text>
           <Text style={styles.assinaturaInstrucaoItem}>
-            • Nunca cruze traços por cima das letras — linhas cortantes bloqueiam o fluxo energético da assinatura.
-          </Text>
-          <Text style={styles.assinaturaInstrucaoItem}>
-            • Inclinação levemente ascendente (da esquerda para a direita) transmite ambição e crescimento positivo.
-          </Text>
-          <Text style={styles.assinaturaInstrucaoItem}>
-            • Evite traçados que descem abruptamente ao final — simbolizam queda ou fechamento de ciclos de forma negativa.
-          </Text>
-          <Text style={styles.assinaturaInstrucaoItem}>
-            • A assinatura deve ser legível o suficiente para reconhecer as letras principais do seu nome magnético.
-          </Text>
-          <Text style={styles.assinaturaInstrucaoItem}>
-            • Termine com um traçado que fecha o nome sem corte — pode ser uma curva suave ascendente ou um ponto de energia.
-          </Text>
-          <Text style={styles.assinaturaInstrucaoItem}>
-            • Pratique até que o movimento se torne fluido e natural — a assinatura deve expressar confiança e leveza.
+            Use este espaço para praticar a assinatura escolhida. Observe a legibilidade e o conforto ao escrever.
           </Text>
         </View>
 
