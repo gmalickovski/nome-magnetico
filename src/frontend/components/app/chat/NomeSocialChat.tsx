@@ -1881,14 +1881,17 @@ export function NomeSocialChat({
       />
 
       <div
-        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-2.5 sm:px-4 md:px-5 lg:px-6 xl:px-8 2xl:px-10 grid min-h-0 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-8 ${
+        className={`flex-1 min-h-0 w-full mx-auto grid min-h-0 ${
           sidebarExpanded
-            ? 'md:grid-cols-1'
+            ? 'grid-cols-1 px-2.5 sm:px-4 md:px-5 lg:px-6 md:pr-1 lg:pr-1.5'
             : [
+                'grid-cols-1',
                 'md:grid-cols-[minmax(0,1fr)_minmax(200px,42%)]',
                 'lg:grid-cols-[minmax(0,1fr)_minmax(260px,36%)]',
                 'xl:grid-cols-[minmax(0,1fr)_minmax(300px,32%)]',
                 '2xl:grid-cols-[minmax(0,1fr)_minmax(340px,30%)]',
+                'gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 2xl:gap-8',
+                'px-2.5 sm:px-4 md:pl-5 lg:pl-6 xl:pl-8 2xl:pl-10 md:pr-1 lg:pr-1.5',
               ].join(' ')
         }`}
       >
@@ -2123,8 +2126,8 @@ export function NomeSocialChat({
         </main>
 
         <aside
-          className={`hidden md:flex flex-col min-h-0 min-w-0 py-2 md:py-3 lg:py-4 ${
-            sidebarExpanded ? 'max-w-4xl mx-auto w-full' : 'md:max-w-[min(44vw,380px)] lg:max-w-none'
+          className={`hidden md:flex flex-col min-h-0 min-w-0 py-2 md:py-3 lg:py-4 w-full ${
+            sidebarExpanded ? '' : 'md:max-w-[min(44vw,380px)] lg:max-w-none'
           }`}
         >
           <ChatSidebarPanelChrome

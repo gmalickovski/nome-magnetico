@@ -35,7 +35,7 @@ export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: Blo
       </div>
 
       <div className="px-5 py-5 space-y-4">
-          <p className="text-gray-300 text-sm leading-relaxed">{bloqueio.descricao}</p>
+          <p className="nm-card-text">{bloqueio.descricao}</p>
 
           {bloqueio.triangulos && bloqueio.triangulos.length > 0 && (
             <div className="space-y-1.5">
@@ -56,7 +56,7 @@ export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: Blo
                 <span className="text-[#c084fc] text-sm">✦</span>
                 <span className="text-xs uppercase tracking-[0.12em] text-[#c084fc] font-medium">Antídoto Prático</span>
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed">{bloqueio.antidoto}</p>
+              <p className="nm-card-text">{bloqueio.antidoto}</p>
             </div>
           )}
         </div>
