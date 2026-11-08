@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **Ambiente TESTE obrigatório:** siga [Ambientes no AGENTS.md](./AGENTS.md#ambientes). Somente cofre `Studio MLK - TESTE`, em worktree isolada.
+
 > **Agentes:** leia primeiro [`AGENTS.md`](./AGENTS.md) na raiz. Este arquivo continua sendo a referência canônica completa do projeto.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -23,7 +25,7 @@ Regras completas em [`AGENTS.md`](./AGENTS.md#segredos-e-variáveis-de-ambiente-
 
 - Nunca commitar segredos reais em `.env` ou no código.
 - Dev local: `npm run dev:1p` ou `npm run env:1p` (gera `.env` com `op inject ... --force`).
-- Nova chave: atualizar item no cofre **Studio MLK** (`NM-PROD-*` / `NM-OPS-*`) com `op item edit` / `op item create` e referência `op://Studio MLK/...` em `.env.1password` com `# pragma: allowlist secret` quando o pre-commit exigir.
+- Nova chave: cadastrar no cofre **Studio MLK - TESTE** (`NM-TESTE-*`), seguindo [AGENTS.md#ambientes](./AGENTS.md#ambientes). Produção é responsabilidade do Infra.
 
 ## Identidade
 

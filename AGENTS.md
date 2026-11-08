@@ -30,8 +30,16 @@ Validação mínima quando a mudança tocar TS/Astro/frontend/backend/build: `np
 - **Nunca** criar ou versionar segredos reais em `.env` (ignorado pelo Git) ou no código-fonte.
 - **Local / worktree:** subir o dev server com segredos injetados em runtime: `npm run dev:1p` (`op run --env-file=.env.1password -- npm run dev`). Ou gerar `.env` local com `npm run env:1p` (`op inject -i .env.1password -o .env --force`).
 - **Stripe (dev/local):** `.env.1password` aponta só para o item de chaves de **teste** do Stripe (`[NM]-[STRIPE]-Chaves de TESTE`). Produção na VPS usa `.env` fixo, não este arquivo. Webhook local: `stripe listen --forward-to localhost:4321/api/stripe-webhook` e atualizar `STRIPE_WEBHOOK_SECRET` no item de teste.
-- **Nova variável de ambiente:** o agente deve (1) cadastrar ou atualizar o valor no cofre **Studio MLK** via CLI (`op item edit "<Item>" --vault "Studio MLK" "NOVA_CHAVE[password]=valor"` ou `op item create ... --vault "Studio MLK"`, seguindo itens `NM-PROD-*` / `NM-OPS-*`); (2) adicionar em `.env.1password` a referência `NOVA_CHAVE="op://Studio MLK/<Item>/NOVA_CHAVE" # pragma: allowlist secret` para o `detect-secrets` no pre-commit.
+- **Nova variável de ambiente:** cadastrar ou atualizar somente no cofre **Studio MLK - TESTE**, em item `NM-TESTE-*`, via CLI `op`. Adicionar a referência `NOVA_CHAVE="op://Studio MLK - TESTE/<Item>/NOVA_CHAVE" # pragma: allowlist secret` em `.env.1password`. Configuração de produção deve ser solicitada ao Infra.
 - **Cursor Cloud Agents:** com `OP_SERVICE_ACCOUNT_TOKEN` no ambiente, o `install` em `.cursor/environment.json` tenta instalar o `op` e rodar `npm run env:1p`; sem token ou se a injeção falhar, o install continua (variáveis já definidas no ambiente).
+
+## Ambientes
+
+- **Cofres:** `Studio MLK - TESTE` é o único permitido para agentes. `Studio MLK` é produção, reservado aos bots/VPS; agentes nunca usam.
+- **Banco:** usar somente `nome_magnetico_teste` (ref e checklist na DEV-253). Proibido usar o ref de produção `bhxneaeuhybtucmbmpvg`. Confirmar o destino antes de injetar credenciais ou executar qualquer acesso.
+- **Isolamento:** trabalhar em worktree fora do checkout original, baseada na última `origin/main` obtida com `git fetch`. Nunca copiar o `.env` do checkout original. Serviços sem configuração TESTE ficam desabilitados; nunca recorrer às credenciais de produção.
+- **Variável nova:** cadastrar no cofre TESTE; pedir configuração de produção ao Infra. Credencial TESTE de IA não garante consumo gratuito: chamadas reais exigem autorização e teto de custo.
+- **Fluxo teste → produção:** reaproveitar issue DEV- existente ou criar → branch `linear/dev-XXX-slug` e worktree → `npm ci` e `npm run env:1p` → código e migrations somente quando explicitamente autorizadas, aplicadas só no TESTE → `npm test`, `npx astro check`, `npm run build` → PR draft com Causa/Mudança/Testes rodados/Rollback → Linear In Review → revisão do Dev → OK explícito do Guilherme → backup pelo Infra → merge → tag `vX.Y.Z` → deploy → smoke test → rollback se necessário. Merge, tag e deploy são humanos salvo autorização explícita; deploy segue a skill `deploy-nome-magnetico`.
 
 ## Regras essenciais
 
