@@ -106,6 +106,19 @@ export async function redeemAccessTrial(params: {
     };
   }
 
+  // Falha de contabilização impede concessão de acesso e sucesso aparente.
+  try {
+    await recordAccessTrialUse({
+      trialCode,
+      productType: products.join(','),
+      userId: params.userId,
+      userEmail: params.userEmail,
+    });
+  } catch {
+    console.error('[trial-redeem] Falha ao registrar uso; acesso não concedido');
+    return { ok: false, status: 503, error: 'Não foi possível registrar o resgate agora. Tente de novo em instantes.' };
+  }
+
   const trialDays = validation.trialDays;
   const endsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000).toISOString();
   const kind = validation.kind ?? 'trial';
@@ -139,12 +152,6 @@ export async function redeemAccessTrial(params: {
     source: kind === 'gift' ? 'gift' : 'link',
   });
 
-  await recordAccessTrialUse({
-    trialCode,
-    productType: products.join(','),
-    userId: params.userId,
-    userEmail: params.userEmail,
-  }).catch((err) => console.error('[trial-redeem] Falha ao registrar uso do trial:', err));
 
   return {
     ok: true,

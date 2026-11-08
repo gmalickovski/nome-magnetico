@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '../db/supabase';
+import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { isUniqueViolation } from '../ops/registry';
 import type { ProductType } from './stripe';
 import { fetchProductPriceMap, fallbackRow } from '../pricing/product-prices-db';
@@ -20,6 +21,7 @@ import {
 import type { EffectivePriceResult } from '../pricing/service';
 import {
   codeAppliesToProduct,
+  codeProductTypes,
   evaluateCoupon,
   evaluateTrial,
   normalizeAccessCode,
@@ -315,16 +317,31 @@ export async function recordAccessTrialUse(params: {
 
   try {
     const row = await findAccessCode(trialCode);
-    if (!row || (row.kind !== 'trial' && row.kind !== 'gift')) return;
-    if (!codeAppliesToProduct(row, params.productType)) return;
-
-    await insertAccessCodeUse({
-      codeId: row.id,
-      userId: params.userId,
-      userEmail: params.userEmail,
-      productType: params.productType || null,
-      source: 'redeem',
-    });
+    if (!row || (row.kind !== 'trial' && row.kind !== 'gift')) {
+      throw new Error('Código de trial não encontrado');
+    }
+    const configured = codeProductTypes(row);
+    const requested = params.productType?.trim();
+    const products = [...new Set(requested && requested !== 'all'
+      ? requested.split(',').map((product) => product.trim())
+      : configured.length > 0 ? configured : [...SELLABLE_PRODUCT_TYPES])];
+    if (products.length === 0 || products.some((product) =>
+      !(PRODUCT_TYPES as readonly string[]).includes(product) ||
+      !codeAppliesToProduct(row, product))) {
+      throw new Error('Produto inválido para o trial');
+    }
+    // Uma linha para cobertura total; subsets históricos ficam em linhas válidas.
+    const useProducts = products.length > 1 && SELLABLE_PRODUCT_TYPES.every((product) => products.includes(product))
+      ? ['all'] : products;
+    for (const productType of useProducts) {
+      await insertAccessCodeUse({
+        codeId: row.id,
+        userId: params.userId,
+        userEmail: params.userEmail,
+        productType,
+        source: 'redeem',
+      });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`Falha ao registrar uso do trial: ${message}`);
