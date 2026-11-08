@@ -1,6 +1,3 @@
-> **Agentes:** leia primeiro [`AGENTS.md`](../../../AGENTS.md) na raiz do repositório.
-
-
 ---
 name: slate
 description: >
@@ -13,6 +10,9 @@ description: >
   remote default branch, and checks out a local worktree. Opens the PR or MR when
   the work is finished and does not merge. Use when the user runs /slate.
 ---
+
+> **Agentes:** leia primeiro [`AGENTS.md`](../../../AGENTS.md) na raiz do repositório.
+
 
 # Slate
 
@@ -67,7 +67,7 @@ Se faltar login, peça para autorizar o servidor no próprio agente e continue s
 5. Ache um clone local (pasta de trabalho já usada ou `git worktree list`). Se não existir, clone para a pasta de projetos que o usuário já usa, ou para `~/Dev/<repo>`. Não commite nesse checkout.
 6. `git fetch origin <branch-padrão>`. A base é `origin/<branch-padrão>`, nunca o HEAD local se ele estiver atrás.
 7. Pergunte o assunto só se ele ainda não tiver sido dito.
-8. Crie a issue no Linear antes da branch. Time e rótulos: os que o `LINEAR.md` do repositório indicar. Se o arquivo não existir, liste os times e pergunte quando houver mais de um. Guarde o identificador (`DEV-123`, ou o prefixo real do time).
+8. Busque issue DEV- existente para o assunto e PR/MR aberto antes de criar qualquer novo trabalho. Se existir, reaproveite; não duplique agentes, branches ou PRs. Crie uma issue no Linear antes da branch somente se ainda não houver. Ao começar, mova a issue para **In Progress**. Time e rótulos: os que o `LINEAR.md` do repositório indicar. Se o arquivo não existir, liste os times e pergunte quando houver mais de um. Guarde o identificador (`DEV-123`, ou o prefixo real do time).
 9. A branch começa sempre com `linear/`. Formato: `linear/<prefixo>-<numero>-<slug>`, em minúsculas. `DEV-123` e o assunto "dashboard nome social" viram `linear/dev-123-dashboard-nome-social`. Se o `LINEAR.md` do repositório der outro formato, siga o arquivo, desde que o prefixo continue `linear/`.
 10. Publique sem trocar o checkout da branch padrão:
 
@@ -82,7 +82,8 @@ git fetch origin <branch>
 git worktree add --track -b <branch> "$HOME/.agents/worktrees/<repo>/<slug>" "origin/<branch>"
 ```
 
-12. Diga a issue, o repositório, a branch, a URL remota e o caminho da worktree. O trabalho seguinte fica só nessa worktree.
+12. Entre na worktree e rode `npm ci` e `npm run env:1p`. Antes de injetar, confirme que todas as referências ativas usam somente `Studio MLK - TESTE`. Item ausente: pare a injeção e registre a pendência, sem fallback de produção. Nunca use o cofre `Studio MLK` nem o ref de produção `bhxneaeuhybtucmbmpvg`. Migrations exigem pedido explícito e só podem ser aplicadas no TESTE.
+13. Diga a issue, o repositório, a branch, a URL remota e o caminho da worktree. O trabalho seguinte fica só nessa worktree.
 
 Se a branch ou a pasta já existirem, pare e pergunte. Não sobrescreva.
 
@@ -92,6 +93,6 @@ Quando o usuário disser que terminou:
 
 1. Rode a validação que o repositório documenta. Se não houver outra, e a mudança tocar código de build, rode o type-check e o build que o `package.json` definir.
 2. Commit só dos arquivos da tarefa e push da mesma branch.
-3. GitHub: `gh pr create` contra a branch padrão. GitLab: `glab mr create`. O título leva o identificador da issue.
+3. Abra **PR/MR em draft** contra a branch padrão: GitHub `gh pr create --draft`, GitLab `glab mr create --draft`. Título com identificador da issue; corpo com **Causa**, **Mudança**, **Testes rodados**, **Rollback**. Mova a issue para **In Review**.
 4. Não faça merge e não crie tag, salvo pedido explícito.
 5. Não abra PR nem MR no início, com a branch ainda vazia.
