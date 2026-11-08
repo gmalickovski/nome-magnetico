@@ -1,5 +1,7 @@
 # Nome Magnético — Contexto do Projeto para Agentes IA (Gemini / Antigravity)
 
+> **Ambiente TESTE obrigatório:** siga [Ambientes no AGENTS.md](./AGENTS.md#ambientes). Somente cofre `Studio MLK - TESTE`, em worktree isolada.
+
 > **Agentes:** leia primeiro [`AGENTS.md`](./AGENTS.md) na raiz.
 
 ## Identidade
@@ -11,7 +13,7 @@
 
 ## Segredos e Variáveis de Ambiente (1Password CLI `op`)
 
-Ver [`AGENTS.md`](./AGENTS.md#segredos-e-variáveis-de-ambiente-1password-cli-op). Em resumo: sem segredos no Git; `npm run dev:1p` / `npm run env:1p`; novas variáveis no cofre **Studio MLK** + linha `op://Studio MLK/...` em `.env.1password` com `# pragma: allowlist secret` se o scanner reclamar.
+Ver [AGENTS.md — Ambientes](./AGENTS.md#ambientes). Sem segredos no Git; `npm run dev:1p` / `npm run env:1p` somente na worktree com referências ao cofre **Studio MLK - TESTE**.
 
 ---
 
