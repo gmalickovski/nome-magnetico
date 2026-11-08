@@ -16,53 +16,53 @@ const cfg = SCORE_CONFIG_V3;
   <LandingHeader client:load />
 
   <main class="min-h-screen bg-[#111111] pt-16 sm:pt-24 pb-24">
-    <div class="max-w-4xl mx-auto px-6 md:px-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 md:px-10">
 
       {/* Header */}
-      <div class="text-center mb-14">
+      <div class="text-center mb-10 sm:mb-14">
         <div class="inline-flex items-center gap-2 bg-[#d7c6ff]/10 border border-[#d7c6ff]/30 rounded-full px-5 py-2 mb-6">
           <span class="text-[#d7c6ff] text-xs">✦</span>
           <span class="text-[#d7c6ff] text-sm font-medium tracking-wide">Transparência Metodológica</span>
           <span class="text-[#d7c6ff] text-xs">✦</span>
         </div>
-        <h1 class="font-cinzel text-3xl sm:text-5xl font-bold text-[#e5e2e1] mb-5 leading-tight">
+        <h1 class="font-cinzel text-[1.75rem] sm:text-5xl font-bold text-[#e5e2e1] mb-5 leading-tight">
           Como Calculamos o<br />
           <span class="bg-gradient-to-r from-[#f2ca50] to-[#d4af37] bg-clip-text text-transparent">
             Score do Seu Nome
           </span>
         </h1>
         <p class="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-          Nosso método combina as regras clássicas da numerologia cabalística com um sistema objetivo de pontuação matemática, avaliando harmonia, tensões e o potencial de desbloqueio do seu campo.
+          Nosso método une as regras clássicas da numerologia cabalística a uma pontuação objetiva. Cada número tem regra, peso e limite claros, e você vê de onde vem cada ponto.
         </p>
       </div>
 
       {/* Content Sections */}
-      <div class="space-y-12 text-[#e5e2e1]">
+      <div class="space-y-6 sm:space-y-10 text-[#e5e2e1]">
 
         {/* 1. Visão Geral */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-4">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">1</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">Visão Geral e Ponto de Partida</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-4">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">1</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Visão Geral e Ponto de Partida</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
             Toda avaliação começa com uma pontuação base de <strong class="text-[#f2ca50]">{cfg.base} pontos</strong>. A partir dessa base inicial, são analisadas tensões estruturais, repetições excessivas ou ausências vibracionais no nome. Cada categoria possui limites específicos para que nenhum fator isolado descaracterize a totalidade do mapa.
           </p>
-          <p class="text-gray-400 leading-relaxed text-sm">
+          <p class="text-gray-400 leading-relaxed text-sm text-left sm:text-justify [text-align-last:left]">
             O resultado final respeita um piso mínimo absoluto de <strong class="text-gray-200">{cfg.piso} pontos</strong>, garantindo que o mapa expresse sempre uma graduação comparativa fiel à sua essência.
           </p>
         </section>
 
         {/* 2. Triângulo da Vida */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-4">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">2</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">Triângulo da Vida vs. Demais Triângulos</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-4">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">2</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Triângulo da Vida vs. Demais Triângulos</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
-            A numerologia cabalística constrói quatro pirâmides numéricas para cada pessoa: <strong>Vida</strong>, <strong>Pessoal</strong>, <strong>Social</strong> e <strong>Destino</strong>. No entanto, o score do nome avalia o impacto direto das letras de nascimento:
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
+            A numerologia cabalística constrói quatro pirâmides numéricas para cada pessoa: <strong>Vida</strong>, <strong>Pessoal</strong>, <strong>Social</strong> e <strong>Destino</strong>. O score do nome avalia o impacto direto das letras. Por isso, na tela do seu resumo você vê o Triângulo da Vida, que é o que entra na nota. Os quatro triângulos completos estão no seu PDF.
           </p>
-          <ul class="space-y-2 text-sm text-gray-300 pl-4 border-l border-[#f2ca50]/20">
+          <ul class="space-y-3 text-sm text-gray-300 leading-relaxed pl-3 sm:pl-4 border-l border-[#f2ca50]/20">
             <li>
               • <strong class="text-white">Triângulo da Vida (Entra no Score):</strong> É a pirâmide pura formada pelas letras do nome. Sequências repetidas de 3 ou mais números idênticos (como 111, 222, até 999) geram um desconto de <strong>-{cfg.sequenciasVida.porCodigoDistinto} pontos</strong> por código distinto presente.
             </li>
@@ -79,12 +79,12 @@ const cfg = SCORE_CONFIG_V3;
         </section>
 
         {/* 3. Alinhamento Expressão x Destino */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-4">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">3</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">Alinhamento Expressão × Destino</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-4">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">3</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Alinhamento Expressão × Destino</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
             O número de <strong>Expressão</strong> (soma de todas as letras do nome) representa como você projeta sua energia no mundo, enquanto o número de <strong>Destino</strong> (soma dos dígitos da data de nascimento) é a sua estrada de vida imutável.
           </p>
           <div class="grid sm:grid-cols-3 gap-4 pt-2">
@@ -107,12 +107,12 @@ const cfg = SCORE_CONFIG_V3;
         </section>
 
         {/* 4. Débitos Kármicos */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-4">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">4</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">Débitos Kármicos do Nome vs. Marca da Sua Data</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-4">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">4</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Débitos Kármicos do Nome vs. Marca da Sua Data</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
             Na tradição cabalística, os números 13, 14, 16 e 19 representam débitos kármicos (aprendizados de responsabilidade, moderação, desapego e liderança generosa). Nosso método separa rigorosamente a origem dessas vibrações:
           </p>
           <div class="space-y-3 pt-2 text-sm">
@@ -132,12 +132,12 @@ const cfg = SCORE_CONFIG_V3;
         </section>
 
         {/* 5. Tendências Ocultas */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-4">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">5</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">Tendências Ocultas (Excessos)</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-4">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">5</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Tendências Ocultas (Excessos)</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
             Ocorrem quando uma determinada vibração numérica (de 1 a 8) aparece repetida quatro ou mais vezes nas letras do seu nome de nascimento. Representa uma qualidade que, por excesso de intensidade, pode gerar padrões compulsivos ou desequilíbrio:
           </p>
           <p class="text-gray-400 text-sm">
@@ -146,12 +146,12 @@ const cfg = SCORE_CONFIG_V3;
         </section>
 
         {/* 6. Lições Kármicas */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-4">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">6</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">Lições Kármicas (Ausências)</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-4">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">6</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Lições Kármicas (Ausências)</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
             Identificam os números de 1 a 8 que não aparecem em nenhuma letra do seu nome de nascimento. Representam virtudes ou recursos que a alma veio desenvolver conscientemente nesta encarnação:
           </p>
           <p class="text-gray-400 text-sm">
@@ -160,16 +160,16 @@ const cfg = SCORE_CONFIG_V3;
         </section>
 
         {/* 7. As 5 Faixas de Nível e Seu Potencial */}
-        <section class="bg-[#181818] rounded-2xl p-6 sm:p-8 border border-white/5 space-y-6">
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">7</span>
-            <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#f2ca50]">As 5 Faixas de Nível e Seu Potencial</h2>
+        <section class="nm-floating-card p-5 sm:p-8 space-y-6">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">7</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">As 5 Faixas de Nível e Seu Potencial</h2>
           </div>
-          <p class="text-gray-300 leading-relaxed text-sm sm:text-base">
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
             A pontuação final resultante (entre 5 e 100) é classificada em cinco níveis oficiais:
           </p>
 
-          <div class="grid sm:grid-cols-5 gap-3 pt-1">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3 pt-1">
             <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center">
               <span class="text-xs font-bold text-emerald-400 block mb-1">N5</span>
               <span class="text-xs text-white font-medium block">Harmonioso</span>
@@ -190,7 +190,7 @@ const cfg = SCORE_CONFIG_V3;
               <span class="text-xs text-white font-medium block">Pede Atenção</span>
               <span class="text-xs text-gray-400 mt-1 block">30 a 49</span>
             </div>
-            <div class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-center">
+            <div class="col-span-2 sm:col-span-1 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-center">
               <span class="text-xs font-bold text-red-400 block mb-1">N1</span>
               <span class="text-xs text-white font-medium block">Em Tensão</span>
               <span class="text-xs text-gray-400 mt-1 block">0 a 29</span>
@@ -203,6 +203,45 @@ const cfg = SCORE_CONFIG_V3;
               O indicador de <strong>Potencial</strong> calcula a maior pontuação teoricamente atingível a partir de variações legítimas do seu próprio nome e sobrenomes de família. Ele aponta até onde seu campo pode chegar após a remoção dos bloqueios do Triângulo da Vida e a harmonização de Expressão e Destino com o Nome Social.
             </p>
           </div>
+        </section>
+
+        {/* 8. Mapa de Alinhamento Vibracional (DEV-265) */}
+        <section class="nm-floating-card p-5 sm:p-8 space-y-5">
+          <div class="flex items-start sm:items-center gap-3">
+            <span class="w-8 h-8 shrink-0 rounded-full bg-[#bea5ff]/10 border border-[#bea5ff]/30 flex items-center justify-center text-[#bea5ff] font-cinzel font-bold text-sm">8</span>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#bea5ff] leading-snug">Mapa de Alinhamento Vibracional</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
+            O score mostra a força do nome. O Mapa mostra para onde essa força aponta no seu momento. Ele cruza os números do nome com o que você respondeu no início: a área em que quer foco e onde vai usar a assinatura.
+          </p>
+          <p class="text-gray-400 leading-relaxed text-sm text-left sm:text-justify [text-align-last:left]">
+            Cada ponta vai de 0% no centro a 100% no vértice. Quanto mais perto da ponta, mais aquele aspecto está alinhado. Ao escolher uma sugestão, o desenho do nome harmonizado aparece por cima do nome de nascimento, na cor do nível da nota, e cada ponta mostra quanto subiu ou desceu.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div class="p-4 rounded-xl bg-white/[0.03]">
+              <h3 class="font-semibold text-[#f2ca50] mb-1">Foco do Momento</h3>
+              <p class="text-gray-400 leading-relaxed">Afinidade do número de Expressão com a área que você escolheu. Bloqueios do Triângulo da Vida ligados a esse tema reduzem a ponta.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/[0.03]">
+              <h3 class="font-semibold text-[#f2ca50] mb-1">Fluidez</h3>
+              <p class="text-gray-400 leading-relaxed">Chega a 100% quando o Triângulo da Vida não tem sequências repetidas. Cada bloqueio ativo reduz o fluxo.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/[0.03]">
+              <h3 class="font-semibold text-[#f2ca50] mb-1">Sintonia de Destino</h3>
+              <p class="text-gray-400 leading-relaxed">Relação formal entre Expressão e Destino: harmônica, neutra ou Tensão Vibracional. A Missão pode reforçar a sintonia.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/[0.03]">
+              <h3 class="font-semibold text-[#f2ca50] mb-1">Magnetismo Social</h3>
+              <p class="text-gray-400 leading-relaxed">Reflexos do Triângulo Social somados à vibração da Impressão no canal em que você vai assinar.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/[0.03] sm:col-span-2">
+              <h3 class="font-semibold text-[#f2ca50] mb-1">Equilíbrio da Alma</h3>
+              <p class="text-gray-400 leading-relaxed">Ressonância da Motivação (as vogais do nome) com a Expressão, somada aos reflexos do Triângulo Pessoal. Metade de cada.</p>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed">
+            O Mapa não muda o score. Ele é uma leitura complementar para ajudar você a escolher a assinatura que mais combina com o seu momento.
+          </p>
         </section>
 
         {/* Aviso Legal */}

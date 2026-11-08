@@ -114,26 +114,44 @@ export function SummaryDrawer({
       className={panelClass}
       style={{
         top: 'var(--nm-chat-mobile-header-h, 52px)',
-        bottom: 'var(--nm-chat-dock-clearance, var(--nm-mobile-dock-stacked-clearance))',
+        bottom: 0,
       }}
     >
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-3 py-2.5">
-        <h2 id="mobile-summary-title" className="nm-h3 text-[#D4AF37] truncate pl-1">
-          Resumo
-        </h2>
+      {/* Header bar mobile alinhado com o design system (PAINEL DE LEITURA + botão de fechar) */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3 bg-[#131313]/95 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span
+            className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
+            aria-hidden="true"
+          />
+          <h2
+            id="mobile-summary-title"
+            className="font-cinzel text-base sm:text-lg font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate"
+          >
+            Painel de leitura
+          </h2>
+        </div>
         <button
           ref={closeBtnRef}
           type="button"
           onClick={() => onClose('x')}
-          aria-label="Fechar resumo e voltar ao chat"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#76746a] transition-colors hover:bg-white/[0.05] hover:text-[#e5e2e1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]/50 focus-visible:outline-offset-2"
+          aria-label="Fechar painel de leitura e voltar ao chat"
+          title="Fechar painel de leitura"
+          className="w-9 h-9 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-colors duration-150 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70 shrink-0"
         >
-          <IconX className="h-[18px] w-[18px]" />
+          <IconX className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 chat-scroll-pane overscroll-contain px-3 py-3 pb-4">
-        <ChatSidebarSection
+      {/* Container de scroll fullscreen cobrindo 100% da viewport, com dock flutuando por cima e padding inferior calibrado */}
+      <div
+        className="min-h-0 flex-1 chat-scroll-pane overscroll-contain px-3.5 sm:px-6 py-4"
+        style={{
+          paddingBottom: 'calc(var(--nm-chat-dock-clearance, 76px) + 2rem)',
+        }}
+      >
+        <div className="w-full max-w-[580px] mx-auto flex flex-col gap-4">
+          <ChatSidebarSection
           birthPanel={birthPanel}
           harmonizedPanel={harmonizedPanel}
           showScoreCard={showScoreCard}
@@ -153,6 +171,7 @@ export function SummaryDrawer({
           readingSummaryLoading={readingSummaryLoading}
           showReadingSummary={showReadingSummary}
         />
+        </div>
       </div>
     </div>
   );
