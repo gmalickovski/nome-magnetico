@@ -71,6 +71,8 @@ describe('processTestCheckoutSuccess', () => {
     assert.equal(notifyCalls[0]?.payload.productType, 'nome_social');
     assert.match(String(notifyCalls[0]?.payload.accessUrl), /\/app\/analise\/nome-social$/);
     assert.equal(notifyCalls[0]?.payload.amount, 0);
+    assert.equal(notifyCalls[0]?.payload.paymentProvider, 'test');
+    assert.equal(notifyCalls[0]?.payload.skipAdminSlack, true);
     assert.equal(notifyCalls.some((c) => c.event === 'admin.new_payment'), false);
   });
 
