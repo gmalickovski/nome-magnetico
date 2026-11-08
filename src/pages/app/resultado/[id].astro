@@ -17,7 +17,7 @@ import {
   getRadarAxisLabels,
   motorRadarToRecord,
 } from '../../../shared/interactive-engine/motor-radar';
-import type { AreaFoco } from '../../../shared/interactive-engine/questionnaire-adaptive';
+import type { AreaFocoNomeMagnetico } from '../../../shared/interactive-engine/copy';
 import NomeAtualResultado from '../../../frontend/components/app/resultado/NomeAtualResultado.astro';
 import NomeBebResultado from '../../../frontend/components/app/resultado/NomeBebResultado.astro';
 import NomeEmpresaResultado from '../../../frontend/components/app/resultado/NomeEmpresaResultado.astro';
@@ -239,7 +239,7 @@ const socialAreaFoco = (
     : typeof rankingSocial?.area_foco === 'string'
       ? rankingSocial.area_foco
       : null
-) as AreaFoco | null;
+) as AreaFocoNomeMagnetico | null;
 
 const socialRadarContext = {
   areaFoco: socialAreaFoco,
