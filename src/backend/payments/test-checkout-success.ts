@@ -55,6 +55,8 @@ export async function processTestCheckoutSuccess(params: {
     productType: params.productType,
     productName: PRODUCT_NAMES[params.productType],
     amount: params.amountPaid ?? 0,
+    paymentProvider: 'test',
+    skipAdminSlack: true,
   });
 
   if (!paymentConfirmedOk) {

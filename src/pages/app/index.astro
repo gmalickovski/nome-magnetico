@@ -678,7 +678,7 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
       </div>
     )}
 
-    {showOnboardingModal && (
+    {showOnboardingModal && !showRefundButton && (
       <FreeAnalysisOnboardingChat client:load />
     )}
 
