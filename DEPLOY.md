@@ -4,6 +4,10 @@ Este é o guia completo para inicializar a VPS (Ubuntu/Debian) e manter o deploy
 
 ---
 
+## Gate obrigatório: banco antes de deploy
+
+Antes de qualquer deploy, siga a [validação de migrations TESTE → produção](docs/devops/dev253-database-predeploy-validation.md#gate-obrigatório-antes-de-qualquer-deploy). SQL deve passar no TESTE, ser promovido somente com autorização e ter catálogo/advisors conferidos em produção antes da tag. Não rode db push às cegas: o histórico atual tem versões heterogêneas. Testes, Astro check ou build com erro bloqueiam o deploy.
+
 ## Passo 1: Preparar a VPS pela Primeira Vez
 
 Conecte-se na sua VPS via SSH como root:

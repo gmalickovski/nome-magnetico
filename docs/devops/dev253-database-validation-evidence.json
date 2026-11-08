@@ -1,0 +1,453 @@
+{
+  "date": "2026-11-08",
+  "baseCommit": "251a2c8e912c12ab4ac63f30f431e3509e095ef3",
+  "projects": [
+    {
+      "name": "produção",
+      "id": "bhxneaeuhybtucmbmpvg"
+    },
+    {
+      "name": "teste",
+      "id": "kbqrkkltjvmxomrgsrbc"
+    }
+  ],
+  "before": {
+    "productionMigrationCount": 78,
+    "testMigrationCount": 65,
+    "differences": {
+      "grants": {
+        "onlyProduction": [
+          "suporte.ticket_messages.anon.SELECT",
+          "suporte.ticket_messages.authenticated.INSERT",
+          "suporte.ticket_messages.authenticated.SELECT",
+          "suporte.ticket_messages.authenticated.UPDATE",
+          "suporte.ticket_messages.service_role.DELETE",
+          "suporte.ticket_messages.service_role.INSERT",
+          "suporte.ticket_messages.service_role.REFERENCES",
+          "suporte.ticket_messages.service_role.SELECT",
+          "suporte.ticket_messages.service_role.TRIGGER",
+          "suporte.ticket_messages.service_role.TRUNCATE",
+          "suporte.ticket_messages.service_role.UPDATE",
+          "suporte.tickets.anon.SELECT",
+          "suporte.tickets.authenticated.INSERT",
+          "suporte.tickets.authenticated.SELECT",
+          "suporte.tickets.authenticated.UPDATE",
+          "suporte.tickets.service_role.DELETE",
+          "suporte.tickets.service_role.INSERT",
+          "suporte.tickets.service_role.REFERENCES",
+          "suporte.tickets.service_role.SELECT",
+          "suporte.tickets.service_role.TRIGGER",
+          "suporte.tickets.service_role.TRUNCATE",
+          "suporte.tickets.service_role.UPDATE"
+        ],
+        "onlyTest": [
+          "public.chat_checkout_choices.anon.DELETE",
+          "public.chat_checkout_choices.anon.INSERT",
+          "public.chat_checkout_choices.anon.REFERENCES",
+          "public.chat_checkout_choices.anon.SELECT",
+          "public.chat_checkout_choices.anon.TRIGGER",
+          "public.chat_checkout_choices.anon.TRUNCATE",
+          "public.chat_checkout_choices.anon.UPDATE",
+          "public.chat_checkout_choices.authenticated.DELETE",
+          "public.chat_checkout_choices.authenticated.INSERT",
+          "public.chat_checkout_choices.authenticated.REFERENCES",
+          "public.chat_checkout_choices.authenticated.SELECT",
+          "public.chat_checkout_choices.authenticated.TRIGGER",
+          "public.chat_checkout_choices.authenticated.TRUNCATE",
+          "public.chat_checkout_choices.authenticated.UPDATE",
+          "public.chat_checkout_choices.service_role.DELETE",
+          "public.chat_checkout_choices.service_role.INSERT",
+          "public.chat_checkout_choices.service_role.REFERENCES",
+          "public.chat_checkout_choices.service_role.SELECT",
+          "public.chat_checkout_choices.service_role.TRIGGER",
+          "public.chat_checkout_choices.service_role.TRUNCATE",
+          "public.chat_checkout_choices.service_role.UPDATE",
+          "public.leads.anon.DELETE",
+          "public.leads.anon.INSERT",
+          "public.leads.anon.REFERENCES",
+          "public.leads.anon.SELECT",
+          "public.leads.anon.TRIGGER",
+          "public.leads.anon.TRUNCATE",
+          "public.leads.anon.UPDATE",
+          "public.leads.authenticated.DELETE",
+          "public.leads.authenticated.INSERT",
+          "public.leads.authenticated.REFERENCES",
+          "public.leads.authenticated.SELECT",
+          "public.leads.authenticated.TRIGGER",
+          "public.leads.authenticated.TRUNCATE",
+          "public.leads.authenticated.UPDATE",
+          "public.leads.service_role.DELETE",
+          "public.leads.service_role.INSERT",
+          "public.leads.service_role.REFERENCES",
+          "public.leads.service_role.SELECT",
+          "public.leads.service_role.TRIGGER",
+          "public.leads.service_role.TRUNCATE",
+          "public.leads.service_role.UPDATE",
+          "public.public_analysis_rate_limits.anon.DELETE",
+          "public.public_analysis_rate_limits.anon.INSERT",
+          "public.public_analysis_rate_limits.anon.REFERENCES",
+          "public.public_analysis_rate_limits.anon.SELECT",
+          "public.public_analysis_rate_limits.anon.TRIGGER",
+          "public.public_analysis_rate_limits.anon.TRUNCATE",
+          "public.public_analysis_rate_limits.anon.UPDATE",
+          "public.public_analysis_rate_limits.authenticated.DELETE",
+          "public.public_analysis_rate_limits.authenticated.INSERT",
+          "public.public_analysis_rate_limits.authenticated.REFERENCES",
+          "public.public_analysis_rate_limits.authenticated.SELECT",
+          "public.public_analysis_rate_limits.authenticated.TRIGGER",
+          "public.public_analysis_rate_limits.authenticated.TRUNCATE",
+          "public.public_analysis_rate_limits.authenticated.UPDATE"
+        ],
+        "changed": []
+      },
+      "columns": {
+        "onlyProduction": [
+          "suporte.ticket_messages.id",
+          "suporte.ticket_messages.ticket_id",
+          "suporte.ticket_messages.direction",
+          "suporte.ticket_messages.subject",
+          "suporte.ticket_messages.body",
+          "suporte.ticket_messages.from_email",
+          "suporte.ticket_messages.to_email",
+          "suporte.ticket_messages.gmail_message_id",
+          "suporte.ticket_messages.created_at",
+          "suporte.tickets.id",
+          "suporte.tickets.ticket_number",
+          "suporte.tickets.status",
+          "suporte.tickets.priority",
+          "suporte.tickets.subject",
+          "suporte.tickets.customer_email",
+          "suporte.tickets.customer_name",
+          "suporte.tickets.source",
+          "suporte.tickets.gmail_message_id",
+          "suporte.tickets.gmail_thread_id",
+          "suporte.tickets.chat_notification_sent",
+          "suporte.tickets.chat_space_name",
+          "suporte.tickets.assigned_to",
+          "suporte.tickets.resolved_at",
+          "suporte.tickets.created_at",
+          "suporte.tickets.updated_at"
+        ],
+        "onlyTest": [
+          "infra_dev262.cart_recovery_sent.dedupe_key",
+          "infra_dev262.cart_recovery_sent.user_id",
+          "infra_dev262.cart_recovery_sent.product_type",
+          "infra_dev262.cart_recovery_sent.sent_at",
+          "infra_dev262.cart_recovery_sent.note",
+          "public.chat_checkout_choices.id",
+          "public.chat_checkout_choices.user_id",
+          "public.chat_checkout_choices.analysis_id",
+          "public.chat_checkout_choices.chosen_signature",
+          "public.chat_checkout_choices.source",
+          "public.chat_checkout_choices.stripe_session_id",
+          "public.chat_checkout_choices.pdf_generated_at",
+          "public.chat_checkout_choices.created_at",
+          "public.leads.id",
+          "public.leads.email",
+          "public.leads.nome",
+          "public.leads.assunto",
+          "public.leads.origem",
+          "public.leads.created_at",
+          "public.leads.last_contact_at"
+        ],
+        "changed": []
+      },
+      "indexes": {
+        "onlyProduction": [
+          "public.blog_posts.idx_blog_posts_category",
+          "public.blog_posts.idx_blog_posts_cover_published",
+          "public.blog_posts.idx_blog_posts_featured",
+          "public.client_messages.client_messages_scheduled_idx",
+          "public.support_tickets.support_tickets_gmail_message_id_idx",
+          "suporte.ticket_messages.ticket_messages_gmail_message_id_key",
+          "suporte.ticket_messages.ticket_messages_pkey",
+          "suporte.ticket_messages.ticket_messages_ticket_id_idx",
+          "suporte.tickets.tickets_created_at_idx",
+          "suporte.tickets.tickets_customer_email_idx",
+          "suporte.tickets.tickets_gmail_message_id_key",
+          "suporte.tickets.tickets_gmail_thread_id_idx",
+          "suporte.tickets.tickets_pkey",
+          "suporte.tickets.tickets_status_idx"
+        ],
+        "onlyTest": [
+          "infra_dev262.cart_recovery_sent.cart_recovery_sent_pkey",
+          "public.chat_checkout_choices.chat_checkout_choices_pkey",
+          "public.chat_checkout_choices.chat_checkout_choices_stripe_session_id_key",
+          "public.chat_checkout_choices.idx_chat_checkout_choices_analysis_id",
+          "public.chat_checkout_choices.idx_chat_checkout_choices_user_id",
+          "public.leads.leads_email_idx",
+          "public.leads.leads_email_key",
+          "public.leads.leads_pkey"
+        ],
+        "changed": []
+      },
+      "policies": {
+        "onlyProduction": [
+          "suporte.ticket_messages.no_public_access_ticket_messages",
+          "suporte.tickets.no_public_access_tickets"
+        ],
+        "onlyTest": [
+          "public.chat_checkout_choices.own rows read",
+          "public.leads.leads_service_all"
+        ],
+        "changed": []
+      },
+      "functions": {
+        "onlyProduction": [
+          "public.match_documents.query_embedding vector, match_count integer, filter jsonb",
+          "public.set_ticket_number.",
+          "suporte.set_updated_at."
+        ],
+        "onlyTest": [],
+        "changed": [
+          "client_mcp.verify_client_access.p_token_hash text, p_cost integer",
+          "mcp_admin.get_funil_metrics.periodo text",
+          "public.check_rate_limit_ip.p_ip text, p_limit integer, p_window_hours integer",
+          "public.ensure_profile.p_user_id uuid, p_email text, p_nome text",
+          "public.faq_embeddings_set_faq_item_id.",
+          "public.match_faq_embeddings.query_embedding vector, match_count integer, filter jsonb"
+        ]
+      },
+      "relations": {
+        "onlyProduction": [
+          "suporte.ticket_messages",
+          "suporte.tickets"
+        ],
+        "onlyTest": [
+          "infra_dev262.cart_recovery_sent",
+          "public.chat_checkout_choices",
+          "public.leads"
+        ],
+        "changed": [
+          "public.crm_funil_leads",
+          "public.user_status"
+        ]
+      },
+      "constraints": {
+        "onlyProduction": [
+          "public.baby_name_inputs.baby_name_inputs_genero_preferido_check",
+          "public.client_messages.client_messages_template_id_fkey",
+          "suporte.ticket_messages.ticket_messages_gmail_message_id_key",
+          "suporte.ticket_messages.ticket_messages_pkey",
+          "suporte.ticket_messages.ticket_messages_ticket_id_fkey",
+          "suporte.tickets.tickets_gmail_message_id_key",
+          "suporte.tickets.tickets_pkey"
+        ],
+        "onlyTest": [
+          "infra_dev262.cart_recovery_sent.cart_recovery_sent_pkey",
+          "public.chat_checkout_choices.chat_checkout_choices_analysis_id_fkey",
+          "public.chat_checkout_choices.chat_checkout_choices_chosen_signature_check",
+          "public.chat_checkout_choices.chat_checkout_choices_pkey",
+          "public.chat_checkout_choices.chat_checkout_choices_source_check",
+          "public.chat_checkout_choices.chat_checkout_choices_stripe_session_id_key",
+          "public.chat_checkout_choices.chat_checkout_choices_user_id_fkey",
+          "public.leads.leads_email_key",
+          "public.leads.leads_pkey"
+        ],
+        "changed": [
+          "public.client_messages.client_messages_status_check",
+          "public.client_messages.client_messages_target_type_check"
+        ]
+      },
+      "function_grants": {
+        "onlyProduction": [
+          "public.match_documents.query_embedding vector, match_count integer, filter jsonb.PUBLIC.EXECUTE",
+          "public.match_documents.query_embedding vector, match_count integer, filter jsonb.anon.EXECUTE",
+          "public.match_documents.query_embedding vector, match_count integer, filter jsonb.authenticated.EXECUTE",
+          "public.match_documents.query_embedding vector, match_count integer, filter jsonb.service_role.EXECUTE",
+          "public.set_ticket_number..PUBLIC.EXECUTE",
+          "public.set_ticket_number..anon.EXECUTE",
+          "public.set_ticket_number..authenticated.EXECUTE",
+          "public.set_ticket_number..service_role.EXECUTE",
+          "suporte.set_updated_at..PUBLIC.EXECUTE"
+        ],
+        "onlyTest": [],
+        "changed": []
+      }
+    }
+  },
+  "after": {
+    "productionMigrationCount": 80,
+    "testMigrationCount": 66,
+    "productionChecks": {
+      "chat_rls": true,
+      "chat_table": true,
+      "service_crud": true,
+      "anon_no_access": true,
+      "ticket_trigger": true,
+      "ticket_sequence": true,
+      "expected_indexes": true,
+      "rate_limit_table": true,
+      "public_tables_rls": true,
+      "fk_and_check_parity": true,
+      "user_status_invoker": true,
+      "private_admin_function": true,
+      "authenticated_select_only": true,
+      "service_no_ddl_privileges": true
+    },
+    "testChecks": {
+      "chat_rls": true,
+      "chat_table": true,
+      "service_crud": true,
+      "anon_no_access": true,
+      "ticket_trigger": true,
+      "ticket_sequence": true,
+      "expected_indexes": true,
+      "rate_limit_table": true,
+      "public_tables_rls": true,
+      "fk_and_check_parity": true,
+      "user_status_invoker": true,
+      "private_admin_function": true,
+      "authenticated_select_only": true,
+      "service_no_ddl_privileges": true
+    },
+    "localCreatedTablesMissing": {
+      "production": [
+        "public.leads"
+      ],
+      "test": []
+    },
+    "applicationValidation": {
+      "tests": {
+        "passed": 467,
+        "total": 468,
+        "preexistingFailure": "motor.test.ts:106 contextual radar label"
+      },
+      "astroCheck": {
+        "errors": 1,
+        "preexistingFailure": "resultado/[id].astro:20 AreaFoco not exported"
+      },
+      "build": "passed",
+      "deploy": "not executed; blocked until code checks pass"
+    }
+  },
+  "localMigrationFiles": [
+    "001_nome_magnetico.sql",
+    "002_auth_fix.sql",
+    "003_user_profile_enrich.sql",
+    "004_tag_app_users.sql",
+    "005_fix_rls_recursion.sql",
+    "005_rename_product_type.sql",
+    "006_add_gender_to_profiles.sql",
+    "007_add_debitos_carmicos.sql",
+    "008_add_score_to_analyses.sql",
+    "009_update_baby_inputs.sql",
+    "010_expand_analyses.sql",
+    "011_add_birth_data_to_profiles.sql",
+    "012_support_tickets_update.sql",
+    "013_ai_config_unique_task.sql",
+    "013_faq_chatwoot.sql",
+    "014_faq_cleanup.sql",
+    "014_fix_numerology_fields.sql",
+    "015_faq_content.sql",
+    "016_faq_rag_embeddings.sql",
+    "017_leads.sql",
+    "018_remove_saas_from_leads.sql",
+    "019_social_name_inputs.sql",
+    "020_test_users.sql",
+    "021_blog_glossary.sql",
+    "022_free_analysis.sql",
+    "023_refund_tracking.sql",
+    "024_payment_provider.sql",
+    "025_client_messages.sql",
+    "026_client_message_rendered_fields.sql",
+    "027_client_messages_include_admins.sql",
+    "028_profile_email_verified_at.sql",
+    "029_lgpd_retention_and_cascades.sql",
+    "030_add_is_analyst_generated_to_analyses.sql",
+    "031_free_analyses_leads.sql",
+    "032_public_analysis_rate_limits.sql",
+    "033_support_faq_readonly.sql",
+    "034_update_groq_models.sql",
+    "035_ops_promotions_access_codes.sql",
+    "036_promotions_access_codes_parity.sql",
+    "037_analyses_marketing_opt_in.sql",
+    "038_access_renewal_lifecycle.sql",
+    "039_remove_legacy_support_sync.sql",
+    "040_product_prices.sql",
+    "041_analyses_score_v3.sql",
+    "042_analyses_recalculation_v3.sql",
+    "043_product_votes_and_social_form_v3.sql",
+    "044_mcp_admin.sql",
+    "045_mcp_admin_fase2.sql",
+    "046_client_mcp.sql",
+    "047_fk_indexes.sql",
+    "048_drop_duplicate_glossary_indexes.sql",
+    "049_rls_initplan.sql",
+    "050_rls_consolidate_permissive.sql",
+    "051_security_advisors_fixes.sql",
+    "052_free_analyses_leads_pdf_path.sql",
+    "053_free_analyses_leads_drop_pdf_base64.sql",
+    "054_security_advisors_residual.sql",
+    "055_security_advisors_dev223.sql",
+    "056_payment_provider_test.sql",
+    "057_chat_checkout_choice.sql",
+    "20261108191009_dev253_predeploy_database_parity.sql"
+  ],
+  "applied": {
+    "test": [
+      {
+        "version": "20261108191311",
+        "name": "dev253_predeploy_database_parity"
+      }
+    ],
+    "production": [
+      {
+        "version": "20261108192153",
+        "name": "057_chat_checkout_choice"
+      },
+      {
+        "version": "20261108192200",
+        "name": "dev253_predeploy_database_parity"
+      }
+    ]
+  },
+  "notes": [
+    "Nenhum dado de producao copiado.",
+    "Fixtures sinteticas somente TESTE com rollback e contagens finais zero.",
+    "Historico nao foi reescrito. Nomes/timestamps historicos diferem entre ambientes.",
+    "Objetos legados e infra_dev262 nao promovidos automaticamente.",
+    "Aviso auth_leaked_password_protection permanece nos dois projetos."
+  ],
+  "localDdlInventory": {
+    "files": 61,
+    "bytes": 211479,
+    "createdTables": [
+      "client_mcp.client_tokens",
+      "client_mcp.mcp_client_audit",
+      "mcp_admin.mcp_audit",
+      "public.access_code_uses",
+      "public.access_codes",
+      "public.access_lifecycle_sends",
+      "public.ai_config",
+      "public.ai_usage",
+      "public.analyses",
+      "public.baby_name_inputs",
+      "public.blog_posts",
+      "public.chat_checkout_choices",
+      "public.client_message_deliveries",
+      "public.client_messages",
+      "public.company_name_inputs",
+      "public.faq_categories",
+      "public.faq_embeddings",
+      "public.faq_items",
+      "public.free_analyses_leads",
+      "public.glossary_terms",
+      "public.leads",
+      "public.magnetic_names",
+      "public.product_price_history",
+      "public.product_prices",
+      "public.product_votes",
+      "public.profiles",
+      "public.promotions",
+      "public.public_analysis_rate_limits",
+      "public.social_name_inputs",
+      "public.subscriptions",
+      "public.support_contact_rate_limits",
+      "public.support_messages",
+      "public.support_tickets",
+      "public.trial_redemptions"
+    ],
+    "dropReferences": []
+  }
+}
