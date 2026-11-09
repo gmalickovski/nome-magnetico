@@ -22,7 +22,7 @@ it('registra uma única utilização all para cobertura total', async () => {
 it('registra subset histórico sem concatenar product_type', async () => {
   row.product_types = ['nome_bebe', 'nome_empresa'];
   await recordAccessTrialUse({ trialCode: 'TESTE', productType: 'nome_bebe,nome_empresa', userId: 'user-synthetic' });
-  assert.deepEqual(uses.map(use => use.product_type), ['nome_bebe', 'nome_empresa']);
+  assert.deepEqual(uses.map(use => use.product_type), ['all']);
 });
 it('usa produtos vendáveis quando a configuração está vazia', async () => {
   await recordAccessTrialUse({ trialCode: 'TESTE', userId: 'user-synthetic' });

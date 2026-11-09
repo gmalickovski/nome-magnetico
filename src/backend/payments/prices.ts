@@ -330,18 +330,15 @@ export async function recordAccessTrialUse(params: {
       !codeAppliesToProduct(row, product))) {
       throw new Error('Produto inválido para o trial');
     }
-    // Uma linha para cobertura total; subsets históricos ficam em linhas válidas.
-    const useProducts = products.length > 1 && SELLABLE_PRODUCT_TYPES.every((product) => products.includes(product))
-      ? ['all'] : products;
-    for (const productType of useProducts) {
-      await insertAccessCodeUse({
-        codeId: row.id,
-        userId: params.userId,
-        userEmail: params.userEmail,
-        productType,
-        source: 'redeem',
-      });
-    }
+    // O índice único permite um uso por código + usuário, inclusive subsets.
+    // 'all' agrega o resgate; assinaturas guardam o escopo efetivamente concedido.
+    await insertAccessCodeUse({
+      codeId: row.id,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      productType: products.length > 1 ? 'all' : products[0],
+      source: 'redeem',
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`Falha ao registrar uso do trial: ${message}`);
