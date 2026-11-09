@@ -241,7 +241,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 {hasTriangulos && (
   <section class="mt-16 mb-12">
     <div class="mb-3 px-1">
-      <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Mapa de Triângulos</p>
+      <p class="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">Mapa de Triângulos</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Os 4 Triângulos Numerológicos</h2>
     </div>
 
@@ -378,7 +378,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 {debitosRaw !== null && (
   <section class="mt-16 mb-12">
     <div class="mb-4 px-1">
-      <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">O Peso do Passado</p>
+      <p class="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">O Peso do Passado</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Débitos Kármicos</h2>
     </div>
     <KarmicDebts client:load debitos={debitosRaw as any} nomeCompleto={nomeExibido} />
@@ -407,7 +407,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 {licoesRaw !== null && (
   <section class="mt-16 mb-12">
     <div class="mb-4 px-1">
-      <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Lacunas Energéticas</p>
+      <p class="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">Lacunas Energéticas</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Lições Kármicas</h2>
     </div>
     <KarmicLessons client:load licoes={licoesRaw as any} nomeCompleto={nomeExibido} showSolution={false} />
@@ -418,7 +418,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 {(tendenciasRaw !== null || (frequenciasRaw && Object.keys(frequenciasRaw).length > 0)) && (
   <section class="mt-16 mb-12">
     <div class="mb-4 px-1">
-      <p class="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-2">Frequências Numéricas</p>
+      <p class="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">Frequências Numéricas</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Tendências Ocultas</h2>
     </div>
     <HiddenTendencies

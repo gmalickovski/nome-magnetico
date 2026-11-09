@@ -52,7 +52,27 @@ interface Props {
   isFreeAnalysis?: boolean;
   arcanos?: Record<number, ArcanoInfo>;
   descricaoDetalhada?: Record<string, string>;
+  /** DEV-265: exibe só o Triângulo da Vida (resumo web). Os 4 triângulos seguem no PDF. */
+  onlyVida?: boolean;
 }
+
+/** Ícone autoral do Triângulo da Vida (mesmo traço dos ícones da landing). */
+function TrianguloVidaIcon() {
+  return (
+    <svg viewBox="0 0 72 52" className="h-11 w-14 shrink-0" fill="none" role="img" aria-label="Triângulo da Vida">
+      <path d="M36 7 L56 43 L16 43 Z" stroke="#f2ca50" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M24 31h24M29 22h14" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.7" />
+      <circle cx="36" cy="37" r="2.5" fill="#bea5ff" />
+    </svg>
+  );
+}
+
+const LEGENDA_VIDA = [
+  { label: 'Valores das letras', stroke: '#D4AF37', bg: 'rgba(212,175,55,0.25)' },
+  { label: 'Reduções intermediárias', stroke: '#9CA3AF', bg: 'rgba(156,163,175,0.2)' },
+  { label: 'Arcano Regente', stroke: '#bea5ff', bg: 'rgba(190,165,255,0.25)' },
+  { label: 'Bloqueio energético', stroke: '#ef4444', bg: 'rgba(239,68,68,0.25)' },
+] as const;
 
 const TIPO_LABEL: Record<string, { label: string; descricao: string; emoji: string }> = {
   vida:    { label: 'Triângulo da Vida',    descricao: 'Aspectos gerais da vida e padrões de existência',   emoji: '🔺' },
@@ -271,12 +291,12 @@ function TrianguloInfo({
             <span className="text-sm font-medium text-purple-200">{arcanoInfo.palavraChave}</span>
           </div>
           <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1.5 font-medium">Vibração Dominante</p>
-          <p className="text-sm text-gray-300 leading-relaxed mb-4">
+          <p className="nm-card-text mb-4">
             {ARCANO_RESUMO[arcanoInfo.numero]?.vibracao ?? arcanoInfo.descricao}
           </p>
           <div className="rounded-lg bg-purple-900/30 border border-purple-500/20 p-3">
             <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1.5 font-medium">Desafio a Integrar</p>
-            <p className="text-sm text-purple-200 italic leading-relaxed">
+            <p className="nm-card-text !text-purple-200 italic">
               {ARCANO_RESUMO[arcanoInfo.numero]?.desafio ?? arcanoInfo.desafio}
             </p>
           </div>
@@ -316,7 +336,7 @@ function TrianguloInfo({
               <p className="text-xs text-gray-400/80 italic mb-3">
                 Duração de cada ciclo: ~{(90 / triangulo.arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos
               </p>
-              <p className="text-sm text-gray-300 leading-relaxed mb-4 text-justify">
+              <p className="nm-card-text mb-4">
                 Os Arcanos de Passagem representam o mapa do tempo e a jornada evolutiva ao longo de toda a sua existência. Cada círculo abaixo corresponde a um ciclo vibracional de aproximadamente {(90 / triangulo.arcanosDePassagem.length).toFixed(1).replace('.', ',')} anos. Esta ordem cronológica descreve as energias que governaram o seu passado (em cinza), o portal vibracional ativo que você está atravessando no seu presente (em roxo) e as sementes do destino que florescerão no seu futuro (em dourado).
               </p>
 
@@ -451,7 +471,7 @@ function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloquei
               displayDesc = displayDesc.split('O antídoto é')[0].trim();
             }
             return (
-              <p className="text-gray-300 text-sm leading-relaxed pt-3">{displayDesc}</p>
+              <p className="nm-card-text pt-3">{displayDesc}</p>
             );
           })()}
         </div>
@@ -463,7 +483,7 @@ function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloquei
 // ─────────────────────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────────────────────
-export default function TriangleVisualization({ vida, pessoal, social, destino, bloqueios, nome, productType, isFreeAnalysis, arcanos, descricaoDetalhada }: Props) {
+export default function TriangleVisualization({ vida, pessoal, social, destino, bloqueios, nome, productType, isFreeAnalysis, arcanos, descricaoDetalhada, onlyVida = false }: Props) {
   const tabs = ['vida', 'pessoal', 'social', 'destino'] as const;
   const [aba, setAba] = useState<typeof tabs[number]>('vida');
 
@@ -478,6 +498,47 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
   };
 
   const isLocked = isFreeAnalysis && aba !== 'vida';
+
+  if (onlyVida) {
+    const bloqueiosVida = bloqueios.filter(b => b.triangulos?.includes('vida'));
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-5 flex items-start gap-3 sm:gap-4">
+          <TrianguloVidaIcon />
+          <div className="min-w-0 space-y-2">
+            <span className="inline-flex items-center rounded-full bg-[#D4AF37]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#D4AF37] ring-1 ring-[#D4AF37]/25">
+              Entra no cálculo do Score Cabalístico
+            </span>
+            <p className="nm-card-text">
+              {descricaoDetalhada?.vida ?? getDescricao('vida', productType)}
+            </p>
+            <p className="text-xs text-gray-500 leading-relaxed text-left sm:text-justify [text-align-last:left]">
+              Os triângulos Pessoal, Social e do Destino estão no seu PDF completo.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl flex justify-center">
+          <TrianguloSVG triangulo={vida} nome={nome} />
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2.5 px-2 text-[13px]">
+          {LEGENDA_VIDA.map(item => (
+            <span key={item.label} className="inline-flex items-center gap-2 min-w-0">
+              <span
+                className="inline-block w-3 h-3 rounded-full shrink-0"
+                style={{ borderColor: item.stroke, borderWidth: 1.5, borderStyle: 'solid', background: item.bg }}
+                aria-hidden="true"
+              />
+              <span className="text-[#e5e2e1] font-medium">{item.label}</span>
+            </span>
+          ))}
+        </div>
+
+        <TrianguloInfo triangulo={vida} arcanos={arcanos} bloqueiosFiltrados={bloqueiosVida} abaAtiva="vida" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -542,7 +603,7 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="nm-card-text">
           {descricaoDetalhada?.[aba] ?? getDescricao(aba, productType)}
         </p>
       </div>

@@ -33,7 +33,7 @@ function DebitoCard({ debito }: { debito: DebitoCarmico }) {
         : 'border-purple-500/30 bg-purple-500/10'
     }`}>
       <div className="w-full text-left p-4 flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold font-mono shrink-0 border ${
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border ${
           isFixo
             ? 'bg-amber-500/20 border-amber-500/30 text-amber-300'
             : 'bg-purple-500/20 border-purple-500/30 text-purple-300'
@@ -60,15 +60,15 @@ function DebitoCard({ debito }: { debito: DebitoCarmico }) {
       <div className={`px-4 pb-4 space-y-4 border-t bg-opacity-5 ${
         isFixo ? 'border-amber-500/10 bg-amber-500/5' : 'border-purple-500/10 bg-purple-500/5'
       }`}>
-        <p className="text-gray-300 text-sm leading-relaxed pt-4 break-words">
+        <p className="nm-card-text pt-4 break-words">
           {debito.descricao}
         </p>
         {isFixo ? (
-          <p className="text-xs text-amber-400/60 italic border-t border-amber-500/10 pt-3">
+          <p className="text-xs text-amber-400/80 italic border-t border-amber-500/10 pt-3 text-left sm:text-justify [text-align-last:left]">
             Este débito está vinculado à data de nascimento e persiste independentemente do nome utilizado. Trabalhe-o com consciência e ação focada.
           </p>
         ) : (
-          <p className="text-xs text-purple-400/60 italic border-t border-purple-500/10 pt-3">
+          <p className="text-xs text-purple-400/80 italic border-t border-purple-500/10 pt-3 text-left sm:text-justify [text-align-last:left]">
             Este débito pode ser reduzido ou eliminado por uma variação do nome que ajuste os números de Motivação e/ou Expressão.
           </p>
         )}
@@ -100,7 +100,7 @@ export default function KarmicDebts({ debitos, nomeCompleto }: Props) {
   return (
     <div className="space-y-4">
       <div className="glass rounded-xl p-4">
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="nm-card-text">
           <strong className="text-[#c084fc]">{debitos.length} {debitos.length === 1 ? 'Débito Kármico' : 'Débitos Kármicos'}</strong> — o nome de {primeiroNome} aponta para tendências de encarnações passadas que precisam ser redimidas nesta vida.
           {fixos.length > 0 && (
             <> <span className="text-amber-300">{fixos.length} {fixos.length === 1 ? 'é permanente' : 'são permanentes'}</span> (ligado{fixos.length > 1 ? 's' : ''} à data de nascimento) e {variaveis.length > 0 ? 'não pode ser eliminado pelo nome.' : 'não podem ser eliminados pelo nome.'}</>

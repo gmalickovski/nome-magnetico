@@ -41,10 +41,10 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
       <ChatProgress currentStep={4} totalSteps={7} className="shrink-0 border-b border-white/5" />
 
       <div
-        className={`flex-1 min-h-0 w-full max-w-[1680px] mx-auto px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 grid min-h-0 gap-3 md:gap-4 lg:gap-6 ${
+        className={`flex-1 min-h-0 w-full mx-auto grid min-h-0 ${
           sidebarExpanded
-            ? 'md:grid-cols-1'
-            : 'md:grid-cols-[minmax(0,1fr)_minmax(220px,44%)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,38%)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,34%)]'
+            ? 'md:grid-cols-1 px-3 sm:px-4 md:pr-1 lg:pr-1.5'
+            : 'md:grid-cols-[minmax(0,1fr)_minmax(220px,44%)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,38%)] xl:grid-cols-[minmax(0,1fr)_minmax(320px,34%)] gap-3 md:gap-4 lg:gap-6 px-3 sm:px-4 md:pl-5 lg:pl-6 md:pr-1 lg:pr-1.5'
         }`}
       >
         <main className={`flex flex-col min-h-0 min-w-0 py-3 ${sidebarExpanded ? 'hidden' : ''}`}>
@@ -59,8 +59,8 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
         </main>
 
         <aside
-          className={`hidden md:flex flex-col min-h-0 py-3 ${
-            sidebarExpanded ? 'max-w-4xl mx-auto w-full' : ''
+          className={`hidden md:flex flex-col min-h-0 py-3 w-full ${
+            sidebarExpanded ? '' : ''
           }`}
         >
           <ChatSidebarPanelChrome
