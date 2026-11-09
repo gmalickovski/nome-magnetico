@@ -8,6 +8,7 @@
  */
 
 import { supabase } from '../db/supabase';
+import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { isUniqueViolation } from '../ops/registry';
 import type { ProductType } from './stripe';
 import { fetchProductPriceMap, fallbackRow } from '../pricing/product-prices-db';
@@ -20,6 +21,7 @@ import {
 import type { EffectivePriceResult } from '../pricing/service';
 import {
   codeAppliesToProduct,
+  codeProductTypes,
   evaluateCoupon,
   evaluateTrial,
   normalizeAccessCode,
@@ -315,14 +317,26 @@ export async function recordAccessTrialUse(params: {
 
   try {
     const row = await findAccessCode(trialCode);
-    if (!row || (row.kind !== 'trial' && row.kind !== 'gift')) return;
-    if (!codeAppliesToProduct(row, params.productType)) return;
-
+    if (!row || (row.kind !== 'trial' && row.kind !== 'gift')) {
+      throw new Error('Código de trial não encontrado');
+    }
+    const configured = codeProductTypes(row);
+    const requested = params.productType?.trim();
+    const products = [...new Set(requested && requested !== 'all'
+      ? requested.split(',').map((product) => product.trim())
+      : configured.length > 0 ? configured : [...SELLABLE_PRODUCT_TYPES])];
+    if (products.length === 0 || products.some((product) =>
+      !(PRODUCT_TYPES as readonly string[]).includes(product) ||
+      !codeAppliesToProduct(row, product))) {
+      throw new Error('Produto inválido para o trial');
+    }
+    // O índice único permite um uso por código + usuário, inclusive subsets.
+    // 'all' agrega o resgate; assinaturas guardam o escopo efetivamente concedido.
     await insertAccessCodeUse({
       codeId: row.id,
       userId: params.userId,
       userEmail: params.userEmail,
-      productType: params.productType || null,
+      productType: products.length > 1 ? 'all' : products[0],
       source: 'redeem',
     });
   } catch (err) {
