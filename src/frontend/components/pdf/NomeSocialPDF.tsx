@@ -1309,7 +1309,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         {/* ─── CARD: Os 5 Números Fundamentais ─────────────────────────────── */}
         <View style={{ marginHorizontal: 0, marginBottom: 16 }}>
           {/* Card header */}
-          <View style={{ backgroundColor: '#8A661C', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 6 }}>
+          <View minPresenceAhead={100} style={{ backgroundColor: '#8A661C', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 6 }}>
             <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#FFFDF0', textTransform: 'uppercase', letterSpacing: 1 }}>
               Os 5 Números Fundamentais
             </Text>

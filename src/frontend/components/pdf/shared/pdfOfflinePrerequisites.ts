@@ -20,7 +20,7 @@ function commandOk(cmd: string, args: string[]): boolean {
 /** Somente verifica ferramentas já instaladas — sem pip/apt/rede. */
 export function probePdfOfflineTooling(): PdfOfflineTooling {
   const messages: string[] = [];
-  const pypdf = commandOk(process.env.NM_PDF_PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['-c', 'import pypdf']);
+  const pypdf = commandOk(process.platform === 'win32' ? 'python' : 'python3', ['-c', 'import pypdf']);
   if (!pypdf) {
     messages.push(
       `pypdf ausente (python3 -c "import pypdf"). Instale fora do teste: pip install -r ${PDF_OFFLINE_REQUIREMENTS}`,

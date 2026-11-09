@@ -17,7 +17,7 @@ function inspectNamedDestinationsPython(
   const pdfPath = join(dir, 'inspect.pdf');
   writeFileSync(pdfPath, pdfBuffer);
 
-  const run = spawnSync(process.env.NM_PDF_PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), [INSPECTOR, pdfPath], { encoding: 'utf8', timeout: 30_000 });
+  const run = spawnSync(process.platform === 'win32' ? 'python' : 'python3', [INSPECTOR, pdfPath], { encoding: 'utf8', timeout: 30_000 });
   try {
     unlinkSync(pdfPath);
   } catch {
