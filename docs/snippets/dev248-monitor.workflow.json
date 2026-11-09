@@ -1,0 +1,211 @@
+{
+  "id": "sI7o0WxcRvf5SGOb",
+  "nodes": [
+    {
+      "id": "84e63827-59d0-4577-be12-649547f06869",
+      "name": "A cada 30 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "54e2af00-ca4e-4e1d-93bd-0bdc92a5ec21",
+      "name": "Incidentes (somente leitura)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT kind, entity_id, product_type, incident_at FROM nm_ops_alerts.incidents ORDER BY incident_at,kind,entity_id;",
+        "options": {
+          "connectionTimeout": 10,
+          "queryBatching": "single"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "NmAlertsProd24801",
+          "name": "[NM] Supabase Alertas PRODUCAO (readonly)"
+        }
+      }
+    },
+    {
+      "id": "542e0e60-836b-4b85-9515-a6b483e0288c",
+      "name": "Validar projeção",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers shared by the workflow builder and offline tests. No network access.\nconst PRODUCTS = new Set(['nome_magnetico', 'nome_social', 'nome_bebe', 'nome_empresa']);\nconst KINDS = new Set(['payment_without_analysis', 'analysis_error', 'analysis_stalled']);\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nfunction normalizeIncidents(rows) {\n  const unique = new Map();\n  for (const row of rows) {\n    if (!row || !KINDS.has(row.kind) || !UUID.test(row.entity_id) ||\n        !PRODUCTS.has(row.product_type) || !Number.isFinite(Date.parse(row.incident_at))) {\n      throw new Error('Invalid operational alert row');\n    }\n    // An entity/status is alerted once; no contact data or raw failure text is retained.\n    const key = row.kind + ':' + row.entity_id.toLowerCase();\n    unique.set(key, { alertKey: key, kind: row.kind, entity_id: row.entity_id.toLowerCase(),\n      product_type: row.product_type, incident_at: new Date(row.incident_at).toISOString() });\n  }\n  return [...unique.values()];\n}\nfunction summarizeIncidents(rows) {\n  if (!rows.length) return [];\n  const safe = normalizeIncidents(rows);\n  const counts = Object.fromEntries([...KINDS].map(kind => [kind, safe.filter(r => r.kind === kind).length]));\n  const lines = safe.slice(0, 15).map(r => r.kind + ' | ' + r.product_type + ' | ' + r.entity_id);\n  return [{ channel: 'C0CBEFW2X6K', text: '*[NM] Alertas operacionais*\\n' +\n    JSON.stringify(counts) + '\\n' + lines.join('\\n') +\n    (safe.length > 15 ? '\\n+' + (safe.length - 15) + ' ocorrências nesta execução; consulte o histórico restrito do n8n.' : ''),\n    total: safe.length }];\n}\nfunction prepareFailure(input, handlerId) {\n  const workflowId = String(input?.workflow?.id ?? '');\n  const executionId = String(input?.execution?.retryOf ?? input?.execution?.id ?? '');\n  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(workflowId) || workflowId === handlerId ||\n      !/^[0-9]{1,30}$/.test(executionId)) return [];\n  // Node names and exception messages are untrusted and can contain PII/secrets.\n  const node = String(input?.execution?.lastNodeExecuted ?? '');\n  const event = node.includes('payment.confirmed') ? 'payment.confirmed' :\n    node.includes('user.analysis_complete') || node.includes('Análise Pronta') ? 'user.analysis_complete' : 'workflow.failure';\n  const email = input?.email ?? input?.body?.payload?.email;\n  const masked = typeof email === 'string' && /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email) ? '***@***' : 'indisponível';\n  const text = '*[NM] Falha de automação*\\nworkflow: ' + workflowId + '\\nevento: ' + event +\n    '\\ne-mail: ' + masked + '\\nexecução: ' + executionId;\n  return [{ alertKey: workflowId + ':' + executionId, channel: 'C0CBEFW2X6K', text,\n    executionId, workflowId, event, maskedEmail: masked }];\n}\nfunction slackSucceeded(response) { return response?.ok === true; }\n\nreturn normalizeIncidents($input.all().map(i=>i.json)).map(json=>({json}));"
+      }
+    },
+    {
+      "id": "b62f8c59-734a-4d5c-8abd-f93d23c076c0",
+      "name": "Resumo limitado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers shared by the workflow builder and offline tests. No network access.\nconst PRODUCTS = new Set(['nome_magnetico', 'nome_social', 'nome_bebe', 'nome_empresa']);\nconst KINDS = new Set(['payment_without_analysis', 'analysis_error', 'analysis_stalled']);\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nfunction normalizeIncidents(rows) {\n  const unique = new Map();\n  for (const row of rows) {\n    if (!row || !KINDS.has(row.kind) || !UUID.test(row.entity_id) ||\n        !PRODUCTS.has(row.product_type) || !Number.isFinite(Date.parse(row.incident_at))) {\n      throw new Error('Invalid operational alert row');\n    }\n    // An entity/status is alerted once; no contact data or raw failure text is retained.\n    const key = row.kind + ':' + row.entity_id.toLowerCase();\n    unique.set(key, { alertKey: key, kind: row.kind, entity_id: row.entity_id.toLowerCase(),\n      product_type: row.product_type, incident_at: new Date(row.incident_at).toISOString() });\n  }\n  return [...unique.values()];\n}\nfunction summarizeIncidents(rows) {\n  if (!rows.length) return [];\n  const safe = normalizeIncidents(rows);\n  const counts = Object.fromEntries([...KINDS].map(kind => [kind, safe.filter(r => r.kind === kind).length]));\n  const lines = safe.slice(0, 15).map(r => r.kind + ' | ' + r.product_type + ' | ' + r.entity_id);\n  return [{ channel: 'C0CBEFW2X6K', text: '*[NM] Alertas operacionais*\\n' +\n    JSON.stringify(counts) + '\\n' + lines.join('\\n') +\n    (safe.length > 15 ? '\\n+' + (safe.length - 15) + ' ocorrências nesta execução; consulte o histórico restrito do n8n.' : ''),\n    total: safe.length }];\n}\nfunction prepareFailure(input, handlerId) {\n  const workflowId = String(input?.workflow?.id ?? '');\n  const executionId = String(input?.execution?.retryOf ?? input?.execution?.id ?? '');\n  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(workflowId) || workflowId === handlerId ||\n      !/^[0-9]{1,30}$/.test(executionId)) return [];\n  // Node names and exception messages are untrusted and can contain PII/secrets.\n  const node = String(input?.execution?.lastNodeExecuted ?? '');\n  const event = node.includes('payment.confirmed') ? 'payment.confirmed' :\n    node.includes('user.analysis_complete') || node.includes('Análise Pronta') ? 'user.analysis_complete' : 'workflow.failure';\n  const email = input?.email ?? input?.body?.payload?.email;\n  const masked = typeof email === 'string' && /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email) ? '***@***' : 'indisponível';\n  const text = '*[NM] Falha de automação*\\nworkflow: ' + workflowId + '\\nevento: ' + event +\n    '\\ne-mail: ' + masked + '\\nexecução: ' + executionId;\n  return [{ alertKey: workflowId + ':' + executionId, channel: 'C0CBEFW2X6K', text,\n    executionId, workflowId, event, maskedEmail: masked }];\n}\nfunction slackSucceeded(response) { return response?.ok === true; }\n\nreturn summarizeIncidents($input.all().map(i=>i.json)).map(json=>({json}));"
+      }
+    },
+    {
+      "id": "9f8e5324-9577-41c5-9816-c5c2f30c7553",
+      "name": "Slack - um envio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "options": {
+          "timeout": 15000
+        },
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $json.channel, text: $json.text, unfurl_links: false }) }}"
+      },
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wpIBCXMT05rQlhYw",
+          "name": "Slack - Studio MLK Ops (Bearer)"
+        }
+      }
+    },
+    {
+      "id": "6fb9105c-c4a4-4372-ba65-fac1d0d6d2bb",
+      "name": "Validar entrega",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers shared by the workflow builder and offline tests. No network access.\nconst PRODUCTS = new Set(['nome_magnetico', 'nome_social', 'nome_bebe', 'nome_empresa']);\nconst KINDS = new Set(['payment_without_analysis', 'analysis_error', 'analysis_stalled']);\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nfunction normalizeIncidents(rows) {\n  const unique = new Map();\n  for (const row of rows) {\n    if (!row || !KINDS.has(row.kind) || !UUID.test(row.entity_id) ||\n        !PRODUCTS.has(row.product_type) || !Number.isFinite(Date.parse(row.incident_at))) {\n      throw new Error('Invalid operational alert row');\n    }\n    // An entity/status is alerted once; no contact data or raw failure text is retained.\n    const key = row.kind + ':' + row.entity_id.toLowerCase();\n    unique.set(key, { alertKey: key, kind: row.kind, entity_id: row.entity_id.toLowerCase(),\n      product_type: row.product_type, incident_at: new Date(row.incident_at).toISOString() });\n  }\n  return [...unique.values()];\n}\nfunction summarizeIncidents(rows) {\n  if (!rows.length) return [];\n  const safe = normalizeIncidents(rows);\n  const counts = Object.fromEntries([...KINDS].map(kind => [kind, safe.filter(r => r.kind === kind).length]));\n  const lines = safe.slice(0, 15).map(r => r.kind + ' | ' + r.product_type + ' | ' + r.entity_id);\n  return [{ channel: 'C0CBEFW2X6K', text: '*[NM] Alertas operacionais*\\n' +\n    JSON.stringify(counts) + '\\n' + lines.join('\\n') +\n    (safe.length > 15 ? '\\n+' + (safe.length - 15) + ' ocorrências nesta execução; consulte o histórico restrito do n8n.' : ''),\n    total: safe.length }];\n}\nfunction prepareFailure(input, handlerId) {\n  const workflowId = String(input?.workflow?.id ?? '');\n  const executionId = String(input?.execution?.retryOf ?? input?.execution?.id ?? '');\n  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(workflowId) || workflowId === handlerId ||\n      !/^[0-9]{1,30}$/.test(executionId)) return [];\n  // Node names and exception messages are untrusted and can contain PII/secrets.\n  const node = String(input?.execution?.lastNodeExecuted ?? '');\n  const event = node.includes('payment.confirmed') ? 'payment.confirmed' :\n    node.includes('user.analysis_complete') || node.includes('Análise Pronta') ? 'user.analysis_complete' : 'workflow.failure';\n  const email = input?.email ?? input?.body?.payload?.email;\n  const masked = typeof email === 'string' && /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email) ? '***@***' : 'indisponível';\n  const text = '*[NM] Falha de automação*\\nworkflow: ' + workflowId + '\\nevento: ' + event +\n    '\\ne-mail: ' + masked + '\\nexecução: ' + executionId;\n  return [{ alertKey: workflowId + ':' + executionId, channel: 'C0CBEFW2X6K', text,\n    executionId, workflowId, event, maskedEmail: masked }];\n}\nfunction slackSucceeded(response) { return response?.ok === true; }\n\nfunction pendingIncidents(rows, confirmed = {}) {\n const pending = normalizeIncidents(rows).filter(row => !Object.hasOwn(confirmed, row.alertKey));\n if (Object.keys(confirmed).length + pending.length > 100000) throw new Error('Alert history capacity reached');\n return pending;\n}\nfunction acknowledgeIncidents(rows, confirmed = {}, at = Date.now()) {\n const next = { ...confirmed };\n for (const row of normalizeIncidents(rows)) next[row.alertKey] = at;\n return next;\n}\n\nif ($input.first().json.ok !== true) throw new Error('Slack did not confirm delivery');\nconst state=$getWorkflowStaticData('global');\nstate.confirmed=acknowledgeIncidents($('Filtrar não confirmados').all().map(i=>i.json), state.confirmed ?? {});\nreturn [{json:{delivered:true}}];"
+      }
+    },
+    {
+      "id": "1d239afe-1920-4972-a762-dd6af9167d18",
+      "name": "Filtrar não confirmados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers shared by the workflow builder and offline tests. No network access.\nconst PRODUCTS = new Set(['nome_magnetico', 'nome_social', 'nome_bebe', 'nome_empresa']);\nconst KINDS = new Set(['payment_without_analysis', 'analysis_error', 'analysis_stalled']);\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nfunction normalizeIncidents(rows) {\n  const unique = new Map();\n  for (const row of rows) {\n    if (!row || !KINDS.has(row.kind) || !UUID.test(row.entity_id) ||\n        !PRODUCTS.has(row.product_type) || !Number.isFinite(Date.parse(row.incident_at))) {\n      throw new Error('Invalid operational alert row');\n    }\n    // An entity/status is alerted once; no contact data or raw failure text is retained.\n    const key = row.kind + ':' + row.entity_id.toLowerCase();\n    unique.set(key, { alertKey: key, kind: row.kind, entity_id: row.entity_id.toLowerCase(),\n      product_type: row.product_type, incident_at: new Date(row.incident_at).toISOString() });\n  }\n  return [...unique.values()];\n}\nfunction summarizeIncidents(rows) {\n  if (!rows.length) return [];\n  const safe = normalizeIncidents(rows);\n  const counts = Object.fromEntries([...KINDS].map(kind => [kind, safe.filter(r => r.kind === kind).length]));\n  const lines = safe.slice(0, 15).map(r => r.kind + ' | ' + r.product_type + ' | ' + r.entity_id);\n  return [{ channel: 'C0CBEFW2X6K', text: '*[NM] Alertas operacionais*\\n' +\n    JSON.stringify(counts) + '\\n' + lines.join('\\n') +\n    (safe.length > 15 ? '\\n+' + (safe.length - 15) + ' ocorrências nesta execução; consulte o histórico restrito do n8n.' : ''),\n    total: safe.length }];\n}\nfunction prepareFailure(input, handlerId) {\n  const workflowId = String(input?.workflow?.id ?? '');\n  const executionId = String(input?.execution?.retryOf ?? input?.execution?.id ?? '');\n  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(workflowId) || workflowId === handlerId ||\n      !/^[0-9]{1,30}$/.test(executionId)) return [];\n  // Node names and exception messages are untrusted and can contain PII/secrets.\n  const node = String(input?.execution?.lastNodeExecuted ?? '');\n  const event = node.includes('payment.confirmed') ? 'payment.confirmed' :\n    node.includes('user.analysis_complete') || node.includes('Análise Pronta') ? 'user.analysis_complete' : 'workflow.failure';\n  const email = input?.email ?? input?.body?.payload?.email;\n  const masked = typeof email === 'string' && /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email) ? '***@***' : 'indisponível';\n  const text = '*[NM] Falha de automação*\\nworkflow: ' + workflowId + '\\nevento: ' + event +\n    '\\ne-mail: ' + masked + '\\nexecução: ' + executionId;\n  return [{ alertKey: workflowId + ':' + executionId, channel: 'C0CBEFW2X6K', text,\n    executionId, workflowId, event, maskedEmail: masked }];\n}\nfunction slackSucceeded(response) { return response?.ok === true; }\n\nfunction pendingIncidents(rows, confirmed = {}) {\n const pending = normalizeIncidents(rows).filter(row => !Object.hasOwn(confirmed, row.alertKey));\n if (Object.keys(confirmed).length + pending.length > 100000) throw new Error('Alert history capacity reached');\n return pending;\n}\nfunction acknowledgeIncidents(rows, confirmed = {}, at = Date.now()) {\n const next = { ...confirmed };\n for (const row of normalizeIncidents(rows)) next[row.alertKey] = at;\n return next;\n}\n\nconst confirmed = $getWorkflowStaticData('global').confirmed ?? {};\nreturn pendingIncidents($input.all().map(i=>i.json), confirmed).map(json=>({json}));"
+      }
+    }
+  ],
+  "connections": {
+    "A cada 30 minutos": {
+      "main": [
+        [
+          {
+            "node": "Incidentes (somente leitura)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Incidentes (somente leitura)": {
+      "main": [
+        [
+          {
+            "node": "Validar projeção",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumo limitado": {
+      "main": [
+        [
+          {
+            "node": "Slack - um envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - um envio": {
+      "main": [
+        [
+          {
+            "node": "Validar entrega",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar projeção": {
+      "main": [
+        [
+          {
+            "node": "Filtrar não confirmados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar não confirmados": {
+      "main": [
+        [
+          {
+            "node": "Resumo limitado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 60
+  }
+}

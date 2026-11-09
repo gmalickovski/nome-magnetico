@@ -1,0 +1,201 @@
+{
+  "id": "LEYGmnPKWJHvS8rd",
+  "nodes": [
+    {
+      "id": "7ada5bd6-e729-464e-81cf-25ae4d3df2c6",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "723dd962-5149-4b47-a4b9-6bd1c51fd312",
+      "name": "Sanitizar falha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers shared by the workflow builder and offline tests. No network access.\nconst PRODUCTS = new Set(['nome_magnetico', 'nome_social', 'nome_bebe', 'nome_empresa']);\nconst KINDS = new Set(['payment_without_analysis', 'analysis_error', 'analysis_stalled']);\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nfunction normalizeIncidents(rows) {\n  const unique = new Map();\n  for (const row of rows) {\n    if (!row || !KINDS.has(row.kind) || !UUID.test(row.entity_id) ||\n        !PRODUCTS.has(row.product_type) || !Number.isFinite(Date.parse(row.incident_at))) {\n      throw new Error('Invalid operational alert row');\n    }\n    // An entity/status is alerted once; no contact data or raw failure text is retained.\n    const key = row.kind + ':' + row.entity_id.toLowerCase();\n    unique.set(key, { alertKey: key, kind: row.kind, entity_id: row.entity_id.toLowerCase(),\n      product_type: row.product_type, incident_at: new Date(row.incident_at).toISOString() });\n  }\n  return [...unique.values()];\n}\nfunction summarizeIncidents(rows) {\n  if (!rows.length) return [];\n  const safe = normalizeIncidents(rows);\n  const counts = Object.fromEntries([...KINDS].map(kind => [kind, safe.filter(r => r.kind === kind).length]));\n  const lines = safe.slice(0, 15).map(r => r.kind + ' | ' + r.product_type + ' | ' + r.entity_id);\n  return [{ channel: 'C0CBEFW2X6K', text: '*[NM] Alertas operacionais*\\n' +\n    JSON.stringify(counts) + '\\n' + lines.join('\\n') +\n    (safe.length > 15 ? '\\n+' + (safe.length - 15) + ' ocorrências nesta execução; consulte o histórico restrito do n8n.' : ''),\n    total: safe.length }];\n}\nfunction prepareFailure(input, handlerId) {\n  const workflowId = String(input?.workflow?.id ?? '');\n  const executionId = String(input?.execution?.retryOf ?? input?.execution?.id ?? '');\n  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(workflowId) || workflowId === handlerId ||\n      !/^[0-9]{1,30}$/.test(executionId)) return [];\n  // Node names and exception messages are untrusted and can contain PII/secrets.\n  const node = String(input?.execution?.lastNodeExecuted ?? '');\n  const event = node.includes('payment.confirmed') ? 'payment.confirmed' :\n    node.includes('user.analysis_complete') || node.includes('Análise Pronta') ? 'user.analysis_complete' : 'workflow.failure';\n  const email = input?.email ?? input?.body?.payload?.email;\n  const masked = typeof email === 'string' && /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email) ? '***@***' : 'indisponível';\n  const text = '*[NM] Falha de automação*\\nworkflow: ' + workflowId + '\\nevento: ' + event +\n    '\\ne-mail: ' + masked + '\\nexecução: ' + executionId;\n  return [{ alertKey: workflowId + ':' + executionId, channel: 'C0CBEFW2X6K', text,\n    executionId, workflowId, event, maskedEmail: masked }];\n}\nfunction slackSucceeded(response) { return response?.ok === true; }\n\nreturn prepareFailure($input.first().json, $workflow.id).map(json=>({json}));"
+      }
+    },
+    {
+      "id": "07d16dac-4f07-4b75-a57a-d01d01a023fb",
+      "name": "Deduplicar execução",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "logic": "removeItemsWithAlreadySeenKeyValues",
+        "dedupeValue": "={{ $json.alertKey }}",
+        "options": {
+          "scope": "node",
+          "historySize": 100000
+        }
+      }
+    },
+    {
+      "id": "a7969bac-95d9-4579-b5d0-efdd12346471",
+      "name": "Slack - um envio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "options": {
+          "timeout": 15000
+        },
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $json.channel, text: $json.text, unfurl_links: false }) }}"
+      },
+      "executeOnce": true,
+      "onError": "continueErrorOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wpIBCXMT05rQlhYw",
+          "name": "Slack - Studio MLK Ops (Bearer)"
+        }
+      }
+    },
+    {
+      "id": "44f9e5ec-e2a2-4e88-8a23-4475f6c35573",
+      "name": "Validar entrega",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "if ($input.first().json.ok !== true) throw new Error('Slack did not confirm delivery'); return [{json:{delivered:true}}];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "274dbfd8-a193-45a5-bbf0-f7525e3b5554",
+      "name": "E-mail - fallback sanitizado",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        250
+      ],
+      "parameters": {
+        "resource": "email",
+        "operation": "send",
+        "fromEmail": "Nome Magnético <noreply@nomemagnetico.com.br>",
+        "toEmail": "gmalickovski@studiomlk.com.br",
+        "subject": "[NM] Falha de automação (Slack indisponível)",
+        "emailFormat": "text",
+        "text": "={{ $('Sanitizar falha').first().json.text }}",
+        "options": {
+          "appendAttribution": false,
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "retryOnFail": false,
+      "executeOnce": true,
+      "webhookId": "5ac363a3-44dc-4a61-b0ca-ee42760f53c0",
+      "credentials": {
+        "smtp": {
+          "id": "AE8dOKfUxMJ8eTlg",
+          "name": "SMTP Amazon SES"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Sanitizar falha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitizar falha": {
+      "main": [
+        [
+          {
+            "node": "Deduplicar execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicar execução": {
+      "main": [
+        [
+          {
+            "node": "Slack - um envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - um envio": {
+      "main": [
+        [
+          {
+            "node": "Validar entrega",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "E-mail - fallback sanitizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar entrega": {
+      "main": [
+        null,
+        [
+          {
+            "node": "E-mail - fallback sanitizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 30
+  }
+}
