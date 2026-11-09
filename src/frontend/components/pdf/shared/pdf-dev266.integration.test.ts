@@ -123,10 +123,12 @@ describe('DEV-266 · PDF integração offline', () => {
       PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
+    const compactText = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, '').toLowerCase();
     const paidTextPages = pdfToText(Buffer.from(pagoBuf)).split('\f');
-    const numbersHeaderPage = paidTextPages.find((page) => /Os\s+5\s+N[úu]meros\s+Fundamentais/i.test(page));
+    // Letter spacing pode aparecer como espaços entre letras na extração Poppler.
+    const numbersHeaderPage = paidTextPages.find((page) => compactText(page).includes('os5numerosfundamentais'));
     assert.ok(numbersHeaderPage, 'cabeçalho do comparativo numérico presente');
-    assert.match(numbersHeaderPage, /Data de Nascimento/i, 'cabeçalho permanece na página da primeira linha');
+    assert.ok(compactText(numbersHeaderPage).includes('datadenascimento'), 'cabeçalho permanece na página da primeira linha');
 
     const gDest = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
     const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
