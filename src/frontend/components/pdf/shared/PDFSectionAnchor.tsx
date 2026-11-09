@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { View } from '@react-pdf/renderer';
 import type { Bookmark } from '@react-pdf/types';
 
@@ -13,12 +14,12 @@ export function PDFSectionAnchor({
   id: string;
   bookmark: Bookmark;
 }) {
-  return (
-    <View
-      id={id}
-      bookmark={bookmark}
-      wrap={false}
-      style={{ height: 1, opacity: 0 }}
-    />
-  );
+  // O runtime suporta bookmark em View; ViewProps desta versão omite a prop.
+  const props: ComponentProps<typeof View> & { bookmark: Bookmark } = {
+    id,
+    bookmark,
+    wrap: false,
+    style: { height: 1, opacity: 0 },
+  };
+  return <View {...props} />;
 }

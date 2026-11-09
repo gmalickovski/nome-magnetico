@@ -53,7 +53,6 @@ async function inspectNamedDestinationsPdfJs(
       data: new Uint8Array(pdfBuffer),
       useSystemFonts: true,
       disableFontFace: true,
-      isEvalSupported: false,
     });
     const doc = await loadingTask.promise;
     const rawDests = await doc.getDestinations();

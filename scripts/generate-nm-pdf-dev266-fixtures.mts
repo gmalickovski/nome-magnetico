@@ -20,6 +20,7 @@ import {
   calcularDebitosCarmicos,
 } from '../src/backend/numerology/karmic.ts';
 import { avaliarNome } from '../src/backend/numerology/score.ts';
+import { obterNivelV3 } from '../src/shared/score-v3.ts';
 import { avaliarCompatibilidade } from '../src/backend/numerology/harmonization.ts';
 import { buildClientBirthNamePanel } from '../src/backend/numerology/birth-name-panel.ts';
 import { analisarNomesSocial, analisarNomeSocial } from '../src/backend/numerology/products/nome-social.ts';
@@ -63,8 +64,11 @@ const built = buildFreeLeadAnalysisRecord({
 const rankingMotor = analisarNomesSocial([], profile.nomeCompleto, profile.dataNascimentoPt, {
   assinaturaAtual: profile.nomeHarmonizado,
 });
-const melhorMotor = rankingMotor.melhorNome;
-if (!melhorMotor) throw new Error('motor sem melhorNome');
+const melhorMotor = (() => {
+  const melhor = rankingMotor.melhorNome;
+  if (!melhor) throw new Error('motor sem melhorNome');
+  return melhor;
+})();
 
 const candidatoAudit = analisarNomeSocial(
   melhorMotor.nomeCompleto,
@@ -89,7 +93,7 @@ const candidatosPdf = rankingMotor.nomesCandidatos.slice(0, 8).map((a) => {
     temBloqueio: base.temBloqueio,
     bloqueios: base.bloqueios,
     origemSugerida: base.origemSugerida,
-    nivelV3: base.nivelV3,
+    nivelV3: obterNivelV3(base.score).codigo,
   };
 });
 
@@ -216,7 +220,7 @@ const paidChatOnly = {
         nomeCompleto: a.nomeCompleto,
         score: a.score,
         origemSugerida: a.origemSugerida,
-        nivelV3: a.nivelV3,
+        nivelV3: obterNivelV3(a.score).codigo,
       })),
     },
   },

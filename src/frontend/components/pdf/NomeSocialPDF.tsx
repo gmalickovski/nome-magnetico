@@ -338,7 +338,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
     return {
       ...base,
       nomeCompleto: String(c.nomeCompleto ?? base.nomeCompleto),
-      nivelV3: c.nivelV3 ?? base.nivelV3,
+      nivelV3: obterNivelV3(base.score).codigo,
       origemSugerida: c.origemSugerida ?? base.origemSugerida,
     };
   });
