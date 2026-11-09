@@ -1,0 +1,7 @@
+services:
+  n8n:
+    environment:
+      NODE_EXTRA_CA_CERTS: /home/node/.n8n/certs/dev248-supabase-ca.crt
+  n8n-worker:
+    environment:
+      NODE_EXTRA_CA_CERTS: /home/node/.n8n/certs/dev248-supabase-ca.crt
