@@ -123,6 +123,11 @@ describe('DEV-266 · PDF integração offline', () => {
       PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
+    const paidTextPages = pdfToText(Buffer.from(pagoBuf)).split('\f');
+    const numbersHeaderPage = paidTextPages.find((page) => /Os\s+5\s+N[úu]meros\s+Fundamentais/i.test(page));
+    assert.ok(numbersHeaderPage, 'cabeçalho do comparativo numérico presente');
+    assert.match(numbersHeaderPage, /Data de Nascimento/i, 'cabeçalho permanece na página da primeira linha');
+
     const gDest = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
     const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     assert.ok(!('error' in gDest), `gratuito destinos: ${'error' in gDest ? gDest.error : ''}`);

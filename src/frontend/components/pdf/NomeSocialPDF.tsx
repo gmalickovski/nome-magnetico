@@ -1309,11 +1309,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         {/* ─── CARD: Os 5 Números Fundamentais ─────────────────────────────── */}
         <View style={{ marginHorizontal: 0, marginBottom: 16 }}>
           {/* Card header */}
-          <View minPresenceAhead={100} style={{ backgroundColor: '#8A661C', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 6 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#FFFDF0', textTransform: 'uppercase', letterSpacing: 1 }}>
-              Os 5 Números Fundamentais
-            </Text>
-          </View>
           {/* Number rows */}
           {[
             { label: 'Destino', sub: 'Data de Nascimento', nasc: cincoNumNasc.destino, harm: cincoNumNasc.destino, fixo: true },
@@ -1324,7 +1319,15 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           ].map((r, i) => {
             const changed = !r.fixo && r.nasc !== r.harm;
             return (
-              <View key={i} wrap={false} style={{ backgroundColor: i % 2 === 0 ? '#FAFAFA' : '#FFFFFF', paddingVertical: 10, paddingHorizontal: 14 }}>
+              <View key={i} wrap={false}>
+                {i === 0 && (
+                  <View style={{ backgroundColor: '#8A661C', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 6 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#FFFDF0', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Os 5 Números Fundamentais
+            </Text>
+          </View>
+                )}
+                <View style={{ backgroundColor: i % 2 === 0 ? '#FAFAFA' : '#FFFFFF', paddingVertical: 10, paddingHorizontal: 14 }}>
                 {/* Label row */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                   <View style={{ flex: 1 }}>
@@ -1377,6 +1380,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                     </View>
                   </View>
                 )}
+              </View>
               </View>
             );
           })}
