@@ -226,7 +226,7 @@ export function TrianguloPiramideInline({
   const letterFontSize = Math.max(5, Math.floor(cellSize * 0.7));
 
   return (
-    <View style={triStyles.card}>
+    <View wrap={data.linhas.length * (cellSize + 1) + 60 > 620} style={triStyles.card}>
       <Text style={triStyles.cardLabel}>{label}</Text>
 
       {letras && letras.length === data.linhas[0].length ? (

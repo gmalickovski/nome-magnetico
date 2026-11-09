@@ -105,7 +105,7 @@ export function PDFDoubleStar({
 
   return (
     <View style={styles.container} wrap={false}>
-      <Svg width={W} height={H}>
+      <Svg width={420} height={H * (420 / W)} viewBox={`0 0 ${W} ${H}`}>
         <Polygon
           points={outerPts}
           fill={harmVisual.stroke}

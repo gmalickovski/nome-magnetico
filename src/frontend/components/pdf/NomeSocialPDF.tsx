@@ -2373,7 +2373,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <PDFSectionAnchor id="pdf-arquetipo" bookmark={{ title: 'Arquétipo da expressão', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 10 }}>
           <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
           <View style={{ backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
             <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
@@ -2391,7 +2391,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         {/* Banner do Arquétipo */}
-        <View wrap={false} style={{ backgroundColor: '#4C1D95', borderRadius: 10, padding: 20, marginBottom: 14, alignItems: 'center' }}>
+        <View wrap={false} style={{ backgroundColor: '#4C1D95', borderRadius: 10, padding: 14, marginBottom: 10, alignItems: 'center' }}>
           <Text style={{ fontSize: 8, color: '#DDD6FE', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 6 }}>
             Expressão {cincoNumSocial.expressao} — Arquétipo do Nome Social
           </Text>
@@ -2404,7 +2404,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         {/* Essência */}
-        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.07)', borderWidth: 1, borderColor: GOLD, borderRadius: 8, padding: 14, marginBottom: 14, alignItems: 'center' }}>
+        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.07)', borderWidth: 1, borderColor: GOLD, borderRadius: 8, padding: 10, marginBottom: 10, alignItems: 'center' }}>
           <Text style={{ fontSize: 8, color: '#8A661C', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>
             Essência
           </Text>
@@ -2414,33 +2414,33 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         {/* Intro */}
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.5, marginBottom: 10 }}>
           Na Numerologia Cabalística, o número de Expressão do nome revela não apenas qualidades — mas um padrão arquetípico profundo, uma força narrativa que organiza como você age, lidera e se relaciona com o mundo. O arquétipo não é uma limitação: é a estrutura de potencial máximo disponível para quem carrega esse campo vibracional.
         </Text>
 
         {/* Descrição */}
-        <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.7, marginBottom: 14 }}>
+        <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.5, marginBottom: 14 }}>
           {arquetipoSocial.descricao}
         </Text>
 
         {/* Expressão positiva vs Sombra */}
-        <View wrap={false} style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-          <View style={{ flex: 1, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#166534', borderRadius: 8, padding: 12 }}>
+        <View wrap={false} style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+          <View style={{ flex: 1, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#166534', borderRadius: 8, padding: 10 }}>
             <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#166534', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Expressão Positiva
             </Text>
             {arquetipoSocial.expressaoPositiva.map((item, i) => (
-              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.6, marginBottom: 4 }}>
+              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.45, marginBottom: 4 }}>
                 ✓ {item}
               </Text>
             ))}
           </View>
-          <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#DC2626', borderRadius: 8, padding: 12 }}>
+          <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#DC2626', borderRadius: 8, padding: 10 }}>
             <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Expressão Sombra
             </Text>
             {arquetipoSocial.expressaoSombra.map((item, i) => (
-              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.6, marginBottom: 4 }}>
+              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.45, marginBottom: 4 }}>
                 ! {item}
               </Text>
             ))}
@@ -2448,11 +2448,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         {/* Figuras míticas */}
-        <View wrap={false} style={{ borderRadius: 7, backgroundColor: '#F5F3FF', padding: 12 }}>
+        <View wrap={false} style={{ borderRadius: 7, backgroundColor: '#F5F3FF', padding: 10 }}>
           <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#7C3AED', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Figuras que Carregam Este Arquétipo
           </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.45 }}>
             {arquetipoSocial.figurasMiticas.join('  ·  ')}
           </Text>
         </View>
