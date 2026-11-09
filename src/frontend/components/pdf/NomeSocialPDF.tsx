@@ -25,7 +25,6 @@ import { PDFTableOfContents } from './shared/PDFTableOfContents';
 import { buildPaidTocEntries } from './shared/pdfTocCatalog.ts';
 import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { PDFComoCalculamosScore } from './shared/PDFComoCalculamosScore';
-import { PDFMapaAlinhamentoVibracional } from './shared/PDFMapaAlinhamentoVibracional';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
@@ -1247,20 +1246,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <PDFFooter />
       </Page>
 
-      {/* Mapa de Alinhamento — assunto novo, após Estrela/score (Growth t279s) */}
-      <Page size="A4" style={styles.pageHarmonizacao}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Harmonização`} bgColor="#FEFCE8" />
-        <View style={{ marginTop: 12 }}>
-          <PDFMapaAlinhamentoVibracional
-            nomeNascimento={nomeNascimento}
-            nomeHarmonizado={nomeParaExibir}
-            dataNascimento={dataNascimentoRaw}
-            scoreNascimento={scoreNasc}
-            scoreHarmonizado={scoreSocial}
-          />
-        </View>
-        <PDFFooter />
-      </Page>
+
 
       <Page size="A4" style={styles.pageHarmonizacao}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />

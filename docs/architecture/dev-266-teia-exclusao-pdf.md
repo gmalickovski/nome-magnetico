@@ -15,3 +15,8 @@ Sem captura do componente exato no DOM de produção e cadeia de props validada,
 ## Próximo passo (fora deste escopo)
 
 Confirmar com screenshot + props do resumo app se a teia = item 3 ou outro; só então especificar render PDF (provavelmente SVG estático ou rasterização controlada).
+
+## Revisão de integração — 08/11/2026
+
+O head anterior incluía PDFMapaAlinhamentoVibracional com contexto null para ambos os nomes, mas descrevia percentuais derivados das respostas. Isso não comprovava a paridade com o resumo contextual real. Página, import e entrada do sumário removidos deste pacote; triângulos e estrela preservados. Inclusão futura depende de contexto persistido e validação da cadeia de props/DOM, conforme critério 6 da issue.
+

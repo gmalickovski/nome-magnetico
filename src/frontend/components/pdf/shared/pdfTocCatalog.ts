@@ -37,7 +37,6 @@ export function buildPaidTocEntries(hasRanking: boolean): PdfTocEntry[] {
     { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
     ...essenciaSubassuntos,
     { id: 'pdf-harmonizacao', title: 'Harmonização — assinatura e estrela', level: 0 },
-    { id: 'pdf-mapa-alinhamento', title: 'Mapa de Alinhamento Vibracional', level: 1 },
     { id: 'pdf-harmonizacao-comparativa', title: 'Harmonização — leitura comparativa', level: 1 },
     { id: 'pdf-harmonizacao-corpo', title: 'Corpo da assinatura harmonizada', level: 1 },
     { id: 'pdf-arquetipo', title: 'Arquétipo da expressão', level: 1 },
