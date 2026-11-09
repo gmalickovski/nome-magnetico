@@ -606,6 +606,11 @@ export interface OpcoesRankingNomeSocial {
   restricaoDocumentosLegais?: boolean;
   /** Teto de nível de geração (ex.: 50 = só acento sutil) — filtro, não altera score */
   maxNivelGeracao?: number;
+  /**
+   * Export/chat: usa somente os nomes informados em `nomesCandidatos`, na ordem recebida,
+   * sem gerar sugestões automáticas do motor (gerarSugestoesAutoSocial).
+   */
+  somenteCandidatosInformados?: boolean;
 }
 
 /**
@@ -916,26 +921,33 @@ export function analisarNomesSocial(
   const destino = calcularDestino(dataNascimento);
   const acentosNascimento = contarAcentos(nomeNascimento);
 
-  const listaCandidatos = [...nomesCandidatos];
-  const variacaoPropria = resolvedOpcoes?.variacaoPropria?.trim();
-  if (
-    variacaoPropria &&
-    variacaoPropria.length >= 2 &&
-    !listaCandidatos.some(c => c.trim().toLowerCase() === variacaoPropria.toLowerCase())
-  ) {
-    listaCandidatos.unshift(variacaoPropria);
-  }
-
-  // Se o usuário informou "Como você assina hoje?" e é diferente do nome de nascimento,
-  // incluímos na lista avaliada como linha de base se ainda não estiver nos candidatos.
+  const somenteChat = Boolean(resolvedOpcoes?.somenteCandidatosInformados);
   const assinaturaAtual = resolvedOpcoes?.assinaturaAtual?.trim();
-  if (
-    assinaturaAtual &&
-    assinaturaAtual.length >= 2 &&
-    assinaturaAtual.toLowerCase() !== nomeNascimento.trim().toLowerCase() &&
-    !listaCandidatos.some(c => c.trim().toLowerCase() === assinaturaAtual.toLowerCase())
-  ) {
-    listaCandidatos.unshift(assinaturaAtual);
+
+  const listaCandidatos = somenteChat
+    ? nomesCandidatos.map((n) => n.trim()).filter((n) => n.length >= 2)
+    : [...nomesCandidatos];
+
+  if (!somenteChat) {
+    const variacaoPropria = resolvedOpcoes?.variacaoPropria?.trim();
+    if (
+      variacaoPropria &&
+      variacaoPropria.length >= 2 &&
+      !listaCandidatos.some((c) => c.trim().toLowerCase() === variacaoPropria.toLowerCase())
+    ) {
+      listaCandidatos.unshift(variacaoPropria);
+    }
+
+    // Se o usuário informou "Como você assina hoje?" e é diferente do nome de nascimento,
+    // incluímos na lista avaliada como linha de base se ainda não estiver nos candidatos.
+    if (
+      assinaturaAtual &&
+      assinaturaAtual.length >= 2 &&
+      assinaturaAtual.toLowerCase() !== nomeNascimento.trim().toLowerCase() &&
+      !listaCandidatos.some((c) => c.trim().toLowerCase() === assinaturaAtual.toLowerCase())
+    ) {
+      listaCandidatos.unshift(assinaturaAtual);
+    }
   }
 
   // Candidatos do usuário
@@ -958,11 +970,25 @@ export function analisarNomesSocial(
       };
     });
 
-  analisesUsuario.sort((a, b) => {
-    if (a.score !== b.score) return b.score - a.score;
-    const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
-    return (compRank[b.compatibilidade] ?? 1) - (compRank[a.compatibilidade] ?? 1);
-  });
+  if (!resolvedOpcoes?.somenteCandidatosInformados) {
+    analisesUsuario.sort((a, b) => {
+      if (a.score !== b.score) return b.score - a.score;
+      const compRank = { favoravel: 3, neutro: 2, desfavoravel: 1 };
+      return (compRank[b.compatibilidade] ?? 1) - (compRank[a.compatibilidade] ?? 1);
+    });
+  }
+
+  if (resolvedOpcoes?.somenteCandidatosInformados) {
+    return {
+      nomeNascimento,
+      dataNascimento,
+      destino,
+      nomesCandidatos: analisesUsuario,
+      melhorNome: analisesUsuario[0] ?? null,
+      top3: analisesUsuario.slice(0, 3),
+      avisoSobrenomeExigido: null,
+    };
+  }
 
   // Sugestões do sistema
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));

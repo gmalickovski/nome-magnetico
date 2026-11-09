@@ -560,7 +560,7 @@ export function TendenciasBlock({
   showSolution?: boolean;
 }) {
   return (
-    <View style={styles.sectionBlock}>
+    <View style={styles.sectionBlock} wrap={false}>
       {frequencias && Object.keys(frequencias).length > 0 ? (
         <FrequencyBar frequencias={frequencias} />
       ) : null}

@@ -4,6 +4,7 @@ import { PDFPageHeader } from './PDFPageHeader';
 import { PDFFooter } from './PDFFooter';
 import type { ProductTheme, ProductType } from './PDFTheme';
 import { TITLE_FONT } from './PDFFonts';
+import { PDFSectionAnchor } from './PDFSectionAnchor';
 
 const styles = StyleSheet.create({
   page: {
@@ -46,13 +47,24 @@ interface IntroProps {
   entityName: string;
   isFreeAnalysis?: boolean;
   isScoreV3?: boolean;
+  /** Evita duplicar o bloco de score quando o PDF já tem seção dedicada + sumário. */
+  skipScoreExplainer?: boolean;
 }
 
-export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysis = false, isScoreV3 = false }: IntroProps) {
+export function PDFStandardIntro({
+  theme,
+  productType,
+  entityName,
+  isFreeAnalysis = false,
+  isScoreV3 = false,
+  skipScoreExplainer = false,
+}: IntroProps) {
 
-  const isLightBackground = productType === 'nome_bebe';
-  const textColor = isLightBackground ? '#5C2D1E' : '#e5e2e1';
-  const boldColor = isLightBackground ? theme.primaryColor : '#ffffff';
+  const isLightBackground =
+    productType === 'nome_bebe' || (productType === 'nome_social' && skipScoreExplainer);
+  const textColor = isLightBackground ? '#334155' : '#e5e2e1';
+  const boldColor = isLightBackground ? '#1E293B' : '#ffffff';
+  const introPageBg = isLightBackground ? '#FFFFFF' : theme.coverBgColor;
 
   // Textos Históricos e Holísticos da Página 1
   const getHolisticText = () => {
@@ -76,7 +88,11 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
   return (
     <>
       {/* ── PÁGINA 1: HOLÍSTICA / BENEFÍCIOS ────────────────────────────── */}
-      <Page size="A4" style={[styles.page, { backgroundColor: theme.coverBgColor }]}>
+      <Page size="A4" style={[styles.page, { backgroundColor: introPageBg }]}>
+        <PDFSectionAnchor
+          id="pdf-intro-leitura"
+          bookmark={{ title: 'Como ler este relatório', fit: true }}
+        />
         <PDFPageHeader subtitle={`${entityName} — ${introTitleSubtitleP1}`} />
 
         <View style={styles.section}>
@@ -126,7 +142,7 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
       </Page>
 
       {/* ── PÁGINA 2: O MÉTODO E O SCORE ────────────────────────────────── */}
-      <Page size="A4" style={[styles.page, { backgroundColor: theme.coverBgColor }]}>
+      <Page size="A4" style={[styles.page, { backgroundColor: introPageBg }]}>
         <PDFPageHeader subtitle={`${entityName} — Como Ler a Análise`} />
         
         <View style={styles.section}>
@@ -163,6 +179,12 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
             </Text>
           )}
 
+          {skipScoreExplainer ? (
+            <Text style={[styles.bodyText, { color: textColor, marginTop: 8 }]}>
+              A explicação completa do Score Cabalístico (Motor v3) está na seção «Como calculamos o score» do sumário deste PDF.
+            </Text>
+          ) : (
+            <>
           <Text style={[styles.subHead, { color: textColor }]}>
             Como Funciona o Cálculo do Score? (A Nota de 0 a 100)
           </Text>
@@ -176,9 +198,9 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
               {'\n'}
               • <Text style={[styles.bold, { color: boldColor }]}>Débitos Kármicos do Nome:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-12 pontos</Text> apenas para débitos originados no nome (Expressão/Motivação). Débitos originados na data de nascimento ou Destino são imutáveis e têm desconto zero na nota do nome.
               {'\n'}
-              • <Text style={[styles.bold, { color: boldColor }]}>Tendências Ocultas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text> cada (números que aparecem 4+ vezes).
+              • <Text style={[styles.bold, { color: boldColor }]}>Tendências Ocultas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-3 pontos</Text> cada (teto −9; números que aparecem 4+ vezes).
               {'\n'}
-              • <Text style={[styles.bold, { color: boldColor }]}>Lições Kármicas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-1 ponto</Text> cada (números ausentes no nome).
+              • <Text style={[styles.bold, { color: boldColor }]}>Lições Kármicas:</Text> <Text style={[styles.bold, { color: theme.primaryColor }]}>-2 pontos</Text> cada (teto −8; números ausentes no nome).
               {'\n\n'}
               Escala de 5 Níveis: <Text style={[styles.bold, { color: boldColor }]}>N5 Harmonioso</Text> (85–100), <Text style={[styles.bold, { color: boldColor }]}>N4 Favorável</Text> (70–84), <Text style={[styles.bold, { color: boldColor }]}>N3 Equilíbrio Parcial</Text> (50–69), <Text style={[styles.bold, { color: boldColor }]}>N2 Pede Atenção</Text> (30–49) e <Text style={[styles.bold, { color: boldColor }]}>N1 Em Tensão</Text> (0–29). Piso de dignidade vibracional: 5 pontos.
             </Text>
@@ -199,6 +221,8 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
               Retire dos ombros a busca pelos 100 pontos. Um score <Text style={[styles.bold, { color: boldColor }]}>acima de 70</Text> já indica um nome Bom (sólido). Acima de <Text style={[styles.bold, { color: boldColor }]}>80 pontos</Text>, um "Nome de Ouro" (máximo alinhamento com mínima alteração). Acima de <Text style={[styles.bold, { color: boldColor }]}>90 pontos</Text>, um alinhamento excepcional e raro.
             </Text>
           )}
+            </>
+          )}
 
           <Text style={[styles.subHead, { color: textColor }]}>
             A Tabela de Harmonização Cabalística
@@ -210,7 +234,7 @@ export function PDFStandardIntro({ theme, productType, entityName, isFreeAnalysi
             {'\n'}
             • <Text style={[styles.bold, { color: boldColor }]}>Neutra:</Text> Relação harmoniosa e sem conflito direto. Não há conflito ativo entre as forças da Expressão e do Destino. A vida flui de forma equilibrada, exigindo esforço consciente, mas sem bloqueios ou tensões vibracionais ativas de compatibilidade.
             {'\n'}
-            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-15 pontos</Text>). Ocorre quando a vibração ativa do nome (Expressão) entra em atrito direto com o caminho de nascimento (Destino). Funciona como um "freio de mão puxado": exige esforço gigantesco para obter resultados mínimos, gerando atrasos e estagnação. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
+            • <Text style={[styles.bold, { color: boldColor }]}>Tensão Vibracional:</Text> Conflito de frequências (<Text style={[styles.bold, { color: theme.primaryColor }]}>-18 pontos</Text>). Ocorre quando a vibração ativa do nome (Expressão) entra em atrito direto com o caminho de nascimento (Destino). Funciona como um "freio de mão puxado": exige esforço gigantesco para obter resultados mínimos, gerando atrasos e estagnação. O Nome Social visa justamente eliminar essa tensão e restabelecer o fluxo natural.
           </Text>
         </View>
 

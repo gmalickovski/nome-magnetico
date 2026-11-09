@@ -29,11 +29,11 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '01 · Identidade e Registro',
     title: 'Sua Assinatura Muda, Seu Nome Civil Continua',
     description:
-      'Você não precisa alterar sua certidão nem abrir processo em cartório. O seu nome oficial permanece exatamente como está hoje, enquanto a nova assinatura passa a representar a forma limpa e legível como você assina.',
+      'A assinatura é a forma como você traça seu nome. Seu nome civil nos registros pode permanecer o de nascimento, enquanto você adota uma grafia clara nas situações do cotidiano.',
     bulletPoints: [
-      'Seu nome de certidão continua exatamente o mesmo',
-      'Zero burocracia: sem cartório e sem processo judicial',
-      'Traço único e legível para assinar sempre do mesmo jeito',
+      'Grafie a assinatura escolhida com legibilidade e conforto',
+      'Seu nome de certidão permanece como está hoje',
+      'Traço reconhecível no seu ritmo, sem cronograma imposto',
     ],
     MockupComponent: DocumentCinMockup,
   },
@@ -167,8 +167,8 @@ export function SignatureUseCasesSection() {
         <div ref={headerReveal.ref} className="mb-12 sm:mb-16 md:mb-20">
           <LandingSectionIntro
             label="Onde Usar no Dia a Dia"
-            title="Uma Assinatura Só Sua Para Usar em Todo Lugar"
-            description="Seu nome de registro continua intacto. Veja como aplicar a versão escolhida na sua rotina profissional, nas redes sociais e em cada lugar onde você assina."
+            title="Uma assinatura só sua para usar no dia a dia"
+            description="Use o nome escolhido em redes sociais, cartões e apresentações profissionais. Isso não altera seu nome civil. Para contratos, bancos e documentos, confirme as exigências da instituição ou do cartório. Uma mudança significativa no traço da assinatura pode tornar necessária a atualização da identidade ou da firma cadastrada."
             align="center"
             revealed={headerReveal.revealed}
             reduceMotion={headerReveal.reduceMotion}

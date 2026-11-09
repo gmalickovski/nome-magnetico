@@ -21,6 +21,11 @@ import { TrianguloPiramideInline } from './shared/PDFMarkdownRenderer';
 import { BloqueiosBlock, DebitosBlock, LicoesBlock, TendenciasBlock } from './shared/PDFKarmicBlock';
 import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
+import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
+import { PDFTableOfContents } from './shared/PDFTableOfContents';
+import { buildGratuitoTocEntries } from './shared/pdfTocCatalog.ts';
+import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
+import { PDFComoCalculamosScore } from './shared/PDFComoCalculamosScore';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
 import { getArcano } from '../../../backend/numerology/arcanos';
@@ -41,7 +46,6 @@ import {
   MISSAO_DESC,
 } from '../../../backend/numerology/interpretations';
 
-import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 import {
   getScoreV3Level,
   getScoreV3LevelBadgeClass,
@@ -309,6 +313,7 @@ export function NomeAtualPDF({
   magneticNames: _magneticNames,
   userName: _userName,
   upgradeOfferLabel,
+  pdfRender,
 }: ProductPDFProps) {
   const upgradePrice = upgradeOfferLabel ?? 'nomemagnetico.com.br/precos';
   const logoSrc = loadLogoSrc();
@@ -321,7 +326,9 @@ export function NomeAtualPDF({
   const dataGeracao = formatDate(analysis.completed_at ?? analysis.created_at);
 
   // ── Dados calculados em tempo real a partir do nome de nascimento ──────────
-  const dataNascimentoRaw = freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '';
+  const dataNascimentoRaw = normalizeBirthDateForNumerology(
+    freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '',
+  );
   const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
   const triangulosNasc = calcularTodosTriangulos(nomeNascimento, dataNascimentoRaw);
   const bloqueios = detectarBloqueios(triangulosNasc);
@@ -423,6 +430,8 @@ export function NomeAtualPDF({
     }
   }
 
+  const tocEntries = buildGratuitoTocEntries();
+
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
 
@@ -437,11 +446,24 @@ export function NomeAtualPDF({
         titleFont={TITLE_FONT}
       />
 
+      {!pdfRender?.omitTableOfContents && (
+        <PDFTableOfContents
+          entries={tocEntries}
+          subtitle={`${nomeParaExibir} — Sumário`}
+          pageNumbers={pdfRender?.tocPageNumbers}
+        />
+      )}
+
       {/* ═══════════════════════════════════════════════════════════════════════
        *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
        *  (Bloco completo — idêntico à seção "A Essência" do NomeSocialPDF)
        * ═══════════════════════════════════════════════════════════════════════ */}
       <Page size="A4" style={styles.pageEssencia}>
+        <PDFSectionAnchor
+          id="pdf-intro-leitura"
+          bookmark={{ title: 'Como ler este relatório', fit: true }}
+        />
+        <PDFSectionAnchor id="pdf-essencia" bookmark={{ title: 'A Essência', fit: true }} />
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
         {/* Badge de seção */}
@@ -491,6 +513,10 @@ export function NomeAtualPDF({
 
         {/* ── O Destino: A Estrada Imutável ── */}
         <View wrap={false}>
+          <PDFSectionAnchor
+            id="pdf-essencia-destino"
+            bookmark={{ title: 'Destino', fit: true }}
+          />
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, marginTop: 4 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: '#6d28d9', opacity: 0.3 }} />
             <Text style={{ fontSize: 9, color: '#6d28d9', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
@@ -518,6 +544,7 @@ export function NomeAtualPDF({
 
         {/* ── Os 4 números do nome de nascimento ── */}
         <View wrap={false}>
+          <PDFSectionAnchor id="pdf-essencia-expressao" bookmark={{ title: 'Expressão', fit: true }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
             <Text style={{ fontSize: 9, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
@@ -530,12 +557,15 @@ export function NomeAtualPDF({
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
             {[
-              { label: 'Expressão', sublabel: 'O Dom Natural', value: cincoNumNasc.expressao, color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
-              { label: 'Motivação', sublabel: 'A Alma', value: cincoNumNasc.motivacao, color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
-              { label: 'Impressão', sublabel: 'A Máscara', value: cincoNumNasc.impressao, color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
-              { label: 'Missão', sublabel: 'A Vocação', value: cincoNumNasc.missao, color: '#7C3AED', border: '#7C3AED', bg: '#F5F3FF' },
+              { label: 'Expressão', anchor: 'pdf-essencia-expressao', sublabel: 'O Dom Natural', value: cincoNumNasc.expressao, color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
+              { label: 'Motivação', anchor: 'pdf-essencia-motivacao', sublabel: 'A Alma', value: cincoNumNasc.motivacao, color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
+              { label: 'Impressão', anchor: 'pdf-essencia-impressao', sublabel: 'A Máscara', value: cincoNumNasc.impressao, color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
+              { label: 'Missão', anchor: 'pdf-essencia-missao', sublabel: 'A Vocação', value: cincoNumNasc.missao, color: '#7C3AED', border: '#7C3AED', bg: '#F5F3FF' },
             ].map((n, i) => (
               <View key={i} style={{ flex: 1, borderWidth: 1.5, borderColor: n.border, borderRadius: 8, padding: 10, alignItems: 'center', backgroundColor: n.bg }}>
+                {i > 0 ? (
+                  <PDFSectionAnchor id={n.anchor} bookmark={{ title: n.label, fit: true }} />
+                ) : null}
                 <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: n.color, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>{n.label}</Text>
                 <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: n.color, lineHeight: 1 }}>{n.value ?? '?'}</Text>
                 <Text style={{ fontSize: 7, color: n.color, textAlign: 'center', marginTop: 4 }}>{n.sublabel}</Text>
@@ -641,6 +671,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO DA VIDA ─── */}
           {tVida && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-vida"
+                bookmark={{ title: 'Triângulo da Vida', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo da Vida (Nascimento)
               </Text>
@@ -669,7 +703,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('vida'))}hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -679,6 +713,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO PESSOAL ─── */}
           {tPessoal && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-pessoal"
+                bookmark={{ title: 'Triângulo Pessoal', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo Pessoal (Nascimento)
               </Text>
@@ -707,7 +745,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -717,6 +755,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO SOCIAL ─── */}
           {tSocial && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-social"
+                bookmark={{ title: 'Triângulo Social', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo Social (Nascimento)
               </Text>
@@ -745,7 +787,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -755,6 +797,10 @@ export function NomeAtualPDF({
           {/* ─── TRIÂNGULO DO DESTINO ─── */}
           {tDestino && (
             <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-destino"
+                bookmark={{ title: 'Triângulo do Destino', fit: true }}
+              />
               <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo do Destino (Nascimento)
               </Text>
@@ -783,7 +829,7 @@ export function NomeAtualPDF({
                   </Text>
                   <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
                   <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura reorganiza essas sequências, eliminando os padrões de resistência neste triângulo.
+                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
                   </Text>
                 </View>
               )}
@@ -791,6 +837,13 @@ export function NomeAtualPDF({
           )}
         </View>
       )}
+
+        <PDFFooter bgColor="#FEF2F2" />
+      </Page>
+
+      {/* Karma — página dedicada (evita fragmento de card na p.18) */}
+      <Page size="A4" style={styles.pageEssencia}>
+        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
       {/* ── SEÇÃO A ESSÊNCIA: O PESO DO PASSADO ───────────────────── */}
       <View>
@@ -812,7 +865,8 @@ export function NomeAtualPDF({
         </Text>
 
         {/* Débitos Kármicos */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
+        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
+          <PDFSectionAnchor id="pdf-essencia-debitos" bookmark={{ title: 'Débitos kármicos', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
             Débitos Kármicos
           </Text>
@@ -833,7 +887,8 @@ export function NomeAtualPDF({
         </View>
 
         {/* Lições Kármicas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
+        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
+          <PDFSectionAnchor id="pdf-essencia-licoes" bookmark={{ title: 'Lições kármicas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
             Lições Kármicas
           </Text>
@@ -844,7 +899,8 @@ export function NomeAtualPDF({
         </View>
 
         {/* Tendências Ocultas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
+        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
+          <PDFSectionAnchor id="pdf-essencia-tendencias" bookmark={{ title: 'Tendências ocultas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
             Tendências Ocultas
           </Text>
@@ -854,12 +910,6 @@ export function NomeAtualPDF({
           <TendenciasBlock tendencias={tendencias} frequencias={frequencias} />
         </View>
 
-        {/* Gancho sutil pós-karma */}
-        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginTop: 4, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-          <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, textAlign: 'center', fontStyle: 'italic' }}>
-            Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
-          </Text>
-        </View>
       </View>
 
         <PDFFooter bgColor="#FEF2F2" />
@@ -869,13 +919,13 @@ export function NomeAtualPDF({
        *  PÁGINAS FINAIS — mantidas do PDF gratuito original
        * ═══════════════════════════════════════════════════════════════════════ */}
 
-      {/* ── PÁGINA: DIAGNÓSTICO É CLARO (FUNDO ESCURO) ──────────────────── */}
-      <Page size="A4" style={styles.darkPage}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — O Diagnóstico`} />
+      {/* ── PÁGINA: O QUE ESTE MAPA MOSTROU (fundo claro) ───────────────── */}
+      <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-mapa" bookmark={{ title: 'O que este mapa mostrou', fit: true }} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Resumo do mapa`} />
 
-        {/* Título dourado */}
-        <View style={{ marginTop: 28, marginBottom: 24 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 22 }]}>O Diagnóstico É Claro</Text>
+        <View style={{ marginTop: 12, marginBottom: 16 }}>
+          <Text style={[styles.hugeTitle, { fontSize: 22, color: DARK }]}>O que este mapa mostrou</Text>
         </View>
 
         {/* Bullets */}
@@ -884,7 +934,7 @@ export function NomeAtualPDF({
           {/* Bloqueios */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{bloqueios.length} bloqueio{bloqueios.length !== 1 ? 's' : ''} {bloqueios.length !== 1 ? 'energéticos' : 'energético'}</Text>
               {' '}detectado{bloqueios.length !== 1 ? 's' : ''} nos 4 triângulos do nome de nascimento — loops vibracionais ativos 24h/dia, independente de esforço ou força de vontade.
             </Text>
@@ -893,7 +943,7 @@ export function NomeAtualPDF({
           {/* Débitos */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{debitos.length} débito{debitos.length !== 1 ? 's' : ''} kármico{debitos.length !== 1 ? 's' : ''}</Text>
               {' '}ativo{debitos.length !== 1 ? 's' : ''} — padrões de encarnações passadas que criam ciclos de resistência em áreas específicas da vida.
             </Text>
@@ -902,7 +952,7 @@ export function NomeAtualPDF({
           {/* Lições */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{licoes.length} lição{licoes.length !== 1 ? 'ões' : ''} kármica{licoes.length !== 1 ? 's' : ''}</Text>
               {' '}identificada{licoes.length !== 1 ? 's' : ''} — vibrações ausentes no nome que criam pontos cegos e lacunas de talento.
             </Text>
@@ -911,7 +961,7 @@ export function NomeAtualPDF({
           {/* Tendências */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: '#e5e2e1', lineHeight: 1.6 }}>
+            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{tendencias.length} tendência{tendencias.length !== 1 ? 's' : ''} oculta{tendencias.length !== 1 ? 's' : ''}</Text>
               {' '}— frequências em excesso que operam como compulsão automática, sabotando exatamente onde você mais quer prosperar.
             </Text>
@@ -919,77 +969,27 @@ export function NomeAtualPDF({
 
         </View>
 
-        {/* Card cinza escuro de conclusão */}
-        <View style={{
-          marginTop: 28,
-          marginHorizontal: 24,
-          backgroundColor: 'rgba(255,255,255,0.05)',
+        {/* Card de conclusão — card inteiro na mesma página (Growth t271u) */}
+        <View wrap={false} style={{
+          marginTop: 20,
+          marginHorizontal: 8,
+          backgroundColor: '#F9FAFB',
           borderRadius: 10,
           padding: 18,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.1)',
+          borderColor: '#E5E7EB',
         }}>
-          <Text style={{ fontSize: 10, color: '#C9C5C0', lineHeight: 1.7, textAlign: 'center' }}>
-            Nenhum desses padrões responde a esforço ou mudança de comportamento — a origem está na frequência que a assinatura emite. A harmonização reorganiza as letras do nome para eliminar os bloqueios, minimizar os débitos variáveis e introduzir as vibrações ausentes. O resultado é uma assinatura que trabalha a favor do Destino, não contra.
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, textAlign: 'center' }}>
+            Esses padrões são descritos pela numerologia cabalística como tensões vibracionais no nome atual — não como diagnóstico ou promessa de cura. A harmonização propõe outras formas de assinar para você comparar scores, bloqueios e triângulos lado a lado, sem garantia de eliminação ou melhora automática.
           </Text>
         </View>
 
-        <PDFFooter />
-      </Page>
-
-      {/* ── PÁGINA: A PEQUENA VITÓRIA (BRIDGE PAGE) ────────────────────── */}
-      <Page size="A4" style={styles.darkPage}>
-        <PDFPageHeader subtitle={`${nomeParaExibir} — O Primeiro Passo`} />
-
-        <View style={{ marginTop: 28, marginBottom: 18 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 22, color: GOLD }]}>Ação Imediata: O Escudo Provisório</Text>
-        </View>
-
-        <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
-          Antes de mergulhar na Harmonização completa do seu nome, existe um passo imediato que você pode tomar hoje. Ao aplicar as orientações para amenizar o bloqueio primário da sua assinatura atual, você ergue um "Escudo Provisório" que ajuda a estancar a perda de energia vital.
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginTop: 16, textAlign: 'justify' }}>
+          No Nome Social você compara outras formas de assinar; o convite e o passo a passo estão na seção final deste PDF.
         </Text>
 
-        {bloqueios.length > 0 ? (
-          <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderRadius: 10, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: '#f2ca50', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>O Que Fazer Agora?</Text>
-            <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
-              Sua primeira ação prática deve ser neutralizar a repetição primária do {bloqueios[0].titulo}.
-            </Text>
-            {(escudoTexto || SUGESTOES_AMENIZAR[bloqueios[0].codigo]) && (
-              <View style={{ backgroundColor: 'rgba(242, 202, 80, 0.1)', padding: 12, borderRadius: 6, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: '#f2ca50' }}>
-                <Text style={{ fontSize: 10, color: '#f2ca50', fontFamily: BODY_FONT_BOLD, marginBottom: 6 }}>Ação Recomendada (Próximas 72h):</Text>
-                <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.5, marginBottom: escudoTexto ? 0 : 6 }}>
-                  {escudoTexto
-                    ? escudoTexto
-                    : `Para neutralizar provisoriamente essa vibração e restabelecer o equilíbrio do seu campo, você pode adotar atitudes práticas imediatas. Escolha pelo menos uma das ações abaixo para aplicar nos próximos dias:`
-                  }
-                </Text>
-                {!escudoTexto && (SUGESTOES_AMENIZAR[bloqueios[0].codigo] || []).map((sugestao, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 4, paddingLeft: 4 }}>
-                    <Text style={{ color: '#f2ca50', fontSize: 9, marginRight: 6, marginTop: 1 }}>✦</Text>
-                    <Text style={{ fontSize: 9.5, color: '#e5e2e1', lineHeight: 1.45, flex: 1 }}>{sugestao}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
-              Nota: Este é apenas um exercício simbólico provisório de autoconhecimento. Para integrar este padrão de forma mais profunda na sua assinatura, a Harmonização de Assinatura reorganiza a vibração do nome e sustenta uma proteção energética alinhada ao seu destino.
-            </Text>
-          </View>
-        ) : (
-          <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderRadius: 10, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: '#f2ca50', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>O Que Fazer Agora?</Text>
-            <Text style={{ fontSize: 10, color: '#e5e2e1', lineHeight: 1.6, marginBottom: 12 }}>
-              Sua primeira ação prática deve ser alinhar sua assinatura para evitar futuras resistências vibracionais. Este pequeno ajuste já é capaz de otimizar a sua energia nas próximas 72 horas.
-            </Text>
-            <Text style={{ fontSize: 9, color: '#C9C5C0', fontStyle: 'italic', lineHeight: 1.5 }}>
-              Nota: Este é apenas um passo preventivo. Para o alinhamento completo do seu propósito, a análise profunda de todos os triângulos é indispensável.
-            </Text>
-          </View>
-        )}
-
-        <Text style={{ fontSize: 10, color: '#C9C5C0', lineHeight: 1.7, textAlign: 'center', marginTop: 'auto', marginBottom: 20 }}>
-          Descubra na próxima página como iniciar a sua Harmonização Completa e transformar definitivamente a vibração que rege os seus resultados.
+        <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, marginTop: 12, textAlign: 'center', fontStyle: 'italic' }}>
+          Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
         </Text>
 
         <PDFFooter />
@@ -997,6 +997,7 @@ export function NomeAtualPDF({
 
       {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
       <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como calculamos o score', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
 
         <View style={{ marginTop: 24, marginBottom: 14 }}>
@@ -1005,198 +1006,45 @@ export function NomeAtualPDF({
           </Text>
         </View>
 
-        <Text style={{ fontSize: 9.5, color: GRAY, lineHeight: 1.6, marginBottom: 12, textAlign: 'justify' }}>
-          O Score do Nome Magnético é um modelo estritamente matemático e determinístico, fundamentado nos critérios objetivos da Numerologia Cabalística tradicional. A avaliação parte da pontuação máxima (100 pontos) e aplica regras claras e auditáveis:
-        </Text>
-
-        <View style={{ gap: 8, marginBottom: 14 }}>
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              1. Base de Cálculo e Piso
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Todo nome inicia em 100 pontos. Nenhum nome recebe nota menor que 5 pontos (piso de dignidade vibracional).
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              2. Sequências no Triângulo da Vida
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Sequências repetidas (111..999) no Triângulo da Vida subtraem 15 pontos por padrão distinto, com desconto de até 45 pontos no total. Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não subtraem pontos.
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              3. Harmonia Expressão × Destino
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Relação Favorável (0 pts), Neutro (-6 pts) ou Tensão Vibracional (-18 pts).
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              4. Débitos Kármicos do Nome e Marca da Data
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              Apenas débitos variáveis (originados na Expressão ou Motivação) descontam pontos. Débitos originados no dia do nascimento ou no Destino pertencem à sua data natalícia e têm desconto zero na nota do nome.
-            </Text>
-          </View>
-
-          <View style={{ backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: DARK, marginBottom: 3 }}>
-              5. Escala de 5 Níveis (N1 a N5)
-            </Text>
-            <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.5 }}>
-              N5 (85–100 Harmonioso), N4 (70–84 Favorável), N3 (50–69 Equilíbrio Parcial), N2 (30–49 Pede Atenção) e N1 (0–29 Em Tensão).
-            </Text>
-          </View>
-        </View>
-
-        {/* Link para página pública */}
-        <View style={{ borderRadius: 6, backgroundColor: 'rgba(212,175,55,0.08)', borderWidth: 1, borderColor: '#D4AF37', padding: 8, marginBottom: 12 }}>
-          <Text style={{ fontSize: 8, color: '#92640F', textAlign: 'center', fontFamily: BODY_FONT_BOLD }}>
-            Consulte o detalhamento completo das fórmulas em: nomemagnetico.com.br/como-funciona-o-score
-          </Text>
-        </View>
-
-        {/* Aviso Legal Autoconhecimento */}
-        <View style={{ marginTop: 'auto', borderTopWidth: 0.5, borderTopColor: '#E5E7EB', paddingTop: 8 }}>
-          <Text style={{ fontSize: 7, color: '#9CA3AF', lineHeight: 1.4, textAlign: 'justify' }}>
-            {AVISO_AUTOCONHECIMENTO}
-          </Text>
-        </View>
+        <PDFComoCalculamosScore isV3={isV3} />
 
         <PDFFooter />
       </Page>
 
-      {/* ── PÁGINA FINAL: CTA — DIAGNÓSTICO DEFINITIVO (FUNDO ESCURO) ──────── */}
-      <Page size="A4" style={styles.darkPage}>
-
-        {/* Título */}
-        <View style={{ marginTop: 18, marginBottom: 16 }}>
-          <Text style={[styles.hugeTitle, { color: bloqueios.length > 0 ? '#EF4444' : scoreNivel === 'aceitavel' ? '#F59E0B' : GOLD, fontSize: 17 }]}>
-            O Diagnóstico É Definitivo — A Assinatura Continua Emitindo
+      {/* ── PÁGINA FINAL: CTA NOME SOCIAL (fundo claro) ───────────────────── */}
+      <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-nome-social" bookmark={{ title: 'Compare outras formas de assinar', fit: true }} />
+        <View style={{ marginTop: 24, marginBottom: 16 }}>
+          <Text style={[styles.hugeTitle, { color: DARK, fontSize: 17 }]}>
+            Compare outras formas de assinar
           </Text>
         </View>
 
-        {/* Comparação lado a lado */}
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }} wrap={false}>
-          {/* Coluna Atual */}
-          <View style={{ flex: 1, backgroundColor: 'rgba(220,38,38,0.12)', borderWidth: 1.5, borderColor: '#EF4444', borderRadius: 8, padding: 12 }}>
-            <Text style={{ fontSize: 8, color: '#EF4444', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, textAlign: 'center' }}>
-              Assinatura Atual {nivelV3 ? `(${nivelV3})` : ''}
-            </Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 26, color: rawScore != null ? scoreColor(rawScore) : '#EF4444', textAlign: 'center', marginBottom: 8, lineHeight: 1 }}>
-              {rawScore != null ? `${rawScore}` : '--'}/100
-            </Text>
-            {nivelV3 && (
-              <Text style={{ fontSize: 7.5, color: '#FCA5A5', textAlign: 'center', marginBottom: 4 }}>
-                Nível {nivelV3}: {getScoreV3LevelDescription(nivelV3)}
-              </Text>
-            )}
-            {bloqueios.length > 0 && (
-              <Text style={{ fontSize: 8, color: '#FCA5A5', marginBottom: 2 }}>
-                - {bloqueios.length} bloqueio{bloqueios.length > 1 ? 's' : ''} ativo{bloqueios.length > 1 ? 's' : ''} na assinatura
-              </Text>
-            )}
-            <Text style={{ fontSize: 8, color: '#9CA3AF', marginBottom: 2 }}>- Frequência de resistência 24h/dia</Text>
-            <Text style={{ fontSize: 8, color: '#9CA3AF', marginBottom: 2 }}>- Campo vibracional parcialmente travado</Text>
-            <Text style={{ fontSize: 8, color: '#9CA3AF' }}>- Esforço desproporcional ao resultado</Text>
-          </View>
-          {/* Seta */}
-          <View style={{ justifyContent: 'center', alignItems: 'center', width: 24 }}>
-            <Text style={{ fontSize: 14, color: GOLD, fontFamily: 'Helvetica-Bold' }}>{'>>'}</Text>
-          </View>
-          {/* Coluna Harmonizado */}
-          <View style={{ flex: 1, backgroundColor: 'rgba(5,150,105,0.12)', borderWidth: 1.5, borderColor: '#10B981', borderRadius: 8, padding: 12 }}>
-            <Text style={{ fontSize: 8, color: '#10B981', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, textAlign: 'center' }}>
-              Seu Potencial Harmonizado {nivelPotencialV3 ? `(${nivelPotencialV3})` : ''}
-            </Text>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 26, color: '#10B981', textAlign: 'center', marginBottom: 8, lineHeight: 1 }}>
-              {potencialV3 != null ? `Até ${potencialV3}/100` : '85-98/100'}
-            </Text>
-            {nivelPotencialV3 && (
-              <Text style={{ fontSize: 7.5, color: '#6EE7B7', textAlign: 'center', marginBottom: 4 }}>
-                Nível {nivelPotencialV3}: {getScoreV3LevelDescription(nivelPotencialV3)}
-              </Text>
-            )}
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Zero bloqueios no Triângulo da Vida</Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Frequência magnética constante</Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7', marginBottom: 2 }}>+ Expressão alinhada ao Destino</Text>
-            <Text style={{ fontSize: 8, color: '#6EE7B7' }}>+ Campo vibracional recalibrado</Text>
-          </View>
-        </View>
-
-        {/* O Que Você Recebe */}
-        <View style={{ backgroundColor: 'rgba(212,175,55,0.06)', borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)', borderRadius: 8, padding: 12, marginBottom: 14 }} wrap={false}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: GOLD, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            O Que Você Recebe na Harmonização de Assinatura
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1, gap: 6 }}>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Comparativo completo dos 4 triângulos'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Nascimento vs. Harmonizado lado a lado</Text>
-              </View>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Variações de assinatura sem bloqueios'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Score acima de 70 garantido</Text>
-              </View>
-            </View>
-            <View style={{ flex: 1, gap: 6 }}>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Todos os arcanos reorganizados'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Novas forças governando cada dimensão</Text>
-              </View>
-              <View>
-                <Text style={{ fontSize: 8, color: GOLD, fontFamily: BODY_FONT_BOLD, marginBottom: 2 }}>{'> Guia de implementação'}</Text>
-                <Text style={{ fontSize: 7, color: '#9CA3AF' }}>Como aplicar a nova assinatura imediatamente</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Depoimentos */}
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }} wrap={false}>
-          {[
-            { texto: '"Os bloqueios que o relatório mostrou explicavam ciclos de 10 anos. Harmonizei e o padrão mudou."', autor: 'Ricardo T. — empresário, MG' },
-            { texto: '"Em 3 meses vieram 2 contratos que eu nem buscava. Assinar diferente foi o divisor de águas."', autor: 'Fernanda M. — consultora, SP' },
-            { texto: '"Parecia pequena coisa — mudar uma letra na assinatura. Não era."', autor: 'Ana Paula C. — terapeuta, RJ' },
-          ].map((dep, i) => (
-            <View key={i} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 8 }}>
-              <Text style={{ fontSize: 7, color: '#D1D5DB', lineHeight: 1.5, fontStyle: 'italic', marginBottom: 5 }}>{dep.texto}</Text>
-              <Text style={{ fontSize: 7, color: '#6B7280' }}>{dep.autor}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Âncora de preço */}
-        <Text style={{ fontSize: 9, color: '#92640F', fontStyle: 'italic', textAlign: 'center', lineHeight: 1.6, marginBottom: 12 }}>
-          {bloqueios.length > 0
-            ? `Quanto custa mais um ano com ${bloqueios.length} bloqueio${bloqueios.length > 1 ? 's' : ''} na sua assinatura repelindo resultados?`
-            : 'Quanto custa mais um ano com uma frequência que pode ser muito mais poderosa?'}{'\n'}
-          Harmonização de Assinatura ({upgradePrice}) — a assinatura muda. A frequência muda. Os resultados mudam.
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
+          No Nome Social, você compara as opções calculadas para o seu nome e escolhe qual deseja analisar.
         </Text>
 
-        {/* CTA Button */}
+        {rawScore != null && (
+          <View style={{ backgroundColor: '#F9FAFB', borderRadius: 8, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#E5E7EB' }}>
+            <Text style={{ fontSize: 9, color: GRAY, textAlign: 'center', lineHeight: 1.5 }}>
+              Nota calculada deste mapa (nome de nascimento): {rawScore}/100{nivelV3 ? ` · ${nivelV3}` : ''}.
+              {potencialV3 != null ? ` Potencial explorável pelo motor: até ${potencialV3}/100 (referência de cálculo, não resultado garantido).` : ''}
+            </Text>
+          </View>
+        )}
+
         <View style={{ alignItems: 'center', marginBottom: 10 }}>
           <Link src="https://www.nomemagnetico.com.br/nome-social?utm_source=pdf_gratis&utm_medium=pdf&utm_campaign=upsell_nome_social" style={{ textDecoration: 'none', marginBottom: 8 }}>
-            <View style={{ backgroundColor: '#10B981', paddingVertical: 18, paddingHorizontal: 44, borderRadius: 32 }}>
-              <Text style={{ color: '#FFFFFF', fontFamily: 'Helvetica-Bold', fontSize: 15, textAlign: 'center' }}>
-                Harmonizar Minha Assinatura Agora
+            <View style={{ backgroundColor: '#10B981', paddingVertical: 16, paddingHorizontal: 36, borderRadius: 32 }}>
+              <Text style={{ color: '#FFFFFF', fontFamily: BODY_FONT_BOLD, fontSize: 14, textAlign: 'center' }}>
+                Conhecer o Nome Social
               </Text>
             </View>
           </Link>
           <Text style={{ fontSize: 9, color: GOLD, marginBottom: 2 }}>nomemagnetico.com.br/nome-social</Text>
-          <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-            <Text style={{ fontSize: 8, color: '#6B7280' }}>Acesso imediato após confirmação</Text>
-            <Text style={{ fontSize: 8, color: '#9CA3AF' }}>|</Text>
-            <Text style={{ fontSize: 8, color: '#6B7280' }}>{upgradePrice}</Text>
-          </View>
+          {upgradePrice && !upgradeOfferLabel?.includes('EXEMPLO') && (
+            <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 4 }}>{upgradePrice}</Text>
+          )}
         </View>
 
         {/* Selos de segurança */}

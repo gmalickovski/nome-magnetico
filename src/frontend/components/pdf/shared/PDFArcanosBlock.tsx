@@ -46,6 +46,7 @@ export function PDFArcanosBlock({
 
   return (
     <View style={{ marginTop: 14 }}>
+      <View wrap={false}>
       {/* (Subtitulo) Arcanos - Triangulo da... */}
       <Text style={{ 
         fontSize: 11,
@@ -60,7 +61,6 @@ export function PDFArcanosBlock({
         {title}
       </Text>
 
-      <View wrap={false}>
         {/* Arcano Regente */}
         <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 8, textAlign: 'justify' }}>
           <Text style={{ fontFamily: BODY_FONT_BOLD, color: THEME_PURPLE }}>Arcano Regente {arcanoRegente.numero}: {arcanoRegente.nome} — </Text>

@@ -70,39 +70,48 @@ export const BLOQUEIOS_MAP: Record<
 > = {
   '111': {
     titulo: 'Sequência 111 — Limitação e Iniciação',
-    descricao: 'A pessoa fica limitada, perdendo a coragem de se aventurar em algo novo. Pode, também, ficar um longo período inativo(a), desempregado(a) ou mesmo impotente para realizar o que quer que seja, permanecendo nesse estado o tempo que durar o Arcano que domina o período. Indica, eventualmente, tendência para desenvolver distúrbios ou doenças cardíacas.',
+    descricao:
+      'A pessoa fica limitada, perdendo a coragem de se aventurar em algo novo. Pode, também, ficar um longo período inativo(a), desempregado(a) ou mesmo impotente para realizar o que quer que seja, permanecendo nesse estado o tempo que durar o Arcano que domina o período.',
   },
   '222': {
     titulo: 'Sequência 222 — Associação e Autoestima',
-    descricao: 'Possibilidade de timidez e indecisão, podendo levar a ser subjugado(a) pelos mais próximos (amigos, sócios, colegas ou conhecidos). Faz perder a autoestima, limitando projetos e realizações. Pode, eventualmente, surgir alguma doença que provoque dependência.',
+    descricao:
+      'Possibilidade de timidez e indecisão, podendo levar a ser subjugado(a) pelos mais próximos (amigos, sócios, colegas ou conhecidos). Faz perder a autoestima, limitando projetos e realizações.',
   },
   '333': {
     titulo: 'Sequência 333 — Comunicação e Diálogo',
-    descricao: 'Possibilidade de ser incompreendido(a), dificuldade no diálogo, principalmente com colegas de trabalho e com o(a) companheiro(a). Dificuldade de se impor em seus projetos e de convencer as pessoas. Pode, eventualmente, indicar doenças respiratórias ou de articulações.',
+    descricao:
+      'Possibilidade de ser incompreendido(a), dificuldade no diálogo, principalmente com colegas de trabalho e com o(a) companheiro(a). Dificuldade de se impor em seus projetos e de convencer as pessoas.',
   },
   '444': {
     titulo: 'Sequência 444 — Realização Profissional',
-    descricao: 'Dificuldade na realização profissional. Pode ser mal remunerado(a), ter perspectivas profissionais difíceis, dificuldade em se manter no emprego ou em se dar bem em qualquer atividade. Pode, eventualmente, indicar doenças reumáticas ou arteriais.',
+    descricao:
+      'Dificuldade na realização profissional. Pode ser mal remunerado(a), ter perspectivas profissionais difíceis, dificuldade em se manter no emprego ou em se dar bem em qualquer atividade.',
   },
   '555': {
     titulo: 'Sequência 555 — Instabilidade e Mudanças',
-    descricao: 'Possíveis mudanças não desejadas de casa, de profissão ou meio social. Altos e baixos frequentes, sem se fixar profissionalmente, sempre à procura de melhores oportunidades e com dificuldade para encontrá-las. Pode causar fuga do meio social e desenvolver alguma doença de pele.',
+    descricao:
+      'Possíveis mudanças não desejadas de casa, de profissão ou meio social. Altos e baixos frequentes, sem se fixar profissionalmente, sempre à procura de melhores oportunidades e com dificuldade para encontrá-las. Pode causar fuga do meio social.',
   },
   '666': {
     titulo: 'Sequência 666 — Afetividade e Relações',
-    descricao: 'Possibilidade de decepções com amigos, sócios, parentes e até com o cônjuge/companheiro(a), que não compreende seus propósitos e sentimentos. Algum tipo de doença cardíaca pode aparecer nesse estado.',
+    descricao:
+      'Possibilidade de decepções com amigos, sócios, parentes e até com o cônjuge/companheiro(a), que não compreende seus propósitos e sentimentos.',
   },
   '777': {
     titulo: 'Sequência 777 — Introspecção e Isolamento',
-    descricao: 'Faz com que se afaste de tudo e de todos. Pode levar ao desmando, tornar dependente, vaidoso(a), arrogante e vítima da própria intolerância. A persistência provoca solidão, doenças nervosas, dependências e, eventualmente, algum tipo de câncer.',
+    descricao:
+      'Faz com que se afaste de tudo e de todos. Pode levar ao desmando, tornar dependente, vaidoso(a), arrogante e vítima da própria intolerância. A persistência provoca solidão.',
   },
   '888': {
     titulo: 'Sequência 888 — Atividades Sociais e Equilíbrio Material',
-    descricao: 'Torna arredio(a), afastando das atividades sociais. Se não for evoluído(a) espiritualmente, pode descontrolar-se emocionalmente com facilidade. Pode oscilar entre a riqueza e a pobreza e, por esse estresse, desenvolver alguma doença.',
+    descricao:
+      'Torna arredio(a), afastando das atividades sociais. Se não for evoluído(a) espiritualmente, pode descontrolar-se emocionalmente com facilidade. Pode oscilar entre a riqueza e a pobreza.',
   },
   '999': {
     titulo: 'Sequência 999 — Dificuldades Financeiras e Perdas',
-    descricao: 'Tendência a dificuldades financeiras, eventualmente perdas de bens, fracassos nos negócios e provações por períodos de estagnação. Tudo isso pode afetar o sistema nervoso e o coração.',
+    descricao:
+      'Tendência a dificuldades financeiras, eventualmente perdas de bens, fracassos nos negócios e provações por períodos de estagnação.',
   },
 };
 

@@ -17,7 +17,10 @@ import {
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
 import { avaliarNome, calcularScoreV1SemOcorrenciasExtras } from '../../backend/numerology/score';
 import { isScoreV3 } from '../../backend/numerology/score-version';
-import { renderToBuffer } from '@react-pdf/renderer';
+import {
+  PDF_TOC_ANCHOR_IDS,
+  renderProductPdfBuffer,
+} from '../../frontend/components/pdf/shared/pdfDynamicRender';
 import React from 'react';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
 import {
@@ -147,12 +150,14 @@ async function generateLeadPdfBuffer(lead: {
     completed_at: new Date().toISOString(),
   };
 
-  const buffer = await renderToBuffer(
-    React.createElement(NomeAtualPDF, {
+  const buffer = await renderProductPdfBuffer(
+    NomeAtualPDF,
+    {
       analysis: analysisObj as any,
       magneticNames: [],
       userName: fullName.split(' ')[0],
-    }) as any
+    },
+    PDF_TOC_ANCHOR_IDS.gratuito,
   );
   return Buffer.from(buffer);
 }

@@ -13,7 +13,7 @@ import type {
 import type { ChatCollectState } from './decide-live-bridge.js';
 
 /** Bump quando copy/fluxo do palpite mudar (invalida sessões antigas com leitura duplicada). */
-export const CHAT_SESSION_STORAGE_VERSION = 6 as const;
+export const CHAT_SESSION_STORAGE_VERSION = 7 as const;
 
 const STORAGE_VERSION = CHAT_SESSION_STORAGE_VERSION;
 
@@ -61,12 +61,6 @@ export function loadChatSession(userId: string): PersistedChatSession | null {
       return null;
     }
     if (parsed.version !== STORAGE_VERSION) {
-      clearChatSession(userId);
-      return null;
-    }
-    // Se a sessão salva já concluiu a análise (analysisId gerado), ela não deve ser restaurada
-    // como formulário em andamento ao entrar para uma nova harmonização.
-    if (parsed.analysisId) {
       clearChatSession(userId);
       return null;
     }
