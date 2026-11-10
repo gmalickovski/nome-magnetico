@@ -94,8 +94,7 @@ describe('buildFreeAnalysisMarketingPayload', () => {
 
     assert.equal(payload.score, 0);
     assert.equal(typeof payload.score, 'number');
-    assert.equal(payload.potencial, 0);
-    assert.equal(typeof payload.potencial, 'number');
+    assert.equal(payload.potencial, null);
     assert.equal(payload.nome, '');
     assert.equal(payload.sobrenome, '');
     assert.match(payload.analise_data, /^\d{4}-\d{2}-\d{2}$/);
@@ -103,7 +102,7 @@ describe('buildFreeAnalysisMarketingPayload', () => {
     assert.equal(payload.opt_in_data, null);
   });
 
-  it('faz fallback de potencial para score quando potencial não for informado', () => {
+  it('retorna null para potencial quando não for informado ou for inválido', () => {
     const payload = buildFreeAnalysisMarketingPayload({
       email: 'cliente@email.com',
       nomeCompleto: 'Carlos Silva',
@@ -114,8 +113,7 @@ describe('buildFreeAnalysisMarketingPayload', () => {
     });
 
     assert.equal(payload.score, 65);
-    assert.equal(payload.potencial, 65);
-    assert.equal(typeof payload.potencial, 'number');
+    assert.equal(payload.potencial, null);
   });
 
   it('acrescenta analysisUrl, offerUrl e checkoutUrl sem alterar o contrato do n8n', () => {

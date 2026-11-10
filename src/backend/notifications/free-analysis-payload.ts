@@ -37,7 +37,7 @@ export interface FreeAnalysisMarketingPayload {
   analise_data: string;
   analise_id: string;
   score: number;
-  potencial: number;
+  potencial: number | null;
   origem: 'analise_gratis';
   opt_in: boolean;
   opt_in_data: string | null;
@@ -90,6 +90,10 @@ function asScore(score: number): number {
   return typeof score === 'number' && Number.isFinite(score) ? score : 0;
 }
 
+function asPotencial(potencial: number | null | undefined): number | null {
+  return typeof potencial === 'number' && Number.isFinite(potencial) ? potencial : null;
+}
+
 function optInDataIso(optIn: boolean, optInEm: Date | string | null | undefined): string | null {
   if (!optIn || optInEm == null || optInEm === '') return null;
   const date = asDate(optInEm);
@@ -112,7 +116,7 @@ export function buildFreeAnalysisMarketingPayload(
     analise_data: formatAnaliseData(input.concluidaEm),
     analise_id: (input.analiseId ?? '').trim(),
     score: asScore(input.score),
-    potencial: asScore(input.potencial ?? input.score),
+    potencial: asPotencial(input.potencial),
     origem: 'analise_gratis',
     opt_in: optIn,
     opt_in_data: optInDataIso(optIn, input.optInEm),
