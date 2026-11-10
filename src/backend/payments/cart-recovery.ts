@@ -1,6 +1,17 @@
 import type { ProductType } from '../../shared/product-labels';
 import { PRODUCT_LABELS } from '../../shared/product-labels';
 
+/** Saudação do e-mail payment.failed (n8n); cart.abandoned não usa fallback. */
+export function paymentFailedDisplayFirstName(profile: {
+  email: string;
+  nome?: string | null;
+}): string {
+  const nome = profile.nome?.trim();
+  if (nome) return nome;
+  const local = profile.email.split('@')[0]?.trim();
+  return local || 'Cliente';
+}
+
 export const MOTIVO_CART_ABANDONED = {
   pix_expired: 'O pagamento via Pix da sua análise de Nome Social não foi concluído.',
   card_declined: 'O pagamento com cartão da sua análise de Nome Social não foi concluído.',

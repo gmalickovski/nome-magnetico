@@ -8,7 +8,18 @@ import {
   buildCartAbandonedPayload,
   FailedPaymentDeduplicator,
   resolvePaymentMethodFromIntent,
+  paymentFailedDisplayFirstName,
 } from './cart-recovery';
+
+describe('cart-recovery · payment.failed firstName', () => {
+  it('usa parte local do e-mail quando nome está ausente', () => {
+    assert.equal(
+      paymentFailedDisplayFirstName({ email: 'maria.silva@example.com', nome: null }),
+      'maria.silva',
+    );
+    assert.equal(paymentFailedDisplayFirstName({ email: 'maria@example.com', nome: '  Ana  ' }), 'Ana');
+  });
+});
 
 describe('cart-recovery · Motivos fixos do Growth', () => {
   it('mapeia exatamente o texto do Caso 1: Pix expirado ou não pago', () => {

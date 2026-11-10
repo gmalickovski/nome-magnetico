@@ -2,7 +2,10 @@ import type { ProductType } from './stripe';
 import { notify } from '../notifications/notify';
 import { hasActiveSubscription } from '../db/subscriptions';
 import { getEffectivePriceCore } from '../pricing/service';
-import { claimCartRecoverySend } from '../db/cart-recovery-sends';
+import {
+  claimCartRecoverySend,
+  releaseCartRecoverySend,
+} from '../db/cart-recovery-sends';
 import {
   buildCartAbandonedPayload,
   type RecoveryPaymentMethod,
@@ -62,10 +65,14 @@ export async function emitCartAbandonedIfEligible(params: {
     return 'skipped';
   }
 
-  const claimed = await claimCartRecoverySend(userId, productType);
-  if (!claimed) {
+  const claim = await claimCartRecoverySend(userId, productType);
+  if (claim !== 'claimed') {
     return 'skipped';
   }
+
+  const rollbackClaim = async () => {
+    await releaseCartRecoverySend(userId, productType);
+  };
 
   let unitAmount =
     sessionMetadata?.final_cents ? Number(sessionMetadata.final_cents)
@@ -83,6 +90,7 @@ export async function emitCartAbandonedIfEligible(params: {
   }
 
   if (unitAmount <= 0) {
+    await rollbackClaim();
     return 'skipped';
   }
 
@@ -101,6 +109,7 @@ export async function emitCartAbandonedIfEligible(params: {
   });
 
   if (!checkoutUrl) {
+    await rollbackClaim();
     return 'skipped';
   }
 
@@ -117,9 +126,15 @@ export async function emitCartAbandonedIfEligible(params: {
   });
 
   if (!payload) {
+    await rollbackClaim();
     return 'skipped';
   }
 
-  await notify('cart.abandoned', payload);
+  const notifyOk = await notify('cart.abandoned', payload);
+  if (!notifyOk) {
+    await rollbackClaim();
+    return 'skipped';
+  }
+
   return 'emitted';
 }

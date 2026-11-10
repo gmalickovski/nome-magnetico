@@ -3,8 +3,10 @@ import { beforeEach, describe, it, mock } from 'node:test';
 import { MOTIVO_CART_ABANDONED } from './cart-recovery';
 
 let hasActive = false;
-let claimResult = true;
+let claimResult: 'claimed' | 'duplicate' | 'error' = 'claimed';
+const releaseCalls: Array<{ userId: string; productType: string }> = [];
 const notifyCalls: { event: string; payload: Record<string, unknown> }[] = [];
+let notifyOk = true;
 
 mock.module('../db/subscriptions', {
   namedExports: {
@@ -15,6 +17,9 @@ mock.module('../db/subscriptions', {
 mock.module('../db/cart-recovery-sends', {
   namedExports: {
     claimCartRecoverySend: async () => claimResult,
+    releaseCartRecoverySend: async (userId: string, productType: string) => {
+      releaseCalls.push({ userId, productType });
+    },
   },
 });
 
@@ -33,7 +38,7 @@ mock.module('../notifications/notify', {
   namedExports: {
     notify: async (event: string, payload: Record<string, unknown>) => {
       notifyCalls.push({ event, payload });
-      return true;
+      return notifyOk;
     },
   },
 });
@@ -52,8 +57,10 @@ describe('cart-recovery-emit · loop guard metadata', () => {
 describe('cart-recovery-emit · emissão cart.abandoned', () => {
   beforeEach(() => {
     hasActive = false;
-    claimResult = true;
+    claimResult = 'claimed';
+    notifyOk = true;
     notifyCalls.length = 0;
+    releaseCalls.length = 0;
   });
 
   const baseProfile = { email: 'user@example.com', nome: null as string | null };
@@ -77,8 +84,7 @@ describe('cart-recovery-emit · emissão cart.abandoned', () => {
     assert.equal(notifyCalls.length, 1);
     assert.equal(notifyCalls[0]?.event, 'cart.abandoned');
     assert.equal(notifyCalls[0]?.payload.firstName, '');
-    assert.equal(notifyCalls[0]?.payload.user_id, 'user-1');
-    assert.equal(notifyCalls[0]?.payload.product_type, 'nome_social');
+    assert.equal(releaseCalls.length, 0);
   });
 
   it('não emite se já possui assinatura ativa', async () => {
@@ -96,10 +102,11 @@ describe('cart-recovery-emit · emissão cart.abandoned', () => {
 
     assert.equal(result, 'skipped');
     assert.equal(notifyCalls.length, 0);
+    assert.equal(releaseCalls.length, 0);
   });
 
   it('não emite se dedup persistente já reservou (duplicate)', async () => {
-    claimResult = false;
+    claimResult = 'duplicate';
     const result = await emitCartAbandonedIfEligible({
       userId: 'user-1',
       productType: 'nome_social',
@@ -113,6 +120,7 @@ describe('cart-recovery-emit · emissão cart.abandoned', () => {
 
     assert.equal(result, 'skipped');
     assert.equal(notifyCalls.length, 0);
+    assert.equal(releaseCalls.length, 0);
   });
 
   it('não emite para produto fora do escopo (nome_bebe)', async () => {
@@ -132,7 +140,7 @@ describe('cart-recovery-emit · emissão cart.abandoned', () => {
   });
 
   it('fail closed quando claim falha no banco', async () => {
-    claimResult = false;
+    claimResult = 'error';
     await emitCartAbandonedIfEligible({
       userId: 'user-1',
       productType: 'nome_social',
@@ -145,5 +153,56 @@ describe('cart-recovery-emit · emissão cart.abandoned', () => {
       resolveRecoveryCheckoutUrl: resolveUrl,
     });
     assert.equal(notifyCalls.length, 0);
+    assert.equal(releaseCalls.length, 0);
+  });
+
+  it('libera a reserva quando não há checkoutUrl', async () => {
+    const result = await emitCartAbandonedIfEligible({
+      userId: 'user-1',
+      productType: 'nome_social',
+      profile: baseProfile,
+      paymentId: 'cs_abc',
+      reasonType: 'expired',
+      motivo: MOTIVO_CART_ABANDONED.checkout_expired,
+      sessionMetadata: { final_cents: '9700' },
+      resolveRecoveryCheckoutUrl: async () => null,
+    });
+
+    assert.equal(result, 'skipped');
+    assert.equal(notifyCalls.length, 0);
+    assert.deepEqual(releaseCalls, [{ userId: 'user-1', productType: 'nome_social' }]);
+  });
+
+  it('libera a reserva quando o payload é rejeitado (checkoutUrl inválido)', async () => {
+    const result = await emitCartAbandonedIfEligible({
+      userId: 'user-1',
+      productType: 'nome_social',
+      profile: baseProfile,
+      paymentId: 'cs_abc',
+      reasonType: 'expired',
+      motivo: MOTIVO_CART_ABANDONED.checkout_expired,
+      sessionMetadata: { final_cents: '9700' },
+      resolveRecoveryCheckoutUrl: async () => 'http://inseguro.example/checkout',
+    });
+
+    assert.equal(result, 'skipped');
+    assert.deepEqual(releaseCalls, [{ userId: 'user-1', productType: 'nome_social' }]);
+  });
+
+  it('libera a reserva quando notify falha', async () => {
+    notifyOk = false;
+    const result = await emitCartAbandonedIfEligible({
+      userId: 'user-1',
+      productType: 'nome_social',
+      profile: baseProfile,
+      paymentId: 'cs_abc',
+      reasonType: 'expired',
+      motivo: MOTIVO_CART_ABANDONED.checkout_expired,
+      sessionMetadata: { final_cents: '9700' },
+      resolveRecoveryCheckoutUrl: resolveUrl,
+    });
+
+    assert.equal(result, 'skipped');
+    assert.deepEqual(releaseCalls, [{ userId: 'user-1', productType: 'nome_social' }]);
   });
 });

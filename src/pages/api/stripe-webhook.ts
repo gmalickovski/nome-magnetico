@@ -7,6 +7,7 @@ import {
   isValidHttpsCheckoutUrl,
   hasNoConcatenatedUtm,
   MOTIVO_CART_ABANDONED,
+  paymentFailedDisplayFirstName,
   resolvePaymentMethodFromIntent,
 } from '../../backend/payments/cart-recovery';
 import {
@@ -445,7 +446,7 @@ export const POST: APIRoute = async ({ request }) => {
               const amountCents = typeof session.amount_total === 'number' ? session.amount_total : undefined;
               await notify('payment.failed', {
                 email: profile.email,
-                firstName: profile.nome || '',
+                firstName: paymentFailedDisplayFirstName(profile),
                 productType: failedProductType,
                 productName: PRODUCT_NAMES[failedProductType] ?? 'Nome Social',
                 reason_type: 'expired',
@@ -505,19 +506,6 @@ export const POST: APIRoute = async ({ request }) => {
           if (userId) {
             const profile = await getProfile(userId);
             if (profile) {
-              const amountCents = typeof session.amount_total === 'number' ? session.amount_total : undefined;
-              await notify('payment.failed', {
-                email: profile.email,
-                firstName: profile.nome || '',
-                productType: failedProductType,
-                productName: PRODUCT_NAMES[failedProductType] ?? 'Nome Social',
-                reason_type: 'expired',
-                payment_id: paymentId,
-                reason: 'checkout_expired',
-                amount: amountCents,
-                user_id: userId,
-              });
-
               await emitCartAbandonedIfEligible({
                 userId,
                 productType: failedProductType,
@@ -600,7 +588,7 @@ export const POST: APIRoute = async ({ request }) => {
 
               await notify('payment.failed', {
                 email: profile.email,
-                firstName: profile.nome || '',
+                firstName: paymentFailedDisplayFirstName(profile),
                 productType: failedProductType,
                 productName: PRODUCT_NAMES[failedProductType] ?? 'Nome Social',
                 reason_type: reasonType,

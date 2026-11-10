@@ -8,9 +8,10 @@ create table if not exists public.cart_recovery_sends (
   constraint cart_recovery_sends_user_product_unique unique (user_id, product_type)
 );
 
-create index if not exists idx_cart_recovery_sends_user_id
-  on public.cart_recovery_sends(user_id);
-
 alter table public.cart_recovery_sends enable row level security;
 
-grant all on public.cart_recovery_sends to service_role;
+revoke all on public.cart_recovery_sends from public;
+revoke all on public.cart_recovery_sends from anon;
+revoke all on public.cart_recovery_sends from authenticated;
+
+grant select, insert, update, delete on public.cart_recovery_sends to service_role;
