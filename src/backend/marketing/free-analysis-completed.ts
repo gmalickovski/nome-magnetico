@@ -8,6 +8,7 @@ export interface FreeAnalysisMarketingNotifyInput {
   nomeCompleto: string;
   analiseId: string;
   score: number;
+  potencial?: number | null;
   concluidaEm: Date | string;
   optIn: boolean;
   optInEm?: Date | string | null;
@@ -65,6 +66,7 @@ export async function sendFreeAnalysisMarketingEvent(
     concluidaEm: input.concluidaEm,
     analiseId: input.analiseId,
     score: input.score,
+    potencial: input.potencial,
     optIn: input.optIn,
     optInEm: input.optInEm,
     utmSource: input.utmSource,
@@ -82,6 +84,7 @@ export async function sendFreeAnalysisMarketingEvent(
     analise_data: payload.analise_data,
     analise_id: payload.analise_id,
     score: payload.score,
+    potencial: payload.potencial,
     origem: payload.origem,
     opt_in: payload.opt_in,
     opt_in_data: payload.opt_in_data,

@@ -15,6 +15,7 @@ export interface FreeAnalysisMarketingInput {
   concluidaEm: Date | string;
   analiseId: string;
   score: number;
+  potencial?: number | null;
   optIn: boolean;
   /** Instante do consentimento. Ignorado quando `optIn` é false. */
   optInEm?: Date | string | null;
@@ -36,6 +37,7 @@ export interface FreeAnalysisMarketingPayload {
   analise_data: string;
   analise_id: string;
   score: number;
+  potencial: number;
   origem: 'analise_gratis';
   opt_in: boolean;
   opt_in_data: string | null;
@@ -110,6 +112,7 @@ export function buildFreeAnalysisMarketingPayload(
     analise_data: formatAnaliseData(input.concluidaEm),
     analise_id: (input.analiseId ?? '').trim(),
     score: asScore(input.score),
+    potencial: asScore(input.potencial ?? input.score),
     origem: 'analise_gratis',
     opt_in: optIn,
     opt_in_data: optInDataIso(optIn, input.optInEm),

@@ -12,6 +12,7 @@ const PAYLOAD_KEYS = [
   'analise_data',
   'analise_id',
   'score',
+  'potencial',
   'origem',
   'opt_in',
   'opt_in_data',
@@ -28,6 +29,7 @@ describe('buildFreeAnalysisMarketingPayload', () => {
       concluidaEm: '2026-10-15T02:30:00.000Z',
       analiseId: '  7c1a9b2e-4d55-4a1e-9c0a-111111111111  ',
       score: 72,
+      potencial: 88,
       optIn: true,
       optInEm: '2026-10-14T18:04:05.000Z',
       utmSource: ' instagram ',
@@ -42,6 +44,7 @@ describe('buildFreeAnalysisMarketingPayload', () => {
       analise_data: '2026-10-14',
       analise_id: '7c1a9b2e-4d55-4a1e-9c0a-111111111111',
       score: 72,
+      potencial: 88,
       origem: 'analise_gratis',
       opt_in: true,
       opt_in_data: '2026-10-14T18:04:05.000Z',
@@ -84,17 +87,35 @@ describe('buildFreeAnalysisMarketingPayload', () => {
       concluidaEm: 'data-invalida',
       analiseId: 'abc',
       score: Number.NaN,
+      potencial: Number.NaN,
       optIn: true,
       optInEm: 'nao-e-data',
     });
 
     assert.equal(payload.score, 0);
     assert.equal(typeof payload.score, 'number');
+    assert.equal(payload.potencial, 0);
+    assert.equal(typeof payload.potencial, 'number');
     assert.equal(payload.nome, '');
     assert.equal(payload.sobrenome, '');
     assert.match(payload.analise_data, /^\d{4}-\d{2}-\d{2}$/);
     assert.equal(payload.opt_in, true);
     assert.equal(payload.opt_in_data, null);
+  });
+
+  it('faz fallback de potencial para score quando potencial não for informado', () => {
+    const payload = buildFreeAnalysisMarketingPayload({
+      email: 'cliente@email.com',
+      nomeCompleto: 'Carlos Silva',
+      concluidaEm: '2026-10-15T02:30:00.000Z',
+      analiseId: 'abc-123',
+      score: 65,
+      optIn: false,
+    });
+
+    assert.equal(payload.score, 65);
+    assert.equal(payload.potencial, 65);
+    assert.equal(typeof payload.potencial, 'number');
   });
 
   it('acrescenta analysisUrl, offerUrl e checkoutUrl sem alterar o contrato do n8n', () => {
