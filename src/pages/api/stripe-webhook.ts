@@ -7,14 +7,14 @@ import {
   isValidHttpsCheckoutUrl,
   hasNoConcatenatedUtm,
   MOTIVO_CART_ABANDONED,
-  buildCartAbandonedPayload,
   resolvePaymentMethodFromIntent,
 } from '../../backend/payments/cart-recovery';
-import { getEffectivePriceCore } from '../../backend/pricing/service';
-import { formatBRLFromCents } from '../../backend/money/format-brl-cents';
+import {
+  emitCartAbandonedIfEligible,
+  isRecoveryCheckout,
+} from '../../backend/payments/cart-recovery-emit';
 import {
   createSubscription,
-  hasActiveSubscription,
   refundSubscription,
   getSubscriptionByPaymentIntent,
 } from '../../backend/db/subscriptions';
@@ -418,6 +418,19 @@ export const POST: APIRoute = async ({ request }) => {
       // PIX expirou ou falhou → notificar usuário e emitir cart.abandoned
       case 'checkout.session.async_payment_failed': {
         const session = event.data.object as CheckoutSession;
+        if (isRecoveryCheckout(session.metadata)) {
+          console.log(
+            JSON.stringify({
+              scope: 'stripe-webhook',
+              event_type: 'checkout.session.async_payment_failed',
+              event_id: event.id,
+              action: 'skip_recovery_loop',
+              session_id: session.id,
+            }),
+          );
+          await captureCheckoutPostHog('checkout_error', session, 'pix');
+          break;
+        }
         const userId = session.metadata?.user_id;
         const failedProductType = (session.metadata?.product_type ?? 'nome_social') as ProductType;
         const paymentIntentId = typeof session.payment_intent === 'string'
@@ -443,56 +456,18 @@ export const POST: APIRoute = async ({ request }) => {
                 user_id: userId,
               });
 
-              const hasAccess = await hasActiveSubscription(userId, failedProductType);
-
-              if (!hasAccess && failedProductType === 'nome_social') {
-                let unitAmount =
-                  session.metadata?.final_cents ? Number(session.metadata.final_cents)
-                  : (typeof session.amount_total === 'number' && session.amount_total > 0) ? session.amount_total
-                  : 0;
-
-                if (unitAmount <= 0) {
-                  try {
-                    const effective = await getEffectivePriceCore({ productType: failedProductType });
-                    unitAmount = effective.final_cents;
-                  } catch {
-                    unitAmount = 0;
-                  }
-                }
-
-                if (unitAmount > 0) {
-                  const checkoutUrl = await resolveRecoveryCheckoutUrl({
-                    userId,
-                    userEmail: profile.email,
-                    productType: failedProductType,
-                    unitAmount,
-                    baseCents: session.metadata?.base_cents ? Number(session.metadata.base_cents) : unitAmount,
-                    promoId: session.metadata?.promo_id,
-                    discountSource: session.metadata?.discount_source as 'none' | 'promotion' | 'coupon' | undefined,
-                    couponCode: session.metadata?.coupon_code,
-                    chosenSignature: session.metadata?.chosen_signature,
-                    analysisId: session.metadata?.analysis_id,
-                    source: session.metadata?.source as 'card_pdf' | 'paywall_free' | undefined,
-                  });
-
-                  if (checkoutUrl) {
-                    const payload = buildCartAbandonedPayload({
-                      email: profile.email,
-                      firstName: profile.nome || '',
-                      productType: failedProductType,
-                      checkoutUrl,
-                      userId,
-                      paymentId,
-                      reasonType: 'expired',
-                      paymentMethod: 'pix',
-                      motivo: MOTIVO_CART_ABANDONED.pix_expired,
-                    });
-                    if (payload) {
-                      await notify('cart.abandoned', payload);
-                    }
-                  }
-                }
-              }
+              await emitCartAbandonedIfEligible({
+                userId,
+                productType: failedProductType,
+                profile,
+                paymentId,
+                reasonType: 'expired',
+                paymentMethod: 'pix',
+                motivo: MOTIVO_CART_ABANDONED.pix_expired,
+                sessionMetadata: session.metadata,
+                amountTotalCents: session.amount_total,
+                resolveRecoveryCheckoutUrl,
+              });
             }
           }
         }
@@ -503,11 +478,10 @@ export const POST: APIRoute = async ({ request }) => {
       // Sessão expirou sem pagamento (cliente abandonou o Checkout).
       case 'checkout.session.expired': {
         const session = event.data.object as CheckoutSession;
-        // Ponto 1 da revisão: se a sessão expirada já é de recuperação, NÃO reemite para evitar laço infinito
-        if (session.metadata?.recovery === '1') {
+        if (isRecoveryCheckout(session.metadata)) {
           console.log(
             JSON.stringify({
-              scope: 'stripe_webhook',
+              scope: 'stripe-webhook',
               event_type: 'checkout.session.expired',
               event_id: event.id,
               action: 'skip_recovery_loop',
@@ -527,8 +501,6 @@ export const POST: APIRoute = async ({ request }) => {
 
         // Ponto 5 da revisão: emissão de cart.abandoned é exclusiva para nome_social
         // Ponto 3: não emitir se o usuário já tem assinatura ativa no mesmo produto
-        const hasAccess = userId ? await hasActiveSubscription(userId, failedProductType) : false;
-
         if (failedPaymentDeduplicator.shouldProcess([session.id, paymentIntentId, userId ? `${userId}:${failedProductType}` : null])) {
           if (userId) {
             const profile = await getProfile(userId);
@@ -546,53 +518,17 @@ export const POST: APIRoute = async ({ request }) => {
                 user_id: userId,
               });
 
-              if (!hasAccess && failedProductType === 'nome_social') {
-                let unitAmount =
-                  session.metadata?.final_cents ? Number(session.metadata.final_cents)
-                  : (typeof session.amount_total === 'number' && session.amount_total > 0) ? session.amount_total
-                  : 0;
-
-                if (unitAmount <= 0) {
-                  try {
-                    const effective = await getEffectivePriceCore({ productType: failedProductType });
-                    unitAmount = effective.final_cents;
-                  } catch {
-                    unitAmount = 0;
-                  }
-                }
-
-                if (unitAmount > 0) {
-                  const checkoutUrl = await resolveRecoveryCheckoutUrl({
-                    userId,
-                    userEmail: profile.email,
-                    productType: failedProductType,
-                    unitAmount,
-                    baseCents: session.metadata?.base_cents ? Number(session.metadata.base_cents) : unitAmount,
-                    promoId: session.metadata?.promo_id,
-                    discountSource: session.metadata?.discount_source as 'none' | 'promotion' | 'coupon' | undefined,
-                    couponCode: session.metadata?.coupon_code,
-                    chosenSignature: session.metadata?.chosen_signature,
-                    analysisId: session.metadata?.analysis_id,
-                    source: session.metadata?.source as 'card_pdf' | 'paywall_free' | undefined,
-                  });
-
-                  if (checkoutUrl) {
-                    const payload = buildCartAbandonedPayload({
-                      email: profile.email,
-                      firstName: profile.nome || '',
-                      productType: failedProductType,
-                      checkoutUrl,
-                      userId,
-                      paymentId,
-                      reasonType: 'expired',
-                      motivo: MOTIVO_CART_ABANDONED.checkout_expired,
-                    });
-                    if (payload) {
-                      await notify('cart.abandoned', payload);
-                    }
-                  }
-                }
-              }
+              await emitCartAbandonedIfEligible({
+                userId,
+                productType: failedProductType,
+                profile,
+                paymentId,
+                reasonType: 'expired',
+                motivo: MOTIVO_CART_ABANDONED.checkout_expired,
+                sessionMetadata: session.metadata,
+                amountTotalCents: session.amount_total,
+                resolveRecoveryCheckoutUrl,
+              });
             }
           }
         }
@@ -635,6 +571,18 @@ export const POST: APIRoute = async ({ request }) => {
 
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (isRecoveryCheckout(pi.metadata)) {
+          console.log(
+            JSON.stringify({
+              scope: 'stripe-webhook',
+              event_type: 'payment_intent.payment_failed',
+              event_id: event.id,
+              action: 'skip_recovery_loop',
+              payment_intent_id: pi.id,
+            }),
+          );
+          break;
+        }
         const userId = pi.metadata?.user_id;
         const failedProductType = (pi.metadata?.product_type ?? 'nome_social') as ProductType;
         const paymentId = pi.id;
@@ -663,60 +611,22 @@ export const POST: APIRoute = async ({ request }) => {
                 user_id: userId,
               });
 
-              const hasAccess = await hasActiveSubscription(userId, failedProductType);
+              const motivo = isPixExpired
+                ? MOTIVO_CART_ABANDONED.pix_expired
+                : MOTIVO_CART_ABANDONED.card_declined;
 
-              if (!hasAccess && failedProductType === 'nome_social') {
-                let unitAmount =
-                  pi.metadata?.final_cents ? Number(pi.metadata.final_cents)
-                  : (typeof pi.amount === 'number' && pi.amount > 0) ? pi.amount
-                  : 0;
-
-                if (unitAmount <= 0) {
-                  try {
-                    const effective = await getEffectivePriceCore({ productType: failedProductType });
-                    unitAmount = effective.final_cents;
-                  } catch {
-                    unitAmount = 0;
-                  }
-                }
-
-                if (unitAmount > 0) {
-                  const checkoutUrl = await resolveRecoveryCheckoutUrl({
-                    userId,
-                    userEmail: profile.email,
-                    productType: failedProductType,
-                    unitAmount,
-                    baseCents: pi.metadata?.base_cents ? Number(pi.metadata.base_cents) : unitAmount,
-                    promoId: pi.metadata?.promo_id,
-                    discountSource: pi.metadata?.discount_source as 'none' | 'promotion' | 'coupon' | undefined,
-                    couponCode: pi.metadata?.coupon_code,
-                    chosenSignature: pi.metadata?.chosen_signature,
-                    analysisId: pi.metadata?.analysis_id,
-                    source: pi.metadata?.source as 'card_pdf' | 'paywall_free' | undefined,
-                  });
-
-                  if (checkoutUrl) {
-                    const motivo = isPixExpired
-                      ? MOTIVO_CART_ABANDONED.pix_expired
-                      : MOTIVO_CART_ABANDONED.card_declined;
-
-                    const payload = buildCartAbandonedPayload({
-                      email: profile.email,
-                      firstName: profile.nome || '',
-                      productType: failedProductType,
-                      checkoutUrl,
-                      userId,
-                      paymentId,
-                      reasonType,
-                      paymentMethod,
-                      motivo,
-                    });
-                    if (payload) {
-                      await notify('cart.abandoned', payload);
-                    }
-                  }
-                }
-              }
+              await emitCartAbandonedIfEligible({
+                userId,
+                productType: failedProductType,
+                profile,
+                paymentId,
+                reasonType,
+                paymentMethod,
+                motivo,
+                sessionMetadata: pi.metadata,
+                amountTotalCents: pi.amount,
+                resolveRecoveryCheckoutUrl,
+              });
             }
           }
         }

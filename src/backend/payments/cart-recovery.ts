@@ -148,7 +148,7 @@ export function buildCartAbandonedPayload(input: {
 
   return {
     email,
-    firstName: input.firstName.trim() || email.split('@')[0] || 'Cliente',
+    firstName: input.firstName.trim(),
     productName,
     checkoutUrl: input.checkoutUrl.trim(),
     user_id: userId,

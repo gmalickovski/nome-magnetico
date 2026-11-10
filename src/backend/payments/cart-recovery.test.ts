@@ -108,6 +108,21 @@ describe('cart-recovery · Validação de checkoutUrl', () => {
     assert.equal(payload.payment_method, 'pix');
     assert.equal(payload.motivo, MOTIVO_CART_ABANDONED.pix_expired);
   });
+
+  it('mantém firstName vazio sem fallback para e-mail', () => {
+    const payload = buildCartAbandonedPayload({
+      email: 'maria@email.com',
+      firstName: '',
+      productType: 'nome_social',
+      checkoutUrl: 'https://checkout.stripe.com/pay/cs_123',
+      userId: 'usr_123',
+      paymentId: 'cs_123',
+      reasonType: 'expired',
+      motivo: MOTIVO_CART_ABANDONED.checkout_expired,
+    });
+    assert.ok(payload);
+    assert.equal(payload.firstName, '');
+  });
 });
 
 describe('cart-recovery · Deduplicador de falhas de pagamento', () => {
