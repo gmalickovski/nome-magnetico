@@ -1,7 +1,19 @@
 import type { APIRoute } from 'astro';
 import type Stripe from 'stripe';
 import { buildPaymentConfirmedPayload } from '../../backend/notifications/payment-confirmed-payload';
-import { constructWebhookEvent, PRODUCT_NAMES } from '../../backend/payments/stripe';
+import { constructWebhookEvent, createCheckoutSession, PRODUCT_NAMES } from '../../backend/payments/stripe';
+import {
+  failedPaymentDeduplicator,
+  isValidHttpsCheckoutUrl,
+  hasNoConcatenatedUtm,
+  MOTIVO_CART_ABANDONED,
+  paymentFailedDisplayFirstName,
+  resolvePaymentMethodFromIntent,
+} from '../../backend/payments/cart-recovery';
+import {
+  emitCartAbandonedIfEligible,
+  isRecoveryCheckout,
+} from '../../backend/payments/cart-recovery-emit';
 import {
   createSubscription,
   refundSubscription,
@@ -44,6 +56,58 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('Assinatura inválida', { status: 400 });
   }
 
+  // Log estruturado de todo evento recebido (tipo e id), sem PII
+  console.log(
+    JSON.stringify({
+      scope: 'stripe-webhook',
+      event_type: event.type,
+      event_id: event.id,
+    }),
+  );
+
+  async function resolveRecoveryCheckoutUrl(params: {
+    userId: string;
+    userEmail: string;
+    productType: ProductType;
+    unitAmount: number;
+    baseCents?: number;
+    promoId?: string | null;
+    discountSource?: 'none' | 'promotion' | 'coupon';
+    couponCode?: string;
+    chosenSignature?: string;
+    analysisId?: string;
+    source?: 'card_pdf' | 'paywall_free';
+  }): Promise<string | null> {
+    const baseUrl = getPublicBaseUrl();
+    try {
+      const session = await createCheckoutSession({
+        userId: params.userId,
+        userEmail: params.userEmail,
+        productType: params.productType,
+        unitAmount: params.unitAmount,
+        baseCents: params.baseCents,
+        promoId: params.promoId,
+        discountSource: params.discountSource,
+        couponCode: params.couponCode,
+        successUrl: `${baseUrl}/obrigado?session_id={CHECKOUT_SESSION_ID}&produto=${params.productType}`,
+        cancelUrl: `${baseUrl}/comprar?checkout=cancel`,
+        chosenSignature: params.chosenSignature,
+        analysisId: params.analysisId,
+        source: params.source,
+        recovery: true,
+      });
+
+      const url = session.url ?? null;
+      if (url && isValidHttpsCheckoutUrl(url) && hasNoConcatenatedUtm(url)) {
+        return url;
+      }
+      return null;
+    } catch (err) {
+      console.error('[stripe-webhook] Erro ao gerar nova sessão para recuperação:', err);
+      return null;
+    }
+  }
+
   // Tipo base para sessões de checkout
   type CheckoutSession = {
     metadata?: {
@@ -59,6 +123,8 @@ export const POST: APIRoute = async ({ request }) => {
       chosen_signature?: string;
       analysis_id?: string;
       source?: string;
+      discount_source?: string;
+      recovery?: string;
     };
     id: string;
     payment_intent?: string | { id: string } | null;
@@ -350,20 +416,60 @@ export const POST: APIRoute = async ({ request }) => {
         break;
       }
 
-      // PIX expirou ou falhou → notificar usuário
+      // PIX expirou ou falhou → notificar usuário e emitir cart.abandoned
       case 'checkout.session.async_payment_failed': {
         const session = event.data.object as CheckoutSession;
+        if (isRecoveryCheckout(session.metadata)) {
+          console.log(
+            JSON.stringify({
+              scope: 'stripe-webhook',
+              event_type: 'checkout.session.async_payment_failed',
+              event_id: event.id,
+              action: 'skip_recovery_loop',
+              session_id: session.id,
+            }),
+          );
+          await captureCheckoutPostHog('checkout_error', session, 'pix');
+          break;
+        }
         const userId = session.metadata?.user_id;
         const failedProductType = (session.metadata?.product_type ?? 'nome_social') as ProductType;
-        if (userId) {
-          const profile = await getProfile(userId);
-          if (profile) {
-            await notify('payment.failed', {
-              email: profile.email,
-              firstName: profile.nome ?? profile.email.split('@')[0],
-              productType: failedProductType,
-              productName: PRODUCT_NAMES[failedProductType],
-            });
+        const paymentIntentId = typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id;
+        const paymentId = paymentIntentId || session.id;
+
+        if (failedPaymentDeduplicator.shouldProcess([session.id, paymentIntentId, userId ? `${userId}:${failedProductType}` : null])) {
+          if (userId) {
+            const profile = await getProfile(userId);
+            if (profile) {
+              const amountCents = typeof session.amount_total === 'number' ? session.amount_total : undefined;
+              await notify('payment.failed', {
+                email: profile.email,
+                firstName: paymentFailedDisplayFirstName(profile),
+                productType: failedProductType,
+                productName: PRODUCT_NAMES[failedProductType] ?? 'Nome Social',
+                reason_type: 'expired',
+                payment_id: paymentId,
+                reason: 'pix_expired',
+                payment_method: 'pix',
+                amount: amountCents,
+                user_id: userId,
+              });
+
+              await emitCartAbandonedIfEligible({
+                userId,
+                productType: failedProductType,
+                profile,
+                paymentId,
+                reasonType: 'expired',
+                paymentMethod: 'pix',
+                motivo: MOTIVO_CART_ABANDONED.pix_expired,
+                sessionMetadata: session.metadata,
+                amountTotalCents: session.amount_total,
+                resolveRecoveryCheckoutUrl,
+              });
+            }
           }
         }
         await captureCheckoutPostHog('checkout_error', session, 'pix');
@@ -373,6 +479,47 @@ export const POST: APIRoute = async ({ request }) => {
       // Sessão expirou sem pagamento (cliente abandonou o Checkout).
       case 'checkout.session.expired': {
         const session = event.data.object as CheckoutSession;
+        if (isRecoveryCheckout(session.metadata)) {
+          console.log(
+            JSON.stringify({
+              scope: 'stripe-webhook',
+              event_type: 'checkout.session.expired',
+              event_id: event.id,
+              action: 'skip_recovery_loop',
+              session_id: session.id,
+            }),
+          );
+          await captureCheckoutPostHog('checkout_abandoned', session);
+          break;
+        }
+
+        const userId = session.metadata?.user_id;
+        const failedProductType = (session.metadata?.product_type ?? 'nome_social') as ProductType;
+        const paymentIntentId = typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id;
+        const paymentId = session.id;
+
+        // Ponto 5 da revisão: emissão de cart.abandoned é exclusiva para nome_social
+        // Ponto 3: não emitir se o usuário já tem assinatura ativa no mesmo produto
+        if (failedPaymentDeduplicator.shouldProcess([session.id, paymentIntentId, userId ? `${userId}:${failedProductType}` : null])) {
+          if (userId) {
+            const profile = await getProfile(userId);
+            if (profile) {
+              await emitCartAbandonedIfEligible({
+                userId,
+                productType: failedProductType,
+                profile,
+                paymentId,
+                reasonType: 'expired',
+                motivo: MOTIVO_CART_ABANDONED.checkout_expired,
+                sessionMetadata: session.metadata,
+                amountTotalCents: session.amount_total,
+                resolveRecoveryCheckoutUrl,
+              });
+            }
+          }
+        }
         await captureCheckoutPostHog('checkout_abandoned', session);
         break;
       }
@@ -411,20 +558,64 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       case 'payment_intent.payment_failed': {
-        const pi = event.data.object as {
-          metadata?: { user_id?: string; product_type?: string };
-        };
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (isRecoveryCheckout(pi.metadata)) {
+          console.log(
+            JSON.stringify({
+              scope: 'stripe-webhook',
+              event_type: 'payment_intent.payment_failed',
+              event_id: event.id,
+              action: 'skip_recovery_loop',
+              payment_intent_id: pi.id,
+            }),
+          );
+          break;
+        }
         const userId = pi.metadata?.user_id;
         const failedProductType = (pi.metadata?.product_type ?? 'nome_social') as ProductType;
-        if (userId) {
-          const profile = await getProfile(userId);
-          if (profile) {
-            await notify('payment.failed', {
-              email: profile.email,
-              firstName: profile.nome ?? profile.email.split('@')[0],
-              productType: failedProductType,
-              productName: PRODUCT_NAMES[failedProductType],
-            });
+        const paymentId = pi.id;
+
+        if (failedPaymentDeduplicator.shouldProcess([pi.id, userId ? `${userId}:${failedProductType}` : null])) {
+          if (userId) {
+            const profile = await getProfile(userId);
+            if (profile) {
+              const lastErr = pi.last_payment_error;
+              const isPixExpired = lastErr?.code === 'payment_intent_payment_attempt_expired';
+              const paymentMethod: 'pix' | 'card' = resolvePaymentMethodFromIntent(pi);
+              const reasonType: 'expired' | 'declined' = isPixExpired ? 'expired' : 'declined';
+              const reasonMessage = lastErr?.decline_code ?? lastErr?.message ?? 'payment_failed';
+              const amountCents = typeof pi.amount === 'number' ? pi.amount : undefined;
+
+              await notify('payment.failed', {
+                email: profile.email,
+                firstName: paymentFailedDisplayFirstName(profile),
+                productType: failedProductType,
+                productName: PRODUCT_NAMES[failedProductType] ?? 'Nome Social',
+                reason_type: reasonType,
+                payment_id: paymentId,
+                reason: reasonMessage,
+                payment_method: paymentMethod,
+                amount: amountCents,
+                user_id: userId,
+              });
+
+              const motivo = isPixExpired
+                ? MOTIVO_CART_ABANDONED.pix_expired
+                : MOTIVO_CART_ABANDONED.card_declined;
+
+              await emitCartAbandonedIfEligible({
+                userId,
+                productType: failedProductType,
+                profile,
+                paymentId,
+                reasonType,
+                paymentMethod,
+                motivo,
+                sessionMetadata: pi.metadata,
+                amountTotalCents: pi.amount,
+                resolveRecoveryCheckoutUrl,
+              });
+            }
           }
         }
         break;
