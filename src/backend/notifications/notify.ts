@@ -26,6 +26,7 @@ type NotificationEvent =
   | 'marketing.free_analysis_completed'
   | 'payment.confirmed'
   | 'payment.failed'
+  | 'cart.abandoned'
   | 'subscription.expiring_soon'
   | 'subscription.expired'
   | 'access.lifecycle'
@@ -90,6 +91,7 @@ const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>
   'payment.confirmed': 'notify_transacional',
   'user.analysis_complete': 'notify_transacional',
   'payment.failed': 'notify_transacional',
+  'cart.abandoned': 'notify_transacional',
 };
 
 function reportNotifyFailure(event: NotificationEvent | MarketingEvent, error: unknown): void {
