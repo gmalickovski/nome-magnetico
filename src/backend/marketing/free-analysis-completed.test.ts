@@ -46,6 +46,7 @@ const sampleMarketingInput: FreeAnalysisMarketingNotifyInput = {
   nomeCompleto: 'Ana Silva',
   analiseId: 'lead-abc',
   score: 55,
+  potencial: 78,
   concluidaEm: '2026-10-14T12:00:00.000Z',
   optIn: false,
   optInEm: null,

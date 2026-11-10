@@ -159,6 +159,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             concluidaEm: completedAt,
             analiseId: lead.id,
             score,
+            potencial: avaliacaoV3.potencial,
             optIn: marketingConsent.optIn,
             optInEm: marketingConsent.optInEm,
             utmSource: utm_source,

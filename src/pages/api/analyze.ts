@@ -17,6 +17,7 @@ import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
 import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
 import {
   avaliarNome,
+  calcularPotencialV3,
   calcularScoreV1ComOcorrenciasExtras,
   calcularScoreV1SemOcorrenciasExtras,
   persistenciaScoreFields,
@@ -299,6 +300,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let analiseTexto = '';
       let marketingStats = {
         score: null as number | null,
+        potencial: null as number | null,
         bloqueios: 0,
         licoesCarmicas: 0,
         tendenciasOcultas: 0,
@@ -363,8 +365,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
               nomeNascimentoPotencial: nome_completo,
             })
           : { score: null as number | null };
+        const potencialCalculado =
+          'potencial' in scoreFieldsSocial && typeof scoreFieldsSocial.potencial === 'number'
+            ? scoreFieldsSocial.potencial
+            : (isGratuita && optIn ? calcularPotencialV3(nome_completo, data_nascimento) : null);
         marketingStats = {
           score: melhor?.score ?? null,
+          potencial: potencialCalculado,
           bloqueios: melhor?.bloqueios?.length ?? 0,
           licoesCarmicas: melhor?.licoesCarmicas?.length ?? 0,
           tendenciasOcultas: melhor?.tendenciasOcultas?.length ?? 0,
@@ -475,8 +482,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
           dataNascimento: data_nascimento,
         });
 
+        const potencialCalculadoNomeCompleto =
+          'potencial' in scoreFields && typeof scoreFields.potencial === 'number'
+            ? scoreFields.potencial
+            : (isGratuita && optIn ? calcularPotencialV3(nome_completo, data_nascimento) : null);
+
         marketingStats = {
           score: isScoreV3() ? avaliarNome(nome_completo, data_nascimento).score_v3 : scoreLegado,
+          potencial: potencialCalculadoNomeCompleto,
           bloqueios: bloqueios.length,
           licoesCarmicas: licoesCarmicas.length,
           tendenciasOcultas: tendenciasOcultas.length,
@@ -579,6 +592,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             concluidaEm: completedAt,
             analiseId: analysis.id,
             score,
+            potencial: marketingStats.potencial,
             optIn: true,
             optInEm: optInData,
             utmSource: utm_source,
