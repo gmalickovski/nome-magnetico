@@ -61,6 +61,8 @@ export interface CreateCheckoutParams {
   chosenSignature?: string;
   analysisId?: string;
   source?: 'card_pdf' | 'paywall_free';
+  /** Sessão gerada exclusivamente para recuperação de carrinho abandonado. */
+  recovery?: boolean;
 }
 
 /**
@@ -104,6 +106,9 @@ export async function createCheckoutSession(
     ph_distinct_id: params.phDistinctId ?? '',
     purchase_kind: params.purchaseKind === 'renewal' ? 'renewal' : 'new',
   };
+  if (params.recovery === true) {
+    metadata.recovery = '1';
+  }
   if (params.utmCampaign) {
     metadata.utm_campaign = params.utmCampaign;
     metadata.utm_source = params.utmSource || 'brevo';

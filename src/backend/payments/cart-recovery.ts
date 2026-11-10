@@ -10,6 +10,43 @@ export const MOTIVO_CART_ABANDONED = {
 export type RecoveryReasonType = 'expired' | 'declined';
 export type RecoveryPaymentMethod = 'pix' | 'card';
 
+/**
+ * Resolve o método de pagamento a partir do erro ou payment method details do PaymentIntent.
+ * Nunca confia cegamente em payment_method_types que contenha 'pix' quando o checkout é dual (card + pix).
+ */
+export function resolvePaymentMethodFromIntent(pi: {
+  last_payment_error?: {
+    payment_method?: { type?: string | null } | null;
+    type?: string | null;
+    code?: string | null;
+  } | null;
+  charges?: {
+    data?: Array<{
+      payment_method_details?: { type?: string | null } | null;
+    }>;
+  } | null;
+  payment_method_types?: string[] | null;
+}): RecoveryPaymentMethod {
+  const errorMethod = pi.last_payment_error?.payment_method?.type?.toLowerCase();
+  if (errorMethod === 'pix') return 'pix';
+  if (errorMethod === 'card') return 'card';
+
+  const chargeMethod = pi.charges?.data?.[0]?.payment_method_details?.type?.toLowerCase();
+  if (chargeMethod === 'pix') return 'pix';
+  if (chargeMethod === 'card') return 'card';
+
+  if (pi.last_payment_error?.code === 'payment_intent_payment_attempt_expired') {
+    return 'pix';
+  }
+
+  // Fallback seguro: se payment_method_types é exclusivamente pix
+  if (pi.payment_method_types?.length === 1 && pi.payment_method_types[0] === 'pix') {
+    return 'pix';
+  }
+
+  return 'card';
+}
+
 export interface CartAbandonedPayload {
   email: string;
   firstName: string;

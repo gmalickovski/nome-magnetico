@@ -7,6 +7,7 @@ import {
   hasNoConcatenatedUtm,
   buildCartAbandonedPayload,
   FailedPaymentDeduplicator,
+  resolvePaymentMethodFromIntent,
 } from './cart-recovery';
 
 describe('cart-recovery · Motivos fixos do Growth', () => {
@@ -139,5 +140,53 @@ describe('cart-recovery · Deduplicador de falhas de pagamento', () => {
 
     assert.equal(dedup.shouldProcess(['cs_session_a', 'pi_intent_a']), true);
     assert.equal(dedup.shouldProcess(['cs_session_b', 'pi_intent_b']), true);
+  });
+
+  it('deduplica por user_id e product_type cobrindo recusa seguida de expiração com ids diferentes', () => {
+    const dedup = new FailedPaymentDeduplicator(60000);
+
+    const primeiraTentativa = dedup.shouldProcess(['pi_recusado_123', 'usr_456:nome_social']);
+    assert.equal(primeiraTentativa, true, 'primeira recusa deve ser processada');
+
+    const segundaTentativaExpirada = dedup.shouldProcess(['cs_expirado_999', 'usr_456:nome_social']);
+    assert.equal(segundaTentativaExpirada, false, 'mesmo usuário e produto não deve duplicar');
+  });
+});
+
+describe('cart-recovery · Resolução precisa de payment_method (sem falso positivo Pix)', () => {
+  it('identifica cartão recusado mesmo quando payment_method_types aceita pix e card', () => {
+    const pi = {
+      last_payment_error: {
+        payment_method: { type: 'card' },
+        message: 'Your card was declined.',
+      },
+      payment_method_types: ['card', 'pix'],
+    };
+    assert.equal(resolvePaymentMethodFromIntent(pi), 'card');
+  });
+
+  it('identifica pix a partir de charge details ou error code', () => {
+    const piPix = {
+      charges: {
+        data: [{ payment_method_details: { type: 'pix' } }],
+      },
+      payment_method_types: ['card', 'pix'],
+    };
+    assert.equal(resolvePaymentMethodFromIntent(piPix), 'pix');
+
+    const piPixExpired = {
+      last_payment_error: {
+        code: 'payment_intent_payment_attempt_expired',
+      },
+      payment_method_types: ['card', 'pix'],
+    };
+    assert.equal(resolvePaymentMethodFromIntent(piPixExpired), 'pix');
+  });
+
+  it('não cai em pix quando payment_method_types é dual e não há evidência de pix', () => {
+    const piSemDetalhe = {
+      payment_method_types: ['card', 'pix'],
+    };
+    assert.equal(resolvePaymentMethodFromIntent(piSemDetalhe), 'card');
   });
 });
