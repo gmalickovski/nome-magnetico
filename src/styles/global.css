@@ -607,11 +607,22 @@
   @keyframes mobile-dock-btn-in {
     from {
       opacity: 0;
-      transform: translateY(6px) scale(0.9);
+      transform: translateX(8px);
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes mobile-dock-btn-out-x {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(8px);
     }
   }
 
@@ -625,11 +636,25 @@
   }
 
   .mobile-chat-dock-actions .mobile-chat-dock-btn {
-    animation: mobile-dock-btn-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: mobile-dock-btn-in 180ms ease-out both;
   }
 
   .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn {
     animation: mobile-dock-btn-fade-in 120ms ease both;
+  }
+
+  .nm-dock-context-actions .mobile-chat-dock-btn--exit {
+    animation: mobile-dock-btn-out-x 120ms ease both;
+  }
+
+  .nm-mobile-dock--keyboard-hidden {
+    transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 24px));
+    pointer-events: none;
+    transition: transform 180ms ease-out;
+  }
+
+  .nm-app-mobile-dock:not(.nm-mobile-dock--keyboard-hidden) {
+    transition: transform 180ms ease-out;
   }
 
   @keyframes mobile-dock-btn-out {
@@ -761,10 +786,10 @@
     border-top-color: rgba(26, 26, 26, 0.92);
   }
 
-  @keyframes mobile-summary-enter {
+  @keyframes nm-reading-sheet-in {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(12px);
     }
     to {
       opacity: 1;
@@ -772,32 +797,64 @@
     }
   }
 
-  @keyframes mobile-summary-exit {
+  @keyframes nm-reading-sheet-out {
     from {
       opacity: 1;
-      transform: translateY(0);
     }
     to {
       opacity: 0;
-      transform: translateY(6px);
     }
+  }
+
+  @keyframes nm-reading-overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes nm-reading-badge-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.35);
+      opacity: 0.85;
+    }
+  }
+
+  .nm-reading-sheet {
+    pointer-events: auto;
+    transition: height 220ms ease-out, bottom 220ms ease-out, max-height 220ms ease-out;
+  }
+
+  .nm-reading-sheet--open:not(.nm-reading-sheet--reduced) {
+    animation: nm-reading-sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .nm-reading-sheet--closed:not(.nm-reading-sheet--reduced) {
+    animation: nm-reading-sheet-out 120ms ease both;
+  }
+
+  .nm-reading-sheet-overlay--open {
+    animation: nm-reading-overlay-in 180ms ease both;
+  }
+
+  .nm-reading-sheet-overlay--closed {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .nm-reading-badge--pulse:not(.motion-reduce) {
+    animation: nm-reading-badge-pulse 600ms ease-out 1;
   }
 
   .mobile-summary-fullscreen {
     pointer-events: auto;
-  }
-
-  .mobile-summary-fullscreen--open:not(.mobile-summary-fullscreen--reduced) {
-    animation: mobile-summary-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  .mobile-summary-fullscreen--closed:not(.mobile-summary-fullscreen--reduced) {
-    animation: mobile-summary-exit 180ms ease both;
-  }
-
-  .mobile-summary-fullscreen--reduced.mobile-summary-fullscreen--open,
-  .mobile-summary-fullscreen--reduced.mobile-summary-fullscreen--closed {
-    animation: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -805,9 +862,14 @@
       animation: none;
     }
 
-    .mobile-summary-fullscreen--open,
-    .mobile-summary-fullscreen--closed {
+    .nm-reading-sheet--open,
+    .nm-reading-sheet--closed,
+    .nm-reading-badge--pulse {
       animation: none;
+    }
+
+    .nm-mobile-dock--keyboard-hidden {
+      transition: none;
     }
   }
 }

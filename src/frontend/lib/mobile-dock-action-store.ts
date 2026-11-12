@@ -11,6 +11,7 @@ export interface MobileDockActionState {
   summaryPanelOpen: boolean;
   restartExitActive: boolean;
   summaryBadge: boolean;
+  showReadingAction: boolean;
   pdfModel: ChatPdfCtaModel | null;
   pdfExiting: boolean;
 }

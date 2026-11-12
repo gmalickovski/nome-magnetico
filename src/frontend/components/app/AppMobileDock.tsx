@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import {
   buildAppNavDockItems,
   showAppNavRouteLoadingBar,
@@ -10,10 +10,10 @@ import { MobileDockRoot } from './chat/MobileDockRoot.js';
 import { dockShellWidthStyle, MOBILE_DOCK_BAR_CLASS } from './chat/mobile-dock-layout.js';
 import { useDockBarWidth } from './chat/useDockBarWidth.js';
 import { DockTooltipButton } from './chat/DockTooltipButton.js';
-import { MobileSummaryToggle } from './chat/MobileSummaryToggle.js';
 import { resolveMobileDockContext } from '../../lib/mobile-dock-context.js';
 import { useMobileDockActionSnapshot } from '../../lib/mobile-dock-action-store.js';
 import { dockLayoutHasVisibleActions } from './chat/mobile-dock-screen.js';
+import { useMobileKeyboardOpen } from './chat/useMobileKeyboardOpen.js';
 
 export interface AppMobileDockProps {
   pathname: string;
@@ -29,7 +29,7 @@ function prefersReducedMotion(): boolean {
 
 function activeBtnClass(item: AppNavDockItem): string {
   const base =
-    'mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color,box-shadow] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px]';
+    'mobile-chat-dock-btn nm-dock-nav-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color,box-shadow] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px]';
 
   if (item.disabled) {
     return `${base} cursor-not-allowed opacity-45`;
@@ -37,7 +37,7 @@ function activeBtnClass(item: AppNavDockItem): string {
 
   if (!item.active) return base;
 
-  return `${base} bg-[rgba(212,175,55,0.14)] text-[#f2ca50] shadow-[0_0_0_1px_rgba(242,202,80,0.45)] focus-visible:outline-[#f2ca50]`;
+  return `${base} text-[#D4AF37] focus-visible:outline-[#D4AF37]`;
 }
 
 function navigateFromDock(item: AppNavDockItem) {
@@ -66,7 +66,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   const snapshot = useMobileDockActionSnapshot();
   const context = resolveMobileDockContext(props.pathname);
   const action = context === 'action' && snapshot?.handlers ? snapshot : null;
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const keyboardOpen = useMobileKeyboardOpen();
   const reduced = prefersReducedMotion();
   const navMeasureKey = items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|');
   const measureKey =
@@ -77,46 +77,33 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   const { innerRef, widthPx } = useDockBarWidth(measureKey);
   const barClassName = `${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`;
 
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const update = () => setKeyboardOpen(window.innerHeight - viewport.height > 100);
-    update();
-    viewport.addEventListener('resize', update);
-    viewport.addEventListener('scroll', update);
-    return () => {
-      viewport.removeEventListener('resize', update);
-      viewport.removeEventListener('scroll', update);
-    };
-  }, []);
-
   useLayoutEffect(() => {
     assertSingleMobileDockRoot();
   });
 
-  const creationRoute = props.pathname.replace(/\/+$/, '') === '/app/analise/nome-social';
   const contextLayout = action?.state.layout ?? null;
+  const showReadingAction = Boolean(action?.state.showReadingAction);
   const showContextActions =
     contextLayout &&
     dockLayoutHasVisibleActions(contextLayout, {
       pdfVisible: Boolean(action?.state.pdfModel?.visible),
       pdfExiting: Boolean(action?.state.pdfExiting),
+      readingVisible: showReadingAction,
     });
 
   return (
-    <>
-      <MobileDockRoot
-        role="navigation"
-        aria-label="Navegação principal"
-        className={keyboardOpen ? 'invisible pointer-events-none' : ''}
-      >
+    <MobileDockRoot
+      role="navigation"
+      aria-label="Navegação principal"
+      className={keyboardOpen ? 'nm-mobile-dock--keyboard-hidden' : undefined}
+    >
         <div
           className="mobile-chat-dock-shell max-w-[calc(100vw-24px)] rounded-[28px]"
           style={dockShellWidthStyle(widthPx, reduced)}
         >
           <div ref={innerRef} className={barClassName}>
             <div
-              className={`inline-flex shrink-0 items-center gap-0.5 ${
+              className={`inline-flex shrink-0 items-center gap-1 ${
                 reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
               }`}
               role="group"
@@ -136,7 +123,13 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                     onClick={() => navigateFromDock(item)}
                     className={activeBtnClass(item)}
                   >
-                    <Icon />
+                    <Icon className="h-[22px] w-[22px] shrink-0" />
+                    {item.active ? (
+                      <span
+                        className="nm-dock-nav-active-mark absolute bottom-1.5 left-1/2 h-0.5 w-0.5 -translate-x-1/2 rounded-full bg-[#D4AF37]"
+                        aria-hidden="true"
+                      />
+                    ) : null}
                   </DockTooltipButton>
                 );
               })}
@@ -145,7 +138,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
               <>
                 <span
                   data-nm-dock-divider
-                  className="mx-0.5 h-6 w-px shrink-0 bg-white/15"
+                  className="mx-2 h-6 w-px shrink-0 bg-[#D4AF37]/30"
                   aria-hidden="true"
                 />
                 <div
@@ -160,6 +153,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                     summaryPanelOpen={action.state.summaryPanelOpen}
                     restartExitActive={action.state.restartExitActive}
                     summaryBadge={action.state.summaryBadge}
+                    showReadingAction={showReadingAction}
                     pdfModel={action.state.pdfModel}
                     pdfExiting={action.state.pdfExiting}
                     onPdfClick={action.handlers.onPdfClick}
@@ -172,13 +166,5 @@ export default function AppMobileDock(props: AppMobileDockProps) {
           </div>
         </div>
       </MobileDockRoot>
-      {creationRoute && action && !keyboardOpen && (
-        <MobileSummaryToggle
-          open={action.state.summaryPanelOpen}
-          badge={action.state.summaryBadge}
-          onToggle={() => action.handlers!.onSecondary('summary', 0)}
-        />
-      )}
-    </>
   );
 }

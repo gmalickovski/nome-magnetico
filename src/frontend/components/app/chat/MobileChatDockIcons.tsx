@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapDownloadIcon } from '../MapDownloadIcon.js';
 
-const STROKE = 1.75;
+const STROKE = 1.5;
 
 type IconProps = { className?: string };
 
@@ -45,6 +45,37 @@ export function IconChevronRight(props: IconProps) {
   return (
     <Svg {...props}>
       <path d="m9 18 6-6-6-6" />
+    </Svg>
+  );
+}
+
+export function IconScrollText(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M15 12h5" />
+      <path d="M15 8h5" />
+      <path d="M15 16h5" />
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1 0-5H20" />
+    </Svg>
+  );
+}
+
+export function IconPanelBottomOpen(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 14h18" />
+      <path d="M12 3v11" />
+      <path d="m8 7 4-4 4 4" />
+    </Svg>
+  );
+}
+
+export function IconMoreHorizontal(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="6" cy="12" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="12" r="1.25" fill="currentColor" stroke="none" />
     </Svg>
   );
 }
@@ -100,6 +131,7 @@ export function IconLockOpen(props: IconProps) {
 
 export function dockIconFor(
   icon:
+    | 'scroll-text'
     | 'panel-right'
     | 'rotate-ccw'
     | 'sparkles'
@@ -108,6 +140,8 @@ export function dockIconFor(
     | 'lock-open'
 ): React.FC<IconProps> {
   switch (icon) {
+    case 'scroll-text':
+      return IconScrollText;
     case 'panel-right':
       return IconPanelRight;
     case 'rotate-ccw':

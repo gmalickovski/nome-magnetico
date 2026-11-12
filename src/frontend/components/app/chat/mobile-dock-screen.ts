@@ -2,6 +2,7 @@ export type ChatDockScreen = 'chat_questionnaire' | 'chat_suggestions' | 'chat_f
 
 export type DockSecondaryActionId =
   | 'summary'
+  | 'reading'
   | 'restart'
   | 'other_options'
   | 'share'
@@ -11,6 +12,7 @@ export type DockSecondaryActionId =
 export type DockPrimaryActionId = 'generate_pdf' | 'download_pdf' | 'unlock_nome_social';
 
 export type DockIconKind =
+  | 'scroll-text'
   | 'panel-right'
   | 'rotate-ccw'
   | 'sparkles'
@@ -154,13 +156,18 @@ export function buildResultadoDockLayout(input: ResultadoDockInput): ResultadoDo
 /** A dock contextual só aparece quando há botões além da navegação global. */
 export function dockLayoutHasVisibleActions(
   layout: MobileDockLayout,
-  options?: { pdfVisible?: boolean; pdfExiting?: boolean }
+  options?: { pdfVisible?: boolean; pdfExiting?: boolean; readingVisible?: boolean }
 ): boolean {
   const secondaries = layout.screen === 'resultado' ? layout.secondaries : layout.middleSecondaries;
   const hasPdf =
     layout.screen !== 'resultado' &&
     (Boolean(options?.pdfVisible) || Boolean(options?.pdfExiting));
-  return secondaries.length > 0 || Boolean(layout.primary) || hasPdf;
+  return (
+    secondaries.length > 0 ||
+    Boolean(layout.primary) ||
+    hasPdf ||
+    Boolean(options?.readingVisible)
+  );
 }
 
 /** Máximo 4 ações contextuais (centro + pdf) na mesma barra. */

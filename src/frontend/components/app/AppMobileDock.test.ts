@@ -14,7 +14,6 @@ mock.module('../../lib/auth-fetch.js', {
 });
 const { default: AppMobileDock } = await import('./AppMobileDock.tsx');
 const { MobileChatDock } = await import('./chat/MobileChatDock.tsx');
-const { MobileSummaryToggle } = await import('./chat/MobileSummaryToggle.tsx');
 import { buildResultadoDockLayout } from './chat/mobile-dock-screen.ts';
 
 const noop = () => {};
@@ -40,7 +39,7 @@ describe('AppMobileDock', () => {
       assert.doesNotMatch(html, /aria-label="Área do Analista"/);
     }
   });
-  it('ações incorporadas não criam outro shell nem incluem controle do resumo', () => {
+  it('ações incorporadas não criam outro shell nem controle lateral de resumo', () => {
     const layout = buildResultadoDockLayout({
       canShare: true,
       canRedo: true,
@@ -62,18 +61,32 @@ describe('AppMobileDock', () => {
     assert.doesNotMatch(html, />Baixar PDF</);
     assert.match(html, /aria-label="Compartilhar"/);
     assert.doesNotMatch(html, /aria-label="Voltar"/);
+    assert.doesNotMatch(html, /MobileSummaryToggle|aria-controls="mobile-reading-summary"/);
   });
-  it('controle lateral expõe expansão, alvo e feedback acessível', () => {
-    for (const open of [true, false]) {
-      const html = renderToStaticMarkup(
-        React.createElement(MobileSummaryToggle, { open, badge: true, onToggle: noop })
-      );
-      assert.match(html, /aria-controls="mobile-reading-summary"/);
-      assert.ok(html.includes('aria-expanded="' + open + '"'));
-      assert.match(html, /h-12 w-11/);
-    }
+  it('exibe ação Abrir leitura na dock quando showReadingAction', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: false,
+      canRedo: false,
+      canDownloadPdf: true,
+      isFree: false,
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(MobileChatDock, {
+        omitRoot: true,
+        layout,
+        summaryPanelOpen: false,
+        summaryBadge: true,
+        showReadingAction: true,
+        onSecondary: noop,
+        onPrimary: noop,
+      })
+    );
+    assert.match(html, /aria-label="Abrir leitura"/);
+    assert.match(html, /data-nm-reading-trigger/);
+  });
+  it('não referencia controle lateral MobileSummaryToggle no layout', () => {
     const src = readFileSync(new URL('./AppMobileDock.tsx', import.meta.url), 'utf8');
-    assert.ok(src.indexOf('</MobileDockRoot>') < src.indexOf('<MobileSummaryToggle'));
-    assert.match(src, /creationRoute && action/);
+    assert.doesNotMatch(src, /MobileSummaryToggle/);
+    assert.match(src, /showReadingAction/);
   });
 });

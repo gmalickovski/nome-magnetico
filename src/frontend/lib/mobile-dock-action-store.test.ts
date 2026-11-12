@@ -17,6 +17,7 @@ describe('mobile-dock-action-store', () => {
         summaryPanelOpen: false,
         restartExitActive: false,
         summaryBadge: false,
+        showReadingAction: false,
         pdfModel: null,
         pdfExiting: false,
       },

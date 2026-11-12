@@ -32,11 +32,16 @@ import {
   type DockPrimaryActionId,
   type DockSecondaryActionId,
 } from './mobile-dock-screen.js';
-import type { SummaryPanelCloseMethod } from './SummaryDrawer.js';
+import {
+  MobileReadingBottomSheet,
+  type ReadingSheetSnap,
+  type SummaryPanelCloseMethod,
+} from './MobileReadingBottomSheet.js';
+import { ChatReadingHeaderTrigger } from './ChatReadingHeaderTrigger.js';
+import { useMobileKeyboardOpen } from './useMobileKeyboardOpen.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { GuessButtons } from './GuessButtons.js';
-import { SummaryDrawer } from './SummaryDrawer.js';
 import { ChatInlineDateReply } from './ChatInlineDateReply.js';
 import { ChatProfileConfirmBlock } from './ChatProfileConfirmBlock.js';
 import {
@@ -238,7 +243,10 @@ export function NomeSocialChat({
 
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [readingSnap, setReadingSnap] = useState<ReadingSheetSnap>('closed');
+  const readingReturnFocusRef = useRef<HTMLElement | null>(null);
+  const mobileKeyboardOpen = useMobileKeyboardOpen();
+  const drawerOpen = readingSnap !== 'closed';
   const [summaryBadge, setSummaryBadge] = useState(false);
   const lastSummarySnapshotRef = useRef<string>('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -266,7 +274,7 @@ export function NomeSocialChat({
     const mq = window.matchMedia('(min-width: 768px)');
     const onChange = () => {
       if (mq.matches) {
-        setDrawerOpen(false);
+        setReadingSnap('closed');
       } else {
         setSidebarExpanded(false);
       }
@@ -1613,6 +1621,7 @@ export function NomeSocialChat({
   const chatDockScreen = resolveChatDockScreen(chatDockInput);
 
   const chatDockLayout = chatDockScreen ? buildChatDockLayout(chatDockScreen, chatDockInput) : null;
+  const showReadingAction = birthConfirmed && Boolean(basePanel);
 
   useEffect(() => {
     return () => {
@@ -1807,6 +1816,10 @@ export function NomeSocialChat({
   }, [summarySnapshot, drawerOpen, birthConfirmed, basePanel]);
 
   const openSummaryPanel = () => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.closest('[data-nm-reading-trigger]')) {
+      readingReturnFocusRef.current = active;
+    }
     if (!drawerOpen) {
       capturePostHogEvent('summary_drawer_opened', {
         screen: chatDockScreen ?? 'chat_questionnaire',
@@ -1814,7 +1827,7 @@ export function NomeSocialChat({
       });
       setSummaryBadge(false);
     }
-    setDrawerOpen(true);
+    setReadingSnap((prev) => (prev === 'closed' ? 'half' : prev));
   };
 
   const closeSummaryPanel = (method: SummaryPanelCloseMethod) => {
@@ -1824,7 +1837,10 @@ export function NomeSocialChat({
       screen: chatDockScreen ?? 'chat_questionnaire',
       method: mapped,
     });
-    setDrawerOpen(false);
+    setReadingSnap('closed');
+    const target = readingReturnFocusRef.current;
+    readingReturnFocusRef.current = null;
+    if (target) requestAnimationFrame(() => target.focus());
   };
 
   const handleDockSecondary = (action: DockSecondaryActionId, position: number) => {
@@ -1834,7 +1850,7 @@ export function NomeSocialChat({
       position,
     });
 
-    if (action === 'summary') {
+    if (action === 'summary' || action === 'reading') {
       if (drawerOpen) {
         closeSummaryPanel('trigger');
       } else {
@@ -1949,6 +1965,12 @@ export function NomeSocialChat({
           className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
           trailing={
             <>
+              {mobileKeyboardOpen && showReadingAction ? (
+                <ChatReadingHeaderTrigger
+                  badge={summaryBadge}
+                  onOpen={openSummaryPanel}
+                />
+              ) : null}
               {freePaywallActive ? (
                 <ChatPaywallStickyDesktop
                   visible={paywallStickyVisible}
@@ -2237,6 +2259,7 @@ export function NomeSocialChat({
         summaryPanelOpen={drawerOpen}
         restartExitActive={restartExitActive}
         summaryBadge={summaryBadge}
+        showReadingAction={showReadingAction}
         pdfModel={freePaywallActive ? null : pdfCtaModel}
         pdfExiting={pdfCircleExiting}
         onPdfClick={freePaywallActive ? undefined : onPdfDockClick}
@@ -2255,8 +2278,9 @@ export function NomeSocialChat({
         onDismissError={() => setFreePdfOverlayPhase('idle')}
       />
 
-      <SummaryDrawer
-        isOpen={drawerOpen}
+      <MobileReadingBottomSheet
+        snap={readingSnap}
+        onSnapChange={setReadingSnap}
         onClose={closeSummaryPanel}
         birthPanel={basePanel}
         harmonizedPanel={activeSuggestion?.panel ?? null}
