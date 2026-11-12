@@ -11,12 +11,12 @@ export interface MobileDockActionState {
   summaryPanelOpen: boolean;
   restartExitActive: boolean;
   summaryBadge: boolean;
+  showReadingAction: boolean;
   pdfModel: ChatPdfCtaModel | null;
   pdfExiting: boolean;
 }
 
 export interface MobileDockActionHandlers {
-  onBack: () => void;
   onSecondary: (action: DockSecondaryActionId, position: number) => void;
   onPrimary: (action: DockPrimaryActionId) => void;
   onPdfClick?: () => void;

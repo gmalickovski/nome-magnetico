@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { MapDownloadIcon } from './MapDownloadIcon.js';
 import { track } from '../../lib/analytics';
 import { EmailConfirmationPrompt } from './EmailConfirmationPrompt';
 
@@ -220,11 +221,7 @@ export function PDFFeedbackButton({
     }
   }
 
-  const downloadIcon = (
-    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-    </svg>
-  );
+  const downloadIcon = <MapDownloadIcon className={status === 'loading' ? 'motion-safe:animate-pulse' : ''} />;
 
   // ── Modal via Portal — renderiza direto no document.body, escapando
   //    qualquer stacking context de pai (header fixo, transforms, etc.)
@@ -507,13 +504,16 @@ export function PDFFeedbackButton({
       {!fabOnly && (
         <button
           onClick={handleDownload}
+          aria-label={status === 'loading' ? 'Preparando PDF' : (label ?? 'Baixar Análise')}
+          title={label ?? 'Baixar Análise'}
+          aria-busy={status === 'loading'}
+          disabled={status === 'loading'}
           className={
             className ??
-            'hidden md:inline-flex items-center gap-2 bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-300'
+            'hidden md:inline-flex h-11 w-11 items-center justify-center bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider p-0 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-300'
           }
         >
           {downloadIcon}
-          {label ?? 'Baixar Análise'}
         </button>
       )}
 
@@ -522,7 +522,11 @@ export function PDFFeedbackButton({
         <button
           ref={fabRef}
           onClick={handleDownload}
-          className="md:hidden fixed z-50 flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-xs sm:text-sm font-bold uppercase tracking-wider py-3.5 sm:py-4 px-3 sm:px-6 rounded-full shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-[#f2ca50] hover:shadow-[0_4px_32px_rgba(212,175,55,0.55)] active:scale-95 transition-all duration-300 left-3 right-3 sm:left-4 sm:right-4 max-w-md mx-auto"
+          aria-label={status === 'loading' ? 'Preparando PDF' : (label ?? 'Baixar Análise')}
+          title={label ?? 'Baixar Análise'}
+          aria-busy={status === 'loading'}
+          disabled={status === 'loading'}
+          className="md:hidden fixed right-3 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-[#D4AF37] text-[#131313] shadow-[0_4px_24px_rgba(0,0,0,0.4)] hover:bg-[#f2ca50] active:scale-95 transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
           style={{
             opacity: 1,
             transition: 'opacity 0.4s ease, background-color 0.3s, box-shadow 0.3s, transform 0.1s',
@@ -530,10 +534,7 @@ export function PDFFeedbackButton({
           }}
           id="pdf-download-btn"
         >
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          {label ?? 'Baixar Análise'}
+          {downloadIcon}
         </button>
       )}
 

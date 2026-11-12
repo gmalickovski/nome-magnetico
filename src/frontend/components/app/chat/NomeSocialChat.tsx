@@ -32,11 +32,17 @@ import {
   type DockPrimaryActionId,
   type DockSecondaryActionId,
 } from './mobile-dock-screen.js';
-import type { SummaryPanelCloseMethod } from './SummaryDrawer.js';
+import {
+  MobileReadingBottomSheet,
+  type ReadingSheetCardHeader,
+  type ReadingSheetSnap,
+  type SummaryPanelCloseMethod,
+} from './MobileReadingBottomSheet.js';
+import { ChatReadingHeaderTrigger } from './ChatReadingHeaderTrigger.js';
+import { useMobileKeyboardOpen } from './useMobileKeyboardOpen.js';
 import { NmBubble } from './NmBubble.js';
 import { UserBubble } from './UserBubble.js';
 import { GuessButtons } from './GuessButtons.js';
-import { SummaryDrawer } from './SummaryDrawer.js';
 import { ChatInlineDateReply } from './ChatInlineDateReply.js';
 import { ChatProfileConfirmBlock } from './ChatProfileConfirmBlock.js';
 import {
@@ -60,7 +66,6 @@ import {
   mapRegenerateApiToCandidates,
   mergeCollectFromApi,
   shouldShowRadar,
-  shouldShowSummary,
   type ChatCollectState,
 } from './decide-live-bridge.js';
 import { podePedirGerarMais } from '../../../../shared/nome-social/gerar-mais-limits.js';
@@ -120,7 +125,6 @@ import { ChatPaywallStickyDesktop } from './ChatPaywallStickyDesktop.js';
 import { ChatPaywallSidebarCta } from './ChatPaywallSidebarCta.js';
 import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-engine/chat-profile-copy.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
-import { navigateClientAreaBack } from '../../../lib/app-nav-back.js';
 import { fetchWithAuth } from '../../../lib/auth-fetch.js';
 import { Button } from '../../ui/Button.js';
 import { Modal } from '../../ui/Modal.js';
@@ -241,7 +245,18 @@ export function NomeSocialChat({
 
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [readingSnap, setReadingSnap] = useState<ReadingSheetSnap>('closed');
+  const [sheetHeaderFromCard, setSheetHeaderFromCard] = useState<ReadingSheetCardHeader | null>(null);
+  const [scrollHarmonizedOnEnter, setScrollHarmonizedOnEnter] = useState(false);
+  const readingReturnFocusRef = useRef<HTMLElement | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const chatScrollTopRestoreRef = useRef(0);
+  const readingOpenedAtRef = useRef<number | null>(null);
+  const readingMaxScrollRef = useRef(0);
+  const readingOpenTriggerRef = useRef<'manual' | 'auto_card_tap'>('manual');
+  const openSheetAfterCardTapRef = useRef<string | null>(null);
+  const mobileKeyboardOpen = useMobileKeyboardOpen();
+  const drawerOpen = readingSnap !== 'closed';
   const [summaryBadge, setSummaryBadge] = useState(false);
   const lastSummarySnapshotRef = useRef<string>('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -266,10 +281,10 @@ export function NomeSocialChat({
   const [nomeArtisticoDraft, setNomeArtisticoDraft] = useState('');
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia('(min-width: 1024px)');
     const onChange = () => {
       if (mq.matches) {
-        setDrawerOpen(false);
+        setReadingSnap('closed');
       } else {
         setSidebarExpanded(false);
       }
@@ -562,14 +577,6 @@ export function NomeSocialChat({
     capturePostHogEvent('restart_confirmed', { step: currentStepId });
     setResetConfirmOpen(false);
     resetChat();
-  };
-
-  const handleChatDockBack = () => {
-    const screen = chatDockScreen ?? 'chat_questionnaire';
-    const destination = navigateClientAreaBack({
-      beforeLeave: flushChatSessionToStorage,
-    });
-    capturePostHogEvent('back_clicked', { screen, step: currentStepId, destination });
   };
 
   const appendUserBubble = (content: string, stepId: string) => {
@@ -1294,6 +1301,18 @@ export function NomeSocialChat({
       lastAnalyzeSuggestionsFingerprintRef.current = null;
       lastAnalyzeSelectedNameRef.current = null;
     }
+    if (id) {
+      const isMobileSheet =
+        typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+      if (isMobileSheet) {
+        chatScrollTopRestoreRef.current = chatScrollRef.current?.scrollTop ?? 0;
+        openSheetAfterCardTapRef.current = id;
+      }
+    } else {
+      setSheetHeaderFromCard(null);
+      setScrollHarmonizedOnEnter(false);
+      openSheetAfterCardTapRef.current = null;
+    }
     setActiveSuggestionId(id);
   };
 
@@ -1608,7 +1627,6 @@ export function NomeSocialChat({
   const showScoreCard = Boolean(basePanel);
   const showStarDetail = birthConfirmed && Boolean(basePanel);
   const showRadarPanel = shouldShowRadar(collectState);
-  const showSummaryPanel = shouldShowSummary(summaryItems);
   const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel);
   const activeReadingSummary = activeSuggestionId
     ? harmonizedSummaries[activeSuggestionId] ?? null
@@ -1619,7 +1637,6 @@ export function NomeSocialChat({
     (showScoreCard ? 1 : 0) +
     (showStarDetail ? 1 : 0) +
     (showRadarPanel ? 1 : 0) +
-    summaryItems.length +
     (showReadingSummaryPanel && (activeReadingSummary || activeReadingLoading) ? 1 : 0);
 
   const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
@@ -1638,7 +1655,7 @@ export function NomeSocialChat({
     canShowSummary: birthConfirmed && Boolean(basePanel),
     profileCollectionComplete,
     hasSuggestionsMessage,
-    canRestart: birthConfirmed && paidAccessActive,
+    canRestart: true,
     canRegenerate:
       profileCollectionComplete &&
       suggestions.length > 0 &&
@@ -1651,6 +1668,7 @@ export function NomeSocialChat({
   const chatDockScreen = resolveChatDockScreen(chatDockInput);
 
   const chatDockLayout = chatDockScreen ? buildChatDockLayout(chatDockScreen, chatDockInput) : null;
+  const showReadingAction = birthConfirmed && Boolean(basePanel);
 
   useEffect(() => {
     return () => {
@@ -1844,26 +1862,83 @@ export function NomeSocialChat({
     lastSummarySnapshotRef.current = summarySnapshot;
   }, [summarySnapshot, drawerOpen, birthConfirmed, basePanel]);
 
-  const openSummaryPanel = () => {
+  const openSummaryPanel = (opts?: {
+    trigger?: 'manual' | 'auto_card_tap';
+    namePosition?: number;
+    cardHeader?: ReadingSheetCardHeader | null;
+    scrollHarmonized?: boolean;
+  }) => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.closest('[data-nm-reading-trigger]')) {
+      readingReturnFocusRef.current = active;
+    }
+    const trigger = opts?.trigger ?? 'manual';
+    readingOpenTriggerRef.current = trigger;
+    readingOpenedAtRef.current = Date.now();
+    readingMaxScrollRef.current = 0;
+    if (opts?.cardHeader) setSheetHeaderFromCard(opts.cardHeader);
+    else if (trigger === 'manual') setSheetHeaderFromCard(null);
+    setScrollHarmonizedOnEnter(Boolean(opts?.scrollHarmonized));
     if (!drawerOpen) {
       capturePostHogEvent('summary_drawer_opened', {
         screen: chatDockScreen ?? 'chat_questionnaire',
         step: currentStepId,
       });
+      capturePostHogEvent('reading_panel_open', {
+        trigger,
+        time_open_ms: 0,
+        max_scroll_pct: 0,
+      });
       setSummaryBadge(false);
     }
-    setDrawerOpen(true);
+    setReadingSnap((prev) => (prev === 'closed' ? 'full' : prev));
   };
 
   const closeSummaryPanel = (method: SummaryPanelCloseMethod) => {
-    const mapped =
-      method === 'escape' ? 'x' : method;
+    const mapped = method === 'escape' ? 'x' : method;
+    const timeOpenMs = readingOpenedAtRef.current
+      ? Date.now() - readingOpenedAtRef.current
+      : 0;
     capturePostHogEvent('summary_drawer_closed', {
       screen: chatDockScreen ?? 'chat_questionnaire',
       method: mapped,
     });
-    setDrawerOpen(false);
+    capturePostHogEvent('reading_panel_close', {
+      trigger: mapped,
+      time_open_ms: timeOpenMs,
+      max_scroll_pct: readingMaxScrollRef.current,
+    });
+    setReadingSnap('closed');
+    setScrollHarmonizedOnEnter(false);
+    readingOpenedAtRef.current = null;
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = chatScrollTopRestoreRef.current;
+    const target = readingReturnFocusRef.current;
+    readingReturnFocusRef.current = null;
+    if (target) requestAnimationFrame(() => target.focus());
   };
+
+  useEffect(() => {
+    const pendingId = openSheetAfterCardTapRef.current;
+    if (!pendingId || activeSuggestionId !== pendingId) return;
+    openSheetAfterCardTapRef.current = null;
+    const sug = suggestions.find((s) => s.id === pendingId);
+    if (!sug?.panel || !basePanel) return;
+    if (typeof window !== 'undefined' && !window.matchMedia('(max-width: 1023px)').matches) return;
+    const pressed = document.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (pressed) readingReturnFocusRef.current = pressed;
+    const rank = Math.max(1, suggestions.findIndex((s) => s.id === pendingId) + 1);
+    openSummaryPanel({
+      trigger: 'auto_card_tap',
+      namePosition: rank,
+      cardHeader: {
+        suggestedName: sug.nome,
+        chosenScore: sug.score,
+        baseScore: basePanel.score,
+      },
+      scrollHarmonized: true,
+    });
+  }, [activeSuggestionId, suggestions, basePanel]);
 
   const handleDockSecondary = (action: DockSecondaryActionId, position: number) => {
     capturePostHogEvent('dock_action_clicked', {
@@ -1872,9 +1947,9 @@ export function NomeSocialChat({
       position,
     });
 
-    if (action === 'summary') {
+    if (action === 'summary' || action === 'reading') {
       if (drawerOpen) {
-        closeSummaryPanel('dock');
+        closeSummaryPanel('trigger');
       } else {
         openSummaryPanel();
       }
@@ -1920,8 +1995,6 @@ export function NomeSocialChat({
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
         showRadar={showRadarPanel && paidAccessActive}
-        summaryItems={summaryItems}
-        showSummary={showSummaryPanel}
         readingSummary={activeReadingSummary}
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
@@ -1989,6 +2062,12 @@ export function NomeSocialChat({
           className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
           trailing={
             <>
+              {mobileKeyboardOpen && showReadingAction ? (
+                <ChatReadingHeaderTrigger
+                  badge={summaryBadge}
+                  onOpen={openSummaryPanel}
+                />
+              ) : null}
               {freePaywallActive ? (
                 <ChatPaywallStickyDesktop
                   visible={paywallStickyVisible}
@@ -2032,8 +2111,12 @@ export function NomeSocialChat({
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-clearance)] md:pb-6">
+          <div
+            ref={chatScrollRef}
+            className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-lg:pb-[var(--nm-mobile-dock-clearance)] lg:pb-6"
+          >
             {messages.map((msg) => {
+              if (msg.type === 'profile_confirm' && (birthConfirmed || answers.onboarding_confirm === 'ok')) return null;
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
               }
@@ -2047,7 +2130,7 @@ export function NomeSocialChat({
                 return (
                   <NmBubble key={msg.id} wide={msg.wide} eyebrow={msg.eyebrow}>
                     <p className="text-chat-ink leading-relaxed">{msg.content}</p>
-                    <ChatFreeBirthAnalysisBody panel={basePanel} highlights={summaryItems} />
+                    <ChatFreeBirthAnalysisBody panel={basePanel} />
                   </NmBubble>
                 );
               }
@@ -2277,10 +2360,10 @@ export function NomeSocialChat({
         summaryPanelOpen={drawerOpen}
         restartExitActive={restartExitActive}
         summaryBadge={summaryBadge}
+        showReadingAction={showReadingAction}
         pdfModel={freePaywallActive ? null : pdfCtaModel}
         pdfExiting={pdfCircleExiting}
         onPdfClick={freePaywallActive ? undefined : onPdfDockClick}
-        onBack={handleChatDockBack}
         onSecondary={handleDockSecondary}
         onPrimary={handleDockPrimary}
       />
@@ -2296,8 +2379,9 @@ export function NomeSocialChat({
         onDismissError={() => setFreePdfOverlayPhase('idle')}
       />
 
-      <SummaryDrawer
-        isOpen={drawerOpen}
+      <MobileReadingBottomSheet
+        snap={readingSnap}
+        onSnapChange={setReadingSnap}
         onClose={closeSummaryPanel}
         birthPanel={basePanel}
         harmonizedPanel={activeSuggestion?.panel ?? null}
@@ -2311,12 +2395,44 @@ export function NomeSocialChat({
         radarLabels={radarLabels}
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
-        summaryItems={summaryItems}
         showRadar={showRadarPanel}
-        showSummary={showSummaryPanel}
         readingSummary={activeReadingSummary}
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
+        headerFromCard={sheetHeaderFromCard}
+        scrollToHarmonizedOnEnter={scrollHarmonizedOnEnter}
+        onContentScrollMax={(pct) => {
+          if (pct > readingMaxScrollRef.current) readingMaxScrollRef.current = pct;
+        }}
+        panelPrimary={
+          paidAccessActive && pdfCtaModel.visible
+            ? {
+                variant: 'pdf',
+                onClick: () => {
+                  capturePostHogEvent('primary_cta_click', {
+                    cta: 'pdf',
+                    location: 'panel',
+                    surface: 'app',
+                  });
+                  onPdfDockClick();
+                },
+                pdfModel: pdfCtaModel,
+                pdfExiting: pdfCircleExiting,
+              }
+            : freePaywallActive
+              ? {
+                  variant: 'unlock',
+                  onClick: () => {
+                    capturePostHogEvent('primary_cta_click', {
+                      cta: 'unlock',
+                      location: 'panel',
+                      surface: 'app',
+                    });
+                    goPaywallCheckout('panel');
+                  },
+                }
+              : null
+        }
       />
 
       <Modal
