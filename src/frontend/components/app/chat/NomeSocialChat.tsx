@@ -63,6 +63,7 @@ import {
   shouldShowSummary,
   type ChatCollectState,
 } from './decide-live-bridge.js';
+import { podePedirGerarMais } from '../../../../shared/nome-social/gerar-mais-limits.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
 import {
   detectShownBlockTransitions,
@@ -1149,8 +1150,15 @@ export function NomeSocialChat({
     const collectionComplete =
       data.next_step === 'fim_coleta' || data.next_step === 'conclusao';
 
-    if (collectionComplete && data.previewTop3 && data.previewTop3.length > 0) {
-      setSuggestions(data.previewTop3);
+    if (collectionComplete) {
+      if (data.semOpcoesElegiveis) {
+        setSuggestions([]);
+        setRegenerateNotice(
+          'Com o que você pediu, nenhuma assinatura teve nota maior que a do seu nome de nascimento. Ajuste suas preferências para explorar outras combinações.',
+        );
+      } else if (data.previewTop3 && data.previewTop3.length > 0) {
+        setSuggestions(data.previewTop3);
+      }
     }
 
     setCurrentStepId(data.next_step);
@@ -1512,7 +1520,22 @@ export function NomeSocialChat({
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 429 && data.limiteGerarMais) {
+          setRegenerateNotice(
+            typeof data.error === 'string'
+              ? data.error
+              : 'Você já usou o limite de sugestões extras desta rodada.',
+          );
+          return;
+        }
         throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao regenerar opções');
+      }
+
+      if (data.semOpcoesElegiveis) {
+        setRegenerateNotice(
+          'Não encontramos novas assinaturas com nota acima da do seu nome de nascimento dentro das suas preferências atuais.',
+        );
+        return;
       }
 
       if (isRegeneratePoolExhausted(data, nomesExcluidos)) {
@@ -1616,7 +1639,10 @@ export function NomeSocialChat({
     profileCollectionComplete,
     hasSuggestionsMessage,
     canRestart: birthConfirmed && paidAccessActive,
-    canRegenerate: profileCollectionComplete && suggestions.length > 0,
+    canRegenerate:
+      profileCollectionComplete &&
+      suggestions.length > 0 &&
+      podePedirGerarMais(suggestions.length),
     suggestionSelected,
     freePaywallActive,
     summaryPanelOpen: omitRestartFromDockLayout,
@@ -2061,6 +2087,7 @@ export function NomeSocialChat({
                       onRegenerate={handleRegenerate}
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
+                      canRegenerate={podePedirGerarMais(suggestions.length)}
                     />
                   </NmBubble>
                 );

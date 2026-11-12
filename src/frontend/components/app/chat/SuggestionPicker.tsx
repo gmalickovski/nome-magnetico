@@ -12,6 +12,7 @@ export interface SuggestionPickerProps {
   onRegenerate: () => void;
   isRegenerating?: boolean;
   regenerateNotice?: string | null;
+  canRegenerate?: boolean;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export function SuggestionPicker({
   onRegenerate,
   isRegenerating = false,
   regenerateNotice = null,
+  canRegenerate = true,
   className = '',
 }: SuggestionPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -119,9 +121,15 @@ export function SuggestionPicker({
         <Pill
           label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
           size="lg"
-          disabled={isRegenerating}
+          disabled={isRegenerating || !canRegenerate}
           onClick={onRegenerate}
         />
+        {!canRegenerate && suggestions.length > 0 && (
+          <p className="text-xs text-chat-muted leading-relaxed">
+            Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
+            combinações.
+          </p>
+        )}
       </div>
     </div>
   );
