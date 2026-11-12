@@ -98,7 +98,7 @@ describe('mobile-dock-screen', () => {
     assert.equal(layout.primary?.label, 'Desbloquear');
     assert.deepEqual(
       layout.middleSecondaries.map((s) => s.id),
-      ['free_pdf']
+      ['restart', 'free_pdf']
     );
   });
 
@@ -111,4 +111,10 @@ describe('mobile-dock-screen', () => {
     });
     assert.equal(layout.primary.id, 'unlock_nome_social');
   });
+});
+
+it('permite reiniciar antes da confirmação de nascimento', () => {
+ const input={...chatBase,birthConfirmed:false,canShowSummary:false,canRestart:true};
+ const layout=buildChatDockLayout('chat_questionnaire',input);
+ assert.ok(layout.middleSecondaries.some(action=>action.id==='restart'));
 });

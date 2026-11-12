@@ -1595,7 +1595,6 @@ export function NomeSocialChat({
     (showScoreCard ? 1 : 0) +
     (showStarDetail ? 1 : 0) +
     (showRadarPanel ? 1 : 0) +
-    summaryItems.length +
     (showReadingSummaryPanel && (activeReadingSummary || activeReadingLoading) ? 1 : 0);
 
   const hasSuggestionsMessage = messages.some((m) => m.type === 'suggestions');
@@ -1614,7 +1613,7 @@ export function NomeSocialChat({
     canShowSummary: birthConfirmed && Boolean(basePanel),
     profileCollectionComplete,
     hasSuggestionsMessage,
-    canRestart: birthConfirmed && paidAccessActive,
+    canRestart: true,
     canRegenerate: profileCollectionComplete && suggestions.length > 0,
     suggestionSelected,
     freePaywallActive,
@@ -1847,7 +1846,7 @@ export function NomeSocialChat({
 
     if (action === 'summary') {
       if (drawerOpen) {
-        closeSummaryPanel('dock');
+        closeSummaryPanel('trigger');
       } else {
         openSummaryPanel();
       }
@@ -1960,6 +1959,7 @@ export function NomeSocialChat({
         >
           <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-clearance)] md:pb-6">
             {messages.map((msg) => {
+              if (msg.type === 'profile_confirm' && (birthConfirmed || answers.onboarding_confirm === 'ok')) return null;
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
               }

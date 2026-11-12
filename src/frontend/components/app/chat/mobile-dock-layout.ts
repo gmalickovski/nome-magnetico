@@ -21,7 +21,7 @@ export function dockShellWidthStyle(
 
 /** Classes da barra: contêiner flutuante, largura só do conteúdo. */
 export const MOBILE_DOCK_BAR_CLASS =
-  'mobile-chat-dock-bar inline-flex w-max max-w-[calc(100vw-24px)] h-14 items-center gap-1 rounded-[28px] border border-[rgba(212,175,55,0.18)] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-[20px] backdrop-saturate-[140%] bg-[rgba(19,19,19,0.72)]';
+  'mobile-chat-dock-bar inline-flex w-max max-w-[calc(100vw-24px)] h-14 items-center gap-0 rounded-[28px] border border-[rgba(212,175,55,0.18)] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-[20px] backdrop-saturate-[140%] bg-[rgba(19,19,19,0.72)]';
 
 export const MOBILE_DOCK_ROOT_CLASS =
   'md:hidden mobile-chat-dock-root fixed left-1/2 z-[70] w-max max-w-[calc(100%-24px)] -translate-x-1/2';

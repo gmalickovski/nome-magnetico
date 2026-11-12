@@ -9,7 +9,7 @@ import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { useFocusTrap } from './useFocusTrap.js';
 import { IconX } from './MobileChatDockIcons.js';
 
-export type SummaryPanelCloseMethod = 'dock' | 'x' | 'backdrop' | 'swipe' | 'escape';
+export type SummaryPanelCloseMethod = 'trigger' | 'x' | 'backdrop' | 'swipe' | 'escape';
 
 export interface SummaryDrawerProps {
   isOpen: boolean;
@@ -108,6 +108,7 @@ export function SummaryDrawer({
   return (
     <div
       ref={dialogRef}
+      id="mobile-reading-summary"
       role="dialog"
       aria-modal="true"
       aria-labelledby="mobile-summary-title"
@@ -137,7 +138,7 @@ export function SummaryDrawer({
           onClick={() => onClose('x')}
           aria-label="Fechar painel de leitura e voltar ao chat"
           title="Fechar painel de leitura"
-          className="w-9 h-9 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-colors duration-150 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70 shrink-0"
+          className="w-11 h-11 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-colors duration-150 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70 shrink-0"
         >
           <IconX className="h-4 w-4" />
         </button>
