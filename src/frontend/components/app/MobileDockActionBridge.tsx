@@ -5,6 +5,8 @@ import {
   publishMobileDockAction,
 } from '../../lib/mobile-dock-action-store.js';
 
+export type MobileDockActionBridgeProps = Omit<MobileChatDockProps, 'omitRoot'>;
+
 /** Publica estado/handlers da dock de ações para a única `AppMobileDock` no layout. */
 export function MobileDockActionBridge({
   layout,
@@ -14,10 +16,9 @@ export function MobileDockActionBridge({
   pdfModel = null,
   pdfExiting = false,
   onPdfClick,
-  onBack,
   onSecondary,
   onPrimary,
-}: MobileChatDockProps) {
+}: MobileDockActionBridgeProps) {
   useLayoutEffect(() => {
     publishMobileDockAction({
       state: {
@@ -28,7 +29,7 @@ export function MobileDockActionBridge({
         pdfModel,
         pdfExiting,
       },
-      handlers: { onBack, onSecondary, onPrimary, onPdfClick },
+      handlers: { onSecondary, onPrimary, onPdfClick },
     });
   }, [
     layout,
@@ -38,7 +39,6 @@ export function MobileDockActionBridge({
     pdfModel,
     pdfExiting,
     onPdfClick,
-    onBack,
     onSecondary,
     onPrimary,
   ]);

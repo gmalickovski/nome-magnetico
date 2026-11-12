@@ -53,7 +53,6 @@ describe('AppMobileDock', () => {
         layout,
         summaryPanelOpen: false,
         summaryBadge: false,
-        onBack: noop,
         onSecondary: noop,
         onPrimary: noop,
       })
@@ -62,6 +61,7 @@ describe('AppMobileDock', () => {
     assert.match(html, /aria-label="Baixar PDF"/);
     assert.doesNotMatch(html, />Baixar PDF</);
     assert.match(html, /aria-label="Compartilhar"/);
+    assert.doesNotMatch(html, /aria-label="Voltar"/);
   });
   it('controle lateral expõe expansão, alvo e feedback acessível', () => {
     for (const open of [true, false]) {

@@ -21,7 +21,6 @@ describe('mobile-dock-action-store', () => {
         pdfExiting: false,
       },
       handlers: {
-        onBack: () => {},
         onSecondary: () => {},
         onPrimary: () => {},
       },

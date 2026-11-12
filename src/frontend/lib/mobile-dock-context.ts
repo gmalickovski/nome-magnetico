@@ -4,7 +4,7 @@
 
 export type MobileDockContext = 'app_nav' | 'action';
 
-/** Rotas com dock de ações (Voltar, Recomeçar, etc.) — junto da nav global. */
+/** Rotas com ações contextuais (Recomeçar, PDF, etc.) ao lado da nav global. */
 const ACTION_DOCK_PREFIXES = ['/app/analise/nome-social', '/app/resultado'] as const;
 
 export function resolveMobileDockContext(pathname: string): MobileDockContext {

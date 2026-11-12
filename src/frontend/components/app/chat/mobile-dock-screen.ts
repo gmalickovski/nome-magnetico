@@ -151,15 +151,26 @@ export function buildResultadoDockLayout(input: ResultadoDockInput): ResultadoDo
   return { screen: 'resultado', secondaries, primary };
 }
 
-/** Máximo 4 itens além do Voltar (centro + resumo + pdf). */
+/** A dock contextual só aparece quando há botões além da navegação global. */
+export function dockLayoutHasVisibleActions(
+  layout: MobileDockLayout,
+  options?: { pdfVisible?: boolean; pdfExiting?: boolean }
+): boolean {
+  const secondaries = layout.screen === 'resultado' ? layout.secondaries : layout.middleSecondaries;
+  const hasPdf =
+    layout.screen !== 'resultado' &&
+    (Boolean(options?.pdfVisible) || Boolean(options?.pdfExiting));
+  return secondaries.length > 0 || Boolean(layout.primary) || hasPdf;
+}
+
+/** Máximo 4 ações contextuais (centro + pdf) na mesma barra. */
 export function assertDockItemLimit(layout: MobileDockLayout): void {
   if (layout.screen === 'resultado') {
     const count = layout.secondaries.length + 1;
     if (count > 4) throw new Error(`Dock excede 4 itens: ${count}`);
     return;
   }
-  const count =
-    layout.middleSecondaries.length + (layout.showPdfCircle ? 1 : 0) + 1;
+  const count = layout.middleSecondaries.length + (layout.showPdfCircle ? 1 : 0) + (layout.primary ? 1 : 0);
   if (count > 5) {
     throw new Error(`Dock chat excede limite de ações: ${count}`);
   }

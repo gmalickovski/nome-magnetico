@@ -13,6 +13,7 @@ import { DockTooltipButton } from './chat/DockTooltipButton.js';
 import { MobileSummaryToggle } from './chat/MobileSummaryToggle.js';
 import { resolveMobileDockContext } from '../../lib/mobile-dock-context.js';
 import { useMobileDockActionSnapshot } from '../../lib/mobile-dock-action-store.js';
+import { dockLayoutHasVisibleActions } from './chat/mobile-dock-screen.js';
 
 export interface AppMobileDockProps {
   pathname: string;
@@ -94,6 +95,13 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   });
 
   const creationRoute = props.pathname.replace(/\/+$/, '') === '/app/analise/nome-social';
+  const contextLayout = action?.state.layout ?? null;
+  const showContextActions =
+    contextLayout &&
+    dockLayoutHasVisibleActions(contextLayout, {
+      pdfVisible: Boolean(action?.state.pdfModel?.visible),
+      pdfExiting: Boolean(action?.state.pdfExiting),
+    });
 
   return (
     <>
@@ -133,7 +141,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                 );
               })}
             </div>
-            {action?.state.layout && (
+            {showContextActions && action && (
               <>
                 <span
                   data-nm-dock-divider
@@ -148,16 +156,15 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                 >
                   <MobileChatDock
                     omitRoot
-                    layout={action.state.layout}
+                    layout={contextLayout}
                     summaryPanelOpen={action.state.summaryPanelOpen}
                     restartExitActive={action.state.restartExitActive}
                     summaryBadge={action.state.summaryBadge}
                     pdfModel={action.state.pdfModel}
                     pdfExiting={action.state.pdfExiting}
-                    onPdfClick={action.handlers!.onPdfClick}
-                    onBack={action.handlers!.onBack}
-                    onSecondary={action.handlers!.onSecondary}
-                    onPrimary={action.handlers!.onPrimary}
+                    onPdfClick={action.handlers.onPdfClick}
+                    onSecondary={action.handlers.onSecondary}
+                    onPrimary={action.handlers.onPrimary}
                   />
                 </div>
               </>

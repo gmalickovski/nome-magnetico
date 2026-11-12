@@ -16,7 +16,6 @@ export interface MobileDockActionState {
 }
 
 export interface MobileDockActionHandlers {
-  onBack: () => void;
   onSecondary: (action: DockSecondaryActionId, position: number) => void;
   onPrimary: (action: DockPrimaryActionId) => void;
   onPdfClick?: () => void;
