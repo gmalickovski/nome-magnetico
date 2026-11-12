@@ -13,9 +13,14 @@ Astro.response.headers.set('Expires', '0');
 import FreeUsedModal from '../../frontend/components/app/FreeUsedModal';
 import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoGenerator';
 import { MailWarning } from '../../frontend/components/app/MailWarning';
-import { DashboardCheckoutButton } from '../../frontend/components/app/DashboardCheckoutButton';
 import { getPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
-import FreeAnalysisOnboardingChat from '../../frontend/components/app/chat/FreeAnalysisOnboardingChat';
+import AppDashboard from '../../frontend/components/app/dashboard/AppDashboard';
+import type { RadarAxesData } from '../../frontend/components/app/chat/chat-types';
+import {
+  computeContextualRadarAxes,
+  getRadarAxisLabels,
+  motorRadarToRecord,
+} from '../../shared/interactive-engine/motor-radar';
 
 // Funções de numerologia locais para cálculo instantâneo da análise gratuita do lead
 import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
@@ -99,8 +104,6 @@ try {
 // Sincronização automática de lead por e-mail para novas contas
 let leadNome: string | null = null;
 let leadData: string | null = null;
-let showOnboardingModal = false;
-
 if (!freeAnalysisId && user.email) {
   try {
     const { data: lead } = await supabase
@@ -193,13 +196,9 @@ if (!freeAnalysisId && user.email) {
         birth_date: lead.data_nascimento,
         updated_at: new Date().toISOString(),
       }).eq('id', user.id);
-    } else {
-      // Se não há lead e não há análise, mostra o modal de onboarding
-      showOnboardingModal = true;
     }
   } catch (e) {
     console.error('[index.astro] Erro ao sincronizar lead gratuito:', e);
-    showOnboardingModal = true;
   }
 }
 
@@ -290,8 +289,6 @@ function formatAccessDate(iso: string | null) {
 }
 
 const accessEndLabel = formatAccessDate(nomeSocialEndsAt);
-const nomeSocialCheckoutClass = 'inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]';
-
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
 const { prices, promotion } = await getPricesAndPromo().catch(() => ({ prices: {}, promotion: null }));
 const priceMap = prices as Record<string, PriceInfo>;
@@ -427,8 +424,6 @@ const featuredIsSocial = !!bestSocialAnalysis;
 let featuredIsV3 = featuredAnalysis?.score_version === 'v3';
 let featuredScoreRaw = featuredIsV3 ? (featuredAnalysis?.score_v3 ?? featuredAnalysis?.score) : featuredAnalysis?.score;
 let featuredVersion = featuredAnalysis?.score_version;
-const featuredBlockCount = featuredAnalysis?.bloqueios?.length ?? 0;
-
 if (getScoreVersion() === 'v3') {
   if (featuredIsV3 && featuredAnalysis?.score_v3 != null) {
     featuredScoreRaw = featuredAnalysis.score_v3;
@@ -453,15 +448,115 @@ if (getScoreVersion() === 'v3') {
 }
 
 const featuredTheme = getScoreTheme(featuredScoreRaw, featuredVersion);
-const featuredName =
-  bestSocialAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto
-    ?? bestSocialAnalysis?.nome_completo
-    ?? freeAnalysis?.nome_completo
-    ?? '';
 const socialPrice = priceMap.nome_social;
-const socialPriceLabel = socialPrice && socialPrice.cents > 0
-  ? (socialPrice.hasDiscount && socialPrice.discountedFormatted ? socialPrice.discountedFormatted : socialPrice.formatted)
-  : null;
+
+const showDashboardPanel =
+  !!featuredAnalysis
+  && featuredAnalysis.status === 'complete'
+  && !!featuredAnalysisId;
+
+const nomeHojeDashboard =
+  freeAnalysis?.nome_completo
+  ?? profileData?.birth_name
+  ?? featuredAnalysis?.nome_completo
+  ?? '';
+
+const nomeHarmonizadoDashboard =
+  featuredAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto
+  ?? null;
+
+const bloqueioTitulosDashboard: string[] = (featuredAnalysis?.bloqueios ?? [])
+  .map((b: { titulo?: string }) => b?.titulo?.trim())
+  .filter((t: string | undefined): t is string => Boolean(t));
+
+const dashboardScore = Math.max(0, Math.min(100, featuredScoreRaw ?? 0));
+
+let dashboardRadarAxes: RadarAxesData = {
+  expressao: 0.5,
+  motivacao: 0.5,
+  destino: 0.5,
+  harmonia_triangulo: 0.5,
+  sequencias: 0.5,
+};
+let dashboardRadarLabels = getRadarAxisLabels(null);
+
+const birthForRadar = nomeHojeDashboard;
+const rawBirthRadar =
+  freeAnalysis?.data_nascimento
+  ?? featuredAnalysis?.data_nascimento
+  ?? profileData?.birth_date;
+if (birthForRadar && rawBirthRadar) {
+  const birthParts = String(rawBirthRadar).split('-');
+  const dataPtRadar = birthParts.length === 3
+    ? `${birthParts[2]}/${birthParts[1]}/${birthParts[0]}`
+    : String(rawBirthRadar);
+  try {
+    const axes = computeContextualRadarAxes(birthForRadar, dataPtRadar, null);
+    dashboardRadarAxes = motorRadarToRecord(axes) as RadarAxesData;
+    dashboardRadarLabels = getRadarAxisLabels(null);
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular teia do painel:', e);
+  }
+}
+
+type DashboardHistoryRow = {
+  id: string;
+  nome: string;
+  dateLabel: string;
+  score: number | null;
+};
+
+let dashboardHistory: DashboardHistoryRow[] = [];
+try {
+  const { data: historyRows } = await _client
+    .from('analyses')
+    .select('id, nome_completo, created_at, score, score_v3, score_version, product_type, status, frequencias_numeros, data_nascimento, is_free')
+    .eq('user_id', user.id)
+    .eq('status', 'complete')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  dashboardHistory = (historyRows ?? []).map((row) => {
+    const freqData = row.frequencias_numeros as Record<string, unknown> | null;
+    const ranking = freqData?.ranking as { melhorNome?: { nomeCompleto?: string } } | undefined;
+    const nomeExibido =
+      (row.product_type === 'nome_social' && ranking?.melhorNome?.nomeCompleto)
+        ? ranking.melhorNome.nomeCompleto
+        : row.nome_completo;
+
+    let score: number | null = null;
+    const isV3Row = row.score_version === 'v3';
+    if (isV3Row && row.score_v3 != null) {
+      score = row.score_v3;
+    } else if (getScoreVersion() === 'v3' && row.nome_completo && row.data_nascimento) {
+      const parts = String(row.data_nascimento).split('-');
+      const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : row.data_nascimento;
+      try {
+        score = avaliarNome(nomeExibido, dataPt).score_v3;
+      } catch {
+        score = row.score;
+      }
+    } else {
+      score = row.score;
+    }
+
+    return {
+      id: row.id,
+      nome: nomeExibido,
+      dateLabel: new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'America/Sao_Paulo',
+      }).format(new Date(row.created_at)),
+      score,
+    };
+  });
+} catch (e) {
+  console.warn('[index.astro] Erro ao carregar histórico do painel:', e);
+}
+
+const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
 
 ---
 
@@ -678,10 +773,6 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
       </div>
     )}
 
-    {showOnboardingModal && !showRefundButton && (
-      <FreeAnalysisOnboardingChat client:load />
-    )}
-
     {(freeAnalysisStatus === 'pending' || freeAnalysisStatus === 'processing') && (
       <section
         class="rounded-3xl border bg-white/[0.03] p-6 md:p-8 text-center flex flex-col items-center justify-center min-h-[220px]"
@@ -726,160 +817,45 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
       </section>
     )}
 
-    {featuredAnalysis && (
-      <section
-        class="rounded-3xl border bg-white/[0.03] p-5 md:p-7"
-        style={`border-color:${featuredTheme.border}; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), ${featuredTheme.shadow};`}
-      >
-        <div class="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-center">
-          <div class="order-2 md:order-1">
-            <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">
-              {featuredIsSocial ? 'Melhor harmonização do Nome Social' : 'Análise gratuita de nascimento'}
-            </p>
-            <h2 class="font-cinzel text-2xl font-bold leading-tight text-[#e5e2e1] md:text-3xl">
-              {featuredName}
-            </h2>
-            <p class="mt-2 text-sm leading-relaxed text-gray-500">
-              {featuredIsSocial
-                ? 'Este é o melhor resultado salvo nas suas harmonizações. Acesse o relatório completo, baixe a análise gratuita ou gere uma nova análise do Nome Social.'
-                : hasNomeSocial
-                  ? 'Seu diagnóstico inicial está salvo. Baixe novamente o PDF ou avance para harmonizar seu nome.'
-                  : 'Seu diagnóstico gratuito está salvo. O próximo passo é o Nome Social: a partir do seu nome de nascimento, você gera a assinatura harmonizada, com ranking de score 0–100 e acesso imediato após o pagamento.'}
-            </p>
-            {!featuredIsSocial && !hasNomeSocial && socialPriceLabel && (
-              <p class="mt-2 text-xs font-medium text-[#D4AF37]">
-                Nome Social · {socialPriceLabel} · pagamento único
-              </p>
-            )}
-            <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-              {featuredIsSocial ? (
-                <>
-                  <a
-                    href={`/app/resultado/${featuredAnalysisId}`}
-                    class="inline-flex items-center justify-center rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/10 px-5 py-2.5 text-sm font-bold text-[#D4AF37] transition hover:bg-[#D4AF37]/15"
-                  >
-                    Ver Harmonização
-                  </a>
-                  <FreePDFAutoGenerator
-                    client:load
-                    existingAnalysisId={freeAnalysisId}
-                    autoRun={false}
-                  />
-                  <a
-                    href="/app/analise/nome-social"
-                    class="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
-                  >
-                    Nova harmonização
-                  </a>
-                </>
-              ) : (
-                <>
-                  <FreePDFAutoGenerator
-                    client:load
-                    existingAnalysisId={freeAnalysisId}
-                    autoRun={false}
-                  />
-                  {hasNomeSocial ? (
-                    <a
-                      href="/app/analise/nome-social"
-                      class="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
-                    >
-                      Harmonizar meu Nome
-                    </a>
-                  ) : (
-                    <DashboardCheckoutButton
-                      client:load
-                      product="nome_social"
-                      priceInfo={priceMap.nome_social ?? PRICE_UNAVAILABLE}
-                      promotion={promotion}
-                      label="Harmonizar meu Nome"
-                      className="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50]"
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+    {showDashboardPanel && (
+      <AppDashboard
+        client:load
+        userId={user.id}
+        nomeHoje={nomeHojeDashboard}
+        nomeHarmonizado={nomeHarmonizadoDashboard}
+        score={dashboardScore}
+        scoreLabel={featuredTheme.label}
+        scoreColor={featuredTheme.color}
+        bloqueios={bloqueioTitulosDashboard}
+        analysisId={featuredAnalysisId!}
+        radarAxes={dashboardRadarAxes}
+        radarLabels={dashboardRadarLabels}
+        history={dashboardHistory}
+        hasNomeSocial={hasNomeSocial}
+        isAdmin={isAdmin}
+        isExpired={isExpired}
+        accessEndLabel={accessEndLabel}
+        hasPaidAccess={hasAnyAccess}
+        onlyFreeAnalysis={onlyFreeAnalysisDashboard}
+        socialPrice={socialPrice ?? PRICE_UNAVAILABLE}
+        promotion={promotion}
+      />
+    )}
 
-          {(() => {
-            const theme = featuredTheme;
-            const scoreVal = Math.max(0, Math.min(100, featuredScoreRaw ?? 0));
-            // Circunferência de raio 44 é 2 * PI * 44 = 276.46
-            const circumference = 276.46;
-            const strokeDashoffset = circumference * (1 - scoreVal / 100);
-            return (
-              <div class="relative flex flex-col items-center justify-center mx-auto order-1 md:order-2">
-                <div class="relative flex items-center justify-center w-52 h-52 sm:w-60 sm:h-60 md:w-64 md:h-64">
-                  <!-- SVG de Progresso Circular -->
-                  <svg class="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none" viewBox="0 0 100 100">
-                    <!-- Círculo de Fundo -->
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="44"
-                      fill="transparent"
-                      stroke="rgba(255,255,255,0.04)"
-                      stroke-width="4.5"
-                    />
-                    <!-- Círculo de Progresso -->
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="44"
-                      fill="transparent"
-                      stroke={theme.color}
-                      stroke-width="4.5"
-                      stroke-dasharray={circumference}
-                      stroke-dashoffset={strokeDashoffset}
-                      stroke-linecap="round"
-                      style="transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;"
-                    />
-                  </svg>
-
-                  <!-- Conteúdo Interno com padding e centralização estrita -->
-                  <div
-                    class="flex flex-col items-center justify-center rounded-full w-[82%] h-[82%] p-3 sm:p-4 text-center overflow-hidden bg-[#111111]"
-                    style={`background:radial-gradient(circle at 50% 30%, ${theme.bg}, #111111 62%); box-shadow:${theme.shadow};`}
-                  >
-                    <span class="font-cinzel text-5xl sm:text-6xl font-bold leading-none tracking-tight" style={`color:${theme.color};`}>
-                      {scoreVal}
-                    </span>
-                    <span class="mt-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500 leading-tight">
-                      {featuredIsSocial ? 'Melhor score' : 'Score atual'}
-                    </span>
-
-                    <div class="mt-2 sm:mt-2.5 flex flex-col items-center justify-center w-full max-w-[88%] gap-1">
-                      <span
-                        class="inline-block rounded-full px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-center leading-tight max-w-full truncate"
-                        style={`background-color:${theme.pillBg}; color:${theme.pillColor};`}
-                        title={theme.label}
-                      >
-                        {theme.label}
-                      </span>
-                      <span class="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-tight text-center">
-                        {featuredBlockCount} {featuredBlockCount === 1 ? 'bloqueio' : 'bloqueios'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {featuredIsV3 && (
-                  <div class="mt-3.5 flex items-center gap-2">
-                    <span class="rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D4AF37]">
-                      Motor v3
-                    </span>
-                    <a
-                      href="/como-funciona-o-score"
-                      class="text-[11px] text-gray-400 hover:text-[#D4AF37] transition-colors underline underline-offset-2"
-                    >
-                      Como calculamos?
-                    </a>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
+    {!showDashboardPanel && freeAnalysisStatus !== 'pending' && freeAnalysisStatus !== 'processing' && (
+      <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
+        <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
+          Comece pela sua análise gratuita
+        </h2>
+        <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
+          Descubra o score do seu nome de nascimento e os bloqueios que afetam sua assinatura.
+        </p>
+        <a
+          href="/app/analise-gratuita"
+          class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
+        >
+          Iniciar análise gratuita
+        </a>
       </section>
     )}
 
@@ -894,58 +870,6 @@ const socialPriceLabel = socialPrice && socialPrice.cents > 0
         />
       </div>
     )}
-
-    <section
-      class="rounded-3xl bg-white/[0.03] p-6 md:p-8"
-      style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 18px 55px rgba(0,0,0,0.28);"
-    >
-      <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div class="min-w-0">
-          <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#D4AF37]">Nome Social</p>
-          <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1]">Harmonização do nome</h2>
-          <p class="mt-2 max-w-xl text-sm leading-relaxed text-gray-400">
-            Harmonize sua assinatura e veja qual variação do nome flui melhor com a sua Expressão e o seu Destino.
-          </p>
-          <p class="mt-4 text-sm text-[#e5e2e1]">
-            {isAdmin
-              ? 'Acesso de administrador.'
-              : hasNomeSocial
-                ? (accessEndLabel ? `Acesso ativo até ${accessEndLabel}.` : 'Acesso ativo.')
-                : isExpired
-                  ? 'Seu acesso ao Nome Social expirou.'
-                  : 'Você ainda não tem acesso ao Nome Social.'}
-          </p>
-        </div>
-        <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-          <span class:list={[
-            'rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]',
-            isAdmin
-              ? 'bg-[#bea5ff]/15 text-[#d7c6ff]'
-              : hasNomeSocial
-                ? 'bg-emerald-500/12 text-emerald-300'
-                : isExpired
-                  ? 'bg-red-500/12 text-red-300'
-                  : 'bg-white/[0.06] text-gray-400'
-          ]}>
-            {isAdmin ? 'Admin' : hasNomeSocial ? 'Ativo' : isExpired ? 'Expirado' : 'Disponível'}
-          </span>
-          {hasNomeSocial ? (
-            <a href="/app/analise/nome-social" class={nomeSocialCheckoutClass}>
-              Iniciar harmonização
-            </a>
-          ) : (
-            <DashboardCheckoutButton
-              client:load
-              product="nome_social"
-              priceInfo={socialPrice ?? PRICE_UNAVAILABLE}
-              promotion={promotion}
-              label={isExpired ? 'Renovar' : 'Adquirir'}
-              className={nomeSocialCheckoutClass}
-            />
-          )}
-        </div>
-      </div>
-    </section>
 
     {showRefundButton && (
       <div class="flex justify-center sm:justify-end">

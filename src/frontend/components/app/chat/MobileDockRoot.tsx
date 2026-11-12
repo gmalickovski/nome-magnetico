@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { MOBILE_DOCK_ROOT_CLASS } from './mobile-dock-layout.js';
 
 export interface MobileDockRootProps {
@@ -10,14 +10,13 @@ export interface MobileDockRootProps {
 }
 
 /** Único contêiner fixo da dock mobile — uma instância por página via AppMobileDock. */
-export function MobileDockRoot({
-  children,
-  role,
-  'aria-label': ariaLabel,
-  className = '',
-}: MobileDockRootProps) {
+export const MobileDockRoot = forwardRef<HTMLDivElement, MobileDockRootProps>(function MobileDockRoot(
+  { children, role, 'aria-label': ariaLabel, className = '' },
+  ref
+) {
   return (
     <div
+      ref={ref}
       data-nm-mobile-dock="single"
       className={`${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-dock ${className}`.trim()}
       role={role}
@@ -26,6 +25,6 @@ export function MobileDockRoot({
       {children}
     </div>
   );
-}
+});
 
 export default MobileDockRoot;

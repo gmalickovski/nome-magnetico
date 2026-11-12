@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildChatDockLayout,
   buildResultadoDockLayout,
+  dockLayoutHasVisibleActions,
   resolveChatDockScreen,
 } from './mobile-dock-screen.ts';
 
@@ -17,7 +18,7 @@ const chatBase = {
 };
 
 describe('mobile-dock-screen', () => {
-  it('antes da certidão: dock de questionário (Voltar), não null', () => {
+  it('antes da certidão: tela de questionário, não null', () => {
     assert.equal(
       resolveChatDockScreen({ ...chatBase, birthConfirmed: false, canShowSummary: false }),
       'chat_questionnaire'
@@ -40,6 +41,18 @@ describe('mobile-dock-screen', () => {
       summaryPanelOpen: true,
     });
     assert.deepEqual(layout.middleSecondaries.map((s) => s.id), []);
+    assert.equal(dockLayoutHasVisibleActions(layout), false);
+  });
+
+  it('divisória contextual só com ações visíveis', () => {
+    const empty = buildChatDockLayout('chat_questionnaire', {
+      ...chatBase,
+      summaryPanelOpen: true,
+      canRestart: false,
+    });
+    assert.equal(dockLayoutHasVisibleActions(empty), false);
+    const withRestart = buildChatDockLayout('chat_questionnaire', chatBase);
+    assert.equal(dockLayoutHasVisibleActions(withRestart), true);
   });
 
   it('sugestões: Recomeçar no centro, sem estrela Outras opções; PDF só com seleção', () => {
@@ -98,7 +111,7 @@ describe('mobile-dock-screen', () => {
     assert.equal(layout.primary?.label, 'Desbloquear');
     assert.deepEqual(
       layout.middleSecondaries.map((s) => s.id),
-      ['free_pdf']
+      ['restart', 'free_pdf']
     );
   });
 
@@ -111,4 +124,10 @@ describe('mobile-dock-screen', () => {
     });
     assert.equal(layout.primary.id, 'unlock_nome_social');
   });
+});
+
+it('permite reiniciar antes da confirmação de nascimento', () => {
+ const input={...chatBase,birthConfirmed:false,canShowSummary:false,canRestart:true};
+ const layout=buildChatDockLayout('chat_questionnaire',input);
+ assert.ok(layout.middleSecondaries.some(action=>action.id==='restart'));
 });
