@@ -6,6 +6,7 @@ import {
   adminOpsUrl,
   classifyAdminPath,
   isAdminHost,
+  normalizePathname,
   publicSiteOrigin,
   requestHostname,
   safeOpsRedirect,
@@ -120,6 +121,9 @@ async function handleAdminHost(context: APIContext, next: MiddlewareNext): Promi
   }
 
   if (route.kind === 'customer') {
+    if (normalizePathname(context.url.pathname) === '/robots.txt') {
+      return next();
+    }
     return redirectToPublic(context);
   }
 

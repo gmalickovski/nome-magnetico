@@ -1,14 +1,7 @@
 import type { APIRoute } from 'astro';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+import { PUBLIC_ROBOTS_TXT } from '../backend/seo/publicRobotsTxt';
 import { adminHostRobotsTxtBody, applyAdminHostSeoHeaders } from '../backend/security/adminHostSeo';
 import { isAdminHost, requestHostname } from '../backend/security/adminHost';
-
-const publicRobots = readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), '../../public/robots.txt'),
-  'utf8'
-);
 
 export const GET: APIRoute = ({ request }) => {
   const headers = new Headers({
@@ -21,5 +14,5 @@ export const GET: APIRoute = ({ request }) => {
     return new Response(adminHostRobotsTxtBody(), { status: 200, headers });
   }
 
-  return new Response(publicRobots, { status: 200, headers });
+  return new Response(PUBLIC_ROBOTS_TXT, { status: 200, headers });
 };
