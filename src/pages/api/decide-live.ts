@@ -281,10 +281,18 @@ export const POST: APIRoute = async ({ request }) => {
     const readingSummary = buildChatReadingSummary(nomeLimpo, dataPtBr);
 
     // Sugestões Enriquecidas com seu respectivo panel (Seção 6C)
+    const vistosPreview = new Set<string>();
     const previewTop3Raw = [
       ...(resultadoSocial.melhorNome ? [resultadoSocial.melhorNome] : []),
       ...resultadoSocial.top3,
-    ].slice(0, 3);
+    ]
+      .filter((c) => {
+        const k = c.nomeCompleto.trim().toLowerCase();
+        if (vistosPreview.has(k)) return false;
+        vistosPreview.add(k);
+        return true;
+      })
+      .slice(0, 3);
 
     const previewTop3 = previewTop3Raw.map(c => {
       const candPanel = buildPanelData(c.nomeCompleto, dataPtBr, destino);
@@ -325,6 +333,8 @@ export const POST: APIRoute = async ({ request }) => {
         trianguloVidaLinhas: triangulos.vida.linhas,
         sobrenomesDetectados,
         previewTop3,
+        semOpcoesElegiveis: resultadoSocial.semOpcoesElegiveis ?? false,
+        scoreNascimento: resultadoSocial.scoreNascimento ?? notaHoje,
         avisoSobrenomeExigido: resultadoSocial.avisoSobrenomeExigido ?? null,
         providerUsed: decision.providerUsed,
         escopoPronto: decision.escopoPronto,

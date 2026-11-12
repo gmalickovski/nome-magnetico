@@ -13,7 +13,13 @@ import {
 import {
   analisarNomeSocial,
   analisarNomesSocial,
+  scoreNascimentoNomeSocial,
 } from '../../backend/numerology/products/nome-social';
+import { passaGanhoMinimo, getGanhoMinimoPontos } from '../../backend/numerology/suggestion-birth-invariant';
+import {
+  NOME_SOCIAL_MAX_SUGESTOES_TOTAL,
+  validarPedidoGerarMais,
+} from '../../backend/numerology/suggestion-gerar-mais-limits';
 import { NOME_MAGNETICO_COPY } from '../../shared/interactive-engine/presets/nome-magnetico';
 import { buildSelectedSocialSummary } from './analyze';
 import type { ResultPanelData } from './decide-live';
@@ -189,6 +195,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const estiloEfetivo =
     estiloPreferido ?? parametrosAnteriores.estiloPreferido ?? 'qualquer';
 
+  if (!selecionarComoPrincipal) {
+    const totalJaExibidos = (nomesExcluidos ?? []).length;
+    const validacao = validarPedidoGerarMais(totalJaExibidos);
+    if (!validacao.ok) {
+      return new Response(
+        JSON.stringify({
+          error: validacao.mensagem,
+          codigo: validacao.codigo,
+          limiteGerarMais: true,
+          maxSugestoes: NOME_SOCIAL_MAX_SUGESTOES_TOTAL,
+        }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+  }
+
   const rankingChatMerged = {
     aceitaEncurtarOuApelido:
       rankingChat?.aceitaEncurtarOuApelido ??
@@ -229,10 +251,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (selecionarComoPrincipal && selecionarComoPrincipal.trim().length >= 2) {
     const alvoNorm = selecionarComoPrincipal.trim().toLowerCase();
-    const escolhido =
+    const scoreNasc = scoreNascimentoNomeSocial(nomeNascimento, dataNascimento);
+  const escolhido =
       resultado.nomesCandidatos.find(
         c => c.nomeCompleto.trim().toLowerCase() === alvoNorm
       ) ?? analisarNomeSocial(selecionarComoPrincipal.trim(), dataNascimento, 'ia');
+
+    if (!passaGanhoMinimo(escolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Esta assinatura não tem nota acima da do seu nome de nascimento. Escolha outra opção ou ajuste suas preferências.',
+          codigo: 'SUGESTAO_INELEGIVEL',
+        }),
+        { status: 422, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
 
     resultado.melhorNome = escolhido;
     resultado.nomesCandidatos = [
@@ -325,6 +359,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         top3: top3ComPanel,
         nossasSugestoes,
         poolEsgotado,
+        semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
+        scoreNascimento: resultado.scoreNascimento,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
@@ -400,6 +436,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       avisoSobrenomeExigido: aviso,
       feedbackMensagem,
       poolEsgotado,
+      semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
+      scoreNascimento: resultado.scoreNascimento,
     }),
     {
       status: 200,

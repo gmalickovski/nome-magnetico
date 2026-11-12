@@ -43,6 +43,13 @@ import { avaliarNome, calcularScoreTeto, calcularScoreV1ComOcorrenciasExtras } f
 import { isScoreV3 } from '../score-version';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic';
 import type { Bloqueio } from '../triangle';
+import {
+  dedupeCandidatosEstavel,
+  filtrarCandidatosElegiveis,
+  getGanhoMinimoPontos,
+  ordenarPorNotaDescEstavel,
+  passaGanhoMinimo,
+} from '../suggestion-birth-invariant';
 
 // ── Tabelas de acentos ────────────────────────────────────────────────────────
 const ACENTOS_LOWER: Record<string, string[]> = {
@@ -347,9 +354,22 @@ export interface ResultadoNomeSocial {
   melhorNome: AnaliseNomeSocial | null;
   top3: AnaliseNomeSocial[];
   avisoSobrenomeExigido?: AvisoSobrenomeExigido | null;
+  /** Nota do nome de nascimento (mesmo motor, sem arredondamento extra). */
+  scoreNascimento?: number;
+  /** Nenhuma sugestão passou do ganho mínimo sobre o nascimento. */
+  semOpcoesElegiveis?: boolean;
+  ganhoMinimoPontos?: number;
 }
 
 // ── Análise de um nome ────────────────────────────────────────────────────────
+
+/** Nota de referência do nascimento para invariante DEV-275. */
+export function scoreNascimentoNomeSocial(
+  nomeNascimento: string,
+  dataNascimento: string,
+): number {
+  return analisarNomeSocial(nomeNascimento.trim(), dataNascimento, 'usuario').score;
+}
 
 export function analisarNomeSocial(
   nomeCandidato: string,
@@ -951,7 +971,7 @@ export function analisarNomesSocial(
   }
 
   // Candidatos do usuário
-  const analisesUsuario: AnaliseNomeSocial[] = listaCandidatos
+  let analisesUsuario: AnaliseNomeSocial[] = listaCandidatos
     .map(n => n.trim()).filter(n => n.length >= 2)
     .map(n => {
       const a = analisarNomeSocial(n, dataNascimento, 'usuario');
@@ -978,24 +998,36 @@ export function analisarNomesSocial(
     });
   }
 
+  const scoreNasc = scoreNascimentoNomeSocial(nomeNascimento, dataNascimento);
+  const ganhoMinimoPontos = getGanhoMinimoPontos();
+
   if (resolvedOpcoes?.somenteCandidatosInformados) {
+    const elegiveis = dedupeCandidatosEstavel(
+      filtrarCandidatosElegiveis(analisesUsuario, scoreNasc, ganhoMinimoPontos),
+    );
     return {
       nomeNascimento,
       dataNascimento,
       destino,
-      nomesCandidatos: analisesUsuario,
-      melhorNome: analisesUsuario[0] ?? null,
-      top3: analisesUsuario.slice(0, 3),
+      nomesCandidatos: elegiveis,
+      melhorNome: elegiveis[0] ?? null,
+      top3: elegiveis.slice(0, 3),
       avisoSobrenomeExigido: null,
+      scoreNascimento: scoreNasc,
+      semOpcoesElegiveis: elegiveis.length === 0,
+      ganhoMinimoPontos,
     };
   }
 
   // Sugestões do sistema
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));
-  const sugestoesIA = gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
+  let sugestoesIA = gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
     .filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
 
-  // Pool de seleção do melhor nome (Nome de Ouro)
+  analisesUsuario = filtrarCandidatosElegiveis(analisesUsuario, scoreNasc, ganhoMinimoPontos);
+  sugestoesIA = filtrarCandidatosElegiveis(sugestoesIA, scoreNasc, ganhoMinimoPontos);
+
+  // Pool de seleção do melhor nome (Nome de Ouro) — só elegíveis acima do nascimento
   type Candidato = AnaliseNomeSocial & { nivelEfetivo: number };
   const aptosN5: Candidato[] = [
     ...analisesUsuario.filter(a => a.score >= 85).map(a => ({ ...a, nivelEfetivo: 0 })),
@@ -1005,9 +1037,12 @@ export function analisarNomesSocial(
   const comparador = criarComparadorCandidatosV3(resolvedOpcoes);
   aptosN5.sort(comparador);
 
-  // Melhor nome
+  // Melhor nome (pode privilegiar aderência à entrevista via comparador, sempre elegível)
   const melhorNome: AnaliseNomeSocial | null =
-    aptosN5[0] ?? analisesUsuario[0] ?? sugestoesIA[0] ?? null;
+  aptosN5[0] ??
+    ordenarPorNotaDescEstavel(analisesUsuario)[0] ??
+    ordenarPorNotaDescEstavel(sugestoesIA)[0] ??
+    null;
 
   if (melhorNome && !melhorNome.tipoOpcao) {
     const p = melhorNome.nomeCompleto.split(/\s+/);
@@ -1015,8 +1050,12 @@ export function analisarNomesSocial(
     melhorNome.tipoOpcao = p.length < origP.length ? 'encurtado' : 'mudanca_minima';
   }
 
-  const todasOrdenadas = [...analisesUsuario, ...sugestoesIA];
-  const top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
+  const todasOrdenadas = dedupeCandidatosEstavel(
+    ordenarPorNotaDescEstavel([...analisesUsuario, ...sugestoesIA]),
+  );
+  const top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento).filter((c) =>
+    passaGanhoMinimo(c.score, scoreNasc, ganhoMinimoPontos),
+  );
 
   // Verifica transparência de bloqueio nativo quando um sobrenome obrigatório precisou de acento sutil
   let avisoSobrenomeExigido: AvisoSobrenomeExigido | null = null;
@@ -1046,8 +1085,14 @@ export function analisarNomesSocial(
     dataNascimento,
     destino,
     nomesCandidatos: todasOrdenadas,
-    melhorNome,
+    melhorNome:
+      melhorNome && passaGanhoMinimo(melhorNome.score, scoreNasc, ganhoMinimoPontos)
+        ? melhorNome
+        : null,
     top3,
     avisoSobrenomeExigido,
+    scoreNascimento: scoreNasc,
+    semOpcoesElegiveis: todasOrdenadas.length === 0,
+    ganhoMinimoPontos,
   };
 }

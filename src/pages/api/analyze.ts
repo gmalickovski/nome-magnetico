@@ -25,7 +25,12 @@ import {
 import { isScoreV3 } from '../../backend/numerology/score-version';
 import { avaliarCompatibilidade } from '../../backend/numerology/harmonization';
 import { verificarDisponibilidadeNomes } from '../../backend/utils/availability';
-import { analisarNomeSocial, analisarNomesSocial } from '../../backend/numerology/products/nome-social';
+import {
+  analisarNomeSocial,
+  analisarNomesSocial,
+  scoreNascimentoNomeSocial,
+} from '../../backend/numerology/products/nome-social';
+import { getGanhoMinimoPontos, passaGanhoMinimo } from '../../backend/numerology/suggestion-birth-invariant';
 import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { logError } from '../../backend/utils/error-logger';
@@ -331,22 +336,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         if (nome_social_principal) {
           const principalNormalizado = nome_social_principal.trim().toLowerCase();
+          const scoreNasc = scoreNascimentoNomeSocial(nome_completo, data_nascimento);
           const nomeEscolhido =
             resultado.nomesCandidatos.find(
               candidato => candidato.nomeCompleto.trim().toLowerCase() === principalNormalizado
             ) ?? analisarNomeSocial(nome_social_principal, data_nascimento, 'usuario');
 
-          resultado.melhorNome = nomeEscolhido;
-          if (!somenteChat) {
-            resultado.nomesCandidatos = [
-              nomeEscolhido,
-              ...resultado.nomesCandidatos.filter(
-                candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado
-              ),
-            ];
-            resultado.top3 = resultado.nomesCandidatos
-              .filter(candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado)
-              .slice(0, 3);
+          if (!passaGanhoMinimo(nomeEscolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+            resultado.melhorNome = null;
+            resultado.semOpcoesElegiveis = true;
+          } else {
+            resultado.melhorNome = nomeEscolhido;
+            if (!somenteChat) {
+              resultado.nomesCandidatos = [
+                nomeEscolhido,
+                ...resultado.nomesCandidatos.filter(
+                  candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado
+                ),
+              ];
+              resultado.top3 = resultado.nomesCandidatos
+                .filter(candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado)
+                .slice(0, 3);
+            }
           }
         }
 

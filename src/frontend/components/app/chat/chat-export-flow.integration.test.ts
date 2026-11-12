@@ -68,8 +68,8 @@ describe('fluxo chat 3→6 → reabrir → export (integração mínima)', () =>
   });
 
   it('cumula 3+3, persiste sessão com analysisId e payload com 6 nomes exatos no motor', () => {
-    const round1 = [sug('Ana Vale', '1'), sug('Bia Costa', '2'), sug('Cássia Lima', '3')];
-    const round2 = [sug('Dora Melo', '4'), sug('Eva Rios', '5'), sug('Fabi Nunes', '6')];
+    const round1 = [sug('Ana Vale', '1'), sug('Bia Costa', '2'), sug('Dora Melo', '3')];
+    const round2 = [sug('Eva Rios', '4'), sug('Fabi Nunes', '5'), sug('Iris Mattos', '6')];
     const merged = mergeChatSuggestionsCumulative(round1, round2);
     assert.equal(merged.length, 6);
 
