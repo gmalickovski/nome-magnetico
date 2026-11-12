@@ -41,8 +41,8 @@ describe('AppMobileDock', () => {
   });
   it('ações incorporadas não criam outro shell nem controle lateral de resumo', () => {
     const layout = buildResultadoDockLayout({
-      canShare: true,
-      canRedo: true,
+      canShare: false,
+      canRedo: false,
       canDownloadPdf: true,
       isFree: false,
     });
@@ -59,9 +59,29 @@ describe('AppMobileDock', () => {
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de leitura/);
     assert.match(html, /aria-label="Baixar PDF"/);
     assert.doesNotMatch(html, />Baixar PDF</);
-    assert.match(html, /aria-label="Compartilhar"/);
     assert.doesNotMatch(html, /aria-label="Voltar"/);
     assert.doesNotMatch(html, /MobileSummaryToggle|aria-controls="mobile-reading-summary"/);
+  });
+  it('com mais ações que o limite em 390px, usa overflow em vez de segunda barra', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: true,
+      canRedo: true,
+      canDownloadPdf: true,
+      isFree: false,
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(MobileChatDock, {
+        omitRoot: true,
+        layout,
+        summaryPanelOpen: false,
+        summaryBadge: false,
+        onSecondary: noop,
+        onPrimary: noop,
+      })
+    );
+    assert.match(html, /aria-label="Compartilhar"/);
+    assert.match(html, /aria-label="Mais ações"/);
+    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root/);
   });
   it('exibe ação Abrir leitura na dock quando showReadingAction', () => {
     const layout = buildResultadoDockLayout({
