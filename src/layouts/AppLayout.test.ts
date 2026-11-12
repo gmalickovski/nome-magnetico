@@ -7,17 +7,33 @@ import path from 'node:path';
 const layoutsDir = path.dirname(fileURLToPath(import.meta.url));
 const srcRoot = path.resolve(layoutsDir, '..');
 
-describe('AppLayout.astro e unificação DEV-263', () => {
-  it('importa AvatarMenu quando usado na sidebar desktop e define app-fixed-header sem links de navegação', () => {
-    const file = path.join(layoutsDir, 'AppLayout.astro');
-    const src = readFileSync(file, 'utf8');
-    assert.match(src, /import AvatarMenu/);
-    assert.match(src, /<AvatarMenu/);
-    assert.match(src, /app-fixed-header/);
-    assert.match(src, /slot name="header-actions"/);
+describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
+  it('usa AppDesktopHeader no layout, move AvatarMenu e Logo da sidebar para o header', () => {
+    const appLayoutFile = path.join(layoutsDir, 'AppLayout.astro');
+    const appLayoutSrc = readFileSync(appLayoutFile, 'utf8');
+    assert.match(appLayoutSrc, /import AppDesktopHeader/);
+    assert.match(appLayoutSrc, /<AppDesktopHeader/);
+    assert.match(appLayoutSrc, /slot name="header-actions"/);
+
+    // Sidebar deve conter AppSidebarLogout e não deve conter Logo nem AvatarMenu
+    const sidebarMatch = appLayoutSrc.match(/<aside id="app-sidebar"[\s\S]*?<\/aside>/);
+    assert.ok(sidebarMatch, 'sidebar deve existir');
+    const sidebarHtml = sidebarMatch[0];
+    assert.match(sidebarHtml, /<AppSidebarLogout/);
+    assert.doesNotMatch(sidebarHtml, /<AvatarMenu/);
+    assert.doesNotMatch(sidebarHtml, /logo-nm-header\.svg/);
+
+    // AppDesktopHeader deve importar AvatarMenu e ter classes de posicionamento
+    const headerFile = path.join(srcRoot, 'frontend', 'components', 'app', 'AppDesktopHeader.tsx');
+    const headerSrc = readFileSync(headerFile, 'utf8');
+    assert.match(headerSrc, /import AvatarMenu/);
+    assert.match(headerSrc, /<AvatarMenu/);
+    assert.match(headerSrc, /app-fixed-header/);
+    assert.match(headerSrc, /logo-nm-header\.svg/);
+
     // Não deve conter links de navegação no header desktop
-    assert.doesNotMatch(src, /headerBackHref/);
-    assert.doesNotMatch(src, /headerBackLabel/);
+    assert.doesNotMatch(appLayoutSrc, /headerBackHref/);
+    assert.doesNotMatch(appLayoutSrc, /headerBackLabel/);
   });
 
   it('sidebar desktop e header usam left fixo (5rem) para overlay suave sem empurrar o layout', () => {
