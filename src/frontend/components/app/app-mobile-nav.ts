@@ -1,12 +1,14 @@
 /** Navegação mobile /app — espelha sidebar desktop (AppLayout). */
 
-export type AppNavItemId = 'dashboard' | 'analises' | 'suporte' | 'blog' | 'analista';
+import { APP_CLIENT_NAV_HREFS, APP_CLIENT_NAV_LABELS } from './app-client-nav-shared.js';
+
+export type AppNavItemId = 'inicio' | 'analises' | 'glossario' | 'suporte';
 
 export interface AppNavActiveFlags {
-  dashboard: boolean;
+  inicio: boolean;
   analises: boolean;
+  glossario: boolean;
   suporte: boolean;
-  analista: boolean;
 }
 
 export function resolveAppNavActive(pathname: string): AppNavActiveFlags {
@@ -15,8 +17,8 @@ export function resolveAppNavActive(pathname: string): AppNavActiveFlags {
   const analises =
     isActive('/app/analises') || isActive('/app/resultado');
   const suporte = isActive('/app/suporte');
-  const analista = isActive('/app/admin-analise');
-  const dashboard =
+  const glossario = isActive('/glossario');
+  const inicio =
     isActive('/app') &&
     !isActive('/app/analise') &&
     !isActive('/app/resultado') &&
@@ -25,32 +27,29 @@ export function resolveAppNavActive(pathname: string): AppNavActiveFlags {
     !isActive('/app/admin-analise') &&
     !isActive('/app/sentry-test');
 
-  return { dashboard, analises, suporte, analista };
+  return { inicio, analises, glossario, suporte };
 }
 
 export interface AppNavDockItem {
   id: AppNavItemId;
   label: string;
   href: string;
-  external?: boolean;
   disabled?: boolean;
   active: boolean;
-  /** Destaque roxo (Área do Analista). */
-  accent?: 'gold' | 'purple';
+  accent?: 'gold';
 }
 
 export function buildAppNavDockItems(options: {
   pathname: string;
   showAnalisesNav: boolean;
-  isAdmin: boolean;
 }): AppNavDockItem[] {
   const active = resolveAppNavActive(options.pathname);
   const items: AppNavDockItem[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      href: '/app',
-      active: active.dashboard,
+      id: 'inicio',
+      label: APP_CLIENT_NAV_LABELS.inicio,
+      href: APP_CLIENT_NAV_HREFS.inicio,
+      active: active.inicio,
       accent: 'gold',
     },
   ];
@@ -58,16 +57,16 @@ export function buildAppNavDockItems(options: {
   if (options.showAnalisesNav) {
     items.push({
       id: 'analises',
-      label: 'Minhas Análises',
-      href: '/app/analises',
+      label: APP_CLIENT_NAV_LABELS.analises,
+      href: APP_CLIENT_NAV_HREFS.analises,
       active: active.analises,
       accent: 'gold',
     });
   } else {
     items.push({
       id: 'analises',
-      label: 'Minhas Análises',
-      href: '/app/analises',
+      label: APP_CLIENT_NAV_LABELS.analises,
+      href: APP_CLIENT_NAV_HREFS.analises,
       disabled: true,
       active: false,
       accent: 'gold',
@@ -76,31 +75,20 @@ export function buildAppNavDockItems(options: {
 
   items.push(
     {
-      id: 'suporte',
-      label: 'Suporte',
-      href: '/app/suporte',
-      active: active.suporte,
+      id: 'glossario',
+      label: APP_CLIENT_NAV_LABELS.glossario,
+      href: APP_CLIENT_NAV_HREFS.glossario,
+      active: active.glossario,
       accent: 'gold',
     },
     {
-      id: 'blog',
-      label: 'Blog',
-      href: '/blog',
-      external: true,
-      active: false,
+      id: 'suporte',
+      label: APP_CLIENT_NAV_LABELS.suporte,
+      href: APP_CLIENT_NAV_HREFS.suporte,
+      active: active.suporte,
       accent: 'gold',
     }
   );
-
-  if (options.isAdmin) {
-    items.push({
-      id: 'analista',
-      label: 'Área do Analista',
-      href: '/app/admin-analise',
-      active: active.analista,
-      accent: 'purple',
-    });
-  }
 
   return items;
 }

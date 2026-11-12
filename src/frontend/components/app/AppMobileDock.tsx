@@ -18,7 +18,8 @@ import { useMobileDockActionSnapshot } from '../../lib/mobile-dock-action-store.
 
 export interface AppMobileDockProps {
   pathname: string;
-  isAdmin: boolean;
+  /** Mantido por compatibilidade com AppLayout; não afeta itens da dock. */
+  isAdmin?: boolean;
   showAnalisesNav: boolean;
 }
 
@@ -37,20 +38,11 @@ function activeBtnClass(item: AppNavDockItem): string {
 
   if (!item.active) return base;
 
-  if (item.accent === 'purple') {
-    return `${base} bg-[rgba(190,165,255,0.14)] text-[#bea5ff] shadow-[0_0_0_1px_rgba(190,165,255,0.45)] focus-visible:outline-[#bea5ff]`;
-  }
-
-  return `${base} bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)] focus-visible:outline-[#D4AF37]`;
+  return `${base} bg-[rgba(212,175,55,0.14)] text-[#f2ca50] shadow-[0_0_0_1px_rgba(242,202,80,0.45)] focus-visible:outline-[#f2ca50]`;
 }
 
 function navigateFromDock(item: AppNavDockItem) {
   if (item.disabled) return;
-
-  if (item.external) {
-    window.open(item.href, '_blank', 'noopener,noreferrer');
-    return;
-  }
 
   if (item.href === window.location.pathname) return;
 
@@ -58,14 +50,10 @@ function navigateFromDock(item: AppNavDockItem) {
   window.location.href = item.href;
 }
 
-function AppNavDockInner({
-  pathname,
-  isAdmin,
-  showAnalisesNav,
-}: AppMobileDockProps) {
+function AppNavDockInner({ pathname, showAnalisesNav }: AppMobileDockProps) {
   const items = useMemo(
-    () => buildAppNavDockItems({ pathname, isAdmin, showAnalisesNav }),
-    [pathname, isAdmin, showAnalisesNav]
+    () => buildAppNavDockItems({ pathname, showAnalisesNav }),
+    [pathname, showAnalisesNav]
   );
 
   const measureKey = useMemo(

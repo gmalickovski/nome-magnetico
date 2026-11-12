@@ -1,0 +1,28 @@
+---
+/**
+ * Preview do chrome real da área logada (sem Supabase).
+ * Acesso: `NM_NAV_PREVIEW=1` no servidor ou `astro dev`.
+ */
+import AppClientNavChromePreview from '../../frontend/components/app/AppClientNavChromePreview';
+import '../../styles/global.css';
+
+const previewAllowed =
+  import.meta.env.DEV || (typeof process !== 'undefined' && process.env.NM_NAV_PREVIEW === '1');
+
+if (!previewAllowed) {
+  return new Response('Not Found', { status: 404 });
+}
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Preview navegação · DEV-286</title>
+  </head>
+  <body>
+    <AppClientNavChromePreview client:load sidebarExpanded={true} />
+  </body>
+</html>
