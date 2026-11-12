@@ -11,6 +11,7 @@
  */
 
 import { Image, TypeSafeClient } from '@typesafe-ai/sdk';
+import { isJevMockOnlyMode } from '../adaptive/config';
 import {
   buildNomeMagneticoJevQuestions,
   buildSignatureBoxQuestions,
@@ -38,6 +39,8 @@ export interface JevDecisionInputState {
 
 export interface JevDecisionResult {
   providerUsed: 'typesafe-jev' | 'groq-structured' | 'openai-structured' | 'deterministic';
+  /** Preenchido quando o fluxo não tentou providers pagos (ex.: NM_JEV_MOCK_ONLY). */
+  providerPath?: string[];
   escopoPronto: boolean;
   escopoConfidence: number;
   clarezaRelatoScore: number;
@@ -316,9 +319,12 @@ async function evaluateWithOpenAIStructuredOutputs(
   );
 }
 
-function logInteractiveProvider(providerUsed: JevDecisionResult['providerUsed']): void {
+function logInteractiveProvider(
+  providerUsed: JevDecisionResult['providerUsed'],
+  providerPath?: string[]
+): void {
   if (typeof console !== 'undefined') {
-    console.info('[interactive-engine] provider', providerUsed);
+    console.info('[interactive-engine] provider', providerUsed, providerPath ?? []);
   }
 }
 
@@ -389,6 +395,7 @@ export function evaluateDeterministically(state: JevDecisionInputState): JevDeci
 
   return {
     providerUsed: 'deterministic',
+    providerPath: ['deterministic-local'],
     escopoPronto: hasEnoughInput,
     escopoConfidence: hasEnoughInput ? 0.85 : 0.25,
     clarezaRelatoScore,
@@ -407,11 +414,18 @@ export function evaluateDeterministically(state: JevDecisionInputState): JevDeci
  * 3º cai para avaliação determinística em 0 ms
  */
 export async function runJevDecision(state: JevDecisionInputState): Promise<JevDecisionResult> {
+  if (isJevMockOnlyMode()) {
+    const fallback = evaluateDeterministically(state);
+    fallback.providerPath = ['jev-mock-only', 'deterministic-local'];
+    logInteractiveProvider(fallback.providerUsed, fallback.providerPath);
+    return fallback;
+  }
+
   const typesafeKey = getEnvKey('TYPESAFE_API_KEY');
   if (typesafeKey) {
     try {
       const result = await evaluateWithTypeSafeJev(state, typesafeKey);
-      logInteractiveProvider(result.providerUsed);
+      logInteractiveProvider(result.providerUsed, ['typesafe-jev']);
       return result;
     } catch {
       // Se a conta TypeSafe retornar 401/402/403 (sem créditos) ou timeout, segue para Groq/OpenAI
@@ -424,7 +438,7 @@ export async function runJevDecision(state: JevDecisionInputState): Promise<JevD
   if (groqKey && hasRelato) {
     try {
       const result = await evaluateWithGroqStructuredOutputs(state, groqKey);
-      logInteractiveProvider(result.providerUsed);
+      logInteractiveProvider(result.providerUsed, ['typesafe-failed', 'groq-structured']);
       return result;
     } catch {
       // Groq indisponível: tenta OpenAI ou determinístico
@@ -435,7 +449,7 @@ export async function runJevDecision(state: JevDecisionInputState): Promise<JevD
   if (openAiKey && hasRelato) {
     try {
       const result = await evaluateWithOpenAIStructuredOutputs(state, openAiKey);
-      logInteractiveProvider(result.providerUsed);
+      logInteractiveProvider(result.providerUsed, ['typesafe-failed', 'groq-failed', 'openai-structured']);
       return result;
     } catch {
       // Se a rede oscilar, cai para o determinístico em 0 ms
@@ -443,7 +457,13 @@ export async function runJevDecision(state: JevDecisionInputState): Promise<JevD
   }
 
   const fallback = evaluateDeterministically(state);
-  logInteractiveProvider(fallback.providerUsed);
+  fallback.providerPath = [
+    typesafeKey ? 'typesafe-failed' : 'no-typesafe-key',
+    groqKey && hasRelato ? 'groq-failed' : 'groq-skipped',
+    openAiKey && hasRelato ? 'openai-failed' : 'openai-skipped',
+    'deterministic-local',
+  ];
+  logInteractiveProvider(fallback.providerUsed, fallback.providerPath);
   return fallback;
 }
 

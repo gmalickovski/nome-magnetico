@@ -26,7 +26,7 @@ const named = Object.fromEntries(Object.entries(sdk).filter(([name]) => name !==
 mock.module('@typesafe-ai/sdk', { namedExports: { ...named, TypeSafeClient: FakeTypeSafeClient } });
 const { runJevDecision } = await import('./jev-provider');
 const state = { nome_completo: 'Pessoa Exemplo', numero_destino: 3, nota_hoje: 60, potencial: 85, bloqueios_triangulos: [], relato_consulente: 'Quero clareza para minha carreira.' };
-beforeEach(() => { keys.forEach(key => delete process.env[key]); process.env.TYPESAFE_API_KEY = 'synthetic-mock-key'; behavior = 'success'; calls = 0; networkAttempts = 0; });
+beforeEach(() => { keys.forEach(key => delete process.env[key]); delete process.env.NM_JEV_MOCK_ONLY; delete process.env.NM_CHAT_ADAPTIVE_JEV; process.env.TYPESAFE_API_KEY = 'synthetic-mock-key'; behavior = 'success'; calls = 0; networkAttempts = 0; });
 after(() => { globalThis.fetch = originalFetch; keys.forEach(key => { const value = previous.get(key); if(value === undefined) delete process.env[key]; else process.env[key] = value; }); });
 it('identifica sucesso do JEV mockado sem acesso externo', async () => {
  const result = await runJevDecision(state);
