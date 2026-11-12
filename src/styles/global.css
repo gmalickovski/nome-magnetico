@@ -598,9 +598,37 @@
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .mobile-chat-dock-bar {
-    background: #131313 !important;
+  .mobile-chat-dock-bar,
+  .nm-mobile-dock-bar {
+    background: rgba(19, 19, 19, 0.95) !important;
+    backdrop-filter: none !important;
   }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-chat-dock-bar,
+  .nm-mobile-dock-bar {
+    background: #131313 !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .nm-app-mobile-dock.nm-mobile-dock--scrolling .nm-mobile-dock-bar,
+  .nm-app-mobile-dock.nm-mobile-dock--sheet-open .nm-mobile-dock-bar {
+    background: rgba(19, 19, 19, 0.72);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+.nm-dock-scroll-clearance {
+  scroll-padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mobile-chat-dock-pdf-circle:not(:disabled):hover,
+.mobile-chat-dock-pdf-circle:not(:disabled):active {
+  box-shadow: 0 0 12px rgba(242, 202, 80, 0.45);
 }
 
 @media (max-width: 767px) {
@@ -788,21 +816,23 @@
 
   @keyframes nm-reading-sheet-in {
     from {
-      opacity: 0;
-      transform: translateY(12px);
+      opacity: 1;
+      transform: translateY(100%);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(10%);
     }
   }
 
   @keyframes nm-reading-sheet-out {
     from {
       opacity: 1;
+      transform: translateY(10%);
     }
     to {
       opacity: 0;
+      transform: translateY(100%);
     }
   }
 
@@ -811,7 +841,25 @@
       opacity: 0;
     }
     to {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes nm-reading-sheet-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
       opacity: 1;
+    }
+  }
+
+  @keyframes nm-reading-sheet-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
     }
   }
 
@@ -832,16 +880,24 @@
     transition: height 220ms ease-out, bottom 220ms ease-out, max-height 220ms ease-out;
   }
 
-  .nm-reading-sheet--open:not(.nm-reading-sheet--reduced) {
-    animation: nm-reading-sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  .nm-reading-sheet--open:not(.nm-reading-sheet--reduced):not(.nm-reading-sheet--dragging) {
+    animation: nm-reading-sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
   }
 
-  .nm-reading-sheet--closed:not(.nm-reading-sheet--reduced) {
-    animation: nm-reading-sheet-out 120ms ease both;
+  .nm-reading-sheet--closed:not(.nm-reading-sheet--reduced):not(.nm-reading-sheet--dragging) {
+    animation: nm-reading-sheet-out 220ms ease-in both;
+  }
+
+  .nm-reading-sheet--open.nm-reading-sheet--reduced {
+    animation: nm-reading-sheet-fade-in 150ms ease both;
+  }
+
+  .nm-reading-sheet--closed.nm-reading-sheet--reduced {
+    animation: nm-reading-sheet-fade-out 150ms ease both;
   }
 
   .nm-reading-sheet-overlay--open {
-    animation: nm-reading-overlay-in 180ms ease both;
+    animation: nm-reading-overlay-in 200ms ease both;
   }
 
   .nm-reading-sheet-overlay--closed {

@@ -34,6 +34,7 @@ import {
 } from './mobile-dock-screen.js';
 import {
   MobileReadingBottomSheet,
+  type ReadingSheetCardHeader,
   type ReadingSheetSnap,
   type SummaryPanelCloseMethod,
 } from './MobileReadingBottomSheet.js';
@@ -244,7 +245,15 @@ export function NomeSocialChat({
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [readingSnap, setReadingSnap] = useState<ReadingSheetSnap>('closed');
+  const [sheetHeaderFromCard, setSheetHeaderFromCard] = useState<ReadingSheetCardHeader | null>(null);
+  const [scrollHarmonizedOnEnter, setScrollHarmonizedOnEnter] = useState(false);
   const readingReturnFocusRef = useRef<HTMLElement | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const chatScrollTopRestoreRef = useRef(0);
+  const readingOpenedAtRef = useRef<number | null>(null);
+  const readingMaxScrollRef = useRef(0);
+  const readingOpenTriggerRef = useRef<'manual' | 'auto_card_tap'>('manual');
+  const openSheetAfterCardTapRef = useRef<string | null>(null);
   const mobileKeyboardOpen = useMobileKeyboardOpen();
   const drawerOpen = readingSnap !== 'closed';
   const [summaryBadge, setSummaryBadge] = useState(false);
@@ -271,7 +280,7 @@ export function NomeSocialChat({
   const [nomeArtisticoDraft, setNomeArtisticoDraft] = useState('');
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia('(min-width: 1024px)');
     const onChange = () => {
       if (mq.matches) {
         setReadingSnap('closed');
@@ -1284,6 +1293,18 @@ export function NomeSocialChat({
       lastAnalyzeSuggestionsFingerprintRef.current = null;
       lastAnalyzeSelectedNameRef.current = null;
     }
+    if (id) {
+      const isMobileSheet =
+        typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+      if (isMobileSheet) {
+        chatScrollTopRestoreRef.current = chatScrollRef.current?.scrollTop ?? 0;
+        openSheetAfterCardTapRef.current = id;
+      }
+    } else {
+      setSheetHeaderFromCard(null);
+      setScrollHarmonizedOnEnter(false);
+      openSheetAfterCardTapRef.current = null;
+    }
     setActiveSuggestionId(id);
   };
 
@@ -1815,33 +1836,81 @@ export function NomeSocialChat({
     lastSummarySnapshotRef.current = summarySnapshot;
   }, [summarySnapshot, drawerOpen, birthConfirmed, basePanel]);
 
-  const openSummaryPanel = () => {
+  const openSummaryPanel = (opts?: {
+    trigger?: 'manual' | 'auto_card_tap';
+    namePosition?: number;
+    cardHeader?: ReadingSheetCardHeader | null;
+    scrollHarmonized?: boolean;
+  }) => {
     const active = document.activeElement;
     if (active instanceof HTMLElement && active.closest('[data-nm-reading-trigger]')) {
       readingReturnFocusRef.current = active;
     }
+    const trigger = opts?.trigger ?? 'manual';
+    readingOpenTriggerRef.current = trigger;
+    readingOpenedAtRef.current = Date.now();
+    readingMaxScrollRef.current = 0;
+    if (opts?.cardHeader) setSheetHeaderFromCard(opts.cardHeader);
+    else if (trigger === 'manual') setSheetHeaderFromCard(null);
+    setScrollHarmonizedOnEnter(Boolean(opts?.scrollHarmonized));
     if (!drawerOpen) {
       capturePostHogEvent('summary_drawer_opened', {
         screen: chatDockScreen ?? 'chat_questionnaire',
         step: currentStepId,
       });
+      capturePostHogEvent('reading_panel_open', {
+        trigger,
+        name_position: opts?.namePosition,
+        surface: 'app',
+      });
       setSummaryBadge(false);
     }
-    setReadingSnap((prev) => (prev === 'closed' ? 'half' : prev));
+    setReadingSnap((prev) => (prev === 'closed' ? 'full' : prev));
   };
 
   const closeSummaryPanel = (method: SummaryPanelCloseMethod) => {
-    const mapped =
-      method === 'escape' ? 'x' : method;
+    const mapped = method === 'escape' ? 'x' : method;
+    const timeOpenMs = readingOpenedAtRef.current
+      ? Date.now() - readingOpenedAtRef.current
+      : 0;
     capturePostHogEvent('summary_drawer_closed', {
       screen: chatDockScreen ?? 'chat_questionnaire',
       method: mapped,
     });
+    capturePostHogEvent('reading_panel_close', {
+      trigger: mapped,
+      time_open_ms: timeOpenMs,
+      max_scroll_pct: readingMaxScrollRef.current,
+    });
     setReadingSnap('closed');
+    setScrollHarmonizedOnEnter(false);
+    readingOpenedAtRef.current = null;
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = chatScrollTopRestoreRef.current;
     const target = readingReturnFocusRef.current;
     readingReturnFocusRef.current = null;
     if (target) requestAnimationFrame(() => target.focus());
   };
+
+  useEffect(() => {
+    const pendingId = openSheetAfterCardTapRef.current;
+    if (!pendingId || activeSuggestionId !== pendingId) return;
+    openSheetAfterCardTapRef.current = null;
+    const sug = suggestions.find((s) => s.id === pendingId);
+    if (!sug?.panel || !basePanel) return;
+    if (typeof window !== 'undefined' && !window.matchMedia('(max-width: 1023px)').matches) return;
+    const rank = Math.max(1, suggestions.findIndex((s) => s.id === pendingId) + 1);
+    openSummaryPanel({
+      trigger: 'auto_card_tap',
+      namePosition: rank,
+      cardHeader: {
+        suggestedName: sug.nome,
+        chosenScore: sug.score,
+        baseScore: basePanel.score,
+      },
+      scrollHarmonized: true,
+    });
+  }, [activeSuggestionId, suggestions, basePanel]);
 
   const handleDockSecondary = (action: DockSecondaryActionId, position: number) => {
     capturePostHogEvent('dock_action_clicked', {
@@ -2014,7 +2083,10 @@ export function NomeSocialChat({
             sidebarExpanded ? 'hidden' : ''
           }`}
         >
-          <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-md:pb-[var(--nm-mobile-dock-clearance)] md:pb-6">
+          <div
+            ref={chatScrollRef}
+            className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-lg:pb-[var(--nm-mobile-dock-clearance)] lg:pb-6"
+          >
             {messages.map((msg) => {
               if (msg.type === 'profile_confirm' && (birthConfirmed || answers.onboarding_confirm === 'ok')) return null;
               if (msg.sender === 'user') {
@@ -2262,7 +2334,14 @@ export function NomeSocialChat({
         showReadingAction={showReadingAction}
         pdfModel={freePaywallActive ? null : pdfCtaModel}
         pdfExiting={pdfCircleExiting}
-        onPdfClick={freePaywallActive ? undefined : onPdfDockClick}
+        onPdfClick={
+          freePaywallActive
+            ? undefined
+            : () => {
+                capturePostHogEvent('pdf_download_click', { location: 'dock', surface: 'app' });
+                onPdfDockClick();
+              }
+        }
         onSecondary={handleDockSecondary}
         onPrimary={handleDockPrimary}
       />
@@ -2298,6 +2377,11 @@ export function NomeSocialChat({
         readingSummary={activeReadingSummary}
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
+        headerFromCard={sheetHeaderFromCard}
+        scrollToHarmonizedOnEnter={scrollHarmonizedOnEnter}
+        onContentScrollMax={(pct) => {
+          if (pct > readingMaxScrollRef.current) readingMaxScrollRef.current = pct;
+        }}
       />
 
       <Modal

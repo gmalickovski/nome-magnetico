@@ -1,3 +1,11 @@
+/** Dock sempre acima de sheets, overlays e FABs no mobile. */
+export const MOBILE_DOCK_Z_INDEX = 80;
+export const MOBILE_READING_OVERLAY_Z_INDEX = 55;
+export const MOBILE_READING_SHEET_Z_INDEX = 60;
+
+export const MOBILE_READING_SHEET_HEIGHT_FULL = '92dvh';
+export const MOBILE_READING_SHEET_HEIGHT_HALF = '50dvh';
+
 /** Transição de largura da barra flutuante (dock). */
 export const DOCK_BAR_WIDTH_TRANSITION_MS = 240;
 
@@ -21,7 +29,7 @@ export function dockShellWidthStyle(
 
 /** Classes da barra: contêiner flutuante, largura só do conteúdo. */
 export const MOBILE_DOCK_BAR_CLASS =
-  'mobile-chat-dock-bar inline-flex w-max max-w-[calc(100vw-24px)] h-14 items-center gap-0 rounded-[28px] border border-[rgba(212,175,55,0.18)] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-[20px] backdrop-saturate-[140%] bg-[rgba(19,19,19,0.72)]';
+  'mobile-chat-dock-bar nm-mobile-dock-bar inline-flex w-max max-w-[calc(100vw-24px)] h-14 items-center gap-0 rounded-[28px] border border-t border-t-[#2A2A2A] border-[rgba(212,175,55,0.18)] p-1.5 shadow-[0_-4px_16px_rgba(0,0,0,0.35)] backdrop-blur-[16px] backdrop-saturate-[140%] bg-[rgba(19,19,19,0.92)] transition-[background-color,backdrop-filter] duration-200 ease-out';
 
 export const MOBILE_DOCK_ROOT_CLASS =
-  'lg:hidden mobile-chat-dock-root fixed left-1/2 z-[70] w-max max-w-[calc(100%-24px)] -translate-x-1/2';
+  `lg:hidden mobile-chat-dock-root fixed left-1/2 z-[${MOBILE_DOCK_Z_INDEX}] w-max max-w-[calc(100%-24px)] -translate-x-1/2`;

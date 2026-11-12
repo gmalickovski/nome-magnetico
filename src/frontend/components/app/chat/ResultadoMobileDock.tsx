@@ -69,6 +69,7 @@ export function ResultadoMobileDock({
       return;
     }
     if (action === 'download_pdf' && analysisId) {
+      capturePostHogEvent('pdf_download_click', { location: 'dock', surface: 'resultado' });
       window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
     }
   };

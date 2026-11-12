@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo } from 'react';
+import React, { useLayoutEffect, useMemo, useRef } from 'react';
 import {
   buildAppNavDockItems,
   showAppNavRouteLoadingBar,
@@ -14,6 +14,7 @@ import { resolveMobileDockContext } from '../../lib/mobile-dock-context.js';
 import { useMobileDockActionSnapshot } from '../../lib/mobile-dock-action-store.js';
 import { dockLayoutHasVisibleActions } from './chat/mobile-dock-screen.js';
 import { useMobileKeyboardOpen } from './chat/useMobileKeyboardOpen.js';
+import { useMobileDockScrollFade } from './chat/useMobileDockScrollFade.js';
 
 export interface AppMobileDockProps {
   pathname: string;
@@ -67,6 +68,8 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   const context = resolveMobileDockContext(props.pathname);
   const action = context === 'action' && snapshot?.handlers ? snapshot : null;
   const keyboardOpen = useMobileKeyboardOpen();
+  const dockRootRef = useRef<HTMLDivElement>(null);
+  useMobileDockScrollFade(dockRootRef, !keyboardOpen);
   const reduced = prefersReducedMotion();
   const navMeasureKey = items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|');
   const measureKey =
@@ -75,7 +78,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
     (action?.state.pdfModel?.visible ? '|pdf' : '') +
     (action?.state.pdfExiting ? '|pdf-exit' : '');
   const { innerRef, widthPx } = useDockBarWidth(measureKey);
-  const barClassName = `${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`;
+  const barClassName = MOBILE_DOCK_BAR_CLASS;
 
   useLayoutEffect(() => {
     assertSingleMobileDockRoot();
@@ -93,6 +96,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
 
   return (
     <MobileDockRoot
+      ref={dockRootRef}
       role="navigation"
       aria-label="Navegação principal"
       className={keyboardOpen ? 'nm-mobile-dock--keyboard-hidden' : undefined}

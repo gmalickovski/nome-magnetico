@@ -57,7 +57,7 @@ describe('AppMobileDock', () => {
       })
     );
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de leitura/);
-    assert.match(html, /aria-label="Baixar PDF"/);
+    assert.match(html, /aria-label="Baixar a análise em PDF"/);
     assert.doesNotMatch(html, />Baixar PDF</);
     assert.doesNotMatch(html, /aria-label="Voltar"/);
     assert.doesNotMatch(html, /MobileSummaryToggle|aria-controls="mobile-reading-summary"/);
@@ -79,8 +79,9 @@ describe('AppMobileDock', () => {
         onPrimary: noop,
       })
     );
-    assert.match(html, /aria-label="Compartilhar"/);
     assert.match(html, /aria-label="Mais ações"/);
+    assert.match(html, /aria-label="Baixar a análise em PDF"/);
+    assert.match(html, /aria-label="Refazer análise"/);
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root/);
   });
   it('exibe ação Abrir leitura na dock quando showReadingAction', () => {

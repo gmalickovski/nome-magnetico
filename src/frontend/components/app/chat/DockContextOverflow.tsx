@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { capturePostHogEvent } from '../../../lib/analytics.js';
 import type { DockContextualAction } from './dock-contextual-actions.js';
 import { IconMoreHorizontal } from './MobileChatDockIcons.js';
 import { dockIconFor, IconScrollText } from './MobileChatDockIcons.js';
@@ -65,6 +66,9 @@ export function DockContextOverflow({
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-[#E5E2E1] hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
                   onClick={() => {
                     setOpen(false);
+                    capturePostHogEvent('dock_overflow_item_click', {
+                      item: item.secondaryId ?? item.primaryId ?? item.kind,
+                    });
                     onPick(item);
                   }}
                 >
@@ -86,7 +90,13 @@ export function DockContextOverflow({
         aria-label="Mais ações"
         aria-expanded={open}
         aria-haspopup="menu"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((v) => {
+            const next = !v;
+            if (next) capturePostHogEvent('dock_overflow_open', {});
+            return next;
+          });
+        }}
         className={CONTEXT_BTN}
       >
         <IconMoreHorizontal />

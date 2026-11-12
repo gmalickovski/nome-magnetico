@@ -62,7 +62,9 @@ export function ChatSidebarSection({
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       {hasScore && birthPanel && (
-        <ChatHarmonyScoreCard birthPanel={birthPanel} harmonizedPanel={harmonizedPanel} />
+        <div id={isSuggestion && harmonizedPanel ? 'nm-reading-harmonized' : undefined}>
+          <ChatHarmonyScoreCard birthPanel={birthPanel} harmonizedPanel={harmonizedPanel} />
+        </div>
       )}
 
       {hasStar && birthPanel && (

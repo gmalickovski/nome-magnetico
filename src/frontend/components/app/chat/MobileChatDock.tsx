@@ -13,6 +13,7 @@ import {
 } from './dock-contextual-actions.js';
 import { DockContextOverflow } from './DockContextOverflow.js';
 import { useViewportInnerWidth } from './useViewportInnerWidth.js';
+import { capturePostHogEvent } from '../../../lib/analytics.js';
 
 export interface MobileChatDockProps {
   omitRoot?: boolean;
@@ -110,7 +111,7 @@ export function MobileChatDock({
           model={pdfModel}
           onClick={onPdfClick}
           exiting={pdfExiting}
-          tooltip={pdfModel.isFree ? 'Desbloquear análise' : 'Baixar PDF'}
+          tooltip={pdfModel.isFree ? 'Desbloquear análise' : pdfModel.assinaturaLabel?.trim() ? 'PDF deste nome' : 'Baixar PDF'}
         />
       );
     }
@@ -118,14 +119,22 @@ export function MobileChatDock({
     const Icon =
       item.kind === 'reading' ? IconScrollText : item.icon ? dockIconFor(item.icon) : IconScrollText;
     const isRestartExit = item.secondaryId === 'restart' && restartExitActive;
+    const isPdfPrimary =
+      item.kind === 'primary' &&
+      (item.primaryId === 'download_pdf' || item.primaryId === 'generate_pdf');
     const className =
       (item.primaryGold ? PRIMARY_BTN : CONTEXT_BTN) + (isRestartExit ? ' mobile-chat-dock-btn--exit' : '');
+
+  const aria =
+    isPdfPrimary && item.primaryId === 'download_pdf'
+      ? 'Baixar a análise em PDF'
+      : item.label;
 
     return (
       <DockTooltipButton
         key={item.key}
-        tooltip={item.label}
-        aria-label={item.label}
+        tooltip={isPdfPrimary ? 'Baixar PDF' : item.label}
+        aria-label={aria}
         disabled={item.disabled}
         data-nm-reading-trigger={item.kind === 'reading' ? 'true' : undefined}
         onClick={() => fireAction(item, index)}
@@ -156,6 +165,12 @@ export function MobileChatDock({
         <DockContextOverflow
           items={overflow}
           onPick={(item) => {
+            if (item.kind === 'pdf') {
+              capturePostHogEvent('pdf_download_click', {
+                location: 'menu',
+                surface: layout.screen === 'resultado' ? 'resultado' : 'app',
+              });
+            }
             const globalIndex = allActions.findIndex((a) => a.key === item.key);
             fireAction(item, globalIndex >= 0 ? globalIndex : 0);
           }}

@@ -501,14 +501,20 @@ export function ChatPdfDockCircle({
   const isLoading = model.phase === 'loading';
   const defaultActionLabel = model.isFree
     ? 'Desbloquear Análise'
-    : model.phase === 'ready'
-      ? 'Baixar Análise'
-      : 'Gerar Análise';
-  const label = isLoading ? 'Preparando o seu PDF' : defaultActionLabel;
+    : model.assinaturaLabel?.trim()
+      ? 'PDF deste nome'
+      : 'Baixar PDF';
+  const label = isLoading
+    ? 'Gerando...'
+    : model.phase === 'error'
+      ? 'Tentar de novo'
+      : model.isFree
+        ? defaultActionLabel
+        : 'Baixar a análise em PDF';
 
   return (
     <DockTooltipButton
-      tooltip={tooltip ?? defaultActionLabel}
+      tooltip={tooltip ?? (model.isFree ? defaultActionLabel : 'Baixar PDF')}
       onClick={onClick}
       disabled={isLoading || !model.emailConfirmed}
       aria-label={label}
@@ -528,7 +534,7 @@ export function ChatPdfDockCircle({
     >
       {isLoading ? (
         <svg
-          className="h-[18px] w-[18px] animate-spin"
+          className="h-5 w-5 animate-spin"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -542,7 +548,7 @@ export function ChatPdfDockCircle({
           />
         </svg>
       ) : (
-        <Icon className="text-[#111111]" />
+        <Icon className="h-5 w-5 text-[#111111]" />
       )}
     </DockTooltipButton>
   );
