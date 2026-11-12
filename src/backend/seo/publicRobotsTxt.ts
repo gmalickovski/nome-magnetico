@@ -1,4 +1,9 @@
-User-agent: *
+/**
+ * Conteúdo canônico de /robots.txt para o site público (www).
+ * Mantido em TypeScript para servir só via `src/pages/robots.txt.ts`
+ * (sem `public/robots.txt`, que o adapter costuma priorizar).
+ */
+export const PUBLIC_ROBOTS_TXT = `User-agent: *
 Allow: /
 Disallow: /app/
 Disallow: /admin/
@@ -30,3 +35,4 @@ Crawl-delay: 30
 
 User-agent: SemrushBot
 Crawl-delay: 30
+`;
