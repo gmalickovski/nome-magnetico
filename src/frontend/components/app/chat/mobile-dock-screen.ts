@@ -84,7 +84,10 @@ export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput
   if (screen === 'chat_free_paywall') {
     return {
       screen,
-      middleSecondaries: [{ id: 'free_pdf', label: 'PDF grátis', icon: 'file-down' }],
+      middleSecondaries: [
+        ...(input.canRestart && !input.summaryPanelOpen ? [{ id: 'restart' as const, label: 'Recomeçar', icon: 'rotate-ccw' as const }] : []),
+        { id: 'free_pdf', label: 'PDF grátis', icon: 'file-down' },
+      ],
       showPdfCircle: false,
       primary: {
         id: 'unlock_nome_social',

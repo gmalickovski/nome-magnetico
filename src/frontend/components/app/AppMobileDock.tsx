@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   buildAppNavDockItems,
   showAppNavRouteLoadingBar,
@@ -7,12 +7,10 @@ import {
 import { iconForNavItem } from './AppNavDockIcons.js';
 import { MobileChatDock } from './chat/MobileChatDock.js';
 import { MobileDockRoot } from './chat/MobileDockRoot.js';
-import {
-  dockShellWidthStyle,
-  MOBILE_DOCK_BAR_CLASS,
-} from './chat/mobile-dock-layout.js';
+import { dockShellWidthStyle, MOBILE_DOCK_BAR_CLASS } from './chat/mobile-dock-layout.js';
 import { useDockBarWidth } from './chat/useDockBarWidth.js';
 import { DockTooltipButton } from './chat/DockTooltipButton.js';
+import { MobileSummaryToggle } from './chat/MobileSummaryToggle.js';
 import { resolveMobileDockContext } from '../../lib/mobile-dock-context.js';
 import { useMobileDockActionSnapshot } from '../../lib/mobile-dock-action-store.js';
 
@@ -43,62 +41,9 @@ function activeBtnClass(item: AppNavDockItem): string {
 
 function navigateFromDock(item: AppNavDockItem) {
   if (item.disabled) return;
-
   if (item.href === window.location.pathname) return;
-
   showAppNavRouteLoadingBar();
   window.location.href = item.href;
-}
-
-function AppNavDockInner({ pathname, showAnalisesNav }: AppMobileDockProps) {
-  const items = useMemo(
-    () => buildAppNavDockItems({ pathname, showAnalisesNav }),
-    [pathname, showAnalisesNav]
-  );
-
-  const measureKey = useMemo(
-    () => items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|'),
-    [items]
-  );
-
-  const { innerRef, widthPx } = useDockBarWidth(measureKey);
-  const reduced = prefersReducedMotion();
-  const shellStyle = dockShellWidthStyle(widthPx, reduced);
-  const barClassName = `${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`;
-
-  return (
-    <div className="mobile-chat-dock-shell rounded-[28px]" style={shellStyle}>
-      <div ref={innerRef} className={barClassName}>
-        <div
-          className={`inline-flex shrink-0 items-center gap-1 ${
-            reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
-          }`}
-        >
-          {items.map((item, index) => {
-            const Icon = iconForNavItem(item.id);
-            const tooltip = item.disabled
-              ? 'Disponível após adquirir um produto'
-              : item.label;
-
-            return (
-              <DockTooltipButton
-                key={item.id}
-                tooltip={tooltip}
-                aria-label={item.label}
-                aria-current={item.active ? 'page' : undefined}
-                disabled={item.disabled}
-                style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
-                onClick={() => navigateFromDock(item)}
-                className={activeBtnClass(item)}
-              >
-                <Icon />
-              </DockTooltipButton>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function assertSingleMobileDockRoot(): void {
@@ -111,42 +56,122 @@ function assertSingleMobileDockRoot(): void {
   }
 }
 
-/** Única dock mobile do /app: mesma posição fixa; conteúdo por rota. */
+/** Navegação global permanece na dock; ações contextuais expandem a mesma barra (DEV-273 + nav DEV-286). */
 export default function AppMobileDock(props: AppMobileDockProps) {
-  const dockContext = resolveMobileDockContext(props.pathname);
-  const actionSnapshot = useMobileDockActionSnapshot();
+  const items = useMemo(
+    () => buildAppNavDockItems({ pathname: props.pathname, showAnalisesNav: props.showAnalisesNav }),
+    [props.pathname, props.showAnalisesNav]
+  );
+  const snapshot = useMobileDockActionSnapshot();
+  const context = resolveMobileDockContext(props.pathname);
+  const action = context === 'action' && snapshot?.handlers ? snapshot : null;
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const reduced = prefersReducedMotion();
+  const navMeasureKey = items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|');
+  const measureKey =
+    navMeasureKey +
+    JSON.stringify(action?.state.layout ?? null) +
+    (action?.state.pdfModel?.visible ? '|pdf' : '') +
+    (action?.state.pdfExiting ? '|pdf-exit' : '');
+  const { innerRef, widthPx } = useDockBarWidth(measureKey);
+  const barClassName = `${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`;
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => setKeyboardOpen(window.innerHeight - viewport.height > 100);
+    update();
+    viewport.addEventListener('resize', update);
+    viewport.addEventListener('scroll', update);
+    return () => {
+      viewport.removeEventListener('resize', update);
+      viewport.removeEventListener('scroll', update);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     assertSingleMobileDockRoot();
   });
 
-  if (dockContext === 'action') {
-    if (!actionSnapshot?.state.layout || !actionSnapshot.handlers) {
-      return null;
-    }
-    const { state, handlers } = actionSnapshot;
-    return (
-      <MobileDockRoot role="toolbar" aria-label="Ações">
-        <MobileChatDock
-          omitRoot
-          layout={state.layout}
-          summaryPanelOpen={state.summaryPanelOpen}
-          restartExitActive={state.restartExitActive}
-          summaryBadge={state.summaryBadge}
-          pdfModel={state.pdfModel}
-          pdfExiting={state.pdfExiting}
-          onPdfClick={handlers.onPdfClick}
-          onBack={handlers.onBack}
-          onSecondary={handlers.onSecondary}
-          onPrimary={handlers.onPrimary}
-        />
-      </MobileDockRoot>
-    );
-  }
+  const creationRoute = props.pathname.replace(/\/+$/, '') === '/app/analise/nome-social';
 
   return (
-    <MobileDockRoot role="navigation" aria-label="Navegação principal">
-      <AppNavDockInner {...props} />
-    </MobileDockRoot>
+    <>
+      <MobileDockRoot
+        role="navigation"
+        aria-label="Navegação principal"
+        className={keyboardOpen ? 'invisible pointer-events-none' : ''}
+      >
+        <div
+          className="mobile-chat-dock-shell max-w-[calc(100vw-24px)] rounded-[28px]"
+          style={dockShellWidthStyle(widthPx, reduced)}
+        >
+          <div ref={innerRef} className={barClassName}>
+            <div
+              className={`inline-flex shrink-0 items-center gap-0.5 ${
+                reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
+              }`}
+              role="group"
+              aria-label="Páginas da área do usuário"
+            >
+              {items.map((item, index) => {
+                const Icon = iconForNavItem(item.id);
+                const tooltip = item.disabled ? 'Disponível após adquirir um produto' : item.label;
+                return (
+                  <DockTooltipButton
+                    key={item.id}
+                    tooltip={tooltip}
+                    aria-label={item.label}
+                    aria-current={item.active ? 'page' : undefined}
+                    disabled={item.disabled}
+                    style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
+                    onClick={() => navigateFromDock(item)}
+                    className={activeBtnClass(item)}
+                  >
+                    <Icon />
+                  </DockTooltipButton>
+                );
+              })}
+            </div>
+            {action?.state.layout && (
+              <>
+                <span
+                  data-nm-dock-divider
+                  className="mx-0.5 h-6 w-px shrink-0 bg-white/15"
+                  aria-hidden="true"
+                />
+                <div
+                  className="nm-mobile-dock-context min-w-11 overflow-x-auto overscroll-x-contain"
+                  role="toolbar"
+                  aria-label="Ações desta página"
+                  tabIndex={0}
+                >
+                  <MobileChatDock
+                    omitRoot
+                    layout={action.state.layout}
+                    summaryPanelOpen={action.state.summaryPanelOpen}
+                    restartExitActive={action.state.restartExitActive}
+                    summaryBadge={action.state.summaryBadge}
+                    pdfModel={action.state.pdfModel}
+                    pdfExiting={action.state.pdfExiting}
+                    onPdfClick={action.handlers!.onPdfClick}
+                    onBack={action.handlers!.onBack}
+                    onSecondary={action.handlers!.onSecondary}
+                    onPrimary={action.handlers!.onPrimary}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </MobileDockRoot>
+      {creationRoute && action && !keyboardOpen && (
+        <MobileSummaryToggle
+          open={action.state.summaryPanelOpen}
+          badge={action.state.summaryBadge}
+          onToggle={() => action.handlers!.onSecondary('summary', 0)}
+        />
+      )}
+    </>
   );
 }

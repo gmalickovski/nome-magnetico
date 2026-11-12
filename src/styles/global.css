@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
+@import './app-typography.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -579,7 +580,7 @@
     bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Dock de ações (chat, resultado): colada no rodapé, sem nav global empilhada */
+  /* Navegação e ações contextuais compartilham uma única dock. */
   .nm-app-shell--with-mobile-dock .mobile-chat-dock-root {
     bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
   }
@@ -993,3 +994,14 @@
 }
 
 
+
+/* DEV-273: acoes extras deslizam sem empurrar a navegacao ou a pagina. */
+.nm-mobile-dock-context {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.5) transparent;
+  scroll-padding-inline: 4px;
+}
+.nm-mobile-dock-context:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: -2px;
+}

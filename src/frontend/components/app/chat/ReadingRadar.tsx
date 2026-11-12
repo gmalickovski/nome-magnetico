@@ -198,7 +198,7 @@ export function ReadingRadar({
                 dominantBaseline="central"
                 fill="#d0d5de"
                 fontFamily="Inter, sans-serif"
-                fontSize={25}
+                className="nm-radar-label"
                 fontWeight={700}
               >
                 {labelText}
@@ -210,7 +210,7 @@ export function ReadingRadar({
                 dominantBaseline="central"
                 fill={valueColor}
                 fontFamily="Inter, sans-serif"
-                fontSize={28}
+                className="nm-radar-value"
                 fontWeight={800}
               >
                 {valueText}

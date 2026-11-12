@@ -1,10 +1,10 @@
 /**
- * Uma dock por página no mobile: nav global /app OU dock de ações (chat, resultado).
+ * Uma dock por página no mobile: navegação global /app com ações contextuais (chat, resultado).
  */
 
 export type MobileDockContext = 'app_nav' | 'action';
 
-/** Rotas com dock de ações (Voltar, Recomeçar, etc.) — sem nav global. */
+/** Rotas com dock de ações (Voltar, Recomeçar, etc.) — junto da nav global. */
 const ACTION_DOCK_PREFIXES = ['/app/analise/nome-social', '/app/resultado'] as const;
 
 export function resolveMobileDockContext(pathname: string): MobileDockContext {
@@ -18,7 +18,7 @@ export function resolveMobileDockContext(pathname: string): MobileDockContext {
 }
 
 export function shouldRenderGlobalMobileNavDock(pathname: string): boolean {
-  return resolveMobileDockContext(pathname) === 'app_nav';
+  return pathname === '/app' || pathname.startsWith('/app/');
 }
 
 export function shouldRenderActionMobileDock(pathname: string): boolean {

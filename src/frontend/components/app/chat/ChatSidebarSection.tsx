@@ -6,7 +6,7 @@ import type {
   ResultPanelData,
 } from './chat-types.js';
 import { ReadingRadar } from './ReadingRadar.js';
-import { SummaryCard } from './SummaryCard.js';
+
 import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
 import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
 import { ChatReadingSummaryPanel } from './ChatReadingSummaryPanel.js';
@@ -48,8 +48,6 @@ export function ChatSidebarSection({
   radarShowNumericLabels = false,
   contextChips = [],
   showRadar,
-  summaryItems,
-  showSummary,
   readingSummary = null,
   readingSummaryLoading = false,
   showReadingSummary = false,
@@ -60,7 +58,7 @@ export function ChatSidebarSection({
   const hasReadingBlocks =
     showReadingSummary && (Boolean(readingSummary) || readingSummaryLoading);
 
-  if (!hasScore && !hasStar && !showRadar && !showSummary && !hasReadingBlocks) {
+  if (!hasScore && !hasStar && !showRadar && !hasReadingBlocks) {
     return null;
   }
 
@@ -111,7 +109,6 @@ export function ChatSidebarSection({
         </div>
       )}
 
-      {showSummary && summaryItems.length > 0 && <SummaryCard items={summaryItems} />}
 
       {hasReadingBlocks && (
         <ChatReadingSummaryPanel summary={readingSummary} loading={readingSummaryLoading} />
