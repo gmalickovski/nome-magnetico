@@ -23,7 +23,7 @@ export function buildGratuitoTocEntries(): PdfTocEntry[] {
     ...essenciaSubassuntos,
     { id: 'pdf-mapa', title: 'O que este mapa mostrou', level: 0 },
     { id: 'pdf-score', title: 'Como calculamos o score', level: 1 },
-    { id: 'pdf-nome-social', title: 'Compare outras formas de assinar', level: 1 },
+    { id: 'pdf-nome-social', title: 'Potencial da sua assinatura', level: 1 },
   ];
 }
 
