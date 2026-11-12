@@ -1,8 +1,16 @@
 /**
  * Potencial máximo de assinatura para o CTA do PDF gratuito (DEV-275).
- * Mesma amostra do motor determinístico que a análise paga (gerador + analisarNomeSocial).
+ *
+ * Diferente de `avaliacaoV3.potencial` (`calcularPotencialV3`): aquele é o maior score v3
+ * entre todas as variantes do gerador (pode incluir candidatos com sequência na Vida e
+ * não exige ganho acima do nascimento). Aqui usamos o mesmo gerador + `analisarNomeSocial`,
+ * mas só candidatos elegíveis na análise paga padrão: `semSequenciaVida` e score > nota base.
+ *
+ * Quando existe ganho elegível, o valor costuma coincidir com `calcularPotencialV3`; quando não
+ * há opção acima da base, o V3 permanece no teto do nascimento e `potencialMax` fica null.
  */
 import { isScoreV3 } from '../score-version';
+import { calcularPotencialV3 } from '../score';
 import {
   analisarNomeSocial,
   gerarCandidatosComNivel,
@@ -62,4 +70,9 @@ export function potencialMaximoGeradorParidade(
   dataNascimento: string,
 ): number | null {
   return calcularPotencialAssinaturaPdfGratuito(nomeNascimento, dataNascimento).potencialMax;
+}
+
+/** Referência explícita ao potencial V3 já usado no modal e APIs. */
+export function potencialV3Existente(nomeNascimento: string, dataNascimento: string): number {
+  return calcularPotencialV3(nomeNascimento.trim(), dataNascimento);
 }

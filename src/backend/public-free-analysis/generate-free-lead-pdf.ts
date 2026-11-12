@@ -77,10 +77,8 @@ export function buildFreeLeadAnalysisRecord(input: {
     debitosCarmicos,
     compatibilidade: avaliarCompatibilidade(expressao, destino),
   });
+  const avaliacaoV3 = avaliarNome(nome, dataPt, { calcularPotencial: true });
   const potencialAssinatura = calcularPotencialAssinaturaPdfGratuito(nome, dataPt);
-  const avaliacaoV3 = avaliarNome(nome, dataPt, {
-    potencial: potencialAssinatura.potencialMax ?? potencialAssinatura.notaBase,
-  });
   const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
   const completedAt = input.completedAt ?? new Date().toISOString();
 
@@ -114,7 +112,7 @@ export function buildFreeLeadAnalysisRecord(input: {
     score_version: avaliacaoV3.score_version,
     score_v3: avaliacaoV3.score_v3,
     nivel: avaliacaoV3.nivel.codigo,
-    potencial: potencialAssinatura.potencialMax ?? potencialAssinatura.notaBase,
+    potencial: avaliacaoV3.potencial,
     potencial_assinatura_calculado: potencialAssinatura.calculado,
     potencial_assinatura_nota_base: potencialAssinatura.notaBase,
     potencial_assinatura_max: potencialAssinatura.potencialMax,
