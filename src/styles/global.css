@@ -557,13 +557,13 @@
   overflow: hidden;
   background: #1a1a1a;
 }
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .nm-chat-shell {
     left: 5rem;
   }
 }
-@media (max-width: 767px) {
-  /* /app mobile: dock flutuante única (nav global) */
+@media (max-width: 1023px) {
+  /* /app mobile + tablet: dock flutuante única (nav global); sidebar só a partir de lg */
   .nm-app-shell--with-mobile-dock {
     --nm-mobile-dock-margin: 12px;
     --nm-mobile-dock-bar-h: 3.5rem;

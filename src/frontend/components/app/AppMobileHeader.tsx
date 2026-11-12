@@ -9,7 +9,7 @@ export interface AppMobileHeaderProps {
 /** Header mobile único do /app: logo central + avatar (52px). */
 export default function AppMobileHeader({ nome, isAdmin }: AppMobileHeaderProps) {
   return (
-    <header className="md:hidden sticky top-0 z-40 h-[52px] nm-chat-compact-header border-b border-[#D4AF37]/20 bg-[#111111]/80 backdrop-blur-md">
+    <header className="lg:hidden sticky top-0 z-40 h-[52px] nm-chat-compact-header border-b border-[#D4AF37]/20 bg-[#111111]/80 backdrop-blur-md">
       <div className="relative mx-auto flex h-full max-w-[1440px] items-center px-4">
         <a
           href="/app"

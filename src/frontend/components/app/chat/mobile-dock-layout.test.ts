@@ -32,5 +32,6 @@ describe('mobile-dock-layout', () => {
     assert.match(MOBILE_DOCK_ROOT_CLASS, /w-max/);
     assert.match(MOBILE_DOCK_ROOT_CLASS, /left-1\/2/);
     assert.match(MOBILE_DOCK_ROOT_CLASS, /-translate-x-1\/2/);
+    assert.match(MOBILE_DOCK_ROOT_CLASS, /lg:hidden/);
   });
 });
