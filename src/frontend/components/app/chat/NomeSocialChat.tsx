@@ -60,7 +60,6 @@ import {
   mapRegenerateApiToCandidates,
   mergeCollectFromApi,
   shouldShowRadar,
-  shouldShowSummary,
   type ChatCollectState,
 } from './decide-live-bridge.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
@@ -1585,7 +1584,6 @@ export function NomeSocialChat({
   const showScoreCard = Boolean(basePanel);
   const showStarDetail = birthConfirmed && Boolean(basePanel);
   const showRadarPanel = shouldShowRadar(collectState);
-  const showSummaryPanel = shouldShowSummary(summaryItems);
   const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel);
   const activeReadingSummary = activeSuggestionId
     ? harmonizedSummaries[activeSuggestionId] ?? null
@@ -1893,8 +1891,6 @@ export function NomeSocialChat({
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
         showRadar={showRadarPanel && paidAccessActive}
-        summaryItems={summaryItems}
-        showSummary={showSummaryPanel}
         readingSummary={activeReadingSummary}
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}
@@ -2021,7 +2017,7 @@ export function NomeSocialChat({
                 return (
                   <NmBubble key={msg.id} wide={msg.wide} eyebrow={msg.eyebrow}>
                     <p className="text-chat-ink leading-relaxed">{msg.content}</p>
-                    <ChatFreeBirthAnalysisBody panel={basePanel} highlights={summaryItems} />
+                    <ChatFreeBirthAnalysisBody panel={basePanel} />
                   </NmBubble>
                 );
               }
@@ -2284,9 +2280,7 @@ export function NomeSocialChat({
         radarLabels={radarLabels}
         radarShowNumericLabels={Boolean(activeSuggestionId) && profileCollectionComplete}
         contextChips={contextChips}
-        summaryItems={summaryItems}
         showRadar={showRadarPanel}
-        showSummary={showSummaryPanel}
         readingSummary={activeReadingSummary}
         readingSummaryLoading={activeReadingLoading}
         showReadingSummary={showReadingSummaryPanel}

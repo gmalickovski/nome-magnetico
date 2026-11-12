@@ -2,7 +2,6 @@ import React from 'react';
 import type {
   ChatReadingSummary,
   RadarAxesData,
-  ReadingSummaryItem,
   ResultPanelData,
 } from './chat-types.js';
 import { ReadingRadar } from './ReadingRadar.js';
@@ -26,8 +25,6 @@ export interface ChatSidebarSectionProps {
   radarShowNumericLabels?: boolean;
   contextChips?: string[];
   showRadar: boolean;
-  summaryItems: ReadingSummaryItem[];
-  showSummary: boolean;
   readingSummary?: ChatReadingSummary | null;
   readingSummaryLoading?: boolean;
   showReadingSummary?: boolean;

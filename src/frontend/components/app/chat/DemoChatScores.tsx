@@ -31,8 +31,6 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
       onResetToBase={() => setSelectedId(null)}
       radarAxes={null}
       showRadar={false}
-      summaryItems={[]}
-      showSummary={false}
     />
   );
 
@@ -87,9 +85,7 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
         isSuggestion={Boolean(selectedId)}
         onResetToBase={() => setSelectedId(null)}
         radarAxes={null}
-        summaryItems={[]}
         showRadar={false}
-        showSummary={false}
       />
     </div>
   );

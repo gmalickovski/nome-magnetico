@@ -3,7 +3,6 @@ import type {
   ChatReadingSummary,
   RadarAxesData,
   ResultPanelData,
-  ReadingSummaryItem,
 } from './chat-types.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { useFocusTrap } from './useFocusTrap.js';
@@ -26,9 +25,7 @@ export interface SummaryDrawerProps {
   radarLabels?: Record<string, string>;
   radarShowNumericLabels?: boolean;
   contextChips?: string[];
-  summaryItems: ReadingSummaryItem[];
   showRadar: boolean;
-  showSummary: boolean;
   readingSummary?: ChatReadingSummary | null;
   readingSummaryLoading?: boolean;
   showReadingSummary?: boolean;
@@ -54,9 +51,7 @@ export function SummaryDrawer({
   radarLabels,
   radarShowNumericLabels = false,
   contextChips = [],
-  summaryItems,
   showRadar,
-  showSummary,
   readingSummary = null,
   readingSummaryLoading = false,
   showReadingSummary = false,
@@ -166,8 +161,6 @@ export function SummaryDrawer({
           radarShowNumericLabels={radarShowNumericLabels}
           contextChips={contextChips}
           showRadar={showRadar}
-          summaryItems={summaryItems}
-          showSummary={showSummary}
           readingSummary={readingSummary}
           readingSummaryLoading={readingSummaryLoading}
           showReadingSummary={showReadingSummary}
