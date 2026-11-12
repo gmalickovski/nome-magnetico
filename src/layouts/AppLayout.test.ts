@@ -64,6 +64,22 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(src, /leading=\{[\s\S]*?Minhas análises/);
   });
 
+  it('sidebar do cliente expõe só Início, Minhas análises, Glossário e Suporte (DEV-286)', () => {
+    const appLayoutFile = path.join(layoutsDir, 'AppLayout.astro');
+    const appLayoutSrc = readFileSync(appLayoutFile, 'utf8');
+    const sidebarMatch = appLayoutSrc.match(/<aside id="app-sidebar"[\s\S]*?<\/aside>/);
+    assert.ok(sidebarMatch, 'sidebar deve existir');
+    const sidebarHtml = sidebarMatch[0];
+    assert.match(sidebarHtml, /APP_CLIENT_NAV_LABELS\.inicio/);
+    assert.match(sidebarHtml, /APP_CLIENT_NAV_LABELS\.glossario/);
+    assert.doesNotMatch(sidebarHtml, /admin-analise/);
+    assert.doesNotMatch(sidebarHtml, /Área do Analista/);
+    const navMatch = sidebarHtml.match(/<nav class="flex flex-col gap-2"[\s\S]*?<\/nav>/);
+    assert.ok(navMatch, 'nav principal deve existir');
+    assert.doesNotMatch(navMatch[0], /\/blog/);
+    assert.match(sidebarHtml, /href="\/blog"/);
+  });
+
   it('ChatProgress usa container flex centralizado e ChatRestartButton usa IconRotateCcw com tons dourados', () => {
     const progressFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatProgress.tsx');
     const progressSrc = readFileSync(progressFile, 'utf8');

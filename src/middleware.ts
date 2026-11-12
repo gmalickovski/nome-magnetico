@@ -10,6 +10,7 @@ import {
   requestHostname,
   safeOpsRedirect,
 } from './backend/security/adminHost';
+import { applyAdminHostSeoHeaders } from './backend/security/adminHostSeo';
 import {
   AUTH_ACCESS_COOKIE,
   AUTH_REFRESH_COOKIE,
@@ -260,9 +261,21 @@ async function handle(context: APIContext, next: MiddlewareNext): Promise<Respon
   return handlePublicHost(context, next);
 }
 
+function withAdminHostSeo(response: Response, request: Request): Response {
+  if (!isAdminHost(requestHostname(request))) return response;
+  const headers = new Headers(response.headers);
+  applyAdminHostSeoHeaders(headers);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   try {
-    return await handle(context, next);
+    const response = await handle(context, next);
+    return withAdminHostSeo(response, context.request);
   } catch (error) {
     const fluxo = fluxoForPath(context.url.pathname);
     if (fluxo) captureFluxoException(fluxo, error);
