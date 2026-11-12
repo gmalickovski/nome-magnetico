@@ -12,6 +12,7 @@ import { fetchChatReadingSummary } from './chat-reading-summary-client.js';
 import { isDemoChatUser } from './demo-chat-utils.js';
 import { ChatProgress } from './ChatProgress.js';
 import { ChatRestartButton } from './ChatRestartButton.js';
+import { publishDesktopHeader, clearDesktopHeader } from '../../../lib/desktop-header-store.js';
 import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import { buildChatPdfAnalyzePayload } from './chat-pdf-persist.js';
 import {
@@ -1908,35 +1909,82 @@ export function NomeSocialChat({
     </div>
   );
 
+  useEffect(() => {
+    publishDesktopHeader({
+      progress: {
+        currentStep: stepIndex,
+        totalSteps: totalSteps,
+      },
+      actions: (
+        <>
+          {freePaywallActive ? (
+            <ChatPaywallStickyDesktop
+              visible={paywallStickyVisible}
+              onClick={() => goPaywallCheckout('sticky')}
+            />
+          ) : (
+            <ChatPdfStickyDesktop
+              model={pdfCtaModel}
+              onClick={onPdfStickyClick}
+              onResendEmail={onPdfResendEmail}
+              resending={pdfResending}
+            />
+          )}
+          <ChatRestartButton
+            onClick={handleRequestReset}
+            className="inline-flex"
+          />
+        </>
+      ),
+    });
+
+    return () => {
+      clearDesktopHeader();
+    };
+  }, [
+    stepIndex,
+    totalSteps,
+    freePaywallActive,
+    paywallStickyVisible,
+    pdfCtaModel,
+    pdfResending,
+    onPdfStickyClick,
+    onPdfResendEmail,
+    handleRequestReset,
+  ]);
+
   return (
     <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
-      <ChatProgress
-        currentStep={stepIndex}
-        totalSteps={totalSteps}
-        remaining={remaining}
-        className="shrink-0 z-20 bg-dark-deeper/95 md:bg-[#111111]/95 backdrop-blur-md border-b border-white/5 md:border-[#D4AF37]/15"
-        trailing={
-          <>
-            {freePaywallActive ? (
-              <ChatPaywallStickyDesktop
-                visible={paywallStickyVisible}
-                onClick={() => goPaywallCheckout('sticky')}
+      <div className="md:hidden">
+        <ChatProgress
+          currentStep={stepIndex}
+          totalSteps={totalSteps}
+          remaining={remaining}
+          className="shrink-0 z-20 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
+          trailing={
+            <>
+              {freePaywallActive ? (
+                <ChatPaywallStickyDesktop
+                  visible={paywallStickyVisible}
+                  onClick={() => goPaywallCheckout('sticky')}
+                />
+              ) : (
+                <ChatPdfStickyDesktop
+                  model={pdfCtaModel}
+                  onClick={onPdfStickyClick}
+                  onResendEmail={onPdfResendEmail}
+                  resending={pdfResending}
+                />
+              )}
+              <ChatRestartButton
+                onClick={handleRequestReset}
+                className="hidden md:inline-flex"
               />
-            ) : (
-              <ChatPdfStickyDesktop
-                model={pdfCtaModel}
-                onClick={onPdfStickyClick}
-                onResendEmail={onPdfResendEmail}
-                resending={pdfResending}
-              />
-            )}
-            <ChatRestartButton
-              onClick={handleRequestReset}
-              className="hidden md:inline-flex"
-            />
-          </>
-        }
-      />
+            </>
+          }
+        />
+      </div>
+      <div className="hidden md:block h-14 shrink-0" aria-hidden="true" />
 
       <div
         className={`flex-1 min-h-0 w-full mx-auto grid min-h-0 ${

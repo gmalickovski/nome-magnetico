@@ -1,20 +1,26 @@
 import React from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
+  variant?: 'default' | 'pill';
+  pill?: boolean;
 }
 
 export function Input({
   label,
   error,
   hint,
+  variant = 'default',
+  pill = false,
   className = '',
   id,
   ...props
 }: InputProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
+  const isPill = pill || variant === 'pill' || className.includes('rounded-full');
+  const shapeClass = isPill ? 'rounded-full px-5 py-3' : 'rounded-xl px-4 py-3';
 
   return (
     <div className="w-full">
@@ -31,9 +37,10 @@ export function Input({
         {...props}
         id={inputId}
         className={`
-          w-full bg-black/40 border rounded-xl px-4 py-3 text-white
+          w-full bg-black/40 border text-white
           focus:outline-none focus:ring-1 focus:border-transparent
           transition duration-300 placeholder-gray-500
+          ${shapeClass}
           ${error
             ? 'border-red-500/70 focus:ring-red-500/50'
             : 'border-white/10 focus:ring-[#D4AF37]/50 hover:border-white/20'

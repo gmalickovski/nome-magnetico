@@ -59,15 +59,21 @@ export function ForgotPasswordForm() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
+          variant="pill"
         />
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-400 text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3 text-red-400 text-sm">
             {error}
           </div>
         )}
 
-        <Button type="submit" loading={loading} className="w-full">
+        <Button
+          type="submit"
+          loading={loading}
+          pill
+          className="w-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/20 py-3 text-sm font-bold"
+        >
           Enviar Link de Redefinição
         </Button>
       </form>

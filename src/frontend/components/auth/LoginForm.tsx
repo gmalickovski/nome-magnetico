@@ -153,6 +153,7 @@ export function LoginForm() {
           onChange={e => setEmail(e.target.value)}
           required
           autoComplete="email"
+          variant="pill"
         />
         <Input
           label="Senha"
@@ -162,10 +163,11 @@ export function LoginForm() {
           onChange={e => setPassword(e.target.value)}
           required
           autoComplete="current-password"
+          variant="pill"
         />
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-400 text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3 text-red-400 text-sm">
             {error}
           </div>
         )}
@@ -176,17 +178,24 @@ export function LoginForm() {
           </a>
         </div>
 
-        <Button type="submit" loading={loading} className="w-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/20">
+        <Button
+          type="submit"
+          loading={loading}
+          pill
+          className="w-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/20 py-3 text-sm font-bold"
+        >
           Entrar
         </Button>
       </form>
 
-      <a
+      <Button
         href={signupUrl}
-        className="mt-4 flex w-full items-center justify-center rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-5 py-3 text-sm font-bold text-[#D4AF37] transition hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50]"
+        variant="secondary-gold"
+        pill
+        className="mt-4 w-full py-3 text-sm font-bold"
       >
         Criar Conta
-      </a>
+      </Button>
     </div>
   );
 }

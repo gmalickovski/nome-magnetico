@@ -116,6 +116,7 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
           value={nome}
           onChange={e => setNome(e.target.value)}
           required
+          variant="pill"
         />
         <Input
           label="Email"
@@ -125,6 +126,7 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
           onChange={e => setEmail(e.target.value)}
           required
           autoComplete="email"
+          variant="pill"
         />
         <Input
           label="Senha"
@@ -135,20 +137,26 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
           required
           autoComplete="new-password"
           hint="Mínimo de 8 caracteres"
+          variant="pill"
         />
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-red-400 text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3 text-red-400 text-sm">
             {error}
           </div>
         )}
 
-        <Button type="submit" loading={loading} className="w-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/20">
+        <Button
+          type="submit"
+          loading={loading}
+          pill
+          className="w-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/20 py-3 text-sm font-bold"
+        >
           Criar Conta
         </Button>
       </form>
 
-      <a
+      <Button
         href={
           redirect
             ? `/auth/login?redirect=${encodeURIComponent(redirect)}`
@@ -156,10 +164,12 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
             ? `/auth/login?produto=${produto}`
             : '/auth/login'
         }
-        className="mt-4 flex w-full items-center justify-center rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 px-5 py-3 text-sm font-bold text-[#D4AF37] transition hover:border-[#D4AF37]/70 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50]"
+        variant="secondary-gold"
+        pill
+        className="mt-4 w-full py-3 text-sm font-bold"
       >
         Já tenho uma conta
-      </a>
+      </Button>
     </div>
   );
 }
