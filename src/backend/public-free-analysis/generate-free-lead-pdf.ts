@@ -3,6 +3,8 @@ import {
   PDF_TOC_ANCHOR_IDS,
   renderProductPdfBuffer,
 } from '../../frontend/components/pdf/shared/pdfDynamicRender.ts';
+import { buildPotencialCtaQrDataUrl } from '../../frontend/components/pdf/shared/pdfPotencialQr';
+import { buildPotencialCtaUrl } from '../../frontend/components/pdf/shared/pdfPotencialCtaUrl';
 import { calcularTodosTriangulos, detectarBloqueios } from '../numerology/triangle';
 import {
   calcularExpressao,
@@ -24,6 +26,7 @@ import {
   type AvaliacaoScoreNome,
 } from '../numerology/score';
 import { isScoreV3 } from '../numerology/score-version';
+import { calcularPotencialAssinaturaPdfGratuito } from '../numerology/products/nome-social-potencial-pdf';
 import { isoBirthDateToPtBr } from './birth-date';
 
 export type FreeLeadAnalysisRecord = Record<string, unknown>;
@@ -75,6 +78,7 @@ export function buildFreeLeadAnalysisRecord(input: {
     compatibilidade: avaliarCompatibilidade(expressao, destino),
   });
   const avaliacaoV3 = avaliarNome(nome, dataPt, { calcularPotencial: true });
+  const potencialAssinatura = calcularPotencialAssinaturaPdfGratuito(nome, dataPt);
   const score = isScoreV3() ? avaliacaoV3.score_v3 : scoreLegado;
   const completedAt = input.completedAt ?? new Date().toISOString();
 
@@ -109,6 +113,9 @@ export function buildFreeLeadAnalysisRecord(input: {
     score_v3: avaliacaoV3.score_v3,
     nivel: avaliacaoV3.nivel.codigo,
     potencial: avaliacaoV3.potencial,
+    potencial_assinatura_calculado: potencialAssinatura.calculado,
+    potencial_assinatura_nota_base: potencialAssinatura.notaBase,
+    potencial_assinatura_max: potencialAssinatura.potencialMax,
     score_detalhe: avaliacaoV3,
     is_free: true,
     created_at: input.createdAt,
@@ -123,12 +130,16 @@ export async function renderFreeLeadPdfBase64(
   analysis: FreeLeadAnalysisRecord,
   userName: string,
 ): Promise<string> {
+  const nome = typeof analysis.nome_completo === 'string' ? analysis.nome_completo : '';
+  const ctaUrl = buildPotencialCtaUrl(nome);
+  const potencialCtaQrDataUrl = await buildPotencialCtaQrDataUrl(ctaUrl);
   const pdfBuffer = await renderProductPdfBuffer(
     NomeAtualPDF,
     {
       analysis: analysis as never,
       magneticNames: [],
       userName,
+      potencialCtaQrDataUrl,
     },
     PDF_TOC_ANCHOR_IDS.gratuito,
   );

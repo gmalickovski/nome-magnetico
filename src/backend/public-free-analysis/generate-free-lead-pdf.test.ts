@@ -26,6 +26,8 @@ describe('generate-free-lead-pdf', () => {
     assert.ok(typeof score === 'number');
     assert.ok(record.triangulo_vida);
     assert.ok(Array.isArray(record.bloqueios));
+    assert.equal(record.potencial_assinatura_calculado, true);
+    assert.ok(typeof record.potencial_assinatura_nota_base === 'number');
   });
 
   it('renderFreeLeadPdfBase64 inclui sumário com destinos nomeados', async () => {
