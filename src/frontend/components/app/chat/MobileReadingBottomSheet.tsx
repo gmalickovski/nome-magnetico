@@ -13,7 +13,7 @@ import {
   MOBILE_READING_SHEET_HEIGHT_HALF,
   MOBILE_READING_SHEET_Z_INDEX,
 } from './mobile-dock-layout.js';
-import { NM_MOBILE_DOCK_CLEARANCE } from '../mobile-dock-tokens.js';
+import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
 
 export type ReadingSheetSnap = 'closed' | 'half' | 'full';
 export type SummaryPanelCloseMethod = 'trigger' | 'x' | 'backdrop' | 'swipe' | 'escape';
@@ -22,6 +22,13 @@ export interface ReadingSheetCardHeader {
   suggestedName: string;
   chosenScore: number;
   baseScore: number;
+}
+
+export interface ReadingPanelPrimaryCta {
+  variant: 'pdf' | 'unlock';
+  onClick: () => void;
+  pdfModel?: ChatPdfCtaModel | null;
+  pdfExiting?: boolean;
 }
 
 export interface MobileReadingBottomSheetProps {
@@ -47,6 +54,7 @@ export interface MobileReadingBottomSheetProps {
   headerFromCard?: ReadingSheetCardHeader | null;
   scrollToHarmonizedOnEnter?: boolean;
   onContentScrollMax?: (maxPct: number) => void;
+  panelPrimary?: ReadingPanelPrimaryCta | null;
 }
 
 function prefersReducedMotion(): boolean {
@@ -82,6 +90,7 @@ export function MobileReadingBottomSheet({
   headerFromCard = null,
   scrollToHarmonizedOnEnter = false,
   onContentScrollMax,
+  panelPrimary = null,
 }: MobileReadingBottomSheetProps) {
   const [mounted, setMounted] = useState(snap !== 'closed');
   const [entered, setEntered] = useState(snap !== 'closed');
@@ -99,14 +108,12 @@ export function MobileReadingBottomSheet({
   const isFull = snap === 'full';
   const showCardHeader = Boolean(headerFromCard?.suggestedName?.trim());
 
-  useFocusTrap(isOpen && isFull, dialogRef);
+  useFocusTrap(isOpen, dialogRef);
 
   useEffect(() => {
     if (!isTabletOrPhone()) return undefined;
-    const root = document.querySelector('[data-nm-mobile-dock="single"]');
-    if (isOpen) root?.classList.add('nm-mobile-dock--sheet-open');
-    else root?.classList.remove('nm-mobile-dock--sheet-open');
-    return () => root?.classList.remove('nm-mobile-dock--sheet-open');
+    document.documentElement.classList.toggle('nm-reading-panel-open', isOpen);
+    return () => document.documentElement.classList.remove('nm-reading-panel-open');
   }, [isOpen]);
 
   useEffect(() => {
@@ -119,7 +126,7 @@ export function MobileReadingBottomSheet({
     setEntered(false);
     setDragOffset(0);
     setDragging(false);
-    const ms = reduced ? 150 : 220;
+    const ms = reduced ? 0 : 220;
     const t = window.setTimeout(() => setMounted(false), ms);
     return () => window.clearTimeout(t);
   }, [isOpen, reduced]);
@@ -131,9 +138,13 @@ export function MobileReadingBottomSheet({
 
   useEffect(() => {
     if (!mounted || !entered || !scrollToHarmonizedOnEnter) return;
+    if (reduced) {
+      document.getElementById('nm-reading-harmonized')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      return;
+    }
     const t = window.setTimeout(() => {
-      document.getElementById('nm-reading-harmonized')?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-    }, reduced ? 0 : 280);
+      document.getElementById('nm-reading-harmonized')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 280);
     return () => window.clearTimeout(t);
   }, [mounted, entered, scrollToHarmonizedOnEnter, reduced]);
 
@@ -153,12 +164,6 @@ export function MobileReadingBottomSheet({
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }, []);
 
-  const onHandlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (dragStartY.current == null || !dragging) return;
-    const delta = Math.max(0, e.clientY - dragStartY.current);
-    setDragOffset(delta);
-  }, [dragging]);
-
   const onHandlePointerUp = useCallback(
     (e: React.PointerEvent) => {
       if (dragStartY.current == null) return;
@@ -176,18 +181,11 @@ export function MobileReadingBottomSheet({
       const dismissByVelocity = velocity > 1.2 && delta > 24;
 
       if (delta > 48 || dismissByDistance || dismissByVelocity) {
-        if (snap === 'full' && !dismissByDistance && !dismissByVelocity && delta <= sheetHeight * 0.3) {
-          onSnapChange('half');
-        } else {
-          onClose('swipe');
-        }
+        onClose('swipe');
         return;
       }
-      if (delta < -48) {
-        if (snap === 'half') onSnapChange('full');
-      }
     },
-    [onClose, onSnapChange, snap]
+    [onClose]
   );
 
   const onContentScroll = useCallback(() => {
@@ -224,22 +222,18 @@ export function MobileReadingBottomSheet({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className={`nm-reading-sheet-overlay fixed inset-0 bg-black/50 lg:hidden ${
-          `z-[${MOBILE_READING_OVERLAY_Z_INDEX}] `
-        }${
+        className={`nm-reading-sheet-overlay fixed inset-0 bg-black/50 lg:hidden z-[${MOBILE_READING_OVERLAY_Z_INDEX}] ${
           entered ? 'nm-reading-sheet-overlay--open' : 'nm-reading-sheet-overlay--closed'
-        }`}
+        } ${reduced ? 'nm-reading-sheet--reduced' : ''}`}
         onClick={() => onClose('backdrop')}
       />
       <div
         ref={dialogRef}
         id="mobile-reading-summary"
         role="dialog"
-        aria-modal={isFull ? 'true' : 'false'}
+        aria-modal="true"
         aria-labelledby="mobile-summary-title"
-        className={`nm-reading-sheet fixed inset-x-0 bottom-0 flex flex-col overflow-hidden bg-[#1C1C1C] text-[#E5E2E1] lg:hidden rounded-t-2xl ${
-          `z-[${MOBILE_READING_SHEET_Z_INDEX}] `
-        }${
+        className={`nm-reading-sheet fixed inset-x-0 bottom-0 flex flex-col overflow-hidden bg-[#1C1C1C] text-[#E5E2E1] lg:hidden rounded-t-2xl z-[${MOBILE_READING_SHEET_Z_INDEX}] ${
           entered ? 'nm-reading-sheet--open' : 'nm-reading-sheet--closed'
         } ${reduced ? 'nm-reading-sheet--reduced' : ''} ${dragging ? 'nm-reading-sheet--dragging' : ''}`}
         style={{
@@ -249,15 +243,15 @@ export function MobileReadingBottomSheet({
         }}
       >
         <div
-          className="flex h-11 shrink-0 items-center justify-center touch-none"
+          className="flex h-11 w-full shrink-0 touch-none items-center justify-center"
           onPointerDown={onHandlePointerDown}
-          onPointerMove={onHandlePointerMove}
           onPointerUp={onHandlePointerUp}
+          aria-hidden="true"
         >
-          <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" aria-hidden="true" />
+          <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" style={{ width: 36, height: 4 }} />
         </div>
 
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-white/[0.06] px-4 pb-3">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-white/[0.06] px-4 pb-3">
           <div className="min-w-0 flex-1">
             {showCardHeader && headerFromCard ? (
               <>
@@ -290,20 +284,40 @@ export function MobileReadingBottomSheet({
               </h2>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => onClose('x')}
-            aria-label={showCardHeader ? 'Fechar leitura' : 'Fechar painel de leitura'}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1c1c1c] text-[#E5E2E1] hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
-          >
-            <IconX className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {panelPrimary?.variant === 'pdf' && panelPrimary.pdfModel ? (
+              <ChatPdfDockCircle
+                model={panelPrimary.pdfModel}
+                onClick={panelPrimary.onClick}
+                exiting={panelPrimary.pdfExiting}
+                tooltip={
+                  panelPrimary.pdfModel.assinaturaLabel?.trim() ? 'PDF deste nome' : 'Baixar PDF'
+                }
+              />
+            ) : null}
+            {panelPrimary?.variant === 'unlock' ? (
+              <button
+                type="button"
+                onClick={panelPrimary.onClick}
+                className="mobile-chat-dock-btn flex h-11 shrink-0 items-center justify-center rounded-full bg-[#D4AF37] px-3 text-[11px] font-bold uppercase tracking-wide text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+              >
+                Desbloquear
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => onClose('x')}
+              aria-label={showCardHeader ? 'Fechar leitura' : 'Fechar painel de leitura'}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1c1c1c] text-[#E5E2E1] hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+            >
+              <IconX className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div
           ref={contentRef}
-          className="min-h-0 flex-1 chat-scroll-pane nm-dock-scroll-clearance overscroll-contain px-4 py-3 text-[#E5E2E1]"
-          style={{ paddingBottom: `calc(${NM_MOBILE_DOCK_CLEARANCE} + 8px)` }}
+          className="min-h-0 flex-1 chat-scroll-pane overscroll-contain px-4 py-3 pb-4 text-[#E5E2E1]"
         >
           <ChatSidebarSection
             birthPanel={birthPanel}

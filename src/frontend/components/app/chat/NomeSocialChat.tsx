@@ -1860,8 +1860,8 @@ export function NomeSocialChat({
       });
       capturePostHogEvent('reading_panel_open', {
         trigger,
-        name_position: opts?.namePosition,
-        surface: 'app',
+        time_open_ms: 0,
+        max_scroll_pct: 0,
       });
       setSummaryBadge(false);
     }
@@ -1899,6 +1899,8 @@ export function NomeSocialChat({
     const sug = suggestions.find((s) => s.id === pendingId);
     if (!sug?.panel || !basePanel) return;
     if (typeof window !== 'undefined' && !window.matchMedia('(max-width: 1023px)').matches) return;
+    const pressed = document.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (pressed) readingReturnFocusRef.current = pressed;
     const rank = Math.max(1, suggestions.findIndex((s) => s.id === pendingId) + 1);
     openSummaryPanel({
       trigger: 'auto_card_tap',
@@ -2334,14 +2336,7 @@ export function NomeSocialChat({
         showReadingAction={showReadingAction}
         pdfModel={freePaywallActive ? null : pdfCtaModel}
         pdfExiting={pdfCircleExiting}
-        onPdfClick={
-          freePaywallActive
-            ? undefined
-            : () => {
-                capturePostHogEvent('pdf_download_click', { location: 'dock', surface: 'app' });
-                onPdfDockClick();
-              }
-        }
+        onPdfClick={freePaywallActive ? undefined : onPdfDockClick}
         onSecondary={handleDockSecondary}
         onPrimary={handleDockPrimary}
       />
@@ -2382,6 +2377,35 @@ export function NomeSocialChat({
         onContentScrollMax={(pct) => {
           if (pct > readingMaxScrollRef.current) readingMaxScrollRef.current = pct;
         }}
+        panelPrimary={
+          paidAccessActive && pdfCtaModel.visible
+            ? {
+                variant: 'pdf',
+                onClick: () => {
+                  capturePostHogEvent('primary_cta_click', {
+                    cta: 'pdf',
+                    location: 'panel',
+                    surface: 'app',
+                  });
+                  onPdfDockClick();
+                },
+                pdfModel: pdfCtaModel,
+                pdfExiting: pdfCircleExiting,
+              }
+            : freePaywallActive
+              ? {
+                  variant: 'unlock',
+                  onClick: () => {
+                    capturePostHogEvent('primary_cta_click', {
+                      cta: 'unlock',
+                      location: 'panel',
+                      surface: 'app',
+                    });
+                    goPaywallCheckout('panel');
+                  },
+                }
+              : null
+        }
       />
 
       <Modal

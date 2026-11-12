@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { MobileDockLayout, DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { dockIconFor, IconScrollText } from './MobileChatDockIcons.js';
 import { dockShellWidthStyle, MOBILE_DOCK_BAR_CLASS, MOBILE_DOCK_ROOT_CLASS } from './mobile-dock-layout.js';
@@ -8,11 +8,13 @@ import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
 import { DockTooltipButton } from './DockTooltipButton.js';
 import {
   collectDockContextualActions,
-  splitDockContextualActions,
+  partitionDockContextualActions,
   type DockContextualAction,
 } from './dock-contextual-actions.js';
-import { DockContextOverflow } from './DockContextOverflow.js';
-import { useViewportInnerWidth } from './useViewportInnerWidth.js';
+import {
+  DockContextScrollStrip,
+  type DockContextScrollStripHandle,
+} from './DockContextScrollStrip.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 
 export interface MobileChatDockProps {
@@ -30,7 +32,7 @@ export interface MobileChatDockProps {
 }
 
 const CONTEXT_BTN =
-  'mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#D4AF37] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-[#D4AF37]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#D4AF37]';
+  'mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 snap-start scroll-ml-0 items-center justify-center rounded-full text-[#D4AF37] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-[#D4AF37]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#D4AF37]';
 
 const PRIMARY_BTN =
   CONTEXT_BTN + ' mobile-chat-dock-primary bg-[#D4AF37] text-[#111111] disabled:opacity-45';
@@ -40,9 +42,14 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+function dockSurface(layout: MobileDockLayout): 'app' | 'resultado' {
+  return layout.screen === 'resultado' ? 'resultado' : 'app';
+}
+
 export function MobileChatDock({
   omitRoot = false,
   layout,
+  summaryPanelOpen = false,
   restartExitActive = false,
   summaryBadge,
   showReadingAction = false,
@@ -54,7 +61,8 @@ export function MobileChatDock({
 }: MobileChatDockProps) {
   const reduced = prefersReducedMotion();
   const [readingBadgePulse, setReadingBadgePulse] = useState(false);
-  const viewportWidth = useViewportInnerWidth();
+  const scrollStripRef = useRef<DockContextScrollStripHandle>(null);
+  const surface = layout ? dockSurface(layout) : 'app';
 
   useEffect(() => {
     if (!summaryBadge || reduced) return;
@@ -62,25 +70,47 @@ export function MobileChatDock({
     const t = window.setTimeout(() => setReadingBadgePulse(false), 700);
     return () => window.clearTimeout(t);
   }, [summaryBadge, reduced]);
-  const { innerRef, widthPx } = useDockBarWidth(
-    JSON.stringify(layout) + String(showReadingAction) + String(summaryBadge) + String(viewportWidth)
+
+  const measureKey =
+    JSON.stringify(layout) + String(showReadingAction) + String(summaryBadge) + String(summaryPanelOpen);
+  const { innerRef, widthPx } = useDockBarWidth(measureKey);
+
+  const firePrimaryCta = useCallback(
+    (cta: 'unlock' | 'pdf', location: 'dock') => {
+      capturePostHogEvent('primary_cta_click', { cta, location, surface });
+    },
+    [surface]
   );
 
   const fireAction = useCallback(
-    (item: DockContextualAction, index: number) => {
+    (item: DockContextualAction, index: number, inScroll: boolean) => {
       if (item.kind === 'primary' && item.primaryId) {
+        if (item.primaryId === 'unlock_nome_social') firePrimaryCta('unlock', 'dock');
+        else if (item.primaryId === 'download_pdf' || item.primaryId === 'generate_pdf') {
+          firePrimaryCta('pdf', 'dock');
+        }
         onPrimary(item.primaryId);
         return;
       }
       if (item.kind === 'pdf') {
+        firePrimaryCta('pdf', 'dock');
         onPdfClick?.();
         return;
       }
       if (item.secondaryId) {
+        const visibleWithoutScroll = inScroll
+          ? scrollStripRef.current?.isItemFullyVisible(item.key) ?? true
+          : true;
+        capturePostHogEvent('dock_item_click', {
+          item: item.secondaryId,
+          position: index,
+          visible_without_scroll: visibleWithoutScroll,
+          surface,
+        });
         onSecondary(item.secondaryId, index);
       }
     },
-    [onPdfClick, onPrimary, onSecondary]
+    [firePrimaryCta, onPdfClick, onPrimary, onSecondary, surface]
   );
 
   if (
@@ -101,17 +131,26 @@ export function MobileChatDock({
       ? { visible: true, badge: summaryBadge }
       : undefined,
   });
-  const { visible, overflow } = splitDockContextualActions(allActions, viewportWidth);
+  const { scrollable, fixed } = partitionDockContextualActions(allActions);
 
-  const renderAction = (item: DockContextualAction, index: number) => {
+  const renderAction = (item: DockContextualAction, index: number, inScroll: boolean) => {
     if (item.kind === 'pdf' && pdfModel && onPdfClick) {
       return (
         <ChatPdfDockCircle
           key={item.key}
           model={pdfModel}
-          onClick={onPdfClick}
+          onClick={() => {
+            firePrimaryCta('pdf', 'dock');
+            onPdfClick();
+          }}
           exiting={pdfExiting}
-          tooltip={pdfModel.isFree ? 'Desbloquear análise' : pdfModel.assinaturaLabel?.trim() ? 'PDF deste nome' : 'Baixar PDF'}
+          tooltip={
+            pdfModel.isFree
+              ? 'Desbloquear análise'
+              : pdfModel.assinaturaLabel?.trim()
+                ? 'PDF deste nome'
+                : 'Baixar PDF'
+          }
         />
       );
     }
@@ -125,10 +164,10 @@ export function MobileChatDock({
     const className =
       (item.primaryGold ? PRIMARY_BTN : CONTEXT_BTN) + (isRestartExit ? ' mobile-chat-dock-btn--exit' : '');
 
-  const aria =
-    isPdfPrimary && item.primaryId === 'download_pdf'
-      ? 'Baixar a análise em PDF'
-      : item.label;
+    const aria =
+      isPdfPrimary && item.primaryId === 'download_pdf'
+        ? 'Baixar a análise em PDF'
+        : item.label;
 
     return (
       <DockTooltipButton
@@ -137,7 +176,8 @@ export function MobileChatDock({
         aria-label={aria}
         disabled={item.disabled}
         data-nm-reading-trigger={item.kind === 'reading' ? 'true' : undefined}
-        onClick={() => fireAction(item, index)}
+        data-dock-scroll-item={inScroll ? item.key : undefined}
+        onClick={() => fireAction(item, index, inScroll)}
         style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
         className={className}
       >
@@ -154,28 +194,27 @@ export function MobileChatDock({
     );
   };
 
+  const activeSelector =
+    summaryPanelOpen && showReadingAction ? '[data-nm-reading-trigger]' : null;
+
   const content = (
     <div
-      className={`inline-flex w-max shrink-0 items-center gap-1 nm-dock-context-actions ${
+      className={`flex min-w-0 max-w-full flex-1 items-center gap-1 nm-dock-context-actions ${
         reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
       }`}
     >
-      {visible.map((item, index) => renderAction(item, index))}
-      {overflow.length > 0 && (
-        <DockContextOverflow
-          items={overflow}
-          onPick={(item) => {
-            if (item.kind === 'pdf') {
-              capturePostHogEvent('pdf_download_click', {
-                location: 'menu',
-                surface: layout.screen === 'resultado' ? 'resultado' : 'app',
-              });
-            }
-            const globalIndex = allActions.findIndex((a) => a.key === item.key);
-            fireAction(item, globalIndex >= 0 ? globalIndex : 0);
-          }}
-        />
+      {scrollable.length > 0 ? (
+        <DockContextScrollStrip ref={scrollStripRef} surface={surface} activeItemSelector={activeSelector}>
+          {scrollable.map((item, index) => renderAction(item, index, true))}
+        </DockContextScrollStrip>
+      ) : (
+        <span className="min-w-0 flex-1" aria-hidden="true" />
       )}
+      {fixed.length > 0 ? (
+        <div className="nm-dock-context-fixed inline-flex shrink-0 items-center gap-1">
+          {fixed.map((item, index) => renderAction(item, scrollable.length + index, false))}
+        </div>
+      ) : null}
     </div>
   );
 

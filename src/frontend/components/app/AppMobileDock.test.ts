@@ -58,11 +58,11 @@ describe('AppMobileDock', () => {
     );
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de leitura/);
     assert.match(html, /aria-label="Baixar a análise em PDF"/);
-    assert.doesNotMatch(html, />Baixar PDF</);
+    assert.doesNotMatch(html, /aria-label="Mais ações"/);
     assert.doesNotMatch(html, /aria-label="Voltar"/);
     assert.doesNotMatch(html, /MobileSummaryToggle|aria-controls="mobile-reading-summary"/);
   });
-  it('com mais ações que o limite em 390px, usa overflow em vez de segunda barra', () => {
+  it('várias ações contextuais usam faixa rolável e CTA fixo', () => {
     const layout = buildResultadoDockLayout({
       canShare: true,
       canRedo: true,
@@ -79,9 +79,11 @@ describe('AppMobileDock', () => {
         onPrimary: noop,
       })
     );
-    assert.match(html, /aria-label="Mais ações"/);
+    assert.match(html, /nm-dock-context-scroll/);
+    assert.match(html, /nm-dock-context-fixed/);
     assert.match(html, /aria-label="Baixar a análise em PDF"/);
     assert.match(html, /aria-label="Refazer análise"/);
+    assert.match(html, /data-dock-scroll-item/);
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root/);
   });
   it('exibe ação Abrir leitura na dock quando showReadingAction', () => {
@@ -109,5 +111,6 @@ describe('AppMobileDock', () => {
     const src = readFileSync(new URL('./AppMobileDock.tsx', import.meta.url), 'utf8');
     assert.doesNotMatch(src, /MobileSummaryToggle/);
     assert.match(src, /showReadingAction/);
+    assert.doesNotMatch(src, /DockContextOverflow/);
   });
 });
