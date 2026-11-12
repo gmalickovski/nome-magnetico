@@ -3,7 +3,6 @@ import { buildResultadoDockLayout } from './mobile-dock-screen.js';
 import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
-import { navigateClientAreaBack } from '../../../lib/app-nav-back.js';
 
 export interface ResultadoMobileDockProps {
   analysisId: string;
@@ -29,16 +28,12 @@ export function ResultadoMobileDock({
     [analysisId, isFree, redoHref]
   );
 
-  const handleBack = () => {
-    const destination = navigateClientAreaBack();
-    capturePostHogEvent('back_clicked', { screen: 'resultado', step: productType, destination });
-  };
-
   const handleSecondary = async (action: DockSecondaryActionId, position: number) => {
-    capturePostHogEvent('dock_action_clicked', {
-      screen: 'resultado',
-      action,
+    capturePostHogEvent('dock_item_click', {
+      item: action,
       position,
+      visible_without_scroll: true,
+      surface: 'resultado',
     });
 
     if (action === 'share') {
@@ -64,17 +59,21 @@ export function ResultadoMobileDock({
   };
 
   const handlePrimary = (action: DockPrimaryActionId) => {
-    capturePostHogEvent('dock_primary_clicked', {
-      screen: 'resultado',
-      action,
-      is_free: isFree,
-    });
-
     if (action === 'unlock_nome_social') {
+      capturePostHogEvent('primary_cta_click', {
+        cta: 'unlock',
+        location: 'dock',
+        surface: 'resultado',
+      });
       window.location.href = '/comprar?produto=nome_social&utm_source=app_dock';
       return;
     }
     if (action === 'download_pdf' && analysisId) {
+      capturePostHogEvent('primary_cta_click', {
+        cta: 'pdf',
+        location: 'dock',
+        surface: 'resultado',
+      });
       window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
     }
   };
@@ -84,7 +83,6 @@ export function ResultadoMobileDock({
       layout={layout}
       summaryPanelOpen={false}
       summaryBadge={false}
-      onBack={handleBack}
       onSecondary={handleSecondary}
       onPrimary={handlePrimary}
     />

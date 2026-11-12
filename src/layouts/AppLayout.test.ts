@@ -36,16 +36,44 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(appLayoutSrc, /headerBackLabel/);
   });
 
-  it('sidebar desktop e header usam left fixo (5rem) para overlay suave sem empurrar o layout', () => {
+  it('sidebar desktop empurra conteúdo (rail 5rem) a partir de lg sem expansão hover', () => {
     const appLayoutFile = path.join(layoutsDir, 'AppLayout.astro');
     const appLayoutSrc = readFileSync(appLayoutFile, 'utf8');
-    assert.match(appLayoutSrc, /left:\s*5rem/);
+    assert.match(appLayoutSrc, /hidden lg:flex/);
+    assert.match(appLayoutSrc, /\bw-20\b/);
+    assert.doesNotMatch(appLayoutSrc, /hover:w-60/);
+    assert.match(appLayoutSrc, /lg:ml-20/);
     assert.doesNotMatch(appLayoutSrc, /--sidebar-w/);
 
     const cssFile = path.join(srcRoot, 'styles', 'global.css');
     const cssSrc = readFileSync(cssFile, 'utf8');
-    assert.match(cssSrc, /\.nm-chat-shell\s*\{\s*left:\s*5rem;\s*\}/);
+    assert.match(cssSrc, /@media \(min-width: 1024px\)[\s\S]*\.nm-chat-shell[\s\S]*left:\s*5rem/);
     assert.doesNotMatch(cssSrc, /\.nm-chat-shell\s*\{\s*left:\s*var\(--sidebar-w/);
+  });
+
+  it('tablet (<lg) usa dock/header mobile; desktop (≥lg) usa sidebar + header fixo', () => {
+    const appLayoutSrc = readFileSync(path.join(layoutsDir, 'AppLayout.astro'), 'utf8');
+    const dockLayoutSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'mobile-dock-layout.ts'),
+      'utf8'
+    );
+    const mobileHeaderSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'AppMobileHeader.tsx'),
+      'utf8'
+    );
+    const desktopHeaderSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'AppDesktopHeader.tsx'),
+      'utf8'
+    );
+
+    assert.match(dockLayoutSrc, /lg:hidden mobile-chat-dock-root/);
+    assert.match(mobileHeaderSrc, /lg:hidden/);
+    assert.match(desktopHeaderSrc, /lg:flex/);
+    assert.match(desktopHeaderSrc, /lg:left-20/);
+    assert.match(appLayoutSrc, /hidden lg:block h-14/);
+
+    const cssSrc = readFileSync(path.join(srcRoot, 'styles', 'global.css'), 'utf8');
+    assert.match(cssSrc, /@media \(max-width: 1023px\)[\s\S]*--nm-mobile-dock-clearance/);
   });
 
   it('página de resultado usa ChatSidebarSection para Nome Social sem sugestões candidatas', () => {

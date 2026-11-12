@@ -1,335 +1,232 @@
-import React, { useEffect, useMemo } from 'react';
-import type { MobileDockLayout } from './mobile-dock-screen.js';
-import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
-import { IconChevronLeft, dockIconFor } from './MobileChatDockIcons.js';
-import {
-  dockShellWidthStyle,
-  MOBILE_DOCK_BAR_CLASS,
-  MOBILE_DOCK_ROOT_CLASS,
-} from './mobile-dock-layout.js';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { MobileDockLayout, DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
+import { dockIconFor, IconScrollText } from './MobileChatDockIcons.js';
+import { dockShellWidthStyle, MOBILE_DOCK_BAR_CLASS, MOBILE_DOCK_ROOT_CLASS } from './mobile-dock-layout.js';
 import { useDockBarWidth } from './useDockBarWidth.js';
+import { dockLayoutHasVisibleActions } from './mobile-dock-screen.js';
 import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
 import { DockTooltipButton } from './DockTooltipButton.js';
+import {
+  collectDockContextualActions,
+  partitionDockContextualActions,
+  type DockContextualAction,
+} from './dock-contextual-actions.js';
+import {
+  DockContextScrollStrip,
+  type DockContextScrollStripHandle,
+} from './DockContextScrollStrip.js';
+import { capturePostHogEvent } from '../../../lib/analytics.js';
 
 export interface MobileChatDockProps {
-  /** Quando true, só o conteúdo interno — o root fixo fica em AppMobileDock. */
   omitRoot?: boolean;
   layout: MobileDockLayout | null;
   summaryPanelOpen: boolean;
-  /** Recomeçar saindo da dock (Resumo aberto, antes de encolher). */
   restartExitActive?: boolean;
   summaryBadge: boolean;
+  showReadingAction?: boolean;
   pdfModel?: ChatPdfCtaModel | null;
   pdfExiting?: boolean;
   onPdfClick?: () => void;
-  onBack: () => void;
   onSecondary: (action: DockSecondaryActionId, position: number) => void;
   onPrimary: (action: DockPrimaryActionId) => void;
 }
+
+const CONTEXT_BTN =
+  'mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 snap-start scroll-ml-0 items-center justify-center rounded-full text-[#D4AF37] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-[#D4AF37]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#D4AF37]';
+
+const PRIMARY_BTN =
+  CONTEXT_BTN + ' mobile-chat-dock-primary bg-[#D4AF37] text-[#111111] disabled:opacity-45';
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function DockInnerWrap({
-  omitRoot,
-  hiddenByKeyboard,
-  shellStyle,
-  innerRef,
-  barClassName,
-  children,
-  role,
-  ariaLabel,
-}: {
-  omitRoot: boolean;
-  hiddenByKeyboard: boolean;
-  shellStyle: ReturnType<typeof dockShellWidthStyle>;
-  innerRef: React.RefObject<HTMLDivElement | null>;
-  barClassName: string;
-  children: React.ReactNode;
-  role: 'toolbar';
-  ariaLabel: string;
-}) {
-  const opacityClass = `transition-opacity duration-[120ms] ${
-    hiddenByKeyboard ? 'opacity-0 pointer-events-none' : 'opacity-100'
-  }`;
-
-  const inner = (
-    <div className={`mobile-chat-dock-shell rounded-[28px] ${omitRoot ? opacityClass : ''}`} style={shellStyle}>
-      <div ref={innerRef as React.RefObject<HTMLDivElement>} className={barClassName}>
-        {children}
-      </div>
-    </div>
-  );
-
-  if (omitRoot) return inner;
-
-  const rootClass = `${MOBILE_DOCK_ROOT_CLASS} nm-app-mobile-dock ${opacityClass}`;
-
-  return (
-    <div className={rootClass} role={role} aria-label={ariaLabel}>
-      {inner}
-    </div>
-  );
+function dockSurface(layout: MobileDockLayout): 'app' | 'resultado' {
+  return layout.screen === 'resultado' ? 'resultado' : 'app';
 }
 
 export function MobileChatDock({
   omitRoot = false,
   layout,
-  summaryPanelOpen,
+  summaryPanelOpen = false,
   restartExitActive = false,
   summaryBadge,
+  showReadingAction = false,
   pdfModel = null,
   pdfExiting = false,
   onPdfClick,
-  onBack,
   onSecondary,
   onPrimary,
 }: MobileChatDockProps) {
-  const [keyboardOpen, setKeyboardOpen] = React.useState(false);
-
-  const layoutMeasureKey = useMemo(() => {
-    if (!layout) return '';
-    if (layout.screen === 'resultado') {
-      return [
-        layout.screen,
-        ...layout.secondaries.map((s) => s.id),
-        layout.primary.id,
-        layout.primary.disabled ? 'd' : 'e',
-      ].join('|');
-    }
-    return [
-      layout.screen,
-      ...layout.middleSecondaries.map((s) => s.id),
-      layout.showPdfCircle ? 'pdf' : '',
-      pdfExiting ? 'pdf-x' : '',
-      summaryPanelOpen ? 'open' : 'closed',
-    ].join('|');
-  }, [layout, summaryPanelOpen, pdfExiting]);
-
-  const { innerRef, widthPx } = useDockBarWidth(layoutMeasureKey);
+  const reduced = prefersReducedMotion();
+  const [readingBadgePulse, setReadingBadgePulse] = useState(false);
+  const scrollStripRef = useRef<DockContextScrollStripHandle>(null);
+  const surface = layout ? dockSurface(layout) : 'app';
 
   useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      setKeyboardOpen(window.innerHeight - vv.height > 100);
-    };
-    update();
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
-  }, []);
+    if (!summaryBadge || reduced) return;
+    setReadingBadgePulse(true);
+    const t = window.setTimeout(() => setReadingBadgePulse(false), 700);
+    return () => window.clearTimeout(t);
+  }, [summaryBadge, reduced]);
 
-  if (!layout) return null;
+  const measureKey =
+    JSON.stringify(layout) + String(showReadingAction) + String(summaryBadge) + String(summaryPanelOpen);
+  const { innerRef, widthPx } = useDockBarWidth(measureKey);
 
-  const reduced = prefersReducedMotion();
-  const hiddenByKeyboard = keyboardOpen;
-  const shellStyle = dockShellWidthStyle(widthPx, reduced);
+  const firePrimaryCta = useCallback(
+    (cta: 'unlock' | 'pdf', location: 'dock') => {
+      capturePostHogEvent('primary_cta_click', { cta, location, surface });
+    },
+    [surface]
+  );
 
-  const SummaryIcon = dockIconFor('panel-right');
-  const barClassName = `${MOBILE_DOCK_BAR_CLASS} supports-[backdrop-filter]:bg-[rgba(19,19,19,0.72)] [@media(not((-webkit-backdrop-filter:none))):not((backdrop-filter:none))):bg-[#131313]`;
+  const fireAction = useCallback(
+    (item: DockContextualAction, index: number, inScroll: boolean) => {
+      if (item.kind === 'primary' && item.primaryId) {
+        if (item.primaryId === 'unlock_nome_social') firePrimaryCta('unlock', 'dock');
+        else if (item.primaryId === 'download_pdf' || item.primaryId === 'generate_pdf') {
+          firePrimaryCta('pdf', 'dock');
+        }
+        onPrimary(item.primaryId);
+        return;
+      }
+      if (item.kind === 'pdf') {
+        firePrimaryCta('pdf', 'dock');
+        onPdfClick?.();
+        return;
+      }
+      if (item.secondaryId) {
+        const visibleWithoutScroll = inScroll
+          ? scrollStripRef.current?.isItemFullyVisible(item.key) ?? true
+          : true;
+        capturePostHogEvent('dock_item_click', {
+          item: item.secondaryId,
+          position: index,
+          visible_without_scroll: visibleWithoutScroll,
+          surface,
+        });
+        onSecondary(item.secondaryId, index);
+      }
+    },
+    [firePrimaryCta, onPdfClick, onPrimary, onSecondary, surface]
+  );
 
-  const dockSecondaryBtnClass = (actionId: string, base: string) =>
-    `${base}${actionId === 'restart' && restartExitActive ? ' mobile-chat-dock-btn--exit' : ''}`;
-
-  if (layout.screen === 'chat_free_paywall' && layout.primary) {
-    const primary = layout.primary;
-    return (
-      <DockInnerWrap
-        omitRoot={omitRoot}
-        hiddenByKeyboard={hiddenByKeyboard}
-        shellStyle={shellStyle}
-        innerRef={innerRef}
-        barClassName={barClassName}
-        role="toolbar"
-        ariaLabel="Ações"
-      >
-        <DockTooltipButton tooltip="Voltar" aria-label="Voltar" onClick={onBack} className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]">
-          <IconChevronLeft />
-        </DockTooltipButton>
-        <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
-        <div className={`inline-flex shrink-0 items-center gap-1 ${reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'}`}>
-          {layout.middleSecondaries.map((action, index) => {
-            const Icon = dockIconFor(action.icon);
-            return (
-              <DockTooltipButton key={action.id} tooltip={action.label} aria-label={action.label} style={reduced ? undefined : { animationDelay: `${index * 30}ms` }} onClick={() => onSecondary(action.id, index)} className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]">
-                <Icon />
-              </DockTooltipButton>
-            );
-          })}
-          <DockTooltipButton tooltip="Painel de leitura" aria-label={summaryPanelOpen ? 'Fechar painel de leitura' : 'Painel de leitura'} aria-pressed={summaryPanelOpen ? true : undefined} onClick={() => onSecondary('summary', layout.middleSecondaries.length)} className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] ${summaryPanelOpen ? 'bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)]' : ''}`}>
-            <SummaryIcon />
-          </DockTooltipButton>
-          <DockTooltipButton tooltip={primary.label} disabled={primary.disabled} onClick={() => onPrimary(primary.id)} className="mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(40vw,160px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] bg-[#D4AF37] text-[#111111]">
-            {(() => {
-              const Icon = dockIconFor(primary.icon);
-              return (
-                <>
-                  <Icon className="text-[#111111]" />
-                  <span className="nm-caption truncate text-[11px] font-semibold leading-none text-[#111111]">{primary.label}</span>
-                </>
-              );
-            })()}
-          </DockTooltipButton>
-        </div>
-      </DockInnerWrap>
-    );
+  if (
+    !layout ||
+    !dockLayoutHasVisibleActions(layout, {
+      pdfVisible: Boolean(pdfModel?.visible),
+      pdfExiting,
+      readingVisible: showReadingAction,
+    })
+  ) {
+    return null;
   }
 
-  if (layout.screen === 'resultado') {
+  const allActions = collectDockContextualActions(layout, {
+    pdfModel,
+    pdfExiting,
+    reading: showReadingAction
+      ? { visible: true, badge: summaryBadge }
+      : undefined,
+  });
+  const { scrollable, fixed } = partitionDockContextualActions(allActions);
+
+  const renderAction = (item: DockContextualAction, index: number, inScroll: boolean) => {
+    if (item.kind === 'pdf' && pdfModel && onPdfClick) {
+      return (
+        <ChatPdfDockCircle
+          key={item.key}
+          model={pdfModel}
+          onClick={() => {
+            firePrimaryCta('pdf', 'dock');
+            onPdfClick();
+          }}
+          exiting={pdfExiting}
+          tooltip={
+            pdfModel.isFree
+              ? 'Desbloquear análise'
+              : pdfModel.assinaturaLabel?.trim()
+                ? 'PDF deste nome'
+                : 'Baixar PDF'
+          }
+        />
+      );
+    }
+
+    const Icon =
+      item.kind === 'reading' ? IconScrollText : item.icon ? dockIconFor(item.icon) : IconScrollText;
+    const isRestartExit = item.secondaryId === 'restart' && restartExitActive;
+    const isPdfPrimary =
+      item.kind === 'primary' &&
+      (item.primaryId === 'download_pdf' || item.primaryId === 'generate_pdf');
+    const className =
+      (item.primaryGold ? PRIMARY_BTN : CONTEXT_BTN) + (isRestartExit ? ' mobile-chat-dock-btn--exit' : '');
+
+    const aria =
+      isPdfPrimary && item.primaryId === 'download_pdf'
+        ? 'Baixar a análise em PDF'
+        : item.label;
+
     return (
-      <DockInnerWrap
-        omitRoot={omitRoot}
-        hiddenByKeyboard={hiddenByKeyboard}
-        shellStyle={shellStyle}
-        innerRef={innerRef}
-        barClassName={barClassName}
-        role="toolbar"
-        ariaLabel="Ações"
+      <DockTooltipButton
+        key={item.key}
+        tooltip={isPdfPrimary ? 'Baixar PDF' : item.label}
+        aria-label={aria}
+        disabled={item.disabled}
+        data-nm-reading-trigger={item.kind === 'reading' ? 'true' : undefined}
+        data-dock-scroll-item={inScroll ? item.key : undefined}
+        onClick={() => fireAction(item, index, inScroll)}
+        style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
+        className={className}
       >
-            <DockTooltipButton
-              tooltip="Voltar"
-              aria-label="Voltar"
-              onClick={onBack}
-              className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06]"
-            >
-              <IconChevronLeft />
-            </DockTooltipButton>
-            <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
-            <div
-              className={`inline-flex shrink-0 items-center gap-1 ${
-                reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
-              }`}
-            >
-              {layout.secondaries.map((action, index) => {
-                const Icon = dockIconFor(action.icon);
-                return (
-                  <DockTooltipButton
-                    key={action.id}
-                    tooltip={action.label}
-                    aria-label={action.label}
-                    style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
-                    onClick={() => onSecondary(action.id, index)}
-                    className="mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06]"
-                  >
-                    <Icon />
-                  </DockTooltipButton>
-                );
-              })}
-              <DockTooltipButton
-                tooltip={layout.primary.label}
-                disabled={layout.primary.disabled}
-                onClick={() => onPrimary(layout.primary.id)}
-                className={`mobile-chat-dock-btn mobile-chat-dock-primary ml-0.5 flex h-11 max-w-[min(52vw,200px)] shrink-0 items-center gap-1.5 rounded-full px-[14px] active:scale-[0.92] ${
-                  layout.primary.disabled
-                    ? 'border border-[rgba(212,175,55,0.3)] bg-transparent text-[rgba(212,175,55,0.5)]'
-                    : 'bg-[#D4AF37] text-[#111111]'
-                }`}
-              >
-                {(() => {
-                  const Icon = dockIconFor(layout.primary.icon);
-                  return (
-                    <>
-                      <Icon className={layout.primary.disabled ? 'opacity-50' : ''} />
-                      <span className="nm-caption truncate text-[11px] font-semibold leading-none text-[#111111]">
-                        {layout.primary.label}
-                      </span>
-                    </>
-                  );
-                })()}
-              </DockTooltipButton>
-            </div>
-      </DockInnerWrap>
-    );
-  }
-
-  const summarySpec = { id: 'summary' as const, label: 'Painel de leitura', icon: 'panel-right' as const };
-  const isSummaryActive = summaryPanelOpen;
-  const pdfTooltip = pdfModel?.isFree ? 'Desbloquear análise' : 'Baixar PDF';
-
-  return (
-    <DockInnerWrap
-      omitRoot={omitRoot}
-      hiddenByKeyboard={hiddenByKeyboard}
-      shellStyle={shellStyle}
-      innerRef={innerRef}
-      barClassName={barClassName}
-      role="toolbar"
-      ariaLabel="Ações"
-    >
-          <DockTooltipButton
-            tooltip="Voltar"
-            aria-label="Voltar"
-            onClick={onBack}
-            className="mobile-chat-dock-btn mobile-chat-dock-btn--back relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]"
-          >
-            <IconChevronLeft />
-          </DockTooltipButton>
-
-          <span className="mx-1.5 h-6 w-px shrink-0 bg-white/[0.12]" aria-hidden />
-
-          <div
-            className={`inline-flex shrink-0 items-center gap-1 ${
-              reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
+        <Icon className="h-5 w-5 shrink-0" />
+        {item.badge && (
+          <span
+            aria-label="Leitura atualizada"
+            className={`nm-reading-badge absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#D4AF37] motion-reduce:animate-none${
+              readingBadgePulse && item.kind === 'reading' ? ' nm-reading-badge--pulse' : ''
             }`}
-          >
-            {layout.middleSecondaries.map((action, index) => {
-              const Icon = dockIconFor(action.icon);
-              return (
-                <DockTooltipButton
-                  key={action.id}
-                  tooltip={action.label}
-                  aria-label={action.label}
-                  style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
-                  onClick={() => onSecondary(action.id, index)}
-                  className={dockSecondaryBtnClass(
-                    action.id,
-                    'mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px]'
-                  )}
-                >
-                  <Icon />
-                </DockTooltipButton>
-              );
-            })}
+          />
+        )}
+      </DockTooltipButton>
+    );
+  };
 
-            <DockTooltipButton
-              tooltip="Painel de leitura"
-              aria-label={isSummaryActive ? 'Fechar painel de leitura' : summarySpec.label}
-              aria-pressed={isSummaryActive ? true : undefined}
-              onClick={() => onSecondary('summary', layout.middleSecondaries.length)}
-              className={`mobile-chat-dock-btn relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#A0A0A0] transition-[transform,background-color,color,box-shadow] duration-150 active:scale-[0.92] active:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[3px] ${
-                isSummaryActive
-                  ? 'bg-[rgba(212,175,55,0.14)] text-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.45)]'
-                  : ''
-              }`}
-            >
-              <span className="relative flex h-[22px] w-[22px] items-center justify-center">
-                <SummaryIcon />
-                {summaryBadge && !summaryPanelOpen && (
-                  <span
-                    className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#D4AF37]"
-                    aria-hidden
-                  />
-                )}
-              </span>
-            </DockTooltipButton>
+  const activeSelector =
+    summaryPanelOpen && showReadingAction ? '[data-nm-reading-trigger]' : null;
 
-            {pdfModel && (pdfModel.visible || pdfExiting) && onPdfClick && (
-              <ChatPdfDockCircle
-                model={pdfModel}
-                onClick={onPdfClick}
-                exiting={pdfExiting}
-                tooltip={pdfTooltip}
-              />
-            )}
-          </div>
-    </DockInnerWrap>
+  const content = (
+    <div
+      className={`flex min-w-0 max-w-full flex-1 items-center gap-1 nm-dock-context-actions ${
+        reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
+      }`}
+    >
+      {scrollable.length > 0 ? (
+        <DockContextScrollStrip ref={scrollStripRef} surface={surface} activeItemSelector={activeSelector}>
+          {scrollable.map((item, index) => renderAction(item, index, true))}
+        </DockContextScrollStrip>
+      ) : (
+        <span className="min-w-0 flex-1" aria-hidden="true" />
+      )}
+      {fixed.length > 0 ? (
+        <div className="nm-dock-context-fixed inline-flex shrink-0 items-center gap-1">
+          {fixed.map((item, index) => renderAction(item, scrollable.length + index, false))}
+        </div>
+      ) : null}
+    </div>
+  );
+
+  if (omitRoot) return content;
+  return (
+    <div className={MOBILE_DOCK_ROOT_CLASS} role="toolbar" aria-label="Ações">
+      <div className="mobile-chat-dock-shell rounded-[28px]" style={dockShellWidthStyle(widthPx, reduced)}>
+        <div ref={innerRef} className={MOBILE_DOCK_BAR_CLASS}>
+          {content}
+        </div>
+      </div>
+    </div>
   );
 }
-
 export default MobileChatDock;

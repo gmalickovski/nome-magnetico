@@ -12,7 +12,7 @@
  *   N-1. Ação Imediata: O Escudo Provisório (fundo escuro)
  *   N. CTA / Oferta para a Harmonização (Nome Social)
  */
-import { Document, Page, View, Text, StyleSheet, Link } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { THEME_NOME_ATUAL } from './shared/PDFTheme';
 import { PDFCover } from './shared/PDFCover';
 import { PDFPageHeader } from './shared/PDFPageHeader';
@@ -55,6 +55,12 @@ import {
   isAnaliseV3,
   type NivelCodigo,
 } from '../../../shared/score-v3';
+import {
+  calcularPotencialAssinaturaPdfGratuito,
+  notaEstritamenteMaiorQueBase,
+} from '../../../backend/numerology/products/nome-social-potencial-pdf';
+import { buildPotencialCtaUrl } from './shared/pdfPotencialCtaUrl';
+import { PDFPotencialMaximoCtaPage } from './shared/PDFPotencialMaximoCta';
 
 const theme = THEME_NOME_ATUAL;
 
@@ -312,10 +318,10 @@ export function NomeAtualPDF({
   analysis,
   magneticNames: _magneticNames,
   userName: _userName,
-  upgradeOfferLabel,
+  upgradeOfferLabel: _upgradeOfferLabel,
+  potencialCtaQrDataUrl,
   pdfRender,
 }: ProductPDFProps) {
-  const upgradePrice = upgradeOfferLabel ?? 'nomemagnetico.com.br/precos';
   const logoSrc = loadLogoSrc();
   const freqData = analysis.frequencias_numeros as any;
   const nomeParaExibir = analysis.nome_completo;
@@ -431,6 +437,31 @@ export function NomeAtualPDF({
   }
 
   const tocEntries = buildGratuitoTocEntries();
+
+  const potencialGravado = analysis as {
+    potencial_assinatura_calculado?: boolean;
+    potencial_assinatura_nota_base?: number;
+    potencial_assinatura_max?: number | null;
+  };
+
+  const potencialAssinatura =
+    potencialGravado.potencial_assinatura_calculado === true
+      ? {
+          calculado: true,
+          notaBase: potencialGravado.potencial_assinatura_nota_base ?? rawScore ?? 0,
+          potencialMax: potencialGravado.potencial_assinatura_max ?? null,
+        }
+      : analysis.nome_completo && birthForScore && isV3
+        ? calcularPotencialAssinaturaPdfGratuito(analysis.nome_completo, birthForScore)
+        : { calculado: false, notaBase: 0, potencialMax: null as number | null };
+
+  const potencialCtaUrl = buildPotencialCtaUrl(analysis.nome_completo);
+  const exibirBlocoPotencial = potencialAssinatura.calculado && potencialAssinatura.notaBase > 0;
+  const variantePotencial =
+    potencialAssinatura.potencialMax != null &&
+    notaEstritamenteMaiorQueBase(potencialAssinatura.potencialMax, potencialAssinatura.notaBase)
+      ? ('com_cta' as const)
+      : ('sem_cta' as const);
 
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
@@ -1011,55 +1042,15 @@ export function NomeAtualPDF({
         <PDFFooter />
       </Page>
 
-      {/* ── PÁGINA FINAL: CTA NOME SOCIAL (fundo claro) ───────────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFSectionAnchor id="pdf-nome-social" bookmark={{ title: 'Compare outras formas de assinar', fit: true }} />
-        <View style={{ marginTop: 24, marginBottom: 16 }}>
-          <Text style={[styles.hugeTitle, { color: DARK, fontSize: 17 }]}>
-            Compare outras formas de assinar
-          </Text>
-        </View>
-
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginBottom: 20, textAlign: 'justify' }}>
-          No Nome Social, você compara as opções calculadas para o seu nome e escolhe qual deseja analisar.
-        </Text>
-
-        {rawScore != null && (
-          <View style={{ backgroundColor: '#F9FAFB', borderRadius: 8, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#E5E7EB' }}>
-            <Text style={{ fontSize: 9, color: GRAY, textAlign: 'center', lineHeight: 1.5 }}>
-              Nota calculada deste mapa (nome de nascimento): {rawScore}/100{nivelV3 ? ` · ${nivelV3}` : ''}.
-              {potencialV3 != null ? ` Potencial explorável pelo motor: até ${potencialV3}/100 (referência de cálculo, não resultado garantido).` : ''}
-            </Text>
-          </View>
-        )}
-
-        <View style={{ alignItems: 'center', marginBottom: 10 }}>
-          <Link src="https://www.nomemagnetico.com.br/nome-social?utm_source=pdf_gratis&utm_medium=pdf&utm_campaign=upsell_nome_social" style={{ textDecoration: 'none', marginBottom: 8 }}>
-            <View style={{ backgroundColor: '#10B981', paddingVertical: 16, paddingHorizontal: 36, borderRadius: 32 }}>
-              <Text style={{ color: '#FFFFFF', fontFamily: BODY_FONT_BOLD, fontSize: 14, textAlign: 'center' }}>
-                Conhecer o Nome Social
-              </Text>
-            </View>
-          </Link>
-          <Text style={{ fontSize: 9, color: GOLD, marginBottom: 2 }}>nomemagnetico.com.br/nome-social</Text>
-          {upgradePrice && !upgradeOfferLabel?.includes('EXEMPLO') && (
-            <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 4 }}>{upgradePrice}</Text>
-          )}
-        </View>
-
-        {/* Selos de segurança */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 4 }}>
-          <Text style={{ fontSize: 7, color: '#4B5563' }}>Pagamento seguro</Text>
-          <Text style={{ fontSize: 7, color: '#4B5563', fontFamily: BODY_FONT_BOLD }}>Stripe</Text>
-          <Text style={{ fontSize: 7, color: '#4B5563' }}>Google Pay</Text>
-          <Text style={{ fontSize: 7, color: '#4B5563' }}>Apple Pay</Text>
-        </View>
-        <Text style={{ fontSize: 6, color: '#374151', textAlign: 'center' }}>
-          Processado via Stripe — criptografia SSL de 256 bits. Acesso imediato após confirmação.
-        </Text>
-
-        <PDFFooter />
-      </Page>
+      {exibirBlocoPotencial ? (
+        <PDFPotencialMaximoCtaPage
+          notaBase={potencialAssinatura.notaBase}
+          potencialMax={potencialAssinatura.potencialMax ?? potencialAssinatura.notaBase}
+          variant={variantePotencial}
+          ctaUrl={potencialCtaUrl}
+          qrDataUrl={variantePotencial === 'com_cta' ? potencialCtaQrDataUrl : undefined}
+        />
+      ) : null}
     </Document>
   );
 }

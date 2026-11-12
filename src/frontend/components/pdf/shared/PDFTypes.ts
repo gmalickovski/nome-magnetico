@@ -99,5 +99,7 @@ export interface ProductPDFProps {
   userName?: string;
   /** Preço efetivo do Nome Social no momento da geração (DEV-178). */
   upgradeOfferLabel?: string;
+  /** QR (data URL) da última página do PDF grátis, quando o bloco de potencial está ativo. */
+  potencialCtaQrDataUrl?: string;
   pdfRender?: PdfRenderOptions;
 }

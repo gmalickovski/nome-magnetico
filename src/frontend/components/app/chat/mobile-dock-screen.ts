@@ -2,6 +2,7 @@ export type ChatDockScreen = 'chat_questionnaire' | 'chat_suggestions' | 'chat_f
 
 export type DockSecondaryActionId =
   | 'summary'
+  | 'reading'
   | 'restart'
   | 'other_options'
   | 'share'
@@ -11,6 +12,7 @@ export type DockSecondaryActionId =
 export type DockPrimaryActionId = 'generate_pdf' | 'download_pdf' | 'unlock_nome_social';
 
 export type DockIconKind =
+  | 'scroll-text'
   | 'panel-right'
   | 'rotate-ccw'
   | 'sparkles'
@@ -84,7 +86,10 @@ export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput
   if (screen === 'chat_free_paywall') {
     return {
       screen,
-      middleSecondaries: [{ id: 'free_pdf', label: 'PDF grátis', icon: 'file-down' }],
+      middleSecondaries: [
+        ...(input.canRestart && !input.summaryPanelOpen ? [{ id: 'restart' as const, label: 'Recomeçar', icon: 'rotate-ccw' as const }] : []),
+        { id: 'free_pdf', label: 'PDF grátis', icon: 'file-down' },
+      ],
       showPdfCircle: false,
       primary: {
         id: 'unlock_nome_social',
@@ -148,15 +153,31 @@ export function buildResultadoDockLayout(input: ResultadoDockInput): ResultadoDo
   return { screen: 'resultado', secondaries, primary };
 }
 
-/** Máximo 4 itens além do Voltar (centro + resumo + pdf). */
+/** A dock contextual só aparece quando há botões além da navegação global. */
+export function dockLayoutHasVisibleActions(
+  layout: MobileDockLayout,
+  options?: { pdfVisible?: boolean; pdfExiting?: boolean; readingVisible?: boolean }
+): boolean {
+  const secondaries = layout.screen === 'resultado' ? layout.secondaries : layout.middleSecondaries;
+  const hasPdf =
+    layout.screen !== 'resultado' &&
+    (Boolean(options?.pdfVisible) || Boolean(options?.pdfExiting));
+  return (
+    secondaries.length > 0 ||
+    Boolean(layout.primary) ||
+    hasPdf ||
+    Boolean(options?.readingVisible)
+  );
+}
+
+/** Máximo 4 ações contextuais (centro + pdf) na mesma barra. */
 export function assertDockItemLimit(layout: MobileDockLayout): void {
   if (layout.screen === 'resultado') {
     const count = layout.secondaries.length + 1;
     if (count > 4) throw new Error(`Dock excede 4 itens: ${count}`);
     return;
   }
-  const count =
-    layout.middleSecondaries.length + (layout.showPdfCircle ? 1 : 0) + 1;
+  const count = layout.middleSecondaries.length + (layout.showPdfCircle ? 1 : 0) + (layout.primary ? 1 : 0);
   if (count > 5) {
     throw new Error(`Dock chat excede limite de ações: ${count}`);
   }

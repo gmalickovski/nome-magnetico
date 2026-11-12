@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../../ui/Button.js';
+import { MapDownloadIcon } from '../MapDownloadIcon.js';
 
 export interface ChatFreePaywallBubbleProps {
   priceLabel: string;
@@ -36,13 +37,16 @@ export function ChatFreePaywallBubble({
         </p>
 
         <Button
-          variant="secondary"
-          size="md"
-          className="w-full rounded-full border border-[#D4AF37]/45 bg-transparent text-[#e5e2e1] hover:bg-[#D4AF37]/10"
+          variant="primary"
+          size="icon"
+          className="h-11 w-11 self-center rounded-full"
+          aria-label={pdfLoading ? 'Preparando PDF' : 'Baixar minha análise gratuita (PDF)'}
+          title="Baixar minha análise gratuita (PDF)"
+          aria-busy={pdfLoading}
           disabled={pdfLoading}
           onClick={onFreePdfClick}
         >
-          {pdfLoading ? 'Preparando PDF…' : 'Baixar minha análise gratuita (PDF)'}
+          <MapDownloadIcon className={pdfLoading ? 'motion-safe:animate-pulse' : ''} />
         </Button>
         <p className="text-center text-[11px] text-chat-muted leading-snug">
           Leitura do seu nome atual. Fica salva na sua conta.

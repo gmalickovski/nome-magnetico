@@ -2,11 +2,10 @@ import React from 'react';
 import type {
   ChatReadingSummary,
   RadarAxesData,
-  ReadingSummaryItem,
   ResultPanelData,
 } from './chat-types.js';
 import { ReadingRadar } from './ReadingRadar.js';
-import { SummaryCard } from './SummaryCard.js';
+
 import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
 import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
 import { ChatReadingSummaryPanel } from './ChatReadingSummaryPanel.js';
@@ -26,8 +25,6 @@ export interface ChatSidebarSectionProps {
   radarShowNumericLabels?: boolean;
   contextChips?: string[];
   showRadar: boolean;
-  summaryItems: ReadingSummaryItem[];
-  showSummary: boolean;
   readingSummary?: ChatReadingSummary | null;
   readingSummaryLoading?: boolean;
   showReadingSummary?: boolean;
@@ -48,8 +45,6 @@ export function ChatSidebarSection({
   radarShowNumericLabels = false,
   contextChips = [],
   showRadar,
-  summaryItems,
-  showSummary,
   readingSummary = null,
   readingSummaryLoading = false,
   showReadingSummary = false,
@@ -60,14 +55,16 @@ export function ChatSidebarSection({
   const hasReadingBlocks =
     showReadingSummary && (Boolean(readingSummary) || readingSummaryLoading);
 
-  if (!hasScore && !hasStar && !showRadar && !showSummary && !hasReadingBlocks) {
+  if (!hasScore && !hasStar && !showRadar && !hasReadingBlocks) {
     return null;
   }
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       {hasScore && birthPanel && (
-        <ChatHarmonyScoreCard birthPanel={birthPanel} harmonizedPanel={harmonizedPanel} />
+        <div id={isSuggestion && harmonizedPanel ? 'nm-reading-harmonized' : undefined}>
+          <ChatHarmonyScoreCard birthPanel={birthPanel} harmonizedPanel={harmonizedPanel} />
+        </div>
       )}
 
       {hasStar && birthPanel && (
@@ -111,7 +108,6 @@ export function ChatSidebarSection({
         </div>
       )}
 
-      {showSummary && summaryItems.length > 0 && <SummaryCard items={summaryItems} />}
 
       {hasReadingBlocks && (
         <ChatReadingSummaryPanel summary={readingSummary} loading={readingSummaryLoading} />
