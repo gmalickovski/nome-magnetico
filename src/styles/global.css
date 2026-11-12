@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
+@import './app-typography.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -556,13 +557,13 @@
   overflow: hidden;
   background: #1a1a1a;
 }
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .nm-chat-shell {
     left: 5rem;
   }
 }
-@media (max-width: 767px) {
-  /* /app mobile: dock flutuante única (nav global) */
+@media (max-width: 1023px) {
+  /* /app mobile + tablet: dock flutuante única (nav global); sidebar só a partir de lg */
   .nm-app-shell--with-mobile-dock {
     --nm-mobile-dock-margin: 12px;
     --nm-mobile-dock-bar-h: 3.5rem;
@@ -579,7 +580,7 @@
     bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Dock de ações (chat, resultado): colada no rodapé, sem nav global empilhada */
+  /* Navegação e ações contextuais compartilham uma única dock. */
   .nm-app-shell--with-mobile-dock .mobile-chat-dock-root {
     bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
   }
@@ -597,20 +598,130 @@
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .mobile-chat-dock-bar {
-    background: #131313 !important;
+  .mobile-chat-dock-bar,
+  .nm-mobile-dock-bar {
+    background: rgba(19, 19, 19, 0.95) !important;
+    backdrop-filter: none !important;
   }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-chat-dock-bar,
+  .nm-mobile-dock-bar {
+    background: #131313 !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .nm-app-mobile-dock.nm-mobile-dock--scrolling .nm-mobile-dock-bar,
+  .nm-app-mobile-dock.nm-mobile-dock--sheet-open .nm-mobile-dock-bar {
+    background: rgba(19, 19, 19, 0.72);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+.nm-dock-scroll-clearance {
+  scroll-padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 1023px) {
+  .nm-app-shell--with-mobile-dock {
+    --nm-dock-context-scroll-max: min(5.75rem, calc(100vw - 13.75rem));
+  }
+
+  @media (max-width: 360px) {
+    .nm-app-shell--with-mobile-dock {
+      --nm-dock-context-scroll-max: min(4.125rem, calc(100vw - 12.5rem));
+    }
+  }
+
+  .nm-dock-context-scroll {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nm-dock-context-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nm-dock-context-scroll .mobile-chat-dock-btn {
+    scroll-snap-align: start;
+  }
+
+  .nm-dock-scroll-outer--fade-start {
+    mask-image: linear-gradient(to right, transparent, #000 24px, #000);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000);
+  }
+
+  .nm-dock-scroll-outer--fade-end {
+    mask-image: linear-gradient(to left, transparent, #000 24px, #000);
+    -webkit-mask-image: linear-gradient(to left, transparent, #000 24px, #000);
+  }
+
+  .nm-dock-scroll-outer--fade-start.nm-dock-scroll-outer--fade-end {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent
+    );
+  }
+
+  html.nm-reading-panel-open .nm-app-mobile-dock:not(.nm-mobile-dock--keyboard-hidden) {
+    transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 16px));
+    pointer-events: none;
+    transition: transform 200ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.nm-reading-panel-open .nm-app-mobile-dock {
+      transition: none;
+    }
+    .nm-reading-sheet--open,
+    .nm-reading-sheet--closed,
+    .nm-reading-sheet-overlay--open,
+    .nm-reading-sheet-overlay--closed {
+      animation: none !important;
+    }
+  }
+}
+
+.mobile-chat-dock-pdf-circle:not(:disabled):hover,
+.mobile-chat-dock-pdf-circle:not(:disabled):active {
+  box-shadow: 0 0 12px rgba(242, 202, 80, 0.45);
 }
 
 @media (max-width: 767px) {
   @keyframes mobile-dock-btn-in {
     from {
       opacity: 0;
-      transform: translateY(6px) scale(0.9);
+      transform: translateX(8px);
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes mobile-dock-btn-out-x {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(8px);
     }
   }
 
@@ -624,11 +735,25 @@
   }
 
   .mobile-chat-dock-actions .mobile-chat-dock-btn {
-    animation: mobile-dock-btn-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: mobile-dock-btn-in 180ms ease-out both;
   }
 
   .mobile-chat-dock-actions--reduced .mobile-chat-dock-btn {
     animation: mobile-dock-btn-fade-in 120ms ease both;
+  }
+
+  .nm-dock-context-actions .mobile-chat-dock-btn--exit {
+    animation: mobile-dock-btn-out-x 120ms ease both;
+  }
+
+  .nm-mobile-dock--keyboard-hidden {
+    transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 24px));
+    pointer-events: none;
+    transition: transform 180ms ease-out;
+  }
+
+  .nm-app-mobile-dock:not(.nm-mobile-dock--keyboard-hidden) {
+    transition: transform 180ms ease-out;
   }
 
   @keyframes mobile-dock-btn-out {
@@ -760,43 +885,103 @@
     border-top-color: rgba(26, 26, 26, 0.92);
   }
 
-  @keyframes mobile-summary-enter {
+  @keyframes nm-reading-sheet-in {
     from {
-      opacity: 0;
-      transform: translateY(8px);
+      opacity: 1;
+      transform: translateY(100%);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(10%);
     }
   }
 
-  @keyframes mobile-summary-exit {
+  @keyframes nm-reading-sheet-out {
     from {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(10%);
     }
     to {
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(100%);
     }
+  }
+
+  @keyframes nm-reading-overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes nm-reading-sheet-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes nm-reading-sheet-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes nm-reading-badge-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.35);
+      opacity: 0.85;
+    }
+  }
+
+  .nm-reading-sheet {
+    pointer-events: auto;
+    transition: height 220ms ease-out, bottom 220ms ease-out, max-height 220ms ease-out;
+  }
+
+  .nm-reading-sheet--open:not(.nm-reading-sheet--reduced):not(.nm-reading-sheet--dragging) {
+    animation: nm-reading-sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+
+  .nm-reading-sheet--closed:not(.nm-reading-sheet--reduced):not(.nm-reading-sheet--dragging) {
+    animation: nm-reading-sheet-out 220ms ease-in both;
+  }
+
+  .nm-reading-sheet--open.nm-reading-sheet--reduced {
+    animation: nm-reading-sheet-fade-in 150ms ease both;
+  }
+
+  .nm-reading-sheet--closed.nm-reading-sheet--reduced {
+    animation: nm-reading-sheet-fade-out 150ms ease both;
+  }
+
+  .nm-reading-sheet-overlay--open {
+    animation: nm-reading-overlay-in 200ms ease both;
+  }
+
+  .nm-reading-sheet-overlay--closed {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .nm-reading-badge--pulse:not(.motion-reduce) {
+    animation: nm-reading-badge-pulse 600ms ease-out 1;
   }
 
   .mobile-summary-fullscreen {
     pointer-events: auto;
-  }
-
-  .mobile-summary-fullscreen--open:not(.mobile-summary-fullscreen--reduced) {
-    animation: mobile-summary-enter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  .mobile-summary-fullscreen--closed:not(.mobile-summary-fullscreen--reduced) {
-    animation: mobile-summary-exit 180ms ease both;
-  }
-
-  .mobile-summary-fullscreen--reduced.mobile-summary-fullscreen--open,
-  .mobile-summary-fullscreen--reduced.mobile-summary-fullscreen--closed {
-    animation: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -804,9 +989,14 @@
       animation: none;
     }
 
-    .mobile-summary-fullscreen--open,
-    .mobile-summary-fullscreen--closed {
+    .nm-reading-sheet--open,
+    .nm-reading-sheet--closed,
+    .nm-reading-badge--pulse {
       animation: none;
+    }
+
+    .nm-mobile-dock--keyboard-hidden {
+      transition: none;
     }
   }
 }
@@ -993,3 +1183,14 @@
 }
 
 
+
+/* DEV-273: acoes extras deslizam sem empurrar a navegacao ou a pagina. */
+.nm-mobile-dock-context {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.5) transparent;
+  scroll-padding-inline: 4px;
+}
+.nm-mobile-dock-context:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: -2px;
+}

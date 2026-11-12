@@ -142,7 +142,7 @@ export function FreePDFAutoGenerator({ existingAnalysisId, leadNome, leadData, a
         showFab={false}
         autoDownload={!!autoRun}
         label="Baixar Análise Gratuita"
-        className={autoRun ? 'hidden' : 'flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-full border border-[#0F766E]/30 bg-[#0F766E]/10 px-5 py-2.5 text-sm font-bold text-[#2DD4BF] transition-all duration-300 hover:bg-[#0F766E]/20 cursor-pointer'}
+        className={autoRun ? 'hidden' : 'flex-shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#D4AF37] p-0 text-[#131313] transition-colors duration-200 hover:bg-[#f2ca50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]'}
       />
     );
   }

@@ -1,23 +1,116 @@
-import { describe, it } from 'node:test';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+import { APP_CLIENT_NAV_LABELS } from './app-client-nav-shared.ts';
+
+mock.module('../../lib/auth-fetch.js', {
+  namedExports: {
+    fetchWithAuth: async () => {
+      throw new Error('Unexpected network in dock render test');
+    },
+  },
+});
+const { default: AppMobileDock } = await import('./AppMobileDock.tsx');
+const { MobileChatDock } = await import('./chat/MobileChatDock.tsx');
+import { buildResultadoDockLayout } from './chat/mobile-dock-screen.ts';
+
+const noop = () => {};
+
+const CLIENT_NAV_LABELS = [
+  APP_CLIENT_NAV_LABELS.inicio,
+  APP_CLIENT_NAV_LABELS.analises,
+  APP_CLIENT_NAV_LABELS.glossario,
+  APP_CLIENT_NAV_LABELS.suporte,
+];
 
 describe('AppMobileDock', () => {
-  it('monta um único MobileDockRoot (data-nm-mobile-dock) por render', () => {
-    const file = path.join(path.dirname(fileURLToPath(import.meta.url)), 'AppMobileDock.tsx');
-    const src = readFileSync(file, 'utf8');
-    assert.match(src, /MobileDockRoot/);
-    assert.doesNotMatch(src, /nm-app-mobile-dock-host/);
-    const rootOpens = src.match(/<MobileDockRoot/g) ?? [];
-    assert.ok(rootOpens.length >= 2, 'nav e action devem usar MobileDockRoot');
-    assert.doesNotMatch(src, /MOBILE_DOCK_ROOT_CLASS/);
+  it('mantém páginas globais e um único root também durante análise e resultado', () => {
+    for (const pathname of ['/app', '/app/analise/nome-social', '/app/resultado/x']) {
+      const html = renderToStaticMarkup(
+        React.createElement(AppMobileDock, { pathname, showAnalisesNav: true })
+      );
+      assert.equal((html.match(/data-nm-mobile-dock="single"/g) ?? []).length, 1);
+      for (const label of CLIENT_NAV_LABELS) {
+        assert.ok(html.includes('aria-label="' + label + '"'), label);
+      }
+      assert.doesNotMatch(html, /aria-label="Blog"/);
+      assert.doesNotMatch(html, /aria-label="Área do Analista"/);
+    }
   });
-
-  it('MobileChatDock no layout usa omitRoot (sem segundo root fixo)', () => {
-    const file = path.join(path.dirname(fileURLToPath(import.meta.url)), 'AppMobileDock.tsx');
-    const src = readFileSync(file, 'utf8');
-    assert.match(src, /omitRoot/);
+  it('ações incorporadas não criam outro shell nem controle lateral de resumo', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: false,
+      canRedo: false,
+      canDownloadPdf: true,
+      isFree: false,
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(MobileChatDock, {
+        omitRoot: true,
+        layout,
+        summaryPanelOpen: false,
+        summaryBadge: false,
+        onSecondary: noop,
+        onPrimary: noop,
+      })
+    );
+    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de leitura/);
+    assert.match(html, /aria-label="Baixar a análise em PDF"/);
+    assert.doesNotMatch(html, /aria-label="Mais ações"/);
+    assert.doesNotMatch(html, /aria-label="Voltar"/);
+    assert.doesNotMatch(html, /MobileSummaryToggle|aria-controls="mobile-reading-summary"/);
+  });
+  it('várias ações contextuais usam faixa rolável e CTA fixo', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: true,
+      canRedo: true,
+      canDownloadPdf: true,
+      isFree: false,
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(MobileChatDock, {
+        omitRoot: true,
+        layout,
+        summaryPanelOpen: false,
+        summaryBadge: false,
+        onSecondary: noop,
+        onPrimary: noop,
+      })
+    );
+    assert.match(html, /nm-dock-context-scroll/);
+    assert.match(html, /nm-dock-context-fixed/);
+    assert.match(html, /aria-label="Baixar a análise em PDF"/);
+    assert.match(html, /aria-label="Refazer análise"/);
+    assert.match(html, /data-dock-scroll-item/);
+    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root/);
+  });
+  it('exibe ação Abrir leitura na dock quando showReadingAction', () => {
+    const layout = buildResultadoDockLayout({
+      canShare: false,
+      canRedo: false,
+      canDownloadPdf: true,
+      isFree: false,
+    });
+    const html = renderToStaticMarkup(
+      React.createElement(MobileChatDock, {
+        omitRoot: true,
+        layout,
+        summaryPanelOpen: false,
+        summaryBadge: true,
+        showReadingAction: true,
+        onSecondary: noop,
+        onPrimary: noop,
+      })
+    );
+    assert.match(html, /aria-label="Abrir leitura"/);
+    assert.match(html, /data-nm-reading-trigger/);
+  });
+  it('não referencia controle lateral MobileSummaryToggle no layout', () => {
+    const src = readFileSync(new URL('./AppMobileDock.tsx', import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /MobileSummaryToggle/);
+    assert.match(src, /showReadingAction/);
+    assert.doesNotMatch(src, /DockContextOverflow/);
   });
 });

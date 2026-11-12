@@ -4,7 +4,10 @@ import { SuggestionPicker } from './SuggestionPicker.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { ChatSidebarPanelChrome } from './ChatSidebarPanelChrome.js';
 import { SummaryFab } from './SummaryFab.js';
-import { SummaryDrawer } from './SummaryDrawer.js';
+import {
+  MobileReadingBottomSheet,
+  type ReadingSheetSnap,
+} from './MobileReadingBottomSheet.js';
 import { ChatProgress } from './ChatProgress.js';
 
 export interface DemoChatScoresProps {
@@ -14,7 +17,7 @@ export interface DemoChatScoresProps {
 
 export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScoresProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [readingSnap, setReadingSnap] = useState<ReadingSheetSnap>('closed');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const active = suggestions.find((s) => s.id === selectedId);
 
@@ -31,8 +34,6 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
       onResetToBase={() => setSelectedId(null)}
       radarAxes={null}
       showRadar={false}
-      summaryItems={[]}
-      showSummary={false}
     />
   );
 
@@ -72,13 +73,12 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
         </aside>
       </div>
 
-      <SummaryFab visible count={summaryCount} onClick={() => setDrawerOpen(true)} />
+      <SummaryFab visible count={summaryCount} onClick={() => setReadingSnap('half')} />
 
-      <SummaryDrawer
-        isOpen={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-        }}
+      <MobileReadingBottomSheet
+        snap={readingSnap}
+        onSnapChange={setReadingSnap}
+        onClose={() => setReadingSnap('closed')}
         birthPanel={birthPanel}
         harmonizedPanel={active?.panel ?? null}
         showScoreCard
@@ -87,9 +87,7 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
         isSuggestion={Boolean(selectedId)}
         onResetToBase={() => setSelectedId(null)}
         radarAxes={null}
-        summaryItems={[]}
         showRadar={false}
-        showSummary={false}
       />
     </div>
   );

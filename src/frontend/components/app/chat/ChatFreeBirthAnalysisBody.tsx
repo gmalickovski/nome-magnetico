@@ -1,15 +1,13 @@
 import React from 'react';
-import type { ReadingSummaryItem, ResultPanelData } from './chat-types.js';
+import type { ResultPanelData } from './chat-types.js';
 import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
 import { HarmonyScoreRow, HarmonyScoreStack } from '../../landing/ProductResultFrame.js';
-import { SummaryCard } from './SummaryCard.js';
 
 export interface ChatFreeBirthAnalysisBodyProps {
   panel: ResultPanelData;
-  highlights: ReadingSummaryItem[];
 }
 
-export function ChatFreeBirthAnalysisBody({ panel, highlights }: ChatFreeBirthAnalysisBodyProps) {
+export function ChatFreeBirthAnalysisBody({ panel }: ChatFreeBirthAnalysisBodyProps) {
   return (
     <div className="flex flex-col gap-4 mt-2">
       <HarmonyScoreStack>
@@ -17,12 +15,6 @@ export function ChatFreeBirthAnalysisBody({ panel, highlights }: ChatFreeBirthAn
       </HarmonyScoreStack>
 
       <ChatHarmonyStarPanel birthPanel={panel} harmonizedPanel={null} isSuggestion={false} />
-
-      {highlights.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-          <SummaryCard items={highlights} />
-        </div>
-      )}
     </div>
   );
 }
