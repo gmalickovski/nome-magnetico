@@ -190,6 +190,8 @@ export interface DecideLiveResponse {
   readingSummary?: ChatReadingSummary;
   panel?: ResultPanelData;
   previewTop3: CandidateSuggestion[];
+  semOpcoesElegiveis?: boolean;
+  scoreNascimento?: number;
   analysisId?: string;
   next_question?: NextQuestionSpec;
   providerUsed?: string;

@@ -187,7 +187,7 @@ describe('DEV-266 · PDF integração offline', () => {
   });
 
   it('ranking somente chat não gera sugestões extras do motor', () => {
-    const ordem = ['Maria Silva Vale', 'Alexandra M. Vale', 'Alêxandra Mendes'];
+    const ordem = ['Aléxandra Mendes', 'Álexandra Mendes Vale', 'Alexxandra Mendes'];
     const resultado = analisarNomesSocial(ordem, profile.nomeCompleto, profile.dataNascimentoPt, {
       somenteCandidatosInformados: true,
     });

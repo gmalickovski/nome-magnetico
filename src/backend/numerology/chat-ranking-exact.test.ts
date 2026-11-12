@@ -20,12 +20,12 @@ describe('ranking somente chat — lista exata', () => {
 
   it('6 sugestões permanecem 6 (sem unshift de assinatura_atual)', () => {
     const ordem = [
-      'Ana Vale Silva',
-      'Ana V. Silva',
-      'Ana Silva Vale',
-      'Maria Ana Vale',
-      'Ana M. Silva',
-      'Ana Silva Santos',
+      'Maria Santos',
+      'Maria',
+      'Mãria Santos',
+      'Mariã Santos',
+      'Maria Santôs',
+      'Maria Sãntos',
     ];
     const res = analisarNomesSocial(ordem, birth, date, {
       somenteCandidatosInformados: true,
