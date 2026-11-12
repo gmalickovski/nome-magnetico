@@ -29,10 +29,11 @@ export function ResultadoMobileDock({
   );
 
   const handleSecondary = async (action: DockSecondaryActionId, position: number) => {
-    capturePostHogEvent('dock_action_clicked', {
-      screen: 'resultado',
-      action,
+    capturePostHogEvent('dock_item_click', {
+      item: action,
       position,
+      visible_without_scroll: true,
+      surface: 'resultado',
     });
 
     if (action === 'share') {
@@ -58,18 +59,21 @@ export function ResultadoMobileDock({
   };
 
   const handlePrimary = (action: DockPrimaryActionId) => {
-    capturePostHogEvent('dock_primary_clicked', {
-      screen: 'resultado',
-      action,
-      is_free: isFree,
-    });
-
     if (action === 'unlock_nome_social') {
+      capturePostHogEvent('primary_cta_click', {
+        cta: 'unlock',
+        location: 'dock',
+        surface: 'resultado',
+      });
       window.location.href = '/comprar?produto=nome_social&utm_source=app_dock';
       return;
     }
     if (action === 'download_pdf' && analysisId) {
-      capturePostHogEvent('pdf_download_click', { location: 'dock', surface: 'resultado' });
+      capturePostHogEvent('primary_cta_click', {
+        cta: 'pdf',
+        location: 'dock',
+        surface: 'resultado',
+      });
       window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
     }
   };

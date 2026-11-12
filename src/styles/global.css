@@ -626,6 +626,77 @@
   scroll-padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+@media (max-width: 1023px) {
+  .nm-app-shell--with-mobile-dock {
+    --nm-dock-context-scroll-max: min(5.75rem, calc(100vw - 13.75rem));
+  }
+
+  @media (max-width: 360px) {
+    .nm-app-shell--with-mobile-dock {
+      --nm-dock-context-scroll-max: min(4.125rem, calc(100vw - 12.5rem));
+    }
+  }
+
+  .nm-dock-context-scroll {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nm-dock-context-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nm-dock-context-scroll .mobile-chat-dock-btn {
+    scroll-snap-align: start;
+  }
+
+  .nm-dock-scroll-outer--fade-start {
+    mask-image: linear-gradient(to right, transparent, #000 24px, #000);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000);
+  }
+
+  .nm-dock-scroll-outer--fade-end {
+    mask-image: linear-gradient(to left, transparent, #000 24px, #000);
+    -webkit-mask-image: linear-gradient(to left, transparent, #000 24px, #000);
+  }
+
+  .nm-dock-scroll-outer--fade-start.nm-dock-scroll-outer--fade-end {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 24px,
+      #000 calc(100% - 24px),
+      transparent
+    );
+  }
+
+  html.nm-reading-panel-open .nm-app-mobile-dock:not(.nm-mobile-dock--keyboard-hidden) {
+    transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 16px));
+    pointer-events: none;
+    transition: transform 200ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.nm-reading-panel-open .nm-app-mobile-dock {
+      transition: none;
+    }
+    .nm-reading-sheet--open,
+    .nm-reading-sheet--closed,
+    .nm-reading-sheet-overlay--open,
+    .nm-reading-sheet-overlay--closed {
+      animation: none !important;
+    }
+  }
+}
+
 .mobile-chat-dock-pdf-circle:not(:disabled):hover,
 .mobile-chat-dock-pdf-circle:not(:disabled):active {
   box-shadow: 0 0 12px rgba(242, 202, 80, 0.45);
