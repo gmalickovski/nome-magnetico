@@ -503,18 +503,20 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
     const bloqueiosVida = bloqueios.filter(b => b.triangulos?.includes('vida'));
     return (
       <div className="space-y-5 text-left">
-        <div className="nm-floating-tile p-4 flex items-start gap-3 sm:gap-4">
-          <TrianguloVidaIcon />
-          <div className="min-w-0 space-y-2 text-left">
-            <span className="inline-flex items-center rounded-full bg-[#D4AF37]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#D4AF37] ring-1 ring-[#D4AF37]/25">
-              Entra no cálculo do Score Cabalístico
-            </span>
-            <p className="nm-card-text">
-              {descricaoDetalhada?.vida ?? getDescricao('vida', productType)}
-            </p>
-            <p className="text-xs text-[#e5e2e1]/60 leading-relaxed text-left">
-              Os triângulos Pessoal, Social e do Destino estão no seu PDF completo.
-            </p>
+        <div className="nm-floating-tile nm-vida-intro-container p-4">
+          <div className="nm-vida-intro-layout">
+            <TrianguloVidaIcon />
+            <div className="min-w-0 space-y-2 text-left">
+              <span className="inline-flex items-center rounded-full bg-[#D4AF37]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#D4AF37] ring-1 ring-[#D4AF37]/25">
+                Entra no cálculo do Score Cabalístico
+              </span>
+              <p className="nm-card-text">
+                {descricaoDetalhada?.vida ?? getDescricao('vida', productType)}
+              </p>
+              <p className="text-xs text-[#e5e2e1]/60 leading-relaxed text-left">
+                Os triângulos Pessoal, Social e do Destino estão no seu PDF completo.
+              </p>
+            </div>
           </div>
         </div>
 

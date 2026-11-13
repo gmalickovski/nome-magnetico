@@ -57,3 +57,22 @@
 .nm-app-shell--with-mobile-dock #desktop-summary-title[data-expanded="true"] {
   font-size: var(--nm-type-h3);
 }
+
+.nm-vida-intro-container {
+  container-type: inline-size;
+}
+
+.nm-vida-intro-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+@container (min-width: 26.25rem) {
+  .nm-vida-intro-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
