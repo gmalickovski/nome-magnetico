@@ -164,6 +164,19 @@ export function MobileReadingBottomSheet({
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }, []);
 
+  const onHandlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (dragStartY.current == null) return;
+    const delta = e.clientY - dragStartY.current;
+    setDragOffset(delta > 0 ? delta : 0);
+  }, []);
+
+  const onHandlePointerCancel = useCallback(() => {
+    dragStartY.current = null;
+    dragStartT.current = null;
+    setDragging(false);
+    setDragOffset(0);
+  }, []);
+
   const onHandlePointerUp = useCallback(
     (e: React.PointerEvent) => {
       if (dragStartY.current == null) return;
@@ -247,7 +260,9 @@ export function MobileReadingBottomSheet({
         <div
           className="flex h-11 w-full shrink-0 touch-none items-center justify-center"
           onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
           onPointerUp={onHandlePointerUp}
+          onPointerCancel={onHandlePointerCancel}
           aria-hidden="true"
         >
           <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" style={{ width: 36, height: 4 }} />

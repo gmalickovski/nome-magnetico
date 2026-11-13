@@ -199,7 +199,9 @@ export function MobileChatDock({
 
   const content = (
     <div
-      className={`flex min-w-0 max-w-full flex-1 items-center gap-1 nm-dock-context-actions ${
+      className={`${
+        omitRoot ? 'inline-flex min-w-0 shrink' : 'flex min-w-0 max-w-full flex-1'
+      } items-center gap-1 nm-dock-context-actions ${
         reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
       }`}
     >
@@ -207,9 +209,9 @@ export function MobileChatDock({
         <DockContextScrollStrip ref={scrollStripRef} surface={surface} activeItemSelector={activeSelector}>
           {scrollable.map((item, index) => renderAction(item, index, true))}
         </DockContextScrollStrip>
-      ) : (
+      ) : !omitRoot ? (
         <span className="min-w-0 flex-1" aria-hidden="true" />
-      )}
+      ) : null}
       {fixed.length > 0 ? (
         <div className="nm-dock-context-fixed inline-flex shrink-0 items-center gap-1">
           {fixed.map((item, index) => renderAction(item, scrollable.length + index, false))}

@@ -703,7 +703,7 @@
   box-shadow: 0 0 12px rgba(242, 202, 80, 0.45);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   @keyframes mobile-dock-btn-in {
     from {
       opacity: 0;
@@ -893,14 +893,14 @@
     }
     to {
       opacity: 1;
-      transform: translateY(10%);
+      transform: translateY(0);
     }
   }
 
   @keyframes nm-reading-sheet-out {
     from {
       opacity: 1;
-      transform: translateY(10%);
+      transform: translateY(0);
     }
     to {
       opacity: 0;

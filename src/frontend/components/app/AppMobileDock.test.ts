@@ -113,4 +113,21 @@ describe('AppMobileDock', () => {
     assert.match(src, /showReadingAction/);
     assert.doesNotMatch(src, /DockContextOverflow/);
   });
+  it('mantém medição intrínseca na innerRef para expandir ao receber ações contextuais', () => {
+    const dockSrc = readFileSync(new URL('./AppMobileDock.tsx', import.meta.url), 'utf8');
+    const chatDockSrc = readFileSync(new URL('./chat/MobileChatDock.tsx', import.meta.url), 'utf8');
+    assert.match(dockSrc, /ref=\{innerRef\} className=\{`\$\{barClassName\} items-center`\}/);
+    assert.doesNotMatch(dockSrc, /ref=\{innerRef\}[^>\n]*w-full/);
+    assert.match(dockSrc, /nm-mobile-dock-context min-w-0 shrink overflow-hidden/);
+    assert.match(chatDockSrc, /omitRoot \? 'inline-flex min-w-0 shrink'/);
+  });
+  it('bottom sheet mobile abre em translateY(0), suporta drag contínuo e animação cobre até 1023px', () => {
+    const sheetSrc = readFileSync(new URL('./chat/MobileReadingBottomSheet.tsx', import.meta.url), 'utf8');
+    const cssSrc = readFileSync(new URL('../../../styles/global.css', import.meta.url), 'utf8');
+    assert.match(sheetSrc, /onPointerMove=\{onHandlePointerMove\}/);
+    assert.match(sheetSrc, /onPointerCancel=\{onHandlePointerCancel\}/);
+    assert.match(cssSrc, /@media \(max-width: 1023px\)/);
+    assert.match(cssSrc, /@keyframes nm-reading-sheet-in[\s\S]*?translateY\(0\)/);
+    assert.match(cssSrc, /@keyframes nm-reading-sheet-out[\s\S]*?translateY\(0\)/);
+  });
 });
