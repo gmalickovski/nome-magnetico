@@ -171,4 +171,18 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(chatSrc, /if \(msg\.id\.startsWith\('sug-choice-'\)\) return null;/);
     assert.match(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"\s+className="!max-w-full"/);
   });
+
+  it('painel lateral desktop usa título Painel de análise e bolinha dourada condicional na seleção', () => {
+    const chromeFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarPanelChrome.tsx');
+    const chromeSrc = readFileSync(chromeFile, 'utf8');
+    assert.match(chromeSrc, /hasSelection\s*=\s*false/);
+    assert.match(chromeSrc, /\{hasSelection\s*&&\s*\(/);
+    assert.match(chromeSrc, /data-nm-selection-dot="true"/);
+    assert.match(chromeSrc, /Painel de análise/);
+    assert.doesNotMatch(chromeSrc, /Painel de leitura/i);
+
+    const chatFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
+    const chatSrc = readFileSync(chatFile, 'utf8');
+    assert.match(chatSrc, /<ChatSidebarPanelChrome[\s\S]*?hasSelection=\{Boolean\(activeSuggestionId\)\}/);
+  });
 });

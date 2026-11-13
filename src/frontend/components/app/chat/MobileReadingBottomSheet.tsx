@@ -297,7 +297,7 @@ export function MobileReadingBottomSheet({
                 tabIndex={-1}
                 className="font-cinzel text-base font-bold uppercase tracking-[0.12em] text-[#D4AF37] truncate"
               >
-                Painel de leitura
+                Painel de análise
               </h2>
             )}
           </div>
@@ -305,7 +305,7 @@ export function MobileReadingBottomSheet({
             <button
               type="button"
               onClick={() => onClose('x')}
-              aria-label={showCardHeader ? 'Fechar leitura' : 'Fechar painel de leitura'}
+              aria-label="Fechar painel de análise"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1c1c1c] text-[#E5E2E1] hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
             >
               <IconX className="h-4 w-4" />

@@ -56,7 +56,7 @@ describe('AppMobileDock', () => {
         onPrimary: noop,
       })
     );
-    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de leitura/);
+    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de análise|Painel de leitura/);
     assert.match(html, /aria-label="Baixar a análise em PDF"/);
     assert.doesNotMatch(html, /aria-label="Mais ações"/);
     assert.doesNotMatch(html, /aria-label="Voltar"/);
@@ -86,7 +86,7 @@ describe('AppMobileDock', () => {
     assert.match(html, /data-dock-scroll-item/);
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root/);
   });
-  it('exibe ação Abrir leitura na dock quando showReadingAction', () => {
+  it('exibe ação Abrir painel de análise na dock quando showReadingAction', () => {
     const layout = buildResultadoDockLayout({
       canShare: false,
       canRedo: false,
@@ -104,7 +104,7 @@ describe('AppMobileDock', () => {
         onPrimary: noop,
       })
     );
-    assert.match(html, /aria-label="Abrir leitura"/);
+    assert.match(html, /aria-label="Abrir painel de análise"/);
     assert.match(html, /data-nm-reading-trigger/);
   });
   it('não referencia controle lateral MobileSummaryToggle no layout', () => {

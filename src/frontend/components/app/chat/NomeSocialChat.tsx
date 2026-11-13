@@ -2330,6 +2330,7 @@ export function NomeSocialChat({
         >
           <ChatSidebarPanelChrome
             expanded={sidebarExpanded}
+            hasSelection={Boolean(activeSuggestionId)}
             onToggleExpand={() => setSidebarExpanded((v) => !v)}
           >
             {sidebarSection}

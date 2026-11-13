@@ -3,6 +3,7 @@ import React, { type ReactNode } from 'react';
 export interface ChatSidebarPanelChromeProps {
   expanded: boolean;
   onToggleExpand: () => void;
+  hasSelection?: boolean;
   children: ReactNode;
   className?: string;
 }
@@ -10,6 +11,7 @@ export interface ChatSidebarPanelChromeProps {
 export function ChatSidebarPanelChrome({
   expanded,
   onToggleExpand,
+  hasSelection = false,
   children,
   className = '',
 }: ChatSidebarPanelChromeProps) {
@@ -20,16 +22,19 @@ export function ChatSidebarPanelChrome({
         {(() => {
           const titleNode = (
             <div className="flex items-center gap-2.5 min-w-0 pr-10">
-              <span
-                className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
-                aria-hidden="true"
-              />
+              {hasSelection && (
+                <span
+                  data-nm-selection-dot="true"
+                  className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
+                  aria-hidden="true"
+                />
+              )}
               <h2
                 id="desktop-summary-title"
                 data-expanded={expanded ? 'true' : 'false'}
                 className="font-cinzel font-bold uppercase tracking-[0.1em] text-[#e5e2e1] text-left break-words whitespace-normal leading-snug min-w-0"
               >
-                Painel de leitura
+                Painel de análise
               </h2>
             </div>
           );
@@ -45,8 +50,8 @@ export function ChatSidebarPanelChrome({
           type="button"
           onClick={onToggleExpand}
           className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
-          title={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de leitura'}
-          aria-label={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de leitura'}
+          title={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de análise'}
+          aria-label={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de análise'}
         >
           {expanded ? (
             /* Ícone de fechar/recolher: setas apontando para dentro */
