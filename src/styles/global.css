@@ -578,6 +578,7 @@
 
   .nm-app-shell--with-mobile-dock .nm-app-mobile-dock {
     bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
+    z-index: 80;
   }
 
   /* Navegação e ações contextuais compartilham uma única dock. */

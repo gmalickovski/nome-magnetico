@@ -222,9 +222,10 @@ export function MobileReadingBottomSheet({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className={`nm-reading-sheet-overlay fixed inset-0 bg-black/50 lg:hidden z-[${MOBILE_READING_OVERLAY_Z_INDEX}] ${
+        className={`nm-reading-sheet-overlay fixed inset-0 bg-black/50 lg:hidden z-[55] ${
           entered ? 'nm-reading-sheet-overlay--open' : 'nm-reading-sheet-overlay--closed'
         } ${reduced ? 'nm-reading-sheet--reduced' : ''}`}
+        style={{ zIndex: MOBILE_READING_OVERLAY_Z_INDEX }}
         onClick={() => onClose('backdrop')}
       />
       <div
@@ -233,10 +234,11 @@ export function MobileReadingBottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="mobile-summary-title"
-        className={`nm-reading-sheet fixed inset-x-0 bottom-0 flex flex-col overflow-hidden bg-[#1C1C1C] text-[#E5E2E1] lg:hidden rounded-t-2xl z-[${MOBILE_READING_SHEET_Z_INDEX}] ${
+        className={`nm-reading-sheet fixed inset-x-0 bottom-0 flex flex-col overflow-hidden bg-[#1C1C1C] text-[#E5E2E1] lg:hidden rounded-t-2xl z-[60] ${
           entered ? 'nm-reading-sheet--open' : 'nm-reading-sheet--closed'
         } ${reduced ? 'nm-reading-sheet--reduced' : ''} ${dragging ? 'nm-reading-sheet--dragging' : ''}`}
         style={{
+          zIndex: MOBILE_READING_SHEET_Z_INDEX,
           height: sheetHeight,
           maxHeight: sheetHeight,
           transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
