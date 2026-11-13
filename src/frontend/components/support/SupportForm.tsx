@@ -54,7 +54,7 @@ export function SupportForm() {
         <div className="text-4xl mb-4">✅</div>
         <h3 className="font-cinzel text-xl font-bold text-white mb-2">Mensagem enviada!</h3>
         <p className="text-gray-400 text-sm">
-          Nossa equipe responderá em breve. Acompanhe pelo chat no canto da tela.
+          Nossa equipe responderá em breve. Acompanhe pelo seu chamado e pelo seu e-mail.
         </p>
         <button
           onClick={() => {

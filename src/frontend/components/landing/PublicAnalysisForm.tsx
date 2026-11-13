@@ -276,7 +276,7 @@ export function PublicAnalysisForm() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 shrink-0">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span>PDF completo de 9 páginas enviado para {submittedEmail || 'seu e-mail'}</span>
+              <span>Relatório em PDF enviado para {submittedEmail || 'seu e-mail'}</span>
             </div>
 
             <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] text-center mb-2">
@@ -313,7 +313,7 @@ export function PublicAnalysisForm() {
                 </div>
 
                 <p className="text-sm text-gray-300 text-center leading-relaxed">
-                  Enquanto o PDF detalhado chega na sua caixa de entrada, veja como criamos 3 opções de assinatura magnética prontas para destravar o seu potencial máximo.
+                  Enquanto o PDF detalhado chega na sua caixa de entrada, veja como geramos variações de assinatura magnética rankeadas acima da sua nota atual para destravar o seu potencial máximo.
                 </p>
 
                 <div className="space-y-3 pt-1">
