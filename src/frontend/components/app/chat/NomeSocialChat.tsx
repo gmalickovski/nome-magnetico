@@ -257,8 +257,7 @@ export function NomeSocialChat({
   const openSheetAfterCardTapRef = useRef<string | null>(null);
   const mobileKeyboardOpen = useMobileKeyboardOpen();
   const drawerOpen = readingSnap !== 'closed';
-  const [summaryBadge, setSummaryBadge] = useState(false);
-  const lastSummarySnapshotRef = useRef<string>('');
+  const mobileSelectionBadge = Boolean(activeSuggestionId);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [draftGender, setDraftGender] = useState(initialProfileGender);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
@@ -1845,23 +1844,6 @@ export function NomeSocialChat({
     return undefined;
   }, [pdfCtaModel.visible]);
 
-  const summarySnapshot = [
-    summaryCount,
-    activeSuggestionId ?? '',
-    basePanel?.score ?? '',
-    activeSuggestion?.score ?? '',
-    showRadarPanel ? 'r' : '',
-  ].join(':');
-
-  useEffect(() => {
-    if (!birthConfirmed || !basePanel) return;
-    const prev = lastSummarySnapshotRef.current;
-    if (prev && prev !== summarySnapshot && !drawerOpen) {
-      setSummaryBadge(true);
-    }
-    lastSummarySnapshotRef.current = summarySnapshot;
-  }, [summarySnapshot, drawerOpen, birthConfirmed, basePanel]);
-
   const openSummaryPanel = (opts?: {
     trigger?: 'manual' | 'auto_card_tap';
     namePosition?: number;
@@ -1876,8 +1858,19 @@ export function NomeSocialChat({
     readingOpenTriggerRef.current = trigger;
     readingOpenedAtRef.current = Date.now();
     readingMaxScrollRef.current = 0;
-    if (opts?.cardHeader) setSheetHeaderFromCard(opts.cardHeader);
-    else if (trigger === 'manual') setSheetHeaderFromCard(null);
+    if (opts?.cardHeader) {
+      setSheetHeaderFromCard(opts.cardHeader);
+    } else if (trigger === 'manual') {
+      if (activeSuggestion && basePanel) {
+        setSheetHeaderFromCard({
+          suggestedName: activeSuggestion.nome,
+          chosenScore: activeSuggestion.score,
+          baseScore: basePanel.score,
+        });
+      } else {
+        setSheetHeaderFromCard(null);
+      }
+    }
     setScrollHarmonizedOnEnter(Boolean(opts?.scrollHarmonized));
     if (!drawerOpen) {
       capturePostHogEvent('summary_drawer_opened', {
@@ -1889,7 +1882,6 @@ export function NomeSocialChat({
         time_open_ms: 0,
         max_scroll_pct: 0,
       });
-      setSummaryBadge(false);
     }
     setReadingSnap((prev) => (prev === 'closed' ? 'full' : prev));
   };
@@ -2064,7 +2056,7 @@ export function NomeSocialChat({
             <>
               {mobileKeyboardOpen && showReadingAction ? (
                 <ChatReadingHeaderTrigger
-                  badge={summaryBadge}
+                  badge={mobileSelectionBadge}
                   onOpen={openSummaryPanel}
                 />
               ) : null}
@@ -2359,11 +2351,9 @@ export function NomeSocialChat({
         layout={chatDockLayout}
         summaryPanelOpen={drawerOpen}
         restartExitActive={restartExitActive}
-        summaryBadge={summaryBadge}
+        summaryBadge={mobileSelectionBadge}
         showReadingAction={showReadingAction}
-        pdfModel={freePaywallActive ? null : pdfCtaModel}
-        pdfExiting={pdfCircleExiting}
-        onPdfClick={freePaywallActive ? undefined : onPdfDockClick}
+        pdfModel={null}
         onSecondary={handleDockSecondary}
         onPrimary={handleDockPrimary}
       />

@@ -72,9 +72,13 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   useMobileDockScrollFade(dockRootRef, !keyboardOpen);
   const reduced = prefersReducedMotion();
   const navMeasureKey = items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|');
+  const contextLayout = action?.state.layout ?? null;
+  const showReadingAction = Boolean(action?.state.showReadingAction);
   const measureKey =
     navMeasureKey +
-    JSON.stringify(action?.state.layout ?? null) +
+    JSON.stringify(contextLayout) +
+    (showReadingAction ? '|read' : '') +
+    (action?.state.summaryBadge ? '|badge' : '') +
     (action?.state.pdfModel?.visible ? '|pdf' : '') +
     (action?.state.pdfExiting ? '|pdf-exit' : '');
   const { innerRef, widthPx } = useDockBarWidth(measureKey);
@@ -84,8 +88,6 @@ export default function AppMobileDock(props: AppMobileDockProps) {
     assertSingleMobileDockRoot();
   });
 
-  const contextLayout = action?.state.layout ?? null;
-  const showReadingAction = Boolean(action?.state.showReadingAction);
   const showContextActions =
     contextLayout &&
     dockLayoutHasVisibleActions(contextLayout, {

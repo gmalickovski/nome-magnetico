@@ -130,4 +130,21 @@ describe('AppMobileDock', () => {
     assert.match(cssSrc, /@keyframes nm-reading-sheet-in[\s\S]*?translateY\(0\)/);
     assert.match(cssSrc, /@keyframes nm-reading-sheet-out[\s\S]*?translateY\(0\)/);
   });
+  it('chat mobile expande dock sem trava 5.75rem, move CTA Gerar análise para pílula no rodapé do painel e mantém badge enquanto houver seleção', () => {
+    const chatSrc = readFileSync(new URL('./chat/NomeSocialChat.tsx', import.meta.url), 'utf8');
+    const sheetSrc = readFileSync(new URL('./chat/MobileReadingBottomSheet.tsx', import.meta.url), 'utf8');
+    const cssSrc = readFileSync(new URL('../../../styles/global.css', import.meta.url), 'utf8');
+    const stripSrc = readFileSync(new URL('./chat/DockContextScrollStrip.tsx', import.meta.url), 'utf8');
+
+    assert.match(cssSrc, /--nm-dock-context-scroll-max:\s*100%/);
+    assert.doesNotMatch(cssSrc, /min\(5\.75rem/);
+    assert.doesNotMatch(stripSrc, /endSentinelRef.*pr-5/);
+
+    assert.match(chatSrc, /mobileSelectionBadge\s*=\s*Boolean\(activeSuggestionId\)/);
+    assert.match(chatSrc, /<MobileDockActionBridge[\s\S]*?summaryBadge=\{mobileSelectionBadge\}[\s\S]*?pdfModel=\{null\}/);
+    assert.match(chatSrc, /openSheetAfterCardTapRef\.current\s*=\s*id/);
+
+    assert.match(sheetSrc, /Gerar análise/);
+    assert.doesNotMatch(sheetSrc, /ChatPdfDockCircle/);
+  });
 });

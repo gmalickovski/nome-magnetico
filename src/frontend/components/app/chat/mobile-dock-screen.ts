@@ -116,7 +116,7 @@ export function buildChatDockLayout(screen: ChatDockScreen, input: ChatDockInput
   return {
     screen: 'chat_suggestions',
     middleSecondaries,
-    showPdfCircle: input.suggestionSelected,
+    showPdfCircle: false,
   };
 }
 

@@ -184,8 +184,8 @@ export function MobileChatDock({
         <Icon className="h-5 w-5 shrink-0" />
         {item.badge && (
           <span
-            aria-label="Leitura atualizada"
-            className={`nm-reading-badge absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#D4AF37] motion-reduce:animate-none${
+            aria-label="Nome selecionado no painel"
+            className={`nm-reading-badge absolute right-2 top-2 h-2 w-2 rounded-full bg-[#f2ca50] ring-[1.5px] ring-[#131313] motion-reduce:animate-none${
               readingBadgePulse && item.kind === 'reading' ? ' nm-reading-badge--pulse' : ''
             }`}
           />

@@ -629,13 +629,7 @@
 
 @media (max-width: 1023px) {
   .nm-app-shell--with-mobile-dock {
-    --nm-dock-context-scroll-max: min(5.75rem, calc(100vw - 13.75rem));
-  }
-
-  @media (max-width: 360px) {
-    .nm-app-shell--with-mobile-dock {
-      --nm-dock-context-scroll-max: min(4.125rem, calc(100vw - 12.5rem));
-    }
+    --nm-dock-context-scroll-max: 100%;
   }
 
   .nm-dock-context-scroll {
