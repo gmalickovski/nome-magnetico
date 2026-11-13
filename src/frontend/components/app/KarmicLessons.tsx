@@ -65,12 +65,9 @@ export default function KarmicLessons({ licoes, nomeCompleto, showSolution = tru
 
   return (
     <div className="space-y-4 text-left">
-      <div className="nm-floating-tile p-4 text-left">
-        <p className="nm-card-text">
-          <strong className="text-[#D4AF37]">{licoes.length} {licoes.length === 1 ? 'Lição Kármica' : 'Lições Kármicas'}</strong> — números ausentes de 1 a 9 no nome de {primeiroNome}.
-          Cada ausência indica uma qualidade a ser desenvolvida nesta encarnação.
-        </p>
-      </div>
+      <p className="nm-card-text">
+        Lições Kármicas correspondem aos números de 1 a 9 que estão ausentes nas letras do nome completo. Cada ausência revela uma qualidade ou habilidade pouco exercitada no passado e que agora pede desenvolvimento consciente ao longo desta jornada.
+      </p>
 
       {licoes.map((l, i) => <LicaoCard key={i} licao={l} showSolution={showSolution} />)}
 

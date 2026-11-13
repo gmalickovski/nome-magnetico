@@ -3,18 +3,20 @@ import React from 'react';
 export interface ReadingTopicCardProps {
   eyebrow: string;
   title?: string;
+  count?: number;
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
 }
 
 /**
- * Container padrão dos assuntos no Painel de Leitura, espelhando `.nm-floating-card`
+ * Container padrão dos assuntos no Painel de Análise, espelhando `.nm-floating-card`
  * da landing page (`#1c1c1c`, borda sutil e sombra flutuante em camadas).
  */
 export function ReadingTopicCard({
   eyebrow,
   title,
+  count,
   subtitle,
   children,
   className = '',
@@ -28,6 +30,9 @@ export function ReadingTopicCard({
         {title && (
           <h3 className="font-cinzel font-bold text-[#e5e2e1] leading-snug break-words text-left">
             {title}
+            {typeof count === 'number' && (
+              <span className="text-[#f2ca50]"> = {count}</span>
+            )}
           </h3>
         )}
         {subtitle && (

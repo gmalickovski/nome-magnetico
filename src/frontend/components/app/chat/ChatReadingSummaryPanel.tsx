@@ -10,7 +10,7 @@ import ReadingTopicCard from './ReadingTopicCard.js';
 function buildTrianguloDesc(nomeExibido: string): Record<string, string> {
   const primeiroNome = nomeExibido.split(' ')[0] ?? nomeExibido;
   return {
-    vida: `Vibração base de cada letra — padrões gerais de existência e vitalidade de ${primeiroNome}.`,
+    vida: `O Triângulo da Vida é a pirâmide principal formada pelos valores de cada letra do nome de ${primeiroNome}, revelando padrões gerais de existência, vitalidade e eventuais travamentos.`,
     pessoal: `Letra + dia de nascimento — dimensão íntima e reações internas de ${primeiroNome}.`,
     social: `Letra + mês de nascimento — como o mundo percebe ${primeiroNome} nas interações externas.`,
     destino: `Letra + dia/mês reduzidos — missão, resultados e colheita ao longo da vida de ${primeiroNome}.`,
@@ -79,7 +79,14 @@ export function ChatReadingSummaryPanel({
       </ReadingTopicCard>
 
       {bloqueios.length > 0 && (
-        <ReadingTopicCard eyebrow="O raio-x vibracional" title="Bloqueios energéticos">
+        <ReadingTopicCard
+          eyebrow="O raio-x vibracional"
+          title="Bloqueios energéticos"
+          count={bloqueios.length}
+        >
+          <p className="nm-card-text">
+            Bloqueios energéticos são sequências de três ou mais números repetidos nas linhas dos triângulos numerológicos. Eles formam pontos de atrito silenciosos que tendem a travar o fluxo natural dessa área da vida até que o nome seja harmonizado.
+          </p>
           <div className="space-y-3">
             {bloqueios.map((bloqueio, i) => (
               <BlockAnalysisCard
@@ -93,19 +100,31 @@ export function ChatReadingSummaryPanel({
       )}
 
       {debitosCarmicos.length > 0 && (
-        <ReadingTopicCard eyebrow="O peso do passado" title="Débitos kármicos">
+        <ReadingTopicCard
+          eyebrow="O peso do passado"
+          title="Débitos kármicos"
+          count={debitosCarmicos.length}
+        >
           <KarmicDebts debitos={debitosCarmicos} nomeCompleto={nomeExibido} />
         </ReadingTopicCard>
       )}
 
       {licoesCarmicas.length > 0 && (
-        <ReadingTopicCard eyebrow="Lacunas energéticas" title="Lições kármicas">
+        <ReadingTopicCard
+          eyebrow="Lacunas energéticas"
+          title="Lições kármicas"
+          count={licoesCarmicas.length}
+        >
           <KarmicLessons licoes={licoesCarmicas} nomeCompleto={nomeExibido} showSolution />
         </ReadingTopicCard>
       )}
 
       {(tendenciasOcultas.length > 0 || hasFrequencias) && (
-        <ReadingTopicCard eyebrow="Frequências numéricas" title="Tendências ocultas">
+        <ReadingTopicCard
+          eyebrow="Frequências numéricas"
+          title="Tendências ocultas"
+          count={tendenciasOcultas.length}
+        >
           <HiddenTendencies
             tendencias={tendenciasOcultas}
             frequencias={frequencias ?? {}}

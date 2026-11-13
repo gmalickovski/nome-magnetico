@@ -56,17 +56,6 @@ interface Props {
   onlyVida?: boolean;
 }
 
-/** Ícone autoral do Triângulo da Vida (mesmo traço dos ícones da landing). */
-function TrianguloVidaIcon() {
-  return (
-    <svg viewBox="0 0 72 52" className="h-11 w-14 shrink-0" fill="none" role="img" aria-label="Triângulo da Vida">
-      <path d="M36 7 L56 43 L16 43 Z" stroke="#f2ca50" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M24 31h24M29 22h14" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.7" />
-      <circle cx="36" cy="37" r="2.5" fill="#bea5ff" />
-    </svg>
-  );
-}
-
 const LEGENDA_VIDA = [
   { label: 'Valores das letras', stroke: '#D4AF37', bg: 'rgba(212,175,55,0.25)' },
   { label: 'Reduções intermediárias', stroke: '#9CA3AF', bg: 'rgba(156,163,175,0.2)' },
@@ -503,21 +492,13 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
     const bloqueiosVida = bloqueios.filter(b => b.triangulos?.includes('vida'));
     return (
       <div className="space-y-5 text-left">
-        <div className="nm-floating-tile nm-vida-intro-container p-4">
-          <div className="nm-vida-intro-layout">
-            <TrianguloVidaIcon />
-            <div className="min-w-0 space-y-2 text-left">
-              <span className="inline-flex items-center rounded-full bg-[#D4AF37]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#D4AF37] ring-1 ring-[#D4AF37]/25">
-                Entra no cálculo do Score Cabalístico
-              </span>
-              <p className="nm-card-text">
-                {descricaoDetalhada?.vida ?? getDescricao('vida', productType)}
-              </p>
-              <p className="text-xs text-[#e5e2e1]/60 leading-relaxed text-left">
-                Os triângulos Pessoal, Social e do Destino estão no seu PDF completo.
-              </p>
-            </div>
-          </div>
+        <div className="space-y-2 text-left">
+          <p className="nm-card-text">
+            {descricaoDetalhada?.vida ?? getDescricao('vida', productType)}
+          </p>
+          <p className="text-xs text-[#e5e2e1]/65 leading-relaxed text-left">
+            Entra diretamente no cálculo do Score Cabalístico; os triângulos Pessoal, Social e do Destino ficam completos no seu PDF.
+          </p>
         </div>
 
         <div className="rounded-xl flex justify-center">
