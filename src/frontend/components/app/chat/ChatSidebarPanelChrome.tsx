@@ -15,13 +15,13 @@ export function ChatSidebarPanelChrome({
 }: ChatSidebarPanelChromeProps) {
   return (
     <div className={`flex flex-col min-h-0 h-full w-full relative ${className}`}>
-      {/* Header bar fixo no topo, com botão permanentemente fixado no canto superior direito sem transição de posição */}
-      <div className="shrink-0 relative w-full pb-5 sm:pb-6 pt-1 px-1 min-h-[44px] flex items-center">
+      {/* Header bar fixo no topo, com botão permanentemente alinhado ao centro do título */}
+      <div className="shrink-0 relative w-full mb-4 sm:mb-5 px-1 min-h-[36px] flex items-center">
         {(() => {
           const titleNode = (
-            <div className="flex items-start gap-2.5 min-w-0 pr-12">
+            <div className="flex items-center gap-2.5 min-w-0 pr-10">
               <span
-                className="w-2.5 h-2.5 mt-1.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
+                className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
                 aria-hidden="true"
               />
               <h2
@@ -40,18 +40,18 @@ export function ChatSidebarPanelChrome({
           );
         })()}
 
-        {/* Botão permanentemente fixo no canto superior direito (mesma posição exata em ambos os estados, sem transição de coordenadas) */}
+        {/* Botão permanentemente fixo no canto direito da linha do título, somente ícone (sem círculo/fundo) */}
         <button
           type="button"
           onClick={onToggleExpand}
-          className="absolute right-1 sm:right-2 top-1 z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-colors duration-150 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
+          className="group absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
           title={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de leitura'}
           aria-label={expanded ? 'Recolher painel (voltar ao chat)' : 'Expandir painel de leitura'}
         >
           {expanded ? (
             /* Ícone de fechar/recolher: setas apontando para dentro */
             <svg
-              className="w-4 h-4 sm:w-[18px] sm:h-[18px]"
+              className="w-[18px] h-[18px] sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-105"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -68,7 +68,7 @@ export function ChatSidebarPanelChrome({
           ) : (
             /* Ícone de expandir/abrir: setas apontando para fora */
             <svg
-              className="w-4 h-4 sm:w-[18px] sm:h-[18px]"
+              className="w-[18px] h-[18px] sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-105"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
