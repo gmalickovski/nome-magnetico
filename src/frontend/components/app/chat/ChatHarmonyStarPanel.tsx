@@ -4,6 +4,7 @@ import {
   ProductHarmonyStar,
   harmonyStarNumsFromPanel,
 } from '../../landing/ProductResultFrame.js';
+import ReadingTopicCard from './ReadingTopicCard.js';
 
 export interface ChatHarmonyStarPanelProps {
   birthPanel: ResultPanelData;
@@ -24,8 +25,11 @@ export function ChatHarmonyStarPanel({
   const dual = isSuggestion && Boolean(harmonizedPanel);
 
   return (
-    <div className={`w-full min-w-0 flex flex-col gap-3 ${className}`}>
-
+    <ReadingTopicCard
+      eyebrow="Estrela Cabalística"
+      subtitle="Os 5 números essenciais do seu campo vibracional"
+      className={className}
+    >
       {dual && harmonizedPanel ? (
         <ProductHarmonyStar
           play
@@ -46,7 +50,7 @@ export function ChatHarmonyStarPanel({
           birthNums={harmonyStarNumsFromPanel(birthPanel)}
         />
       )}
-    </div>
+    </ReadingTopicCard>
   );
 }
 

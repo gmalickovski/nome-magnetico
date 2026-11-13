@@ -56,7 +56,7 @@ describe('AppMobileDock', () => {
         onPrimary: noop,
       })
     );
-    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de leitura/);
+    assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root|Painel de análise|Painel de leitura/);
     assert.match(html, /aria-label="Baixar a análise em PDF"/);
     assert.doesNotMatch(html, /aria-label="Mais ações"/);
     assert.doesNotMatch(html, /aria-label="Voltar"/);
@@ -86,7 +86,7 @@ describe('AppMobileDock', () => {
     assert.match(html, /data-dock-scroll-item/);
     assert.doesNotMatch(html, /mobile-chat-dock-shell|mobile-chat-dock-root/);
   });
-  it('exibe ação Abrir leitura na dock quando showReadingAction', () => {
+  it('exibe ação Abrir painel de análise na dock quando showReadingAction', () => {
     const layout = buildResultadoDockLayout({
       canShare: false,
       canRedo: false,
@@ -104,7 +104,7 @@ describe('AppMobileDock', () => {
         onPrimary: noop,
       })
     );
-    assert.match(html, /aria-label="Abrir leitura"/);
+    assert.match(html, /aria-label="Abrir painel de análise"/);
     assert.match(html, /data-nm-reading-trigger/);
   });
   it('não referencia controle lateral MobileSummaryToggle no layout', () => {
@@ -112,5 +112,39 @@ describe('AppMobileDock', () => {
     assert.doesNotMatch(src, /MobileSummaryToggle/);
     assert.match(src, /showReadingAction/);
     assert.doesNotMatch(src, /DockContextOverflow/);
+  });
+  it('mantém medição intrínseca na innerRef para expandir ao receber ações contextuais', () => {
+    const dockSrc = readFileSync(new URL('./AppMobileDock.tsx', import.meta.url), 'utf8');
+    const chatDockSrc = readFileSync(new URL('./chat/MobileChatDock.tsx', import.meta.url), 'utf8');
+    assert.match(dockSrc, /ref=\{innerRef\} className=\{`\$\{barClassName\} items-center`\}/);
+    assert.doesNotMatch(dockSrc, /ref=\{innerRef\}[^>\n]*w-full/);
+    assert.match(dockSrc, /nm-mobile-dock-context min-w-0 shrink overflow-hidden/);
+    assert.match(chatDockSrc, /omitRoot \? 'inline-flex min-w-0 shrink'/);
+  });
+  it('bottom sheet mobile abre em translateY(0), suporta drag contínuo e animação cobre até 1023px', () => {
+    const sheetSrc = readFileSync(new URL('./chat/MobileReadingBottomSheet.tsx', import.meta.url), 'utf8');
+    const cssSrc = readFileSync(new URL('../../../styles/global.css', import.meta.url), 'utf8');
+    assert.match(sheetSrc, /onPointerMove=\{onHandlePointerMove\}/);
+    assert.match(sheetSrc, /onPointerCancel=\{onHandlePointerCancel\}/);
+    assert.match(cssSrc, /@media \(max-width: 1023px\)/);
+    assert.match(cssSrc, /@keyframes nm-reading-sheet-in[\s\S]*?translateY\(0\)/);
+    assert.match(cssSrc, /@keyframes nm-reading-sheet-out[\s\S]*?translateY\(0\)/);
+  });
+  it('chat mobile expande dock sem trava 5.75rem, move CTA Gerar análise para pílula no rodapé do painel e mantém badge enquanto houver seleção', () => {
+    const chatSrc = readFileSync(new URL('./chat/NomeSocialChat.tsx', import.meta.url), 'utf8');
+    const sheetSrc = readFileSync(new URL('./chat/MobileReadingBottomSheet.tsx', import.meta.url), 'utf8');
+    const cssSrc = readFileSync(new URL('../../../styles/global.css', import.meta.url), 'utf8');
+    const stripSrc = readFileSync(new URL('./chat/DockContextScrollStrip.tsx', import.meta.url), 'utf8');
+
+    assert.match(cssSrc, /--nm-dock-context-scroll-max:\s*100%/);
+    assert.doesNotMatch(cssSrc, /min\(5\.75rem/);
+    assert.doesNotMatch(stripSrc, /endSentinelRef.*pr-5/);
+
+    assert.match(chatSrc, /mobileSelectionBadge\s*=\s*Boolean\(activeSuggestionId\)/);
+    assert.match(chatSrc, /<MobileDockActionBridge[\s\S]*?summaryBadge=\{mobileSelectionBadge\}[\s\S]*?pdfModel=\{null\}/);
+    assert.match(chatSrc, /openSheetAfterCardTapRef\.current\s*=\s*id/);
+
+    assert.match(sheetSrc, /Gerar análise/);
+    assert.doesNotMatch(sheetSrc, /ChatPdfDockCircle/);
   });
 });

@@ -6,14 +6,14 @@ import type {
 } from './chat-types.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { useFocusTrap } from './useFocusTrap.js';
-import { IconX } from './MobileChatDockIcons.js';
+import { IconFileDown, IconLockOpen, IconX } from './MobileChatDockIcons.js';
 import {
   MOBILE_READING_OVERLAY_Z_INDEX,
   MOBILE_READING_SHEET_HEIGHT_FULL,
   MOBILE_READING_SHEET_HEIGHT_HALF,
   MOBILE_READING_SHEET_Z_INDEX,
 } from './mobile-dock-layout.js';
-import { ChatPdfDockCircle, type ChatPdfCtaModel } from './ChatPdfCta.js';
+import type { ChatPdfCtaModel } from './ChatPdfCta.js';
 
 export type ReadingSheetSnap = 'closed' | 'half' | 'full';
 export type SummaryPanelCloseMethod = 'trigger' | 'x' | 'backdrop' | 'swipe' | 'escape';
@@ -164,6 +164,19 @@ export function MobileReadingBottomSheet({
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }, []);
 
+  const onHandlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (dragStartY.current == null) return;
+    const delta = e.clientY - dragStartY.current;
+    setDragOffset(delta > 0 ? delta : 0);
+  }, []);
+
+  const onHandlePointerCancel = useCallback(() => {
+    dragStartY.current = null;
+    dragStartT.current = null;
+    setDragging(false);
+    setDragOffset(0);
+  }, []);
+
   const onHandlePointerUp = useCallback(
     (e: React.PointerEvent) => {
       if (dragStartY.current == null) return;
@@ -222,9 +235,10 @@ export function MobileReadingBottomSheet({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className={`nm-reading-sheet-overlay fixed inset-0 bg-black/50 lg:hidden z-[${MOBILE_READING_OVERLAY_Z_INDEX}] ${
+        className={`nm-reading-sheet-overlay fixed inset-0 bg-black/50 lg:hidden z-[55] ${
           entered ? 'nm-reading-sheet-overlay--open' : 'nm-reading-sheet-overlay--closed'
         } ${reduced ? 'nm-reading-sheet--reduced' : ''}`}
+        style={{ zIndex: MOBILE_READING_OVERLAY_Z_INDEX }}
         onClick={() => onClose('backdrop')}
       />
       <div
@@ -233,10 +247,11 @@ export function MobileReadingBottomSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="mobile-summary-title"
-        className={`nm-reading-sheet fixed inset-x-0 bottom-0 flex flex-col overflow-hidden bg-[#1C1C1C] text-[#E5E2E1] lg:hidden rounded-t-2xl z-[${MOBILE_READING_SHEET_Z_INDEX}] ${
+        className={`nm-reading-sheet fixed inset-x-0 bottom-0 flex flex-col overflow-hidden bg-[#1C1C1C] text-[#E5E2E1] lg:hidden rounded-t-2xl z-[60] ${
           entered ? 'nm-reading-sheet--open' : 'nm-reading-sheet--closed'
         } ${reduced ? 'nm-reading-sheet--reduced' : ''} ${dragging ? 'nm-reading-sheet--dragging' : ''}`}
         style={{
+          zIndex: MOBILE_READING_SHEET_Z_INDEX,
           height: sheetHeight,
           maxHeight: sheetHeight,
           transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
@@ -245,7 +260,9 @@ export function MobileReadingBottomSheet({
         <div
           className="flex h-11 w-full shrink-0 touch-none items-center justify-center"
           onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
           onPointerUp={onHandlePointerUp}
+          onPointerCancel={onHandlePointerCancel}
           aria-hidden="true"
         >
           <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" style={{ width: 36, height: 4 }} />
@@ -280,34 +297,15 @@ export function MobileReadingBottomSheet({
                 tabIndex={-1}
                 className="font-cinzel text-base font-bold uppercase tracking-[0.12em] text-[#D4AF37] truncate"
               >
-                Painel de leitura
+                Painel de análise
               </h2>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            {panelPrimary?.variant === 'pdf' && panelPrimary.pdfModel ? (
-              <ChatPdfDockCircle
-                model={panelPrimary.pdfModel}
-                onClick={panelPrimary.onClick}
-                exiting={panelPrimary.pdfExiting}
-                tooltip={
-                  panelPrimary.pdfModel.assinaturaLabel?.trim() ? 'PDF deste nome' : 'Baixar PDF'
-                }
-              />
-            ) : null}
-            {panelPrimary?.variant === 'unlock' ? (
-              <button
-                type="button"
-                onClick={panelPrimary.onClick}
-                className="mobile-chat-dock-btn flex h-11 shrink-0 items-center justify-center rounded-full bg-[#D4AF37] px-3 text-[11px] font-bold uppercase tracking-wide text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
-              >
-                Desbloquear
-              </button>
-            ) : null}
             <button
               type="button"
               onClick={() => onClose('x')}
-              aria-label={showCardHeader ? 'Fechar leitura' : 'Fechar painel de leitura'}
+              aria-label="Fechar painel de análise"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1c1c1c] text-[#E5E2E1] hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
             >
               <IconX className="h-4 w-4" />
@@ -338,6 +336,66 @@ export function MobileReadingBottomSheet({
             showReadingSummary={showReadingSummary}
           />
         </div>
+
+        {panelPrimary && (panelPrimary.pdfModel || panelPrimary.variant === 'unlock') ? (
+          <div className="shrink-0 border-t border-white/[0.06] bg-[#1C1C1C]/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+            {panelPrimary.variant === 'pdf' && panelPrimary.pdfModel ? (
+              !panelPrimary.pdfModel.emailConfirmed || panelPrimary.pdfModel.phase === 'email_gate' ? (
+                <div
+                  className="flex w-full items-center justify-center rounded-full border border-[#F59E0B]/70 bg-[#131313]/95 px-4 py-2.5 text-xs font-semibold text-[#F59E0B]"
+                  role="status"
+                >
+                  Confirme seu e-mail para gerar a análise
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={panelPrimary.onClick}
+                  disabled={panelPrimary.pdfModel.phase === 'loading'}
+                  aria-busy={panelPrimary.pdfModel.phase === 'loading'}
+                  className={`inline-flex w-full min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-semibold font-inter text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] active:scale-[0.98] transition-all duration-200 disabled:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
+                    panelPrimary.pdfModel.phase === 'error' ? 'ring-2 ring-[#FF6B6B]' : ''
+                  }`}
+                >
+                  {panelPrimary.pdfModel.phase === 'loading' ? (
+                    <svg
+                      className="h-4 w-4 animate-spin shrink-0 text-[#131313]"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  ) : (
+                    <IconFileDown className="h-4 w-4 shrink-0 text-[#131313]" />
+                  )}
+                  <span>
+                    {panelPrimary.pdfModel.phase === 'loading'
+                      ? 'Gerando análise...'
+                      : panelPrimary.pdfModel.phase === 'ready'
+                        ? 'Baixar análise'
+                        : 'Gerar análise'}
+                  </span>
+                </button>
+              )
+            ) : panelPrimary.variant === 'unlock' ? (
+              <button
+                type="button"
+                onClick={panelPrimary.onClick}
+                className="inline-flex w-full min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-semibold font-inter text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] active:scale-[0.98] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+              >
+                <IconLockOpen className="h-4 w-4 shrink-0 text-[#131313]" />
+                <span>Desbloquear análise</span>
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </>
   );

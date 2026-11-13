@@ -215,7 +215,7 @@ export const DockContextScrollStrip = forwardRef<DockContextScrollStripHandle, D
         >
           <div ref={startSentinelRef} className="nm-dock-scroll-sentinel w-px shrink-0" aria-hidden="true" />
           {children}
-          <div ref={endSentinelRef} className="nm-dock-scroll-sentinel w-px shrink-0 pr-5" aria-hidden="true" />
+          <div ref={endSentinelRef} className="nm-dock-scroll-sentinel w-px shrink-0" aria-hidden="true" />
         </div>
       </div>
     );

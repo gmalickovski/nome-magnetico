@@ -55,7 +55,7 @@ describe('mobile-dock-screen', () => {
     assert.equal(dockLayoutHasVisibleActions(withRestart), true);
   });
 
-  it('sugestões: Recomeçar no centro, sem estrela Outras opções; PDF só com seleção', () => {
+  it('sugestões: Recomeçar no centro, sem estrela Outras opções e sem PDF circular na dock', () => {
     const input = {
       ...chatBase,
       profileCollectionComplete: true,
@@ -74,7 +74,7 @@ describe('mobile-dock-screen', () => {
       ...input,
       suggestionSelected: true,
     });
-    assert.equal(withPick.showPdfCircle, true);
+    assert.equal(withPick.showPdfCircle, false);
   });
 
   it('resultado pago: Compartilhar, Refazer e Baixar PDF', () => {

@@ -22,7 +22,7 @@ const TRIANGULO_LABELS: Record<string, string> = {
 
 export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: BlockAnalysisCardProps) {
   return (
-    <div className="rounded-2xl bg-red-500/5 overflow-hidden">
+    <div className="nm-floating-tile border-red-500/20 bg-red-500/[0.06] overflow-hidden text-left">
       <div className="w-full flex items-center justify-between p-5 text-left border-b border-red-500/10">
         <div className="flex items-center gap-3">
           <span className="text-red-400 text-xl leading-none">⚠</span>

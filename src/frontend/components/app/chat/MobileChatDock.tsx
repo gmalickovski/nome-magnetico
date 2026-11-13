@@ -184,8 +184,8 @@ export function MobileChatDock({
         <Icon className="h-5 w-5 shrink-0" />
         {item.badge && (
           <span
-            aria-label="Leitura atualizada"
-            className={`nm-reading-badge absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#D4AF37] motion-reduce:animate-none${
+            aria-label="Nome selecionado no painel"
+            className={`nm-reading-badge absolute right-2 top-2 h-2 w-2 rounded-full bg-[#f2ca50] ring-[1.5px] ring-[#131313] motion-reduce:animate-none${
               readingBadgePulse && item.kind === 'reading' ? ' nm-reading-badge--pulse' : ''
             }`}
           />
@@ -199,7 +199,9 @@ export function MobileChatDock({
 
   const content = (
     <div
-      className={`flex min-w-0 max-w-full flex-1 items-center gap-1 nm-dock-context-actions ${
+      className={`${
+        omitRoot ? 'inline-flex min-w-0 shrink' : 'flex min-w-0 max-w-full flex-1'
+      } items-center gap-1 nm-dock-context-actions ${
         reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
       }`}
     >
@@ -207,9 +209,9 @@ export function MobileChatDock({
         <DockContextScrollStrip ref={scrollStripRef} surface={surface} activeItemSelector={activeSelector}>
           {scrollable.map((item, index) => renderAction(item, index, true))}
         </DockContextScrollStrip>
-      ) : (
+      ) : !omitRoot ? (
         <span className="min-w-0 flex-1" aria-hidden="true" />
-      )}
+      ) : null}
       {fixed.length > 0 ? (
         <div className="nm-dock-context-fixed inline-flex shrink-0 items-center gap-1">
           {fixed.map((item, index) => renderAction(item, scrollable.length + index, false))}

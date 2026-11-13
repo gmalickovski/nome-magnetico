@@ -28,8 +28,8 @@ describe('chat-pdf-utils', () => {
     assert.match(href, /produto=nome_social/);
   });
 
-  it('CHAT_PDF_PREP_TIME_LABEL comunica teto pós-fix', () => {
-    assert.equal(CHAT_PDF_PREP_TIME_LABEL, 'até 1 minuto');
-    assert.ok(CHAT_PDF_TYPICAL_TOTAL_MS <= 60_000);
+  it('CHAT_PDF_PREP_TIME_LABEL comunica prazo realista para PDF completo', () => {
+    assert.equal(CHAT_PDF_PREP_TIME_LABEL, 'de 1 a 3 minutos');
+    assert.ok(CHAT_PDF_TYPICAL_TOTAL_MS <= 180_000);
   });
 });

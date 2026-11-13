@@ -44,8 +44,8 @@ export type PdfDevice = 'mobile' | 'desktop';
 
 export type PdfSurface = 'dock' | 'sticky';
 
-/** Limite superior exibido no overlay (pós-fix: persistência numérica ~2–5s + PDF ~3–8s). */
-export const CHAT_PDF_PREP_TIME_LABEL = 'até 1 minuto';
+/** Limite superior exibido no overlay para PDFs completos (~60 páginas em duas passadas). */
+export const CHAT_PDF_PREP_TIME_LABEL = 'de 1 a 3 minutos';
 
 /** Tempo típico esperado após persistência sem LLM (ms). */
-export const CHAT_PDF_TYPICAL_TOTAL_MS = 8_000;
+export const CHAT_PDF_TYPICAL_TOTAL_MS = 50_000;

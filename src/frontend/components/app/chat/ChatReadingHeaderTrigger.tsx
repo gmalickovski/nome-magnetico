@@ -12,7 +12,7 @@ export function ChatReadingHeaderTrigger({
     <button
       type="button"
       data-nm-reading-trigger="header"
-      aria-label="Abrir leitura"
+      aria-label="Abrir painel de análise"
       onClick={onOpen}
       className="md:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D4AF37]/30 text-[#D4AF37] bg-[#131313] relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
     >
