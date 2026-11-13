@@ -14,9 +14,10 @@ import { logError } from '../../backend/utils/error-logger';
 import { getEffectivePrice } from '../../backend/payments/prices';
 import { guardConfirmedEmail } from '../../backend/auth/requireConfirmedEmail';
 
-// Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile)
+// Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile ou re-download próximo)
 const pdfCache = new Map<string, { buffer: Buffer; expiresAt: number }>();
-const CACHE_TTL = 15_000; // 15 segundos
+const CACHE_TTL = 5 * 60_000; // 5 minutos
+const MAX_PDF_CACHE_ENTRIES = 20;
 
 export const GET: APIRoute = async ({ url, locals }) => {
   const user = locals.user;
@@ -119,7 +120,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     if (val.expiresAt < agora) pdfCache.delete(key);
   }
 
-  const cacheKey = `${analysisId}-${productType}`;
+  const cacheKey = `${analysisId}-${productType}-${selectedSocialName}-${(analysis as any).completed_at ?? ''}`;
   const cached = pdfCache.get(cacheKey);
   let pdfBuffer: Buffer;
 
@@ -161,7 +162,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
         );
       }
       
-      // Salva no cache
+      // Salva no cache com limite de entradas para manter uso de memória previsível
+      if (pdfCache.size >= MAX_PDF_CACHE_ENTRIES) {
+        const oldestKey = pdfCache.keys().next().value;
+        if (oldestKey) pdfCache.delete(oldestKey);
+      }
       pdfCache.set(cacheKey, {
         buffer: pdfBuffer,
         expiresAt: Date.now() + CACHE_TTL,
