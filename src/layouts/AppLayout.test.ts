@@ -120,4 +120,34 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(restartSrc, /border-\[\#D4AF37\]/);
     assert.match(restartSrc, /text-\[\#D4AF37\]/);
   });
+
+  it('botões Nova Análise, Começar Agora e painel /app levam ao chat /app/analise/nome-social (mobile e desktop)', () => {
+    const analisesFile = path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro');
+    const analisesSrc = readFileSync(analisesFile, 'utf8');
+    const anchors = analisesSrc.match(/<a\b[\s\S]*?<\/a>/g) ?? [];
+    const novaAnaliseAnchors = anchors.filter((a) => a.includes('+ Nova Análise'));
+    const comecarAnchors = anchors.filter((a) => a.includes('Começar Agora'));
+
+    assert.equal(novaAnaliseAnchors.length, 2, 'deve ter botão + Nova Análise no header e no mobile');
+    for (const a of novaAnaliseAnchors) {
+      assert.match(a, /href="\/app\/analise\/nome-social"/);
+      assert.doesNotMatch(a, /href="\/app"/);
+    }
+    assert.ok(
+      novaAnaliseAnchors.some((a) => a.includes('lg:hidden')),
+      'botão mobile + Nova Análise deve usar lg:hidden para cobrir <1024px'
+    );
+
+    assert.equal(comecarAnchors.length, 1);
+    assert.match(comecarAnchors[0], /href="\/app\/analise\/nome-social"/);
+    assert.doesNotMatch(comecarAnchors[0], /href="\/app"/);
+
+    const dashboardFile = path.join(srcRoot, 'frontend', 'components', 'app', 'dashboard', 'AppDashboard.tsx');
+    const dashboardSrc = readFileSync(dashboardFile, 'utf8');
+    assert.match(dashboardSrc, /href="\/app\/analise\/nome-social"/);
+
+    const appIndexFile = path.join(srcRoot, 'pages', 'app', 'index.astro');
+    const appIndexSrc = readFileSync(appIndexFile, 'utf8');
+    assert.match(appIndexSrc, /slot="header-actions"[\s\S]{0,120}href="\/app\/analise\/nome-social"/);
+  });
 });
