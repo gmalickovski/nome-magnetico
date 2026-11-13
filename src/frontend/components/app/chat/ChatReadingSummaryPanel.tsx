@@ -5,28 +5,7 @@ import KarmicDebts from '../KarmicDebts';
 import KarmicLessons from '../KarmicLessons';
 import HiddenTendencies from '../HiddenTendencies';
 import BlockAnalysisCard from '../BlockAnalysisCard';
-
-function SectionIntro({
-  eyebrow,
-  title,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="space-y-3">
-      <div className="px-0.5">
-        <p className="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">
-          {eyebrow}
-        </p>
-        <h3 className="font-cinzel text-base sm:text-lg font-bold text-white">{title}</h3>
-      </div>
-      {children}
-    </section>
-  );
-}
+import ReadingTopicCard from './ReadingTopicCard.js';
 
 function buildTrianguloDesc(nomeExibido: string): Record<string, string> {
   const primeiroNome = nomeExibido.split(' ')[0] ?? nomeExibido;
@@ -59,9 +38,9 @@ export function ChatReadingSummaryPanel({
   if (loading && !summary) {
     return (
       <div
-        className={`rounded-2xl border border-white/10 bg-chat-bubble/50 p-4 animate-pulse ${className}`}
+        className={`nm-floating-card p-4 sm:p-5 animate-pulse ${className}`}
       >
-        <p className="text-xs text-chat-muted font-cinzel uppercase tracking-wider">
+        <p className="text-xs text-chat-muted font-cinzel uppercase tracking-wider text-left">
           Calculando triângulos e karma…
         </p>
         <div className="mt-3 h-24 rounded-xl bg-white/5" />
@@ -77,32 +56,30 @@ export function ChatReadingSummaryPanel({
   const hasFrequencias = frequencias && Object.keys(frequencias).length > 0;
 
   return (
-    <div className={`flex flex-col gap-8 ${className}`}>
+    <div className={`flex flex-col gap-4 ${className}`}>
       {loading && (
-        <p className="text-[10px] text-chat-muted font-cinzel uppercase tracking-wider -mb-4">
+        <p className="text-[10px] text-chat-muted font-cinzel uppercase tracking-wider text-left">
           Atualizando leitura…
         </p>
       )}
 
-      <SectionIntro eyebrow="Anatomia vibratória" title="O Triângulo da Vida">
-        <div className="rounded-2xl bg-white/[0.03] p-3 sm:p-4">
-          <TriangleVisualization
-            onlyVida
-            nome={nomeExibido}
-            vida={triangulos.vida as never}
-            pessoal={triangulos.pessoal as never}
-            social={triangulos.social as never}
-            destino={triangulos.destino as never}
-            bloqueios={bloqueios as never}
-            arcanos={arcanos as never}
-            descricaoDetalhada={descricaoDetalhada}
-            productType="nome_social"
-          />
-        </div>
-      </SectionIntro>
+      <ReadingTopicCard eyebrow="Anatomia vibratória" title="O Triângulo da Vida">
+        <TriangleVisualization
+          onlyVida
+          nome={nomeExibido}
+          vida={triangulos.vida as never}
+          pessoal={triangulos.pessoal as never}
+          social={triangulos.social as never}
+          destino={triangulos.destino as never}
+          bloqueios={bloqueios as never}
+          arcanos={arcanos as never}
+          descricaoDetalhada={descricaoDetalhada}
+          productType="nome_social"
+        />
+      </ReadingTopicCard>
 
       {bloqueios.length > 0 && (
-        <SectionIntro eyebrow="O raio-x vibracional" title="Bloqueios energéticos">
+        <ReadingTopicCard eyebrow="O raio-x vibracional" title="Bloqueios energéticos">
           <div className="space-y-3">
             {bloqueios.map((bloqueio, i) => (
               <BlockAnalysisCard
@@ -112,30 +89,30 @@ export function ChatReadingSummaryPanel({
               />
             ))}
           </div>
-        </SectionIntro>
+        </ReadingTopicCard>
       )}
 
       {debitosCarmicos.length > 0 && (
-        <SectionIntro eyebrow="O peso do passado" title="Débitos kármicos">
+        <ReadingTopicCard eyebrow="O peso do passado" title="Débitos kármicos">
           <KarmicDebts debitos={debitosCarmicos} nomeCompleto={nomeExibido} />
-        </SectionIntro>
+        </ReadingTopicCard>
       )}
 
       {licoesCarmicas.length > 0 && (
-        <SectionIntro eyebrow="Lacunas energéticas" title="Lições kármicas">
+        <ReadingTopicCard eyebrow="Lacunas energéticas" title="Lições kármicas">
           <KarmicLessons licoes={licoesCarmicas} nomeCompleto={nomeExibido} showSolution />
-        </SectionIntro>
+        </ReadingTopicCard>
       )}
 
       {(tendenciasOcultas.length > 0 || hasFrequencias) && (
-        <SectionIntro eyebrow="Frequências numéricas" title="Tendências ocultas">
+        <ReadingTopicCard eyebrow="Frequências numéricas" title="Tendências ocultas">
           <HiddenTendencies
             tendencias={tendenciasOcultas}
             frequencias={frequencias ?? {}}
             nomeCompleto={nomeExibido}
             showSolution
           />
-        </SectionIntro>
+        </ReadingTopicCard>
       )}
 
     </div>

@@ -1,11 +1,12 @@
-/* Escala canonica da area do usuario. Nao altera a landing ou o PDF. */
+/* Escala canonica da area do usuario (Material Design 3 + The Celestial Alchemist). Nao altera a landing ou o PDF. */
 .nm-app-shell--with-mobile-dock {
-  --nm-type-body: 1rem;
-  --nm-type-caption: .875rem;
+  --nm-type-body: 0.9375rem;
+  --nm-type-card-body: 0.875rem;
+  --nm-type-caption: 0.75rem;
   --nm-type-h1: 1.75rem;
-  --nm-type-h2: 1.5rem;
-  --nm-type-h3: 1.25rem;
-  --nm-type-h4: 1.125rem;
+  --nm-type-h2: 1.375rem;
+  --nm-type-h3: 1.125rem;
+  --nm-type-h4: 1rem;
   /* Unidades do viewBox SVG, nao pixels finais da tela. */
   --nm-type-chart-label: 25px;
   --nm-type-chart-number: 28px;
@@ -13,21 +14,27 @@
 @media (min-width: 768px) {
   .nm-app-shell--with-mobile-dock {
     --nm-type-h1: 2.25rem;
-    --nm-type-h2: 1.75rem;
-    --nm-type-h3: 1.375rem;
-    --nm-type-h4: 1.125rem;
+    --nm-type-h2: 1.625rem;
+    --nm-type-h3: 1.25rem;
+    --nm-type-h4: 1.0625rem;
     --nm-type-chart-label: 21px;
     --nm-type-chart-number: 24px;
   }
 }
 .nm-app-shell--with-mobile-dock :is(h1, .nm-h1) { font-size: var(--nm-type-h1); line-height: 1.2; }
 .nm-app-shell--with-mobile-dock :is(h2, .nm-h2) { font-size: var(--nm-type-h2); line-height: 1.25; }
-.nm-app-shell--with-mobile-dock :is(h3, .nm-h3) { font-size: var(--nm-type-h3); line-height: 1.35; }
-.nm-app-shell--with-mobile-dock :is(h4, .nm-h4) { font-size: var(--nm-type-h4); line-height: 1.4; }
-.nm-app-shell--with-mobile-dock p:not(.nm-caption):not([class*="uppercase"]),
-.nm-app-shell--with-mobile-dock :is(.nm-body, .nm-body-lg, .nm-card-text) {
+.nm-app-shell--with-mobile-dock :is(h3, .nm-h3) { font-size: var(--nm-type-h3); line-height: 1.3; }
+.nm-app-shell--with-mobile-dock :is(h4, .nm-h4) { font-size: var(--nm-type-h4); line-height: 1.35; }
+.nm-app-shell--with-mobile-dock p:not(.nm-caption):not(.nm-score-eyebrow):not([class*="uppercase"]),
+.nm-app-shell--with-mobile-dock :is(.nm-body, .nm-body-lg) {
   font-size: var(--nm-type-body);
-  line-height: 1.65;
+  line-height: 1.6;
+}
+.nm-app-shell--with-mobile-dock .nm-card-text,
+.nm-app-shell--with-mobile-dock .nm-reading-card p:not(.nm-caption):not(.nm-score-eyebrow):not([class*="uppercase"]):not([class*="text-xs"]):not([class*="text-[11px]"]):not([class*="text-[10px]"]) {
+  font-size: var(--nm-type-card-body);
+  line-height: 1.6;
+  text-align: left;
 }
 .nm-app-shell--with-mobile-dock .nm-caption { font-size: var(--nm-type-caption); line-height: 1.5; }
 .nm-app-shell--with-mobile-dock :is(.harmony-star-label, .nm-radar-label) {
@@ -39,8 +46,14 @@
   font-weight: 700;
 }
 
-.nm-app-shell--with-mobile-dock #mobile-summary-title {
+.nm-app-shell--with-mobile-dock #mobile-summary-title,
+.nm-app-shell--with-mobile-dock #desktop-summary-title {
   font-size: var(--nm-type-h4);
-  line-height: 1.35;
+  line-height: 1.3;
   letter-spacing: 0.1em;
+  text-align: left;
+}
+
+.nm-app-shell--with-mobile-dock #desktop-summary-title[data-expanded="true"] {
+  font-size: var(--nm-type-h3);
 }

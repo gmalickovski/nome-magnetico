@@ -5,6 +5,7 @@ import type {
   ResultPanelData,
 } from './chat-types.js';
 import { ReadingRadar } from './ReadingRadar.js';
+import ReadingTopicCard from './ReadingTopicCard.js';
 
 import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
 import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
@@ -77,11 +78,10 @@ export function ChatSidebarSection({
       )}
 
       {showRadar && radarAxes && (
-        <div className="rounded-2xl border border-white/10 bg-[#1c1c1c] p-3.5 sm:p-4 flex flex-col gap-3.5 w-full shadow-lg shadow-black/30">
-          <div className="flex flex-col gap-0.5 self-start">
-            <p className="nm-score-eyebrow">Mapa de Alinhamento Vibracional</p>
-            <p className="text-[11px] font-inter text-[#A0A0A0]">Ressonância da assinatura com o seu momento</p>
-          </div>
+        <ReadingTopicCard
+          eyebrow="Mapa de Alinhamento Vibracional"
+          subtitle="Ressonância da assinatura com o seu momento"
+        >
           <ReadingRadar
             axes={radarAxes}
             overlayAxes={radarOverlayAxes}
@@ -91,13 +91,13 @@ export function ChatSidebarSection({
             showNumericLabels={radarShowNumericLabels}
           />
           {contextChips.length > 0 && (
-            <div className="w-full pt-1.5 border-t border-white/[0.06]">
-              <p className="text-[10px] uppercase font-cinzel tracking-wider text-chat-muted mb-2">Seu contexto</p>
+            <div className="w-full pt-2 border-t border-white/[0.06] text-left">
+              <p className="text-[10px] uppercase font-cinzel tracking-wider text-chat-muted mb-2 text-left">Seu contexto</p>
               <div className="flex flex-wrap gap-1.5">
                 {contextChips.map((chip) => (
                   <span
                     key={chip}
-                    className="inline-flex items-center rounded-full bg-[#1C1C1C] border border-[#D4AF37]/35 px-2.5 py-1 text-[11px] font-medium text-[#e5e2e1]"
+                    className="inline-flex items-center rounded-full bg-[#141414] border border-[#D4AF37]/35 px-2.5 py-1 text-[11px] font-medium text-[#e5e2e1]"
                   >
                     {chip}
                   </span>
@@ -105,7 +105,7 @@ export function ChatSidebarSection({
               </div>
             </div>
           )}
-        </div>
+        </ReadingTopicCard>
       )}
 
 

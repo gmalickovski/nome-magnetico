@@ -23,7 +23,7 @@ export function ChatHarmonyScoreCard({
   const dual = Boolean(harmonizedPanel);
 
   return (
-    <HarmonyScoreStack className={className}>
+    <HarmonyScoreStack className={`nm-reading-card text-left ${className}`}>
       <HarmonyScoreRow
         eyebrow="Nome de nascimento (Nota Hoje)"
         nome={birthPanel.nome}

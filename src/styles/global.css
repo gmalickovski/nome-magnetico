@@ -1067,7 +1067,7 @@
    * Alinhado a esquerda no mobile (<640px) para evitar espacamentos irregulares entre palavras,
    * e justificado em telas maiores (sm+) com a ultima linha alinhada a esquerda. */
   .nm-card-text {
-    @apply font-inter text-sm font-normal text-gray-300 leading-relaxed text-left sm:text-justify [text-align-last:left];
+    @apply font-inter text-sm font-normal text-[#e5e2e1]/90 leading-[1.6] text-left;
     text-wrap: pretty;
   }
 }

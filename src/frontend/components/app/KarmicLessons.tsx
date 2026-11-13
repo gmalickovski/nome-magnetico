@@ -52,10 +52,10 @@ export default function KarmicLessons({ licoes, nomeCompleto, showSolution = tru
 
   if (licoes.length === 0) {
     return (
-      <div className="glass rounded-2xl p-6 text-center space-y-3">
-        <div className="text-4xl">✨</div>
-        <h3 className="text-lg font-semibold text-gold">Energia Completa</h3>
-        <p className="text-gray-300 text-sm leading-relaxed max-w-md mx-auto">
+      <div className="nm-floating-tile p-5 text-left space-y-2.5">
+        <div className="text-3xl">✨</div>
+        <h4 className="font-cinzel font-semibold text-[#f2ca50]">Energia Completa</h4>
+        <p className="nm-card-text">
           {primeiroNome} não possui Lições Kármicas — todos os números de 1 a 9 estão presentes
           no nome. Isso indica uma energia numerológica completa e equilibrada nesta encarnação.
         </p>
@@ -64,8 +64,8 @@ export default function KarmicLessons({ licoes, nomeCompleto, showSolution = tru
   }
 
   return (
-    <div className="space-y-4">
-      <div className="glass rounded-xl p-4">
+    <div className="space-y-4 text-left">
+      <div className="nm-floating-tile p-4 text-left">
         <p className="nm-card-text">
           <strong className="text-[#D4AF37]">{licoes.length} {licoes.length === 1 ? 'Lição Kármica' : 'Lições Kármicas'}</strong> — números ausentes de 1 a 9 no nome de {primeiroNome}.
           Cada ausência indica uma qualidade a ser desenvolvida nesta encarnação.

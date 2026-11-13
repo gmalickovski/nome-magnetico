@@ -453,7 +453,7 @@ export function ChatPdfStickyDesktop({
       aria-label={isLoading ? "Preparando o seu PDF" : title}
       aria-busy={isLoading}
       title={nomeTrunc ? `${title} — ${nomeTrunc}` : title}
-      className={`hidden md:inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] h-11 min-w-11 ${model.isFree ? 'px-3' : 'w-11 p-0'} text-xs font-bold uppercase tracking-wider text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[2px] disabled:opacity-85 ${
+      className={`hidden md:inline-flex items-center justify-center gap-1.5 rounded-full bg-[#D4AF37] min-h-[36px] px-3.5 py-1.5 text-xs sm:text-sm font-semibold font-inter whitespace-nowrap text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[2px] disabled:opacity-85 ${
         isError ? 'ring-2 ring-[#FF6B6B]' : ''
       } ${reduced ? 'transition-opacity duration-[120ms]' : ''}`}
     >
@@ -475,7 +475,7 @@ export function ChatPdfStickyDesktop({
       ) : (
         <Icon className="h-3.5 w-3.5 shrink-0 text-[#131313]" />
       )}
-      {model.isFree && <span>{title}</span>}
+      <span>{title}</span>
     </button>
   );
 }

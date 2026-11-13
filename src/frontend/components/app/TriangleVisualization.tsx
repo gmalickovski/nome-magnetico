@@ -502,17 +502,17 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
   if (onlyVida) {
     const bloqueiosVida = bloqueios.filter(b => b.triangulos?.includes('vida'));
     return (
-      <div className="space-y-6">
-        <div className="rounded-2xl bg-white/[0.03] p-4 sm:p-5 flex items-start gap-3 sm:gap-4">
+      <div className="space-y-5 text-left">
+        <div className="nm-floating-tile p-4 flex items-start gap-3 sm:gap-4">
           <TrianguloVidaIcon />
-          <div className="min-w-0 space-y-2">
+          <div className="min-w-0 space-y-2 text-left">
             <span className="inline-flex items-center rounded-full bg-[#D4AF37]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#D4AF37] ring-1 ring-[#D4AF37]/25">
               Entra no cálculo do Score Cabalístico
             </span>
             <p className="nm-card-text">
               {descricaoDetalhada?.vida ?? getDescricao('vida', productType)}
             </p>
-            <p className="text-xs text-gray-500 leading-relaxed text-left sm:text-justify [text-align-last:left]">
+            <p className="text-xs text-[#e5e2e1]/60 leading-relaxed text-left">
               Os triângulos Pessoal, Social e do Destino estão no seu PDF completo.
             </p>
           </div>

@@ -64,11 +64,11 @@ function DebitoCard({ debito }: { debito: DebitoCarmico }) {
           {debito.descricao}
         </p>
         {isFixo ? (
-          <p className="text-xs text-amber-400/80 italic border-t border-amber-500/10 pt-3 text-left sm:text-justify [text-align-last:left]">
+          <p className="text-xs text-amber-400/80 italic border-t border-amber-500/10 pt-3 text-left">
             Este débito está vinculado à data de nascimento e persiste independentemente do nome utilizado. Trabalhe-o com consciência e ação focada.
           </p>
         ) : (
-          <p className="text-xs text-purple-400/80 italic border-t border-purple-500/10 pt-3 text-left sm:text-justify [text-align-last:left]">
+          <p className="text-xs text-purple-400/80 italic border-t border-purple-500/10 pt-3 text-left">
             Este débito pode ser reduzido ou eliminado por uma variação do nome que ajuste os números de Motivação e/ou Expressão.
           </p>
         )}
@@ -98,8 +98,8 @@ export default function KarmicDebts({ debitos, nomeCompleto }: Props) {
   const variaveis = debitos.filter(d => d.fixo !== true);
 
   return (
-    <div className="space-y-4">
-      <div className="glass rounded-xl p-4">
+    <div className="space-y-4 text-left">
+      <div className="nm-floating-tile p-4 text-left">
         <p className="nm-card-text">
           <strong className="text-[#c084fc]">{debitos.length} {debitos.length === 1 ? 'Débito Kármico' : 'Débitos Kármicos'}</strong> — o nome de {primeiroNome} aponta para tendências de encarnações passadas que precisam ser redimidas nesta vida.
           {fixos.length > 0 && (

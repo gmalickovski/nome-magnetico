@@ -17,29 +17,28 @@ export function ChatSidebarPanelChrome({
     <div className={`flex flex-col min-h-0 h-full w-full relative ${className}`}>
       {/* Header bar fixo no topo, com botão permanentemente fixado no canto superior direito sem transição de posição */}
       <div className="shrink-0 relative w-full pb-5 sm:pb-6 pt-1 px-1 min-h-[44px] flex items-center">
-        {expanded ? (
-          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
-            <div className="flex items-center gap-2.5 min-w-0 pr-12">
+        {(() => {
+          const titleNode = (
+            <div className="flex items-start gap-2.5 min-w-0 pr-12">
               <span
-                className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
+                className="w-2.5 h-2.5 mt-1.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
                 aria-hidden="true"
               />
-              <h2 className="font-cinzel text-base sm:text-lg md:text-xl font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate">
+              <h2
+                id="desktop-summary-title"
+                data-expanded={expanded ? 'true' : 'false'}
+                className="font-cinzel font-bold uppercase tracking-[0.1em] text-[#e5e2e1] text-left break-words whitespace-normal leading-snug min-w-0"
+              >
                 Painel de leitura
               </h2>
             </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2.5 min-w-0 pr-12">
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
-              aria-hidden="true"
-            />
-            <h2 className="font-cinzel text-base sm:text-lg md:text-xl font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate">
-              Painel de leitura
-            </h2>
-          </div>
-        )}
+          );
+          return expanded ? (
+            <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">{titleNode}</div>
+          ) : (
+            titleNode
+          );
+        })()}
 
         {/* Botão permanentemente fixo no canto superior direito (mesma posição exata em ambos os estados, sem transição de coordenadas) */}
         <button

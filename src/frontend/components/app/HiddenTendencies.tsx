@@ -83,12 +83,12 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
   const maxFreq = Math.max(...numeros.map(n => frequencias[n] ?? 0), 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 text-left">
       {/* Mapa de frequências */}
-      <div className="glass rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
+      <div className="nm-floating-tile p-4 sm:p-5 text-left">
+        <h4 className="font-inter text-xs font-semibold text-[#e5e2e1]/80 uppercase tracking-wider mb-4 text-left">
           Frequência dos Números no Nome
-        </h3>
+        </h4>
         <div className="space-y-2.5">
           {numeros.map(n => (
             <FrequencyBar
@@ -120,8 +120,8 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="glass rounded-xl p-4">
+        <div className="space-y-3 text-left">
+          <div className="nm-floating-tile p-4 text-left">
             <p className="nm-card-text">
               <strong className="text-blue-300">{tendencias.length} tendência(s) oculta(s)</strong> — números
               que aparecem 4 ou mais vezes indicam um excesso daquela qualidade. Quando bem canalizada,
