@@ -133,9 +133,9 @@ export const NOME_MAGNETICO_COPY = {
     botaoPrimario: 'Fez todo sentido para mim',
     botaoSecundario: 'Quero acrescentar um detalhe',
   },
-  ctaFormulario: 'Ver Minhas 3 Opções de Assinatura',
+  ctaFormulario: 'Ver Minhas Opções de Assinatura',
   vitrineSugestoes: {
-    eyebrow: 'SUAS 3 OPÇÕES DE ASSINATURA',
+    eyebrow: 'SUAS OPÇÕES DE ASSINATURA',
     titulo: 'Escolha a Assinatura Que Mais Combina Com Você',
     subtituloTemplate:
       'Toque em cada opção abaixo para comparar a nota alcançada, a Expressão alinhada ao seu Destino {{destino}} e como ela apoia o seu momento atual.',

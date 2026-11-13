@@ -140,7 +140,7 @@ export function ProductsSection() {
                   className={`nm-h2 mb-3 ${s2Title.className}`}
                   style={s2Title.style}
                 >
-                  Três Opções de Assinatura Para Você Escolher a Sua
+                  Opções de Assinatura Rankeadas Para Você Escolher a Sua
                 </h2>
 
                 <p
