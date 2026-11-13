@@ -272,28 +272,44 @@ function TrianguloInfo({
     <div className="space-y-4 mt-4">
       {/* Arcano Regente — bloco expandido */}
       {arcanoInfo ? (
-        <div className="rounded-xl bg-[#1a0533]/60 border border-purple-500/30 p-3 sm:p-5">
-          <p className="text-[10px] text-purple-400 font-medium uppercase tracking-[0.15em] mb-3">
-            Arcano Regente — {arcanoInfo.numero}: {arcanoInfo.nome}
-          </p>
-          <div className="inline-block px-3 py-1 rounded-full bg-purple-900/50 border border-purple-500/20 mb-4">
-            <span className="text-sm font-medium text-purple-200">{arcanoInfo.palavraChave}</span>
+        <div className="rounded-xl bg-[#1a0533]/60 border border-purple-500/30 overflow-hidden">
+          <div className="w-full text-left p-4 flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border bg-purple-500/20 border-purple-500/30 text-purple-300">
+              {arcanoInfo.numero}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                <p className="font-semibold text-gray-200 text-sm leading-snug">
+                  Arcano Regente {arcanoInfo.numero} — {arcanoInfo.nome}
+                </p>
+              </div>
+              <div className="inline-block px-3 py-1 rounded-full bg-purple-900/50 border border-purple-500/20">
+                <span className="text-sm font-medium text-purple-200">{arcanoInfo.palavraChave}</span>
+              </div>
+            </div>
           </div>
-          <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1.5 font-medium">Vibração Dominante</p>
-          <p className="nm-card-text mb-4">
-            {ARCANO_RESUMO[arcanoInfo.numero]?.vibracao ?? arcanoInfo.descricao}
-          </p>
-          <div className="rounded-lg bg-purple-900/30 border border-purple-500/20 p-3">
-            <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1.5 font-medium">Desafio a Integrar</p>
-            <p className="nm-card-text !text-purple-200 italic">
-              {ARCANO_RESUMO[arcanoInfo.numero]?.desafio ?? arcanoInfo.desafio}
-            </p>
+
+          <div className="px-4 pb-4 space-y-4 border-t border-purple-500/10 pt-4">
+            <div>
+              <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1.5 font-medium">Vibração Dominante</p>
+              <p className="nm-card-text">
+                {ARCANO_RESUMO[arcanoInfo.numero]?.vibracao ?? arcanoInfo.descricao}
+              </p>
+            </div>
+            <div className="rounded-lg bg-purple-900/30 border border-purple-500/20 p-3">
+              <p className="text-[10px] text-purple-400 uppercase tracking-wider mb-1.5 font-medium">Desafio a Integrar</p>
+              <p className="nm-card-text !text-purple-200 italic">
+                {ARCANO_RESUMO[arcanoInfo.numero]?.desafio ?? arcanoInfo.desafio}
+              </p>
+            </div>
           </div>
         </div>
       ) : triangulo.arcanoRegente != null ? (
-        <div className="rounded-xl bg-white/5 border border-purple-500/20 p-4">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Arcano Regente</p>
-          <p className="font-cinzel text-2xl font-bold text-purple-300">{triangulo.arcanoRegente}</p>
+        <div className="rounded-xl bg-[#1a0533]/60 border border-purple-500/30 p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border bg-purple-500/20 border-purple-500/30 text-purple-300">
+            {triangulo.arcanoRegente}
+          </div>
+          <p className="font-semibold text-gray-200 text-sm leading-snug">Arcano Regente {triangulo.arcanoRegente}</p>
         </div>
       ) : null}
 
