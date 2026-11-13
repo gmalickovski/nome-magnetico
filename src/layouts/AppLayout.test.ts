@@ -36,12 +36,19 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(appLayoutSrc, /headerBackLabel/);
   });
 
-  it('sidebar desktop empurra conteúdo (rail 5rem) a partir de lg sem expansão hover', () => {
+  it('sidebar desktop expande sobreposta ao passar o mouse (z-50, hover:w-60) revelando rótulos sem empurrar página ou header', () => {
     const appLayoutFile = path.join(layoutsDir, 'AppLayout.astro');
     const appLayoutSrc = readFileSync(appLayoutFile, 'utf8');
-    assert.match(appLayoutSrc, /hidden lg:flex/);
-    assert.match(appLayoutSrc, /\bw-20\b/);
-    assert.doesNotMatch(appLayoutSrc, /hover:w-60/);
+    const sidebarMatch = appLayoutSrc.match(/<aside id="app-sidebar"[\s\S]*?<\/aside>/);
+    assert.ok(sidebarMatch, 'sidebar deve existir');
+    const sidebarHtml = sidebarMatch[0];
+
+    assert.match(sidebarHtml, /hidden lg:flex fixed inset-y-0 left-0 z-50 w-20/);
+    assert.match(sidebarHtml, /hover:w-60/);
+    assert.match(sidebarHtml, /transition-\[width/);
+    assert.match(sidebarHtml, /group-hover:opacity-100/);
+    assert.doesNotMatch(sidebarHtml, /sr-only/);
+
     assert.match(appLayoutSrc, /lg:ml-20/);
     assert.doesNotMatch(appLayoutSrc, /--sidebar-w/);
 
@@ -49,6 +56,12 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const cssSrc = readFileSync(cssFile, 'utf8');
     assert.match(cssSrc, /@media \(min-width: 1024px\)[\s\S]*\.nm-chat-shell[\s\S]*left:\s*5rem/);
     assert.doesNotMatch(cssSrc, /\.nm-chat-shell\s*\{\s*left:\s*var\(--sidebar-w/);
+
+    const desktopHeaderSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'AppDesktopHeader.tsx'),
+      'utf8'
+    );
+    assert.match(desktopHeaderSrc, /\bz-40\b/);
   });
 
   it('tablet (<lg) usa dock/header mobile; desktop (≥lg) usa sidebar + header fixo', () => {
