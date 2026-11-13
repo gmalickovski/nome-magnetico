@@ -150,4 +150,12 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const appIndexSrc = readFileSync(appIndexFile, 'utf8');
     assert.match(appIndexSrc, /slot="header-actions"[\s\S]{0,120}href="\/app\/analise\/nome-social"/);
   });
+
+  it('chat não adiciona bolha de resumo ao selecionar opção e container de nomes usa largura total', () => {
+    const chatFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
+    const chatSrc = readFileSync(chatFile, 'utf8');
+    assert.doesNotMatch(chatSrc, /buildPostSuggestionChoiceBlock/);
+    assert.match(chatSrc, /if \(msg\.id\.startsWith\('sug-choice-'\)\) return null;/);
+    assert.match(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"\s+className="!max-w-full"/);
+  });
 });

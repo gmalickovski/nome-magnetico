@@ -123,7 +123,6 @@ import { ChatFreeBirthAnalysisBody } from './ChatFreeBirthAnalysisBody.js';
 import { ChatFreePaywallBubble } from './ChatFreePaywallBubble.js';
 import { ChatPaywallStickyDesktop } from './ChatPaywallStickyDesktop.js';
 import { ChatPaywallSidebarCta } from './ChatPaywallSidebarCta.js';
-import { buildPostSuggestionChoiceBlock } from '../../../../shared/interactive-engine/chat-profile-copy.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { fetchWithAuth } from '../../../lib/auth-fetch.js';
 import { Button } from '../../ui/Button.js';
@@ -1277,21 +1276,6 @@ export function NomeSocialChat({
           rank,
           score_bucket: scoreBucket(sug.score),
         });
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `sug-choice-${Date.now()}`,
-            sender: 'assistant',
-            type: 'text',
-            content: buildPostSuggestionChoiceBlock({
-              assinaturaEscolhida: sug.nome,
-              notaHoje: basePanel.score,
-              notaEscolhida: sug.score,
-              birth: basePanel,
-              chosen: sug.panel,
-            }),
-          },
-        ]);
       }
     }
     if (id && id !== activeSuggestionId) {
@@ -2109,6 +2093,7 @@ export function NomeSocialChat({
           >
             {messages.map((msg) => {
               if (msg.type === 'profile_confirm' && (birthConfirmed || answers.onboarding_confirm === 'ok')) return null;
+              if (msg.id.startsWith('sug-choice-')) return null;
               if (msg.sender === 'user') {
                 return <UserBubble key={msg.id} content={msg.content} />;
               }
@@ -2154,7 +2139,12 @@ export function NomeSocialChat({
                 if (!paidAccessActive) return null;
                 if (!profileCollectionComplete) return null;
                 return (
-                  <NmBubble key={msg.id} wide eyebrow="OPÇÕES HARMONIZADAS">
+                  <NmBubble
+                    key={msg.id}
+                    wide
+                    eyebrow="OPÇÕES HARMONIZADAS"
+                    className="!max-w-full"
+                  >
                     <SuggestionPicker
                       suggestions={suggestions}
                       selectedId={activeSuggestionId}
