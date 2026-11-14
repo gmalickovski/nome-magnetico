@@ -23,14 +23,14 @@ export interface ReadingRadarProps {
  * do lado mais próximo do vértice, então nunca cruza linha nem texto.
  */
 const VB_X = 0;
-const VB_Y = 30;
+const VB_Y = 15;
 const VB_W = 800;
-const VB_H = 540;
+const VB_H = 565;
 const CX = 400;
 const CY = 305;
 const RADIUS = 168;
-const LINE_GAP = 32;
-const LABEL_LINE_HEIGHT = 28;
+const LINE_GAP = 28;
+const LABEL_LINE_HEIGHT = 24;
 
 type Placement = 'top' | 'side' | 'bottom';
 
@@ -109,7 +109,7 @@ export function ReadingRadar({
     <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
         viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
-        className="w-full max-w-[560px] h-auto block"
+        className="nm-radar-svg w-full max-w-[480px] h-auto block"
         role="img"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
@@ -212,7 +212,7 @@ export function ReadingRadar({
             labelY = gy + LINE_GAP;
           } else {
             labelY = gy - (lines.length > 1 ? 26 : 16);
-            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + 32;
+            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + 28;
           }
 
           return (

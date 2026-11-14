@@ -492,9 +492,9 @@ export function ProductHarmonyStar({
   const outerNums = isBirthOnly ? birthNums : harmonizedNums;
   const starViewBox = isDemo
     ? `0 0 ${LANDING_STAR_VIEWBOX.width} ${LANDING_STAR_VIEWBOX.height}`
-    : '-36 20 872 552';
-  const starLabelRadius = isDemo ? LANDING_STAR_LABEL_RADIUS : LANDING_STAR_OUTER_R + 68;
-  const starLabelDy = isDemo ? LANDING_STAR_LABEL_DY : ([-10, -2, 12, 12, -2] as const);
+    : '-36 5 872 580';
+  const starLabelRadius = isDemo ? LANDING_STAR_LABEL_RADIUS : LANDING_STAR_OUTER_R + 62;
+  const starLabelDy = isDemo ? LANDING_STAR_LABEL_DY : ([-8, -2, 10, 10, -2] as const);
 
   useEffect(() => {
     if (!isDemo) {
@@ -686,7 +686,7 @@ export function ProductHarmonyStar({
           transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
         }}
         className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 ${
-          isDemo ? 'mt-8 sm:mt-10' : 'mt-2.5'
+          isDemo ? 'mt-8 sm:mt-10' : 'mt-5 sm:mt-6'
         } px-2 transition-all duration-700 ease-out ${
           shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}

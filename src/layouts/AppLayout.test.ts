@@ -219,13 +219,15 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const typographySrc = readFileSync(path.join(srcRoot, 'styles', 'app-typography.css'), 'utf8');
     assert.match(typographySrc, /--nm-type-min-legible:\s*0\.75rem/);
     assert.match(typographySrc, /--nm-card-safe-inset:\s*0\.375rem/);
-    assert.match(typographySrc, /--nm-type-chart-label:\s*28px/);
-    assert.match(typographySrc, /--nm-type-chart-number:\s*32px/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*26px/);
+    assert.match(typographySrc, /--nm-type-chart-number:\s*30px/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*19px/);
+    assert.match(typographySrc, /\.nm-score-eyebrow/);
     assert.match(typographySrc, /@container \(min-width:\s*28rem\)/);
 
     const frameSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'landing', 'ProductResultFrame.tsx'), 'utf8');
-    assert.match(frameSrc, /-36 20 872 552/);
-    assert.match(frameSrc, /isDemo \? 'mt-8 sm:mt-10' : 'mt-2\.5'/);
+    assert.match(frameSrc, /-36 5 872 580/);
+    assert.match(frameSrc, /isDemo \? 'mt-8 sm:mt-10' : 'mt-5 sm:mt-6'/);
 
     const radarSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingRadar.tsx'), 'utf8');
     assert.match(radarSrc, /const RADIUS = 168/);
