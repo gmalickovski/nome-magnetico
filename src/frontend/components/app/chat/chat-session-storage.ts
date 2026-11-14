@@ -104,3 +104,45 @@ export function clearChatSession(userId: string): void {
     // ignore
   }
 }
+
+/**
+ * Indica se há uma entrevista de Nome Social iniciada e ainda não concluída
+ * no localStorage para trocar dinamicamente "+ Nova Análise" por "Retomar Análise".
+ */
+export function hasUnfinishedChatSession(userId: string): boolean {
+  const session = loadChatSession(userId);
+  if (!session) return false;
+  if (session.analysisId || session.currentStepId === 'conclusao') {
+    return false;
+  }
+  return Boolean(
+    session.birthConfirmed ||
+      Object.keys(session.answers ?? {}).length > 0 ||
+      (session.messages?.length ?? 0) > 1 ||
+      (session.stepIndex ?? 0) > 0,
+  );
+}
+
+/**
+ * Sincroniza todos os links `[data-nm-header-cta="analise"]` da página atual
+ * com o estado de entrevista em andamento no localStorage.
+ */
+export function syncAnaliseCtaLabels(
+  root: ParentNode | null = typeof document !== 'undefined' ? document : null,
+): boolean {
+  if (!root || typeof localStorage === 'undefined') return false;
+  const links = root.querySelectorAll<HTMLAnchorElement>('[data-nm-header-cta="analise"]');
+  let anyUnfinished = false;
+  links.forEach((link) => {
+    const uid = link.dataset.userId ?? '';
+    const unfinished = hasUnfinishedChatSession(uid);
+    if (unfinished) anyUnfinished = true;
+    const defaultLabel = link.dataset.defaultLabel || '+ Nova Análise';
+    const resumeLabel = link.dataset.resumeLabel || 'Retomar Análise';
+    const nextLabel = unfinished ? resumeLabel : defaultLabel;
+    if (link.textContent?.trim() !== nextLabel) {
+      link.textContent = nextLabel;
+    }
+  });
+  return anyUnfinished;
+}

@@ -565,11 +565,25 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
     <a
       slot="header-actions"
       href="/app/analise/nome-social"
+      data-nm-header-cta="analise"
+      data-user-id={user.id}
+      data-default-label="+ Nova Análise"
+      data-resume-label="Retomar Análise"
       class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-300"
     >
       + Nova Análise
     </a>
   )}
+
+  <script>
+    import { syncAnaliseCtaLabels } from '../../frontend/components/app/chat/chat-session-storage';
+
+    const sync = () => syncAnaliseCtaLabels();
+    sync();
+    window.addEventListener('pageshow', sync);
+    window.addEventListener('focus', sync);
+    window.addEventListener('storage', sync);
+  </script>
   {needsEmailConfirmation && user.email && (
     <MailWarning client:load email={user.email} />
   )}
