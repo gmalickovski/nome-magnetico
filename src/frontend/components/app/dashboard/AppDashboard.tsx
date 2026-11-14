@@ -4,7 +4,7 @@ import type { RadarAxesData } from '../chat/chat-types.js';
 import { hasUnfinishedChatSession, syncAnaliseCtaLabels } from '../chat/chat-session-storage.js';
 import { DashboardCheckoutButton } from '../DashboardCheckoutButton';
 import { PDFFeedbackButton } from '../PDFFeedbackButton';
-import { ScoreCardRow, getScoreTierVisual } from '../../landing/ProductResultFrame';
+import { getScoreTierVisual } from '../../landing/ProductResultFrame';
 import type { ActivePromotion, PriceInfo } from '../../../../backend/payments/prices';
 import {
   CHECKLIST_ITEMS,
@@ -20,9 +20,6 @@ import {
 /** CTA dourado do painel: primário da marca (#D4AF37), hover #f2ca50; texto #111111 */
 const CTA_CLASS =
   'inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#111111] shadow-[0_2px_16px_rgba(212,175,55,0.28)] transition hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.45)] active:scale-[0.98]';
-
-const SECONDARY_CTA_CLASS =
-  'inline-flex items-center justify-center gap-2 rounded-full bg-white/[0.06] px-5 py-2.5 text-sm font-semibold text-[#e5e2e1] ring-1 ring-[#D4AF37]/30 transition hover:bg-white/[0.11] hover:text-[#f2ca50] active:scale-[0.98]';
 
 export interface DashboardHistoryItem {
   id: string;
@@ -254,168 +251,112 @@ export function AppDashboard(props: AppDashboardProps) {
   }, [offerDismissed, props]);
 
   const resultadoHref = `/app/resultado/${props.analysisId}`;
-  const featuredProductType =
-    props.featuredProductType ?? (props.hasNomeSocial ? 'nome_social' : 'analise_gratuita');
-  const featuredIsFree = Boolean(props.featuredIsFree ?? !props.hasPaidAccess);
 
   const radius = 102;
   const strokeWidth = 11;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
+  const isShowingHarmonized = activeView === 'harmonized' && hasHarmonizedComparison;
+  const harmonizedGain = harmonizedScoreValue - birthScoreValue;
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      {/* Hero estilo Landing Page ("The Celestial Alchemist") */}
-      <section className="nm-floating-card rounded-2xl p-5 sm:p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          {/* Coluna Esquerda: Nome atual vs Assinatura harmonizada + Bloqueios + Ações */}
-          <div className="min-w-0 flex-1 space-y-5">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AF37]/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#f2ca50]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#f2ca50]" />
-                {hasHarmonizedComparison ? 'Mapa Comparativo' : 'Mapa em Destaque'}
-              </span>
-              {props.scorePotencial != null && !hasHarmonizedComparison && (
-                <span className="rounded-full bg-[#bea5ff]/12 px-3 py-1 text-[11px] font-medium text-[#d7c6ff]">
-                  Potencial estimado: até {props.scorePotencial} pts
-                </span>
-              )}
-            </div>
-
-            {/* Cards interativos de comparação com ScoreCardRow da Landing */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setActiveView('birth')}
-                className={`group relative w-full overflow-hidden rounded-xl p-4 text-left transition-all duration-300 ${
-                  activeView === 'birth'
-                    ? 'bg-white/[0.05] ring-1 ring-[#D4AF37]/45'
-                    : 'bg-[#131313]/75 ring-1 ring-white/[0.04] hover:bg-white/[0.03]'
+      {/* Hero estilo Landing Page: horizontal no desktop, empilhado compacto no mobile */}
+      <section className="nm-floating-card mx-auto w-full max-w-[420px] rounded-2xl p-6 sm:p-7 lg:max-w-none lg:px-10 lg:py-8 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+        <div className="flex flex-col items-center gap-6 text-center lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:text-left">
+          {/* Desktop esquerda / Mobile embaixo: Nome grande em Cinzel e dados abaixo */}
+          <div className="order-2 flex min-w-0 flex-1 flex-col items-center lg:order-1 lg:items-start">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
+                isShowingHarmonized
+                  ? 'bg-[#D4AF37]/12 text-[#f2ca50]'
+                  : 'bg-white/[0.06] text-[#A0A0A0]'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  isShowingHarmonized ? 'bg-[#f2ca50]' : 'bg-[#A0A0A0]'
                 }`}
-              >
-                {activeView === 'birth' && (
-                  <span
-                    className="absolute inset-y-0 left-0 w-1"
-                    style={{ backgroundColor: getScoreTierVisual(birthScoreValue).stroke }}
-                  />
-                )}
-                <ScoreCardRow
-                  eyebrow="Nome de nascimento"
-                  nome={props.nomeHoje || 'Nome não informado'}
-                  score={birthScoreValue}
-                />
-              </button>
+              />
+              {isShowingHarmonized ? 'Assinatura sugerida' : 'Nome de nascimento'}
+            </span>
 
-              {hasHarmonizedComparison && props.nomeHarmonizado ? (
-                <button
-                  type="button"
-                  onClick={() => setActiveView('harmonized')}
-                  className={`group relative w-full overflow-hidden rounded-xl p-4 text-left transition-all duration-300 ${
-                    activeView === 'harmonized'
-                      ? 'bg-white/[0.05] ring-1 ring-[#D4AF37]/45'
-                      : 'bg-[#131313]/75 ring-1 ring-white/[0.04] hover:bg-white/[0.03]'
-                  }`}
-                >
-                  {activeView === 'harmonized' && (
-                    <span
-                      className="absolute inset-y-0 left-0 w-1"
-                      style={{ backgroundColor: getScoreTierVisual(harmonizedScoreValue).stroke }}
-                    />
-                  )}
-                  <ScoreCardRow
-                    eyebrow="Assinatura harmonizada"
-                    nome={props.nomeHarmonizado}
-                    score={harmonizedScoreValue}
-                  />
-                </button>
-              ) : (
-                <a
-                  href={props.hasNomeSocial ? '/app/analise/nome-social' : '/comprar'}
-                  className="flex flex-col justify-between rounded-xl bg-[#131313]/70 p-4 ring-1 ring-white/[0.05] transition-all duration-300 hover:bg-white/[0.04] hover:ring-[#D4AF37]/30"
-                >
-                  <div>
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#bea5ff]">
-                      Assinatura magnética
-                    </p>
-                    <p className="font-cinzel text-base font-bold leading-snug text-[#e5e2e1] sm:text-lg">
-                      Defina na harmonização
-                    </p>
-                  </div>
-                  <p className="mt-2 text-xs text-[#A0A0A0]">
-                    {props.hasNomeSocial
-                      ? 'Gerar variações sem bloqueios e alinhadas ao seu Destino →'
-                      : 'Desbloqueie variações calculadas para elevar sua vibração →'}
-                  </p>
-                </a>
-              )}
-            </div>
+            <h1
+              className={`mt-3 font-cinzel text-2xl font-bold leading-tight tracking-wide break-words sm:text-3xl lg:text-4xl xl:text-[42px] ${
+                isShowingHarmonized ? 'text-[#f2ca50]' : 'text-[#e5e2e1]'
+              }`}
+            >
+              {activeName || 'Nome não informado'}
+            </h1>
 
-            {(visibleBloqueios.length > 0 || hasMoreBloqueios) && (
-              <div className="flex flex-wrap items-center gap-2">
-                {visibleBloqueios.map((titulo) => (
-                  <span
-                    key={titulo}
-                    className="rounded-full bg-[#FF6B6B]/15 px-3 py-1 text-xs font-medium text-[#FF6B6B]"
-                  >
-                    {titulo}
+            <div className="mt-4 flex flex-col items-center gap-3 lg:items-start">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${activeVisual.badgeClass}`}
+                >
+                  <span className="tabular-nums font-bold">{targetScore}/100 pts</span>
+                  <span aria-hidden="true">•</span>
+                  <span>{activeVisual.label}</span>
+                </span>
+
+                {isShowingHarmonized && harmonizedGain > 0 && (
+                  <span className="inline-flex items-center rounded-full bg-emerald-400/12 px-3 py-1 text-xs font-semibold text-emerald-300">
+                    +{harmonizedGain} pts sobre o nome atual ({birthScoreValue} pts)
                   </span>
-                ))}
-                {hasMoreBloqueios && !showAllBloqueios && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllBloqueios(true)}
-                    className="text-xs font-semibold text-[#e5e2e1] underline underline-offset-2 hover:text-[#D4AF37]"
-                  >
-                    ver todos
-                  </button>
                 )}
-                {hasMoreBloqueios && showAllBloqueios && (
-                  <a
-                    href={`${resultadoHref}#bloqueios`}
-                    className="text-xs font-semibold text-[#D4AF37] underline underline-offset-2"
-                  >
-                    Ver no relatório
-                  </a>
+
+                {!isShowingHarmonized && props.scorePotencial != null && (
+                  <span className="inline-flex items-center rounded-full bg-[#bea5ff]/12 px-3 py-1 text-xs font-medium text-[#d7c6ff]">
+                    Potencial até {props.scorePotencial} pts
+                  </span>
                 )}
               </div>
-            )}
 
-            {/* Barra de ações diretas do Hero */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <a href={resultadoHref} className={`${CTA_CLASS} w-full sm:w-auto`}>
-                Ver relatório completo
-              </a>
-
-              <PDFFeedbackButton
-                analysisId={props.analysisId}
-                productType={featuredProductType}
-                isFree={featuredIsFree}
-                label="Baixar PDF"
-                showLabel
-                showFab={false}
-                className={`${SECONDARY_CTA_CLASS} w-full sm:w-auto`}
-              />
-
-              {props.hasNomeSocial && !props.isExpired && (
-                <a
-                  href="/app/analise/nome-social"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-[#f2ca50] ring-1 ring-white/10 transition hover:bg-white/[0.08] sm:w-auto"
-                >
-                  {hasUnfinishedSession
-                    ? 'Retomar Análise'
-                    : props.nomeHarmonizado
-                      ? '+ Nova Análise'
-                      : 'Abrir chat de análise'}
-                </a>
+              {isShowingHarmonized ? (
+                <p className="text-xs font-medium text-[#A0A0A0] sm:text-sm">
+                  Sem bloqueios ativos nos 4 triângulos • Alinhada ao seu Destino
+                </p>
+              ) : visibleBloqueios.length > 0 || hasMoreBloqueios ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                  {visibleBloqueios.map((titulo) => (
+                    <span
+                      key={titulo}
+                      className="rounded-full bg-[#FF6B6B]/15 px-3 py-1 text-xs font-medium text-[#FF6B6B]"
+                    >
+                      {titulo}
+                    </span>
+                  ))}
+                  {hasMoreBloqueios && !showAllBloqueios && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllBloqueios(true)}
+                      className="text-xs font-semibold text-[#e5e2e1] underline underline-offset-2 hover:text-[#D4AF37]"
+                    >
+                      ver todos
+                    </button>
+                  )}
+                  {hasMoreBloqueios && showAllBloqueios && (
+                    <a
+                      href={`${resultadoHref}#bloqueios`}
+                      className="text-xs font-semibold text-[#D4AF37] underline underline-offset-2"
+                    >
+                      Ver no relatório
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs font-medium text-[#A0A0A0] sm:text-sm">
+                  Sem sequências de bloqueio nos 4 triângulos
+                </p>
               )}
             </div>
           </div>
 
-          {/* Coluna Direita: Visor Circular SVG do Score estilo Landing Page */}
-          <div className="flex shrink-0 flex-col items-center justify-center rounded-2xl bg-[#131313]/65 p-5 sm:p-6 ring-1 ring-white/[0.04] lg:w-[290px]">
+          {/* Desktop direita / Mobile topo: Botão de alternância + Visor Circular SVG do Score */}
+          <div className="order-1 flex shrink-0 flex-col items-center justify-center lg:order-2">
             {hasHarmonizedComparison && (
               <div
-                className="mb-4 inline-flex items-center rounded-full bg-[#1C1C1C] p-1 ring-1 ring-white/10"
+                className="mb-4 inline-flex items-center rounded-full bg-[#131313] p-1 ring-1 ring-white/10"
                 role="tablist"
                 aria-label="Alternar nome exibido no score"
               >
@@ -424,7 +365,7 @@ export function AppDashboard(props: AppDashboardProps) {
                   role="tab"
                   aria-selected={activeView === 'birth'}
                   onClick={() => setActiveView('birth')}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                     activeView === 'birth'
                       ? 'bg-[#D4AF37] text-[#131313]'
                       : 'text-[#A0A0A0] hover:text-[#e5e2e1]'
@@ -437,7 +378,7 @@ export function AppDashboard(props: AppDashboardProps) {
                   role="tab"
                   aria-selected={activeView === 'harmonized'}
                   onClick={() => setActiveView('harmonized')}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                     activeView === 'harmonized'
                       ? 'bg-[#D4AF37] text-[#131313]'
                       : 'text-[#A0A0A0] hover:text-[#e5e2e1]'
@@ -450,7 +391,7 @@ export function AppDashboard(props: AppDashboardProps) {
 
             <a
               href={resultadoHref}
-              className="group relative flex h-44 w-44 items-center justify-center sm:h-48 sm:w-48 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] rounded-full"
+              className="group relative flex h-48 w-48 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] sm:h-52 sm:w-52"
               aria-label={`Score ${targetScore} para ${activeName}. Clique para abrir o relatório completo.`}
             >
               <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 224 224">
@@ -478,7 +419,7 @@ export function AppDashboard(props: AppDashboardProps) {
 
               <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
                 <span
-                  className="font-cinzel text-[46px] font-bold leading-none tracking-tight tabular-nums sm:text-[52px]"
+                  className="font-cinzel text-[48px] font-bold leading-none tracking-tight tabular-nums sm:text-[52px]"
                   style={{ color: activeVisual.text }}
                 >
                   {displayedScore}
@@ -493,17 +434,6 @@ export function AppDashboard(props: AppDashboardProps) {
                 </span>
               </div>
             </a>
-
-            <div className="mt-4 w-full text-center">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A0A0A0]">
-                {activeView === 'harmonized' && hasHarmonizedComparison
-                  ? 'Assinatura sugerida'
-                  : 'Nome de nascimento'}
-              </p>
-              <p className="mt-1 font-cinzel text-base font-bold leading-snug text-[#e5e2e1] sm:text-lg break-words">
-                {activeName}
-              </p>
-            </div>
           </div>
         </div>
       </section>
