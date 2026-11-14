@@ -305,36 +305,39 @@ export function MobileReadingBottomSheet({
             <button
               type="button"
               onClick={() => onClose('x')}
+              title="Fechar painel de análise"
               aria-label="Fechar painel de análise"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#1c1c1c] text-[#E5E2E1] hover:text-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+              className="p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex shrink-0 items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
             >
-              <IconX className="h-4 w-4" />
+              <IconX className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
         <div
           ref={contentRef}
-          className="min-h-0 flex-1 chat-scroll-pane overscroll-contain px-4 py-3 pb-4 text-[#E5E2E1]"
+          className="min-h-0 flex-1 chat-scroll-pane overscroll-contain text-[#E5E2E1]"
         >
-          <ChatSidebarSection
-            birthPanel={birthPanel}
-            harmonizedPanel={harmonizedPanel}
-            showScoreCard={showScoreCard}
-            showStarDetail={showStarDetail}
-            starPanelData={starPanelData}
-            isSuggestion={isSuggestion}
-            onResetToBase={onResetToBase}
-            radarAxes={radarAxes}
-            radarOverlayAxes={radarOverlayAxes}
-            radarLabels={radarLabels}
-            radarShowNumericLabels={radarShowNumericLabels}
-            contextChips={contextChips}
-            showRadar={showRadar}
-            readingSummary={readingSummary}
-            readingSummaryLoading={readingSummaryLoading}
-            showReadingSummary={showReadingSummary}
-          />
+          <div className="w-full mx-auto px-4 py-3 pb-4">
+            <ChatSidebarSection
+              birthPanel={birthPanel}
+              harmonizedPanel={harmonizedPanel}
+              showScoreCard={showScoreCard}
+              showStarDetail={showStarDetail}
+              starPanelData={starPanelData}
+              isSuggestion={isSuggestion}
+              onResetToBase={onResetToBase}
+              radarAxes={radarAxes}
+              radarOverlayAxes={radarOverlayAxes}
+              radarLabels={radarLabels}
+              radarShowNumericLabels={radarShowNumericLabels}
+              contextChips={contextChips}
+              showRadar={showRadar}
+              readingSummary={readingSummary}
+              readingSummaryLoading={readingSummaryLoading}
+              showReadingSummary={showReadingSummary}
+            />
+          </div>
         </div>
 
         {panelPrimary && (panelPrimary.pdfModel || panelPrimary.variant === 'unlock') ? (

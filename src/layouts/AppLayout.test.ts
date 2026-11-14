@@ -257,4 +257,16 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.ok(logoLinkMatch, 'link do logo deve existir');
     assert.doesNotMatch(logoLinkMatch[0], /transition-all/);
   });
+
+  it('painel mobile centraliza os cards com espaçamento lateral simétrico e botão fechar X sem círculo', () => {
+    const mobileSheetSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'MobileReadingBottomSheet.tsx'),
+      'utf8',
+    );
+    assert.match(mobileSheetSrc, /chat-scroll-pane overscroll-contain text-\[#E5E2E1\]"\s*>\s*<div className="w-full mx-auto px-4 py-3 pb-4">\s*<ChatSidebarSection/);
+    const closeBtnMatch = mobileSheetSrc.match(/<button\s+type="button"\s+onClick=\{\(\) => onClose\('x'\)\}[\s\S]*?<\/button>/);
+    assert.ok(closeBtnMatch, 'botão de fechar mobile deve existir');
+    assert.doesNotMatch(closeBtnMatch[0], /rounded-full border/);
+    assert.match(closeBtnMatch[0], /bg-transparent text-\[#e5e2e1\]\/80 hover:text-\[#f2ca50\]/);
+  });
 });
