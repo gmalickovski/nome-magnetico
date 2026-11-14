@@ -162,6 +162,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const appIndexFile = path.join(srcRoot, 'pages', 'app', 'index.astro');
     const appIndexSrc = readFileSync(appIndexFile, 'utf8');
     assert.match(appIndexSrc, /slot="header-actions"[\s\S]{0,120}href="\/app\/analise\/nome-social"/);
+    assert.doesNotMatch(appIndexSrc, /admin-analise|Área do Analista/);
   });
 
   it('chat não adiciona bolha de resumo ao selecionar opção e container de nomes usa largura total', () => {
