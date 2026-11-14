@@ -212,10 +212,11 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const triSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'TriangleVisualization.tsx'), 'utf8');
     assert.doesNotMatch(triSrc, /nm-vida-intro-container/);
-    assert.match(triSrc, /Bloqueio = \{bloqueiosFiltrados\.length\}[\s\S]*?Arcanos do \{trianguloTitulo\}/);
-    assert.match(triSrc, /Arcano Regente \{regenteNumero\}/);
-    assert.match(triSrc, /Arcano de Trânsito \{triangulo\.arcanoAtual\.numero\}/);
-    assert.match(triSrc, /Sequência de Passagem \(Cronologia\)/);
+    assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Bloqueios <span className="text-\[#f2ca50\]">= \{bloqueiosFiltrados\.length\}<\/span>\s*<\/h3>/);
+    assert.match(triSrc, /border-red-500\/30 bg-red-500\/10[\s\S]*?✓ Não possui bloqueios neste triângulo/);
+    assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Arcanos\s*<\/h3>/);
+    assert.match(triSrc, /border-purple-500\/30 bg-purple-500\/10[\s\S]*?w-12 h-12 rounded-full[\s\S]*?Arcano Regente \{regenteNumero\}/);
+    assert.match(triSrc, /border-purple-500\/30 bg-purple-500\/10[\s\S]*?w-12 h-12 rounded-full[\s\S]*?Arcano de Trânsito \{arcanoTransito\.numero\}[\s\S]*?Sequência de Passagem \(Cronologia\)/);
   });
 
   it('gráficos da Estrela Cabalística e Mapa de Alinhamento usam fonte mínima legível, legenda próxima e explicam as 5 pontas', () => {

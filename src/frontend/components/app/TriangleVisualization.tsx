@@ -321,19 +321,37 @@ function TrianguloInfo({
           arcanoInfo?.descricao ??
           '')
       : '';
-  const trianguloTitulo = TIPO_LABEL[abaAtiva]?.label ?? 'Triângulo da Vida';
+  const passageList = triangulo.arcanosDePassagem ?? [];
+  const passageCount = passageList.length;
   const cycleYears =
-    triangulo.arcanosDePassagem && triangulo.arcanosDePassagem.length > 0
-      ? (90 / triangulo.arcanosDePassagem.length).toFixed(1).replace('.', ',')
+    passageCount > 0
+      ? (90 / passageCount).toFixed(1).replace('.', ',')
       : null;
+  const arcanoTransito =
+    triangulo.arcanoAtual != null && triangulo.arcanoAtual.numero != null
+      ? {
+          ...triangulo.arcanoAtual,
+          numero: triangulo.arcanoAtual.numero,
+        }
+      : null;
+  const hasArcanosSection =
+    regenteNumero != null ||
+    arcanoTransito != null ||
+    (passageCount > 0 && cycleYears != null);
 
   return (
-    <div className="space-y-4 mt-4 text-left">
-      {/* Subcard 1: Bloqueio do triângulo (logo abaixo do triângulo e antes dos arcanos) */}
-      <div className="rounded-xl bg-[#0d0d1a]/70 border border-purple-500/20 p-4 space-y-3 text-left">
-        <h4 className="font-cinzel text-xs font-bold uppercase tracking-[0.14em] text-[#bea5ff] border-b border-purple-500/20 pb-2 text-left">
-          Bloqueio = {bloqueiosFiltrados.length}
-        </h4>
+    <div className="space-y-6 mt-5 text-left">
+      {/* Seção Bloqueios (acima de Arcanos, direto no card pai) */}
+      <div className="space-y-4 text-left">
+        <div className="space-y-2">
+          <h3 className="font-cinzel font-bold text-[#e5e2e1] leading-snug break-words text-left">
+            Bloqueios <span className="text-[#f2ca50]">= {bloqueiosFiltrados.length}</span>
+          </h3>
+          <p className="nm-card-text">
+            Sequências de três ou mais números repetidos nas linhas deste triângulo que indicam pontos de tensão ou travamento vibracional.
+          </p>
+        </div>
+
         {bloqueiosFiltrados.length > 0 ? (
           <div className="space-y-3">
             {bloqueiosFiltrados.map((b, i) => (
@@ -341,122 +359,149 @@ function TrianguloInfo({
                 key={i}
                 bloqueio={b}
                 contagemNaAba={b.repeticoesPortriangulo?.[abaAtiva] ?? 1}
-                abaAtiva={abaAtiva}
               />
             ))}
           </div>
         ) : (
-          <p className="nm-card-text !text-emerald-400">
-            ✓ Não possui bloqueios neste triângulo
-          </p>
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <p className="nm-card-text !text-emerald-400 font-medium">
+              ✓ Não possui bloqueios neste triângulo
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Subcard 2: Arcanos do Triângulo (estrutura espelhada do PDF, com textos resumidos) */}
-      {regenteNumero != null && (
-        <div className="rounded-xl bg-[#0d0d1a]/70 border border-purple-500/20 p-4 space-y-3.5 text-left">
-          <h4 className="font-cinzel text-xs font-bold uppercase tracking-[0.14em] text-[#bea5ff] border-b border-purple-500/20 pb-2 text-left">
-            Arcanos do {trianguloTitulo}
-          </h4>
-
-          <p className="nm-card-text">
-            <strong className="text-[#bea5ff] font-semibold">
-              Arcano Regente {regenteNumero}
-              {regenteNome ? `: ${regenteNome}` : ''} —{' '}
-            </strong>
-            {regenteResumo}
-          </p>
-
-          {triangulo.arcanoAtual?.numero != null && (
+      {/* Seção Arcanos (abaixo de Bloqueios, no mesmo card pai) */}
+      {hasArcanosSection && (
+        <div className="space-y-4 pt-2 text-left">
+          <div className="space-y-2">
+            <h3 className="font-cinzel font-bold text-[#e5e2e1] leading-snug break-words text-left">
+              Arcanos
+            </h3>
             <p className="nm-card-text">
-              <strong className="text-[#bea5ff] font-semibold">
-                Arcano de Trânsito {triangulo.arcanoAtual.numero} —{' '}
-                {triangulo.arcanoAtual.periodo} (Idade{' '}
-                {triangulo.arcanoAtual.idadeInicio} a{' '}
-                {triangulo.arcanoAtual.idadeFim}) —{' '}
-              </strong>
-              {getArcanoTransitoResumo(triangulo.arcanoAtual.numero, arcanos)}
+              Os Arcanos são as forças arquetípicas que regem os ciclos de evolução deste triângulo, revelando a vibração dominante da pirâmide e o capítulo cronológico que você atravessa no momento.
             </p>
-          )}
+          </div>
 
-          {triangulo.arcanosDePassagem &&
-            triangulo.arcanosDePassagem.length > 0 &&
-            cycleYears && (
-              <div className="space-y-3 pt-1">
-                <div>
-                  <p className="text-sm font-semibold text-[#bea5ff]">
-                    Sequência de Passagem (Cronologia)
-                  </p>
-                  <p className="text-xs text-gray-400/85 italic mt-0.5">
-                    Duração de cada ciclo: ~{cycleYears} anos
-                  </p>
+          {regenteNumero != null && (
+            <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 overflow-hidden">
+              <div className="w-full text-left p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border text-purple-300 border-purple-500/30 bg-purple-500/20">
+                  {regenteNumero}
                 </div>
-
-                <p className="nm-card-text">
-                  Mapa cronológico da sua jornada evolutiva: cada círculo
-                  representa um ciclo de ~{cycleYears} anos, destacando as
-                  energias vivenciadas no passado (em cinza), o portal
-                  vibracional ativo no presente (em roxo) e os ciclos que
-                  florescerão no futuro (em dourado).
-                </p>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {triangulo.arcanosDePassagem.map((raw, idx) => {
-                    let state: 'past' | 'present' | 'future' = 'future';
-                    const currentIndice = triangulo.arcanoAtual?.indice;
-                    if (currentIndice !== undefined) {
-                      if (idx < currentIndice) state = 'past';
-                      else if (idx === currentIndice) state = 'present';
-                      else state = 'future';
-                    } else if (triangulo.arcanoAtual?.numero != null) {
-                      if (raw === triangulo.arcanoAtual.numero) {
-                        state = 'present';
-                      }
-                    }
-
-                    const isAtual = state === 'present';
-                    const isPast = state === 'past';
-
-                    return (
-                      <span
-                        key={idx}
-                        title={`Arcano ${raw}`}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all border ${
-                          isAtual
-                            ? 'bg-purple-500 text-white border-purple-500'
-                            : isPast
-                              ? 'bg-[#F3F4F6]/10 text-gray-500 border-gray-600/50'
-                              : 'bg-[#FFFDF0]/10 text-[#f2ca50] border-[#D4AF37]/50'
-                        }`}
-                      >
-                        {raw}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#F3F4F6]/10 border border-gray-600/50" />
-                    <span className="text-xs text-gray-400">
-                      Ciclos já vivenciados (Passado)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                    <span className="text-xs text-gray-400">
-                      Momento ativo na sua vida (Presente)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#FFFDF0]/10 border border-[#D4AF37]/50" />
-                    <span className="text-xs text-gray-400">
-                      Ciclos futuros de evolução (Futuro)
-                    </span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-200 text-sm leading-snug">
+                    Arcano Regente {regenteNumero}{regenteNome ? ` — ${regenteNome}` : ''}
+                  </p>
                 </div>
               </div>
-            )}
+              {regenteResumo && (
+                <div className="px-4 pb-4 space-y-4 border-t border-white/5">
+                  <p className="nm-card-text pt-4">{regenteResumo}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {(arcanoTransito || (passageCount > 0 && cycleYears)) && (
+            <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 overflow-hidden">
+              {arcanoTransito && (
+                <div className="w-full text-left p-4 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold font-mono shrink-0 border text-purple-300 border-purple-500/30 bg-purple-500/20">
+                    {arcanoTransito.numero}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-200 text-sm leading-snug">
+                      Arcano de Trânsito {arcanoTransito.numero} — {arcanoTransito.periodo} (Idade {arcanoTransito.idadeInicio} a {arcanoTransito.idadeFim})
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className={`px-4 pb-4 space-y-4 ${arcanoTransito ? 'border-t border-white/5' : 'pt-4'}`}>
+                {arcanoTransito && (
+                  <p className="nm-card-text pt-4">
+                    {getArcanoTransitoResumo(arcanoTransito.numero, arcanos)}
+                  </p>
+                )}
+
+                {passageCount > 0 && cycleYears && (
+                  <div className="rounded-lg p-3.5 border bg-purple-500/10 border-purple-500/20 space-y-3">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wider text-purple-300">
+                        Sequência de Passagem (Cronologia)
+                      </p>
+                      <p className="text-xs text-purple-300/80 italic mt-0.5">
+                        Duração de cada ciclo: ~{cycleYears} anos
+                      </p>
+                    </div>
+
+                    <p className="nm-card-text">
+                      Mapa cronológico da sua jornada evolutiva: cada círculo
+                      representa um ciclo de ~{cycleYears} anos, destacando as
+                      energias vivenciadas no passado (em cinza), o portal
+                      vibracional ativo no presente (em roxo) e os ciclos que
+                      florescerão no futuro (em dourado).
+                    </p>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {passageList.map((raw, idx) => {
+                        let state: 'past' | 'present' | 'future' = 'future';
+                        const currentIndice = triangulo.arcanoAtual?.indice;
+                        if (currentIndice !== undefined) {
+                          if (idx < currentIndice) state = 'past';
+                          else if (idx === currentIndice) state = 'present';
+                          else state = 'future';
+                        } else if (arcanoTransito && raw === arcanoTransito.numero) {
+                          state = 'present';
+                        }
+
+                        const isAtual = state === 'present';
+                        const isPast = state === 'past';
+
+                        return (
+                          <span
+                            key={idx}
+                            title={`Arcano ${raw}`}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all border ${
+                              isAtual
+                                ? 'bg-purple-500 text-white border-purple-500'
+                                : isPast
+                                  ? 'bg-[#F3F4F6]/10 text-gray-500 border-gray-600/50'
+                                  : 'bg-[#FFFDF0]/10 text-[#f2ca50] border-[#D4AF37]/50'
+                            }`}
+                          >
+                            {raw}
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#F3F4F6]/10 border border-gray-600/50" />
+                        <span className="text-xs text-gray-400">
+                          Ciclos já vivenciados (Passado)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                        <span className="text-xs text-gray-400">
+                          Momento ativo na sua vida (Presente)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#FFFDF0]/10 border border-[#D4AF37]/50" />
+                        <span className="text-xs text-gray-400">
+                          Ciclos futuros de evolução (Futuro)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -466,46 +511,53 @@ function TrianguloInfo({
 // ─────────────────────────────────────────────────────────────────────────────
 // Card de bloqueio expandível
 // ─────────────────────────────────────────────────────────────────────────────
-function BloqueioCard({ bloqueio, contagemNaAba, abaAtiva }: { bloqueio: Bloqueio; contagemNaAba: number; abaAtiva: string }) {
+function BloqueioCard({ bloqueio, contagemNaAba }: { bloqueio: Bloqueio; contagemNaAba: number }) {
   const [expandido, setExpandido] = useState(false);
 
   return (
-    <div className="rounded-xl border border-red-500/20 bg-red-500/5 overflow-hidden">
+    <div className="rounded-xl border border-red-500/30 bg-red-500/10 overflow-hidden">
       <button
-        className="w-full text-left p-4 flex items-start justify-between gap-4"
+        type="button"
+        className="w-full text-left p-4 flex items-center justify-between gap-4"
         onClick={() => setExpandido(!expandido)}
       >
-        <div>
-          <span className="font-mono text-red-400 text-sm font-bold mr-1">{bloqueio.codigo}</span>
-          {contagemNaAba > 1 && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/25 text-red-300 border border-red-500/40 mr-2 align-middle">
-              {contagemNaAba}×
-            </span>
-          )}
-          <span className="text-gray-200 font-medium">{bloqueio.titulo}</span>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {bloqueio.triangulos.map((t, i) => {
-              const count = bloqueio.repeticoesPortriangulo?.[t] ?? 1;
-              return (
-                <span key={i} className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400">
-                  {TIPO_LABEL[t]?.label ?? t}{count > 1 ? ` (${count}×)` : ''}
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold font-mono shrink-0 border text-red-300 border-red-500/30 bg-red-500/20">
+            {bloqueio.codigo}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-200 text-sm leading-snug">
+              {bloqueio.titulo}
+              {contagemNaAba > 1 && (
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/25 text-red-300 border border-red-500/40 align-middle">
+                  {contagemNaAba}×
                 </span>
-              );
-            })}
+              )}
+            </p>
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {bloqueio.triangulos.map((t, i) => {
+                const count = bloqueio.repeticoesPortriangulo?.[t] ?? 1;
+                return (
+                  <span key={i} className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400">
+                    {TIPO_LABEL[t]?.label ?? t}{count > 1 ? ` (${count}×)` : ''}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         </div>
         <span className="text-[#D4AF37] shrink-0">{expandido ? '▲' : '▼'}</span>
       </button>
 
       {expandido && (
-        <div className="px-4 pb-4 space-y-3 border-t border-red-500/10">
+        <div className="px-4 pb-4 space-y-4 border-t border-white/5">
           {(() => {
             let displayDesc = bloqueio.descricao;
             if (displayDesc.includes('O antídoto é')) {
               displayDesc = displayDesc.split('O antídoto é')[0].trim();
             }
             return (
-              <p className="nm-card-text pt-3">{displayDesc}</p>
+              <p className="nm-card-text pt-4">{displayDesc}</p>
             );
           })()}
         </div>
