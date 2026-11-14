@@ -218,24 +218,25 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
   it('gráficos da Estrela Cabalística e Mapa de Alinhamento usam fonte mínima legível, legenda próxima e explicam as 5 pontas', () => {
     const typographySrc = readFileSync(path.join(srcRoot, 'styles', 'app-typography.css'), 'utf8');
     assert.match(typographySrc, /--nm-type-min-legible:\s*0\.75rem/);
-    assert.match(typographySrc, /--nm-type-chart-label:\s*30px/);
-    assert.match(typographySrc, /--nm-type-chart-number:\s*34px/);
+    assert.match(typographySrc, /--nm-card-safe-inset:\s*0\.375rem/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*28px/);
+    assert.match(typographySrc, /--nm-type-chart-number:\s*32px/);
     assert.match(typographySrc, /@container \(min-width:\s*28rem\)/);
 
     const frameSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'landing', 'ProductResultFrame.tsx'), 'utf8');
-    assert.match(frameSrc, /-24 20 848 552/);
+    assert.match(frameSrc, /-36 20 872 552/);
     assert.match(frameSrc, /isDemo \? 'mt-8 sm:mt-10' : 'mt-2\.5'/);
 
     const radarSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingRadar.tsx'), 'utf8');
-    assert.match(radarSrc, /const VB_W = 870/);
-    assert.match(radarSrc, /const LINE_GAP = 36/);
+    assert.match(radarSrc, /const RADIUS = 168/);
+    assert.match(radarSrc, /function splitRadarLabelLines/);
 
     const starPanelSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyStarPanel.tsx'), 'utf8');
-    assert.match(starPanelSrc, /STAR_TIP_EXPLANATIONS/);
-    assert.match(starPanelSrc, /Calculado pela soma da data de nascimento/);
+    assert.match(starPanelSrc, /STAR_DIMENSION_NUMBER_MEANINGS/);
+    assert.match(starPanelSrc, /activeVisual\.text/);
 
     const sidebarSectionSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarSection.tsx'), 'utf8');
     assert.match(sidebarSectionSrc, /RADAR_AXES_EXPLANATIONS/);
-    assert.match(sidebarSectionSrc, /Mede a afinidade do número de Expressão/);
+    assert.match(sidebarSectionSrc, /activeVisual\.text/);
   });
 });

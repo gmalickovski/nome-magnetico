@@ -145,6 +145,11 @@ export function ChatSidebarSection({
           )}
           <div className="w-full pt-3.5 border-t border-white/[0.06] space-y-3.5 text-left">
             {(() => {
+              const activeScore =
+                (radarOverlayAxes && harmonizedPanel?.score != null
+                  ? harmonizedPanel.score
+                  : birthPanel?.score) ?? 60;
+              const activeVisual = getScoreTierVisual(activeScore);
               const overlayVisual =
                 radarShowNumericLabels && radarOverlayAxes && harmonizedPanel?.score != null
                   ? getScoreTierVisual(harmonizedPanel.score)
@@ -174,9 +179,12 @@ export function ChatSidebarSection({
 
                 return (
                   <div key={axis.key} className="space-y-1 text-left">
-                    <h4 className="font-semibold text-[#e5e2e1] text-sm leading-snug flex flex-wrap items-center gap-1.5">
+                    <p className="font-inter font-semibold text-[#e5e2e1] text-sm leading-snug flex flex-wrap items-center gap-1.5">
                       <span>
-                        {axisLabel} <span className="text-[#f2ca50]">= {activePct}%</span>
+                        {axisLabel}{' '}
+                        <span className="font-bold" style={{ color: activeVisual.text }}>
+                          = {activePct}%
+                        </span>
                       </span>
                       {radarShowNumericLabels && radarOverlayAxes && deltaText && deltaColor && (
                         <span
@@ -186,7 +194,7 @@ export function ChatSidebarSection({
                           ({deltaText})
                         </span>
                       )}
-                    </h4>
+                    </p>
                     <p className="nm-card-text text-gray-300">{axis.description}</p>
                   </div>
                 );

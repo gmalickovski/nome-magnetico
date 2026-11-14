@@ -492,7 +492,7 @@ export function ProductHarmonyStar({
   const outerNums = isBirthOnly ? birthNums : harmonizedNums;
   const starViewBox = isDemo
     ? `0 0 ${LANDING_STAR_VIEWBOX.width} ${LANDING_STAR_VIEWBOX.height}`
-    : '-24 20 848 552';
+    : '-36 20 872 552';
   const starLabelRadius = isDemo ? LANDING_STAR_LABEL_RADIUS : LANDING_STAR_OUTER_R + 68;
   const starLabelDy = isDemo ? LANDING_STAR_LABEL_DY : ([-10, -2, 12, 12, -2] as const);
 
