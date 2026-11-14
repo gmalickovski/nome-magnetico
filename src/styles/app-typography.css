@@ -1,15 +1,17 @@
 /* Escala canonica da area do usuario (Material Design 3 + The Celestial Alchemist). Nao altera a landing ou o PDF. */
 .nm-app-shell--with-mobile-dock {
+  --nm-type-min-legible: 0.75rem; /* 12px piso mínimo WCAG / Material 3 / Apple HIG */
   --nm-type-body: 0.9375rem;
   --nm-type-card-body: 0.875rem;
-  --nm-type-caption: 0.75rem;
+  --nm-type-caption: var(--nm-type-min-legible);
   --nm-type-h1: 1.75rem;
   --nm-type-h2: 1.375rem;
   --nm-type-h3: 1.125rem;
   --nm-type-h4: 1rem;
-  /* Unidades do viewBox SVG, nao pixels finais da tela. */
-  --nm-type-chart-label: 25px;
-  --nm-type-chart-number: 28px;
+  /* Unidades do viewBox SVG dimensionadas para garantir >= 12px–14px reais no mobile e painel lateral compacto */
+  --nm-type-chart-label: 30px;
+  --nm-type-chart-number: 34px;
+  --nm-type-chart-number-inner: 28px;
 }
 @media (min-width: 768px) {
   .nm-app-shell--with-mobile-dock {
@@ -17,8 +19,6 @@
     --nm-type-h2: 1.625rem;
     --nm-type-h3: 1.25rem;
     --nm-type-h4: 1.0625rem;
-    --nm-type-chart-label: 21px;
-    --nm-type-chart-number: 24px;
   }
 }
 .nm-app-shell--with-mobile-dock :is(h1, .nm-h1) { font-size: var(--nm-type-h1); line-height: 1.2; }
@@ -37,13 +37,31 @@
   text-align: left;
 }
 .nm-app-shell--with-mobile-dock .nm-caption { font-size: var(--nm-type-caption); line-height: 1.5; }
+.nm-app-shell--with-mobile-dock .nm-reading-card {
+  container-type: inline-size;
+}
 .nm-app-shell--with-mobile-dock :is(.harmony-star-label, .nm-radar-label) {
   font-size: var(--nm-type-chart-label);
   font-weight: 600;
 }
-.nm-app-shell--with-mobile-dock :is(.harmony-star-num-outer, .harmony-star-num-inner, .nm-radar-value) {
+.nm-app-shell--with-mobile-dock :is(.harmony-star-num-outer, .nm-radar-value) {
   font-size: var(--nm-type-chart-number);
   font-weight: 700;
+}
+.nm-app-shell--with-mobile-dock .harmony-star-num-inner {
+  font-size: var(--nm-type-chart-number-inner);
+  font-weight: 700;
+}
+@container (min-width: 28rem) {
+  .nm-app-shell--with-mobile-dock :is(.harmony-star-label, .nm-radar-label) {
+    --nm-type-chart-label: 25px;
+  }
+  .nm-app-shell--with-mobile-dock :is(.harmony-star-num-outer, .nm-radar-value) {
+    --nm-type-chart-number: 29px;
+  }
+  .nm-app-shell--with-mobile-dock .harmony-star-num-inner {
+    --nm-type-chart-number-inner: 25px;
+  }
 }
 
 .nm-app-shell--with-mobile-dock #mobile-summary-title,
