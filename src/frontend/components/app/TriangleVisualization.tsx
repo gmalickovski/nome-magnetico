@@ -340,7 +340,7 @@ function TrianguloInfo({
     (passageCount > 0 && cycleYears != null);
 
   return (
-    <div className="space-y-6 mt-5 text-left">
+    <div className="space-y-6 pt-4 sm:pt-5 text-left">
       {/* Seção Bloqueios (acima de Arcanos, direto no card pai) */}
       <div className="space-y-4 text-left">
         <div className="space-y-2">
@@ -602,7 +602,7 @@ export default function TriangleVisualization({ vida, pessoal, social, destino, 
           <TrianguloSVG triangulo={vida} nome={nome} />
         </div>
 
-        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2.5 px-2 text-[13px]">
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2.5 px-2 pb-1 text-[13px]">
           {LEGENDA_VIDA.map(item => (
             <span key={item.label} className="inline-flex items-center gap-2 min-w-0">
               <span
