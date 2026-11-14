@@ -3,6 +3,8 @@
  * Lições = números de 1 a 9 ausentes no nome.
  */
 
+import { GlossaryLinkedText } from '../glossary/GlossaryLinkedText';
+
 interface LicaoCarmica {
   numero: number;
   titulo: string;
@@ -35,7 +37,7 @@ function LicaoCard({ licao, showSolution }: { licao: LicaoCarmica; showSolution:
       </div>
 
       <div className="px-4 pb-4 space-y-4 border-t border-white/5">
-        <p className="nm-card-text pt-4">{licao.descricao}</p>
+        <p className="nm-card-text pt-4"><GlossaryLinkedText text={licao.descricao} /></p>
         {showSolution && (
           <div className="rounded-lg p-3 bg-emerald-500/10 border border-emerald-500/20">
             <p className="text-xs text-emerald-400 uppercase tracking-wider mb-2">Como Trabalhar</p>
@@ -66,7 +68,7 @@ export default function KarmicLessons({ licoes, nomeCompleto, showSolution = tru
   return (
     <div className="space-y-4 text-left">
       <p className="nm-card-text">
-        Lições Kármicas correspondem aos números de 1 a 9 que estão ausentes nas letras do nome completo. Cada ausência revela uma qualidade ou habilidade pouco exercitada no passado e que agora pede desenvolvimento consciente ao longo desta jornada.
+        <GlossaryLinkedText text="Lições Kármicas correspondem aos números de 1 a 9 que estão ausentes nas letras do nome completo. Cada ausência revela uma qualidade ou habilidade pouco exercitada no passado e que agora pede desenvolvimento consciente ao longo desta jornada." />
       </p>
 
       {licoes.map((l, i) => <LicaoCard key={i} licao={l} showSolution={showSolution} />)}

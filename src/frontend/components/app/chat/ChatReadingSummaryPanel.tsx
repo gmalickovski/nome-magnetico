@@ -6,6 +6,7 @@ import KarmicLessons from '../KarmicLessons';
 import HiddenTendencies from '../HiddenTendencies';
 import BlockAnalysisCard from '../BlockAnalysisCard';
 import ReadingTopicCard from './ReadingTopicCard.js';
+import { GlossaryLinkedText } from '../../glossary/GlossaryLinkedText.js';
 
 function buildTrianguloDesc(nomeExibido: string): Record<string, string> {
   const primeiroNome = nomeExibido.split(' ')[0] ?? nomeExibido;
@@ -79,13 +80,14 @@ export function ChatReadingSummaryPanel({
       </ReadingTopicCard>
 
       {bloqueios.length > 0 && (
-        <ReadingTopicCard
-          eyebrow="O raio-x vibracional"
-          title="Bloqueios energéticos"
-          count={bloqueios.length}
-        >
+        <div id="bloqueios" className="scroll-mt-24">
+          <ReadingTopicCard
+            eyebrow="O raio-x vibracional"
+            title="Bloqueios energéticos"
+            count={bloqueios.length}
+          >
           <p className="nm-card-text">
-            Bloqueios energéticos são sequências de três ou mais números repetidos nas linhas dos triângulos numerológicos. Eles formam pontos de atrito silenciosos que tendem a travar o fluxo natural dessa área da vida até que o nome seja harmonizado.
+            <GlossaryLinkedText text="Bloqueios energéticos são sequências de três ou mais números repetidos nas linhas dos triângulos numerológicos. Eles formam pontos de atrito silenciosos que tendem a travar o fluxo natural dessa área da vida até que o nome seja harmonizado." />
           </p>
           <div className="space-y-3">
             {bloqueios.map((bloqueio, i) => (
@@ -96,7 +98,8 @@ export function ChatReadingSummaryPanel({
               />
             ))}
           </div>
-        </ReadingTopicCard>
+          </ReadingTopicCard>
+        </div>
       )}
 
       {debitosCarmicos.length > 0 && (

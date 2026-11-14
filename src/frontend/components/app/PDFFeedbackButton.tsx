@@ -13,6 +13,8 @@ interface Props {
   pdfUrl?: string;
   /** Texto do botão (desktop) */
   label?: string;
+  /** Renderiza também o texto ao lado do ícone */
+  showLabel?: boolean;
   /** Classe CSS do botão desktop — sobrescreve o padrão */
   className?: string;
   /** Exibe o FAB mobile (padrão: true) */
@@ -32,6 +34,7 @@ export function PDFFeedbackButton({
   fabOnly = false,
   pdfUrl,
   label,
+  showLabel = false,
   className,
   showFab = true,
   autoDownload = false,
@@ -514,6 +517,7 @@ export function PDFFeedbackButton({
           }
         >
           {downloadIcon}
+          {showLabel ? <span>{status === 'loading' ? 'Preparando PDF...' : (label ?? 'Baixar PDF')}</span> : null}
         </button>
       )}
 

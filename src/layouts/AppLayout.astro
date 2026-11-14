@@ -7,6 +7,7 @@ import AppSidebarLogout from '../frontend/components/app/AppSidebarLogout';
 import AppMobileHeader from '../frontend/components/app/AppMobileHeader';
 import AppMobileDock from '../frontend/components/app/AppMobileDock';
 import ClientMessagePopup from '../frontend/components/app/ClientMessagePopup';
+import { GlossaryTermOverlay } from '../frontend/components/glossary/GlossaryTermOverlay';
 import { resolveMobileDockContext } from '../frontend/lib/mobile-dock-context.ts';
 import {
   APP_CLIENT_NAV_HREFS,
@@ -85,9 +86,9 @@ const showAnalisesNav = isAdmin || hasAnyActive || hasPaidAnalysisHistory;
 const pathname = Astro.url.pathname;
 const isActive = (path: string) =>
   pathname === path || pathname.startsWith(path + '/');
-const navInicioActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/suporte') && !isActive('/app/admin-analise') && !isActive('/app/sentry-test');
+const navInicioActive = isActive('/app') && !isActive('/app/analise') && !isActive('/app/resultado') && !isActive('/app/analises') && !isActive('/app/glossario') && !isActive('/app/suporte') && !isActive('/app/admin-analise') && !isActive('/app/sentry-test');
 const navAnalisesActive = isActive('/app/analises') || isActive('/app/resultado');
-const navGlossarioActive = isActive('/glossario');
+const navGlossarioActive = isActive('/app/glossario') || isActive('/glossario');
 const navSuporteActive = isActive('/app/suporte');
 const mobileDockContext = resolveMobileDockContext(pathname);
 ---
@@ -195,6 +196,7 @@ const mobileDockContext = resolveMobileDockContext(pathname);
     </main>
 
     <ClientMessagePopup client:load />
+    <GlossaryTermOverlay client:load baseHref="/app/glossario" />
   </div>
 
 </BaseLayout>

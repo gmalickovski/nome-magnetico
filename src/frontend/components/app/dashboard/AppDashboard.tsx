@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ReadingRadar } from '../chat/ReadingRadar.js';
 import type { RadarAxesData } from '../chat/chat-types.js';
+import { hasUnfinishedChatSession, syncAnaliseCtaLabels } from '../chat/chat-session-storage.js';
 import { DashboardCheckoutButton } from '../DashboardCheckoutButton';
+import { PDFFeedbackButton } from '../PDFFeedbackButton';
+import { ScoreCardRow, getScoreTierVisual } from '../../landing/ProductResultFrame';
 import type { ActivePromotion, PriceInfo } from '../../../../backend/payments/prices';
 import {
   CHECKLIST_ITEMS,
@@ -16,13 +19,26 @@ import {
 
 /** CTA dourado do painel: primário da marca (#D4AF37), hover #f2ca50; texto #111111 */
 const CTA_CLASS =
-  'inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50] active:scale-[0.98]';
+  'inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-bold text-[#111111] shadow-[0_2px_16px_rgba(212,175,55,0.28)] transition hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.45)] active:scale-[0.98]';
+
+const SECONDARY_CTA_CLASS =
+  'inline-flex items-center justify-center gap-2 rounded-full bg-white/[0.06] px-5 py-2.5 text-sm font-semibold text-[#e5e2e1] ring-1 ring-[#D4AF37]/30 transition hover:bg-white/[0.11] hover:text-[#f2ca50] active:scale-[0.98]';
 
 export interface DashboardHistoryItem {
   id: string;
   nome: string;
   dateLabel: string;
   score: number | null;
+  productType?: string;
+  isFree?: boolean;
+}
+
+export interface DashboardRecommendedReading {
+  badge: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  ctaLabel: string;
 }
 
 export interface AppDashboardProps {
@@ -30,11 +46,19 @@ export interface AppDashboardProps {
   nomeHoje: string;
   nomeHarmonizado: string | null;
   score: number;
+  birthScore?: number;
+  scorePotencial?: number | null;
   scoreLabel: string;
   scoreColor: string;
   bloqueios: string[];
   analysisId: string;
+  featuredProductType?: string;
+  featuredIsFree?: boolean;
+  signatureChosen?: boolean;
+  pdfReady?: boolean;
+  recommendedReading?: DashboardRecommendedReading | null;
   radarAxes: RadarAxesData;
+  harmonizedRadarAxes?: RadarAxesData | null;
   radarLabels: Record<string, string>;
   history: DashboardHistoryItem[];
   hasNomeSocial: boolean;
@@ -47,15 +71,27 @@ export interface AppDashboardProps {
   promotion: ActivePromotion | null;
 }
 
-function useLocalChecklist(userId: string) {
-  const [state, setState] = useState<ChecklistState>(EMPTY_CHECKLIST);
-  const [ready, setReady] = useState(false);
+function useLocalChecklist(
+  userId: string,
+  autoDetected: { assinatura?: boolean; pdf?: boolean },
+) {
+  const [state, setState] = useState<ChecklistState>(() => ({
+    ...EMPTY_CHECKLIST,
+    assinatura: Boolean(autoDetected.assinatura),
+    pdf: Boolean(autoDetected.pdf),
+  }));
 
   useEffect(() => {
     const key = checklistStorageKey(userId);
-    setState(parseChecklistState(typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null));
-    setReady(true);
-  }, [userId]);
+    const parsed = parseChecklistState(
+      typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null,
+    );
+    setState({
+      ...parsed,
+      assinatura: parsed.assinatura || Boolean(autoDetected.assinatura),
+      pdf: parsed.pdf || Boolean(autoDetected.pdf),
+    });
+  }, [userId, autoDetected.assinatura, autoDetected.pdf]);
 
   const persist = useCallback(
     (next: ChecklistState) => {
@@ -73,10 +109,10 @@ function useLocalChecklist(userId: string) {
     (key: ChecklistKey) => {
       persist({ ...state, [key]: !state[key] });
     },
-    [persist, state],
+    [state, persist],
   );
 
-  return { state, toggle, ready };
+  return { state, toggle };
 }
 
 function useOfferDismissed(userId: string) {
@@ -86,7 +122,7 @@ function useOfferDismissed(userId: string) {
     try {
       setDismissed(localStorage.getItem(offerDismissStorageKey(userId)) === '1');
     } catch {
-      setDismissed(false);
+      /* ignore */
     }
   }, [userId]);
 
@@ -105,11 +141,15 @@ function useOfferDismissed(userId: string) {
 function nextChecklistCta(
   state: ChecklistState,
   props: AppDashboardProps,
+  hasUnfinishedSession: boolean,
 ): { href: string; label: string; checkout?: boolean } {
   const resultado = `/app/resultado/${props.analysisId}`;
   if (!state.assinatura) {
     if (props.hasNomeSocial) {
-      return { href: '/app/analise/nome-social', label: 'Escolher assinatura' };
+      return {
+        href: '/app/analise/nome-social',
+        label: hasUnfinishedSession ? 'Retomar análise' : 'Escolher assinatura',
+      };
     }
     return { href: '/comprar', label: 'Ver a análise completa', checkout: true };
   }
@@ -126,14 +166,81 @@ function nextChecklistCta(
 }
 
 export function AppDashboard(props: AppDashboardProps) {
-  const { state: checklist, toggle: toggleChecklist }: ReturnType<typeof useLocalChecklist> =
-    useLocalChecklist(props.userId);
-  const { dismissed: offerDismissed, dismiss: dismissOffer }: ReturnType<typeof useOfferDismissed> =
-    useOfferDismissed(props.userId);
+  const { state: checklist, toggle: toggleChecklist } = useLocalChecklist(props.userId, {
+    assinatura: props.signatureChosen,
+    pdf: props.pdfReady,
+  });
+  const { dismissed: offerDismissed, dismiss: dismissOffer } = useOfferDismissed(props.userId);
   const [showAllBloqueios, setShowAllBloqueios] = useState(false);
+  const [hasUnfinishedSession, setHasUnfinishedSession] = useState(false);
+
+  const hasHarmonizedComparison = Boolean(props.nomeHarmonizado);
+  const birthScoreValue = Math.max(0, Math.min(100, Math.round(props.birthScore ?? props.score)));
+  const harmonizedScoreValue = Math.max(
+    0,
+    Math.min(100, Math.round(props.scorePotencial ?? props.score)),
+  );
+
+  const [activeView, setActiveView] = useState<'birth' | 'harmonized'>(() =>
+    hasHarmonizedComparison ? 'harmonized' : 'birth',
+  );
+
+  const targetScore =
+    activeView === 'harmonized' && hasHarmonizedComparison ? harmonizedScoreValue : birthScoreValue;
+  const activeName =
+    activeView === 'harmonized' && props.nomeHarmonizado ? props.nomeHarmonizado : props.nomeHoje;
+  const activeVisual = getScoreTierVisual(targetScore);
+
+  const [displayedScore, setDisplayedScore] = useState<number>(targetScore);
+  const animFrameRef = useRef<number | null>(null);
+  const displayedRef = useRef<number>(targetScore);
+  displayedRef.current = displayedScore;
+
+  // Sincroniza o botão dinâmico "+ Nova Análise" / "Retomar Análise" no dashboard e no header SSR
+  useEffect(() => {
+    const syncSession = () => {
+      setHasUnfinishedSession(hasUnfinishedChatSession(props.userId));
+      syncAnaliseCtaLabels();
+    };
+    syncSession();
+    window.addEventListener('pageshow', syncSession);
+    window.addEventListener('focus', syncSession);
+    window.addEventListener('storage', syncSession);
+    return () => {
+      window.removeEventListener('pageshow', syncSession);
+      window.removeEventListener('focus', syncSession);
+      window.removeEventListener('storage', syncSession);
+    };
+  }, [props.userId]);
+
+  // Anima o arco e o contador do score com curva quadrática suave (800ms)
+  useEffect(() => {
+    const start = displayedRef.current;
+    if (start === targetScore) return;
+
+    const duration = 800;
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const ease = progress * (2 - progress);
+      setDisplayedScore(Math.round(start + (targetScore - start) * ease));
+      if (progress < 1) {
+        animFrameRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    animFrameRef.current = requestAnimationFrame(step);
+    return () => {
+      if (animFrameRef.current != null) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [targetScore]);
 
   const doneCount = countChecklistDone(checklist);
-  const cta = useMemo(() => nextChecklistCta(checklist, props), [checklist, props]);
+  const cta = useMemo(
+    () => nextChecklistCta(checklist, props, hasUnfinishedSession),
+    [checklist, props, hasUnfinishedSession],
+  );
 
   const visibleBloqueios = showAllBloqueios ? props.bloqueios : props.bloqueios.slice(0, 3);
   const hasMoreBloqueios = props.bloqueios.length > 3;
@@ -147,30 +254,100 @@ export function AppDashboard(props: AppDashboardProps) {
   }, [offerDismissed, props]);
 
   const resultadoHref = `/app/resultado/${props.analysisId}`;
+  const featuredProductType =
+    props.featuredProductType ?? (props.hasNomeSocial ? 'nome_social' : 'analise_gratuita');
+  const featuredIsFree = Boolean(props.featuredIsFree ?? !props.hasPaidAccess);
+
+  const radius = 102;
+  const strokeWidth = 11;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      {/* Hero */}
-      <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#A0A0A0]">
-                  Seu nome hoje
-                </p>
-                <p className="font-cinzel text-xl font-bold leading-tight text-[#e5e2e1] sm:text-2xl">
-                  {props.nomeHoje}
-                </p>
-              </div>
-              <div>
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#A0A0A0]">
-                  Sua assinatura sugerida
-                </p>
-                <p className="font-cinzel text-xl font-bold leading-tight text-[#D4AF37] sm:text-2xl">
-                  {props.nomeHarmonizado ?? 'Defina na harmonização'}
-                </p>
-              </div>
+      {/* Hero estilo Landing Page ("The Celestial Alchemist") */}
+      <section className="nm-floating-card rounded-2xl p-5 sm:p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+          {/* Coluna Esquerda: Nome atual vs Assinatura harmonizada + Bloqueios + Ações */}
+          <div className="min-w-0 flex-1 space-y-5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AF37]/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#f2ca50]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#f2ca50]" />
+                {hasHarmonizedComparison ? 'Mapa Comparativo' : 'Mapa em Destaque'}
+              </span>
+              {props.scorePotencial != null && !hasHarmonizedComparison && (
+                <span className="rounded-full bg-[#bea5ff]/12 px-3 py-1 text-[11px] font-medium text-[#d7c6ff]">
+                  Potencial estimado: até {props.scorePotencial} pts
+                </span>
+              )}
+            </div>
+
+            {/* Cards interativos de comparação com ScoreCardRow da Landing */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setActiveView('birth')}
+                className={`group relative w-full overflow-hidden rounded-xl p-4 text-left transition-all duration-300 ${
+                  activeView === 'birth'
+                    ? 'bg-white/[0.05] ring-1 ring-[#D4AF37]/45'
+                    : 'bg-[#131313]/75 ring-1 ring-white/[0.04] hover:bg-white/[0.03]'
+                }`}
+              >
+                {activeView === 'birth' && (
+                  <span
+                    className="absolute inset-y-0 left-0 w-1"
+                    style={{ backgroundColor: getScoreTierVisual(birthScoreValue).stroke }}
+                  />
+                )}
+                <ScoreCardRow
+                  eyebrow="Nome de nascimento"
+                  nome={props.nomeHoje || 'Nome não informado'}
+                  score={birthScoreValue}
+                />
+              </button>
+
+              {hasHarmonizedComparison && props.nomeHarmonizado ? (
+                <button
+                  type="button"
+                  onClick={() => setActiveView('harmonized')}
+                  className={`group relative w-full overflow-hidden rounded-xl p-4 text-left transition-all duration-300 ${
+                    activeView === 'harmonized'
+                      ? 'bg-white/[0.05] ring-1 ring-[#D4AF37]/45'
+                      : 'bg-[#131313]/75 ring-1 ring-white/[0.04] hover:bg-white/[0.03]'
+                  }`}
+                >
+                  {activeView === 'harmonized' && (
+                    <span
+                      className="absolute inset-y-0 left-0 w-1"
+                      style={{ backgroundColor: getScoreTierVisual(harmonizedScoreValue).stroke }}
+                    />
+                  )}
+                  <ScoreCardRow
+                    eyebrow="Assinatura harmonizada"
+                    nome={props.nomeHarmonizado}
+                    score={harmonizedScoreValue}
+                  />
+                </button>
+              ) : (
+                <a
+                  href={props.hasNomeSocial ? '/app/analise/nome-social' : '/comprar'}
+                  className="flex flex-col justify-between rounded-xl bg-[#131313]/70 p-4 ring-1 ring-white/[0.05] transition-all duration-300 hover:bg-white/[0.04] hover:ring-[#D4AF37]/30"
+                >
+                  <div>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#bea5ff]">
+                      Assinatura magnética
+                    </p>
+                    <p className="font-cinzel text-base font-bold leading-snug text-[#e5e2e1] sm:text-lg">
+                      Defina na harmonização
+                    </p>
+                  </div>
+                  <p className="mt-2 text-xs text-[#A0A0A0]">
+                    {props.hasNomeSocial
+                      ? 'Gerar variações sem bloqueios e alinhadas ao seu Destino →'
+                      : 'Desbloqueie variações calculadas para elevar sua vibração →'}
+                  </p>
+                </a>
+              )}
             </div>
 
             {(visibleBloqueios.length > 0 || hasMoreBloqueios) && (
@@ -203,90 +380,221 @@ export function AppDashboard(props: AppDashboardProps) {
               </div>
             )}
 
-            {props.hasNomeSocial && !props.isExpired && (
-              <div className="pt-1">
-                <a href="/app/analise/nome-social" className={`${CTA_CLASS} w-full sm:w-auto`}>
-                  {props.nomeHarmonizado ? '+ Nova análise no chat' : 'Abrir chat de análise'}
+            {/* Barra de ações diretas do Hero */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <a href={resultadoHref} className={`${CTA_CLASS} w-full sm:w-auto`}>
+                Ver relatório completo
+              </a>
+
+              <PDFFeedbackButton
+                analysisId={props.analysisId}
+                productType={featuredProductType}
+                isFree={featuredIsFree}
+                label="Baixar PDF"
+                showLabel
+                showFab={false}
+                className={`${SECONDARY_CTA_CLASS} w-full sm:w-auto`}
+              />
+
+              {props.hasNomeSocial && !props.isExpired && (
+                <a
+                  href="/app/analise/nome-social"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-[#f2ca50] ring-1 ring-white/10 transition hover:bg-white/[0.08] sm:w-auto"
+                >
+                  {hasUnfinishedSession
+                    ? 'Retomar Análise'
+                    : props.nomeHarmonizado
+                      ? '+ Nova Análise'
+                      : 'Abrir chat de análise'}
                 </a>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          <a
-            href={resultadoHref}
-            className="flex shrink-0 flex-col items-center text-center lg:min-w-[8rem]"
-          >
-            <span
-              className="font-cinzel text-6xl font-bold leading-none sm:text-7xl"
-              style={{ color: props.scoreColor }}
+          {/* Coluna Direita: Visor Circular SVG do Score estilo Landing Page */}
+          <div className="flex shrink-0 flex-col items-center justify-center rounded-2xl bg-[#131313]/65 p-5 sm:p-6 ring-1 ring-white/[0.04] lg:w-[290px]">
+            {hasHarmonizedComparison && (
+              <div
+                className="mb-4 inline-flex items-center rounded-full bg-[#1C1C1C] p-1 ring-1 ring-white/10"
+                role="tablist"
+                aria-label="Alternar nome exibido no score"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeView === 'birth'}
+                  onClick={() => setActiveView('birth')}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                    activeView === 'birth'
+                      ? 'bg-[#D4AF37] text-[#131313]'
+                      : 'text-[#A0A0A0] hover:text-[#e5e2e1]'
+                  }`}
+                >
+                  Nome atual
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeView === 'harmonized'}
+                  onClick={() => setActiveView('harmonized')}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                    activeView === 'harmonized'
+                      ? 'bg-[#D4AF37] text-[#131313]'
+                      : 'text-[#A0A0A0] hover:text-[#e5e2e1]'
+                  }`}
+                >
+                  Harmonizado
+                </button>
+              </div>
+            )}
+
+            <a
+              href={resultadoHref}
+              className="group relative flex h-44 w-44 items-center justify-center sm:h-48 sm:w-48 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] rounded-full"
+              aria-label={`Score ${targetScore} para ${activeName}. Clique para abrir o relatório completo.`}
             >
-              {props.score}
-            </span>
-            <span className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#A0A0A0]">
-              Score
-            </span>
-            <span className="mt-1 text-xs text-[#A0A0A0]">{props.scoreLabel}</span>
-          </a>
+              <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 224 224">
+                <circle
+                  cx="112"
+                  cy="112"
+                  r={radius}
+                  className="stroke-white/[0.06]"
+                  strokeWidth={strokeWidth}
+                  fill="transparent"
+                />
+                <circle
+                  cx="112"
+                  cy="112"
+                  r={radius}
+                  stroke={activeVisual.stroke}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  fill="transparent"
+                  style={{ transition: 'stroke 0.8s ease' }}
+                />
+              </svg>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
+                <span
+                  className="font-cinzel text-[46px] font-bold leading-none tracking-tight tabular-nums sm:text-[52px]"
+                  style={{ color: activeVisual.text }}
+                >
+                  {displayedScore}
+                </span>
+                <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[#A0A0A0]">
+                  Pontos
+                </span>
+                <span
+                  className={`mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${activeVisual.badgeClass}`}
+                >
+                  {activeVisual.label}
+                </span>
+              </div>
+            </a>
+
+            <div className="mt-4 w-full text-center">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A0A0A0]">
+                {activeView === 'harmonized' && hasHarmonizedComparison
+                  ? 'Assinatura sugerida'
+                  : 'Nome de nascimento'}
+              </p>
+              <p className="mt-1 font-cinzel text-base font-bold leading-snug text-[#e5e2e1] sm:text-lg break-words">
+                {activeName}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Checklist + Teia */}
+      {/* Checklist + Teia + Leitura Recomendada */}
       <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
-          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">Seus próximos passos</h2>
-            <p className="text-xs font-medium text-[#A0A0A0]">
-              {doneCount} de 4 feitos
-            </p>
-          </div>
-          <ul className="space-y-3">
-            {CHECKLIST_ITEMS.map((item) => {
-              const checked = checklist[item.key];
-              return (
-                <li key={item.key}>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-[#131313]/80 px-3 py-2.5">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleChecklist(item.key)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#D4AF37]/40 bg-transparent accent-[#D4AF37]"
-                    />
-                    <span
-                      className={`text-sm leading-snug ${checked ? 'text-emerald-400/90 line-through decoration-emerald-400/40' : 'text-[#e5e2e1]'}`}
-                    >
-                      {item.label}
-                    </span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-5">
-            {cta.checkout && !props.hasNomeSocial ? (
-              <DashboardCheckoutButton
-                product="nome_social"
-                priceInfo={props.socialPrice}
-                promotion={props.promotion}
-                label={cta.label}
-                className={`${CTA_CLASS} w-full sm:w-auto`}
-              />
-            ) : (
-              <a href={cta.href} className={`${CTA_CLASS} w-full sm:w-auto`}>
-                {cta.label}
-              </a>
-            )}
-          </div>
-        </section>
+        <div className="flex flex-col gap-6">
+          <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">Seus próximos passos</h2>
+              <p className="text-xs font-medium text-[#A0A0A0]">
+                {doneCount} de 4 feitos
+              </p>
+            </div>
+            <ul className="space-y-3">
+              {CHECKLIST_ITEMS.map((item) => {
+                const checked = checklist[item.key];
+                return (
+                  <li key={item.key}>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-[#131313]/80 px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleChecklist(item.key)}
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#D4AF37]/40 bg-transparent accent-[#D4AF37]"
+                      />
+                      <span
+                        className={`text-sm leading-snug ${checked ? 'text-emerald-400/90 line-through decoration-emerald-400/40' : 'text-[#e5e2e1]'}`}
+                      >
+                        {item.label}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-5">
+              {cta.checkout && !props.hasNomeSocial ? (
+                <DashboardCheckoutButton
+                  product="nome_social"
+                  priceInfo={props.socialPrice}
+                  promotion={props.promotion}
+                  label={cta.label}
+                  className={`${CTA_CLASS} w-full sm:w-auto`}
+                />
+              ) : (
+                <a href={cta.href} className={`${CTA_CLASS} w-full sm:w-auto`}>
+                  {cta.label}
+                </a>
+              )}
+            </div>
+          </section>
+
+          {props.recommendedReading && (
+            <section className="nm-floating-card rounded-2xl p-5 sm:p-6">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d7c6ff]">
+                {props.recommendedReading.badge}
+              </p>
+              <h3 className="mt-1.5 font-cinzel text-lg font-bold text-[#e5e2e1]">
+                {props.recommendedReading.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#A0A0A0]">
+                {props.recommendedReading.subtitle}
+              </p>
+              <div className="mt-4">
+                <a
+                  href={props.recommendedReading.href}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#f2ca50] transition hover:text-[#D4AF37]"
+                >
+                  {props.recommendedReading.ctaLabel}
+                </a>
+              </div>
+            </section>
+          )}
+        </div>
 
         <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
           <h2 className="mb-1 font-cinzel text-lg font-bold text-[#e5e2e1]">
             Como o seu nome se sai em 5 áreas
           </h2>
-          <p className="mb-3 text-xs text-[#A0A0A0]">Toque na teia para abrir a análise completa.</p>
+          <p className="mb-3 text-xs text-[#A0A0A0]">
+            {props.harmonizedRadarAxes
+              ? 'Comparação entre o nome de nascimento e sua assinatura harmonizada. Toque para detalhar.'
+              : 'Toque na teia para abrir a análise completa.'}
+          </p>
           <a href={resultadoHref} className="block rounded-xl bg-[#131313]/60 p-2 transition hover:bg-[#131313]">
             <ReadingRadar
               axes={props.radarAxes}
-              birthScore={props.score}
+              overlayAxes={props.harmonizedRadarAxes ?? undefined}
+              birthScore={birthScoreValue}
+              overlayScore={props.harmonizedRadarAxes ? harmonizedScoreValue : undefined}
               labels={props.radarLabels}
               className="pointer-events-none max-w-[320px] mx-auto [&_svg]:max-w-[320px]"
             />
@@ -313,17 +621,26 @@ export function AppDashboard(props: AppDashboardProps) {
                   <p className="truncate text-sm font-medium text-[#e5e2e1]">{row.nome}</p>
                   <p className="text-xs text-[#A0A0A0]">{row.dateLabel}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {row.score != null && (
                     <span className="font-cinzel text-lg font-bold tabular-nums text-[#e5e2e1]">
                       {row.score}
                     </span>
                   )}
+                  <PDFFeedbackButton
+                    analysisId={row.id}
+                    productType={row.productType ?? 'nome_social'}
+                    isFree={Boolean(row.isFree)}
+                    label="PDF"
+                    showLabel
+                    showFab={false}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-white/[0.1] hover:text-[#f2ca50]"
+                  />
                   <a
                     href={`/app/resultado/${row.id}`}
                     className="text-xs font-bold uppercase tracking-wide text-[#D4AF37] hover:text-[#f2ca50]"
                   >
-                    Reabrir PDF
+                    Ver relatório
                   </a>
                 </div>
               </li>
@@ -387,7 +704,7 @@ export function AppDashboard(props: AppDashboardProps) {
               {props.hasNomeSocial && !props.isExpired && (
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <a href="/app/analise/nome-social" className={CTA_CLASS}>
-                    Abrir chat de análise
+                    {hasUnfinishedSession ? 'Retomar Análise' : 'Abrir chat de análise'}
                   </a>
                   <button
                     type="button"

@@ -7,6 +7,8 @@ import { getArcano } from '../../../backend/numerology/arcanos';
 import { getArquetipo } from '../../../backend/numerology/archetypes';
 import ScoreDisplay from '../../../frontend/components/app/ScoreDisplay';
 import { formatAnalysisText } from '../../../utils/textFormatter';
+import { listPublishedGlossaryTerms } from '../../../backend/glossary/glossary-service';
+import { linkGlossaryTermsInHtml } from '../../../shared/glossary/term-linker';
 import { marked } from 'marked';
 import { ChatSidebarSection } from '../../../frontend/components/app/chat/ChatSidebarSection';
 import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
@@ -103,10 +105,6 @@ const { data: profile } = await supabase
 const isAdmin = profile?.role === 'admin';
 const canGenerateSocialCandidateReports = isAdmin || await hasActiveSubscription(user.id, 'nome_social');
 
-if (isFree) {
-  return Astro.redirect('/app?gen_free_pdf=1');
-}
-
 // ── Arcano regente ───────────────────────────────────────────────────
 const arcanoRawNum = (analysis as any).arcano_regente as number | null;
 const arcanoData = arcanoRawNum ? getArcano(arcanoRawNum) : null;
@@ -123,11 +121,17 @@ const arquetipoData = expressaoParaArquetipo ? getArquetipo(expressaoParaArqueti
 const analiseHtmlRaw = analysis.analise_texto
   ? String(await marked(formatAnalysisText(analysis.analise_texto))).replace(/\*\*/g, '')
   : null;
-const analiseHtml = analiseHtmlRaw && isFree
+const analiseHtmlFiltered = analiseHtmlRaw && isFree
   ? analiseHtmlRaw
       .replace(/^<h1>[^<]*<\/h1>\s*/i, '')
       .replace(/<h[1-6][^>]*>[^<]*Manual de Assinatura[^<]*<\/h[1-6]>[\s\S]*?(?=<h[1-6]|$)/i, '')
   : analiseHtmlRaw;
+const glossaryTermsForReport = analiseHtmlFiltered ? await listPublishedGlossaryTerms() : [];
+const analiseHtml = analiseHtmlFiltered
+  ? linkGlossaryTermsInHtml(analiseHtmlFiltered, glossaryTermsForReport, {
+      baseHref: '/app/glossario',
+    })
+  : null;
 
 // ── Score geral ──────────────────────────────────────────────────────
 const scoreGeral = (analysis as any).score as number | null;
@@ -654,6 +658,7 @@ const socialContextChips: string[] = [
             showReadingSummary={Boolean(socialReadingSummary)}
           />
         )}
+        {isSocialSummaryView && <span id="guia-assinatura" class="sr-only scroll-mt-24"></span>}
 
         {/* ══════════════════════════════════════════════════
             NOME DO BEBÊ — ESTRUTURA ESPECÍFICA

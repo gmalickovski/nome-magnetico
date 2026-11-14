@@ -239,7 +239,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 
 {/* ── SEÇÃO 3: OS 4 TRIÂNGULOS ────────────────────────────────────────── */}
 {hasTriangulos && (
-  <section class="mt-16 mb-12">
+  <section id="bloqueios" class="mt-16 mb-12 scroll-mt-24">
     <div class="mb-3 px-1">
       <p class="font-cinzel text-xs sm:text-[13px] font-bold uppercase tracking-[0.18em] text-[#f2ca50] mb-1.5">Mapa de Triângulos</p>
       <h2 class="font-cinzel text-2xl font-bold text-white">Os 4 Triângulos Numerológicos</h2>
@@ -583,7 +583,7 @@ const temProblemas = bloqueios.length > 0 || (debitosRaw && debitosRaw.length > 
 
 
 {/* ── SEÇÃO 9: CTA FINAL — SCORE-BASED ─────────────────────────────────── */}
-<section class="mt-16 mb-12">
+<section id="guia-assinatura" class="mt-16 mb-12 scroll-mt-24">
 
   {/* ── CASO A: Score excelente (≥80%) sem nada a melhorar ──────────────── */}
   {scoreNivel === 'excelente' && !temMelhorias && (

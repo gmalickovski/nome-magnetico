@@ -83,7 +83,7 @@ import { obterNivelV3 } from '../../shared/score-v3';
 try {
   const { data: foundFreeAnalysis } = await _client
     .from('analyses')
-    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, product_type, is_free, licoes_carmicas')
     .or('is_free.eq.true,product_type.eq.analise_gratuita')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -220,7 +220,7 @@ const hasAnyAccess = hasNomeSocial || hasLegacyAccess;
 try {
   const { data: foundBestSocial } = await _client
     .from('analyses')
-    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at, product_type, is_free, nome_harmonizado, numero_expressao, licoes_carmicas')
     .eq('user_id', user.id)
     .eq('product_type', 'nome_social')
     .eq('status', 'complete')
@@ -461,8 +461,14 @@ const nomeHojeDashboard =
   ?? featuredAnalysis?.nome_completo
   ?? '';
 
-const nomeHarmonizadoDashboard =
-  featuredAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto
+const rankingFeatured = (featuredAnalysis?.frequencias_numeros as Record<string, any> | null)?.ranking as
+  | { selectedNomeSocial?: string; melhorNome?: { nomeCompleto?: string; score?: number } }
+  | undefined;
+
+const nomeHarmonizadoDashboard: string | null =
+  rankingFeatured?.selectedNomeSocial
+  ?? (featuredAnalysis as any)?.nome_harmonizado
+  ?? rankingFeatured?.melhorNome?.nomeCompleto
   ?? null;
 
 const bloqueioTitulosDashboard: string[] = (featuredAnalysis?.bloqueios ?? [])
@@ -471,6 +477,43 @@ const bloqueioTitulosDashboard: string[] = (featuredAnalysis?.bloqueios ?? [])
 
 const dashboardScore = Math.max(0, Math.min(100, featuredScoreRaw ?? 0));
 
+const rawBirthRadar =
+  freeAnalysis?.data_nascimento
+  ?? featuredAnalysis?.data_nascimento
+  ?? profileData?.birth_date;
+const birthPartsRadar = rawBirthRadar ? String(rawBirthRadar).split('-') : [];
+const dataPtRadar = birthPartsRadar.length === 3
+  ? `${birthPartsRadar[2]}/${birthPartsRadar[1]}/${birthPartsRadar[0]}`
+  : (rawBirthRadar ? String(rawBirthRadar) : '');
+
+let birthScoreDashboard = Math.max(
+  0,
+  Math.min(100, freeAnalysis?.score_v3 ?? freeAnalysis?.score ?? dashboardScore),
+);
+let scorePotencialDashboard: number | null = rankingFeatured?.melhorNome?.score != null
+  ? Math.max(0, Math.min(100, Math.round(rankingFeatured.melhorNome.score)))
+  : null;
+
+if (getScoreVersion() === 'v3' && nomeHojeDashboard && dataPtRadar) {
+  try {
+    const birthEval = avaliarNome(nomeHojeDashboard, dataPtRadar, { calcularPotencial: true });
+    birthScoreDashboard = birthEval.score_v3;
+    if (!nomeHarmonizadoDashboard && typeof birthEval.potencial === 'number') {
+      scorePotencialDashboard = Math.max(birthScoreDashboard, Math.min(100, Math.round(birthEval.potencial)));
+    }
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular score do nome de nascimento no painel:', e);
+  }
+}
+
+if (nomeHarmonizadoDashboard && dataPtRadar) {
+  try {
+    scorePotencialDashboard = avaliarNome(nomeHarmonizadoDashboard, dataPtRadar).score_v3;
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular score do nome harmonizado no painel:', e);
+  }
+}
+
 let dashboardRadarAxes: RadarAxesData = {
   expressao: 0.5,
   motivacao: 0.5,
@@ -478,18 +521,11 @@ let dashboardRadarAxes: RadarAxesData = {
   harmonia_triangulo: 0.5,
   sequencias: 0.5,
 };
+let harmonizedRadarAxesDashboard: RadarAxesData | null = null;
 let dashboardRadarLabels = getRadarAxisLabels(null);
 
 const birthForRadar = nomeHojeDashboard;
-const rawBirthRadar =
-  freeAnalysis?.data_nascimento
-  ?? featuredAnalysis?.data_nascimento
-  ?? profileData?.birth_date;
-if (birthForRadar && rawBirthRadar) {
-  const birthParts = String(rawBirthRadar).split('-');
-  const dataPtRadar = birthParts.length === 3
-    ? `${birthParts[2]}/${birthParts[1]}/${birthParts[0]}`
-    : String(rawBirthRadar);
+if (birthForRadar && dataPtRadar) {
   try {
     const axes = computeContextualRadarAxes(birthForRadar, dataPtRadar, null);
     dashboardRadarAxes = motorRadarToRecord(axes) as RadarAxesData;
@@ -499,11 +535,80 @@ if (birthForRadar && rawBirthRadar) {
   }
 }
 
+if (nomeHarmonizadoDashboard && dataPtRadar) {
+  try {
+    const harmAxes = computeContextualRadarAxes(nomeHarmonizadoDashboard, dataPtRadar, null);
+    harmonizedRadarAxesDashboard = motorRadarToRecord(harmAxes) as RadarAxesData;
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular teia harmonizada do painel:', e);
+  }
+}
+
+const featuredProductType =
+  (featuredAnalysis as any)?.product_type
+  ?? (bestSocialAnalysis ? 'nome_social' : 'analise_gratuita');
+const featuredIsFree = Boolean(
+  (featuredAnalysis as any)?.is_free === true
+  || featuredProductType === 'analise_gratuita'
+  || !bestSocialAnalysis,
+);
+const signatureChosenDashboard = Boolean(
+  rankingFeatured?.selectedNomeSocial || (featuredAnalysis as any)?.nome_harmonizado || nomeHarmonizadoDashboard,
+);
+const pdfReadyDashboard = Boolean(featuredAnalysis?.status === 'complete');
+
+type RecommendedReading = {
+  badge: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  ctaLabel: string;
+};
+
+let recommendedReadingDashboard: RecommendedReading | null = null;
+const firstBloqueio = Array.isArray(featuredAnalysis?.bloqueios)
+  ? (featuredAnalysis.bloqueios[0] as { codigo?: string; titulo?: string } | undefined)
+  : undefined;
+const firstLicao = Array.isArray((featuredAnalysis as any)?.licoes_carmicas)
+  ? ((featuredAnalysis as any).licoes_carmicas[0] as { numero?: number; titulo?: string } | undefined)
+  : undefined;
+
+if (firstBloqueio?.codigo) {
+  const code = String(firstBloqueio.codigo).trim();
+  const knownBlockCodes = new Set(['111', '222', '333', '444', '555', '666', '777', '888', '999']);
+  const slug = knownBlockCodes.has(code) ? `bloqueio-${code}` : 'bloqueios-energeticos';
+  recommendedReadingDashboard = {
+    badge: 'Bloqueio ativo no seu mapa',
+    title: firstBloqueio.titulo?.trim() || `Bloqueio ${code}`,
+    subtitle: 'Entenda por que essa sequência repetida trava a fluidez do nome e como ela se dissolve na harmonização.',
+    href: `/app/glossario/${slug}`,
+    ctaLabel: 'Ler no glossário →',
+  };
+} else if (firstLicao?.numero != null) {
+  recommendedReadingDashboard = {
+    badge: 'Lição Kármica no seu mapa',
+    title: firstLicao.titulo?.trim() || `Lição Kármica ${firstLicao.numero}`,
+    subtitle: 'Compreenda o significado das vibrações ausentes no seu nome de nascimento e como equilibrá-las.',
+    href: '/app/glossario/licoes-karmicas',
+    ctaLabel: 'Explorar no glossário →',
+  };
+} else if (featuredAnalysis) {
+  recommendedReadingDashboard = {
+    badge: 'Fundamento do seu mapa',
+    title: 'Número de Expressão e Harmonização',
+    subtitle: 'Descubra como Expressão, Destino e os 4 Triângulos trabalham juntos para elevar seu score magnético.',
+    href: '/app/glossario/numero-de-expressao',
+    ctaLabel: 'Abrir no glossário →',
+  };
+}
+
 type DashboardHistoryRow = {
   id: string;
   nome: string;
   dateLabel: string;
   score: number | null;
+  productType: string;
+  isFree: boolean;
 };
 
 let dashboardHistory: DashboardHistoryRow[] = [];
@@ -550,6 +655,8 @@ try {
         timeZone: 'America/Sao_Paulo',
       }).format(new Date(row.created_at)),
       score,
+      productType: row.product_type ?? 'nome_social',
+      isFree: row.is_free === true || row.product_type === 'analise_gratuita',
     };
   });
 } catch (e) {
@@ -847,11 +954,19 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
         nomeHoje={nomeHojeDashboard}
         nomeHarmonizado={nomeHarmonizadoDashboard}
         score={dashboardScore}
+        birthScore={birthScoreDashboard}
+        scorePotencial={scorePotencialDashboard}
         scoreLabel={featuredTheme.label}
         scoreColor={featuredTheme.color}
         bloqueios={bloqueioTitulosDashboard}
         analysisId={featuredAnalysisId!}
+        featuredProductType={featuredProductType}
+        featuredIsFree={featuredIsFree}
+        signatureChosen={signatureChosenDashboard}
+        pdfReady={pdfReadyDashboard}
+        recommendedReading={recommendedReadingDashboard}
         radarAxes={dashboardRadarAxes}
+        harmonizedRadarAxes={harmonizedRadarAxesDashboard}
         radarLabels={dashboardRadarLabels}
         history={dashboardHistory}
         hasNomeSocial={hasNomeSocial}
@@ -876,6 +991,10 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
           </p>
           <a
             href="/app/analise/nome-social"
+            data-nm-header-cta="analise"
+            data-user-id={user.id}
+            data-default-label="Abrir chat de análise"
+            data-resume-label="Retomar Análise"
             class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
           >
             Abrir chat de análise

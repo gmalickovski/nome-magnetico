@@ -5,6 +5,8 @@
  * Débitos "variáveis" vêm de Motivação e/ou Expressão — podem ser eliminados por variação do nome.
  */
 
+import { GlossaryLinkedText } from '../glossary/GlossaryLinkedText';
+
 interface DebitoCarmico {
   numero: number;
   titulo: string;
@@ -61,7 +63,7 @@ function DebitoCard({ debito }: { debito: DebitoCarmico }) {
         isFixo ? 'border-amber-500/10 bg-amber-500/5' : 'border-purple-500/10 bg-purple-500/5'
       }`}>
         <p className="nm-card-text pt-4 break-words">
-          {debito.descricao}
+          <GlossaryLinkedText text={debito.descricao} />
         </p>
         {isFixo ? (
           <p className="text-xs text-amber-400/80 italic border-t border-amber-500/10 pt-3 text-left">
@@ -98,7 +100,7 @@ export default function KarmicDebts({ debitos }: Props) {
   return (
     <div className="space-y-4 text-left">
       <p className="nm-card-text">
-        Débitos Kármicos (números 13, 14, 16 e 19) representam aprendizados profundos trazidos de experiências anteriores que pedem equilíbrio e responsabilidade nesta vida. Os ligados à data de nascimento são permanentes, enquanto os originados pelas letras do nome podem ser suavizados ou eliminados com a harmonização.
+        <GlossaryLinkedText text="Débitos Kármicos (números 13, 14, 16 e 19) representam aprendizados profundos trazidos de experiências anteriores que pedem equilíbrio e responsabilidade nesta vida. Os ligados à data de nascimento são permanentes, enquanto os originados pelas letras do nome podem ser suavizados ou eliminados com a harmonização." />
       </p>
 
       {/* Débitos permanentes primeiro */}
