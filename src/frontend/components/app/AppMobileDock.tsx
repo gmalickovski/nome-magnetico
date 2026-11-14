@@ -72,9 +72,13 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   useMobileDockScrollFade(dockRootRef, !keyboardOpen);
   const reduced = prefersReducedMotion();
   const navMeasureKey = items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|');
+  const contextLayout = action?.state.layout ?? null;
+  const showReadingAction = Boolean(action?.state.showReadingAction);
   const measureKey =
     navMeasureKey +
-    JSON.stringify(action?.state.layout ?? null) +
+    JSON.stringify(contextLayout) +
+    (showReadingAction ? '|read' : '') +
+    (action?.state.summaryBadge ? '|badge' : '') +
     (action?.state.pdfModel?.visible ? '|pdf' : '') +
     (action?.state.pdfExiting ? '|pdf-exit' : '');
   const { innerRef, widthPx } = useDockBarWidth(measureKey);
@@ -84,8 +88,6 @@ export default function AppMobileDock(props: AppMobileDockProps) {
     assertSingleMobileDockRoot();
   });
 
-  const contextLayout = action?.state.layout ?? null;
-  const showReadingAction = Boolean(action?.state.showReadingAction);
   const showContextActions =
     contextLayout &&
     dockLayoutHasVisibleActions(contextLayout, {
@@ -105,7 +107,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
           className="mobile-chat-dock-shell max-w-[calc(100vw-24px)] rounded-[28px]"
           style={dockShellWidthStyle(widthPx, reduced)}
         >
-          <div ref={innerRef} className={`${barClassName} w-full max-w-full items-center`}>
+          <div ref={innerRef} className={`${barClassName} items-center`}>
             <div
               className={`inline-flex shrink-0 items-center gap-1 ${
                 reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
@@ -146,7 +148,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                   aria-hidden="true"
                 />
                 <div
-                  className="nm-mobile-dock-context min-w-0 max-w-full flex-1 overflow-hidden"
+                  className="nm-mobile-dock-context min-w-0 shrink overflow-hidden"
                   role="toolbar"
                   aria-label="Ações desta página"
                 >

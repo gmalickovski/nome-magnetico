@@ -202,6 +202,14 @@ export function AppDashboard(props: AppDashboardProps) {
                 )}
               </div>
             )}
+
+            {props.hasNomeSocial && !props.isExpired && (
+              <div className="pt-1">
+                <a href="/app/analise/nome-social" className={`${CTA_CLASS} w-full sm:w-auto`}>
+                  {props.nomeHarmonizado ? '+ Nova análise no chat' : 'Abrir chat de análise'}
+                </a>
+              </div>
+            )}
           </div>
 
           <a
@@ -377,13 +385,18 @@ export function AppDashboard(props: AppDashboardProps) {
                 </div>
               )}
               {props.hasNomeSocial && !props.isExpired && (
-                <button
-                  type="button"
-                  onClick={dismissOffer}
-                  className="mt-4 text-sm text-[#A0A0A0] hover:text-[#e5e2e1]"
-                >
-                  Agora não
-                </button>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <a href="/app/analise/nome-social" className={CTA_CLASS}>
+                    Abrir chat de análise
+                  </a>
+                  <button
+                    type="button"
+                    onClick={dismissOffer}
+                    className="text-sm text-[#A0A0A0] hover:text-[#e5e2e1]"
+                  >
+                    Agora não
+                  </button>
+                </div>
               )}
             </>
           )}

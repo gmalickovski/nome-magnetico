@@ -490,6 +490,11 @@ export function ProductHarmonyStar({
 
   const outerStrokeVisual = isBirthOnly ? birthVisual : harmVisual;
   const outerNums = isBirthOnly ? birthNums : harmonizedNums;
+  const starViewBox = isDemo
+    ? `0 0 ${LANDING_STAR_VIEWBOX.width} ${LANDING_STAR_VIEWBOX.height}`
+    : '-44 5 888 585';
+  const starLabelRadius = isDemo ? LANDING_STAR_LABEL_RADIUS : LANDING_STAR_OUTER_R + 62;
+  const starLabelDy = isDemo ? LANDING_STAR_LABEL_DY : ([-8, -2, 10, 10, -2] as const);
 
   useEffect(() => {
     if (!isDemo) {
@@ -533,7 +538,7 @@ export function ProductHarmonyStar({
       <div className="harmony-star-wrap w-full">
         <svg
           className="harmony-star-svg w-full overflow-visible"
-          viewBox={`0 0 ${LANDING_STAR_VIEWBOX.width} ${LANDING_STAR_VIEWBOX.height}`}
+          viewBox={starViewBox}
           role="img"
           aria-label="Estrela comparativa entre nome de nascimento e nome harmonizado"
         >
@@ -601,7 +606,7 @@ export function ProductHarmonyStar({
             const labelPos = harmonyStarTipXY(
               LANDING_STAR_CX,
               LANDING_STAR_CY,
-              LANDING_STAR_LABEL_RADIUS,
+              starLabelRadius,
               i,
             );
             const outerNumPos = harmonyStarTipXY(
@@ -630,7 +635,7 @@ export function ProductHarmonyStar({
                 <text
                   className="harmony-star-label"
                   x={labelPos.x + LANDING_STAR_LABEL_DX[i]}
-                  y={labelPos.y + LANDING_STAR_LABEL_DY[i]}
+                  y={labelPos.y + starLabelDy[i]}
                   fill="#d0d5de"
                   fontFamily="Inter, sans-serif"
                   fontSize={25}
@@ -680,7 +685,9 @@ export function ProductHarmonyStar({
         style={{
           transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
         }}
-        className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
+        className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 ${
+          isDemo ? 'mt-8 sm:mt-10' : 'mt-5 sm:mt-6'
+        } px-2 transition-all duration-700 ease-out ${
           shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >

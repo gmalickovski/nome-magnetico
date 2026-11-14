@@ -22,12 +22,15 @@ export interface ReadingRadarProps {
  * Rótulo + valor ficam empilhados FORA do pentágono; o valor fica sempre
  * do lado mais próximo do vértice, então nunca cruza linha nem texto.
  */
-const VB_W = 800;
-const VB_H = 640;
+const VB_X = -44;
+const VB_Y = 10;
+const VB_W = 888;
+const VB_H = 580;
 const CX = 400;
-const CY = 320;
-const RADIUS = 190;
-const LINE_GAP = 32;
+const CY = 305;
+const RADIUS = 168;
+const LINE_GAP = 42;
+const LABEL_LINE_HEIGHT = 36;
 
 type Placement = 'top' | 'side' | 'bottom';
 
@@ -40,12 +43,32 @@ const AXIS_CONFIG: ReadonlyArray<{
   offset: number;
   dx: number;
 }> = [
-  { key: 'expressao', label: 'Foco do Momento', angle: -Math.PI / 2, anchor: 'middle', placement: 'top', offset: 36, dx: 0 },
-  { key: 'motivacao', label: 'Equilíbrio da Alma', angle: -Math.PI / 2 + (2 * Math.PI) / 5, anchor: 'start', placement: 'side', offset: 26, dx: 10 },
-  { key: 'destino', label: 'Sintonia de Destino', angle: -Math.PI / 2 + (4 * Math.PI) / 5, anchor: 'start', placement: 'bottom', offset: 34, dx: 4 },
-  { key: 'harmonia_triangulo', label: 'Magnetismo Social', angle: -Math.PI / 2 + (6 * Math.PI) / 5, anchor: 'end', placement: 'bottom', offset: 34, dx: -4 },
-  { key: 'sequencias', label: 'Fluidez', angle: -Math.PI / 2 + (8 * Math.PI) / 5, anchor: 'end', placement: 'side', offset: 26, dx: -10 },
+  { key: 'expressao', label: 'Foco do Momento', angle: -Math.PI / 2, anchor: 'middle', placement: 'top', offset: 30, dx: 0 },
+  { key: 'motivacao', label: 'Equilíbrio da Alma', angle: -Math.PI / 2 + (2 * Math.PI) / 5, anchor: 'start', placement: 'side', offset: 22, dx: 6 },
+  { key: 'destino', label: 'Sintonia de Destino', angle: -Math.PI / 2 + (4 * Math.PI) / 5, anchor: 'start', placement: 'bottom', offset: 28, dx: 4 },
+  { key: 'harmonia_triangulo', label: 'Magnetismo Social', angle: -Math.PI / 2 + (6 * Math.PI) / 5, anchor: 'end', placement: 'bottom', offset: 28, dx: -4 },
+  { key: 'sequencias', label: 'Fluidez', angle: -Math.PI / 2 + (8 * Math.PI) / 5, anchor: 'end', placement: 'side', offset: 22, dx: -6 },
 ];
+
+function splitRadarLabelLines(label: string, placement: Placement): string[] {
+  if (placement === 'top' || label.length <= 12 || !label.includes(' ')) {
+    return [label];
+  }
+  const mid = label.length / 2;
+  let bestIdx = -1;
+  let bestDist = Infinity;
+  for (let i = 0; i < label.length; i++) {
+    if (label[i] === ' ') {
+      const dist = Math.abs(i - mid);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+  }
+  if (bestIdx <= 0 || bestIdx >= label.length - 1) return [label];
+  return [label.slice(0, bestIdx), label.slice(bestIdx + 1)];
+}
 
 function getVal(axes: RadarAxesData, key: string): number {
   return axes[key as keyof RadarAxesData] ?? 0.35;
@@ -85,8 +108,8 @@ export function ReadingRadar({
   return (
     <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
-        viewBox={`0 0 ${VB_W} ${VB_H}`}
-        className="w-full max-w-[580px] h-auto overflow-visible"
+        viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
+        className="nm-radar-svg w-full max-w-[520px] h-auto block"
         role="img"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
@@ -177,16 +200,19 @@ export function ReadingRadar({
             valueColor = '#f2ca50'; // Dourado para valores base
           }
 
-          // Valor do lado do vértice; rótulo do lado de fora.
+          // Valor do lado do vértice; rótulo quebrado com folga para nunca encostar na borda.
+          const lines = splitRadarLabelLines(labelText, axis.placement);
           let valueY = gy;
           let labelY = gy;
           if (axis.placement === 'top') {
-            labelY = gy - LINE_GAP - 2;
+            valueY = gy;
+            labelY = gy - LINE_GAP - (lines.length - 1) * LABEL_LINE_HEIGHT;
           } else if (axis.placement === 'bottom') {
+            valueY = gy;
             labelY = gy + LINE_GAP;
           } else {
-            labelY = gy - LINE_GAP / 2;
-            valueY = gy + LINE_GAP / 2 + 2;
+            labelY = gy - (lines.length > 1 ? 38 : 22);
+            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + LINE_GAP;
           }
 
           return (
@@ -201,7 +227,11 @@ export function ReadingRadar({
                 className="nm-radar-label"
                 fontWeight={700}
               >
-                {labelText}
+                {lines.map((line, idx) => (
+                  <tspan key={idx} x={gx} y={labelY + idx * LABEL_LINE_HEIGHT}>
+                    {line}
+                  </tspan>
+                ))}
               </text>
               <text
                 x={gx}

@@ -42,7 +42,7 @@ export function AppSidebarLogout() {
           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
         />
       </svg>
-      <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
         {loading ? 'Saindo...' : 'Sair'}
       </span>
     </button>

@@ -2,7 +2,7 @@ import React from 'react';
 import { IconChevronLeft } from './MobileChatDockIcons.js';
 
 export function MobileSummaryToggle({ open, badge, onToggle }: { open: boolean; badge: boolean; onToggle: () => void }) {
-  const label = open ? 'Fechar painel de leitura' : 'Abrir painel de leitura';
+  const label = open ? 'Fechar painel de análise' : 'Abrir painel de análise';
   return (
     <button type="button" data-nm-summary-toggle aria-label={label} title={label} aria-expanded={open} aria-controls="mobile-reading-summary" onClick={onToggle}
       className="fixed right-0 z-[72] flex h-12 w-11 items-center justify-center rounded-l-2xl bg-[#252525] text-[#f2ca50] shadow-[0_4px_16px_rgba(0,0,0,0.35)] transition-colors hover:bg-[#303030] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f2ca50] md:hidden"

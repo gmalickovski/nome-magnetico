@@ -66,6 +66,7 @@ export default function DemoChatScores({ birthPanel, suggestions }: DemoChatScor
         >
           <ChatSidebarPanelChrome
             expanded={sidebarExpanded}
+            hasSelection={Boolean(selectedId)}
             onToggleExpand={() => setSidebarExpanded((v) => !v)}
           >
             {sidebar}

@@ -36,12 +36,19 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(appLayoutSrc, /headerBackLabel/);
   });
 
-  it('sidebar desktop empurra conteúdo (rail 5rem) a partir de lg sem expansão hover', () => {
+  it('sidebar desktop expande sobreposta ao passar o mouse (z-50, hover:w-60) revelando rótulos sem empurrar página ou header', () => {
     const appLayoutFile = path.join(layoutsDir, 'AppLayout.astro');
     const appLayoutSrc = readFileSync(appLayoutFile, 'utf8');
-    assert.match(appLayoutSrc, /hidden lg:flex/);
-    assert.match(appLayoutSrc, /\bw-20\b/);
-    assert.doesNotMatch(appLayoutSrc, /hover:w-60/);
+    const sidebarMatch = appLayoutSrc.match(/<aside id="app-sidebar"[\s\S]*?<\/aside>/);
+    assert.ok(sidebarMatch, 'sidebar deve existir');
+    const sidebarHtml = sidebarMatch[0];
+
+    assert.match(sidebarHtml, /hidden lg:flex fixed inset-y-0 left-0 z-50 w-20/);
+    assert.match(sidebarHtml, /hover:w-60/);
+    assert.match(sidebarHtml, /transition-\[width/);
+    assert.match(sidebarHtml, /group-hover:opacity-100/);
+    assert.doesNotMatch(sidebarHtml, /sr-only/);
+
     assert.match(appLayoutSrc, /lg:ml-20/);
     assert.doesNotMatch(appLayoutSrc, /--sidebar-w/);
 
@@ -49,6 +56,12 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const cssSrc = readFileSync(cssFile, 'utf8');
     assert.match(cssSrc, /@media \(min-width: 1024px\)[\s\S]*\.nm-chat-shell[\s\S]*left:\s*5rem/);
     assert.doesNotMatch(cssSrc, /\.nm-chat-shell\s*\{\s*left:\s*var\(--sidebar-w/);
+
+    const desktopHeaderSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'AppDesktopHeader.tsx'),
+      'utf8'
+    );
+    assert.match(desktopHeaderSrc, /\bz-40\b/);
   });
 
   it('tablet (<lg) usa dock/header mobile; desktop (≥lg) usa sidebar + header fixo', () => {
@@ -119,5 +132,141 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(restartSrc, /import \{ IconRotateCcw \} from '\.\/MobileChatDockIcons/);
     assert.match(restartSrc, /border-\[\#D4AF37\]/);
     assert.match(restartSrc, /text-\[\#D4AF37\]/);
+  });
+
+  it('botões Nova Análise, Começar Agora e painel /app levam ao chat /app/analise/nome-social (mobile e desktop)', () => {
+    const analisesFile = path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro');
+    const analisesSrc = readFileSync(analisesFile, 'utf8');
+    const anchors = analisesSrc.match(/<a\b[\s\S]*?<\/a>/g) ?? [];
+    const novaAnaliseAnchors = anchors.filter((a) => a.includes('+ Nova Análise'));
+    const comecarAnchors = anchors.filter((a) => a.includes('Começar Agora'));
+
+    assert.equal(novaAnaliseAnchors.length, 2, 'deve ter botão + Nova Análise no header e no mobile');
+    for (const a of novaAnaliseAnchors) {
+      assert.match(a, /href="\/app\/analise\/nome-social"/);
+      assert.doesNotMatch(a, /href="\/app"/);
+    }
+    assert.ok(
+      novaAnaliseAnchors.some((a) => a.includes('lg:hidden')),
+      'botão mobile + Nova Análise deve usar lg:hidden para cobrir <1024px'
+    );
+
+    assert.equal(comecarAnchors.length, 1);
+    assert.match(comecarAnchors[0], /href="\/app\/analise\/nome-social"/);
+    assert.doesNotMatch(comecarAnchors[0], /href="\/app"/);
+
+    const dashboardFile = path.join(srcRoot, 'frontend', 'components', 'app', 'dashboard', 'AppDashboard.tsx');
+    const dashboardSrc = readFileSync(dashboardFile, 'utf8');
+    assert.match(dashboardSrc, /href="\/app\/analise\/nome-social"/);
+
+    const appIndexFile = path.join(srcRoot, 'pages', 'app', 'index.astro');
+    const appIndexSrc = readFileSync(appIndexFile, 'utf8');
+    assert.match(appIndexSrc, /slot="header-actions"[\s\S]{0,120}href="\/app\/analise\/nome-social"/);
+  });
+
+  it('chat não adiciona bolha de resumo ao selecionar opção e container de nomes usa largura total', () => {
+    const chatFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
+    const chatSrc = readFileSync(chatFile, 'utf8');
+    assert.doesNotMatch(chatSrc, /buildPostSuggestionChoiceBlock/);
+    assert.match(chatSrc, /if \(msg\.id\.startsWith\('sug-choice-'\)\) return null;/);
+    assert.match(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"\s+className="!max-w-full"/);
+  });
+
+  it('painel lateral desktop usa título Painel de análise e bolinha dourada condicional na seleção', () => {
+    const chromeFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarPanelChrome.tsx');
+    const chromeSrc = readFileSync(chromeFile, 'utf8');
+    assert.match(chromeSrc, /hasSelection\s*=\s*false/);
+    assert.match(chromeSrc, /\{hasSelection\s*&&\s*\(/);
+    assert.match(chromeSrc, /data-nm-selection-dot="true"/);
+    assert.match(chromeSrc, /Painel de análise/);
+    assert.doesNotMatch(chromeSrc, /Painel de leitura/i);
+
+    const chatFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
+    const chatSrc = readFileSync(chatFile, 'utf8');
+    assert.match(chatSrc, /<ChatSidebarPanelChrome[\s\S]*?hasSelection=\{Boolean\(activeSuggestionId\)\}/);
+  });
+
+  it('seções do painel de análise usam textos introdutórios sem tile escuro e exibem quantidade = N nos títulos', () => {
+    const topicSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingTopicCard.tsx'), 'utf8');
+    assert.match(topicSrc, /typeof count === 'number'/);
+    assert.match(topicSrc, /=\s*\{count\}/);
+
+    const summarySrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatReadingSummaryPanel.tsx'), 'utf8');
+    assert.match(summarySrc, /title="Bloqueios energéticos"[\s\S]*?count=\{bloqueios\.length\}/);
+    assert.match(summarySrc, /title="Débitos kármicos"[\s\S]*?count=\{debitosCarmicos\.length\}/);
+    assert.match(summarySrc, /title="Lições kármicas"[\s\S]*?count=\{licoesCarmicas\.length\}/);
+    assert.match(summarySrc, /title="Tendências ocultas"[\s\S]*?count=\{tendenciasOcultas\.length\}/);
+    assert.match(summarySrc, /Bloqueios energéticos são sequências de três ou mais números repetidos/);
+
+    const debtsSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'KarmicDebts.tsx'), 'utf8');
+    assert.doesNotMatch(debtsSrc, /nm-floating-tile/);
+    assert.match(debtsSrc, /Débitos Kármicos \(números 13, 14, 16 e 19\)/);
+
+    const lessonsSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'KarmicLessons.tsx'), 'utf8');
+    assert.doesNotMatch(lessonsSrc, /\{licoes\.length\} \{licoes\.length === 1 \? 'Lição Kármica'/);
+    assert.match(lessonsSrc, /Lições Kármicas correspondem aos números de 1 a 9 que estão ausentes/);
+
+    const hiddenSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'HiddenTendencies.tsx'), 'utf8');
+    assert.doesNotMatch(hiddenSrc, /\{tendencias\.length\} tendência\(s\) oculta\(s\)/);
+    assert.match(hiddenSrc, /Tendências Ocultas surgem quando um mesmo número de 1 a 9 aparece 4 ou mais vezes/);
+
+    const triSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'TriangleVisualization.tsx'), 'utf8');
+    assert.doesNotMatch(triSrc, /nm-vida-intro-container/);
+    assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Bloqueios <span className="text-\[#f2ca50\]">= \{bloqueiosFiltrados\.length\}<\/span>\s*<\/h3>/);
+    assert.match(triSrc, /border-red-500\/30 bg-red-500\/10[\s\S]*?✓ Não possui bloqueios neste triângulo/);
+    assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Arcanos\s*<\/h3>/);
+    assert.match(triSrc, /border-purple-500\/30 bg-purple-500\/10[\s\S]*?w-12 h-12 rounded-full[\s\S]*?Arcano Regente \{regenteNumero\}/);
+    assert.match(triSrc, /border-purple-500\/30 bg-purple-500\/10[\s\S]*?w-12 h-12 rounded-full[\s\S]*?Arcano de Trânsito \{arcanoTransito\.numero\}[\s\S]*?Sequência de Passagem \(Cronologia\)/);
+  });
+
+  it('gráficos da Estrela Cabalística e Mapa de Alinhamento usam fonte mínima legível, legenda próxima e explicam as 5 pontas', () => {
+    const typographySrc = readFileSync(path.join(srcRoot, 'styles', 'app-typography.css'), 'utf8');
+    assert.match(typographySrc, /--nm-type-min-legible:\s*0\.75rem/);
+    assert.match(typographySrc, /--nm-card-safe-inset:\s*0\.375rem/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*32px/);
+    assert.match(typographySrc, /--nm-type-chart-number:\s*var\(--nm-type-chart-label\)/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*24px/);
+    assert.match(typographySrc, /\.nm-score-eyebrow/);
+    assert.match(typographySrc, /@container \(min-width:\s*28rem\)/);
+
+    const frameSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'landing', 'ProductResultFrame.tsx'), 'utf8');
+    assert.match(frameSrc, /-44 5 888 585/);
+    assert.match(frameSrc, /isDemo \? 'mt-8 sm:mt-10' : 'mt-5 sm:mt-6'/);
+
+    const radarSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingRadar.tsx'), 'utf8');
+    assert.match(radarSrc, /const RADIUS = 168/);
+    assert.match(radarSrc, /const LINE_GAP = 42/);
+    assert.match(radarSrc, /function splitRadarLabelLines/);
+
+    const starPanelSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyStarPanel.tsx'), 'utf8');
+    assert.match(starPanelSrc, /STAR_DIMENSION_NUMBER_MEANINGS/);
+    assert.match(starPanelSrc, /activeVisual\.text/);
+
+    const sidebarSectionSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarSection.tsx'), 'utf8');
+    assert.match(sidebarSectionSrc, /RADAR_AXES_EXPLANATIONS/);
+    assert.match(sidebarSectionSrc, /activeVisual\.text/);
+  });
+
+  it('header desktop já renderiza o logo à esquerda na entrevista (/app/analise) sem deslizar sobre a barra', () => {
+    const appLayoutSrc = readFileSync(path.join(layoutsDir, 'AppLayout.astro'), 'utf8');
+    assert.match(appLayoutSrc, /logoAlignLeft=\{isActive\('\/app\/analise'\)\}/);
+
+    const headerSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'AppDesktopHeader.tsx'), 'utf8');
+    assert.match(headerSrc, /const isLogoLeft = Boolean\(logoAlignLeft \|\| hasProgress\)/);
+    const logoLinkMatch = headerSrc.match(/<a[\s\S]*?href="\/app"[\s\S]*?>/);
+    assert.ok(logoLinkMatch, 'link do logo deve existir');
+    assert.doesNotMatch(logoLinkMatch[0], /transition-all/);
+  });
+
+  it('painel mobile centraliza os cards com espaçamento lateral simétrico e botão fechar X sem círculo', () => {
+    const mobileSheetSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'MobileReadingBottomSheet.tsx'),
+      'utf8',
+    );
+    assert.match(mobileSheetSrc, /chat-scroll-pane overscroll-contain text-\[#E5E2E1\]"\s*>\s*<div className="w-full mx-auto px-4 py-3 pb-4">\s*<ChatSidebarSection/);
+    const closeBtnMatch = mobileSheetSrc.match(/<button\s+type="button"\s+onClick=\{\(\) => onClose\('x'\)\}[\s\S]*?<\/button>/);
+    assert.ok(closeBtnMatch, 'botão de fechar mobile deve existir');
+    assert.doesNotMatch(closeBtnMatch[0], /rounded-full border/);
+    assert.match(closeBtnMatch[0], /bg-transparent text-\[#e5e2e1\]\/80 hover:text-\[#f2ca50\]/);
   });
 });

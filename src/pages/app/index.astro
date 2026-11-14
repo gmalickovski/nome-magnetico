@@ -561,6 +561,15 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
 ---
 
 <AppLayout title="Dashboard">
+  {hasNomeSocial && (
+    <a
+      slot="header-actions"
+      href="/app/analise/nome-social"
+      class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-300"
+    >
+      + Nova Análise
+    </a>
+  )}
   {needsEmailConfirmation && user.email && (
     <MailWarning client:load email={user.email} />
   )}
@@ -843,20 +852,37 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
     )}
 
     {!showDashboardPanel && freeAnalysisStatus !== 'pending' && freeAnalysisStatus !== 'processing' && (
-      <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
-        <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
-          Comece pela sua análise gratuita
-        </h2>
-        <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
-          Descubra o score do seu nome de nascimento e os bloqueios que afetam sua assinatura.
-        </p>
-        <a
-          href="/app/analise-gratuita"
-          class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
-        >
-          Iniciar análise gratuita
-        </a>
-      </section>
+      hasNomeSocial ? (
+        <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
+          <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
+            Inicie sua harmonização no chat
+          </h2>
+          <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
+            Analise seu nome, elimine bloqueios e compare variações harmonizadas em tempo real.
+          </p>
+          <a
+            href="/app/analise/nome-social"
+            class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
+          >
+            Abrir chat de análise
+          </a>
+        </section>
+      ) : (
+        <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
+          <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
+            Comece pela sua análise gratuita
+          </h2>
+          <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
+            Descubra o score do seu nome de nascimento e os bloqueios que afetam sua assinatura.
+          </p>
+          <a
+            href="/app/analise-gratuita"
+            class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
+          >
+            Iniciar análise gratuita
+          </a>
+        </section>
+      )
     )}
 
     {!freeAnalysisId && leadNome && leadData && (

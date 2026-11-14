@@ -7,7 +7,7 @@
  *  - Débitos + Lições         → sob headings que mencionem "Karma" / "Peso do Passado" / "Lição"
  *  - Tendências Ocultas       → sob headings que mencionem "Tendência" / "Oculta"
  */
-import { View, Text, StyleSheet } from '@react-pdf/renderer';
+import { View, Text, StyleSheet, Svg, Path, Text as SvgText } from '@react-pdf/renderer';
 import {
   BloqueiosBlock,
   DebitosBlock,
@@ -201,6 +201,21 @@ const triStyles = StyleSheet.create({
   },
 });
 
+function buildRoundedRectPath(x: number, y: number, w: number, h: number, r: number): string {
+  const rr = Math.min(r, w / 2, h / 2);
+  return (
+    `M${x + rr},${y}` +
+    `H${x + w - rr}` +
+    `Q${x + w},${y} ${x + w},${y + rr}` +
+    `V${y + h - rr}` +
+    `Q${x + w},${y + h} ${x + w - rr},${y + h}` +
+    `H${x + rr}` +
+    `Q${x},${y + h} ${x},${y + h - rr}` +
+    `V${y + rr}` +
+    `Q${x},${y} ${x + rr},${y}Z`
+  );
+}
+
 export function TrianguloPiramideInline({
   data,
   label,
@@ -224,6 +239,111 @@ export function TrianguloPiramideInline({
   const bloqueioPositions = hideValues ? new Set<string>() : buildBloqueioPositions(data.linhas);
   const cellFontSize = Math.max(4, Math.floor(cellSize * 0.65));
   const letterFontSize = Math.max(5, Math.floor(cellSize * 0.7));
+  const hasLetters = Boolean(letras && data.linhas[0] && letras.length === data.linhas[0].length);
+  const hStep = cellSize + 1;
+  const vStep = cellSize + 3;
+  const headerOffset = hasLetters ? letterFontSize + 5 : 0;
+  const totalHeight = headerOffset + data.linhas.length * vStep;
+  const canRenderSvg = data.linhas.length > 0 && totalHeight + 60 <= 620;
+
+  if (canRenderSvg) {
+    const cols = data.linhas[0].length;
+    const svgWidth = Math.max(cellSize, cols * hStep);
+    const svgHeight = Math.max(cellSize, totalHeight);
+    let normalPath = '';
+    let bloqueioPath = '';
+    let regentPath = '';
+    const textEls: React.ReactNode[] = [];
+
+    if (hasLetters && letras) {
+      const letterFill = hideValues ? '#9CA3AF' : '#4B5563';
+      const letterY = letterFontSize + 1;
+      for (let ni = 0; ni < letras.length; ni++) {
+        const cx = 0.5 + ni * hStep + cellSize / 2;
+        textEls.push(
+          <SvgText
+            key={`l-${ni}`}
+            x={cx}
+            y={letterY}
+            textAnchor="middle"
+            fill={letterFill}
+            style={{ fontSize: letterFontSize, fontFamily: 'Helvetica-Bold' }}
+          >
+            {letras[ni]}
+          </SvgText>
+        );
+      }
+    }
+
+    for (let li = 0; li < data.linhas.length; li++) {
+      const linha = data.linhas[li];
+      const rowOffset = (li * hStep) / 2;
+      const y = headerOffset + li * vStep;
+      const isFirstRow = li === 0;
+      const isRegent = !hideValues && li === data.linhas.length - 1;
+
+      for (let ni = 0; ni < linha.length; ni++) {
+        const x = 0.5 + rowOffset + ni * hStep;
+        const isBloqueio = !hideValues && bloqueioPositions.has(`${li}:${ni}`);
+        const rectPath = buildRoundedRectPath(x, y, cellSize, cellSize, 3);
+        if (isBloqueio) {
+          bloqueioPath += rectPath;
+        } else if (isRegent) {
+          regentPath += rectPath;
+        } else {
+          normalPath += rectPath;
+        }
+
+        if (!hideValues) {
+          let textColor = isBloqueio ? '#FFFFFF' : '#1F2937';
+          if (isFirstRow && !isBloqueio) textColor = '#D4AF37';
+          if (isRegent && !isBloqueio) textColor = '#EDE9FE';
+          textEls.push(
+            <SvgText
+              key={`c-${li}-${ni}`}
+              x={x + cellSize / 2}
+              y={y + cellSize / 2 + cellFontSize * 0.35}
+              textAnchor="middle"
+              fill={textColor}
+              style={{ fontSize: cellFontSize, fontFamily: 'Helvetica-Bold' }}
+            >
+              {String(linha[ni])}
+            </SvgText>
+          );
+        }
+      }
+    }
+
+    return (
+      <View wrap={false} style={triStyles.card}>
+        <Text style={triStyles.cardLabel}>{label}</Text>
+        <Svg
+          width={svgWidth}
+          height={svgHeight}
+          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          style={{ alignSelf: 'center' }}
+        >
+          {normalPath ? (
+            <Path d={normalPath} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth={0.5} />
+          ) : null}
+          {bloqueioPath ? (
+            <Path d={bloqueioPath} fill="#DC2626" stroke="#B91C1C" strokeWidth={0.5} />
+          ) : null}
+          {regentPath ? (
+            <Path d={regentPath} fill="#3B0764" stroke="#6D28D9" strokeWidth={0.5} />
+          ) : null}
+          {textEls}
+        </Svg>
+
+        {!hideValues && bloqueios && triKey && (() => {
+          const filtrados = bloqueios.filter(b => b.triangulos?.includes(triKey));
+          return filtrados.length > 0 ? (
+            <BloqueiosBlock bloqueios={filtrados} />
+          ) : null;
+        })()}
+      </View>
+    );
+  }
 
   return (
     <View wrap={data.linhas.length * (cellSize + 1) + 60 > 620} style={triStyles.card}>

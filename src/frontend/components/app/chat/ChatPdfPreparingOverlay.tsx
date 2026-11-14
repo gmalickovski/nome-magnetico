@@ -20,32 +20,49 @@ export function ChatPdfPreparingOverlay({
   onDismissError,
 }: ChatPdfPreparingOverlayProps) {
   const [progress, setProgress] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const reduced = prefersReducedMotion();
   const visible = phase === 'preparing' || phase === 'generating' || phase === 'error';
 
   useEffect(() => {
     if (!visible || phase === 'error') {
       setProgress(0);
+      setElapsedMs(0);
       return;
     }
-    setProgress(phase === 'preparing' ? 18 : 42);
+    setProgress(phase === 'preparing' ? 12 : 35);
+    setElapsedMs(0);
     const start = Date.now();
-    const cap = phase === 'preparing' ? 45 : 92;
+    const cap = phase === 'preparing' ? 35 : 94;
     const tick = window.setInterval(() => {
       const elapsed = Date.now() - start;
-      const bump = phase === 'preparing' ? elapsed / 120 : elapsed / 80;
-      setProgress((p) => Math.min(cap, Math.max(p, bump)));
+      setElapsedMs(elapsed);
+      // Curva assintótica suave para não travar em 92% nos primeiros segundos em PDFs longos (~60 páginas).
+      const target =
+        phase === 'preparing'
+          ? 12 + 23 * (1 - Math.exp(-elapsed / 3500))
+          : 35 + 59 * (1 - Math.exp(-elapsed / 40_000));
+      setProgress((p) => Math.min(cap, Math.max(p, target)));
     }, 280);
     return () => window.clearInterval(tick);
   }, [visible, phase]);
 
   useEffect(() => {
-    if (phase === 'idle') setProgress(0);
+    if (phase === 'idle') {
+      setProgress(0);
+      setElapsedMs(0);
+    }
   }, [phase]);
 
   if (!visible) return null;
 
   const isError = phase === 'error';
+  const generatingLabel =
+    elapsedMs >= 50_000
+      ? 'Finalizando sumário e acabamento do PDF…'
+      : elapsedMs >= 20_000
+        ? 'Diagramando páginas e triângulos…'
+        : 'Gerando arquivo PDF…';
 
   return (
     <div
@@ -108,7 +125,7 @@ export function ChatPdfPreparingOverlay({
             </div>
             <p className="mt-3 flex items-center gap-2 text-xs text-[#76746a]">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[#D4AF37]" />
-              {phase === 'preparing' ? 'Salvando análise…' : 'Gerando arquivo PDF…'}
+              {phase === 'preparing' ? 'Salvando análise…' : generatingLabel}
             </p>
           </>
         )}

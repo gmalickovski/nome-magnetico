@@ -8,7 +8,7 @@ export interface SummaryFabProps {
   className?: string;
 }
 
-/** Botão fixo discreto (< md) para abrir o painel de leitura. */
+/** Botão fixo discreto (< md) para abrir o painel de análise. */
 export function SummaryFab({ visible, count, onClick, className = '' }: SummaryFabProps) {
   if (!visible) return null;
 
@@ -16,7 +16,7 @@ export function SummaryFab({ visible, count, onClick, className = '' }: SummaryF
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Abrir painel de leitura (${count} itens)`}
+      aria-label={`Abrir painel de análise (${count} itens)`}
       className={`md:hidden fixed z-40 right-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#131313]/90 text-chat-muted shadow-[0_8px_28px_rgba(0,0,0,0.55)] backdrop-blur-md transition-colors hover:border-gold/35 hover:text-gold ${className}`}
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
