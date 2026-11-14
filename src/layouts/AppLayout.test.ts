@@ -219,9 +219,9 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const typographySrc = readFileSync(path.join(srcRoot, 'styles', 'app-typography.css'), 'utf8');
     assert.match(typographySrc, /--nm-type-min-legible:\s*0\.75rem/);
     assert.match(typographySrc, /--nm-card-safe-inset:\s*0\.375rem/);
-    assert.match(typographySrc, /--nm-type-chart-label:\s*34px/);
-    assert.match(typographySrc, /--nm-type-chart-number:\s*38px/);
-    assert.match(typographySrc, /--nm-type-chart-label:\s*25px/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*32px/);
+    assert.match(typographySrc, /--nm-type-chart-number:\s*var\(--nm-type-chart-label\)/);
+    assert.match(typographySrc, /--nm-type-chart-label:\s*24px/);
     assert.match(typographySrc, /\.nm-score-eyebrow/);
     assert.match(typographySrc, /@container \(min-width:\s*28rem\)/);
 
@@ -231,6 +231,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const radarSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingRadar.tsx'), 'utf8');
     assert.match(radarSrc, /const RADIUS = 168/);
+    assert.match(radarSrc, /const LINE_GAP = 42/);
     assert.match(radarSrc, /function splitRadarLabelLines/);
 
     const starPanelSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyStarPanel.tsx'), 'utf8');
@@ -240,5 +241,16 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const sidebarSectionSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarSection.tsx'), 'utf8');
     assert.match(sidebarSectionSrc, /RADAR_AXES_EXPLANATIONS/);
     assert.match(sidebarSectionSrc, /activeVisual\.text/);
+  });
+
+  it('header desktop já renderiza o logo à esquerda na entrevista (/app/analise) sem deslizar sobre a barra', () => {
+    const appLayoutSrc = readFileSync(path.join(layoutsDir, 'AppLayout.astro'), 'utf8');
+    assert.match(appLayoutSrc, /logoAlignLeft=\{isActive\('\/app\/analise'\)\}/);
+
+    const headerSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'AppDesktopHeader.tsx'), 'utf8');
+    assert.match(headerSrc, /const isLogoLeft = Boolean\(logoAlignLeft \|\| hasProgress\)/);
+    const logoLinkMatch = headerSrc.match(/<a[\s\S]*?href="\/app"[\s\S]*?>/);
+    assert.ok(logoLinkMatch, 'link do logo deve existir');
+    assert.doesNotMatch(logoLinkMatch[0], /transition-all/);
   });
 });

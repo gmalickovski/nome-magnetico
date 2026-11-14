@@ -177,7 +177,7 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 
     {!hideDesktopHeader && (
       <>
-        <AppDesktopHeader client:load nome={userNome} isAdmin={isAdmin}>
+        <AppDesktopHeader client:load nome={userNome} isAdmin={isAdmin} logoAlignLeft={isActive('/app/analise')}>
           <slot name="header-actions" />
         </AppDesktopHeader>
         <div class="hidden lg:block h-14 shrink-0" aria-hidden="true"></div>

@@ -9,9 +9,9 @@
   --nm-type-h3: 1.125rem;
   --nm-type-h4: 1rem;
   /* Unidades do viewBox SVG (Material Design 3 / WCAG >= 12px reais + folga segura de borda) */
-  --nm-type-chart-label: 34px;
-  --nm-type-chart-number: 38px;
-  --nm-type-chart-number-inner: 30px;
+  --nm-type-chart-label: 32px;
+  --nm-type-chart-number: var(--nm-type-chart-label);
+  --nm-type-chart-number-inner: 26px;
 }
 @media (min-width: 768px) {
   .nm-app-shell--with-mobile-dock {
@@ -65,7 +65,7 @@
   font-weight: 600;
 }
 .nm-app-shell--with-mobile-dock :is(.harmony-star-num-outer, .nm-radar-value) {
-  font-size: var(--nm-type-chart-number);
+  font-size: var(--nm-type-chart-label);
   font-weight: 700;
 }
 .nm-app-shell--with-mobile-dock .harmony-star-num-inner {
@@ -73,17 +73,14 @@
   font-weight: 700;
 }
 @container (min-width: 28rem) {
-  .nm-app-shell--with-mobile-dock :is(.harmony-star-label, .nm-radar-label) {
-    --nm-type-chart-label: 25px;
-    font-size: 25px;
-  }
-  .nm-app-shell--with-mobile-dock :is(.harmony-star-num-outer, .nm-radar-value) {
-    --nm-type-chart-number: 27px;
-    font-size: 27px;
+  .nm-app-shell--with-mobile-dock :is(.harmony-star-label, .nm-radar-label, .harmony-star-num-outer, .nm-radar-value) {
+    --nm-type-chart-label: 24px;
+    --nm-type-chart-number: var(--nm-type-chart-label);
+    font-size: var(--nm-type-chart-label);
   }
   .nm-app-shell--with-mobile-dock .harmony-star-num-inner {
-    --nm-type-chart-number-inner: 24px;
-    font-size: 24px;
+    --nm-type-chart-number-inner: 21px;
+    font-size: 21px;
   }
 }
 

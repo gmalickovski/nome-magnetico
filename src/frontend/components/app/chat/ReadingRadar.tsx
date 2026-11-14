@@ -23,14 +23,14 @@ export interface ReadingRadarProps {
  * do lado mais próximo do vértice, então nunca cruza linha nem texto.
  */
 const VB_X = -44;
-const VB_Y = 5;
+const VB_Y = 10;
 const VB_W = 888;
 const VB_H = 580;
 const CX = 400;
 const CY = 305;
 const RADIUS = 168;
-const LINE_GAP = 34;
-const LABEL_LINE_HEIGHT = 30;
+const LINE_GAP = 42;
+const LABEL_LINE_HEIGHT = 36;
 
 type Placement = 'top' | 'side' | 'bottom';
 
@@ -211,8 +211,8 @@ export function ReadingRadar({
             valueY = gy;
             labelY = gy + LINE_GAP;
           } else {
-            labelY = gy - (lines.length > 1 ? 30 : 18);
-            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + 34;
+            labelY = gy - (lines.length > 1 ? 38 : 22);
+            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + LINE_GAP;
           }
 
           return (

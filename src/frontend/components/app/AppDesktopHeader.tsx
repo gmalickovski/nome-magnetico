@@ -6,12 +6,14 @@ import { getScoreTierVisual } from '../landing/ProductResultFrame.js';
 export interface AppDesktopHeaderProps {
   nome: string;
   isAdmin?: boolean;
+  logoAlignLeft?: boolean;
   children?: ReactNode;
 }
 
-export function AppDesktopHeader({ nome, isAdmin, children }: AppDesktopHeaderProps) {
+export function AppDesktopHeader({ nome, isAdmin, logoAlignLeft = false, children }: AppDesktopHeaderProps) {
   const snapshot = useDesktopHeaderSnapshot();
   const hasProgress = Boolean(snapshot.progress);
+  const isLogoLeft = Boolean(logoAlignLeft || hasProgress);
 
   const percent = snapshot.progress
     ? Math.min(
@@ -31,11 +33,11 @@ export function AppDesktopHeader({ nome, isAdmin, children }: AppDesktopHeaderPr
   return (
     <header className="app-fixed-header fixed top-0 right-0 left-0 lg:left-20 z-40 hidden h-14 border-b border-[#D4AF37]/15 bg-[#111111]/95 backdrop-blur-md lg:flex lg:items-center px-4 lg:px-5">
       <div className="relative flex w-full h-full items-center justify-between min-w-0">
-        {/* Logotipo do Nome Magnético com transição suave entre centro e esquerda */}
+        {/* Logotipo do Nome Magnético posicionado na esquerda na entrevista ou centralizado nas demais telas */}
         <a
           href="/app"
-          className={`absolute top-1/2 -translate-y-1/2 flex items-center z-20 transition-all duration-500 ease-out hover:opacity-85 ${
-            hasProgress ? 'left-4 md:left-5 translate-x-0' : 'left-1/2 -translate-x-1/2'
+          className={`absolute top-1/2 -translate-y-1/2 flex items-center z-20 transition-opacity duration-200 hover:opacity-85 ${
+            isLogoLeft ? 'left-4 md:left-5 translate-x-0' : 'left-1/2 -translate-x-1/2'
           }`}
           aria-label="Ir para Dashboard"
         >
@@ -46,10 +48,10 @@ export function AppDesktopHeader({ nome, isAdmin, children }: AppDesktopHeaderPr
           />
         </a>
 
-        {/* Espaçador dinâmico à esquerda que reserva espaço para o logo quando deslocado */}
+        {/* Espaçador à esquerda que reserva espaço para o logo quando alinhado à esquerda */}
         <div
-          className="shrink-0 transition-all duration-500 ease-out pointer-events-none"
-          style={{ width: hasProgress ? '185px' : '0px' }}
+          className="shrink-0 pointer-events-none"
+          style={{ width: isLogoLeft ? '185px' : '0px' }}
           aria-hidden="true"
         />
 
