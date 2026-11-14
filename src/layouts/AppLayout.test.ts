@@ -212,7 +212,10 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const triSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'TriangleVisualization.tsx'), 'utf8');
     assert.doesNotMatch(triSrc, /nm-vida-intro-container/);
-    assert.match(triSrc, /w-12 h-12 rounded-full[\s\S]*?Arcano Regente \{arcanoInfo\.numero\} — \{arcanoInfo\.nome\}/);
+    assert.match(triSrc, /Bloqueio = \{bloqueiosFiltrados\.length\}[\s\S]*?Arcanos do \{trianguloTitulo\}/);
+    assert.match(triSrc, /Arcano Regente \{regenteNumero\}/);
+    assert.match(triSrc, /Arcano de Trânsito \{triangulo\.arcanoAtual\.numero\}/);
+    assert.match(triSrc, /Sequência de Passagem \(Cronologia\)/);
   });
 
   it('gráficos da Estrela Cabalística e Mapa de Alinhamento usam fonte mínima legível, legenda próxima e explicam as 5 pontas', () => {
