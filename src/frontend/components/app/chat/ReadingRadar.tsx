@@ -22,15 +22,15 @@ export interface ReadingRadarProps {
  * Rótulo + valor ficam empilhados FORA do pentágono; o valor fica sempre
  * do lado mais próximo do vértice, então nunca cruza linha nem texto.
  */
-const VB_X = 0;
-const VB_Y = 15;
-const VB_W = 800;
-const VB_H = 565;
+const VB_X = -44;
+const VB_Y = 5;
+const VB_W = 888;
+const VB_H = 580;
 const CX = 400;
 const CY = 305;
 const RADIUS = 168;
-const LINE_GAP = 28;
-const LABEL_LINE_HEIGHT = 24;
+const LINE_GAP = 34;
+const LABEL_LINE_HEIGHT = 30;
 
 type Placement = 'top' | 'side' | 'bottom';
 
@@ -109,7 +109,7 @@ export function ReadingRadar({
     <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
         viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
-        className="nm-radar-svg w-full max-w-[480px] h-auto block"
+        className="nm-radar-svg w-full max-w-[520px] h-auto block"
         role="img"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
@@ -211,8 +211,8 @@ export function ReadingRadar({
             valueY = gy;
             labelY = gy + LINE_GAP;
           } else {
-            labelY = gy - (lines.length > 1 ? 26 : 16);
-            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + 28;
+            labelY = gy - (lines.length > 1 ? 30 : 18);
+            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + 34;
           }
 
           return (
