@@ -99,7 +99,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
   it('chat posiciona ChatPdfStickyDesktop no header superior (ChatProgress) sem link de voltar e preserva conversa após PDF', () => {
     const file = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
     const src = readFileSync(file, 'utf8');
-    assert.match(src, /onPdfSuccess:\s*\(\)\s*=>\s*\{[^}]*flushChatSessionToStorage\(\)/);
+    assert.match(src, /onSaveSuccess:\s*\(savedAnalysisId\)\s*=>\s*\{[^}]*flushChatSessionToStorage/);
+    assert.match(src, /onPdfSuccess:\s*\(savedAnalysisId\)\s*=>\s*\{[^}]*flushChatSessionToStorage/);
     assert.doesNotMatch(src, /onPdfSuccess:\s*resetChat/);
     assert.match(src, /trailing=\{[\s\S]*?<ChatPdfStickyDesktop/);
     assert.doesNotMatch(src, /leading=\{[\s\S]*?Minhas análises/);
