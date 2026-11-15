@@ -338,12 +338,14 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
       'utf8',
     );
     assert.match(workspaceSrc, /favorite-analysis-btn/);
-    assert.match(workspaceSrc, /<HarmonySuggestionCard/);
-    assert.match(workspaceSrc, /<ChatSidebarPanelChrome/);
+    assert.match(workspaceSrc, /<ScoreCardRow/);
+    assert.match(workspaceSrc, /<PDFFeedbackButton/);
     assert.match(workspaceSrc, /<ChatSidebarSection/);
     assert.match(workspaceSrc, /<MobileDockActionBridge/);
     assert.match(workspaceSrc, /<MobileReadingBottomSheet/);
     assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
+    assert.doesNotMatch(workspaceSrc, /Painel de análise/);
+    assert.doesNotMatch(workspaceSrc, /Relatório completo/);
   });
 
   it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado e suporta ?modo=nascimento', () => {

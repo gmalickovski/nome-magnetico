@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SavedAnalysisItem } from './types.js';
-import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
-import { ChatSidebarPanelChrome } from '../chat/ChatSidebarPanelChrome.js';
+import { ScoreCardRow } from '../../landing/ScoreCardRow.js';
 import { ChatSidebarSection } from '../chat/ChatSidebarSection.js';
 import {
   MobileReadingBottomSheet,
@@ -88,72 +87,88 @@ function CandidateSummaryBlock({ item }: { item: SavedAnalysisItem }) {
   );
 }
 
-function SelectedAnalysisMetaBar({ item }: { item: SavedAnalysisItem }) {
-  const isComplete = item.status === 'complete';
-
+function AnalysesRightPanelChrome({
+  expanded,
+  onToggleExpand,
+  selectedAnalysis,
+  children,
+}: {
+  expanded: boolean;
+  onToggleExpand: () => void;
+  selectedAnalysis: SavedAnalysisItem | null;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-2xl bg-black/25 border border-white/[0.06] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div className="min-w-0 flex flex-wrap items-center gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.06] text-gray-200 border border-white/10">
-          {item.productName}
-        </span>
-        {item.isV3 && (
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/25">
-            Motor v3
-          </span>
-        )}
-        <span className="text-[11px] text-[#A0A0A0] inline-flex items-center gap-1">
-          <svg
-            className="w-3.5 h-3.5 opacity-75"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.75}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+    <div className="flex flex-col min-h-0 h-full w-full relative">
+      <div className="shrink-0 relative w-full mb-3 sm:mb-4 px-1 min-h-[36px] flex items-center justify-end">
+        <div
+          className={`flex items-center justify-end gap-1.5 w-full ${
+            expanded ? 'max-w-4xl mx-auto px-4 sm:px-6' : 'pr-1 sm:pr-2'
+          }`}
+        >
+          {selectedAnalysis && selectedAnalysis.status === 'complete' && (
+            <PDFFeedbackButton
+              analysisId={selectedAnalysis.id}
+              productType={selectedAnalysis.productType}
+              isFree={selectedAnalysis.isFree}
+              isAnalyst={selectedAnalysis.isAnalystGenerated}
+              showFab={false}
+              showLabel={false}
+              label="Baixar PDF"
+              className="p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70 cursor-pointer"
             />
-          </svg>
-          {item.dateFormatted}
-        </span>
+          )}
+
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70 cursor-pointer"
+            title={expanded ? 'Recolher painel' : 'Expandir painel'}
+            aria-label={expanded ? 'Recolher painel' : 'Expandir painel'}
+          >
+            {expanded ? (
+              <svg
+                className="w-[18px] h-[18px] sm:w-5 sm:h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75" />
+                <path d="M15 9h4.5M15 9V4.5M15 9l5.25-5.25" />
+                <path d="M9 15v4.5M9 15H4.5M9 15l-5.25 5.25" />
+                <path d="M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+              </svg>
+            ) : (
+              <svg
+                className="w-[18px] h-[18px] sm:w-5 sm:h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9" />
+                <path d="M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9" />
+                <path d="M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15" />
+                <path d="M20.25 20.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 shrink-0">
-        {isComplete && (
-          <PDFFeedbackButton
-            analysisId={item.id}
-            productType={item.productType}
-            isFree={item.isFree}
-            isAnalyst={item.isAnalystGenerated}
-            showFab={false}
-            showLabel={true}
-            label="Baixar PDF"
-            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white/[0.07] hover:bg-[#D4AF37]/15 text-[#e5e2e1] hover:text-[#f2ca50] border border-white/10 hover:border-[#D4AF37]/30 text-xs font-semibold px-3.5 py-1.5 transition-all cursor-pointer"
-          />
+      <div className="flex-1 min-h-0 chat-scroll-pane pt-0.5">
+        {expanded ? (
+          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">{children}</div>
+        ) : (
+          children
         )}
-        <a
-          href={`/app/resultado/${item.id}`}
-          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#D4AF37] text-[#131313] hover:bg-[#f2ca50] text-xs font-bold px-3.5 py-1.5 shadow-[0_2px_12px_rgba(212,175,55,0.28)] transition-all"
-        >
-          <span>Relatório completo</span>
-          <svg
-            className="w-3.5 h-3.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M14 5l7 7m0 0l-7 7m7-7H3"
-            />
-          </svg>
-        </a>
       </div>
     </div>
   );
@@ -183,7 +198,6 @@ export default function MyAnalysesWorkspace({
   });
   const [deleteTarget, setDeleteTarget] = useState<SavedAnalysisItem | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [recalcBusyId, setRecalcBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     const sync = () => syncAnaliseCtaLabels();
@@ -254,28 +268,6 @@ export default function MyAnalysesWorkspace({
     [favoriteId, userId],
   );
 
-  const handleRecalcV3 = useCallback(async (e: React.MouseEvent, analysisId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setRecalcBusyId(analysisId);
-    try {
-      const res = await fetch('/api/recalculate-v3', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analysisId }),
-      });
-      const data = await res.json();
-      if (res.ok && data.analysisId) {
-        window.location.href = `/app/resultado/${data.analysisId}`;
-        return;
-      }
-      throw new Error(data.error || 'Erro ao recalcular');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Falha ao recalcular análise.');
-      setRecalcBusyId(null);
-    }
-  }, []);
-
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -343,24 +335,21 @@ export default function MyAnalysesWorkspace({
     if (analysis.status !== 'complete') {
       const isProcessing = analysis.status === 'processing' || analysis.status === 'pending';
       return (
-        <div className="flex flex-col gap-4">
-          <SelectedAnalysisMetaBar item={analysis} />
-          <div className="rounded-2xl bg-[#1C1C1C] border border-white/[0.06] p-6 text-center space-y-3">
-            <h3 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
-              {analysis.nomeExibido}
-            </h3>
-            <p className="text-sm text-[#A0A0A0]">
-              {isProcessing
-                ? 'Esta análise ainda está sendo processada.'
-                : analysis.errorMessage || 'Esta análise encontrou um erro durante o processamento.'}
-            </p>
-            <a
-              href={`/app/resultado/${analysis.id}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] text-[#131313] font-bold text-xs px-5 py-2.5 hover:bg-[#f2ca50] transition-all"
-            >
-              {isProcessing ? 'Acompanhar processamento' : 'Ver detalhes do erro'}
-            </a>
-          </div>
+        <div className="rounded-2xl bg-[#1C1C1C] border border-white/[0.06] p-6 text-center space-y-3">
+          <h3 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
+            {analysis.nomeExibido}
+          </h3>
+          <p className="text-sm text-[#A0A0A0]">
+            {isProcessing
+              ? 'Esta análise ainda está sendo processada.'
+              : analysis.errorMessage || 'Esta análise encontrou um erro durante o processamento.'}
+          </p>
+          <a
+            href={`/app/resultado/${analysis.id}`}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] text-[#131313] font-bold text-xs px-5 py-2.5 hover:bg-[#f2ca50] transition-all"
+          >
+            {isProcessing ? 'Acompanhar processamento' : 'Ver detalhes do erro'}
+          </a>
         </div>
       );
     }
@@ -368,7 +357,6 @@ export default function MyAnalysesWorkspace({
     const p = analysis.panelData;
     return (
       <div className="flex flex-col gap-4">
-        <SelectedAnalysisMetaBar item={analysis} />
         <ChatSidebarSection
           birthPanel={p.birthPanel}
           harmonizedPanel={p.harmonizedPanel}
@@ -535,7 +523,6 @@ export default function MyAnalysesWorkspace({
                 {filteredItems.map((item) => {
                   const isSelected = selectedAnalysis?.id === item.id;
                   const isFav = Boolean(favoriteId && favoriteId === item.id);
-                  const isRecalcBusy = recalcBusyId === item.id;
 
                   return (
                     <div
@@ -558,36 +545,11 @@ export default function MyAnalysesWorkspace({
                           : 'border-[#D4AF37]/20 hover:border-[#D4AF37]/50 hover:bg-[#1C1C1C]/90'
                       }`}
                     >
-                      {/* Cabeçalho do card: tags + ações rápidas */}
+                      {/* Cabeçalho do card: apenas data + favoritar/excluir */}
                       <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 pt-3.5 pb-1">
-                        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.06] text-gray-300 border border-white/10 whitespace-nowrap">
-                            {item.productName}
-                          </span>
-                          {item.isV3 && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/25 whitespace-nowrap">
-                              Motor v3
-                            </span>
-                          )}
-                          <span className="text-[10px] text-[#A0A0A0] px-2 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
-                            {item.dateFormatted}
-                          </span>
-                          {item.isAnalystGenerated && (
-                            <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#bea5ff]/10 text-[#bea5ff] border border-[#bea5ff]/20 whitespace-nowrap">
-                              Analista
-                            </span>
-                          )}
-                          {item.recalculatedFromVersion && (
-                            <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 whitespace-nowrap">
-                              Versão Atualizada
-                            </span>
-                          )}
-                          {item.parentAnalysisId && (
-                            <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 text-[#A0A0A0] border border-white/10 whitespace-nowrap">
-                              v3 derivada
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-[10px] text-[#A0A0A0] px-2.5 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
+                          {item.dateFormatted}
+                        </span>
 
                         <div
                           className="flex items-center gap-1.5 shrink-0"
@@ -664,16 +626,13 @@ export default function MyAnalysesWorkspace({
                         </div>
                       </div>
 
-                      {/* Corpo no modelo exato do card de sugestões */}
+                      {/* Corpo enxuto: apenas nome, score e barra */}
                       {item.status === 'complete' && item.cardData ? (
-                        <HarmonySuggestionCard
-                          c={item.cardData}
-                          stagger={true}
-                          delayIndex={0}
-                          className="!shadow-none !bg-transparent !border-0 !pt-1.5 !pb-2"
-                        />
+                        <div className="px-4 sm:px-5 pb-4 pt-1.5">
+                          <ScoreCardRow nome={item.cardData.nome} score={item.cardData.score} />
+                        </div>
                       ) : (
-                        <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
+                        <div className="px-4 sm:px-5 pb-4 pt-2 flex items-center justify-between gap-3">
                           <h4 className="font-cinzel text-base sm:text-lg font-bold text-[#e5e2e1] truncate">
                             {item.nomeExibido}
                           </h4>
@@ -688,68 +647,6 @@ export default function MyAnalysesWorkspace({
                           </span>
                         </div>
                       )}
-
-                      {/* Rodapé do card: indicador de seleção + ações secundárias */}
-                      <div
-                        className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 pb-3 pt-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleSelectAnalysis(item)}
-                          className={`text-[11px] font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'text-[#D4AF37]'
-                              : 'text-[#A0A0A0] hover:text-[#e5e2e1]'
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              isSelected ? 'bg-[#D4AF37]' : 'bg-white/25'
-                            }`}
-                          />
-                          <span className="md:hidden">
-                            {isSelected ? 'Toque para abrir leitura' : 'Abrir painel de leitura'}
-                          </span>
-                          <span className="hidden md:inline">
-                            {isSelected ? 'Exibindo no painel' : 'Ver no painel'}
-                          </span>
-                        </button>
-
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {!item.isV3 && item.status === 'complete' && (
-                            <button
-                              type="button"
-                              disabled={isRecalcBusy}
-                              onClick={(e) => void handleRecalcV3(e, item.id)}
-                              className="text-[11px] px-2.5 py-1 rounded-full font-bold bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#131313] border border-[#D4AF37]/35 whitespace-nowrap uppercase tracking-wider transition-all cursor-pointer disabled:opacity-60"
-                              title="Gerar nova versão com motor v3 (grátis)"
-                            >
-                              {isRecalcBusy ? 'Recalculando...' : '✦ Recalcular v3'}
-                            </button>
-                          )}
-
-                          {item.status === 'complete' && (
-                            <PDFFeedbackButton
-                              analysisId={item.id}
-                              productType={item.productType}
-                              isFree={item.isFree}
-                              isAnalyst={item.isAnalystGenerated}
-                              showFab={false}
-                              showLabel={true}
-                              label="PDF"
-                              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-white/[0.06] text-gray-200 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50] border border-white/10 hover:border-[#D4AF37]/30 transition-colors cursor-pointer"
-                            />
-                          )}
-
-                          <a
-                            href={`/app/resultado/${item.id}`}
-                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-white/[0.06] text-gray-200 hover:bg-[#D4AF37]/15 hover:text-[#f2ca50] border border-white/10 hover:border-[#D4AF37]/30 transition-colors"
-                          >
-                            Relatório
-                          </a>
-                        </div>
-                      </div>
                     </div>
                   );
                 })}
@@ -758,15 +655,15 @@ export default function MyAnalysesWorkspace({
           </div>
         </section>
 
-        {/* Coluna Direita (Desktop/Tablet md+): Painel atualizado dinamicamente + botão expandir igual à análise */}
+        {/* Coluna Direita (Desktop/Tablet md+): sem título, com ícone baixar PDF + expandir */}
         <aside className="hidden md:flex flex-col min-h-0 min-w-0 py-2 md:py-3 lg:py-4 w-full">
-          <ChatSidebarPanelChrome
+          <AnalysesRightPanelChrome
             expanded={panelExpanded}
-            hasSelection={Boolean(selectedAnalysis)}
             onToggleExpand={() => setPanelExpanded((v) => !v)}
+            selectedAnalysis={selectedAnalysis}
           >
             {renderRightPanelBody(selectedAnalysis)}
-          </ChatSidebarPanelChrome>
+          </AnalysesRightPanelChrome>
         </aside>
       </div>
 
