@@ -4,7 +4,6 @@ import TriangleVisualization from '../TriangleVisualization';
 import KarmicDebts from '../KarmicDebts';
 import KarmicLessons from '../KarmicLessons';
 import HiddenTendencies from '../HiddenTendencies';
-import BlockAnalysisCard from '../BlockAnalysisCard';
 import ReadingTopicCard from './ReadingTopicCard.js';
 
 function buildTrianguloDesc(nomeExibido: string): Record<string, string> {
@@ -77,27 +76,6 @@ export function ChatReadingSummaryPanel({
           productType="nome_social"
         />
       </ReadingTopicCard>
-
-      {bloqueios.length > 0 && (
-        <ReadingTopicCard
-          eyebrow="O raio-x vibracional"
-          title="Bloqueios energéticos"
-          count={bloqueios.length}
-        >
-          <p className="nm-card-text">
-            Bloqueios energéticos são sequências de três ou mais números repetidos nas linhas dos triângulos numerológicos. Eles formam pontos de atrito silenciosos que tendem a travar o fluxo natural dessa área da vida até que o nome seja harmonizado.
-          </p>
-          <div className="space-y-3">
-            {bloqueios.map((bloqueio, i) => (
-              <BlockAnalysisCard
-                key={bloqueio.codigo}
-                bloqueio={bloqueio}
-                defaultOpen={i === 0}
-              />
-            ))}
-          </div>
-        </ReadingTopicCard>
-      )}
 
       {debitosCarmicos.length > 0 && (
         <ReadingTopicCard

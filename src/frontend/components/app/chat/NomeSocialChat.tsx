@@ -441,13 +441,19 @@ export function NomeSocialChat({
     !sessionClearedRef.current &&
     (birthConfirmed || Object.keys(answers).length > 0 || messages.length > 1 || stepIndex > 0);
 
-  const flushChatSessionToStorage = () => {
+  const flushChatSessionToStorage = (overrides?: Partial<ChatSessionSnapshotFields>) => {
     if (!userId || !persistReady.current) return;
     if (!hasChatProgress) {
       clearChatSession(userId);
       return;
     }
-    saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
+    saveChatSession(
+      userId,
+      buildPersistedChatSession({
+        ...buildCurrentSessionSnapshot(),
+        ...overrides,
+      })
+    );
   };
 
   useEffect(() => {
@@ -1766,9 +1772,13 @@ export function NomeSocialChat({
     suggestionRank: suggestionRank || 1,
     analysisId,
     ensureAnalysisId: paidAccessActive ? ensurePaidAnalysisIdForPdf : undefined,
-    onPdfSuccess: () => {
+    onSaveSuccess: (savedAnalysisId) => {
       sessionClearedRef.current = false;
-      flushChatSessionToStorage();
+      flushChatSessionToStorage({ analysisId: savedAnalysisId });
+    },
+    onPdfSuccess: (savedAnalysisId) => {
+      sessionClearedRef.current = false;
+      flushChatSessionToStorage(savedAnalysisId ? { analysisId: savedAnalysisId } : undefined);
     },
     isFree: !paidAccessActive,
     emailConfirmed,

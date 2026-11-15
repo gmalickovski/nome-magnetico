@@ -187,7 +187,7 @@ export function ChatHarmonyStarPanel({
 
           return (
             <div key={item.key} className="space-y-1 text-left">
-              <p className="font-inter font-semibold text-[#e5e2e1] text-sm leading-snug">
+              <p className="nm-reading-item-title font-inter font-semibold text-[#f2ca50] text-base leading-snug">
                 {item.label}{' '}
                 <span className="font-bold" style={{ color: activeVisual.text }}>
                   = {activeVal}

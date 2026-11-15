@@ -15,6 +15,10 @@ import {
   ChatPdfPreparingOverlay,
   type ChatPdfOverlayPhase,
 } from './ChatPdfPreparingOverlay.js';
+import {
+  ChatPdfConcludeModal,
+  type ConcludeBusyAction,
+} from './ChatPdfConcludeModal.js';
 
 export type ChatPdfPhase = 'idle' | 'loading' | 'ready' | 'error' | 'email_gate';
 
@@ -33,6 +37,7 @@ export interface ChatPdfCtaModel {
 }
 
 const PDF_STATUS_POLL_DELAYS_MS = [1500, 2500, 4000, 5000] as const;
+const SAVE_STATUS_POLL_DELAYS_MS = [400, 800, 1500, 2500, 4000, 5000] as const;
 
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -109,8 +114,12 @@ export function useChatPdfCta(input: {
   analysisId?: string;
   /** Cria/persiste análise paga quando o chat ainda não tem analysisId. */
   ensureAnalysisId?: (signal: AbortSignal) => Promise<string | undefined>;
+  /** Callback acionado após salvar a análise em "Salvar". */
+  onSaveSuccess?: (analysisId: string) => void;
+  /** Navegação customizada para /app/analises após salvar (opcional para testes). */
+  onNavigateToAnalyses?: (analysisId: string) => void;
   /** Callback acionado após a geração e download bem-sucedidos da análise/PDF. */
-  onPdfSuccess?: () => void;
+  onPdfSuccess?: (analysisId?: string) => void;
   isFree: boolean;
   emailConfirmed: boolean;
   screen: string;
@@ -126,6 +135,9 @@ export function useChatPdfCta(input: {
 } {
   const [phase, setPhase] = useState<ChatPdfPhase>('idle');
   const [overlayPhase, setOverlayPhase] = useState<ChatPdfOverlayPhase>('idle');
+  const [concludeModalOpen, setConcludeModalOpen] = useState(false);
+  const [concludeBusyAction, setConcludeBusyAction] = useState<ConcludeBusyAction>(null);
+  const [concludeError, setConcludeError] = useState<string | null>(null);
   const [priceLabel, setPriceLabel] = useState('');
   const [resending, setResending] = useState(false);
   const shownRef = useRef(false);
@@ -155,12 +167,17 @@ export function useChatPdfCta(input: {
     if (!visible) {
       shownRef.current = false;
       setPhase('idle');
+      setConcludeModalOpen(false);
+      setConcludeError(null);
       return;
     }
     if (!input.emailConfirmed) {
       setPhase('email_gate');
+      setConcludeModalOpen(false);
     } else if (nameChanged) {
       setPhase('idle');
+      setConcludeModalOpen(false);
+      setConcludeError(null);
     } else {
       setPhase((p) => (p === 'loading' || p === 'ready' || p === 'error' ? p : 'idle'));
     }
@@ -205,6 +222,8 @@ export function useChatPdfCta(input: {
     pdfAbortRef.current = controller;
     const { signal } = controller;
 
+    setConcludeError(null);
+    setConcludeBusyAction('pdf');
     setPhase('loading');
     setOverlayPhase('preparing');
     const started = performance.now();
@@ -251,7 +270,7 @@ export function useChatPdfCta(input: {
         suggestion_rank: input.suggestionRank,
         ...(opts?.auto ? { auto: true } : {}),
       });
-      input.onPdfSuccess?.();
+      input.onPdfSuccess?.(analysisId);
       return true;
     } catch (err) {
       if (signal.aborted) {
@@ -267,17 +286,105 @@ export function useChatPdfCta(input: {
       return false;
     } finally {
       pdfRunLockRef.current = false;
+      setConcludeBusyAction(null);
     }
   }, [input.analysisId, input.ensureAnalysisId, input.onPdfSuccess, input.suggestionRank, addToast]);
+
+  const runSaveOnly = useCallback(async (): Promise<boolean> => {
+    if (pdfRunLockRef.current) return false;
+    pdfRunLockRef.current = true;
+    pdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    pdfAbortRef.current = controller;
+    const { signal } = controller;
+
+    setConcludeError(null);
+    setConcludeBusyAction('save');
+    setPhase('loading');
+    let navigated = false;
+
+    try {
+      let analysisId = input.analysisId;
+      if (!analysisId && input.ensureAnalysisId) {
+        analysisId = await input.ensureAnalysisId(signal);
+      }
+      if (signal.aborted) return false;
+      if (!analysisId) {
+        setPhase('error');
+        setConcludeError('Não foi possível salvar a análise agora. Tente novamente.');
+        return false;
+      }
+      const ready = await waitAnalysisCompleteForPdf(
+        analysisId,
+        signal,
+        SAVE_STATUS_POLL_DELAYS_MS
+      );
+      if (signal.aborted) return false;
+      if (!ready) {
+        setPhase('error');
+        setConcludeError('A análise ainda está sendo finalizada. Tente novamente em instantes.');
+        return false;
+      }
+      capturePostHogEvent('nm_analysis_saved', {
+        screen: input.screen,
+        suggestion_rank: input.suggestionRank,
+      });
+      input.onSaveSuccess?.(analysisId);
+      navigated = true;
+      if (input.onNavigateToAnalyses) {
+        input.onNavigateToAnalyses(analysisId);
+      } else if (typeof window !== 'undefined') {
+        window.location.href = '/app/analises';
+      }
+      return true;
+    } catch (err) {
+      if (signal.aborted) {
+        setPhase('idle');
+        return false;
+      }
+      setPhase('error');
+      setConcludeError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Não foi possível salvar a análise agora. Tente novamente.'
+      );
+      return false;
+    } finally {
+      if (!navigated) {
+        pdfRunLockRef.current = false;
+        setConcludeBusyAction(null);
+      }
+    }
+  }, [
+    input.analysisId,
+    input.ensureAnalysisId,
+    input.onSaveSuccess,
+    input.onNavigateToAnalyses,
+    input.screen,
+    input.suggestionRank,
+  ]);
 
   const triggerAutoPdf = useCallback(async (): Promise<boolean> => {
     if (input.isFree || !input.emailConfirmed) return false;
     return runPaidPdf({ auto: true });
   }, [input.isFree, input.emailConfirmed, runPaidPdf]);
 
+  const openConcludeModal = useCallback(() => {
+    if (pdfRunLockRef.current || concludeBusyAction !== null || phase === 'loading') return;
+    setConcludeError(null);
+    setConcludeModalOpen(true);
+  }, [concludeBusyAction, phase]);
+
+  const closeConcludeModal = useCallback(() => {
+    if (pdfRunLockRef.current || concludeBusyAction !== null) return;
+    setConcludeError(null);
+    setConcludeModalOpen(false);
+  }, [concludeBusyAction]);
+
   const onStickyClick = useCallback(() => {
     if (!visible) return;
     if (phase === 'email_gate' || !input.emailConfirmed) return;
+    if (pdfRunLockRef.current || concludeBusyAction !== null || phase === 'loading') return;
 
     if (input.isFree) {
       trackClick('sticky');
@@ -294,22 +401,24 @@ export function useChatPdfCta(input: {
     }
 
     trackClick('sticky');
-    void runPaidPdf();
+    openConcludeModal();
   }, [
     visible,
     phase,
+    concludeBusyAction,
     input.emailConfirmed,
     input.isFree,
     input.suggestionRank,
     input.analysisId,
     displayName,
     trackClick,
-    runPaidPdf,
+    openConcludeModal,
   ]);
 
   const onDockClick = useCallback(() => {
     if (!visible) return;
     if (phase === 'email_gate' || !input.emailConfirmed) return;
+    if (pdfRunLockRef.current || concludeBusyAction !== null || phase === 'loading') return;
 
     if (input.isFree) {
       trackClick('dock');
@@ -326,17 +435,18 @@ export function useChatPdfCta(input: {
     }
 
     trackClick('dock');
-    void runPaidPdf();
+    openConcludeModal();
   }, [
     visible,
     phase,
+    concludeBusyAction,
     input.emailConfirmed,
     input.isFree,
     input.suggestionRank,
     input.analysisId,
     displayName,
     trackClick,
-    runPaidPdf,
+    openConcludeModal,
   ]);
 
   const resendEmail = useCallback(async () => {
@@ -372,17 +482,34 @@ export function useChatPdfCta(input: {
   };
 
   const pdfOverlayUi = (
-    <ChatPdfPreparingOverlay
-      phase={overlayPhase}
-      onRetry={() => {
-        setOverlayPhase('idle');
-        void runPaidPdf();
-      }}
-      onDismissError={() => {
-        setOverlayPhase('idle');
-        setPhase((p) => (p === 'error' ? 'idle' : p));
-      }}
-    />
+    <>
+      <ChatPdfConcludeModal
+        open={concludeModalOpen}
+        displayName={displayName}
+        busyAction={concludeBusyAction}
+        errorMessage={concludeError}
+        onClose={closeConcludeModal}
+        onSaveOnly={() => {
+          void runSaveOnly();
+        }}
+        onSaveAndDownloadPdf={() => {
+          setConcludeError(null);
+          setConcludeModalOpen(false);
+          void runPaidPdf();
+        }}
+      />
+      <ChatPdfPreparingOverlay
+        phase={overlayPhase}
+        onRetry={() => {
+          setOverlayPhase('idle');
+          void runPaidPdf();
+        }}
+        onDismissError={() => {
+          setOverlayPhase('idle');
+          setPhase((p) => (p === 'error' ? 'idle' : p));
+        }}
+      />
+    </>
   );
 
   return {

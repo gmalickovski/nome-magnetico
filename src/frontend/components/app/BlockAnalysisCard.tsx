@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GlossaryLinkedText } from '../glossary/GlossaryLinkedText';
 
 interface Bloqueio {
   codigo: string;
@@ -35,7 +36,7 @@ export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: Blo
       </div>
 
       <div className="px-5 py-5 space-y-4">
-          <p className="nm-card-text">{bloqueio.descricao}</p>
+          <p className="nm-card-text"><GlossaryLinkedText text={bloqueio.descricao} /></p>
 
           {bloqueio.triangulos && bloqueio.triangulos.length > 0 && (
             <div className="space-y-1.5">

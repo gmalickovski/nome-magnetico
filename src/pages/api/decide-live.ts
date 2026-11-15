@@ -33,6 +33,7 @@ export interface ResultPanelData {
   trianguloVidaLinhas?: number[][];
   bloqueiosCount: number;
   bloqueiosCodigos: string[];
+  vidaBloqueiosCodigos?: string[];
   compatibilidade: 'favoravel' | 'neutro' | 'desfavoravel';
   temBloqueiosVida: boolean;
   seloMetodo?: string;
@@ -131,6 +132,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
     trianguloVidaLinhas: core.trianguloVidaLinhas,
     bloqueiosCount: core.bloqueiosCount,
     bloqueiosCodigos: core.bloqueiosCodigos,
+    vidaBloqueiosCodigos: core.vidaBloqueiosCodigos,
     compatibilidade: core.compatibilidade,
     temBloqueiosVida: sequenciasVida.length > 0,
   };

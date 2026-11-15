@@ -99,7 +99,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
   it('chat posiciona ChatPdfStickyDesktop no header superior (ChatProgress) sem link de voltar e preserva conversa após PDF', () => {
     const file = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
     const src = readFileSync(file, 'utf8');
-    assert.match(src, /onPdfSuccess:\s*\(\)\s*=>\s*\{[^}]*flushChatSessionToStorage\(\)/);
+    assert.match(src, /onSaveSuccess:\s*\(savedAnalysisId\)\s*=>\s*\{[^}]*flushChatSessionToStorage/);
+    assert.match(src, /onPdfSuccess:\s*\(savedAnalysisId\)\s*=>\s*\{[^}]*flushChatSessionToStorage/);
     assert.doesNotMatch(src, /onPdfSuccess:\s*resetChat/);
     assert.match(src, /trailing=\{[\s\S]*?<ChatPdfStickyDesktop/);
     assert.doesNotMatch(src, /leading=\{[\s\S]*?Minhas análises/);
@@ -136,8 +137,9 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
   it('botões Nova Análise, Começar Agora e painel /app levam ao chat /app/analise/nome-social (mobile e desktop)', () => {
     const analisesFile = path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro');
-    const analisesSrc = readFileSync(analisesFile, 'utf8');
-    const anchors = analisesSrc.match(/<a\b[\s\S]*?<\/a>/g) ?? [];
+    const workspaceFile = path.join(srcRoot, 'frontend', 'components', 'app', 'analises', 'MyAnalysesWorkspace.tsx');
+    const analisesCombined = readFileSync(analisesFile, 'utf8') + '\n' + readFileSync(workspaceFile, 'utf8');
+    const anchors = analisesCombined.match(/<a\b[\s\S]*?<\/a>/g) ?? [];
     const novaAnaliseAnchors = anchors.filter((a) => a.includes('+ Nova Análise'));
     const comecarAnchors = anchors.filter((a) => a.includes('Começar Agora'));
 
@@ -162,6 +164,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const appIndexFile = path.join(srcRoot, 'pages', 'app', 'index.astro');
     const appIndexSrc = readFileSync(appIndexFile, 'utf8');
     assert.match(appIndexSrc, /slot="header-actions"[\s\S]{0,120}href="\/app\/analise\/nome-social"/);
+    assert.doesNotMatch(appIndexSrc, /admin-analise|Área do Analista/);
   });
 
   it('chat não adiciona bolha de resumo ao selecionar opção e container de nomes usa largura total', () => {
@@ -192,11 +195,13 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(topicSrc, /=\s*\{count\}/);
 
     const summarySrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatReadingSummaryPanel.tsx'), 'utf8');
-    assert.match(summarySrc, /title="Bloqueios energéticos"[\s\S]*?count=\{bloqueios\.length\}/);
+    assert.doesNotMatch(summarySrc, /title="Bloqueios energéticos"/);
+    assert.doesNotMatch(summarySrc, /O raio-x vibracional/);
+    assert.doesNotMatch(summarySrc, /BlockAnalysisCard/);
+    assert.match(summarySrc, /<TriangleVisualization[\s\S]*?onlyVida/);
     assert.match(summarySrc, /title="Débitos kármicos"[\s\S]*?count=\{debitosCarmicos\.length\}/);
     assert.match(summarySrc, /title="Lições kármicas"[\s\S]*?count=\{licoesCarmicas\.length\}/);
     assert.match(summarySrc, /title="Tendências ocultas"[\s\S]*?count=\{tendenciasOcultas\.length\}/);
-    assert.match(summarySrc, /Bloqueios energéticos são sequências de três ou mais números repetidos/);
 
     const debtsSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'KarmicDebts.tsx'), 'utf8');
     assert.doesNotMatch(debtsSrc, /nm-floating-tile/);
@@ -212,6 +217,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const triSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'TriangleVisualization.tsx'), 'utf8');
     assert.doesNotMatch(triSrc, /nm-vida-intro-container/);
+    assert.doesNotMatch(triSrc, /setExpandido/);
     assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Bloqueios <span className="text-\[#f2ca50\]">= \{bloqueiosFiltrados\.length\}<\/span>\s*<\/h3>/);
     assert.match(triSrc, /border-red-500\/30 bg-red-500\/10[\s\S]*?✓ Não possui bloqueios neste triângulo/);
     assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Arcanos\s*<\/h3>/);
@@ -227,6 +233,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(typographySrc, /--nm-type-chart-number:\s*var\(--nm-type-chart-label\)/);
     assert.match(typographySrc, /--nm-type-chart-label:\s*24px/);
     assert.match(typographySrc, /\.nm-score-eyebrow/);
+    assert.match(typographySrc, /\.nm-reading-item-title\s*\{\s*font-size:\s*var\(--nm-type-h4\)/);
     assert.match(typographySrc, /@container \(min-width:\s*28rem\)/);
 
     const frameSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'landing', 'ProductResultFrame.tsx'), 'utf8');
@@ -240,10 +247,12 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const starPanelSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyStarPanel.tsx'), 'utf8');
     assert.match(starPanelSrc, /STAR_DIMENSION_NUMBER_MEANINGS/);
+    assert.match(starPanelSrc, /nm-reading-item-title[\s\S]*?text-\[#f2ca50\]/);
     assert.match(starPanelSrc, /activeVisual\.text/);
 
     const sidebarSectionSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarSection.tsx'), 'utf8');
     assert.match(sidebarSectionSrc, /RADAR_AXES_EXPLANATIONS/);
+    assert.match(sidebarSectionSrc, /nm-reading-item-title[\s\S]*?text-\[#f2ca50\]/);
     assert.match(sidebarSectionSrc, /activeVisual\.text/);
   });
 
@@ -268,5 +277,118 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.ok(closeBtnMatch, 'botão de fechar mobile deve existir');
     assert.doesNotMatch(closeBtnMatch[0], /rounded-full border/);
     assert.match(closeBtnMatch[0], /bg-transparent text-\[#e5e2e1\]\/80 hover:text-\[#f2ca50\]/);
+  });
+
+  it('Hero do /app exibe círculo grande à direita, pílulas sem Mapa Cabalístico, setas sutis, carrossel cronológico, teia dinâmica ampliada e checklist 6 passos', () => {
+    const dashboardSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'dashboard', 'AppDashboard.tsx'),
+      'utf8',
+    );
+    assert.doesNotMatch(dashboardSrc, /Alternar nome exibido no score/);
+    assert.doesNotMatch(dashboardSrc, /Mapa Cabalístico/);
+    assert.doesNotMatch(dashboardSrc, /Treine o traçado/);
+    assert.doesNotMatch(dashboardSrc, /recommendedReading/);
+    assert.doesNotMatch(dashboardSrc, /Explorar no glossário/);
+    assert.doesNotMatch(dashboardSrc, /bg-\[#131313\]\/60/);
+    assert.doesNotMatch(dashboardSrc, /bg-\[#131313\]\/80/);
+    assert.match(dashboardSrc, /lg:grid-cols-\[minmax\(0,1fr\)_300px\]/);
+    assert.match(dashboardSrc, /lg:order-1[\s\S]*lg:order-2/);
+    assert.match(dashboardSrc, /lg:h-\[280px\] lg:w-\[280px\]/);
+    assert.match(dashboardSrc, /activeVisual\.badgeClass/);
+    assert.match(dashboardSrc, /Harmônica \/ Favorável/);
+    assert.match(dashboardSrc, /As 5 pontas da estrela/);
+    assert.match(dashboardSrc, /text-xs sm:text-sm font-medium tracking-wide/);
+    assert.match(dashboardSrc, /canGoPrev/);
+    assert.match(dashboardSrc, /canGoNext/);
+    assert.match(dashboardSrc, /bg-transparent/);
+    assert.match(dashboardSrc, /Jornada de Ativação/);
+    assert.match(dashboardSrc, /Grau de Vibração/);
+    assert.match(dashboardSrc, /role="progressbar"/);
+    assert.match(dashboardSrc, /showChecklistCard/);
+    assert.match(dashboardSrc, /variant="dashboard"/);
+    assert.match(dashboardSrc, /showNumericLabels=\{Boolean\(activeHarmonizedAxes\)\}/);
+    assert.match(dashboardSrc, /<h2 className="mb-2 font-cinzel text-lg font-bold text-\[#e5e2e1\]">\s*Mapa de Alinhamento Vibracional/);
+    assert.match(dashboardSrc, /borderColor: `\$\{activeVisual\.stroke\}59`/);
+    assert.match(dashboardSrc, /nm-reading-card flex flex-col justify-between rounded-2xl bg-\[#1C1C1C\]/);
+    assert.match(dashboardSrc, /if \(offerDismissed \|\| props\.isAdmin\) return false;/);
+    assert.match(dashboardSrc, /text-\[#f2ca50\] break-words sm:truncate sm:text-lg/);
+    assert.match(dashboardSrc, /item\.key === 'destino' \? 'col-span-2 sm:col-span-1'/);
+    assert.match(dashboardSrc, /Mapa de Alinhamento Vibracional[\s\S]*Jornada de Ativação/);
+    assert.match(dashboardSrc, /Abrir Painel/);
+    assert.match(dashboardSrc, /rowVisual\.barGradient/);
+    assert.match(dashboardSrc, /label="Baixar PDF"/);
+    assert.match(dashboardSrc, /Ver Painel de Análise/);
+    assert.match(dashboardSrc, /Análise anterior/);
+    assert.match(dashboardSrc, /Próxima análise/);
+    assert.match(dashboardSrc, /Favoritar esta análise como principal do dashboard/);
+
+    const appIndexSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'index.astro'), 'utf8');
+    assert.doesNotMatch(appIndexSrc, /Mapa Cabalístico/);
+    assert.match(appIndexSrc, /\[birthSlide, \.\.\.paidSlides\]/);
+
+    const checklistApiSrc = readFileSync(path.join(srcRoot, 'pages', 'api', 'analyses', 'checklist.ts'), 'utf8');
+    assert.match(checklistApiSrc, /checklist_by_slide/);
+    assert.match(checklistApiSrc, /ChecklistBodySchema\.safeParse/);
+
+    const analisesSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro'), 'utf8');
+    assert.match(analisesSrc, /<MyAnalysesWorkspace/);
+    assert.match(analisesSrc, /class="nm-chat-shell"/);
+
+    const savedViewSrc = readFileSync(
+      path.join(srcRoot, 'backend', 'numerology', 'saved-analyses-view.ts'),
+      'utf8',
+    );
+    assert.match(savedViewSrc, /buildSynthesizedBirthAnalysisItem/);
+    assert.match(savedViewSrc, /vidaBloqueiosCodigos/);
+
+    const workspaceSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'analises', 'MyAnalysesWorkspace.tsx'),
+      'utf8',
+    );
+    assert.match(workspaceSrc, /favorite-analysis-btn/);
+    assert.match(workspaceSrc, /<ScoreCardRow/);
+    assert.match(workspaceSrc, /<LifeTriangleBlockBadge/);
+    assert.match(workspaceSrc, /<PDFFeedbackButton/);
+    assert.match(workspaceSrc, /<ChatSidebarSection/);
+    assert.match(workspaceSrc, /<MobileDockActionBridge/);
+    assert.match(workspaceSrc, /<MobileReadingBottomSheet/);
+    assert.match(workspaceSrc, /Painel de análise/);
+    assert.doesNotMatch(workspaceSrc, /data-nm-selection-dot/);
+    assert.doesNotMatch(workspaceSrc, /mais recente primeiro/);
+    assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
+    assert.doesNotMatch(workspaceSrc, /Relatório completo/);
+
+    const harmonyScoreSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyScoreCard.tsx'),
+      'utf8',
+    );
+    const idxHarm = harmonyScoreSrc.indexOf('Nome harmonizado (Potencial)');
+    const idxBirth = harmonyScoreSrc.indexOf('Nome de nascimento (Nota Hoje)');
+    assert.ok(idxHarm !== -1 && idxBirth !== -1 && idxHarm < idxBirth);
+    assert.match(harmonyScoreSrc, /emphasize/);
+
+    const mobileSheetSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'MobileReadingBottomSheet.tsx'),
+      'utf8',
+    );
+    assert.match(mobileSheetSrc, /Painel de análise/);
+    assert.doesNotMatch(mobileSheetSrc, /Leitura deste nome/);
+
+    const pickerSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),
+      'utf8',
+    );
+    assert.match(pickerSrc, /showBlockBadgeInTags/);
+  });
+
+  it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado e suporta ?modo=nascimento', () => {
+    const resultadoSrc = readFileSync(
+      path.join(srcRoot, 'pages', 'app', 'resultado', '[id].astro'),
+      'utf8',
+    );
+    assert.doesNotMatch(resultadoSrc, /NomeAtualResultado/);
+    assert.match(resultadoSrc, /modo'\)\s*===\s*'nascimento'/);
+    assert.match(resultadoSrc, /const isSocialSummaryView = isNomeSocial \|\| isAnaliseGratuita \|\| isFree;/);
+    assert.match(resultadoSrc, /<ChatSidebarSection/);
   });
 });

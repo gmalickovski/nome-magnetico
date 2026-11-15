@@ -98,6 +98,7 @@ export function SuggestionPicker({
                   c={card}
                   stagger={stagger}
                   delayIndex={index}
+                  showBlockBadgeInTags
                   className={`!shadow-none !bg-transparent !border-0 ${
                     isCurrentSelected ? '[&_.nm-h3]:text-[#D4AF37]' : ''
                   }`}

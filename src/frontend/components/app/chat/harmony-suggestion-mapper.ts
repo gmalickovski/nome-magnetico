@@ -12,6 +12,17 @@ export function mapCandidateToHarmonySuggestion(
   c: CandidateSuggestion,
 ): HarmonySuggestionCardData {
   const p = c.panel;
+  const vidaCodigos = Array.isArray(p.vidaBloqueiosCodigos)
+    ? p.vidaBloqueiosCodigos
+    : (p.bloqueios ?? []).some((b) => Array.isArray(b.triangulos))
+      ? (p.bloqueios ?? [])
+          .filter((b) => Array.isArray(b.triangulos) && b.triangulos.includes('vida'))
+          .map((b) => b.codigo)
+          .filter(Boolean)
+      : c.bloqueiosRestantes === 0
+        ? []
+        : undefined;
+
   return {
     nome: c.nome,
     score: c.score,
@@ -22,5 +33,6 @@ export function mapCandidateToHarmonySuggestion(
     impressao: p.impressao,
     missao: p.missao,
     bloqueios: c.bloqueiosRestantes,
+    vidaBloqueiosCodigos: vidaCodigos,
   };
 }

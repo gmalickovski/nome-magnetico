@@ -33,12 +33,13 @@ describe('buildChatPdfAnalyzePayload', () => {
       birthName: 'Maria Silva',
       birthDate: '01/01/1990',
       selectedSocialName: 'Guilherme Málickovski',
-      collect: INITIAL_COLLECT_STATE,
+      collect: { ...INITIAL_COLLECT_STATE, areaFoco: 'carreira_negocios' },
       suggestions: [sug, { ...sug, id: '2', nome: 'Gui Málickovski' }],
     });
     assert.equal(body.product_type, 'nome_social');
     assert.equal(body.nome_completo, 'Maria Silva');
     assert.equal(body.nome_social_principal, 'Guilherme Málickovski');
+    assert.equal(body.area_foco, 'carreira_negocios');
     assert.equal(body.nome_ja_escolhido, true);
     assert.equal(body.ranking_somente_chat, true);
     assert.deepEqual(body.nomes_candidatos, [

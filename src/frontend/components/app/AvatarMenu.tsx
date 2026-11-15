@@ -222,7 +222,14 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
     >
       <div className="p-2">
         <div className="mb-1 border-b border-[#D4AF37]/10 px-3 py-3">
-          <p className="truncate text-sm text-gray-400">Ola, {displayName}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate text-sm text-gray-400">Ola, {displayName}</p>
+            {isAdmin && (
+              <span className="shrink-0 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#f2ca50]">
+                Admin
+              </span>
+            )}
+          </div>
           {profile.email && <p className="mt-1 truncate text-xs text-gray-600">{profile.email}</p>}
         </div>
 
@@ -259,7 +266,10 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
         ref={buttonRef}
         type="button"
         onClick={toggleMenu}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#111111] font-cinzel text-lg font-bold text-[#D4AF37] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] focus:outline-none"
+        title={isAdmin ? 'Conta Administrador' : undefined}
+        className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#111111] font-cinzel text-lg font-bold text-[#D4AF37] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] focus:outline-none ${
+          isAdmin ? 'ring-1 ring-[#f2ca50]/35' : ''
+        }`}
         aria-label="Abrir menu da conta"
       >
         {notificationUnreadCount > 0 && (

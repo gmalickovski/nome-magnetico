@@ -3,6 +3,8 @@
  * Tendência oculta = número que aparece ≥4 vezes no nome.
  */
 
+import { GlossaryLinkedText } from '../glossary/GlossaryLinkedText';
+
 interface TendenciaOculta {
   numero: number;
   frequencia: number;
@@ -65,7 +67,7 @@ function TendenciaCard({ tendencia, showSolution }: { tendencia: TendenciaOculta
       </div>
 
       <div className="px-4 pb-4 space-y-4 border-t border-blue-500/10">
-        <p className="nm-card-text pt-4">{tendencia.descricao}</p>
+        <p className="nm-card-text pt-4"><GlossaryLinkedText text={tendencia.descricao} /></p>
         {showSolution && (
           <div className="rounded-lg p-3 bg-blue-500/10 border border-blue-500/20">
             <p className="text-xs text-blue-400 uppercase tracking-wider mb-2">Como Equilibrar</p>
@@ -85,7 +87,7 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
   return (
     <div className="space-y-5 text-left">
       <p className="nm-card-text">
-        Tendências Ocultas surgem quando um mesmo número de 1 a 9 aparece 4 ou mais vezes nas letras do nome completo, revelando uma concentração excessiva dessa energia. Quando bem direcionado, esse excesso vira talento; sem equilíbrio, gera repetições e exageros no comportamento.
+        <GlossaryLinkedText text="Tendências Ocultas surgem quando um mesmo número de 1 a 9 aparece 4 ou mais vezes nas letras do nome completo, revelando uma concentração excessiva dessa energia. Quando bem direcionado, esse excesso vira talento; sem equilíbrio, gera repetições e exageros no comportamento." />
       </p>
 
       {/* Mapa de frequências */}

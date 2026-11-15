@@ -509,59 +509,45 @@ function TrianguloInfo({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Card de bloqueio expandível
+// Card de bloqueio (sempre expandido)
 // ─────────────────────────────────────────────────────────────────────────────
 function BloqueioCard({ bloqueio, contagemNaAba }: { bloqueio: Bloqueio; contagemNaAba: number }) {
-  const [expandido, setExpandido] = useState(false);
+  let displayDesc = bloqueio.descricao;
+  if (displayDesc.includes('O antídoto é')) {
+    displayDesc = displayDesc.split('O antídoto é')[0].trim();
+  }
 
   return (
     <div className="rounded-xl border border-red-500/30 bg-red-500/10 overflow-hidden">
-      <button
-        type="button"
-        className="w-full text-left p-4 flex items-center justify-between gap-4"
-        onClick={() => setExpandido(!expandido)}
-      >
-        <div className="flex items-center gap-4 min-w-0 flex-1">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold font-mono shrink-0 border text-red-300 border-red-500/30 bg-red-500/20">
-            {bloqueio.codigo}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-200 text-sm leading-snug">
-              {bloqueio.titulo}
-              {contagemNaAba > 1 && (
-                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/25 text-red-300 border border-red-500/40 align-middle">
-                  {contagemNaAba}×
+      <div className="w-full text-left p-4 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold font-mono shrink-0 border text-red-300 border-red-500/30 bg-red-500/20">
+          {bloqueio.codigo}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-200 text-sm leading-snug">
+            {bloqueio.titulo}
+            {contagemNaAba > 1 && (
+              <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/25 text-red-300 border border-red-500/40 align-middle">
+                {contagemNaAba}×
+              </span>
+            )}
+          </p>
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {bloqueio.triangulos.map((t, i) => {
+              const count = bloqueio.repeticoesPortriangulo?.[t] ?? 1;
+              return (
+                <span key={i} className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400">
+                  {TIPO_LABEL[t]?.label ?? t}{count > 1 ? ` (${count}×)` : ''}
                 </span>
-              )}
-            </p>
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {bloqueio.triangulos.map((t, i) => {
-                const count = bloqueio.repeticoesPortriangulo?.[t] ?? 1;
-                return (
-                  <span key={i} className="text-xs px-2 py-0.5 rounded bg-white/5 text-gray-400">
-                    {TIPO_LABEL[t]?.label ?? t}{count > 1 ? ` (${count}×)` : ''}
-                  </span>
-                );
-              })}
-            </div>
+              );
+            })}
           </div>
         </div>
-        <span className="text-[#D4AF37] shrink-0">{expandido ? '▲' : '▼'}</span>
-      </button>
+      </div>
 
-      {expandido && (
-        <div className="px-4 pb-4 space-y-4 border-t border-white/5">
-          {(() => {
-            let displayDesc = bloqueio.descricao;
-            if (displayDesc.includes('O antídoto é')) {
-              displayDesc = displayDesc.split('O antídoto é')[0].trim();
-            }
-            return (
-              <p className="nm-card-text pt-4">{displayDesc}</p>
-            );
-          })()}
-        </div>
-      )}
+      <div className="px-4 pb-4 space-y-4 border-t border-white/5">
+        <p className="nm-card-text pt-4">{displayDesc}</p>
+      </div>
     </div>
   );
 }

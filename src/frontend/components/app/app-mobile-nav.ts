@@ -17,12 +17,13 @@ export function resolveAppNavActive(pathname: string): AppNavActiveFlags {
   const analises =
     isActive('/app/analises') || isActive('/app/resultado');
   const suporte = isActive('/app/suporte');
-  const glossario = isActive('/glossario');
+  const glossario = isActive('/app/glossario') || isActive('/glossario');
   const inicio =
     isActive('/app') &&
     !isActive('/app/analise') &&
     !isActive('/app/resultado') &&
     !isActive('/app/analises') &&
+    !isActive('/app/glossario') &&
     !isActive('/app/suporte') &&
     !isActive('/app/admin-analise') &&
     !isActive('/app/sentry-test');

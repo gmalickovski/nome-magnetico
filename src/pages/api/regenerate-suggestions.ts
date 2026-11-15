@@ -101,6 +101,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
     trianguloVidaLinhas: triangulos.vida.linhas,
     bloqueiosCount: bloqueios.length,
     bloqueiosCodigos: bloqueios.map(b => b.codigo),
+    vidaBloqueiosCodigos: triangulos.vida.sequenciasNegativas,
     compatibilidade: (avaliacao as { compatibilidade?: 'favoravel' | 'neutro' | 'desfavoravel' }).compatibilidade ?? 'neutro',
     temBloqueiosVida: sequenciasVida.length > 0,
   };
@@ -369,7 +370,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   await updateAnalysis(analysis!.id, {
     frequencias_numeros: {
       ...freqData,
-      ranking: resultado,
+      ranking: {
+        ...resultado,
+        areaFoco: freqData?.areaFoco ?? rankingAnterior?.areaFoco ?? null,
+        ondeVaiUsar: rankingChatMerged.ondeVaiUsar ?? freqData?.ondeVaiUsar ?? [],
+      },
       frequencias: freqMapSocial,
       selectedNomeSocial: melhor?.nomeCompleto ?? null,
       parametros_usuario: novosParametrosUsuario,
