@@ -33,8 +33,9 @@ Este documento registra a lógica funcional, a estrutura de dados e a persistên
 - **Desktop (`lg:`):** grid `lg:grid-cols-[minmax(0,1fr)_300px]` com dados à esquerda (`lg:order-1`) e visor circular de score ampliado à direita (`lg:order-2`, `lg:h-[280px] lg:w-[280px]`).
 - **Mobile:** empilhado verticalmente com o círculo de score no topo (`order-1`) e as informações abaixo (`order-2`).
 - **Pílulas de análise:** nível do score (`Harmonioso`, `Favorável`, `Equilíbrio Parcial`, etc.), contagem de bloqueios (`✓ 0 Bloqueios` ou `⚠ N Bloqueio(s) ativo(s)`), compatibilidade Expressão × Destino (`✦ Harmônica / Favorável`, `◈ Neutra`, `⚠ Tensão Vibracional`) e ganho de pontos (`+N pts sobre o nome de nascimento`). Sem rótulos genéricos.
-- **As 5 pontas da estrela:** Destino, Expressão, Motivação, Missão e Impressão em tipologia ampliada.
+- **As 5 pontas da estrela:** Destino, Expressão, Motivação, Missão e Impressão em tipologia ampliada (`col-span-2` no mobile para destacar o número imutável de **Destino** no topo do bloco, seguido das 4 demais pontas em 2×2).
 - **Ações:** `Baixar PDF` e `Ver Painel de Análise`.
+- **Ordem das seções abaixo do Hero:** logo após o Hero Card principal vem **Mapa de Alinhamento Vibracional** (seguido por **Jornada de Ativação** nos cards harmonizados e por **Suas análises**).
 
 ---
 

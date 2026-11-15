@@ -627,7 +627,9 @@ export function AppDashboard(props: AppDashboardProps) {
                     {STAR_POINT_ITEMS.map((item) => (
                       <div
                         key={item.key}
-                        className="flex flex-col items-center justify-center rounded-xl bg-[#131313]/85 px-3 py-3 last:col-span-2 sm:last:col-span-1"
+                        className={`flex flex-col items-center justify-center rounded-xl bg-[#131313]/85 px-3 py-3 ${
+                          item.key === 'destino' ? 'col-span-2 sm:col-span-1' : ''
+                        }`}
                       >
                         <span
                           className="font-cinzel text-xl font-bold leading-none tabular-nums sm:text-2xl"
@@ -793,12 +795,33 @@ export function AppDashboard(props: AppDashboardProps) {
         )}
       </section>
 
-      {/* Checklist por card (somente em nomes harmonizados) + Teia dinâmica */}
+      {/* Teia dinâmica + Checklist por card (somente em nomes harmonizados) */}
       <div
         className={`grid gap-6 lg:gap-8 ${
           showChecklistCard ? 'lg:grid-cols-2' : 'grid-cols-1'
         }`}
       >
+        <section className="nm-reading-card flex flex-col justify-between rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
+          <h2 className="mb-2 font-cinzel text-lg font-bold text-[#e5e2e1]">
+            Mapa de Alinhamento Vibracional
+          </h2>
+          <a
+            href={resultadoHref}
+            className="flex flex-1 items-center justify-center rounded-xl py-2 transition-opacity hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]"
+          >
+            <ReadingRadar
+              variant="dashboard"
+              axes={activeBirthAxes}
+              overlayAxes={activeHarmonizedAxes}
+              birthScore={activeBirthScoreForRadar}
+              overlayScore={activeHarmonizedAxes ? activeOverlayScoreForRadar : null}
+              labels={activeRadarLabels}
+              showNumericLabels={Boolean(activeHarmonizedAxes)}
+              className="pointer-events-none mx-auto w-full"
+            />
+          </a>
+        </section>
+
         {showChecklistCard && (
           <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
@@ -902,27 +925,6 @@ export function AppDashboard(props: AppDashboardProps) {
             </ul>
           </section>
         )}
-
-        <section className="nm-reading-card flex flex-col justify-between rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
-          <h2 className="mb-2 font-cinzel text-lg font-bold text-[#e5e2e1]">
-            Mapa de Alinhamento Vibracional
-          </h2>
-          <a
-            href={resultadoHref}
-            className="flex flex-1 items-center justify-center rounded-xl py-2 transition-opacity hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]"
-          >
-            <ReadingRadar
-              variant="dashboard"
-              axes={activeBirthAxes}
-              overlayAxes={activeHarmonizedAxes}
-              birthScore={activeBirthScoreForRadar}
-              overlayScore={activeHarmonizedAxes ? activeOverlayScoreForRadar : null}
-              labels={activeRadarLabels}
-              showNumericLabels={Boolean(activeHarmonizedAxes)}
-              className="pointer-events-none mx-auto w-full"
-            />
-          </a>
-        </section>
       </div>
 
       {/* Histórico */}
