@@ -11,6 +11,9 @@
  */
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { THEMES } from './shared/PDFTheme';
+import { computeContextualRadarAxes } from '../../../shared/interactive-engine/motor-radar';
+import { resolveRadarContext, readContextualRadarSnapshot } from '../../../shared/interactive-engine/radar-context';
+import { PDFMapaVibracional } from './shared/PDFMapaVibracional';
 import { PDFCover } from './shared/PDFCover';
 import { PDFStandardIntro } from './shared/PDFStandardIntro';
 import { PDFPageHeader } from './shared/PDFPageHeader';
@@ -329,17 +332,22 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
     freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '',
   );
 
+  const isV3 = isAnaliseV3(analysis as any) || isScoreV3();
+
   const nomesCandidatos = nomesCandidatosRaw.map((c) => {
     const base = analisarNomeSocial(
       String(c.nomeCompleto ?? ''),
       dataNascimentoRaw,
       c.origemSugerida === 'ia' ? 'ia' : 'usuario',
     );
+    const candidateScore = isV3 ? avaliarNome(String(c.nomeCompleto ?? base.nomeCompleto), dataNascimentoRaw).score_v3 : base.score;
     return {
       ...base,
+      score: candidateScore,
       nomeCompleto: String(c.nomeCompleto ?? base.nomeCompleto),
-      nivelV3: obterNivelV3(base.score).codigo,
+      nivelV3: obterNivelV3(candidateScore).codigo,
       origemSugerida: c.origemSugerida ?? base.origemSugerida,
+      origem: c.origem,
     };
   });
   const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
@@ -371,7 +379,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
   const triCellSizeNasc = Math.min(18, Math.max(5, Math.floor(430 / nascBaseLen) - 1));
   // ───────────────────────────────────────────────────────────────────────────
 
-  const isV3 = isAnaliseV3(analysis as any) || isScoreV3();
 
   // Score do nome de nascimento
   const scoreNasc = isV3
@@ -597,7 +604,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
   }
   const sortedArcanos = Array.from(allArcanoNums).sort((a, b) => a - b);
 
-  const paidToc = buildPaidTocEntries(nomesCandidatos.length > 0);
+  const radarContext = resolveRadarContext(freqData);
+  const radarSnapshot = readContextualRadarSnapshot(freqData, nomeNascimento, nomeParaExibir);
+  const radarBirth = radarSnapshot?.birth ?? computeContextualRadarAxes(nomeNascimento, dataNascimentoRaw, radarContext);
+  const radarSelected = radarSnapshot?.selected ?? computeContextualRadarAxes(nomeParaExibir, dataNascimentoRaw, radarContext);
+  const paidToc = buildPaidTocEntries(nomesCandidatos.length > 0, { hasConclusion: Boolean(conclusaoTexto && conclusaoTexto.length > 50) });
 
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
@@ -664,6 +675,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                      {c.origem === 'manual' && <Text style={{ fontFamily: BODY_FONT_BOLD, fontSize: 8, color: '#6D28D9', marginBottom: 4 }}>Nome informado por você</Text>}
                       {isAssinaturaSelecionada && (
                         <Text style={{ fontSize: 8, color: '#0369a1', fontFamily: BODY_FONT_BOLD }}>
                           Assinatura selecionada para análise{'  '}
@@ -897,7 +909,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
           </View>
           <View style={{ marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
+            <Text style={styles.hugeTitle}>Triângulo da Vida: O Fluxo de Nascimento</Text>
           </View>
 
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
@@ -941,6 +953,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </View>
           )}
 
+          <Text style={styles.bodyText}>Os triângulos Pessoal, Social e Destino estão em Anexos → Leitura complementar dos triângulos.</Text>
           {/* ─── TRIÂNGULO DA VIDA ─── */}
           {tVidaNasc && (
             <View>
@@ -956,7 +969,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 const arc = getArcano(tVidaNasc.arcanoRegente!);
                 const arcAtual = tVidaNasc.arcanoAtual?.numero ? getArcano(tVidaNasc.arcanoAtual.numero) : null;
                 return (
-                  <PDFArcanosBlock 
+                  <PDFArcanosBlock
                     title="Arcanos do Triângulo da Vida"
                     titleColor="#7C3AED"
                     arcanoRegente={arc}
@@ -977,116 +990,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </View>
           )}
 
-          {/* ─── TRIÂNGULO PESSOAL ─── */}
-          {tPessoalNasc && (
-            <View>
-              <PDFSectionAnchor id="pdf-essencia-triangulo-pessoal" bookmark={{ title: 'Triângulo Pessoal', fit: true }} />
-              <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo Pessoal (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — Esta dimensão penetra no santuário mais reservado da sua alma, ativada e moldada pelo dia exato do seu nascimento. Ela governa a sua inteligência emocional, a forma como você processa sentimentos íntimos em segredo, sua tolerância a pressões internas e a dinâmica com os seus entes mais próximos. Quando existem bloqueios nesta pirâmide de origem, a vida afetiva tende a repetir ciclos e roteiros repetitivos de frustração ou incompreensão, atuando como espelhos de conflitos internos ainda não resolvidos.
-              </Text>
-              <TrianguloPiramideInline data={tPessoalNasc} label="TRIÂNGULO PESSOAL" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
-              {tPessoalNasc.arcanoRegente != null && (() => {
-                const arc = getArcano(tPessoalNasc.arcanoRegente!);
-                const arcAtual = tPessoalNasc.arcanoAtual?.numero ? getArcano(tPessoalNasc.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock 
-                    title="Arcanos do Triângulo Pessoal"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tPessoalNasc.arcanosDePassagem}
-                    arcanoAtual={tPessoalNasc.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo Pessoal
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* ─── TRIÂNGULO SOCIAL ─── */}
-          {tSocialNasc && (
-            <View>
-              <PDFSectionAnchor id="pdf-essencia-triangulo-social" bookmark={{ title: 'Triângulo Social', fit: true }} />
-              <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo Social (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#059669' }}>[Carreira, Visibilidade Pública e Magnetismo Social]</Text> — Esta pirâmide irradia a sua assinatura vibracional para o world externo, moldada pela influência do mês do seu nascimento. Ela governa a forma como a sociedade te percebe, o carisma que você emana em ambientes públicos e as oportunidades profissionais que você atrai ou repele. É a frequência que determina a sua reputação, a sua capacidade de vendas, parcerias profissionais e o reconhecimento do seu talento pelo coletivo. Bloqueios aqui geram invisibilidade, sabotagem profissional ou dificuldades de comunicação com o público.
-              </Text>
-              <TrianguloPiramideInline data={tSocialNasc} label="TRIÂNGULO SOCIAL" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
-              {tSocialNasc.arcanoRegente != null && (() => {
-                const arc = getArcano(tSocialNasc.arcanoRegente!);
-                const arcAtual = tSocialNasc.arcanoAtual?.numero ? getArcano(tSocialNasc.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock 
-                    title="Arcanos do Triângulo Social"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tSocialNasc.arcanosDePassagem}
-                    arcanoAtual={tSocialNasc.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo Social
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* ─── TRIÂNGULO DO DESTINO ─── */}
-          {tDestinoNasc && (
-            <View>
-              <PDFSectionAnchor
-                id="pdf-essencia-triangulo-destino"
-                bookmark={{ title: 'Triângulo do Destino', fit: true }}
-              />
-              <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo do Destino (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — A pirâmide mais reveladora e soberana de toda a sua jornada terrestre. Ela entrelaça de forma divina a totalidade do seu nome com as coordenadas do seu nascimento (dia + mês reduzidos). Este triângulo governa a colheita prática da sua jornada: a materialização concreta dos seus esforços, a execução do seu propósito de alma e o legado indelével que você construirá no tempo. Quando há bloqueios nesta área, você pode sentir que despende uma quantidade colossal de energia no trabalho sem nunca alcançar os frutos correspondentes na realidade material.
-              </Text>
-              <TrianguloPiramideInline data={tDestinoNasc} label="TRIÂNGULO DO DESTINO" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
-              {tDestinoNasc.arcanoRegente != null && (() => {
-                const arc = getArcano(tDestinoNasc.arcanoRegente!);
-                const arcAtual = tDestinoNasc.arcanoAtual?.numero ? getArcano(tDestinoNasc.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock 
-                    title="Arcanos do Triângulo do Destino"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tDestinoNasc.arcanosDePassagem}
-                    arcanoAtual={tDestinoNasc.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo do Destino
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
-                </View>
-              )}
-            </View>
-          )}
         </View>
       )}
 
@@ -1102,6 +1005,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
         </View>
         <View style={{ marginBottom: 8 }}>
+          <PDFSectionAnchor id="pdf-essencia-karma" bookmark={{ title: 'O Peso do Passado', fit: true }} />
           <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
         </View>
 
@@ -1161,6 +1065,10 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
 
       {/* ── BLOCO: A ENGENHARIA DA HARMONIZAÇÃO ────────────────────────────── */}
       <Page size="A4" style={styles.pageHarmonizacao}>
+        <PDFSectionAnchor
+          id="pdf-harmonizacao"
+          bookmark={{ title: 'Assinatura e estrela comparativa', fit: true }}
+        />
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
 
         {/* Badge de seção */}
@@ -1178,11 +1086,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <View style={{ marginBottom: 8 }}>
           <Text style={[styles.hugeTitle, { color: '#C89000' }]}>A Engenharia da Harmonização</Text>
         </View>
-
-        <PDFSectionAnchor
-          id="pdf-harmonizacao"
-          bookmark={{ title: 'Assinatura e estrela comparativa', fit: true }}
-        />
+        <PDFSectionAnchor id="pdf-harmonizacao-estrela" bookmark={{ title: 'Assinatura, Estrela e Score', fit: true }} />
         <PDFDoubleStar
           nascimento={nascStarNumbers}
           harmonizado={socialStarNumbers}
@@ -1251,6 +1155,15 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
       <Page size="A4" style={styles.pageHarmonizacao}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
 
+        <View wrap={false} style={{ padding: 12, backgroundColor: '#F5F3FF', borderRadius: 8, marginBottom: 16 }}>
+          <Text style={{ fontFamily: TITLE_FONT, fontSize: 12, color: '#6D28D9', marginBottom: 6 }}>Arquétipo: {getArquetipo(cincoNumSocial.expressao).nome}</Text>
+          <Text style={styles.bodyText}>{getArquetipo(cincoNumSocial.expressao).essencia}</Text>
+          {getArquetipo(cincoNumSocial.expressao).numero === getArquetipo(cincoNumNasc.expressao).numero && <Text style={styles.bodyText}>O arquétipo permanece o mesmo do nome de nascimento.</Text>}
+          <Text style={styles.bodyText}>Síntese simbólica derivada da Expressão, sem diagnóstico ou alteração do score. Leitura completa nos anexos.</Text>
+        </View>
+        <PDFSectionAnchor id="pdf-harmonizacao-mapa" bookmark={{ title: 'Mapa Vibracional', fit: true }} />
+        <PDFMapaVibracional birth={radarBirth} selected={radarSelected} birthScore={scoreNasc} selectedScore={scoreSocial} hasContext={radarContext.hasContext} areaFoco={radarContext.areaFoco} usos={radarContext.ondeAssinaRaw} />
+        <PDFSectionAnchor id="pdf-harmonizacao-escudo" bookmark={{ title: 'O Escudo Magnético e a Transformação', fit: true }} />
         {/* ── 2.1. O Escudo Magnético ────────────────────────────────────── */}
         <View style={{ marginTop: 16, marginBottom: 12 }}>
           <Text style={[styles.sectionTitle, { color: '#8A661C', borderBottomColor: '#8A661C', fontSize: 12, borderBottomWidth: 0.5, paddingBottom: 3, marginBottom: 8 }]}>
@@ -1386,6 +1299,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           })}
         </View>
 
+        <PDFSectionAnchor id="pdf-harmonizacao-triangulos-comp" bookmark={{ title: 'Comparativo dos Triângulos e Arcanos', fit: true }} />
         {/* ─── CARD: OS 4 TRIÂNGULOS (Bloqueios + Arcanos comparativo) ──────── */}
         <View style={{ marginBottom: 16 }}>
           <View style={{ backgroundColor: bloqueiosEliminados.length > 0 ? '#059669' : '#6B7280', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 6 }}>
@@ -1569,6 +1483,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         {/* ─── CARD: Débitos · Lições · Tendências ─────────────────────────── */}
+        <PDFSectionAnchor id="pdf-harmonizacao-karma-comp" bookmark={{ title: 'Débitos, Lições e Tendências Comparativos', fit: true }} />
         {(() => {
           const hasAnyImprovement = licoesEliminadas.length > 0 || tendenciasEliminadas.length > 0 || debitosAliviados.length > 0;
 
@@ -1910,6 +1825,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
 
       {/* ── SEÇÃO: O NOME SOCIAL — O Nome Harmonizado Escolhido ─────────── */}
       <Page size="A4" style={styles.pageHarmonizado}>
+        <PDFSectionAnchor id="pdf-nome-harmonizado" bookmark={{ title: 'O Nome Social (Nome Harmonizado)', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — O Nome Social`} bgColor="#F0FDF4" />
 
         {/* Badge de seção */}
@@ -1922,7 +1838,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </View>
           <View style={{ flex: 1, height: 1, backgroundColor: '#166534', opacity: 0.3 }} />
         </View>
-
         {/* Banner do nome harmonizado */}
         <View style={{ backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#166534', borderRadius: 10, padding: 24, marginBottom: 16, alignItems: 'center' }}>
           <Text style={{ fontSize: 8, color: '#166534', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10, opacity: 0.8 }}>
@@ -1937,6 +1852,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </Text>
         </View>
 
+        <PDFSectionAnchor id="pdf-harmonizado-ressonancia" bookmark={{ title: 'A Ressonância do Nome Harmonizado', fit: true }} />
         {/* "A Ressonância do Nome Harmonizado" */}
         <View style={{ marginTop: 20, marginBottom: 16 }}>
           <Text style={styles.sectionTitle}>
@@ -1983,6 +1899,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         <View wrap={false}>
+        <PDFSectionAnchor id="pdf-harmonizado-numeros" bookmark={{ title: 'Os Números do Nome Harmonizado', fit: true }} />
           {/* Os 4 números do nome harmonizado */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
@@ -2062,7 +1979,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             <View style={{ flex: 1, height: 1, backgroundColor: '#166534', opacity: 0.3 }} />
           </View>
           <View style={{ marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>Os 4 Triângulos: O Novo Fluxo</Text>
+            <Text style={styles.hugeTitle}>Triângulo da Vida: O Novo Fluxo</Text>
           </View>
 
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
@@ -2093,9 +2010,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </View>
           )}
 
+          <Text style={styles.bodyText}>Os triângulos Pessoal, Social e Destino estão em Anexos → Leitura complementar dos triângulos.</Text>
           {/* ─── TRIÂNGULO DA VIDA ─── */}
           {triangulosSocial.vida && (
             <View>
+              <PDFSectionAnchor id="pdf-harmonizado-triangulo-vida" bookmark={{ title: 'Triângulo da Vida (Harmonizado)', fit: true }} />
               <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo da Vida (Harmonizado)
               </Text>
@@ -2128,9 +2047,233 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </View>
           )}
 
+        </View>
+      )}
+
+      {/* ── SEÇÃO O NOME SOCIAL: O CAMPO KÃRMICO ─────────────────────────── */}
+      <View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#166534', opacity: 0.3 }} />
+          <View style={{ backgroundColor: '#166534', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              O NOME SOCIAL
+            </Text>
+          </View>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#166534', opacity: 0.3 }} />
+        </View>
+        <View style={{ marginBottom: 8 }}>
+          <PDFSectionAnchor id="pdf-harmonizado-karma" bookmark={{ title: 'O Campo Kármico', fit: true }} />
+          <Text style={styles.hugeTitle}>O Campo Kármico: Débitos e Tendências</Text>
+        </View>
+
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 16 }}>
+          Além dos bloqueios detectados nos triângulos, o nome harmonizado carrega seu próprio mapa kármico: os Débitos (contas ainda ativas), as Lições (vibrações ainda ausentes) e as Tendências Ocultas (excessos presentes no novo campo). Compare com o campo de nascimento para avaliar os ganhos e os novos pontos de atenção.
+        </Text>
+
+        {/* Débitos Kármicos */}
+        <View style={{ ...styles.section, marginTop: 0 }}>
+          <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
+            Débitos Kármicos
+          </Text>
+          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
+            Os Débitos Kármicos emergem como ecos de vidas anteriores — áreas onde o livre-arbítrio foi utilizado em desequilíbrio. Não são punições, mas leis de compensação que exigem reintegração. Os débitos de origem no nome podem ser aliviados pela harmonização; os débitos fixos (oriundos da data de nascimento) permanecem independentemente do nome adotado.
+          </Text>
+          <PDFSectionAnchor id="pdf-harmonizado-debitos" bookmark={{ title: 'Debitos (Harmonizado)', fit: true }} />
+          <DebitosBlock debitos={debitosSocial} />
+        </View>
+
+        {/* Lições Kármicas */}
+        <View style={{ ...styles.section, marginTop: 0 }}>
+          <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
+            Lições Kármicas
+          </Text>
+          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
+            As Lições Kármicas são os "quartos vazios" da arquitetura energética: determinam exatamente quais virtudes estão ausentes no nome harmonizado. Quando uma lição persiste, ela permanece como convite ao desenvolvimento; quando é superada, a qualidade passa a fluir naturalmente pelo novo campo vibracional.
+          </Text>
+          <PDFSectionAnchor id="pdf-harmonizado-licoes" bookmark={{ title: 'Licoes (Harmonizado)', fit: true }} />
+          <LicoesBlock licoes={licoesSocial} />
+        </View>
+
+        {/* Tendências Ocultas */}
+        <View style={{ ...styles.section, marginTop: 0 }}>
+          <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
+            Tendências Ocultas
+          </Text>
+          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
+            As Tendências Ocultas emergem quando um número aparece quatro ou mais vezes no nome harmonizado — um talento amplificado ao ponto de se tornar compulsão. O mapeamento preciso dessas forças no novo campo permite que você as direcione conscientemente, evitando que a reorganização vibracional troque um excesso por outro.
+          </Text>
+          <PDFSectionAnchor id="pdf-harmonizado-tendencias" bookmark={{ title: 'Tendencias (Harmonizado)', fit: true }} />
+          <TendenciasBlock tendencias={tendenciasSocial} frequencias={frequenciasHarm} />
+        </View>
+      </View>
+
+        <PDFFooter bgColor="#F0FDF4" />
+      </Page>
+
+      {/* ── BLOCO 5: CONCLUSÃO ──────────────────────────────────────────────── */}
+      {conclusaoTexto && conclusaoTexto.length > 50 && (
+        <Page size="A4" style={styles.page}>
+          <PDFPageHeader subtitle={`${nomeParaExibir} — Conclusão`} />
+          <PDFSectionAnchor id="pdf-conclusao" bookmark={{ title: 'Conclusão', fit: true }} />
+
+          {/* Chip Conclusão */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: '#4338CA', opacity: 0.3 }} />
+            <View style={{ backgroundColor: '#4338CA', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+              <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                Conclusão
+              </Text>
+            </View>
+            <View style={{ flex: 1, height: 1, backgroundColor: '#4338CA', opacity: 0.3 }} />
+          </View>
+
+          <View style={{ marginBottom: 20 }}>
+            <Text style={styles.hugeTitle}>O Encerramento do Seu Mapa</Text>
+            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>
+              A Síntese do Seu Campo Vibracional
+            </Text>
+            <View style={{ height: 1, backgroundColor: '#4338CA', opacity: 0.12, marginHorizontal: 40 }} />
+          </View>
+
+          <View style={styles.section}>
+            <RenderMarkdownChunks text={conclusaoTexto} styles={styles} GOLD={GOLD} />
+          </View>
+
+          <PDFFooter />
+        </Page>
+      )}
+
+      {/* ── BLOCO 6: ANEXOS ─────────────────────────────────────────────────── */}
+
+      <Page size="A4" style={styles.page}>
+        <PDFSectionAnchor id="pdf-anexos" bookmark={{ title: 'Anexos', fit: true }} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
+        <PDFSectionAnchor id="pdf-anexos-triangulos" bookmark={{ title: 'Leitura complementar dos triângulos', fit: true }} />
+        <Text style={styles.hugeTitle}>Leitura complementar dos triângulos</Text>
+        <Text style={styles.bodyText}>Os quatro triângulos continuam calculados. A Vida aparece na leitura principal; Pessoal, Social e Destino são apresentados integralmente a seguir.</Text>
+        <PDFSectionAnchor id="pdf-anexos-triangulos-essencia" bookmark={{ title: 'Essência (Nome de Nascimento)', fit: true }} />
+        <Text style={styles.sectionTitle}>Essência (Nome de Nascimento)</Text>
+          {/* ─── TRIÂNGULO PESSOAL ─── */}
+          {tPessoalNasc && (
+            <View>
+              <PDFSectionAnchor id="pdf-essencia-triangulo-pessoal" bookmark={{ title: 'Triângulo Pessoal', fit: true }} />
+              <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+                O Triângulo Pessoal (Nascimento)
+              </Text>
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — Esta dimensão penetra no santuário mais reservado da sua alma, ativada e moldada pelo dia exato do seu nascimento. Ela governa a sua inteligência emocional, a forma como você processa sentimentos íntimos em segredo, sua tolerância a pressões internas e a dinâmica com os seus entes mais próximos. Quando existem bloqueios nesta pirâmide de origem, a vida afetiva tende a repetir ciclos e roteiros repetitivos de frustração ou incompreensão, atuando como espelhos de conflitos internos ainda não resolvidos.
+              </Text>
+              <TrianguloPiramideInline data={tPessoalNasc} label="TRIÂNGULO PESSOAL" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
+              {tPessoalNasc.arcanoRegente != null && (() => {
+                const arc = getArcano(tPessoalNasc.arcanoRegente!);
+                const arcAtual = tPessoalNasc.arcanoAtual?.numero ? getArcano(tPessoalNasc.arcanoAtual.numero) : null;
+                return (
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo Pessoal"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tPessoalNasc.arcanosDePassagem}
+                    arcanoAtual={tPessoalNasc.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
+                );
+              })()}
+              {bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo Pessoal
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ─── TRIÂNGULO SOCIAL ─── */}
+          {tSocialNasc && (
+            <View>
+              <PDFSectionAnchor id="pdf-essencia-triangulo-social" bookmark={{ title: 'Triângulo Social', fit: true }} />
+              <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+                O Triângulo Social (Nascimento)
+              </Text>
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#059669' }}>[Carreira, Visibilidade Pública e Magnetismo Social]</Text> — Esta pirâmide irradia a sua assinatura vibracional para o world externo, moldada pela influência do mês do seu nascimento. Ela governa a forma como a sociedade te percebe, o carisma que você emana em ambientes públicos e as oportunidades profissionais que você atrai ou repele. É a frequência que determina a sua reputação, a sua capacidade de vendas, parcerias profissionais e o reconhecimento do seu talento pelo coletivo. Bloqueios aqui geram invisibilidade, sabotagem profissional ou dificuldades de comunicação com o público.
+              </Text>
+              <TrianguloPiramideInline data={tSocialNasc} label="TRIÂNGULO SOCIAL" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
+              {tSocialNasc.arcanoRegente != null && (() => {
+                const arc = getArcano(tSocialNasc.arcanoRegente!);
+                const arcAtual = tSocialNasc.arcanoAtual?.numero ? getArcano(tSocialNasc.arcanoAtual.numero) : null;
+                return (
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo Social"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tSocialNasc.arcanosDePassagem}
+                    arcanoAtual={tSocialNasc.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
+                );
+              })()}
+              {bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo Social
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ─── TRIÂNGULO DO DESTINO ─── */}
+          {tDestinoNasc && (
+            <View>
+              <PDFSectionAnchor
+                id="pdf-essencia-triangulo-destino"
+                bookmark={{ title: 'Triângulo do Destino', fit: true }}
+              />
+              <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+                O Triângulo do Destino (Nascimento)
+              </Text>
+              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — A pirâmide mais reveladora e soberana de toda a sua jornada terrestre. Ela entrelaça de forma divina a totalidade do seu nome com as coordenadas do seu nascimento (dia + mês reduzidos). Este triângulo governa a colheita prática da sua jornada: a materialização concreta dos seus esforços, a execução do seu propósito de alma e o legado indelével que você construirá no tempo. Quando há bloqueios nesta área, você pode sentir que despende uma quantidade colossal de energia no trabalho sem nunca alcançar os frutos correspondentes na realidade material.
+              </Text>
+              <TrianguloPiramideInline data={tDestinoNasc} label="TRIÂNGULO DO DESTINO" cellSize={triCellSizeNasc} letras={letrasNomeBatismo} />
+              {tDestinoNasc.arcanoRegente != null && (() => {
+                const arc = getArcano(tDestinoNasc.arcanoRegente!);
+                const arcAtual = tDestinoNasc.arcanoAtual?.numero ? getArcano(tDestinoNasc.arcanoAtual.numero) : null;
+                return (
+                  <PDFArcanosBlock
+                    title="Arcanos do Triângulo do Destino"
+                    titleColor="#7C3AED"
+                    arcanoRegente={arc}
+                    arcanosDePassagem={tDestinoNasc.arcanosDePassagem}
+                    arcanoAtual={tDestinoNasc.arcanoAtual}
+                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+                  />
+                );
+              })()}
+              {bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino')).length > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
+                    Bloqueios do Triângulo do Destino
+                  </Text>
+                  <BloqueiosBlock bloqueios={bloqueiosNasc.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
+                </View>
+              )}
+            </View>
+          )}
+
+        <PDFFooter />
+      </Page>
+      <Page size="A4" style={styles.page}>
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
+        <PDFSectionAnchor id="pdf-anexos-triangulos-harmonizado" bookmark={{ title: 'Nome Harmonizado (Nome Social)', fit: true }} />
+        <Text style={styles.hugeTitle}>Nome Harmonizado (Nome Social)</Text>
           {/* ─── TRIÂNGULO PESSOAL ─── */}
           {triangulosSocial.pessoal && (
             <View>
+              <PDFSectionAnchor id="pdf-harmonizado-triangulo-pessoal" bookmark={{ title: 'Triângulo Pessoal (Harmonizado)', fit: true }} />
               <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo Pessoal (Harmonizado)
               </Text>
@@ -2166,6 +2309,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           {/* ─── TRIÂNGULO SOCIAL ─── */}
           {triangulosSocial.social && (
             <View>
+              <PDFSectionAnchor id="pdf-harmonizado-triangulo-social" bookmark={{ title: 'Triângulo Social (Harmonizado)', fit: true }} />
               <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo Social (Harmonizado)
               </Text>
@@ -2201,6 +2345,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           {/* ─── TRIÂNGULO DO DESTINO ─── */}
           {triangulosSocial.destino && (
             <View>
+              <PDFSectionAnchor id="pdf-harmonizado-triangulo-destino" bookmark={{ title: 'Triângulo do Destino (Harmonizado)', fit: true }} />
               <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
                 O Triângulo do Destino (Harmonizado)
               </Text>
@@ -2232,98 +2377,9 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
               )}
             </View>
           )}
-        </View>
-      )}
 
-      {/* ── SEÇÃO O NOME SOCIAL: O CAMPO KÃRMICO ─────────────────────────── */}
-      <View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#166534', opacity: 0.3 }} />
-          <View style={{ backgroundColor: '#166534', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              O NOME SOCIAL
-            </Text>
-          </View>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#166534', opacity: 0.3 }} />
-        </View>
-        <View style={{ marginBottom: 8 }}>
-          <Text style={styles.hugeTitle}>O Campo Kármico: Débitos e Tendências</Text>
-        </View>
-
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 16 }}>
-          Além dos bloqueios detectados nos triângulos, o nome harmonizado carrega seu próprio mapa kármico: os Débitos (contas ainda ativas), as Lições (vibrações ainda ausentes) e as Tendências Ocultas (excessos presentes no novo campo). Compare com o campo de nascimento para avaliar os ganhos e os novos pontos de atenção.
-        </Text>
-
-        {/* Débitos Kármicos */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
-          <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
-            Débitos Kármicos
-          </Text>
-          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
-            Os Débitos Kármicos emergem como ecos de vidas anteriores — áreas onde o livre-arbítrio foi utilizado em desequilíbrio. Não são punições, mas leis de compensação que exigem reintegração. Os débitos de origem no nome podem ser aliviados pela harmonização; os débitos fixos (oriundos da data de nascimento) permanecem independentemente do nome adotado.
-          </Text>
-          <DebitosBlock debitos={debitosSocial} />
-        </View>
-
-        {/* Lições Kármicas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
-          <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
-            Lições Kármicas
-          </Text>
-          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
-            As Lições Kármicas são os "quartos vazios" da arquitetura energética: determinam exatamente quais virtudes estão ausentes no nome harmonizado. Quando uma lição persiste, ela permanece como convite ao desenvolvimento; quando é superada, a qualidade passa a fluir naturalmente pelo novo campo vibracional.
-          </Text>
-          <LicoesBlock licoes={licoesSocial} />
-        </View>
-
-        {/* Tendências Ocultas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
-          <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
-            Tendências Ocultas
-          </Text>
-          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
-            As Tendências Ocultas emergem quando um número aparece quatro ou mais vezes no nome harmonizado — um talento amplificado ao ponto de se tornar compulsão. O mapeamento preciso dessas forças no novo campo permite que você as direcione conscientemente, evitando que a reorganização vibracional troque um excesso por outro.
-          </Text>
-          <TendenciasBlock tendencias={tendenciasSocial} frequencias={frequenciasHarm} />
-        </View>
-      </View>
-
-        <PDFFooter bgColor="#F0FDF4" />
+        <PDFFooter />
       </Page>
-
-      {/* ── BLOCO 5: CONCLUSÃO ──────────────────────────────────────────────── */}
-      {conclusaoTexto && conclusaoTexto.length > 50 && (
-        <Page size="A4" style={styles.page}>
-          <PDFPageHeader subtitle={`${nomeParaExibir} — Conclusão`} />
-
-          {/* Chip Conclusão */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: '#4338CA', opacity: 0.3 }} />
-            <View style={{ backgroundColor: '#4338CA', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-              <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                Conclusão
-              </Text>
-            </View>
-            <View style={{ flex: 1, height: 1, backgroundColor: '#4338CA', opacity: 0.3 }} />
-          </View>
-
-          <View style={{ marginBottom: 20 }}>
-            <Text style={styles.hugeTitle}>O Encerramento do Seu Mapa</Text>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 8 }}>
-              A Síntese do Seu Campo Vibracional
-            </Text>
-            <View style={{ height: 1, backgroundColor: '#4338CA', opacity: 0.12, marginHorizontal: 40 }} />
-          </View>
-
-          <View style={styles.section}>
-            <RenderMarkdownChunks text={conclusaoTexto} styles={styles} GOLD={GOLD} />
-          </View>
-
-          <PDFFooter />
-        </Page>
-      )}
-
-      {/* ── BLOCO 6: ANEXOS ─────────────────────────────────────────────────── */}
 
       {/* ── ARCANOS: DICIONÁRIO UNIFICADO ────────────────────────────────────── */}
       <Page size="A4" style={styles.page}>
@@ -2340,6 +2396,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         </View>
 
         <View style={{ marginBottom: 12 }}>
+          <PDFSectionAnchor id="pdf-arcanos" bookmark={{ title: 'Os Arcanos da Sua Análise', fit: true }} />
           <Text style={styles.hugeTitle}>Os Arcanos da Sua Análise</Text>
           <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 4 }}>
             Glossário Vibracional — Todos os Arcanos Presentes no Seu Mapa

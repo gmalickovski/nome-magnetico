@@ -1,3 +1,4 @@
+import { getArquetipo } from '../../backend/numerology/archetypes';
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { avaliarNome } from '../../backend/numerology/score';
@@ -21,6 +22,7 @@ import {
 import { mapSubfocoToEnum } from '../../shared/interactive-engine/questionnaire-adaptive';
 
 export interface ResultPanelData {
+  arquetipo?: import('../../shared/archetype-summary').ArchetypeSummary;
   nomeExibido: string;
   score: number;
   potencial: number;
@@ -121,6 +123,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
 
   return {
     nomeExibido: core.nomeExibido,
+    arquetipo: getArquetipo(core.expressao),
     score: core.score,
     potencial: core.potencial,
     destino,

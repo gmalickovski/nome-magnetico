@@ -1,3 +1,5 @@
+import { RADAR_SERIES_FILL_OPACITY } from '../../../../shared/interactive-engine/radar-visual';
+import { getCanonicalGlossaryBySlug, GLOSSARY_CATEGORY_LABELS } from '../../../../shared/glossary/canonical-terms';
 import React, { useId } from 'react';
 import type { RadarAxesData } from './chat-types.js';
 import { getScoreTierVisual } from '../../landing/score-tier-visual.js';
@@ -35,6 +37,8 @@ const LINE_GAP = 42;
 const LABEL_LINE_HEIGHT = 36;
 
 type Placement = 'top' | 'side' | 'bottom';
+
+const AXIS_SLUGS: Record<string, string> = { expressao: 'foco-do-momento', motivacao: 'equilibrio-da-alma', destino: 'sintonia-de-destino', harmonia_triangulo: 'magnetismo-social', sequencias: 'fluidez' };
 
 const AXIS_CONFIG: ReadonlyArray<{
   key: string;
@@ -124,7 +128,7 @@ export function ReadingRadar({
         className={`nm-radar-svg ${
           isDashboard ? 'nm-radar-svg--dashboard w-full max-w-[620px]' : 'w-full max-w-[560px]'
         } h-auto block`}
-        role="img"
+        role="group"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
         <defs>
@@ -157,24 +161,14 @@ export function ReadingRadar({
         <polygon
           points={basePoints}
           className="transition-all duration-700 ease-out"
-          fill={birthVisual.fill}
+          fill={birthVisual.stroke}
+          fillOpacity={RADAR_SERIES_FILL_OPACITY}
           stroke={birthVisual.stroke}
-          strokeWidth="2.4"
+          strokeWidth="1.8"
+          strokeDasharray="2 5"
           strokeLinejoin="round"
-          strokeOpacity="0.85"
+          strokeOpacity="0.55"
         />
-
-        {overlayPoints && overlayVisual && (
-          <polygon
-            points={overlayPoints}
-            className="transition-all duration-700 ease-out"
-            fill={overlayVisual.fill}
-            stroke={overlayVisual.stroke}
-            strokeWidth="3.4"
-            strokeLinejoin="round"
-            filter={`url(#${glowId})`}
-          />
-        )}
 
         {AXIS_CONFIG.map((axis) => {
           const { x, y } = getCoords(getVal(axes, axis.key), axis.angle, activeRadius);
@@ -185,10 +179,24 @@ export function ReadingRadar({
               cy={y}
               r="5"
               fill={birthVisual.stroke}
+              opacity="0.55"
               className="transition-all duration-700 ease-out"
             />
           );
         })}
+
+        {overlayPoints && overlayVisual && (
+          <polygon
+            points={overlayPoints}
+            className="transition-all duration-700 ease-out"
+            fill={overlayVisual.stroke}
+            fillOpacity={RADAR_SERIES_FILL_OPACITY}
+            stroke={overlayVisual.stroke}
+            strokeWidth="3.4"
+            strokeLinejoin="round"
+            filter={`url(#${glowId})`}
+          />
+        )}
 
         {overlayAxes && overlayVisual &&
           AXIS_CONFIG.map((axis) => {
@@ -212,6 +220,7 @@ export function ReadingRadar({
           const gx = CX + r * Math.cos(axis.angle) + axis.dx;
           const gy = CY + r * Math.sin(axis.angle);
           const labelText = labels?.[axis.key] ?? axis.label;
+          const term = getCanonicalGlossaryBySlug(AXIS_SLUGS[axis.key])!;
 
           const base = Math.round(getVal(axes, axis.key) * 100);
           let valueText: string;
@@ -219,17 +228,17 @@ export function ReadingRadar({
           if (showDelta && overlayAxes && overlayVisual) {
             const delta = Math.round(getVal(overlayAxes, axis.key) * 100) - base;
             if (delta > 0) {
-              valueText = `+${delta}%`;
+              valueText = `+${delta} pts`;
               valueColor = overlayVisual.text;
             } else if (delta < 0) {
-              valueText = `${delta}%`;
+              valueText = `${delta} pts`;
               valueColor = '#ef4444'; // Vermelho para variação negativa
             } else {
-              valueText = '0%';
+              valueText = '0 pts';
               valueColor = '#f2ca50'; // Dourado quando não mudar (0%)
             }
           } else {
-            valueText = `${base}%`;
+            valueText = `${base}`;
             valueColor = '#f2ca50'; // Dourado para valores base
           }
 
@@ -250,6 +259,7 @@ export function ReadingRadar({
 
           return (
             <g key={`lbl-${axis.key}`}>
+              <a href={`/app/glossario/${term.slug}`} data-glossary-slug={term.slug} data-glossary-term={term.term} data-glossary-summary={term.shortSummary} data-glossary-category={GLOSSARY_CATEGORY_LABELS[term.category]} aria-label={`Significado de ${labelText}`} className="nm-glossary-link focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]">
               <text
                 x={gx}
                 y={labelY}
@@ -257,7 +267,7 @@ export function ReadingRadar({
                 dominantBaseline="central"
                 fill="#d0d5de"
                 fontFamily="Inter, sans-serif"
-                className="nm-radar-label"
+                className="nm-radar-label underline decoration-dotted underline-offset-4"
                 fontWeight={700}
               >
                 {lines.map((line, idx) => (
@@ -266,6 +276,7 @@ export function ReadingRadar({
                   </tspan>
                 ))}
               </text>
+              </a>
               <text
                 x={gx}
                 y={valueY}

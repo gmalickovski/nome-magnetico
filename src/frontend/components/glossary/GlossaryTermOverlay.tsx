@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export interface GlossaryPreviewPayload {
@@ -51,6 +51,9 @@ function readPreviewFromElement(
  * - Mobile (`< 1024px`): intercepta toque e abre bottom-sheet com `z-[95]` acima do `AppMobileDock` (`z-40`) e do `MobileReadingBottomSheet` (`z-[85]`).
  */
 export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOverlayProps) {
+  const overlayId = `glossary-preview-${useId().replace(/:/g, '')}`;
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const skipFocusRef = useRef(false);
   const [mounted, setMounted] = useState(false);
   const [preview, setPreview] = useState<GlossaryPreviewPayload | null>(null);
   const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop');
@@ -67,7 +70,7 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
   const scheduleDesktopClose = () => {
     cancelCloseTimer();
     closeTimerRef.current = window.setTimeout(() => {
-      setPreview(null);
+      if (document.activeElement !== triggerRef.current && !cardRef.current?.contains(document.activeElement)) setPreview(null);
     }, 180);
   };
 
@@ -75,10 +78,12 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
     setMounted(true);
 
     const handleMouseOver = (event: MouseEvent) => {
+      if (document.activeElement?.closest('[data-glossary-preview]') || document.activeElement?.matches('[aria-expanded="true"][aria-controls^="glossary-"]')) return;
       if (window.innerWidth < DESKTOP_BREAKPOINT) return;
       const target = event.target as HTMLElement | null;
       const anchor = target?.closest<HTMLElement>('[data-glossary-slug]');
       if (!anchor) return;
+      triggerRef.current = anchor;
       const data = readPreviewFromElement(anchor, baseHref);
       if (!data) return;
       cancelCloseTimer();
@@ -97,10 +102,12 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
     };
 
     const handleFocusIn = (event: FocusEvent) => {
+      if (skipFocusRef.current) { skipFocusRef.current = false; return; }
       if (window.innerWidth < DESKTOP_BREAKPOINT) return;
       const target = event.target as HTMLElement | null;
       const anchor = target?.closest<HTMLElement>('[data-glossary-slug]');
       if (!anchor) return;
+      triggerRef.current = anchor;
       const data = readPreviewFromElement(anchor, baseHref);
       if (!data) return;
       cancelCloseTimer();
@@ -123,7 +130,8 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
       const anchor = target?.closest<HTMLElement>('[data-glossary-slug]');
       if (anchor && window.innerWidth < DESKTOP_BREAKPOINT) {
         event.preventDefault();
-        const data = readPreviewFromElement(anchor, baseHref);
+        triggerRef.current = anchor;
+      const data = readPreviewFromElement(anchor, baseHref);
         if (!data) return;
         cancelCloseTimer();
         setMode('mobile');
@@ -138,7 +146,24 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        cancelCloseTimer();
+        if (cardRef.current?.contains(document.activeElement)) { skipFocusRef.current = true; triggerRef.current?.focus(); }
         setPreview(null);
+      }
+      if (event.key === 'Tab' && preview) {
+        const items = Array.from(cardRef.current?.querySelectorAll<HTMLElement>('a[href],button') ?? []);
+        if (mode === 'mobile' && items.length) {
+          if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items.at(-1)?.focus(); }
+          else if (!event.shiftKey && document.activeElement === items.at(-1)) { event.preventDefault(); items[0].focus(); }
+        } else if (!event.shiftKey && document.activeElement === triggerRef.current) { event.preventDefault(); items[0]?.focus(); }
+        else if (cardRef.current?.contains(document.activeElement)) {
+          event.preventDefault();
+          if (event.shiftKey) { skipFocusRef.current = true; triggerRef.current?.focus(); }
+          else {
+            const focusable = Array.from(document.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input:not([disabled]),[tabindex="0"]')).filter(el => el.getClientRects().length && !cardRef.current?.contains(el));
+            const next = focusable[focusable.indexOf(triggerRef.current!) + 1]; setPreview(null); next?.focus();
+          }
+        }
       }
     };
 
@@ -148,6 +173,8 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
       }
     };
 
+    const otherPreview = (event: Event) => { if ((event as CustomEvent).detail !== overlayId) setPreview(null); };
+    document.addEventListener('nm-glossary-preview-open', otherPreview);
     document.addEventListener('mouseover', handleMouseOver);
     document.addEventListener('mouseout', handleMouseOut);
     document.addEventListener('focusin', handleFocusIn);
@@ -158,6 +185,7 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
 
     return () => {
       cancelCloseTimer();
+      document.removeEventListener('nm-glossary-preview-open', otherPreview);
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
       document.removeEventListener('focusin', handleFocusIn);
@@ -167,6 +195,16 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
       window.removeEventListener('scroll', handleScroll);
     };
   }, [baseHref, mode, preview]);
+
+  useEffect(() => {
+    const trigger = triggerRef.current;
+    if (!preview || !trigger) return;
+    document.dispatchEvent(new CustomEvent('nm-glossary-preview-open', { detail: overlayId }));
+    trigger.setAttribute('aria-expanded', 'true');
+    trigger.setAttribute('aria-controls', overlayId);
+    if (mode === 'mobile') cardRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    return () => { trigger.removeAttribute('aria-controls'); trigger.setAttribute('aria-expanded', 'false'); };
+  }, [preview, mode, overlayId]);
 
   if (!mounted || !preview) return null;
 
@@ -181,8 +219,9 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
       >
         <div
           ref={cardRef}
+      id={overlayId} data-glossary-preview
           onClick={(e) => e.stopPropagation()}
-          className="nm-floating-card w-full max-w-md rounded-2xl p-5 shadow-[0_24px_64px_rgba(0,0,0,0.85)]"
+          className="nm-floating-card w-full max-w-md max-h-[calc(100dvh-24px)] overflow-y-auto rounded-2xl p-5 shadow-[0_24px_64px_rgba(0,0,0,0.85)]"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -219,7 +258,7 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
               href={preview.href}
               className="inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-5 py-2 text-xs font-bold uppercase tracking-wider text-[#131313] hover:bg-[#f2ca50]"
             >
-              Ver explicação completa →
+              Ver no glossário
             </a>
           </div>
         </div>
@@ -242,10 +281,11 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
   return createPortal(
     <div
       ref={cardRef}
-      role="tooltip"
+        id={overlayId} data-glossary-preview
+      role="region" aria-label={`Significado de ${preview.term}`}
       onMouseEnter={cancelCloseTimer}
       onMouseLeave={scheduleDesktopClose}
-      style={{ top: `${top}px`, left: `${left}px`, width: `${cardWidth}px` }}
+      style={{ position: 'fixed', top: `${top}px`, left: `${left}px`, width: `${cardWidth}px`, maxHeight: 'calc(100dvh - 32px)', overflowY: 'auto' }}
       className="fixed z-[95] nm-floating-card rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.75)] ring-1 ring-[#D4AF37]/30"
     >
       <div className="flex items-center justify-between gap-2">
@@ -268,7 +308,7 @@ export function GlossaryTermOverlay({ baseHref = '/glossario' }: GlossaryTermOve
           href={preview.href}
           className="inline-flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:text-[#f2ca50]"
         >
-          Ver explicação completa →
+          Ver no glossário
         </a>
       </div>
     </div>,

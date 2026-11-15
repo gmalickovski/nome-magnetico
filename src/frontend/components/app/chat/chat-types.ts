@@ -1,3 +1,4 @@
+import type { ArchetypeSummary } from '../../../../shared/archetype-summary';
 /**
  * DEV-235 · Tipos centrais do Chat Conversacional Nome Magnético (v2)
  */
@@ -5,6 +6,7 @@
 import type { ReactNode } from 'react';
 
 export interface ResultPanelData {
+  arquetipo?: ArchetypeSummary | null;
   nome: string;
   score: number;
   expressao: number;
@@ -117,6 +119,9 @@ export interface ChatDebitoCarmico {
 }
 
 export interface CandidateSuggestion {
+  origem?: 'manual' | 'gerado';
+  scoreVersion?: 'v3';
+  radarAxes?: RadarAxesData;
   id: string;
   nome: string;
   score: number;

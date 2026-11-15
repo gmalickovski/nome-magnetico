@@ -1,3 +1,4 @@
+import { buildPaidTocEntries } from './pdfTocCatalog.ts';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
@@ -123,15 +124,16 @@ describe('DEV-266 · PDF integração offline', () => {
       PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
+    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     const compactText = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, '').toLowerCase();
     const paidTextPages = pdfToText(Buffer.from(pagoBuf)).split('\f');
     // Letter spacing pode aparecer como espaços entre letras na extração Poppler.
-    const numbersHeaderPage = paidTextPages.find((page) => compactText(page).includes('os5numerosfundamentais'));
+    assert.ok(!('error' in pDest));
+    const numbersHeaderPage = paidTextPages[pDest['pdf-harmonizacao-corpo'] - 1];
     assert.ok(numbersHeaderPage, 'cabeçalho do comparativo numérico presente');
     assert.ok(compactText(numbersHeaderPage).includes('datadenascimento'), 'cabeçalho permanece na página da primeira linha');
 
     const gDest = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
-    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     assert.ok(!('error' in gDest), `gratuito destinos: ${'error' in gDest ? gDest.error : ''}`);
     assert.ok(!('error' in pDest), `pago destinos: ${'error' in pDest ? pDest.error : ''}`);
 
@@ -140,10 +142,17 @@ describe('DEV-266 · PDF integração offline', () => {
     assert.ok(pDest['pdf-essencia'] >= 1, 'pdf-essencia pago');
     assert.ok(pDest['pdf-harmonizacao'] >= 1, 'pdf-harmonizacao pago');
     assert.ok(pDest['pdf-harmonizacao-comparativa'] >= 1, 'pdf-harmonizacao-comparativa pago');
+    assert.ok(pDest['pdf-harmonizacao-mapa'] >= pDest['pdf-harmonizacao']);
+    for (const prefix of ['pdf-essencia-triangulo-', 'pdf-harmonizado-triangulo-']) {
+      for (const suffix of ['pessoal', 'social', 'destino']) assert.ok(pDest[prefix + suffix] >= pDest['pdf-anexos-triangulos']);
+    }
+    assert.ok(pDest['pdf-essencia-triangulo-vida'] < pDest['pdf-anexos-triangulos']);
+    assert.ok(pDest['pdf-harmonizado-triangulo-vida'] < pDest['pdf-anexos-triangulos']);
+
 
     for (const [label, dests, ids] of [
       ['gratuito', gDest, PDF_TOC_ANCHOR_IDS.gratuito],
-      ['pago', pDest, PDF_TOC_ANCHOR_IDS.nome_social],
+      ['pago', pDest, buildPaidTocEntries(true).map(e => e.id)],
     ] as const) {
       const sumarioPage = dests['pdf-sumario'];
       for (const id of ids) {

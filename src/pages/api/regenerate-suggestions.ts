@@ -1,3 +1,4 @@
+import { getArquetipo } from '../../backend/numerology/archetypes';
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { supabase as globalSupabase } from '../../backend/db/supabase';
@@ -38,6 +39,7 @@ const regenerateSchema = z
     nomeNascimento: z.string().max(200).optional(),
     dataNascimento: z.string().max(30).optional(),
     nomesExcluidos: z.array(z.string().max(150)).max(50).optional(),
+    nomesManuaisExcluidos: z.array(z.string().max(150)).max(5).optional(),
     sobrenomesObrigatorios: z.array(z.string().max(80)).max(10).optional(),
     sobrenomesExcluidos: z.array(z.string().max(80)).max(10).optional(),
     estiloPreferido: z
@@ -90,6 +92,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
 
   return {
     nomeExibido: nome,
+    arquetipo: getArquetipo(cinco.expressao),
     score: avaliacao.score_v3,
     potencial: avaliacao.potencial ?? avaliacao.score_v3,
     destino: cinco.destino ?? baseDestino,
@@ -243,7 +246,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     sobrenomesObrigatorios: sobrenomesObrigEfetivos,
     sobrenomesExcluidos: sobrenomesExclEfetivos,
     estiloPreferido: estiloEfetivo,
-    nomesExcluidos: selecionarComoPrincipal ? undefined : nomesExcluidos,
+    nomesExcluidos: selecionarComoPrincipal ? undefined : [...(nomesExcluidos ?? []), ...(parsed.data.nomesManuaisExcluidos ?? [])],
     motivoRefinamento,
     variacaoPropria,
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais || undefined,

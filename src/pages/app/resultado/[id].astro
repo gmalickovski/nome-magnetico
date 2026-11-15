@@ -653,6 +653,9 @@ if (isSocialSummaryView && dataScoreSocial) {
             showReadingSummary={Boolean(socialReadingSummary)}
           />
         )}
+        {isNomeSocial && rankingSocial?.nomesCandidatos?.some((c: any) => c.origem === 'manual' && c.nomeCompleto?.trim().toLowerCase() === nomeExibido.trim().toLowerCase()) && (
+          <p class="mt-4 text-sm text-[#d7c6ff]">Nome informado por você</p>
+        )}
         {isSocialSummaryView && <span id="guia-assinatura" class="sr-only scroll-mt-24"></span>}
 
         {/* ══════════════════════════════════════════════════

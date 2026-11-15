@@ -53,20 +53,21 @@ export function SuggestionPicker({
   return (
     <div ref={rootRef} className={`w-full space-y-4 ${className}`}>
       <div className="space-y-1">
-        <h3 className="nm-h3 text-gold">Suas assinaturas recomendadas</h3>
+        <h3 className="nm-h3 text-gold">{suggestions.some(s => s.origem === 'manual') ? 'Assinaturas para comparar' : 'Suas assinaturas recomendadas'}</h3>
         <p className="text-xs sm:text-sm text-chat-ink leading-relaxed">
           Toque em uma assinatura para ver a comparação detalhada no painel lateral.
         </p>
       </div>
 
       <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
-        {suggestions.map((sug, index) => {
+        {suggestions.map((sug, originalIndex) => ({ sug, originalIndex })).sort((a, b) => b.sug.score - a.sug.score || (a.sug.origem === 'manual' ? 1 : 0) - (b.sug.origem === 'manual' ? 1 : 0) || a.originalIndex - b.originalIndex).map(({ sug }, index) => {
           const isCurrentSelected = selectedId === sug.id;
           const touchPulse = touchPulseId === sug.id;
           const card = mapCandidateToHarmonySuggestion(sug);
           return (
             <div
               key={sug.id}
+              id={`candidate-${sug.id}`}
               role="button"
               tabIndex={0}
               aria-pressed={isCurrentSelected}
@@ -104,6 +105,7 @@ export function SuggestionPicker({
                   }`}
                 />
               </div>
+              {sug.origem === 'manual' && <p className="px-4 pb-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
               {sug.destaque && (
                 <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>
               )}

@@ -1,3 +1,6 @@
+import { CONTEXTUAL_RADAR_VERSION } from '../../shared/interactive-engine/radar-context';
+import { normalizarChaveNome, validarNomeManual } from '../../shared/nome-social/manual-name-limits';
+import { computeContextualRadarAxes } from '../../shared/interactive-engine/motor-radar';
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createUserClient, supabase as globalSupabase } from '../../backend/db/supabase';
@@ -56,6 +59,7 @@ const schema = z.object({
     .enum(['nome_social', 'analise_gratuita'], { errorMap: () => ({ message: 'Produto indisponível.' }) })
     .default('nome_social'),
   nomes_candidatos: z.array(z.string().min(2)).optional(),
+  nomes_manuais: z.array(z.string().min(2).max(150).refine(n => !validarNomeManual(n))).max(5).optional(),
   // campos específicos nome_social (DEV-190 §6: sem genero_preferido e sem estilo_preferido)
   objetivo_apresentacao: z.string().max(500).optional(),
   vibracoes_desejadas: z.string().max(300).optional(),
@@ -259,6 +263,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
+  const manualNames = new Set((parsed.data.nomes_manuais ?? []).map(normalizarChaveNome));
   const isChatPdfChosenSocial =
     product_type === 'nome_social' &&
     nome_ja_escolhido === true &&
@@ -269,7 +274,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       user.id,
       nome_social_principal!.trim()
     );
-    if (existing) {
+    const existingFreq = existing?.frequencias_numeros as any;
+    const exportMatches = !ranking_somente_chat || (
+      JSON.stringify(existingFreq?.ranking?.nomesCandidatos?.map((c: any) => normalizarChaveNome(c.nomeCompleto))) === JSON.stringify((nomes_candidatos ?? []).map(normalizarChaveNome)) &&
+      JSON.stringify(existingFreq?.ranking?.nomesCandidatos?.filter((c: any) => c.origem === 'manual').map((c: any) => normalizarChaveNome(c.nomeCompleto))) === JSON.stringify(Array.from(manualNames)) &&
+      existingFreq?.areaFoco === (area_foco ?? null) && JSON.stringify(existingFreq?.ondeVaiUsar ?? []) === JSON.stringify(onde_vai_usar ?? [])
+    );
+    if (existing && exportMatches) {
       return new Response(JSON.stringify({ analysisId: existing.id, reused: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -335,6 +346,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
           }
         );
 
+        if (somenteChat && manualNames.size > 0) {
+          const seen = new Set<string>();
+          resultado.nomesCandidatos = candidatos.filter(n => {
+            const key = normalizarChaveNome(n);
+            if (seen.has(key)) return false;
+            seen.add(key); return true;
+          }).map(n => {
+            const evaluated = analisarNomeSocial(n, data_nascimento, 'usuario');
+            return { ...evaluated, score: avaliarNome(n, data_nascimento).score_v3, nomeCompleto: n, origem: manualNames.has(normalizarChaveNome(n)) ? 'manual' as const : 'gerado' as const };
+          });
+        }
         if (nome_social_principal) {
           const principalNormalizado = nome_social_principal.trim().toLowerCase();
           const scoreNasc = scoreNascimentoNomeSocial(nome_completo, data_nascimento);
@@ -343,7 +365,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               candidato => candidato.nomeCompleto.trim().toLowerCase() === principalNormalizado
             ) ?? analisarNomeSocial(nome_social_principal, data_nascimento, 'usuario');
 
-          if (!passaGanhoMinimo(nomeEscolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+          if (!manualNames.has(principalNormalizado) && !passaGanhoMinimo(nomeEscolhido.score, scoreNasc, getGanhoMinimoPontos())) {
             resultado.melhorNome = null;
             resultado.semOpcoesElegiveis = true;
           } else {
@@ -363,7 +385,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const melhor = resultado.melhorNome;
-        const scoreFieldsSocial = melhor
+        let scoreFieldsSocial: { score: number | null; score_v3?: number; score_version?: string; potencial?: number } = melhor
           ? persistenciaScoreFields({
               scoreLegado: calcularScoreV1ComOcorrenciasExtras({
                 bloqueios: melhor.bloqueios,
@@ -377,6 +399,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
               nomeNascimentoPotencial: nome_completo,
             })
           : { score: null as number | null };
+        if (melhor && manualNames.has(normalizarChaveNome(melhor.nomeCompleto))) {
+          const manualScore = avaliarNome(melhor.nomeCompleto, data_nascimento).score_v3;
+          scoreFieldsSocial = { ...scoreFieldsSocial, score: manualScore, score_v3: manualScore, score_version: 'v3' };
+        }
         const potencialCalculado =
           'potencial' in scoreFieldsSocial && typeof scoreFieldsSocial.potencial === 'number'
             ? scoreFieldsSocial.potencial
@@ -402,6 +428,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
               ondeVaiUsar: onde_vai_usar ?? [],
             },
             rankingSomenteChat: somenteChat,
+            scoreVersion: scoreFieldsSocial.score_version ?? (isScoreV3() ? 'v3' : 'v1'),
+            radarVersion: CONTEXTUAL_RADAR_VERSION,
+            radarSnapshot: nome_social_principal ? {
+              birthName: nome_completo, selectedName: nome_social_principal,
+              context: { areaFoco: area_foco ?? null, ondeAssinaRaw: onde_vai_usar ?? [] },
+              birth: computeContextualRadarAxes(nome_completo, data_nascimento, { areaFoco: area_foco, ondeAssinaRaw: onde_vai_usar }),
+              selected: computeContextualRadarAxes(nome_social_principal, data_nascimento, { areaFoco: area_foco, ondeAssinaRaw: onde_vai_usar }),
+            } : null,
             frequencias: freqMapSocial,
             selectedNomeSocial: nome_social_principal ? melhor?.nomeCompleto ?? nome_social_principal : null,
             assinaturaAtual: assinatura_atual?.trim() || null,

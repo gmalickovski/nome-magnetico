@@ -8,7 +8,7 @@ export type PdfTocEntry = {
   id: string;
   title: string;
   /** 0 = parte principal; 1/2 = subassunto com recuo e fonte menor */
-  level?: 0 | 1 | 2;
+  level?: 0 | 1 | 2 | 3;
   /** Preenchido na renderização final (1-based, inclui capa e sumário) */
   page?: number;
 };
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   linkTextL0: {
     fontSize: 11,
-    fontFamily: BODY_FONT,
+    fontFamily: BODY_FONT_BOLD,
     color: '#1E293B',
   },
   linkTextL1: {
@@ -70,10 +70,10 @@ const styles = StyleSheet.create({
   },
 });
 
-function entryStyles(level: 0 | 1 | 2 = 0) {
-  const pad = level === 1 ? 16 : level === 2 ? 28 : 0;
+function entryStyles(level: 0 | 1 | 2 | 3 = 0) {
+  const pad = level === 3 ? 40 : level === 2 ? 28 : level === 1 ? 16 : 0;
   const textStyle =
-    level === 2 ? styles.linkTextL2 : level === 1 ? styles.linkTextL1 : styles.linkTextL0;
+    level >= 2 ? styles.linkTextL2 : level === 1 ? styles.linkTextL1 : styles.linkTextL0;
   return { pad, textStyle };
 }
 
@@ -129,10 +129,10 @@ export function PDFTableOfContents({
             )}
             <View>
               {chunk.map((entry) => {
-                const level = (entry.level ?? 0) as 0 | 1 | 2;
+                const level = (entry.level ?? 0) as 0 | 1 | 2 | 3;
                 const { pad, textStyle } = entryStyles(level);
                 return (
-                  <View key={`${entry.id}-${entry.title}`} style={styles.row}>
+                  <View key={`${entry.id}-${entry.title}`} style={[styles.row, ...(level === 0 ? [{ backgroundColor: '#F3F4F6', paddingHorizontal: 6 }] : [])]}>
                     <Link
                       src={`#${entry.id}`}
                       style={{ textDecoration: 'none', flex: 1, paddingLeft: pad }}

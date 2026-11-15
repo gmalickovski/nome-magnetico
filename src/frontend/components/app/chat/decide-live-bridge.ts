@@ -75,6 +75,7 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
 };
 
 type ApiPanel = {
+  arquetipo?: import('../../../../shared/archetype-summary').ArchetypeSummary;
   nomeExibido: string;
   score: number;
   potencial: number;
@@ -120,6 +121,7 @@ export function buildSobrenomePillOptions(sobrenomes: string[]): Array<{ id: str
 export function mapApiPanel(api: ApiPanel): ResultPanelData {
   return {
     nome: api.nomeExibido,
+    arquetipo: api.arquetipo,
     score: api.score,
     expressao: api.expressao,
     destino: api.destino,

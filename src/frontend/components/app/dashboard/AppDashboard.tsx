@@ -1,3 +1,6 @@
+import { ArquetipoResumoCard } from '../ArquetipoResumoCard';
+import type { ArchetypeSummary } from '../../../../shared/archetype-summary';
+import { GlossaryInlineTerm } from '../../glossary/GlossaryInlineTerm';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ReadingRadar } from '../chat/ReadingRadar.js';
 import type { RadarAxesData } from '../chat/chat-types.js';
@@ -38,6 +41,9 @@ export interface DashboardHeroStarNumbers {
 }
 
 export interface DashboardHeroSlide {
+  arquetipo?: ArchetypeSummary | null;
+  arquetipoNascimento?: ArchetypeSummary | null;
+  origem?: 'manual' | 'gerado';
   id: string;
   nome: string;
   birthName: string;
@@ -638,12 +644,15 @@ export function AppDashboard(props: AppDashboardProps) {
                           {activeSlide.starNumbers[item.key] || '—'}
                         </span>
                         <span className="mt-1.5 text-xs sm:text-sm font-medium tracking-wide text-[#e5e2e1]/90">
-                          {item.label}
+                          {item.key === 'expressao' ? <GlossaryInlineTerm slug="numero-de-expressao">{item.label}</GlossaryInlineTerm> : item.label}
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                <ArquetipoResumoCard arquetipo={activeSlide.arquetipo} expressao={activeSlide.starNumbers.expressao} arquetipoNascimento={activeSlide.arquetipoNascimento} />
+                {activeSlide.origem === 'manual' && <p className="mt-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
 
                 {/* Apenas dois botões: Baixar PDF e Ver Painel de Análise */}
                 <div className="mt-6 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:w-auto">
@@ -803,12 +812,9 @@ export function AppDashboard(props: AppDashboardProps) {
       >
         <section className="nm-reading-card flex flex-col justify-between rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
           <h2 className="mb-2 font-cinzel text-lg font-bold text-[#e5e2e1]">
-            Mapa de Alinhamento Vibracional
+            <GlossaryInlineTerm slug="mapa-vibracional">Mapa Vibracional</GlossaryInlineTerm>
           </h2>
-          <a
-            href={resultadoHref}
-            className="flex flex-1 items-center justify-center rounded-xl py-2 transition-opacity hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]"
-          >
+          <div className="flex flex-1 items-center justify-center rounded-xl py-2">
             <ReadingRadar
               variant="dashboard"
               axes={activeBirthAxes}
@@ -817,9 +823,9 @@ export function AppDashboard(props: AppDashboardProps) {
               overlayScore={activeHarmonizedAxes ? activeOverlayScoreForRadar : null}
               labels={activeRadarLabels}
               showNumericLabels={Boolean(activeHarmonizedAxes)}
-              className="pointer-events-none mx-auto w-full"
+              className="mx-auto w-full"
             />
-          </a>
+          </div>
         </section>
 
         {showChecklistCard && (

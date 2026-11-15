@@ -28,21 +28,45 @@ export function buildGratuitoTocEntries(): PdfTocEntry[] {
 }
 
 /** Sumário pago — inclui ranking quando há candidatos do chat. */
-export function buildPaidTocEntries(hasRanking: boolean): PdfTocEntry[] {
+export function buildPaidTocEntries(hasRanking: boolean, options: { hasConclusion?: boolean } = {}): PdfTocEntry[] {
+  const entry = (id: string, title: string, level: 0 | 1 | 2 | 3): PdfTocEntry => ({ id, title, level });
   return [
-    { id: 'pdf-intro-leitura', title: 'Como ler este relatório', level: 0 },
-    ...(hasRanking
-      ? [{ id: 'pdf-ranking', title: 'Opções avaliadas no chat', level: 0 as const }]
-      : []),
-    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
-    ...essenciaSubassuntos,
-    { id: 'pdf-harmonizacao', title: 'Harmonização — assinatura e estrela', level: 0 },
-    { id: 'pdf-harmonizacao-comparativa', title: 'Harmonização — leitura comparativa', level: 1 },
-    { id: 'pdf-harmonizacao-corpo', title: 'Corpo da assinatura harmonizada', level: 1 },
-    { id: 'pdf-arquetipo', title: 'Arquétipo da expressão', level: 1 },
-    { id: 'pdf-guia', title: 'Guia de uso da assinatura', level: 0 },
-    { id: 'pdf-score', title: 'Como calculamos o score', level: 1 },
-    { id: 'pdf-treino', title: 'Folha de treino de assinatura', level: 1 },
+    entry('pdf-intro-leitura', 'Como ler este relatório', 0),
+    ...(hasRanking ? [entry('pdf-ranking', 'Opções avaliadas no chat', 0)] : []),
+    entry('pdf-essencia', 'A Essência (Nome de Nascimento)', 0),
+    entry('pdf-essencia-destino', 'O Destino: A Estrada Imutável', 1),
+    ...essenciaSubassuntos.filter(e => !e.id.includes('triangulo-') && e.id !== 'pdf-essencia-destino' && !['debitos', 'licoes', 'tendencias'].some(k => e.id.endsWith(k))).map(e => e.id === 'pdf-essencia-expressao' ? { ...e, title: 'Os Números do Nome', level: 1 as const } : e),
+    entry('pdf-essencia-triangulo-vida', 'Triângulo da Vida (Nascimento)', 1),
+    entry('pdf-essencia-karma', 'O Peso do Passado: Débitos e Tendências', 1),
+    ...essenciaSubassuntos.filter(e => ['debitos', 'licoes', 'tendencias'].some(k => e.id.endsWith(k))),
+    entry('pdf-harmonizacao', 'A Engenharia da Harmonização', 0),
+    entry('pdf-harmonizacao-estrela', 'Assinatura, Estrela Comparativa e Score', 1),
+    entry('pdf-harmonizacao-mapa', 'Mapa Vibracional', 1),
+    entry('pdf-harmonizacao-escudo', 'O Escudo Magnético e a Transformação', 1),
+    entry('pdf-harmonizacao-comparativa', 'A Leitura Comparativa', 1),
+    entry('pdf-harmonizacao-corpo', 'Os 5 Números Fundamentais', 2),
+    entry('pdf-harmonizacao-triangulos-comp', 'Comparativo dos Triângulos e Arcanos', 2),
+    entry('pdf-harmonizacao-karma-comp', 'Débitos, Lições e Tendências Comparativos', 2),
+    entry('pdf-nome-harmonizado', 'O Nome Social (Nome Harmonizado)', 0),
+    entry('pdf-harmonizado-ressonancia', 'A Ressonância e o Poder da Nova Frequência', 1),
+    entry('pdf-harmonizado-numeros', 'O Destino e os Números do Nome Harmonizado', 1),
+    entry('pdf-harmonizado-triangulo-vida', 'Triângulo da Vida (Harmonizado)', 1),
+    entry('pdf-harmonizado-karma', 'O Campo Kármico (Harmonizado)', 1),
+    entry('pdf-harmonizado-debitos', 'Débitos Kármicos', 2),
+    entry('pdf-harmonizado-licoes', 'Lições Kármicas', 2),
+    entry('pdf-harmonizado-tendencias', 'Tendências Ocultas', 2),
+    ...(options.hasConclusion ? [entry('pdf-conclusao', 'Conclusão: O Encerramento do Seu Mapa', 1)] : []),
+    entry('pdf-anexos', 'Anexos', 0),
+    entry('pdf-anexos-triangulos', 'Leitura complementar dos triângulos', 1),
+    entry('pdf-anexos-triangulos-essencia', 'Essência (Nome de Nascimento)', 2),
+    ...(['pessoal', 'social', 'destino'] as const).map(k => entry(`pdf-essencia-triangulo-${k}`, k === 'destino' ? 'Triângulo do Destino (Nascimento)' : `Triângulo ${k === 'pessoal' ? 'Pessoal' : 'Social'} (Nascimento)`, 3)),
+    entry('pdf-anexos-triangulos-harmonizado', 'Nome Harmonizado (Nome Social)', 2),
+    ...(['pessoal', 'social', 'destino'] as const).map(k => entry(`pdf-harmonizado-triangulo-${k}`, k === 'destino' ? 'Triângulo do Destino (Harmonizado)' : `Triângulo ${k === 'pessoal' ? 'Pessoal' : 'Social'} (Harmonizado)`, 3)),
+    entry('pdf-arcanos', 'Os Arcanos da Sua Análise', 1),
+    entry('pdf-arquetipo', 'Arquétipo Vibracional', 1),
+    entry('pdf-guia', 'Guia de uso da assinatura', 1),
+    entry('pdf-score', 'Como calculamos o score', 1),
+    entry('pdf-treino', 'Folha de treino de assinatura', 1),
   ];
 }
 
@@ -51,7 +75,7 @@ export function buildStressTocEntries(count: number): PdfTocEntry[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `pdf-stress-${i + 1}`,
     title: `Entrada de teste ${i + 1}`,
-    level: (i % 3) as 0 | 1 | 2,
+    level: (i % 4) as 0 | 1 | 2 | 3,
   }));
 }
 
@@ -60,5 +84,5 @@ export function gratuitoTocAnchorIds(): string[] {
 }
 
 export function paidTocAnchorIds(hasRanking: boolean): string[] {
-  return buildPaidTocEntries(hasRanking).map((e) => e.id);
+  return buildPaidTocEntries(hasRanking, { hasConclusion: true }).map((e) => e.id);
 }
