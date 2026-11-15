@@ -271,13 +271,20 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(closeBtnMatch[0], /bg-transparent text-\[#e5e2e1\]\/80 hover:text-\[#f2ca50\]/);
   });
 
-  it('Hero do /app exibe círculo à esquerda, 5 pontas da estrela, 2 botões, favoritar e setas de carrossel sem toggle Nome atual', () => {
+  it('Hero do /app exibe círculo grande à direita, pílulas sem Mapa Cabalístico, 5 pontas da estrela legíveis, 2 botões, favoritar e card de nascimento no carrossel', () => {
     const dashboardSrc = readFileSync(
       path.join(srcRoot, 'frontend', 'components', 'app', 'dashboard', 'AppDashboard.tsx'),
       'utf8',
     );
     assert.doesNotMatch(dashboardSrc, /Alternar nome exibido no score/);
+    assert.doesNotMatch(dashboardSrc, /Mapa Cabalístico/);
+    assert.match(dashboardSrc, /lg:grid-cols-\[minmax\(0,1fr\)_300px\]/);
+    assert.match(dashboardSrc, /lg:order-1[\s\S]*lg:order-2/);
+    assert.match(dashboardSrc, /lg:h-\[280px\] lg:w-\[280px\]/);
+    assert.match(dashboardSrc, /activeVisual\.badgeClass/);
+    assert.match(dashboardSrc, /Harmônica \/ Favorável/);
     assert.match(dashboardSrc, /As 5 pontas da estrela/);
+    assert.match(dashboardSrc, /text-xs sm:text-sm font-medium tracking-wide/);
     assert.match(dashboardSrc, /key:\s*'destino',\s*label:\s*'Destino'/);
     assert.match(dashboardSrc, /key:\s*'expressao',\s*label:\s*'Expressão'/);
     assert.match(dashboardSrc, /key:\s*'motivacao',\s*label:\s*'Motivação'/);
@@ -289,17 +296,22 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /Próxima análise/);
     assert.match(dashboardSrc, /Favoritar esta análise como principal do dashboard/);
 
+    const appIndexSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'index.astro'), 'utf8');
+    assert.doesNotMatch(appIndexSrc, /Mapa Cabalístico/);
+    assert.match(appIndexSrc, /\[\.\.\.paidSlides, birthSlide\]/);
+
     const analisesSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro'), 'utf8');
     assert.match(analisesSrc, /favorite-analysis-btn/);
     assert.match(analisesSrc, /analysis\.product_type !== 'analise_gratuita'/);
   });
 
-  it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado', () => {
+  it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado e suporta ?modo=nascimento', () => {
     const resultadoSrc = readFileSync(
       path.join(srcRoot, 'pages', 'app', 'resultado', '[id].astro'),
       'utf8',
     );
     assert.doesNotMatch(resultadoSrc, /NomeAtualResultado/);
+    assert.match(resultadoSrc, /modo'\)\s*===\s*'nascimento'/);
     assert.match(resultadoSrc, /const isSocialSummaryView = isNomeSocial \|\| isAnaliseGratuita \|\| isFree;/);
     assert.match(resultadoSrc, /<ChatSidebarSection/);
   });

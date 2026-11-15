@@ -43,12 +43,14 @@ export interface DashboardHeroSlide {
   birthScore: number;
   bloqueiosCount: number;
   bloqueiosTitulos: string[];
-  compatibilidadeLabel: string;
+  compatibilidade: 'favoravel' | 'neutro' | 'desfavoravel' | null;
   starNumbers: DashboardHeroStarNumbers;
   productType: string;
   isFree: boolean;
   isFavorite: boolean;
   dateLabel: string;
+  resultadoHrefOverride?: string;
+  pdfAnalysisId?: string;
 }
 
 export interface DashboardHistoryItem {
@@ -258,7 +260,7 @@ export function AppDashboard(props: AppDashboardProps) {
         birthScore: Math.max(0, Math.min(100, Math.round(props.birthScore ?? props.score))),
         bloqueiosCount: props.bloqueios.length,
         bloqueiosTitulos: props.bloqueios,
-        compatibilidadeLabel: 'Mapa Cabalístico',
+        compatibilidade: null,
         starNumbers: { destino: 0, expressao: 0, motivacao: 0, missao: 0, impressao: 0 },
         productType: props.featuredProductType ?? (isFallbackFree ? 'analise_gratuita' : 'nome_social'),
         isFree: isFallbackFree,
@@ -416,12 +418,31 @@ export function AppDashboard(props: AppDashboardProps) {
     return false;
   }, [offerDismissed, props]);
 
-  const resultadoHref = `/app/resultado/${activeSlide.id}`;
+  const resultadoHref = activeSlide.resultadoHrefOverride ?? `/app/resultado/${activeSlide.id}`;
+  const pdfAnalysisId = activeSlide.pdfAnalysisId ?? activeSlide.id;
   const isCurrentFavorite = !activeSlide.isFree && favoriteId === activeSlide.id;
   const gainPts = activeSlide.score - activeSlide.birthScore;
 
-  const radius = 104;
-  const strokeWidth = 12;
+  const compatPill =
+    activeSlide.compatibilidade === 'favoravel'
+      ? {
+          label: '✦ Harmônica / Favorável',
+          className: 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-300',
+        }
+      : activeSlide.compatibilidade === 'neutro'
+        ? {
+            label: '◈ Neutra',
+            className: 'border border-amber-500/30 bg-amber-500/15 text-amber-300',
+          }
+        : activeSlide.compatibilidade === 'desfavoravel'
+          ? {
+              label: '⚠ Tensão Vibracional',
+              className: 'border border-red-500/30 bg-red-500/15 text-red-300',
+            }
+          : null;
+
+  const radius = 114;
+  const strokeWidth = 14;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * displayedScore) / 100;
 
@@ -448,62 +469,13 @@ export function AppDashboard(props: AppDashboardProps) {
             </button>
           )}
 
-          <div className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-6 sm:p-8 lg:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-6 sm:p-8 lg:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             <div
               key={activeSlide.id}
-              className={`flex flex-col items-center gap-7 text-center transition-all duration-300 ease-out lg:grid lg:grid-cols-[268px_minmax(0,1fr)] lg:items-center lg:gap-10 lg:text-left ${slideMotionClass}`}
+              className={`flex flex-col items-center gap-7 text-center transition-all duration-300 ease-out lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center lg:gap-8 lg:text-left ${slideMotionClass}`}
             >
-              {/* Lado Esquerdo (Desktop) / Topo (Mobile): Apenas o círculo grande do score */}
-              <div className="flex shrink-0 items-center justify-center p-1 lg:h-full lg:p-2">
-                <a
-                  href={resultadoHref}
-                  className="group relative flex h-52 w-52 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] sm:h-56 sm:w-56 lg:h-60 lg:w-60"
-                  aria-label={`Score ${targetScore} para ${activeSlide.nome}. Clique para ver o painel de análise.`}
-                >
-                  <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 240 240">
-                    <circle
-                      cx="120"
-                      cy="120"
-                      r={radius}
-                      className="stroke-white/[0.06]"
-                      strokeWidth={strokeWidth}
-                      fill="transparent"
-                    />
-                    <circle
-                      cx="120"
-                      cy="120"
-                      r={radius}
-                      stroke={activeVisual.stroke}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={circumference}
-                      strokeDashoffset={strokeDashoffset}
-                      strokeLinecap="round"
-                      fill="transparent"
-                      style={{ transition: 'stroke 0.8s ease' }}
-                    />
-                  </svg>
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-                    <span
-                      className="font-cinzel text-[52px] font-bold leading-none tracking-tight tabular-nums sm:text-[58px]"
-                      style={{ color: activeVisual.text }}
-                    >
-                      {displayedScore}
-                    </span>
-                    <span className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-[#A0A0A0]">
-                      Pontos
-                    </span>
-                    <span
-                      className={`mt-2.5 inline-flex items-center rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ${activeVisual.badgeClass}`}
-                    >
-                      {activeVisual.label}
-                    </span>
-                  </div>
-                </a>
-              </div>
-
-              {/* Lado Direito (Desktop) / Base (Mobile): Nome, Tags, 5 Pontas da Estrela, 2 Botões */}
-              <div className="flex w-full min-w-0 flex-1 flex-col items-center lg:items-start">
+              {/* Lado Esquerdo (Desktop) / Base (Mobile): Nome, Tags em Pílula, 5 Pontas da Estrela, 2 Botões */}
+              <div className="order-2 flex w-full min-w-0 flex-1 flex-col items-center lg:order-1 lg:items-start">
                 <div className="flex w-full flex-wrap items-center justify-center gap-2 lg:justify-between">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
@@ -564,26 +536,37 @@ export function AppDashboard(props: AppDashboardProps) {
                   {activeSlide.nome || 'Nome não informado'}
                 </h1>
 
-                {/* Tags de características de harmonização */}
+                {/* Tags em formato pílula relacionadas à análise */}
                 <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                   <span
-                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`inline-flex items-center rounded-full border px-3.5 py-1 text-xs font-semibold ${activeVisual.badgeClass}`}
+                    style={{ backgroundColor: activeVisual.fill }}
+                  >
+                    {activeVisual.label}
+                  </span>
+
+                  <span
+                    className={`inline-flex items-center rounded-full border px-3.5 py-1 text-xs font-semibold ${
                       activeSlide.bloqueiosCount === 0
-                        ? 'bg-emerald-500/12 text-emerald-300'
-                        : 'bg-[#FF6B6B]/15 text-[#FF6B6B]'
+                        ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+                        : 'border-red-500/30 bg-red-500/15 text-red-300'
                     }`}
                   >
                     {activeSlide.bloqueiosCount === 0
-                      ? '0 Bloqueios'
-                      : `${activeSlide.bloqueiosCount} ${activeSlide.bloqueiosCount === 1 ? 'Bloqueio ativo' : 'Bloqueios ativos'}`}
+                      ? '✓ 0 Bloqueios'
+                      : `⚠ ${activeSlide.bloqueiosCount} ${activeSlide.bloqueiosCount === 1 ? 'Bloqueio ativo' : 'Bloqueios ativos'}`}
                   </span>
 
-                  <span className="inline-flex items-center rounded-full bg-[#bea5ff]/12 px-3 py-1 text-xs font-medium text-[#d7c6ff]">
-                    {activeSlide.compatibilidadeLabel}
-                  </span>
+                  {compatPill && (
+                    <span
+                      className={`inline-flex items-center rounded-full px-3.5 py-1 text-xs font-semibold ${compatPill.className}`}
+                    >
+                      {compatPill.label}
+                    </span>
+                  )}
 
                   {!activeSlide.isFree && gainPts > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-emerald-400/12 px-3 py-1 text-xs font-semibold text-emerald-300">
+                    <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-1 text-xs font-semibold text-emerald-300">
                       +{gainPts} pts sobre o nome de nascimento
                     </span>
                   )}
@@ -592,7 +575,7 @@ export function AppDashboard(props: AppDashboardProps) {
                     activeSlide.bloqueiosTitulos.slice(0, 2).map((titulo) => (
                       <span
                         key={titulo}
-                        className="inline-flex items-center rounded-full bg-[#FF6B6B]/10 px-3 py-1 text-xs font-medium text-[#FF6B6B]"
+                        className="inline-flex items-center rounded-full border border-red-500/25 bg-red-500/10 px-3.5 py-1 text-xs font-medium text-red-300"
                       >
                         {titulo}
                       </span>
@@ -601,22 +584,22 @@ export function AppDashboard(props: AppDashboardProps) {
 
                 {/* As 5 pontas da estrela e seus números */}
                 <div className="mt-5 w-full">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#A0A0A0]">
+                  <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.16em] text-[#A0A0A0]">
                     As 5 pontas da estrela
                   </p>
-                  <div className="flex flex-wrap justify-center gap-2 sm:grid sm:grid-cols-5 sm:gap-2.5">
+                  <div className="flex flex-wrap justify-center gap-2.5 sm:grid sm:grid-cols-5 sm:gap-3">
                     {STAR_POINT_ITEMS.map((item) => (
                       <div
                         key={item.key}
-                        className="flex min-w-[84px] flex-1 basis-[28%] flex-col items-center justify-center rounded-xl bg-[#131313]/85 px-2.5 py-2.5 sm:basis-auto sm:min-w-0"
+                        className="flex min-w-[92px] flex-1 basis-[28%] flex-col items-center justify-center rounded-xl bg-[#131313]/85 px-3 py-3 sm:basis-auto sm:min-w-0"
                       >
                         <span
-                          className="font-cinzel text-lg font-bold leading-none tabular-nums sm:text-xl"
+                          className="font-cinzel text-xl font-bold leading-none tabular-nums sm:text-2xl"
                           style={{ color: activeVisual.text }}
                         >
                           {activeSlide.starNumbers[item.key] || '—'}
                         </span>
-                        <span className="mt-1 text-[10px] font-medium tracking-wide text-[#A0A0A0]">
+                        <span className="mt-1.5 text-xs sm:text-sm font-medium tracking-wide text-[#e5e2e1]/90">
                           {item.label}
                         </span>
                       </div>
@@ -627,7 +610,7 @@ export function AppDashboard(props: AppDashboardProps) {
                 {/* Apenas dois botões: Baixar PDF e Ver Painel de Análise */}
                 <div className="mt-6 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:w-auto">
                   <PDFFeedbackButton
-                    analysisId={activeSlide.id}
+                    analysisId={pdfAnalysisId}
                     productType={activeSlide.productType}
                     isFree={activeSlide.isFree}
                     label="Baixar PDF"
@@ -639,6 +622,56 @@ export function AppDashboard(props: AppDashboardProps) {
                     Ver Painel de Análise
                   </a>
                 </div>
+              </div>
+
+              {/* Lado Direito (Desktop) / Topo (Mobile): Apenas o círculo grande do score */}
+              <div className="order-1 flex shrink-0 items-center justify-center p-2 lg:order-2 lg:h-full lg:justify-end">
+                <a
+                  href={resultadoHref}
+                  className="group relative flex h-56 w-56 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] sm:h-64 sm:w-64 lg:h-[280px] lg:w-[280px]"
+                  aria-label={`Score ${targetScore} para ${activeSlide.nome}. Clique para ver o painel de análise.`}
+                >
+                  <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 260 260">
+                    <circle
+                      cx="130"
+                      cy="130"
+                      r={radius}
+                      className="stroke-white/[0.06]"
+                      strokeWidth={strokeWidth}
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="130"
+                      cy="130"
+                      r={radius}
+                      stroke={activeVisual.stroke}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      style={{ transition: 'stroke 0.8s ease' }}
+                    />
+                  </svg>
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+                    <span
+                      className="font-cinzel text-[58px] font-bold leading-none tracking-tight tabular-nums sm:text-[64px] lg:text-[72px]"
+                      style={{ color: activeVisual.text }}
+                    >
+                      {displayedScore}
+                    </span>
+                    <span className="mt-2 text-[11px] font-medium uppercase tracking-[0.22em] text-[#A0A0A0]">
+                      Pontos
+                    </span>
+                    <span
+                      className={`mt-3 inline-flex items-center rounded-full border px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider ${activeVisual.badgeClass}`}
+                      style={{ backgroundColor: activeVisual.fill }}
+                    >
+                      {activeVisual.label}
+                    </span>
+                  </div>
+                </a>
               </div>
             </div>
           </div>

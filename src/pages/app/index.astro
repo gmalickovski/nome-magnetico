@@ -632,20 +632,7 @@ function toPtBrBirthDate(raw?: string | null): string {
   return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(raw);
 }
 
-function formatCompatLabel(comp?: string | null): string {
-  switch (comp) {
-    case 'total':
-      return 'Compatibilidade Total';
-    case 'complementar':
-      return 'Harmonia Complementar';
-    case 'aceitavel':
-      return 'Sintonia Aceitável';
-    case 'incompativel':
-      return 'Tensão Vibracional';
-    default:
-      return 'Mapa Cabalístico';
-  }
-}
+type CompatType = 'favoravel' | 'neutro' | 'desfavoravel';
 
 function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHeroSlide {
   const freqData = row.frequencias_numeros as Record<string, any> | null;
@@ -704,7 +691,7 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
         .map((b: { titulo?: string }) => b?.titulo?.trim())
         .filter((t: string | undefined): t is string => Boolean(t))
     : [];
-  let compatibilidadeLabel = 'Mapa Cabalístico';
+  let compatibilidade: CompatType | null = null;
 
   if (nomeExibido && dataPt) {
     try {
@@ -719,15 +706,8 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
       const tris = calcularTodosTriangulos(nomeExibido, dataPt);
       const blocs = detectarBloqueios(tris);
       bloqueiosTitulos = blocs.map((b) => b.titulo);
-      compatibilidadeLabel = formatCompatLabel(
-        avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino),
-      );
     } catch {
-      if (starNumbers.expressao && starNumbers.destino) {
-        compatibilidadeLabel = formatCompatLabel(
-          avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino),
-        );
-      }
+      /* mantém números salvos no banco */
     }
   } else if (row.product_type === 'nome_empresa' && freqData?.melhorNome) {
     const emp = freqData.melhorNome as Record<string, any>;
@@ -738,9 +718,10 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
       missao: Number(emp.missao ?? starNumbers.missao),
       impressao: Number(emp.impressao ?? starNumbers.impressao),
     };
-    compatibilidadeLabel = formatCompatLabel(
-      avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino),
-    );
+  }
+
+  if (starNumbers.expressao > 0 && starNumbers.destino > 0) {
+    compatibilidade = avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino);
   }
 
   return {
@@ -751,7 +732,7 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
     birthScore: rowBirthScore,
     bloqueiosCount: bloqueiosTitulos.length,
     bloqueiosTitulos,
-    compatibilidadeLabel,
+    compatibilidade,
     starNumbers,
     productType: row.product_type ?? 'nome_social',
     isFree: isFreeRow,
@@ -762,6 +743,60 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
       year: 'numeric',
       timeZone: 'America/Sao_Paulo',
     }).format(new Date(row.created_at)),
+  };
+}
+
+function buildSynthesizedBirthSlide(
+  targetAnalysisId: string | null,
+  birthName: string,
+  dataPt: string,
+  fallbackScore: number,
+): DashboardHeroSlide | null {
+  if (!targetAnalysisId || !birthName.trim()) return null;
+
+  let slideScore = Math.max(0, Math.min(100, Math.round(fallbackScore)));
+  let starNumbers = { destino: 0, expressao: 0, motivacao: 0, missao: 0, impressao: 0 };
+  let bloqueiosTitulos: string[] = [];
+
+  if (dataPt) {
+    try {
+      slideScore = avaliarNome(birthName, dataPt).score_v3;
+      const cinco = calcularCincoNumeros(birthName, dataPt);
+      starNumbers = {
+        destino: cinco.destino,
+        expressao: cinco.expressao,
+        motivacao: cinco.motivacao,
+        missao: cinco.missao,
+        impressao: cinco.impressao,
+      };
+      const tris = calcularTodosTriangulos(birthName, dataPt);
+      bloqueiosTitulos = detectarBloqueios(tris).map((b) => b.titulo);
+    } catch {
+      /* mantém fallback */
+    }
+  }
+
+  const compatibilidade: CompatType | null =
+    starNumbers.expressao > 0 && starNumbers.destino > 0
+      ? avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino)
+      : null;
+
+  return {
+    id: `${targetAnalysisId}__birth`,
+    nome: birthName,
+    birthName,
+    score: slideScore,
+    birthScore: slideScore,
+    bloqueiosCount: bloqueiosTitulos.length,
+    bloqueiosTitulos,
+    compatibilidade,
+    starNumbers,
+    productType: 'analise_gratuita',
+    isFree: true,
+    isFavorite: false,
+    dateLabel: '',
+    pdfAnalysisId: targetAnalysisId,
+    resultadoHrefOverride: `/app/resultado/${targetAnalysisId}?modo=nascimento`,
   };
 }
 
@@ -776,11 +811,27 @@ const paidSlides: DashboardHeroSlide[] = paidCompletedRows
     return b.score - a.score;
   });
 
+const birthSlideFromFreeRow = freeAnalysis
+  ? buildHeroSlideFromRow(freeAnalysis, birthScoreDashboard)
+  : null;
+
+const hasDifferentBirthNameInPaid =
+  Boolean(nomeHojeDashboard) &&
+  paidSlides.some((s) => s.nome.trim().toLowerCase() !== nomeHojeDashboard.trim().toLowerCase());
+
+const birthSlide: DashboardHeroSlide | null =
+  birthSlideFromFreeRow ??
+  (paidSlides.length === 0 || hasDifferentBirthNameInPaid
+    ? buildSynthesizedBirthSlide(featuredAnalysisId, nomeHojeDashboard, dataPtRadar, birthScoreDashboard)
+    : null);
+
 const heroSlides: DashboardHeroSlide[] =
   paidSlides.length > 0
-    ? paidSlides
-    : freeAnalysis
-      ? [buildHeroSlideFromRow(freeAnalysis, birthScoreDashboard)]
+    ? birthSlide
+      ? [...paidSlides, birthSlide]
+      : paidSlides
+    : birthSlide
+      ? [birthSlide]
       : [];
 
 const historySourceRows = allCompletedAnalyses.slice(0, 6);

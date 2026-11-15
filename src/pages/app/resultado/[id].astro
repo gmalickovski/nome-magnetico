@@ -174,8 +174,10 @@ const dataScoreSocial =
   toScoreDate((rankingSocial?.dataNascimento as string | undefined) ?? null)
   || toScoreDate(analysis.data_nascimento ?? null)
   || toScoreDate((profile?.birth_date as string | undefined) ?? null);
+const forceBirthMode = Astro.url.searchParams.get('modo') === 'nascimento';
 const showDualCertificate =
-  isNomeSocial
+  !forceBirthMode
+  && isNomeSocial
   && !isFree
   && !!nomeNascimentoCertificado
   && nomeNascimentoCertificado.trim().toLowerCase() !== nomeExibido.trim().toLowerCase();
