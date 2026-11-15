@@ -229,6 +229,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(typographySrc, /--nm-type-chart-number:\s*var\(--nm-type-chart-label\)/);
     assert.match(typographySrc, /--nm-type-chart-label:\s*24px/);
     assert.match(typographySrc, /\.nm-score-eyebrow/);
+    assert.match(typographySrc, /\.nm-reading-item-title\s*\{\s*font-size:\s*var\(--nm-type-h4\)/);
     assert.match(typographySrc, /@container \(min-width:\s*28rem\)/);
 
     const frameSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'landing', 'ProductResultFrame.tsx'), 'utf8');
@@ -242,10 +243,12 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const starPanelSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyStarPanel.tsx'), 'utf8');
     assert.match(starPanelSrc, /STAR_DIMENSION_NUMBER_MEANINGS/);
+    assert.match(starPanelSrc, /nm-reading-item-title[\s\S]*?text-\[#f2ca50\]/);
     assert.match(starPanelSrc, /activeVisual\.text/);
 
     const sidebarSectionSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarSection.tsx'), 'utf8');
     assert.match(sidebarSectionSrc, /RADAR_AXES_EXPLANATIONS/);
+    assert.match(sidebarSectionSrc, /nm-reading-item-title[\s\S]*?text-\[#f2ca50\]/);
     assert.match(sidebarSectionSrc, /activeVisual\.text/);
   });
 

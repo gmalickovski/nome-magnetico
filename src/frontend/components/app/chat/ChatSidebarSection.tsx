@@ -179,7 +179,7 @@ export function ChatSidebarSection({
 
                 return (
                   <div key={axis.key} className="space-y-1 text-left">
-                    <p className="font-inter font-semibold text-[#e5e2e1] text-sm leading-snug flex flex-wrap items-center gap-1.5">
+                    <p className="nm-reading-item-title font-inter font-semibold text-[#f2ca50] text-base leading-snug flex flex-wrap items-center gap-1.5">
                       <span>
                         {axisLabel}{' '}
                         <span className="font-bold" style={{ color: activeVisual.text }}>

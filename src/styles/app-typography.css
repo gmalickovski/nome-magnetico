@@ -40,10 +40,14 @@
   line-height: 1.6;
 }
 .nm-app-shell--with-mobile-dock .nm-card-text,
-.nm-app-shell--with-mobile-dock .nm-reading-card p:not(.nm-caption):not(.nm-score-eyebrow):not([class*="uppercase"]):not([class*="text-xs"]):not([class*="text-[11px]"]):not([class*="text-[10px]"]) {
+.nm-app-shell--with-mobile-dock .nm-reading-card p:not(.nm-caption):not(.nm-score-eyebrow):not(.nm-reading-item-title):not([class*="uppercase"]):not([class*="text-xs"]):not([class*="text-[11px]"]):not([class*="text-[10px]"]) {
   font-size: var(--nm-type-card-body);
   line-height: 1.6;
   text-align: left;
+}
+.nm-app-shell--with-mobile-dock .nm-reading-item-title {
+  font-size: var(--nm-type-h4);
+  line-height: 1.35;
 }
 .nm-app-shell--with-mobile-dock .nm-caption { font-size: var(--nm-type-caption); line-height: 1.5; }
 .nm-app-shell--with-mobile-dock .nm-score-eyebrow {
