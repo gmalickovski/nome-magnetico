@@ -294,7 +294,11 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /Jornada de Ativação/);
     assert.match(dashboardSrc, /Grau de Vibração/);
     assert.match(dashboardSrc, /role="progressbar"/);
-    assert.match(dashboardSrc, /max-w-\[500px\]/);
+    assert.match(dashboardSrc, /showChecklistCard/);
+    assert.match(dashboardSrc, /variant="dashboard"/);
+    assert.match(dashboardSrc, /showNumericLabels=\{Boolean\(activeHarmonizedAxes\)\}/);
+    assert.match(dashboardSrc, /Mapa de Alinhamento Vibracional/);
+    assert.match(dashboardSrc, /nm-floating-card nm-reading-card/);
     assert.match(dashboardSrc, /label="Baixar PDF"/);
     assert.match(dashboardSrc, /Ver Painel de Análise/);
     assert.match(dashboardSrc, /Análise anterior/);

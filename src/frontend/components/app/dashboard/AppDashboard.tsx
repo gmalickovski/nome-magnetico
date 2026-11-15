@@ -427,6 +427,12 @@ export function AppDashboard(props: AppDashboardProps) {
   const activeHarmonizedAxes = activeSlide.isFree
     ? null
     : (activeSlide.harmonizedRadarAxes ?? props.harmonizedRadarAxes ?? null);
+  const hasDistinctHarmonizedName =
+    activeSlide.productType !== 'nome_social' ||
+    activeSlide.nome.trim().toLowerCase() !== activeSlide.birthName.trim().toLowerCase();
+  const showChecklistCard =
+    !activeSlide.isFree && Boolean(activeHarmonizedAxes) && hasDistinctHarmonizedName;
+  const hasLeftColumn = showChecklistCard || Boolean(props.recommendedReading);
   const activeBirthScoreForRadar = Math.max(
     0,
     Math.min(100, Math.round(activeSlide.birthScore ?? props.birthScore ?? props.score)),
@@ -791,156 +797,168 @@ export function AppDashboard(props: AppDashboardProps) {
         )}
       </section>
 
-      {/* Checklist por card + Teia dinâmica + Leitura Recomendada */}
-      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <div className="flex flex-col gap-6">
-          <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
-                  Jornada de Ativação
-                </h2>
-                <p className="mt-0.5 text-xs text-[#A0A0A0]">
-                  {activeSlide.nome}
-                </p>
-              </div>
-              <p className="text-xs font-medium tabular-nums text-[#A0A0A0]">
-                {doneCount} de {CHECKLIST_ITEMS.length} concluídos
-              </p>
-            </div>
-
-            {/* Grau de Ativação Vibracional + Barra de Progresso */}
-            <div className="mt-4 space-y-2 pb-4 border-b border-white/[0.06]">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
-                    Grau de Vibração
-                  </span>
-                  <span
-                    className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors duration-500"
-                    style={vibrationInfo.badgeStyle}
-                  >
-                    {vibrationInfo.levelName}
-                  </span>
+      {/* Checklist por card (somente em nomes harmonizados) + Teia dinâmica + Leitura Recomendada */}
+      <div
+        className={`grid gap-6 lg:gap-8 ${
+          hasLeftColumn
+            ? showChecklistCard
+              ? 'lg:grid-cols-2'
+              : 'lg:grid-cols-2 lg:items-start'
+            : 'grid-cols-1'
+        }`}
+      >
+        {hasLeftColumn && (
+          <div className="flex flex-col gap-6">
+            {showChecklistCard && (
+              <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
+                      Jornada de Ativação
+                    </h2>
+                    <p className="mt-0.5 text-xs text-[#A0A0A0]">
+                      {activeSlide.nome}
+                    </p>
+                  </div>
+                  <p className="text-xs font-medium tabular-nums text-[#A0A0A0]">
+                    {doneCount} de {CHECKLIST_ITEMS.length} concluídos
+                  </p>
                 </div>
-                <span
-                  className="font-cinzel text-base font-bold tabular-nums transition-colors duration-500"
-                  style={{ color: vibrationInfo.textColor }}
-                >
-                  {vibrationInfo.percentage}%
-                </span>
-              </div>
 
-              <div
-                className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.07]"
-                role="progressbar"
-                aria-valuenow={vibrationInfo.percentage}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={`Grau de Vibração: ${vibrationInfo.percentage}% (${vibrationInfo.levelName})`}
-              >
-                <div
-                  className={`h-full rounded-full bg-gradient-to-r ${vibrationInfo.barGradient} transition-all duration-700 ease-out`}
-                  style={{ width: `${vibrationInfo.percentage}%` }}
-                />
-              </div>
-
-              <p className="text-xs leading-relaxed text-[#A0A0A0]">
-                {vibrationInfo.summary}
-              </p>
-            </div>
-
-            {/* 6 Passos em checkboxes redondos sem fundo escuro interno */}
-            <ul className="mt-4 space-y-1.5">
-              {CHECKLIST_ITEMS.map((item) => {
-                const checked = activeChecklist[item.key];
-                return (
-                  <li key={item.key}>
-                    <label className="group flex cursor-pointer items-start gap-3.5 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleSlideChecklist(activeSlide, item.key)}
-                        className="sr-only"
-                      />
+                {/* Grau de Ativação Vibracional + Barra de Progresso */}
+                <div className="mt-4 space-y-2 pb-4 border-b border-white/[0.06]">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
+                        Grau de Vibração
+                      </span>
                       <span
-                        aria-hidden="true"
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
-                          checked
-                            ? 'border-[#34D399] bg-[#34D399]/20 text-[#34D399] shadow-[0_0_12px_rgba(52,211,153,0.28)]'
-                            : 'border-[#D4AF37]/40 bg-transparent text-transparent group-hover:border-[#f2ca50]'
-                        }`}
+                        className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors duration-500"
+                        style={vibrationInfo.badgeStyle}
                       >
-                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+                        {vibrationInfo.levelName}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span
-                          className={`block text-sm font-medium leading-snug transition-colors ${
-                            checked
-                              ? 'text-emerald-300/90 line-through decoration-emerald-400/40'
-                              : 'text-[#e5e2e1]'
-                          }`}
-                        >
-                          {item.step}. {item.label}
-                        </span>
-                        <span className="mt-0.5 block text-xs leading-relaxed text-[#A0A0A0]">
-                          {item.description}
-                        </span>
-                      </span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+                    </div>
+                    <span
+                      className="font-cinzel text-base font-bold tabular-nums transition-colors duration-500"
+                      style={{ color: vibrationInfo.textColor }}
+                    >
+                      {vibrationInfo.percentage}%
+                    </span>
+                  </div>
 
-          {props.recommendedReading && (
-            <section className="nm-floating-card rounded-2xl p-5 sm:p-6">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d7c6ff]">
-                {props.recommendedReading.badge}
-              </p>
-              <h3 className="mt-1.5 font-cinzel text-lg font-bold text-[#e5e2e1]">
-                {props.recommendedReading.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#A0A0A0]">
-                {props.recommendedReading.subtitle}
-              </p>
-              <div className="mt-4">
-                <a
-                  href={props.recommendedReading.href}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#f2ca50] transition hover:text-[#D4AF37]"
-                >
-                  {props.recommendedReading.ctaLabel}
-                </a>
-              </div>
-            </section>
-          )}
-        </div>
+                  <div
+                    className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.07]"
+                    role="progressbar"
+                    aria-valuenow={vibrationInfo.percentage}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Grau de Vibração: ${vibrationInfo.percentage}% (${vibrationInfo.levelName})`}
+                  >
+                    <div
+                      className={`h-full rounded-full bg-gradient-to-r ${vibrationInfo.barGradient} transition-all duration-700 ease-out`}
+                      style={{ width: `${vibrationInfo.percentage}%` }}
+                    />
+                  </div>
 
-        <section className="flex flex-col justify-between rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
-          <div>
-            <h2 className="mb-1 font-cinzel text-lg font-bold text-[#e5e2e1]">
-              Como o seu nome se sai em 5 áreas
-            </h2>
-            <p className="mb-4 text-xs text-[#A0A0A0]">
+                  <p className="text-xs leading-relaxed text-[#A0A0A0]">
+                    {vibrationInfo.summary}
+                  </p>
+                </div>
+
+                {/* 6 Passos em checkboxes redondos sem fundo escuro interno */}
+                <ul className="mt-4 space-y-1.5">
+                  {CHECKLIST_ITEMS.map((item) => {
+                    const checked = activeChecklist[item.key];
+                    return (
+                      <li key={item.key}>
+                        <label className="group flex cursor-pointer items-start gap-3.5 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleSlideChecklist(activeSlide, item.key)}
+                            className="sr-only"
+                          />
+                          <span
+                            aria-hidden="true"
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                              checked
+                                ? 'border-[#34D399] bg-[#34D399]/20 text-[#34D399] shadow-[0_0_12px_rgba(52,211,153,0.28)]'
+                                : 'border-[#D4AF37]/40 bg-transparent text-transparent group-hover:border-[#f2ca50]'
+                            }`}
+                          >
+                            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span
+                              className={`block text-sm font-medium leading-snug transition-colors ${
+                                checked
+                                  ? 'text-emerald-300/90 line-through decoration-emerald-400/40'
+                                  : 'text-[#e5e2e1]'
+                              }`}
+                            >
+                              {item.step}. {item.label}
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-relaxed text-[#A0A0A0]">
+                              {item.description}
+                            </span>
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {props.recommendedReading && (
+              <section className="nm-floating-card rounded-2xl p-5 sm:p-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d7c6ff]">
+                  {props.recommendedReading.badge}
+                </p>
+                <h3 className="mt-1.5 font-cinzel text-lg font-bold text-[#e5e2e1]">
+                  {props.recommendedReading.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#A0A0A0]">
+                  {props.recommendedReading.subtitle}
+                </p>
+                <div className="mt-4">
+                  <a
+                    href={props.recommendedReading.href}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#f2ca50] transition hover:text-[#D4AF37]"
+                  >
+                    {props.recommendedReading.ctaLabel}
+                  </a>
+                </div>
+              </section>
+            )}
+          </div>
+        )}
+
+        <section className="nm-floating-card nm-reading-card flex flex-col justify-between rounded-2xl p-5 sm:p-6">
+          <header className="flex flex-col gap-1 min-w-0 text-left">
+            <p className="nm-score-eyebrow">Mapa de Alinhamento Vibracional</p>
+            <p className="nm-caption text-[#e5e2e1]/60 leading-snug text-left">
               {activeHarmonizedAxes
                 ? `Comparação entre ${activeSlide.birthName} e ${activeSlide.nome}. Toque para detalhar.`
-                : `Mapa vibracional inicial de ${activeSlide.nome}. Toque para abrir o painel de análise.`}
+                : `Ressonância inicial de ${activeSlide.nome}. Toque para abrir o painel de análise.`}
             </p>
-          </div>
+          </header>
           <a
             href={resultadoHref}
             className="flex flex-1 items-center justify-center rounded-xl py-2 transition-opacity hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]"
           >
             <ReadingRadar
+              variant="dashboard"
               axes={activeBirthAxes}
               overlayAxes={activeHarmonizedAxes}
               birthScore={activeBirthScoreForRadar}
               overlayScore={activeHarmonizedAxes ? activeOverlayScoreForRadar : null}
               labels={activeRadarLabels}
-              className="pointer-events-none mx-auto w-full max-w-[500px] [&_svg]:w-full [&_svg]:max-w-[500px]"
+              showNumericLabels={Boolean(activeHarmonizedAxes)}
+              className="pointer-events-none mx-auto w-full"
             />
           </a>
         </section>

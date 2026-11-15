@@ -235,25 +235,37 @@ const socialAreaFoco = (
     ? rankingSocial.areaFoco
     : typeof rankingSocial?.area_foco === 'string'
       ? rankingSocial.area_foco
-      : null
+      : typeof freqData?.areaFoco === 'string'
+        ? freqData.areaFoco
+        : typeof freqData?.area_foco === 'string'
+          ? freqData.area_foco
+          : typeof freqData?.parametros_usuario?.areaFoco === 'string'
+            ? freqData.parametros_usuario.areaFoco
+            : null
 ) as AreaFocoNomeMagnetico | null;
+
+const socialOndeAssina = Array.isArray(freqData?.ondeVaiUsar)
+  ? freqData.ondeVaiUsar
+  : Array.isArray(freqData?.onde_vai_usar)
+    ? freqData.onde_vai_usar
+    : Array.isArray(rankingSocial?.ondeVaiUsar)
+      ? rankingSocial.ondeVaiUsar
+      : Array.isArray(rankingSocial?.onde_vai_usar)
+        ? rankingSocial.onde_vai_usar
+        : [];
 
 const socialRadarContext = {
   areaFoco: socialAreaFoco,
-  ondeAssinaRaw: Array.isArray(rankingSocial?.ondeVaiUsar)
-    ? rankingSocial.ondeVaiUsar
-    : Array.isArray(rankingSocial?.onde_vai_usar)
-      ? rankingSocial.onde_vai_usar
-      : [],
+  ondeAssinaRaw: socialOndeAssina,
 };
 const socialRadarLabels = getRadarAxisLabels(socialAreaFoco);
 const socialContextChips: string[] = [
-  ...(typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
-    ? [rankingSocial.assinaturaAtual.trim()]
-    : []),
-  ...(Array.isArray(rankingSocial?.ondeVaiUsar)
-    ? rankingSocial.ondeVaiUsar.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0)
-    : []),
+  ...(typeof freqData?.assinaturaAtual === 'string' && freqData.assinaturaAtual.trim()
+    ? [freqData.assinaturaAtual.trim()]
+    : typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
+      ? [rankingSocial.assinaturaAtual.trim()]
+      : []),
+  ...socialOndeAssina.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0),
 ];
 
 if (isSocialSummaryView && dataScoreSocial) {

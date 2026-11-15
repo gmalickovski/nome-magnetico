@@ -527,6 +527,34 @@ if (nomeHarmonizadoDashboard && dataPtRadar) {
   }
 }
 
+const featuredFreqData = (featuredAnalysis?.frequencias_numeros as Record<string, any> | null) ?? null;
+const featuredRanking = (featuredFreqData?.ranking as Record<string, any> | undefined) ?? undefined;
+const featuredAreaFoco: string | null =
+  typeof featuredRanking?.areaFoco === 'string'
+    ? featuredRanking.areaFoco
+    : typeof featuredRanking?.area_foco === 'string'
+      ? featuredRanking.area_foco
+      : typeof featuredFreqData?.areaFoco === 'string'
+        ? featuredFreqData.areaFoco
+        : typeof featuredFreqData?.area_foco === 'string'
+          ? featuredFreqData.area_foco
+          : typeof featuredFreqData?.parametros_usuario?.areaFoco === 'string'
+            ? featuredFreqData.parametros_usuario.areaFoco
+            : null;
+const featuredOndeAssina: string[] = Array.isArray(featuredFreqData?.ondeVaiUsar)
+  ? featuredFreqData.ondeVaiUsar
+  : Array.isArray(featuredFreqData?.onde_vai_usar)
+    ? featuredFreqData.onde_vai_usar
+    : Array.isArray(featuredRanking?.ondeVaiUsar)
+      ? featuredRanking.ondeVaiUsar
+      : Array.isArray(featuredRanking?.onde_vai_usar)
+        ? featuredRanking.onde_vai_usar
+        : [];
+const featuredRadarContext =
+  featuredAreaFoco || featuredOndeAssina.length > 0
+    ? { areaFoco: featuredAreaFoco, ondeAssinaRaw: featuredOndeAssina }
+    : null;
+
 let dashboardRadarAxes: RadarAxesData = {
   expressao: 0.5,
   motivacao: 0.5,
@@ -535,14 +563,14 @@ let dashboardRadarAxes: RadarAxesData = {
   sequencias: 0.5,
 };
 let harmonizedRadarAxesDashboard: RadarAxesData | null = null;
-let dashboardRadarLabels = getRadarAxisLabels(null);
+let dashboardRadarLabels = getRadarAxisLabels(featuredAreaFoco);
 
 const birthForRadar = nomeHojeDashboard;
 if (birthForRadar && dataPtRadar) {
   try {
-    const axes = computeContextualRadarAxes(birthForRadar, dataPtRadar, null);
+    const axes = computeContextualRadarAxes(birthForRadar, dataPtRadar, featuredRadarContext);
     dashboardRadarAxes = motorRadarToRecord(axes) as RadarAxesData;
-    dashboardRadarLabels = getRadarAxisLabels(null);
+    dashboardRadarLabels = getRadarAxisLabels(featuredAreaFoco);
   } catch (e) {
     console.warn('[index.astro] Erro ao calcular teia do painel:', e);
   }
@@ -550,7 +578,7 @@ if (birthForRadar && dataPtRadar) {
 
 if (nomeHarmonizadoDashboard && dataPtRadar) {
   try {
-    const harmAxes = computeContextualRadarAxes(nomeHarmonizadoDashboard, dataPtRadar, null);
+    const harmAxes = computeContextualRadarAxes(nomeHarmonizadoDashboard, dataPtRadar, featuredRadarContext);
     harmonizedRadarAxesDashboard = motorRadarToRecord(harmAxes) as RadarAxesData;
   } catch (e) {
     console.warn('[index.astro] Erro ao calcular teia harmonizada do painel:', e);
@@ -682,12 +710,22 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
       ? ranking.areaFoco
       : typeof ranking?.area_foco === 'string'
         ? ranking.area_foco
-        : null);
-  const ondeAssinaRow = Array.isArray(ranking?.ondeVaiUsar)
-    ? ranking.ondeVaiUsar
-    : Array.isArray(ranking?.onde_vai_usar)
-      ? ranking.onde_vai_usar
-      : [];
+        : typeof freqData?.areaFoco === 'string'
+          ? freqData.areaFoco
+          : typeof freqData?.area_foco === 'string'
+            ? freqData.area_foco
+            : typeof freqData?.parametros_usuario?.areaFoco === 'string'
+              ? freqData.parametros_usuario.areaFoco
+              : featuredAreaFoco);
+  const ondeAssinaRow = Array.isArray(freqData?.ondeVaiUsar)
+    ? freqData.ondeVaiUsar
+    : Array.isArray(freqData?.onde_vai_usar)
+      ? freqData.onde_vai_usar
+      : Array.isArray(ranking?.ondeVaiUsar)
+        ? ranking.ondeVaiUsar
+        : Array.isArray(ranking?.onde_vai_usar)
+          ? ranking.onde_vai_usar
+          : featuredOndeAssina;
   const rowContext = {
     areaFoco: areaFocoRow,
     ondeAssinaRaw: ondeAssinaRow,
@@ -768,7 +806,10 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
       birthRadarAxes = dashboardRadarAxes;
     }
   }
-  if (!isFreeRow && nomeExibido && dataPt) {
+  const hasDistinctHarmonized =
+    row.product_type !== 'nome_social' ||
+    nomeExibido.trim().toLowerCase() !== birthNameForRow.trim().toLowerCase();
+  if (!isFreeRow && hasDistinctHarmonized && nomeExibido && dataPt) {
     try {
       harmonizedRadarAxes = motorRadarToRecord(
         computeContextualRadarAxes(nomeExibido, dataPt, rowContext),
@@ -833,7 +874,7 @@ function buildSynthesizedBirthSlide(
       const tris = calcularTodosTriangulos(birthName, dataPt);
       bloqueiosTitulos = detectarBloqueios(tris).map((b) => b.titulo);
       birthRadarAxes = motorRadarToRecord(
-        computeContextualRadarAxes(birthName, dataPt, null),
+        computeContextualRadarAxes(birthName, dataPt, featuredRadarContext),
       ) as RadarAxesData;
     } catch {
       /* mantém fallback */

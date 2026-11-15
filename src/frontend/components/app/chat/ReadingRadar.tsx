@@ -13,6 +13,8 @@ export interface ReadingRadarProps {
   labels?: Record<string, string>;
   /** Exibe deltas numéricos (+30, etc.) nas pontas quando há sobreposição */
   showNumericLabels?: boolean;
+  /** Variante de escala: 'panel' (padrão lateral/drawer) ou 'dashboard' (pentágono ampliado no card) */
+  variant?: 'panel' | 'dashboard';
   className?: string;
 }
 
@@ -74,9 +76,9 @@ function getVal(axes: RadarAxesData, key: string): number {
   return axes[key as keyof RadarAxesData] ?? 0.35;
 }
 
-function getCoords(val: number, angle: number) {
+function getCoords(val: number, angle: number, radius = RADIUS) {
   const safeVal = Math.max(0.08, Math.min(1.0, val));
-  const r = RADIUS * safeVal;
+  const r = radius * safeVal;
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
 }
 
@@ -87,10 +89,20 @@ export function ReadingRadar({
   overlayScore = null,
   labels,
   showNumericLabels = false,
+  variant = 'panel',
   className = '',
 }: ReadingRadarProps) {
   const glowId = `radar-glow-${useId().replace(/:/g, '')}`;
   const rings = [0.25, 0.5, 0.75, 1.0];
+
+  const isDashboard = variant === 'dashboard';
+  const vbX = isDashboard ? -24 : VB_X;
+  const vbY = isDashboard ? -4 : VB_Y;
+  const vbW = isDashboard ? 848 : VB_W;
+  const vbH = isDashboard ? 596 : VB_H;
+  const activeRadius = isDashboard ? 212 : RADIUS;
+  const lineGap = isDashboard ? 36 : LINE_GAP;
+  const labelLineHeight = isDashboard ? 30 : LABEL_LINE_HEIGHT;
 
   const birthVisual = getScoreTierVisual(birthScore);
   const overlayVisual = overlayAxes && overlayScore != null ? getScoreTierVisual(overlayScore) : null;
@@ -98,7 +110,7 @@ export function ReadingRadar({
 
   const polygonPoints = (data: RadarAxesData) =>
     AXIS_CONFIG.map((axis) => {
-      const { x, y } = getCoords(getVal(data, axis.key), axis.angle);
+      const { x, y } = getCoords(getVal(data, axis.key), axis.angle, activeRadius);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(' ');
 
@@ -108,8 +120,10 @@ export function ReadingRadar({
   return (
     <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
-        viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
-        className="nm-radar-svg w-full max-w-[560px] h-auto block"
+        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+        className={`nm-radar-svg ${
+          isDashboard ? 'nm-radar-svg--dashboard w-full max-w-[620px]' : 'w-full max-w-[560px]'
+        } h-auto block`}
         role="img"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
@@ -124,7 +138,7 @@ export function ReadingRadar({
           <polygon
             key={`ring-${ringVal}`}
             points={AXIS_CONFIG.map((axis) => {
-              const { x, y } = getCoords(ringVal, axis.angle);
+              const { x, y } = getCoords(ringVal, axis.angle, activeRadius);
               return `${x.toFixed(1)},${y.toFixed(1)}`;
             }).join(' ')}
             fill="none"
@@ -134,7 +148,7 @@ export function ReadingRadar({
         ))}
 
         {AXIS_CONFIG.map((axis) => {
-          const { x, y } = getCoords(1.0, axis.angle);
+          const { x, y } = getCoords(1.0, axis.angle, activeRadius);
           return (
             <line key={`axis-${axis.key}`} x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1.6" />
           );
@@ -163,7 +177,7 @@ export function ReadingRadar({
         )}
 
         {AXIS_CONFIG.map((axis) => {
-          const { x, y } = getCoords(getVal(axes, axis.key), axis.angle);
+          const { x, y } = getCoords(getVal(axes, axis.key), axis.angle, activeRadius);
           return (
             <circle
               key={`dot-b-${axis.key}`}
@@ -178,7 +192,7 @@ export function ReadingRadar({
 
         {overlayAxes && overlayVisual &&
           AXIS_CONFIG.map((axis) => {
-            const { x, y } = getCoords(getVal(overlayAxes, axis.key), axis.angle);
+            const { x, y } = getCoords(getVal(overlayAxes, axis.key), axis.angle, activeRadius);
             return (
               <circle
                 key={`dot-o-${axis.key}`}
@@ -193,7 +207,8 @@ export function ReadingRadar({
 
         {/* Rótulo + valor empilhados fora do pentágono (valor sempre visível nas 5 pontas) */}
         {AXIS_CONFIG.map((axis) => {
-          const r = RADIUS + axis.offset;
+          const axisOffset = isDashboard ? (axis.placement === 'side' ? 22 : 24) : axis.offset;
+          const r = activeRadius + axisOffset;
           const gx = CX + r * Math.cos(axis.angle) + axis.dx;
           const gy = CY + r * Math.sin(axis.angle);
           const labelText = labels?.[axis.key] ?? axis.label;
@@ -224,13 +239,13 @@ export function ReadingRadar({
           let labelY = gy;
           if (axis.placement === 'top') {
             valueY = gy;
-            labelY = gy - LINE_GAP - (lines.length - 1) * LABEL_LINE_HEIGHT;
+            labelY = gy - lineGap - (lines.length - 1) * labelLineHeight;
           } else if (axis.placement === 'bottom') {
             valueY = gy;
-            labelY = gy + LINE_GAP;
+            labelY = gy + lineGap;
           } else {
-            labelY = gy - (lines.length > 1 ? 38 : 22);
-            valueY = labelY + (lines.length - 1) * LABEL_LINE_HEIGHT + LINE_GAP;
+            labelY = gy - (lines.length > 1 ? Math.round(lineGap * 0.9) : Math.round(lineGap * 0.52));
+            valueY = labelY + (lines.length - 1) * labelLineHeight + lineGap;
           }
 
           return (
@@ -246,7 +261,7 @@ export function ReadingRadar({
                 fontWeight={700}
               >
                 {lines.map((line, idx) => (
-                  <tspan key={idx} x={gx} y={labelY + idx * LABEL_LINE_HEIGHT}>
+                  <tspan key={idx} x={gx} y={labelY + idx * labelLineHeight}>
                     {line}
                   </tspan>
                 ))}

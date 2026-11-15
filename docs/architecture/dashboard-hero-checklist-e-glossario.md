@@ -45,11 +45,11 @@ Este documento registra a lógica funcional, a estrutura de dados e a persistên
 - `src/frontend/components/app/dashboard/AppDashboard.tsx`
 - `src/pages/app/index.astro`
 
-- Cada `DashboardHeroSlide` transporta seus próprios eixos `birthRadarAxes`, `harmonizedRadarAxes` e `radarLabels` calculados por `computeContextualRadarAxes` em `src/shared/interactive-engine/motor-radar.ts`.
-- Quando o card ativo é o **Nome de Nascimento Inicial** (`isFree: true`), `harmonizedRadarAxes` é `null` — o radar renderiza **apenas o polígono base (amarelo/cor do score de nascimento)** sem sobreposição harmonizada.
-- Quando o card ativo é uma **Assinatura Harmonizada**, o radar compara o polígono de nascimento com o polígono da assinatura daquele card.
+- Cada `DashboardHeroSlide` transporta seus próprios eixos `birthRadarAxes`, `harmonizedRadarAxes` e `radarLabels` calculados por `computeContextualRadarAxes` em `src/shared/interactive-engine/motor-radar.ts` (mesma função e lógica do Painel de Análise), com persistência de `areaFoco` e `ondeVaiUsar` em `analyses.frequencias_numeros` (`chat-pdf-persist.ts` → `/api/analyze`).
+- Quando o card ativo é o **Nome de Nascimento Inicial** (`isFree: true`), `harmonizedRadarAxes` é `null` e `showNumericLabels` é `false` — o radar renderiza **apenas o polígono base (amarelo/cor do score de nascimento)** e os percentuais originais em dourado.
+- Quando o card ativo é uma **Assinatura Harmonizada**, `showNumericLabels={Boolean(activeHarmonizedAxes)}` ativa o cálculo de deltas comparativos idêntico ao Painel de Análise (`+X%` na cor do tier da harmonização, `-X%` em vermelho `#ef4444` quando há perda pontual no eixo, `0%` em dourado `#f2ca50` quando se mantém igual).
 - Ao navegar no carrossel, os polígonos e vértices `<circle>` animam suavemente (`transition-all duration-700 ease-out`).
-- Visual do container no dashboard: sem caixa escura interna (`bg-[#131313]/60` removido) e ampliado para `max-w-[500px]`.
+- Visual no dashboard: utiliza `.nm-floating-card.nm-reading-card`, `.nm-score-eyebrow` (`Mapa de Alinhamento Vibracional`) e `variant="dashboard"` no `ReadingRadar` (`viewBox="-24 -4 848 596"`, `radius = 212`, `.nm-radar-svg--dashboard` em `max-width: 620px`) para aproveitar melhor a largura do card mantendo o tamanho de fonte tipográfico (`24px` SVG em container `>= 28rem`, `32px` no mobile).
 
 ---
 
@@ -59,6 +59,10 @@ Este documento registra a lógica funcional, a estrutura de dados e a persistên
 - Lógica e textos: `src/frontend/lib/app-dashboard-checklist.ts`
 - Endpoint API: `src/pages/api/analyses/checklist.ts`
 - UI no Dashboard: `src/frontend/components/app/dashboard/AppDashboard.tsx`
+
+### Visibilidade condicional
+- O card do checklist (`Jornada de Ativação`) é exibido **exclusivamente em cards de nomes harmonizados** (`!activeSlide.isFree && Boolean(activeHarmonizedAxes) && hasDistinctHarmonizedName`).
+- Quando o usuário navega para o card do **Nome de Nascimento Inicial**, o checklist desaparece automaticamente.
 
 ### Os 6 passos (isolados por card/slide)
 Cada card do carrossel possui seu próprio checklist independente, na ordem do processo de implementação da assinatura:

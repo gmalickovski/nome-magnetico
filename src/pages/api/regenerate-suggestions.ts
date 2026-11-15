@@ -369,7 +369,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   await updateAnalysis(analysis!.id, {
     frequencias_numeros: {
       ...freqData,
-      ranking: resultado,
+      ranking: {
+        ...resultado,
+        areaFoco: freqData?.areaFoco ?? rankingAnterior?.areaFoco ?? null,
+        ondeVaiUsar: rankingChatMerged.ondeVaiUsar ?? freqData?.ondeVaiUsar ?? [],
+      },
       frequencias: freqMapSocial,
       selectedNomeSocial: melhor?.nomeCompleto ?? null,
       parametros_usuario: novosParametrosUsuario,

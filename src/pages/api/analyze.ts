@@ -61,6 +61,7 @@ const schema = z.object({
   vibracoes_desejadas: z.string().max(300).optional(),
   contexto_uso: z.string().optional(),
   assinatura_atual: z.string().max(150).optional(),
+  area_foco: z.string().max(80).optional(),
   onde_vai_usar: z.array(z.string().max(60)).max(10).optional(),
   aceita_encurtar_apelido: z.boolean().optional().default(false),
   nome_social_principal: z.string().min(2).max(150).optional(),
@@ -171,7 +172,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     nome_completo, data_nascimento, product_type,
     nomes_candidatos,
     objetivo_apresentacao, vibracoes_desejadas, contexto_uso,
-    assinatura_atual, onde_vai_usar, aceita_encurtar_apelido,
+    assinatura_atual, area_foco, onde_vai_usar, aceita_encurtar_apelido,
     nome_social_principal,
     nome_ja_escolhido,
     ranking_somente_chat,
@@ -395,11 +396,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         await updateAnalysis(analysis.id, {
           frequencias_numeros: {
-            ranking: resultado,
+            ranking: {
+              ...resultado,
+              areaFoco: area_foco ?? null,
+              ondeVaiUsar: onde_vai_usar ?? [],
+            },
             rankingSomenteChat: somenteChat,
             frequencias: freqMapSocial,
             selectedNomeSocial: nome_social_principal ? melhor?.nomeCompleto ?? nome_social_principal : null,
             assinaturaAtual: assinatura_atual?.trim() || null,
+            areaFoco: area_foco ?? null,
             ondeVaiUsar: onde_vai_usar ?? [],
             aceitaEncurtarApelido: Boolean(aceita_encurtar_apelido),
           } as unknown,

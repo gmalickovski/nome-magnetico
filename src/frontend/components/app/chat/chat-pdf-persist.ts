@@ -24,6 +24,7 @@ export function buildChatPdfAnalyzePayload(input: {
     nome_social_principal: selected,
     nome_ja_escolhido: true,
     aceita_encurtar_apelido: Boolean(ranking.aceitaEncurtarOuApelido),
+    area_foco: input.collect.areaFoco || undefined,
     onde_vai_usar: input.collect.ondeAssina.length > 0 ? input.collect.ondeAssina : undefined,
     assinatura_atual: ranking.assinaturaAtual ?? input.collect.nomeUsoBase ?? undefined,
     objetivo_apresentacao: input.collect.objetivoTexto.trim() || undefined,

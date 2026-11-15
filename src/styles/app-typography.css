@@ -60,6 +60,9 @@
   max-width: 520px;
   margin-inline: auto;
 }
+.nm-app-shell--with-mobile-dock .nm-reading-card .nm-radar-svg.nm-radar-svg--dashboard {
+  max-width: 620px;
+}
 .nm-app-shell--with-mobile-dock :is(.harmony-star-label, .nm-radar-label) {
   font-size: var(--nm-type-chart-label);
   font-weight: 600;
