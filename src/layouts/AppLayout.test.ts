@@ -194,11 +194,13 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(topicSrc, /=\s*\{count\}/);
 
     const summarySrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatReadingSummaryPanel.tsx'), 'utf8');
-    assert.match(summarySrc, /title="Bloqueios energéticos"[\s\S]*?count=\{bloqueios\.length\}/);
+    assert.doesNotMatch(summarySrc, /title="Bloqueios energéticos"/);
+    assert.doesNotMatch(summarySrc, /O raio-x vibracional/);
+    assert.doesNotMatch(summarySrc, /BlockAnalysisCard/);
+    assert.match(summarySrc, /<TriangleVisualization[\s\S]*?onlyVida/);
     assert.match(summarySrc, /title="Débitos kármicos"[\s\S]*?count=\{debitosCarmicos\.length\}/);
     assert.match(summarySrc, /title="Lições kármicas"[\s\S]*?count=\{licoesCarmicas\.length\}/);
     assert.match(summarySrc, /title="Tendências ocultas"[\s\S]*?count=\{tendenciasOcultas\.length\}/);
-    assert.match(summarySrc, /Bloqueios energéticos são sequências de três ou mais números repetidos/);
 
     const debtsSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'KarmicDebts.tsx'), 'utf8');
     assert.doesNotMatch(debtsSrc, /nm-floating-tile/);
@@ -214,6 +216,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const triSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'TriangleVisualization.tsx'), 'utf8');
     assert.doesNotMatch(triSrc, /nm-vida-intro-container/);
+    assert.doesNotMatch(triSrc, /setExpandido/);
     assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Bloqueios <span className="text-\[#f2ca50\]">= \{bloqueiosFiltrados\.length\}<\/span>\s*<\/h3>/);
     assert.match(triSrc, /border-red-500\/30 bg-red-500\/10[\s\S]*?✓ Não possui bloqueios neste triângulo/);
     assert.match(triSrc, /<h3 className="font-cinzel font-bold text-\[#e5e2e1\] leading-snug break-words text-left">\s*Arcanos\s*<\/h3>/);
