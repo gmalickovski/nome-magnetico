@@ -8,6 +8,8 @@ O Mapa usa `computeContextualRadarAxes`, sem alterar a nota global. Os valores s
 
 Essência, Harmonização, Nome Harmonizado e Anexos são capítulos com `<Page>` independentes. Não juntar capítulos para ocupar espaço sobrando. Âncoras de seção ficam no primeiro filho de cada capítulo; usar `PDFSectionAnchor`, pois IDs diretamente em uma `Page` que se estende podem apontar à última folha.
 
+O divisor preto de Anexos abre a primeira página da leitura complementar dos triângulos, logo após Conclusão. Os Arcanos são um assunto posterior desse mesmo capítulo; não devem carregar o primeiro divisor de Anexos somente depois dos triângulos.
+
 O sumário suporta níveis 0–3 e pagina pelo espaço real, com cada entrada indivisível e títulos de capítulos acompanhados pela próxima entrada. As linhas dos capítulos usam as tonalidades do corpo: Essência vermelha, Harmonização dourada, Nome Harmonizado verde e Anexos escuro, com fundos claros e texto contrastante. Não limitar a quantidade de entradas por folha. Os seis triângulos complementares mantêm seus componentes/conteúdo e destinos; só a localização muda para Anexos → Leitura complementar dos triângulos. Vida continua nas duas leituras principais. A ficha completa de Arquétipo Vibracional fica em Harmonização, antes do Mapa, sem duplicação nos anexos. O two-pass resolve as páginas; títulos também presentes no índice devem ser localizados nos testes pelo destino real do corpo, não pela primeira ocorrência textual.
 
 ## Cota manual e persistência

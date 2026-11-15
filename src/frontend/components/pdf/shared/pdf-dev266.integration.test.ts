@@ -145,6 +145,11 @@ describe('DEV-266 · PDF integração offline', () => {
     assert.ok(pDest['pdf-harmonizacao-mapa'] >= pDest['pdf-harmonizacao']);
     assert.ok(pDest['pdf-arquetipo'] >= pDest['pdf-harmonizacao'] && pDest['pdf-arquetipo'] < pDest['pdf-harmonizacao-mapa'], 'arquétipo completo na Harmonização, antes do Mapa');
     assert.ok(pDest['pdf-arquetipo'] < pDest['pdf-anexos'], 'arquétipo fora dos anexos');
+    const annexFirstPage = paidTextPages[pDest['pdf-anexos'] - 1];
+    const annexLines = annexFirstPage.split('\n').map(compactText);
+    assert.ok(annexLines.includes('anexos'), 'divisor Anexos abre o capítulo antes dos triângulos');
+    assert.ok(compactText(annexFirstPage).includes('leituracomplementardostriangulos'), 'leitura complementar abre o capítulo Anexos');
+    assert.equal(pDest['pdf-anexos-triangulos'], pDest['pdf-anexos'], 'triângulos pertencem à abertura de Anexos');
     for (const prefix of ['pdf-essencia-triangulo-', 'pdf-harmonizado-triangulo-']) {
       for (const suffix of ['pessoal', 'social', 'destino']) assert.ok(pDest[prefix + suffix] >= pDest['pdf-anexos-triangulos']);
     }

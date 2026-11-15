@@ -2237,6 +2237,16 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
       <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-anexos" bookmark={{ title: 'Anexos', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
+          <View style={{ backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              Anexos
+            </Text>
+          </View>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
+        </View>
+
         <PDFSectionAnchor id="pdf-anexos-triangulos" bookmark={{ title: 'Leitura complementar dos triângulos', fit: true }} />
         <Text style={styles.hugeTitle}>Leitura complementar dos triângulos</Text>
         <Text style={styles.bodyText}>Os quatro triângulos continuam calculados. A Vida aparece na leitura principal; Pessoal, Social e Destino são apresentados integralmente a seguir.</Text>
@@ -2473,16 +2483,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
       {/* ── ARCANOS: DICIONÁRIO UNIFICADO ────────────────────────────────────── */}
       <Page size="A4" style={styles.page}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 14 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
-          <View style={{ backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              Anexos
-            </Text>
-          </View>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
-        </View>
 
         <View style={{ marginBottom: 12 }}>
           <PDFSectionAnchor id="pdf-arcanos" bookmark={{ title: 'Os Arcanos da Sua Análise', fit: true }} />
