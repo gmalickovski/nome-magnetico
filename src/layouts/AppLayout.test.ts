@@ -270,4 +270,37 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(closeBtnMatch[0], /rounded-full border/);
     assert.match(closeBtnMatch[0], /bg-transparent text-\[#e5e2e1\]\/80 hover:text-\[#f2ca50\]/);
   });
+
+  it('Hero do /app exibe círculo à esquerda, 5 pontas da estrela, 2 botões, favoritar e setas de carrossel sem toggle Nome atual', () => {
+    const dashboardSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'dashboard', 'AppDashboard.tsx'),
+      'utf8',
+    );
+    assert.doesNotMatch(dashboardSrc, /Alternar nome exibido no score/);
+    assert.match(dashboardSrc, /As 5 pontas da estrela/);
+    assert.match(dashboardSrc, /key:\s*'destino',\s*label:\s*'Destino'/);
+    assert.match(dashboardSrc, /key:\s*'expressao',\s*label:\s*'Expressão'/);
+    assert.match(dashboardSrc, /key:\s*'motivacao',\s*label:\s*'Motivação'/);
+    assert.match(dashboardSrc, /key:\s*'missao',\s*label:\s*'Missão'/);
+    assert.match(dashboardSrc, /key:\s*'impressao',\s*label:\s*'Impressão'/);
+    assert.match(dashboardSrc, /label="Baixar PDF"/);
+    assert.match(dashboardSrc, /Ver Painel de Análise/);
+    assert.match(dashboardSrc, /Análise anterior/);
+    assert.match(dashboardSrc, /Próxima análise/);
+    assert.match(dashboardSrc, /Favoritar esta análise como principal do dashboard/);
+
+    const analisesSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro'), 'utf8');
+    assert.match(analisesSrc, /favorite-analysis-btn/);
+    assert.match(analisesSrc, /analysis\.product_type !== 'analise_gratuita'/);
+  });
+
+  it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado', () => {
+    const resultadoSrc = readFileSync(
+      path.join(srcRoot, 'pages', 'app', 'resultado', '[id].astro'),
+      'utf8',
+    );
+    assert.doesNotMatch(resultadoSrc, /NomeAtualResultado/);
+    assert.match(resultadoSrc, /const isSocialSummaryView = isNomeSocial \|\| isAnaliseGratuita \|\| isFree;/);
+    assert.match(resultadoSrc, /<ChatSidebarSection/);
+  });
 });

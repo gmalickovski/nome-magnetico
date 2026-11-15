@@ -14,7 +14,7 @@ import FreeUsedModal from '../../frontend/components/app/FreeUsedModal';
 import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoGenerator';
 import { MailWarning } from '../../frontend/components/app/MailWarning';
 import { getPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
-import AppDashboard from '../../frontend/components/app/dashboard/AppDashboard';
+import AppDashboard, { type DashboardHeroSlide } from '../../frontend/components/app/dashboard/AppDashboard';
 import type { RadarAxesData } from '../../frontend/components/app/chat/chat-types';
 import {
   computeContextualRadarAxes,
@@ -25,6 +25,7 @@ import {
 // Funções de numerologia locais para cálculo instantâneo da análise gratuita do lead
 import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
 import {
+  calcularCincoNumeros,
   calcularExpressao,
   calcularDestino,
   calcularMotivacao,
@@ -83,7 +84,7 @@ import { obterNivelV3 } from '../../shared/score-v3';
 try {
   const { data: foundFreeAnalysis } = await _client
     .from('analyses')
-    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, product_type, is_free, licoes_carmicas')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, product_type, is_free, licoes_carmicas, frequencias_numeros, numero_expressao, numero_destino, numero_motivacao, numero_missao, numero_impressao, created_at')
     .or('is_free.eq.true,product_type.eq.analise_gratuita')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -217,40 +218,51 @@ const [hasNomeSocial, hasLegacyAccess] = isAdmin
 
 const hasAnyAccess = hasNomeSocial || hasLegacyAccess;
 
-try {
-  const { data: foundBestSocial } = await _client
-    .from('analyses')
-    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at, product_type, is_free, nome_harmonizado, numero_expressao, licoes_carmicas')
-    .eq('user_id', user.id)
-    .eq('product_type', 'nome_social')
-    .eq('status', 'complete')
-    .order('score', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  bestSocialAnalysis = foundBestSocial;
-} catch {}
-
-// Detectar análises legadas que qualificam para o recálculo grátis v3
+let allCompletedAnalyses: any[] = [];
 let legacyAnalysesToRecalculate: any[] = [];
 try {
   const { data: userAnalyses } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, score_version, product_type, is_free, parent_analysis_id, recalculated_from_version, created_at')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, product_type, is_free, frequencias_numeros, nome_harmonizado, numero_expressao, numero_destino, numero_motivacao, numero_missao, numero_impressao, licoes_carmicas, parent_analysis_id, recalculated_from_version, created_at, status')
     .eq('user_id', user.id)
     .eq('status', 'complete')
     .order('created_at', { ascending: false });
 
-  if (userAnalyses && userAnalyses.length > 0) {
+  allCompletedAnalyses = userAnalyses ?? [];
+
+  const paidSocialCandidates = allCompletedAnalyses.filter(
+    (a) => a.product_type === 'nome_social' && !a.is_free,
+  );
+  const favoritedSocial = paidSocialCandidates.find(
+    (a) => Boolean((a.frequencias_numeros as Record<string, any> | null)?.is_favorite),
+  );
+  const favoritedAnyPaid = allCompletedAnalyses.find(
+    (a) =>
+      !a.is_free &&
+      a.product_type !== 'analise_gratuita' &&
+      Boolean((a.frequencias_numeros as Record<string, any> | null)?.is_favorite),
+  );
+
+  if (favoritedSocial) {
+    bestSocialAnalysis = favoritedSocial;
+  } else if (paidSocialCandidates.length > 0) {
+    bestSocialAnalysis = [...paidSocialCandidates].sort(
+      (a, b) => (b.score_v3 ?? b.score ?? 0) - (a.score_v3 ?? a.score ?? 0),
+    )[0];
+  } else if (favoritedAnyPaid) {
+    bestSocialAnalysis = favoritedAnyPaid;
+  }
+
+  if (allCompletedAnalyses.length > 0) {
     const recalculatedParentIds = new Set(
-      userAnalyses
+      allCompletedAnalyses
         .filter(a => a.parent_analysis_id && a.score_version === 'v3')
         .map(a => a.parent_analysis_id)
     );
     // Qualificam apenas análises salvas do motor antigo (v1) que o usuário realizou
     // (produtos nome_social, nome_bebe, nome_empresa) — diagnósticos gratuitos de nascimento
     // não devem exibir banner de atualização de motor antigo.
-    legacyAnalysesToRecalculate = userAnalyses.filter(
+    legacyAnalysesToRecalculate = allCompletedAnalyses.filter(
       a => a.product_type !== 'analise_gratuita' &&
            !a.is_free &&
            (!a.score_version || a.score_version === 'v1') &&
@@ -260,7 +272,7 @@ try {
     );
   }
 } catch (e) {
-  console.warn('[index.astro] Erro ao buscar análises legadas para recálculo:', e);
+  console.warn('[index.astro] Erro ao buscar análises concluídas:', e);
 }
 
 const legacyCount = legacyAnalysesToRecalculate.length;
@@ -609,59 +621,213 @@ type DashboardHistoryRow = {
   score: number | null;
   productType: string;
   isFree: boolean;
+  isFavorite: boolean;
 };
 
-let dashboardHistory: DashboardHistoryRow[] = [];
-try {
-  const { data: historyRows } = await _client
-    .from('analyses')
-    .select('id, nome_completo, created_at, score, score_v3, score_version, product_type, status, frequencias_numeros, data_nascimento, is_free')
-    .eq('user_id', user.id)
-    .eq('status', 'complete')
-    .order('created_at', { ascending: false })
-    .limit(5);
+function toPtBrBirthDate(raw?: string | null): string {
+  if (!raw) return '';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  const iso = String(raw).slice(0, 10);
+  const parts = iso.split('-');
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(raw);
+}
 
-  dashboardHistory = (historyRows ?? []).map((row) => {
-    const freqData = row.frequencias_numeros as Record<string, unknown> | null;
-    const ranking = freqData?.ranking as { melhorNome?: { nomeCompleto?: string } } | undefined;
-    const nomeExibido =
-      (row.product_type === 'nome_social' && ranking?.melhorNome?.nomeCompleto)
-        ? ranking.melhorNome.nomeCompleto
-        : row.nome_completo;
+function formatCompatLabel(comp?: string | null): string {
+  switch (comp) {
+    case 'total':
+      return 'Compatibilidade Total';
+    case 'complementar':
+      return 'Harmonia Complementar';
+    case 'aceitavel':
+      return 'Sintonia Aceitável';
+    case 'incompativel':
+      return 'Tensão Vibracional';
+    default:
+      return 'Mapa Cabalístico';
+  }
+}
 
-    let score: number | null = null;
-    const isV3Row = row.score_version === 'v3';
-    if (isV3Row && row.score_v3 != null) {
-      score = row.score_v3;
-    } else if (getScoreVersion() === 'v3' && row.nome_completo && row.data_nascimento) {
-      const parts = String(row.data_nascimento).split('-');
-      const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : row.data_nascimento;
-      try {
-        score = avaliarNome(nomeExibido, dataPt).score_v3;
-      } catch {
-        score = row.score;
+function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHeroSlide {
+  const freqData = row.frequencias_numeros as Record<string, any> | null;
+  const ranking = freqData?.ranking as
+    | {
+        selectedNomeSocial?: string;
+        nomeNascimento?: string;
+        dataNascimento?: string;
+        melhorNome?: { nomeCompleto?: string; nomeEmpresa?: string; expressao?: number; motivacao?: number; missao?: number; impressao?: number; score?: number };
       }
-    } else {
+    | undefined;
+  const isFreeRow = row.is_free === true || row.product_type === 'analise_gratuita';
+  const nomeExibido = isFreeRow
+    ? row.nome_completo
+    : row.product_type === 'nome_social'
+      ? (freqData?.selectedNomeSocial ?? row.nome_harmonizado ?? ranking?.melhorNome?.nomeCompleto ?? row.nome_completo)
+      : row.product_type === 'nome_bebe'
+        ? (ranking?.melhorNome?.nomeCompleto ?? row.nome_completo)
+        : row.product_type === 'nome_empresa'
+          ? (freqData?.melhorNome?.nomeEmpresa ?? row.nome_completo)
+          : row.nome_completo;
+
+  const birthNameForRow =
+    (ranking?.nomeNascimento as string | undefined)?.trim()
+    || nomeHojeDashboard
+    || row.nome_completo;
+  const dataPt = toPtBrBirthDate(ranking?.dataNascimento || row.data_nascimento || rawBirthRadar);
+
+  let slideScore = Math.max(0, Math.min(100, Math.round(row.score_v3 ?? row.score ?? 0)));
+  if (getScoreVersion() === 'v3' && nomeExibido && dataPt) {
+    try {
+      slideScore = avaliarNome(nomeExibido, dataPt).score_v3;
+    } catch {
+      /* mantém score salvo */
+    }
+  }
+
+  let rowBirthScore = defaultBirthScore;
+  if (getScoreVersion() === 'v3' && birthNameForRow && dataPt) {
+    try {
+      rowBirthScore = avaliarNome(birthNameForRow, dataPt).score_v3;
+    } catch {
+      rowBirthScore = defaultBirthScore;
+    }
+  }
+
+  let starNumbers = {
+    destino: Number(row.numero_destino ?? 0),
+    expressao: Number(row.numero_expressao ?? 0),
+    motivacao: Number(row.numero_motivacao ?? 0),
+    missao: Number(row.numero_missao ?? 0),
+    impressao: Number(row.numero_impressao ?? 0),
+  };
+  let bloqueiosTitulos: string[] = Array.isArray(row.bloqueios)
+    ? row.bloqueios
+        .map((b: { titulo?: string }) => b?.titulo?.trim())
+        .filter((t: string | undefined): t is string => Boolean(t))
+    : [];
+  let compatibilidadeLabel = 'Mapa Cabalístico';
+
+  if (nomeExibido && dataPt) {
+    try {
+      const cinco = calcularCincoNumeros(nomeExibido, dataPt);
+      starNumbers = {
+        destino: cinco.destino ?? starNumbers.destino,
+        expressao: cinco.expressao,
+        motivacao: cinco.motivacao,
+        missao: cinco.missao,
+        impressao: cinco.impressao,
+      };
+      const tris = calcularTodosTriangulos(nomeExibido, dataPt);
+      const blocs = detectarBloqueios(tris);
+      bloqueiosTitulos = blocs.map((b) => b.titulo);
+      compatibilidadeLabel = formatCompatLabel(
+        avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino),
+      );
+    } catch {
+      if (starNumbers.expressao && starNumbers.destino) {
+        compatibilidadeLabel = formatCompatLabel(
+          avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino),
+        );
+      }
+    }
+  } else if (row.product_type === 'nome_empresa' && freqData?.melhorNome) {
+    const emp = freqData.melhorNome as Record<string, any>;
+    starNumbers = {
+      destino: Number(freqData.destinoSocio ?? starNumbers.destino),
+      expressao: Number(emp.expressao ?? starNumbers.expressao),
+      motivacao: Number(emp.motivacao ?? starNumbers.motivacao),
+      missao: Number(emp.missao ?? starNumbers.missao),
+      impressao: Number(emp.impressao ?? starNumbers.impressao),
+    };
+    compatibilidadeLabel = formatCompatLabel(
+      avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino),
+    );
+  }
+
+  return {
+    id: row.id,
+    nome: nomeExibido,
+    birthName: birthNameForRow,
+    score: slideScore,
+    birthScore: rowBirthScore,
+    bloqueiosCount: bloqueiosTitulos.length,
+    bloqueiosTitulos,
+    compatibilidadeLabel,
+    starNumbers,
+    productType: row.product_type ?? 'nome_social',
+    isFree: isFreeRow,
+    isFavorite: !isFreeRow && Boolean(freqData?.is_favorite),
+    dateLabel: new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date(row.created_at)),
+  };
+}
+
+const paidCompletedRows = allCompletedAnalyses.filter(
+  (row) => row.is_free !== true && row.product_type !== 'analise_gratuita',
+);
+
+const paidSlides: DashboardHeroSlide[] = paidCompletedRows
+  .map((row) => buildHeroSlideFromRow(row, birthScoreDashboard))
+  .sort((a, b) => {
+    if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+    return b.score - a.score;
+  });
+
+const heroSlides: DashboardHeroSlide[] =
+  paidSlides.length > 0
+    ? paidSlides
+    : freeAnalysis
+      ? [buildHeroSlideFromRow(freeAnalysis, birthScoreDashboard)]
+      : [];
+
+const historySourceRows = allCompletedAnalyses.slice(0, 6);
+const dashboardHistory: DashboardHistoryRow[] = historySourceRows.map((row) => {
+  const freqData = row.frequencias_numeros as Record<string, any> | null;
+  const ranking = freqData?.ranking as { melhorNome?: { nomeCompleto?: string } } | undefined;
+  const isFreeRow = row.is_free === true || row.product_type === 'analise_gratuita';
+  const nomeExibido = isFreeRow
+    ? row.nome_completo
+    : (row.product_type === 'nome_social' && (freqData?.selectedNomeSocial || row.nome_harmonizado || ranking?.melhorNome?.nomeCompleto))
+      ? (freqData?.selectedNomeSocial ?? row.nome_harmonizado ?? ranking?.melhorNome?.nomeCompleto)
+      : (row.product_type === 'nome_bebe' && ranking?.melhorNome?.nomeCompleto)
+        ? ranking.melhorNome.nomeCompleto
+        : (row.product_type === 'nome_empresa' && freqData?.melhorNome?.nomeEmpresa)
+          ? freqData.melhorNome.nomeEmpresa
+          : row.nome_completo;
+
+  let score: number | null = null;
+  const isV3Row = row.score_version === 'v3';
+  if (isV3Row && row.score_v3 != null) {
+    score = row.score_v3;
+  } else if (getScoreVersion() === 'v3' && nomeExibido && row.data_nascimento) {
+    const dataPt = toPtBrBirthDate(row.data_nascimento);
+    try {
+      score = avaliarNome(nomeExibido, dataPt).score_v3;
+    } catch {
       score = row.score;
     }
+  } else {
+    score = row.score;
+  }
 
-    return {
-      id: row.id,
-      nome: nomeExibido,
-      dateLabel: new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'America/Sao_Paulo',
-      }).format(new Date(row.created_at)),
-      score,
-      productType: row.product_type ?? 'nome_social',
-      isFree: row.is_free === true || row.product_type === 'analise_gratuita',
-    };
-  });
-} catch (e) {
-  console.warn('[index.astro] Erro ao carregar histórico do painel:', e);
-}
+  return {
+    id: row.id,
+    nome: nomeExibido,
+    dateLabel: new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date(row.created_at)),
+    score,
+    productType: row.product_type ?? 'nome_social',
+    isFree: isFreeRow,
+    isFavorite: !isFreeRow && Boolean(freqData?.is_favorite),
+  };
+});
 
 const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
 
@@ -969,6 +1135,7 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
         harmonizedRadarAxes={harmonizedRadarAxesDashboard}
         radarLabels={dashboardRadarLabels}
         history={dashboardHistory}
+        heroSlides={heroSlides}
         hasNomeSocial={hasNomeSocial}
         isAdmin={isAdmin}
         isExpired={isExpired}
