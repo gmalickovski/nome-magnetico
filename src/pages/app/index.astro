@@ -15,6 +15,7 @@ import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoG
 import { MailWarning } from '../../frontend/components/app/MailWarning';
 import { getPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
 import AppDashboard, { type DashboardHeroSlide } from '../../frontend/components/app/dashboard/AppDashboard';
+import type { ChecklistKey } from '../../frontend/lib/app-dashboard-checklist';
 import type { RadarAxesData } from '../../frontend/components/app/chat/chat-types';
 import {
   computeContextualRadarAxes,
@@ -634,6 +635,17 @@ function toPtBrBirthDate(raw?: string | null): string {
 
 type CompatType = 'favoravel' | 'neutro' | 'desfavoravel';
 
+function extractSlideChecklist(
+  freqData: Record<string, any> | null | undefined,
+  slideKey: string,
+): Partial<Record<ChecklistKey, boolean>> | undefined {
+  const map = freqData?.checklist_by_slide;
+  if (!map || typeof map !== 'object') return undefined;
+  const entry = (map as Record<string, unknown>)[slideKey];
+  if (!entry || typeof entry !== 'object') return undefined;
+  return entry as Partial<Record<ChecklistKey, boolean>>;
+}
+
 function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHeroSlide {
   const freqData = row.frequencias_numeros as Record<string, any> | null;
   const ranking = freqData?.ranking as
@@ -641,6 +653,10 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
         selectedNomeSocial?: string;
         nomeNascimento?: string;
         dataNascimento?: string;
+        areaFoco?: string | null;
+        area_foco?: string | null;
+        ondeVaiUsar?: string[];
+        onde_vai_usar?: string[];
         melhorNome?: { nomeCompleto?: string; nomeEmpresa?: string; expressao?: number; motivacao?: number; missao?: number; impressao?: number; score?: number };
       }
     | undefined;
@@ -660,6 +676,23 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
     || nomeHojeDashboard
     || row.nome_completo;
   const dataPt = toPtBrBirthDate(ranking?.dataNascimento || row.data_nascimento || rawBirthRadar);
+
+  const areaFocoRow =
+    (typeof ranking?.areaFoco === 'string'
+      ? ranking.areaFoco
+      : typeof ranking?.area_foco === 'string'
+        ? ranking.area_foco
+        : null);
+  const ondeAssinaRow = Array.isArray(ranking?.ondeVaiUsar)
+    ? ranking.ondeVaiUsar
+    : Array.isArray(ranking?.onde_vai_usar)
+      ? ranking.onde_vai_usar
+      : [];
+  const rowContext = {
+    areaFoco: areaFocoRow,
+    ondeAssinaRaw: ondeAssinaRow,
+  };
+  const radarLabels = getRadarAxisLabels(areaFocoRow);
 
   let slideScore = Math.max(0, Math.min(100, Math.round(row.score_v3 ?? row.score ?? 0)));
   if (getScoreVersion() === 'v3' && nomeExibido && dataPt) {
@@ -724,6 +757,27 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
     compatibilidade = avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino);
   }
 
+  let birthRadarAxes: RadarAxesData = dashboardRadarAxes;
+  let harmonizedRadarAxes: RadarAxesData | null = null;
+  if (birthNameForRow && dataPt) {
+    try {
+      birthRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(birthNameForRow, dataPt, rowContext),
+      ) as RadarAxesData;
+    } catch {
+      birthRadarAxes = dashboardRadarAxes;
+    }
+  }
+  if (!isFreeRow && nomeExibido && dataPt) {
+    try {
+      harmonizedRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(nomeExibido, dataPt, rowContext),
+      ) as RadarAxesData;
+    } catch {
+      harmonizedRadarAxes = null;
+    }
+  }
+
   return {
     id: row.id,
     nome: nomeExibido,
@@ -743,11 +797,17 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
       year: 'numeric',
       timeZone: 'America/Sao_Paulo',
     }).format(new Date(row.created_at)),
+    checklistAnalysisId: row.id,
+    birthRadarAxes,
+    harmonizedRadarAxes,
+    radarLabels,
+    initialChecklist: extractSlideChecklist(freqData, row.id),
   };
 }
 
 function buildSynthesizedBirthSlide(
   targetAnalysisId: string | null,
+  targetAnalysisFreqData: Record<string, any> | null | undefined,
   birthName: string,
   dataPt: string,
   fallbackScore: number,
@@ -757,6 +817,7 @@ function buildSynthesizedBirthSlide(
   let slideScore = Math.max(0, Math.min(100, Math.round(fallbackScore)));
   let starNumbers = { destino: 0, expressao: 0, motivacao: 0, missao: 0, impressao: 0 };
   let bloqueiosTitulos: string[] = [];
+  let birthRadarAxes: RadarAxesData = dashboardRadarAxes;
 
   if (dataPt) {
     try {
@@ -771,6 +832,9 @@ function buildSynthesizedBirthSlide(
       };
       const tris = calcularTodosTriangulos(birthName, dataPt);
       bloqueiosTitulos = detectarBloqueios(tris).map((b) => b.titulo);
+      birthRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(birthName, dataPt, null),
+      ) as RadarAxesData;
     } catch {
       /* mantém fallback */
     }
@@ -781,8 +845,10 @@ function buildSynthesizedBirthSlide(
       ? avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino)
       : null;
 
+  const slideKey = `${targetAnalysisId}__birth`;
+
   return {
-    id: `${targetAnalysisId}__birth`,
+    id: slideKey,
     nome: birthName,
     birthName,
     score: slideScore,
@@ -796,7 +862,12 @@ function buildSynthesizedBirthSlide(
     isFavorite: false,
     dateLabel: '',
     pdfAnalysisId: targetAnalysisId,
+    checklistAnalysisId: targetAnalysisId,
     resultadoHrefOverride: `/app/resultado/${targetAnalysisId}?modo=nascimento`,
+    birthRadarAxes,
+    harmonizedRadarAxes: null,
+    radarLabels: dashboardRadarLabels,
+    initialChecklist: extractSlideChecklist(targetAnalysisFreqData, slideKey),
   };
 }
 
@@ -804,12 +875,10 @@ const paidCompletedRows = allCompletedAnalyses.filter(
   (row) => row.is_free !== true && row.product_type !== 'analise_gratuita',
 );
 
-const paidSlides: DashboardHeroSlide[] = paidCompletedRows
-  .map((row) => buildHeroSlideFromRow(row, birthScoreDashboard))
-  .sort((a, b) => {
-    if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
-    return b.score - a.score;
-  });
+// Ordem cronológica crescente (mais antiga -> mais recente), empilhadas à direita do nome inicial
+const paidSlides: DashboardHeroSlide[] = [...paidCompletedRows]
+  .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  .map((row) => buildHeroSlideFromRow(row, birthScoreDashboard));
 
 const birthSlideFromFreeRow = freeAnalysis
   ? buildHeroSlideFromRow(freeAnalysis, birthScoreDashboard)
@@ -822,17 +891,18 @@ const hasDifferentBirthNameInPaid =
 const birthSlide: DashboardHeroSlide | null =
   birthSlideFromFreeRow ??
   (paidSlides.length === 0 || hasDifferentBirthNameInPaid
-    ? buildSynthesizedBirthSlide(featuredAnalysisId, nomeHojeDashboard, dataPtRadar, birthScoreDashboard)
+    ? buildSynthesizedBirthSlide(
+        featuredAnalysisId,
+        (featuredAnalysis?.frequencias_numeros as Record<string, any> | null) ?? null,
+        nomeHojeDashboard,
+        dataPtRadar,
+        birthScoreDashboard,
+      )
     : null);
 
-const heroSlides: DashboardHeroSlide[] =
-  paidSlides.length > 0
-    ? birthSlide
-      ? [...paidSlides, birthSlide]
-      : paidSlides
-    : birthSlide
-      ? [birthSlide]
-      : [];
+const heroSlides: DashboardHeroSlide[] = birthSlide
+  ? [birthSlide, ...paidSlides]
+  : paidSlides;
 
 const historySourceRows = allCompletedAnalyses.slice(0, 6);
 const dashboardHistory: DashboardHistoryRow[] = historySourceRows.map((row) => {

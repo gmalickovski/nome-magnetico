@@ -10,16 +10,18 @@ import {
   CHECKLIST_ITEMS,
   type ChecklistKey,
   type ChecklistState,
-  countChecklistDone,
+  checklistSlideStorageKey,
   checklistStorageKey,
+  countChecklistDone,
+  EMPTY_CHECKLIST,
+  getVibrationActivationInfo,
   offerDismissStorageKey,
   parseChecklistState,
-  EMPTY_CHECKLIST,
+  persistSlideChecklist,
 } from '../../../lib/app-dashboard-checklist';
 import {
   FAVORITE_ANALYSIS_CHANGE_EVENT,
   getStoredFavoriteAnalysisId,
-  orderSlidesWithFavorite,
   persistFavoriteAnalysis,
 } from '../../../lib/favorite-analysis';
 
@@ -51,6 +53,11 @@ export interface DashboardHeroSlide {
   dateLabel: string;
   resultadoHrefOverride?: string;
   pdfAnalysisId?: string;
+  checklistAnalysisId?: string;
+  birthRadarAxes?: RadarAxesData;
+  harmonizedRadarAxes?: RadarAxesData | null;
+  radarLabels?: Record<string, string>;
+  initialChecklist?: Partial<Record<ChecklistKey, boolean>>;
 }
 
 export interface DashboardHistoryItem {
@@ -113,48 +120,75 @@ const STAR_POINT_ITEMS: ReadonlyArray<{
   { key: 'impressao', label: 'Impressão' },
 ];
 
-function useLocalChecklist(
-  userId: string,
-  autoDetected: { assinatura?: boolean; pdf?: boolean },
-) {
-  const [state, setState] = useState<ChecklistState>(() => ({
-    ...EMPTY_CHECKLIST,
-    assinatura: Boolean(autoDetected.assinatura),
-    pdf: Boolean(autoDetected.pdf),
-  }));
+function buildInitialChecklistMap(slides: readonly DashboardHeroSlide[]): Record<string, ChecklistState> {
+  const map: Record<string, ChecklistState> = {};
+  for (const slide of slides) {
+    map[slide.id] = slide.initialChecklist
+      ? parseChecklistState(slide.initialChecklist)
+      : { ...EMPTY_CHECKLIST };
+  }
+  return map;
+}
+
+function useSlideChecklists(userId: string, slides: readonly DashboardHeroSlide[]) {
+  const [bySlide, setBySlide] = useState<Record<string, ChecklistState>>(() =>
+    buildInitialChecklistMap(slides),
+  );
 
   useEffect(() => {
-    const key = checklistStorageKey(userId);
-    const parsed = parseChecklistState(
-      typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null,
-    );
-    setState({
-      ...parsed,
-      assinatura: parsed.assinatura || Boolean(autoDetected.assinatura),
-      pdf: parsed.pdf || Boolean(autoDetected.pdf),
-    });
-  }, [userId, autoDetected.assinatura, autoDetected.pdf]);
+    setBySlide((prev) => {
+      const next: Record<string, ChecklistState> = {};
+      for (const slide of slides) {
+        const dbHasSaved = Boolean(
+          slide.initialChecklist && Object.keys(slide.initialChecklist).length > 0,
+        );
+        const slideKeyStorage = checklistSlideStorageKey(userId, slide.id);
+        const localRaw =
+          typeof localStorage !== 'undefined' ? localStorage.getItem(slideKeyStorage) : null;
 
-  const persist = useCallback(
-    (next: ChecklistState) => {
-      setState(next);
-      try {
-        localStorage.setItem(checklistStorageKey(userId), JSON.stringify(next));
-      } catch {
-        /* ignore */
+        if (dbHasSaved) {
+          next[slide.id] = parseChecklistState(slide.initialChecklist);
+          try {
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem(slideKeyStorage, JSON.stringify(next[slide.id]));
+            }
+          } catch {
+            /* ignore */
+          }
+        } else if (localRaw) {
+          next[slide.id] = parseChecklistState(localRaw);
+        } else if (prev[slide.id]) {
+          next[slide.id] = prev[slide.id];
+        } else {
+          // Migra eventual checklist legado antigo sem perder histórico
+          const legacyRaw =
+            typeof localStorage !== 'undefined' ? localStorage.getItem(checklistStorageKey(userId)) : null;
+          next[slide.id] = legacyRaw ? parseChecklistState(legacyRaw) : { ...EMPTY_CHECKLIST };
+        }
       }
+      return next;
+    });
+  }, [userId, slides]);
+
+  const toggle = useCallback(
+    (slide: DashboardHeroSlide, key: ChecklistKey) => {
+      setBySlide((prev) => {
+        const current = prev[slide.id] ?? { ...EMPTY_CHECKLIST };
+        const updated: ChecklistState = { ...current, [key]: !current[key] };
+        const targetAnalysisId = slide.checklistAnalysisId ?? slide.pdfAnalysisId ?? slide.id;
+        void persistSlideChecklist({
+          userId,
+          analysisId: targetAnalysisId,
+          slideKey: slide.id,
+          state: updated,
+        });
+        return { ...prev, [slide.id]: updated };
+      });
     },
     [userId],
   );
 
-  const toggle = useCallback(
-    (key: ChecklistKey) => {
-      persist({ ...state, [key]: !state[key] });
-    },
-    [state, persist],
-  );
-
-  return { state, toggle };
+  return { bySlide, toggle };
 }
 
 function useOfferDismissed(userId: string) {
@@ -180,33 +214,6 @@ function useOfferDismissed(userId: string) {
   return { dismissed, dismiss };
 }
 
-function nextChecklistCta(
-  state: ChecklistState,
-  props: AppDashboardProps,
-  hasUnfinishedSession: boolean,
-): { href: string; label: string; checkout?: boolean } {
-  const resultado = `/app/resultado/${props.analysisId}`;
-  if (!state.assinatura) {
-    if (props.hasNomeSocial) {
-      return {
-        href: '/app/analise/nome-social',
-        label: hasUnfinishedSession ? 'Retomar análise' : 'Escolher assinatura',
-      };
-    }
-    return { href: '/comprar', label: 'Ver a análise completa', checkout: true };
-  }
-  if (!state.tracado) {
-    return { href: `${resultado}#guia-assinatura`, label: 'Treine o traçado' };
-  }
-  if (!state.redes) {
-    return { href: `${resultado}#guia-assinatura`, label: 'Use o nome nas redes' };
-  }
-  if (!state.pdf) {
-    return { href: resultado, label: 'Baixar o seu PDF' };
-  }
-  return { href: resultado, label: 'Ver sua análise' };
-}
-
 function StarIcon({ filled, className = 'h-3.5 w-3.5' }: { filled: boolean; className?: string }) {
   return (
     <svg
@@ -228,7 +235,14 @@ function StarIcon({ filled, className = 'h-3.5 w-3.5' }: { filled: boolean; clas
 
 function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
+    <svg
+      className="h-7 w-7"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      aria-hidden="true"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -239,10 +253,6 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
 }
 
 export function AppDashboard(props: AppDashboardProps) {
-  const { state: checklist, toggle: toggleChecklist } = useLocalChecklist(props.userId, {
-    assinatura: props.signatureChosen,
-    pdf: props.pdfReady,
-  });
   const { dismissed: offerDismissed, dismiss: dismissOffer } = useOfferDismissed(props.userId);
   const [hasUnfinishedSession, setHasUnfinishedSession] = useState(false);
 
@@ -266,9 +276,17 @@ export function AppDashboard(props: AppDashboardProps) {
         isFree: isFallbackFree,
         isFavorite: false,
         dateLabel: '',
+        birthRadarAxes: props.radarAxes,
+        harmonizedRadarAxes: isFallbackFree ? null : (props.harmonizedRadarAxes ?? null),
+        radarLabels: props.radarLabels,
       },
     ];
   }, [props]);
+
+  const { bySlide: checklistsBySlide, toggle: toggleSlideChecklist } = useSlideChecklists(
+    props.userId,
+    baseSlides,
+  );
 
   const serverFavoriteId = useMemo(
     () => baseSlides.find((s) => s.isFavorite && !s.isFree)?.id ?? null,
@@ -278,6 +296,18 @@ export function AppDashboard(props: AppDashboardProps) {
   const [favoriteId, setFavoriteId] = useState<string | null>(() => {
     if (serverFavoriteId) return serverFavoriteId;
     return getStoredFavoriteAnalysisId(props.userId);
+  });
+
+  // Ordem fixa cronológica (esquerda -> direita): nome de nascimento inicial em 0, depois análises por data
+  const orderedSlides = baseSlides;
+
+  const [activeIndex, setActiveIndex] = useState<number>(() => {
+    const fav = serverFavoriteId ?? getStoredFavoriteAnalysisId(props.userId);
+    if (fav) {
+      const idx = baseSlides.findIndex((s) => s.id === fav && !s.isFree);
+      if (idx >= 0) return idx;
+    }
+    return 0;
   });
 
   useEffect(() => {
@@ -303,17 +333,13 @@ export function AppDashboard(props: AppDashboardProps) {
     };
   }, [props.userId, serverFavoriteId]);
 
-  const orderedSlides = useMemo(
-    () => orderSlidesWithFavorite(baseSlides, favoriteId),
-    [baseSlides, favoriteId],
-  );
-
-  const [activeIndex, setActiveIndex] = useState(0);
   const [slidePhase, setSlidePhase] = useState<'idle' | 'entering-next' | 'entering-prev'>('idle');
 
   const safeIndex = Math.min(activeIndex, Math.max(0, orderedSlides.length - 1));
   const activeSlide = orderedSlides[safeIndex] ?? orderedSlides[0];
   const hasMultipleSlides = orderedSlides.length > 1;
+  const canGoPrev = hasMultipleSlides && safeIndex > 0;
+  const canGoNext = hasMultipleSlides && safeIndex < orderedSlides.length - 1;
 
   const triggerSlideTransition = useCallback((direction: 'next' | 'prev', nextIndex: number) => {
     setSlidePhase(direction === 'next' ? 'entering-next' : 'entering-prev');
@@ -326,15 +352,13 @@ export function AppDashboard(props: AppDashboardProps) {
   }, []);
 
   const goPrevSlide = useCallback(() => {
-    if (orderedSlides.length <= 1) return;
-    const prevIdx = (safeIndex - 1 + orderedSlides.length) % orderedSlides.length;
-    triggerSlideTransition('prev', prevIdx);
-  }, [orderedSlides.length, safeIndex, triggerSlideTransition]);
+    if (safeIndex <= 0) return;
+    triggerSlideTransition('prev', safeIndex - 1);
+  }, [safeIndex, triggerSlideTransition]);
 
   const goNextSlide = useCallback(() => {
-    if (orderedSlides.length <= 1) return;
-    const nextIdx = (safeIndex + 1) % orderedSlides.length;
-    triggerSlideTransition('next', nextIdx);
+    if (safeIndex >= orderedSlides.length - 1) return;
+    triggerSlideTransition('next', safeIndex + 1);
   }, [orderedSlides.length, safeIndex, triggerSlideTransition]);
 
   const handleToggleFavorite = useCallback(
@@ -342,9 +366,6 @@ export function AppDashboard(props: AppDashboardProps) {
       if (isFreeRow) return;
       const nextFav = favoriteId === targetId ? null : targetId;
       setFavoriteId(nextFav);
-      if (nextFav) {
-        setActiveIndex(0);
-      }
       void persistFavoriteAnalysis(props.userId, nextFav);
     },
     [favoriteId, props.userId],
@@ -398,17 +419,23 @@ export function AppDashboard(props: AppDashboardProps) {
     };
   }, [targetScore]);
 
-  const birthScoreValue = Math.max(0, Math.min(100, Math.round(props.birthScore ?? props.score)));
-  const harmonizedScoreValue = Math.max(
-    0,
-    Math.min(100, Math.round(props.scorePotencial ?? props.score)),
-  );
+  const activeChecklist = checklistsBySlide[activeSlide.id] ?? { ...EMPTY_CHECKLIST };
+  const doneCount = countChecklistDone(activeChecklist);
+  const vibrationInfo = getVibrationActivationInfo(doneCount, CHECKLIST_ITEMS.length);
 
-  const doneCount = countChecklistDone(checklist);
-  const cta = useMemo(
-    () => nextChecklistCta(checklist, props, hasUnfinishedSession),
-    [checklist, props, hasUnfinishedSession],
+  const activeBirthAxes = activeSlide.birthRadarAxes ?? props.radarAxes;
+  const activeHarmonizedAxes = activeSlide.isFree
+    ? null
+    : (activeSlide.harmonizedRadarAxes ?? props.harmonizedRadarAxes ?? null);
+  const activeBirthScoreForRadar = Math.max(
+    0,
+    Math.min(100, Math.round(activeSlide.birthScore ?? props.birthScore ?? props.score)),
   );
+  const activeOverlayScoreForRadar = Math.max(
+    0,
+    Math.min(100, Math.round(activeSlide.score ?? props.scorePotencial ?? props.score)),
+  );
+  const activeRadarLabels = activeSlide.radarLabels ?? props.radarLabels;
 
   const showOfferCard = useMemo(() => {
     if (offerDismissed) return false;
@@ -457,13 +484,20 @@ export function AppDashboard(props: AppDashboardProps) {
     <div className="flex flex-col gap-6 lg:gap-8">
       {/* Card Hero principal + carrossel quando houver múltiplas análises */}
       <section className="relative" aria-label="Resumo da análise principal">
-        <div className="flex items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-2 lg:gap-3">
           {hasMultipleSlides && (
             <button
               type="button"
               onClick={goPrevSlide}
+              disabled={!canGoPrev}
+              aria-hidden={!canGoPrev}
+              tabIndex={canGoPrev ? 0 : -1}
               aria-label="Análise anterior"
-              className="hidden sm:inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1C1C1C] text-[#e5e2e1] shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-white/10 transition hover:bg-[#D4AF37] hover:text-[#131313] hover:ring-[#D4AF37] active:scale-95"
+              className={`hidden sm:inline-flex h-10 w-8 shrink-0 items-center justify-center bg-transparent transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] ${
+                canGoPrev
+                  ? 'cursor-pointer text-[#e5e2e1]/55 hover:scale-110 hover:text-[#f2ca50] active:scale-95'
+                  : 'pointer-events-none opacity-0'
+              }`}
             >
               <ChevronIcon direction="left" />
             </button>
@@ -680,8 +714,15 @@ export function AppDashboard(props: AppDashboardProps) {
             <button
               type="button"
               onClick={goNextSlide}
+              disabled={!canGoNext}
+              aria-hidden={!canGoNext}
+              tabIndex={canGoNext ? 0 : -1}
               aria-label="Próxima análise"
-              className="hidden sm:inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1C1C1C] text-[#e5e2e1] shadow-[0_8px_24px_rgba(0,0,0,0.45)] ring-1 ring-white/10 transition hover:bg-[#D4AF37] hover:text-[#131313] hover:ring-[#D4AF37] active:scale-95"
+              className={`hidden sm:inline-flex h-10 w-8 shrink-0 items-center justify-center bg-transparent transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff] ${
+                canGoNext
+                  ? 'cursor-pointer text-[#e5e2e1]/55 hover:scale-110 hover:text-[#f2ca50] active:scale-95'
+                  : 'pointer-events-none opacity-0'
+              }`}
             >
               <ChevronIcon direction="right" />
             </button>
@@ -694,8 +735,15 @@ export function AppDashboard(props: AppDashboardProps) {
             <button
               type="button"
               onClick={goPrevSlide}
+              disabled={!canGoPrev}
+              aria-hidden={!canGoPrev}
+              tabIndex={canGoPrev ? 0 : -1}
               aria-label="Análise anterior"
-              className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#1C1C1C] text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-[#D4AF37] hover:text-[#131313] active:scale-95"
+              className={`sm:hidden inline-flex h-8 w-8 items-center justify-center bg-transparent transition-all duration-200 ${
+                canGoPrev
+                  ? 'cursor-pointer text-[#e5e2e1]/65 hover:text-[#f2ca50] active:scale-95'
+                  : 'pointer-events-none opacity-0'
+              }`}
             >
               <ChevronIcon direction="left" />
             </button>
@@ -727,8 +775,15 @@ export function AppDashboard(props: AppDashboardProps) {
             <button
               type="button"
               onClick={goNextSlide}
+              disabled={!canGoNext}
+              aria-hidden={!canGoNext}
+              tabIndex={canGoNext ? 0 : -1}
               aria-label="Próxima análise"
-              className="sm:hidden inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#1C1C1C] text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-[#D4AF37] hover:text-[#131313] active:scale-95"
+              className={`sm:hidden inline-flex h-8 w-8 items-center justify-center bg-transparent transition-all duration-200 ${
+                canGoNext
+                  ? 'cursor-pointer text-[#e5e2e1]/65 hover:text-[#f2ca50] active:scale-95'
+                  : 'pointer-events-none opacity-0'
+              }`}
             >
               <ChevronIcon direction="right" />
             </button>
@@ -736,53 +791,109 @@ export function AppDashboard(props: AppDashboardProps) {
         )}
       </section>
 
-      {/* Checklist + Teia + Leitura Recomendada */}
+      {/* Checklist por card + Teia dinâmica + Leitura Recomendada */}
       <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
         <div className="flex flex-col gap-6">
           <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
-            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">Seus próximos passos</h2>
-              <p className="text-xs font-medium text-[#A0A0A0]">
-                {doneCount} de 4 feitos
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
+                  Jornada de Ativação
+                </h2>
+                <p className="mt-0.5 text-xs text-[#A0A0A0]">
+                  {activeSlide.nome}
+                </p>
+              </div>
+              <p className="text-xs font-medium tabular-nums text-[#A0A0A0]">
+                {doneCount} de {CHECKLIST_ITEMS.length} concluídos
               </p>
             </div>
-            <ul className="space-y-3">
+
+            {/* Grau de Ativação Vibracional + Barra de Progresso */}
+            <div className="mt-4 space-y-2 pb-4 border-b border-white/[0.06]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
+                    Grau de Vibração
+                  </span>
+                  <span
+                    className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-colors duration-500"
+                    style={vibrationInfo.badgeStyle}
+                  >
+                    {vibrationInfo.levelName}
+                  </span>
+                </div>
+                <span
+                  className="font-cinzel text-base font-bold tabular-nums transition-colors duration-500"
+                  style={{ color: vibrationInfo.textColor }}
+                >
+                  {vibrationInfo.percentage}%
+                </span>
+              </div>
+
+              <div
+                className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.07]"
+                role="progressbar"
+                aria-valuenow={vibrationInfo.percentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Grau de Vibração: ${vibrationInfo.percentage}% (${vibrationInfo.levelName})`}
+              >
+                <div
+                  className={`h-full rounded-full bg-gradient-to-r ${vibrationInfo.barGradient} transition-all duration-700 ease-out`}
+                  style={{ width: `${vibrationInfo.percentage}%` }}
+                />
+              </div>
+
+              <p className="text-xs leading-relaxed text-[#A0A0A0]">
+                {vibrationInfo.summary}
+              </p>
+            </div>
+
+            {/* 6 Passos em checkboxes redondos sem fundo escuro interno */}
+            <ul className="mt-4 space-y-1.5">
               {CHECKLIST_ITEMS.map((item) => {
-                const checked = checklist[item.key];
+                const checked = activeChecklist[item.key];
                 return (
                   <li key={item.key}>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-[#131313]/80 px-3 py-2.5">
+                    <label className="group flex cursor-pointer items-start gap-3.5 rounded-xl px-2 py-2.5 transition-colors hover:bg-white/[0.03]">
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={() => toggleChecklist(item.key)}
-                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#D4AF37]/40 bg-transparent accent-[#D4AF37]"
+                        onChange={() => toggleSlideChecklist(activeSlide, item.key)}
+                        className="sr-only"
                       />
                       <span
-                        className={`text-sm leading-snug ${checked ? 'text-emerald-400/90 line-through decoration-emerald-400/40' : 'text-[#e5e2e1]'}`}
+                        aria-hidden="true"
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                          checked
+                            ? 'border-[#34D399] bg-[#34D399]/20 text-[#34D399] shadow-[0_0_12px_rgba(52,211,153,0.28)]'
+                            : 'border-[#D4AF37]/40 bg-transparent text-transparent group-hover:border-[#f2ca50]'
+                        }`}
                       >
-                        {item.label}
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={`block text-sm font-medium leading-snug transition-colors ${
+                            checked
+                              ? 'text-emerald-300/90 line-through decoration-emerald-400/40'
+                              : 'text-[#e5e2e1]'
+                          }`}
+                        >
+                          {item.step}. {item.label}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-[#A0A0A0]">
+                          {item.description}
+                        </span>
                       </span>
                     </label>
                   </li>
                 );
               })}
             </ul>
-            <div className="mt-5">
-              {cta.checkout && !props.hasNomeSocial ? (
-                <DashboardCheckoutButton
-                  product="nome_social"
-                  priceInfo={props.socialPrice}
-                  promotion={props.promotion}
-                  label={cta.label}
-                  className={`${CTA_CLASS} w-full sm:w-auto`}
-                />
-              ) : (
-                <a href={cta.href} className={`${CTA_CLASS} w-full sm:w-auto`}>
-                  {cta.label}
-                </a>
-              )}
-            </div>
           </section>
 
           {props.recommendedReading && (
@@ -808,23 +919,28 @@ export function AppDashboard(props: AppDashboardProps) {
           )}
         </div>
 
-        <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
-          <h2 className="mb-1 font-cinzel text-lg font-bold text-[#e5e2e1]">
-            Como o seu nome se sai em 5 áreas
-          </h2>
-          <p className="mb-3 text-xs text-[#A0A0A0]">
-            {props.harmonizedRadarAxes
-              ? 'Comparação entre o nome de nascimento e sua assinatura harmonizada. Toque para detalhar.'
-              : 'Toque na teia para abrir o painel de análise completo.'}
-          </p>
-          <a href={resultadoHref} className="block rounded-xl bg-[#131313]/60 p-2 transition hover:bg-[#131313]">
+        <section className="flex flex-col justify-between rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
+          <div>
+            <h2 className="mb-1 font-cinzel text-lg font-bold text-[#e5e2e1]">
+              Como o seu nome se sai em 5 áreas
+            </h2>
+            <p className="mb-4 text-xs text-[#A0A0A0]">
+              {activeHarmonizedAxes
+                ? `Comparação entre ${activeSlide.birthName} e ${activeSlide.nome}. Toque para detalhar.`
+                : `Mapa vibracional inicial de ${activeSlide.nome}. Toque para abrir o painel de análise.`}
+            </p>
+          </div>
+          <a
+            href={resultadoHref}
+            className="flex flex-1 items-center justify-center rounded-xl py-2 transition-opacity hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]"
+          >
             <ReadingRadar
-              axes={props.radarAxes}
-              overlayAxes={props.harmonizedRadarAxes ?? undefined}
-              birthScore={birthScoreValue}
-              overlayScore={props.harmonizedRadarAxes ? harmonizedScoreValue : undefined}
-              labels={props.radarLabels}
-              className="pointer-events-none max-w-[320px] mx-auto [&_svg]:max-w-[320px]"
+              axes={activeBirthAxes}
+              overlayAxes={activeHarmonizedAxes}
+              birthScore={activeBirthScoreForRadar}
+              overlayScore={activeHarmonizedAxes ? activeOverlayScoreForRadar : null}
+              labels={activeRadarLabels}
+              className="pointer-events-none mx-auto w-full max-w-[500px] [&_svg]:w-full [&_svg]:max-w-[500px]"
             />
           </a>
         </section>

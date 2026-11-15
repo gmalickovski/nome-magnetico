@@ -271,13 +271,16 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(closeBtnMatch[0], /bg-transparent text-\[#e5e2e1\]\/80 hover:text-\[#f2ca50\]/);
   });
 
-  it('Hero do /app exibe círculo grande à direita, pílulas sem Mapa Cabalístico, 5 pontas da estrela legíveis, 2 botões, favoritar e card de nascimento no carrossel', () => {
+  it('Hero do /app exibe círculo grande à direita, pílulas sem Mapa Cabalístico, setas sutis, carrossel cronológico, teia dinâmica ampliada e checklist 6 passos', () => {
     const dashboardSrc = readFileSync(
       path.join(srcRoot, 'frontend', 'components', 'app', 'dashboard', 'AppDashboard.tsx'),
       'utf8',
     );
     assert.doesNotMatch(dashboardSrc, /Alternar nome exibido no score/);
     assert.doesNotMatch(dashboardSrc, /Mapa Cabalístico/);
+    assert.doesNotMatch(dashboardSrc, /Treine o traçado/);
+    assert.doesNotMatch(dashboardSrc, /bg-\[#131313\]\/60/);
+    assert.doesNotMatch(dashboardSrc, /bg-\[#131313\]\/80/);
     assert.match(dashboardSrc, /lg:grid-cols-\[minmax\(0,1fr\)_300px\]/);
     assert.match(dashboardSrc, /lg:order-1[\s\S]*lg:order-2/);
     assert.match(dashboardSrc, /lg:h-\[280px\] lg:w-\[280px\]/);
@@ -285,11 +288,13 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /Harmônica \/ Favorável/);
     assert.match(dashboardSrc, /As 5 pontas da estrela/);
     assert.match(dashboardSrc, /text-xs sm:text-sm font-medium tracking-wide/);
-    assert.match(dashboardSrc, /key:\s*'destino',\s*label:\s*'Destino'/);
-    assert.match(dashboardSrc, /key:\s*'expressao',\s*label:\s*'Expressão'/);
-    assert.match(dashboardSrc, /key:\s*'motivacao',\s*label:\s*'Motivação'/);
-    assert.match(dashboardSrc, /key:\s*'missao',\s*label:\s*'Missão'/);
-    assert.match(dashboardSrc, /key:\s*'impressao',\s*label:\s*'Impressão'/);
+    assert.match(dashboardSrc, /canGoPrev/);
+    assert.match(dashboardSrc, /canGoNext/);
+    assert.match(dashboardSrc, /bg-transparent/);
+    assert.match(dashboardSrc, /Jornada de Ativação/);
+    assert.match(dashboardSrc, /Grau de Vibração/);
+    assert.match(dashboardSrc, /role="progressbar"/);
+    assert.match(dashboardSrc, /max-w-\[500px\]/);
     assert.match(dashboardSrc, /label="Baixar PDF"/);
     assert.match(dashboardSrc, /Ver Painel de Análise/);
     assert.match(dashboardSrc, /Análise anterior/);
@@ -298,7 +303,11 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
     const appIndexSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'index.astro'), 'utf8');
     assert.doesNotMatch(appIndexSrc, /Mapa Cabalístico/);
-    assert.match(appIndexSrc, /\[\.\.\.paidSlides, birthSlide\]/);
+    assert.match(appIndexSrc, /\[birthSlide, \.\.\.paidSlides\]/);
+
+    const checklistApiSrc = readFileSync(path.join(srcRoot, 'pages', 'api', 'analyses', 'checklist.ts'), 'utf8');
+    assert.match(checklistApiSrc, /checklist_by_slide/);
+    assert.match(checklistApiSrc, /ChecklistBodySchema\.safeParse/);
 
     const analisesSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro'), 'utf8');
     assert.match(analisesSrc, /favorite-analysis-btn/);

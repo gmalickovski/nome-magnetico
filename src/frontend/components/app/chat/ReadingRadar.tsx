@@ -109,7 +109,7 @@ export function ReadingRadar({
     <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
         viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
-        className="nm-radar-svg w-full max-w-[520px] h-auto block"
+        className="nm-radar-svg w-full max-w-[560px] h-auto block"
         role="img"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
@@ -142,7 +142,7 @@ export function ReadingRadar({
 
         <polygon
           points={basePoints}
-          className="transition-all duration-300 ease-out"
+          className="transition-all duration-700 ease-out"
           fill={birthVisual.fill}
           stroke={birthVisual.stroke}
           strokeWidth="2.4"
@@ -153,7 +153,7 @@ export function ReadingRadar({
         {overlayPoints && overlayVisual && (
           <polygon
             points={overlayPoints}
-            className="transition-all duration-300 ease-out"
+            className="transition-all duration-700 ease-out"
             fill={overlayVisual.fill}
             stroke={overlayVisual.stroke}
             strokeWidth="3.4"
@@ -164,13 +164,31 @@ export function ReadingRadar({
 
         {AXIS_CONFIG.map((axis) => {
           const { x, y } = getCoords(getVal(axes, axis.key), axis.angle);
-          return <circle key={`dot-b-${axis.key}`} cx={x} cy={y} r="5" fill={birthVisual.stroke} />;
+          return (
+            <circle
+              key={`dot-b-${axis.key}`}
+              cx={x}
+              cy={y}
+              r="5"
+              fill={birthVisual.stroke}
+              className="transition-all duration-700 ease-out"
+            />
+          );
         })}
 
         {overlayAxes && overlayVisual &&
           AXIS_CONFIG.map((axis) => {
             const { x, y } = getCoords(getVal(overlayAxes, axis.key), axis.angle);
-            return <circle key={`dot-o-${axis.key}`} cx={x} cy={y} r="7" fill={overlayVisual.stroke} />;
+            return (
+              <circle
+                key={`dot-o-${axis.key}`}
+                cx={x}
+                cy={y}
+                r="7"
+                fill={overlayVisual.stroke}
+                className="transition-all duration-700 ease-out"
+              />
+            );
           })}
 
         {/* Rótulo + valor empilhados fora do pentágono (valor sempre visível nas 5 pontas) */}
