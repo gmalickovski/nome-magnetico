@@ -940,12 +940,15 @@ export function AppDashboard(props: AppDashboardProps) {
           <ul className="divide-y divide-white/[0.06]">
             {props.history.map((row) => {
               const rowFav = !row.isFree && favoriteId === row.id;
+              const rowVisual = row.score != null ? getScoreTierVisual(row.score) : null;
+              const clampedScore =
+                row.score != null ? Math.max(0, Math.min(100, Math.round(row.score))) : 0;
               return (
                 <li
                   key={row.id}
-                  className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                  className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between md:gap-5"
                 >
-                  <div className="flex min-w-0 items-start gap-2.5 sm:items-center sm:gap-3">
+                  <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center sm:gap-3">
                     {!row.isFree && (
                       <button
                         type="button"
@@ -973,31 +976,48 @@ export function AppDashboard(props: AppDashboardProps) {
                       <p className="nm-caption mt-0.5 text-[#A0A0A0]">{row.dateLabel}</p>
                     </div>
                   </div>
-                  <div className="flex w-full items-center justify-between gap-2.5 sm:w-auto sm:justify-end sm:gap-3">
-                    {row.score != null && (
-                      <span className="inline-flex items-baseline gap-1 font-cinzel text-lg font-bold tabular-nums text-[#e5e2e1]">
-                        {row.score}
-                        <span className="font-inter text-[11px] font-medium text-[#A0A0A0] sm:hidden">
-                          pts
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:justify-end md:gap-5">
+                    {row.score != null && rowVisual && (
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span
+                          className="font-cinzel text-lg font-bold leading-none tabular-nums shrink-0"
+                          style={{ color: rowVisual.text }}
+                        >
+                          {clampedScore}
                         </span>
-                      </span>
+                        <div
+                          className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.08] sm:w-32 sm:flex-none md:w-40"
+                          role="progressbar"
+                          aria-valuenow={clampedScore}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`Score ${clampedScore} de 100 (${rowVisual.label})`}
+                        >
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${rowVisual.barGradient} transition-all duration-700 ease-out`}
+                            style={{ width: `${Math.max(clampedScore, 3)}%` }}
+                          />
+                        </div>
+                      </div>
                     )}
-                    <div className="flex items-center gap-2 sm:gap-2.5">
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <a
+                        href={`/app/resultado/${row.id}`}
+                        className="inline-flex h-9 flex-1 items-center justify-center rounded-full bg-[#D4AF37]/15 px-4 text-xs font-bold uppercase tracking-wide text-[#f2ca50] transition hover:bg-[#D4AF37]/25 sm:flex-none"
+                      >
+                        Abrir Painel
+                      </a>
                       <PDFFeedbackButton
                         analysisId={row.id}
                         productType={row.productType ?? 'nome_social'}
                         isFree={Boolean(row.isFree)}
-                        label="PDF"
-                        showLabel
+                        label="Baixar PDF"
+                        showLabel={false}
                         showFab={false}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-white/[0.1] hover:text-[#f2ca50]"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-white/[0.12] hover:text-[#f2ca50]"
                       />
-                      <a
-                        href={`/app/resultado/${row.id}`}
-                        className="inline-flex items-center justify-center rounded-full bg-[#D4AF37]/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-[#f2ca50] transition hover:bg-[#D4AF37]/25"
-                      >
-                        Ver painel
-                      </a>
                     </div>
                   </div>
                 </li>

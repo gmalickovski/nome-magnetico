@@ -304,6 +304,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /nm-reading-card flex flex-col justify-between rounded-2xl bg-\[#1C1C1C\]/);
     assert.match(dashboardSrc, /if \(offerDismissed \|\| props\.isAdmin\) return false;/);
     assert.match(dashboardSrc, /text-\[#f2ca50\] break-words sm:truncate sm:text-lg/);
+    assert.match(dashboardSrc, /Abrir Painel/);
+    assert.match(dashboardSrc, /rowVisual\.barGradient/);
     assert.match(dashboardSrc, /label="Baixar PDF"/);
     assert.match(dashboardSrc, /Ver Painel de Análise/);
     assert.match(dashboardSrc, /Análise anterior/);
