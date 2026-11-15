@@ -300,7 +300,10 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /variant="dashboard"/);
     assert.match(dashboardSrc, /showNumericLabels=\{Boolean\(activeHarmonizedAxes\)\}/);
     assert.match(dashboardSrc, /<h2 className="mb-2 font-cinzel text-lg font-bold text-\[#e5e2e1\]">\s*Mapa de Alinhamento Vibracional/);
-    assert.match(dashboardSrc, /nm-floating-card nm-reading-card/);
+    assert.match(dashboardSrc, /borderColor: `\$\{activeVisual\.stroke\}59`/);
+    assert.match(dashboardSrc, /nm-reading-card flex flex-col justify-between rounded-2xl bg-\[#1C1C1C\]/);
+    assert.match(dashboardSrc, /if \(offerDismissed \|\| props\.isAdmin\) return false;/);
+    assert.match(dashboardSrc, /text-\[#f2ca50\] break-words sm:truncate sm:text-lg/);
     assert.match(dashboardSrc, /label="Baixar PDF"/);
     assert.match(dashboardSrc, /Ver Painel de Análise/);
     assert.match(dashboardSrc, /Análise anterior/);

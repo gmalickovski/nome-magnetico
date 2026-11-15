@@ -434,9 +434,9 @@ export function AppDashboard(props: AppDashboardProps) {
   const activeRadarLabels = activeSlide.radarLabels ?? props.radarLabels;
 
   const showOfferCard = useMemo(() => {
-    if (offerDismissed) return false;
+    if (offerDismissed || props.isAdmin) return false;
     if (props.onlyFreeAnalysis && !props.hasNomeSocial) return true;
-    if (props.hasNomeSocial || props.isAdmin) return true;
+    if (props.hasNomeSocial) return true;
     if (props.isExpired) return true;
     return false;
   }, [offerDismissed, props]);
@@ -499,7 +499,13 @@ export function AppDashboard(props: AppDashboardProps) {
             </button>
           )}
 
-          <div className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-6 sm:p-8 lg:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div
+            className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-5 sm:p-8 lg:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+            style={{
+              borderColor: `${activeVisual.stroke}59`,
+              transition: 'border-color 0.7s ease',
+            }}
+          >
             <div
               key={activeSlide.id}
               className={`flex flex-col items-center gap-7 text-center transition-all duration-300 ease-out lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center lg:gap-8 lg:text-left ${slideMotionClass}`}
@@ -617,11 +623,11 @@ export function AppDashboard(props: AppDashboardProps) {
                   <p className="mb-2.5 text-xs font-bold uppercase tracking-[0.16em] text-[#A0A0A0]">
                     As 5 pontas da estrela
                   </p>
-                  <div className="flex flex-wrap justify-center gap-2.5 sm:grid sm:grid-cols-5 sm:gap-3">
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5 sm:gap-3">
                     {STAR_POINT_ITEMS.map((item) => (
                       <div
                         key={item.key}
-                        className="flex min-w-[92px] flex-1 basis-[28%] flex-col items-center justify-center rounded-xl bg-[#131313]/85 px-3 py-3 sm:basis-auto sm:min-w-0"
+                        className="flex flex-col items-center justify-center rounded-xl bg-[#131313]/85 px-3 py-3 last:col-span-2 sm:last:col-span-1"
                       >
                         <span
                           className="font-cinzel text-xl font-bold leading-none tabular-nums sm:text-2xl"
@@ -794,8 +800,8 @@ export function AppDashboard(props: AppDashboardProps) {
         }`}
       >
         {showChecklistCard && (
-          <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
               <div>
                 <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
                   Jornada de Ativação
@@ -897,7 +903,7 @@ export function AppDashboard(props: AppDashboardProps) {
           </section>
         )}
 
-        <section className="nm-floating-card nm-reading-card flex flex-col justify-between rounded-2xl p-5 sm:p-6">
+        <section className="nm-reading-card flex flex-col justify-between rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
           <h2 className="mb-2 font-cinzel text-lg font-bold text-[#e5e2e1]">
             Mapa de Alinhamento Vibracional
           </h2>
@@ -921,7 +927,7 @@ export function AppDashboard(props: AppDashboardProps) {
 
       {/* Histórico */}
       {props.history.length > 0 && (
-        <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6">
+        <section className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">Suas análises</h2>
             <a
@@ -935,8 +941,11 @@ export function AppDashboard(props: AppDashboardProps) {
             {props.history.map((row) => {
               const rowFav = !row.isFree && favoriteId === row.id;
               return (
-                <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="min-w-0 flex items-center gap-2.5">
+                <li
+                  key={row.id}
+                  className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                >
+                  <div className="flex min-w-0 items-start gap-2.5 sm:items-center sm:gap-3">
                     {!row.isFree && (
                       <button
                         type="button"
@@ -948,7 +957,7 @@ export function AppDashboard(props: AppDashboardProps) {
                             : `Favoritar ${row.nome} como análise principal`
                         }
                         title={rowFav ? 'Análise principal no dashboard' : 'Definir como análise principal'}
-                        className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+                        className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition sm:mt-0 ${
                           rowFav
                             ? 'bg-[#D4AF37]/20 text-[#f2ca50]'
                             : 'text-[#A0A0A0] hover:bg-white/[0.06] hover:text-[#f2ca50]'
@@ -957,32 +966,39 @@ export function AppDashboard(props: AppDashboardProps) {
                         <StarIcon filled={rowFav} className="h-3.5 w-3.5" />
                       </button>
                     )}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[#e5e2e1]">{row.nome}</p>
-                      <p className="text-xs text-[#A0A0A0]">{row.dateLabel}</p>
+                    <div className="min-w-0 flex-1">
+                      <span className="block font-cinzel text-base font-bold leading-snug text-[#f2ca50] break-words sm:truncate sm:text-lg">
+                        {row.nome}
+                      </span>
+                      <p className="nm-caption mt-0.5 text-[#A0A0A0]">{row.dateLabel}</p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex w-full items-center justify-between gap-2.5 sm:w-auto sm:justify-end sm:gap-3">
                     {row.score != null && (
-                      <span className="font-cinzel text-lg font-bold tabular-nums text-[#e5e2e1]">
+                      <span className="inline-flex items-baseline gap-1 font-cinzel text-lg font-bold tabular-nums text-[#e5e2e1]">
                         {row.score}
+                        <span className="font-inter text-[11px] font-medium text-[#A0A0A0] sm:hidden">
+                          pts
+                        </span>
                       </span>
                     )}
-                    <PDFFeedbackButton
-                      analysisId={row.id}
-                      productType={row.productType ?? 'nome_social'}
-                      isFree={Boolean(row.isFree)}
-                      label="PDF"
-                      showLabel
-                      showFab={false}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-white/[0.1] hover:text-[#f2ca50]"
-                    />
-                    <a
-                      href={`/app/resultado/${row.id}`}
-                      className="text-xs font-bold uppercase tracking-wide text-[#D4AF37] hover:text-[#f2ca50]"
-                    >
-                      Ver painel
-                    </a>
+                    <div className="flex items-center gap-2 sm:gap-2.5">
+                      <PDFFeedbackButton
+                        analysisId={row.id}
+                        productType={row.productType ?? 'nome_social'}
+                        isFree={Boolean(row.isFree)}
+                        label="PDF"
+                        showLabel
+                        showFab={false}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-[#e5e2e1] ring-1 ring-white/10 transition hover:bg-white/[0.1] hover:text-[#f2ca50]"
+                      />
+                      <a
+                        href={`/app/resultado/${row.id}`}
+                        className="inline-flex items-center justify-center rounded-full bg-[#D4AF37]/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-[#f2ca50] transition hover:bg-[#D4AF37]/25"
+                      >
+                        Ver painel
+                      </a>
+                    </div>
                   </div>
                 </li>
               );
