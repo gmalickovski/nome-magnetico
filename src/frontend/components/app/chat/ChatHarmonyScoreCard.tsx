@@ -24,21 +24,28 @@ export function ChatHarmonyScoreCard({
 
   return (
     <HarmonyScoreStack className={`nm-reading-card text-left ${className}`}>
-      <HarmonyScoreRow
-        eyebrow="Nome de nascimento (Nota Hoje)"
-        nome={birthPanel.nome}
-        score={birthPanel.score}
-      />
-      {dual && harmonizedPanel && (
+      {dual && harmonizedPanel ? (
         <>
-          <HarmonyScoreDivider />
           <HarmonyScoreRow
             eyebrow="Nome harmonizado (Potencial)"
             nome={harmonizedPanel.nome}
             score={harmonizedPanel.score}
             eyebrowTone="harmonized"
+            emphasize
+          />
+          <HarmonyScoreDivider />
+          <HarmonyScoreRow
+            eyebrow="Nome de nascimento (Nota Hoje)"
+            nome={birthPanel.nome}
+            score={birthPanel.score}
           />
         </>
+      ) : (
+        <HarmonyScoreRow
+          eyebrow="Nome de nascimento (Nota Hoje)"
+          nome={birthPanel.nome}
+          score={birthPanel.score}
+        />
       )}
     </HarmonyScoreStack>
   );

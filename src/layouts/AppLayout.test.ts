@@ -347,8 +347,25 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(workspaceSrc, /<MobileReadingBottomSheet/);
     assert.match(workspaceSrc, /Painel de análise/);
     assert.doesNotMatch(workspaceSrc, /data-nm-selection-dot/);
+    assert.doesNotMatch(workspaceSrc, /mais recente primeiro/);
     assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
     assert.doesNotMatch(workspaceSrc, /Relatório completo/);
+
+    const harmonyScoreSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyScoreCard.tsx'),
+      'utf8',
+    );
+    const idxHarm = harmonyScoreSrc.indexOf('Nome harmonizado (Potencial)');
+    const idxBirth = harmonyScoreSrc.indexOf('Nome de nascimento (Nota Hoje)');
+    assert.ok(idxHarm !== -1 && idxBirth !== -1 && idxHarm < idxBirth);
+    assert.match(harmonyScoreSrc, /emphasize/);
+
+    const mobileSheetSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'MobileReadingBottomSheet.tsx'),
+      'utf8',
+    );
+    assert.match(mobileSheetSrc, /Painel de análise/);
+    assert.doesNotMatch(mobileSheetSrc, /Leitura deste nome/);
 
     const pickerSrc = readFileSync(
       path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),

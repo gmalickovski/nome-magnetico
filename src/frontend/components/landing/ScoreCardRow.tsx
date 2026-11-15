@@ -13,6 +13,8 @@ export interface ScoreCardRowProps {
   className?: string;
   /** Sobrescreve o número exibido (ex.: animação de contagem). */
   displayScore?: number;
+  /** Aumenta proporcionalmente a fonte do nome e da nota para destacar o nome harmonizado principal. */
+  emphasize?: boolean;
 }
 
 const SCORE_CARD_WIDE = '@[520px]/score-card';
@@ -29,12 +31,17 @@ export function ScoreCardRow({
   scoreTrailing,
   className = '',
   displayScore,
+  emphasize = false,
 }: ScoreCardRowProps) {
   const clamped = Math.max(0, Math.min(100, Math.round(score)));
   const shown = displayScore !== undefined ? Math.max(0, Math.min(100, Math.round(displayScore))) : clamped;
   const visual = getScoreTierVisual(shown);
 
   const showEyebrow = Boolean(eyebrow?.trim());
+  const titleSizeClass = emphasize
+    ? `nm-score-name--emphasized text-[1.35rem] sm:text-2xl ${SCORE_CARD_WIDE}:text-[1.55rem]`
+    : `text-base sm:text-lg ${SCORE_CARD_WIDE}:text-xl`;
+  const scoreSizeClass = emphasize ? 'text-[1.6875rem] sm:text-[1.75rem]' : 'text-xl';
 
   return (
     <div className={`@container/score-card w-full min-w-0 ${className}`}>
@@ -45,7 +52,7 @@ export function ScoreCardRow({
           className={`flex flex-col gap-2 min-w-0 w-full ${SCORE_CARD_WIDE}:flex-row ${SCORE_CARD_WIDE}:items-center ${SCORE_CARD_WIDE}:justify-between ${SCORE_CARD_WIDE}:gap-3`}
         >
           <h4
-            className={`min-w-0 w-full max-w-full font-cinzel text-base sm:text-lg font-bold text-white tracking-wide leading-snug truncate ${SCORE_CARD_WIDE}:flex-1 ${SCORE_CARD_WIDE}:text-xl`}
+            className={`min-w-0 w-full max-w-full font-cinzel font-bold text-white tracking-wide leading-snug truncate ${titleSizeClass} ${SCORE_CARD_WIDE}:flex-1`}
             title={nome}
           >
             {nome}
@@ -55,7 +62,7 @@ export function ScoreCardRow({
             className={`flex flex-wrap items-center gap-2 min-w-0 w-full ${SCORE_CARD_WIDE}:w-auto ${SCORE_CARD_WIDE}:shrink-0 ${SCORE_CARD_WIDE}:gap-2.5`}
           >
             <span
-              className="font-cinzel font-bold text-xl tabular-nums leading-none"
+              className={`font-cinzel font-bold tabular-nums leading-none whitespace-nowrap ${scoreSizeClass}`}
               style={{ color: visual.text }}
             >
               {shown}

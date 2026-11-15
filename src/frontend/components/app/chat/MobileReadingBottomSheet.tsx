@@ -87,7 +87,7 @@ export function MobileReadingBottomSheet({
   readingSummary = null,
   readingSummaryLoading = false,
   showReadingSummary = false,
-  headerFromCard = null,
+  headerFromCard: _headerFromCard = null,
   scrollToHarmonizedOnEnter = false,
   onContentScrollMax,
   panelPrimary = null,
@@ -105,8 +105,6 @@ export function MobileReadingBottomSheet({
   const reduced = prefersReducedMotion();
 
   const isOpen = snap !== 'closed';
-  const isFull = snap === 'full';
-  const showCardHeader = Boolean(headerFromCard?.suggestedName?.trim());
 
   useFocusTrap(isOpen, dialogRef);
 
@@ -134,7 +132,7 @@ export function MobileReadingBottomSheet({
   useEffect(() => {
     if (!mounted || !entered) return;
     titleRef.current?.focus();
-  }, [mounted, entered, snap, showCardHeader]);
+  }, [mounted, entered, snap]);
 
   useEffect(() => {
     if (!mounted || !entered || !scrollToHarmonizedOnEnter) return;
@@ -224,10 +222,6 @@ export function MobileReadingBottomSheet({
   if (!mounted) return null;
 
   const sheetHeight = snap === 'full' ? MOBILE_READING_SHEET_HEIGHT_FULL : MOBILE_READING_SHEET_HEIGHT_HALF;
-  const showAboveScoreLine =
-    showCardHeader &&
-    headerFromCard &&
-    headerFromCard.chosenScore > headerFromCard.baseScore;
 
   return (
     <>
@@ -268,46 +262,22 @@ export function MobileReadingBottomSheet({
           <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" style={{ width: 36, height: 4 }} />
         </div>
 
-        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-white/[0.06] px-4 pb-3">
-          <div className="min-w-0 flex-1">
-            {showCardHeader && headerFromCard ? (
-              <>
-                <p className="text-[10px] font-cinzel uppercase tracking-[0.14em] text-[#A0A0A0]">
-                  Leitura deste nome
-                </p>
-                <h2
-                  ref={titleRef}
-                  id="mobile-summary-title"
-                  tabIndex={-1}
-                  className="font-cinzel text-xl font-bold text-[#D4AF37] truncate mt-0.5"
-                >
-                  {headerFromCard.suggestedName}
-                </h2>
-                {showAboveScoreLine && (
-                  <p className="text-xs text-[#A0A0A0] mt-1 leading-snug">
-                    Nota {headerFromCard.chosenScore} · acima da do seu nome de nascimento (
-                    {headerFromCard.baseScore})
-                  </p>
-                )}
-              </>
-            ) : (
-              <h2
-                ref={titleRef}
-                id="mobile-summary-title"
-                tabIndex={-1}
-                className="font-cinzel text-base font-bold uppercase tracking-[0.12em] text-[#D4AF37] truncate"
-              >
-                Painel de análise
-              </h2>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+        <div className="shrink-0 border-b border-white/[0.06] px-4 pb-3">
+          <div className="relative flex w-full items-center justify-center min-h-[32px]">
+            <h2
+              ref={titleRef}
+              id="mobile-summary-title"
+              tabIndex={-1}
+              className="font-cinzel text-base font-bold uppercase tracking-[0.12em] text-[#e5e2e1] text-center px-10 truncate"
+            >
+              Painel de análise
+            </h2>
             <button
               type="button"
               onClick={() => onClose('x')}
               title="Fechar painel de análise"
               aria-label="Fechar painel de análise"
-              className="p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex shrink-0 items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
+              className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex shrink-0 items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
             >
               <IconX className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
             </button>

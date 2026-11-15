@@ -25,6 +25,15 @@
 .nm-app-shell--with-mobile-dock :is(h2, .nm-h2) { font-size: var(--nm-type-h2); line-height: 1.25; }
 .nm-app-shell--with-mobile-dock :is(h3, .nm-h3) { font-size: var(--nm-type-h3); line-height: 1.3; }
 .nm-app-shell--with-mobile-dock :is(h4, .nm-h4) { font-size: var(--nm-type-h4); line-height: 1.35; }
+.nm-app-shell--with-mobile-dock h4.nm-score-name--emphasized {
+  font-size: 1.35rem;
+  line-height: 1.3;
+}
+@media (min-width: 768px) {
+  .nm-app-shell--with-mobile-dock h4.nm-score-name--emphasized {
+    font-size: 1.5rem;
+  }
+}
 .nm-app-shell--with-mobile-dock p:not(.nm-caption):not(.nm-score-eyebrow):not([class*="uppercase"]),
 .nm-app-shell--with-mobile-dock :is(.nm-body, .nm-body-lg) {
   font-size: var(--nm-type-body);
@@ -92,7 +101,14 @@
   font-size: var(--nm-type-h4);
   line-height: 1.3;
   letter-spacing: 0.1em;
+}
+
+.nm-app-shell--with-mobile-dock #desktop-summary-title {
   text-align: left;
+}
+
+.nm-app-shell--with-mobile-dock #mobile-summary-title {
+  text-align: center;
 }
 
 .nm-app-shell--with-mobile-dock #desktop-summary-title[data-expanded="true"] {

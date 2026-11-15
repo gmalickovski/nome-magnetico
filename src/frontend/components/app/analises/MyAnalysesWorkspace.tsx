@@ -466,15 +466,9 @@ export default function MyAnalysesWorkspace({
           <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-lg:pb-[var(--nm-mobile-dock-clearance)] lg:pb-6 pr-0.5 sm:pr-1">
             {/* Cabeçalho da coluna esquerda */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-0.5">
-              <div>
-                <h1 className="font-cinzel text-2xl sm:text-[1.65rem] font-bold text-[#e5e2e1] tracking-wide leading-tight">
-                  Minhas Análises
-                </h1>
-                <p className="text-xs text-[#A0A0A0] mt-0.5">
-                  {items.length} análise{items.length !== 1 ? 's' : ''} salva
-                  {items.length !== 1 ? 's' : ''} · mais recente primeiro
-                </p>
-              </div>
+              <h1 className="font-cinzel text-2xl sm:text-[1.65rem] font-bold text-[#e5e2e1] tracking-wide leading-tight">
+                Minhas Análises
+              </h1>
               {hasAnyPaidAccess && (
                 <a
                   href="/app/analise/nome-social"

@@ -315,6 +315,7 @@ export interface HarmonyScoreRowProps {
   eyebrowTone?: 'birth' | 'harmonized';
   className?: string;
   displayScore?: number;
+  emphasize?: boolean;
 }
 
 /** Alias estável — implementação em {@link ScoreCardRow}. */
