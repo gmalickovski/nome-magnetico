@@ -23,10 +23,12 @@ import {
   landingMockupTileClass,
 } from './LandingSectionIntro';
 import { ScoreCardRow } from './ScoreCardRow.js';
+import { LifeTriangleBlockBadge } from './LifeTriangleBlockBadge.js';
 import { getScoreTierVisual } from './score-tier-visual.js';
 
 export { getScoreTierVisual, type ScoreTierVisual } from './score-tier-visual.js';
 export { ScoreCardRow, type ScoreCardRowProps } from './ScoreCardRow.js';
+export { LifeTriangleBlockBadge, type LifeTriangleBlockBadgeProps } from './LifeTriangleBlockBadge.js';
 
 const GOLD = '#D4AF37';
 
@@ -65,6 +67,8 @@ export interface HarmonySuggestionCardData {
   impressao: number;
   missao: number;
   bloqueios: number;
+  /** Sequências negativas exclusivamente do Triângulo da Vida. */
+  vidaBloqueiosCodigos?: string[];
 }
 
 type DemoSuggestion = HarmonySuggestionCardData;
@@ -130,11 +134,14 @@ export function HarmonySuggestionCard({
   stagger,
   delayIndex,
   className = '',
+  showBlockBadgeInTags = false,
 }: {
   c: HarmonySuggestionCardData;
   stagger: boolean;
   delayIndex: number;
   className?: string;
+  /** Quando true (cards do chat/entrevista), move bloqueio do rodapé para tag ao lado do nível/compatibilidade. */
+  showBlockBadgeInTags?: boolean;
 }) {
   return (
     <div
@@ -146,7 +153,19 @@ export function HarmonySuggestionCard({
       <ScoreCardRow
         nome={c.nome}
         score={c.score}
-        scoreTrailing={<CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />}
+        scoreTrailing={
+          showBlockBadgeInTags ? (
+            <>
+              <LifeTriangleBlockBadge
+                codigos={c.vidaBloqueiosCodigos}
+                fallbackCount={c.bloqueios}
+              />
+              <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
+            </>
+          ) : (
+            <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
+          )
+        }
       />
 
       <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
@@ -168,15 +187,16 @@ export function HarmonySuggestionCard({
           </span>
         </div>
 
-        {c.bloqueios > 0 ? (
-          <span className="text-[10.5px] sm:text-xs font-medium text-red-400 whitespace-nowrap">
-            ⚠ {c.bloqueios} bloqueio(s)
-          </span>
-        ) : (
-          <span className="text-[10.5px] sm:text-xs font-medium text-emerald-400 whitespace-nowrap">
-            ✓ Sem bloqueios
-          </span>
-        )}
+        {!showBlockBadgeInTags &&
+          (c.bloqueios > 0 ? (
+            <span className="text-[10.5px] sm:text-xs font-medium text-red-400 whitespace-nowrap">
+              ⚠ {c.bloqueios} bloqueio(s)
+            </span>
+          ) : (
+            <span className="text-[10.5px] sm:text-xs font-medium text-emerald-400 whitespace-nowrap">
+              ✓ Sem bloqueios
+            </span>
+          ))}
       </div>
     </div>
   );

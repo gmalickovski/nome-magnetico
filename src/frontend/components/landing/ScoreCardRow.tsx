@@ -52,7 +52,7 @@ export function ScoreCardRow({
           </h4>
 
           <div
-            className={`flex items-center gap-2 shrink-0 whitespace-nowrap ${SCORE_CARD_WIDE}:gap-2.5`}
+            className={`flex flex-wrap items-center gap-2 min-w-0 w-full ${SCORE_CARD_WIDE}:w-auto ${SCORE_CARD_WIDE}:shrink-0 ${SCORE_CARD_WIDE}:gap-2.5`}
           >
             <span
               className="font-cinzel font-bold text-xl tabular-nums leading-none"

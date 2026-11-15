@@ -51,7 +51,7 @@ function makeBaseAnalysis(overrides: Partial<Analysis>): Analysis {
 }
 
 describe('buildSavedAnalysesItems', () => {
-  it('exclui gratuitas, ordena por mais recente primeiro e monta cardData + panelData dual', () => {
+  it('inclui análise gratuita concluída do nome de nascimento, ordena por mais recente primeiro e preenche vidaBloqueiosCodigos', () => {
     const older = makeBaseAnalysis({
       id: 'older',
       created_at: '2026-11-01T10:00:00.000Z',
@@ -78,23 +78,55 @@ describe('buildSavedAnalysesItems', () => {
       id: 'free-1',
       product_type: 'analise_gratuita',
       is_free: true,
-      created_at: '2026-11-15T10:00:00.000Z',
+      created_at: '2026-10-15T10:00:00.000Z',
+      nome_completo: 'ANA PAULA FERREIRA LIMA',
     });
 
     const items = buildSavedAnalysesItems([older, free, newer], { isAdmin: false });
 
-    assert.equal(items.length, 2);
+    assert.equal(items.length, 3);
     assert.equal(items[0].id, 'newer');
     assert.equal(items[1].id, 'older');
+    assert.equal(items[2].id, 'free-1');
     assert.equal(items[0].nomeExibido, 'ANA PAULA FÉRREIRA');
     assert.equal(items[0].isFavorite, true);
     assert.ok(items[0].cardData);
     assert.equal(items[0].cardData.nome, 'ANA PAULA FÉRREIRA');
     assert.equal(items[0].cardData.score, 95);
+    assert.ok(Array.isArray(items[0].cardData.vidaBloqueiosCodigos));
     assert.ok(items[0].panelData.birthPanel);
     assert.ok(items[0].panelData.harmonizedPanel);
     assert.equal(items[0].panelData.isSuggestion, true);
     assert.equal(items[0].panelData.showRadar, true);
     assert.equal(items[0].panelData.showReadingSummary, true);
+    assert.equal(items[2].canFavorite, false);
+  });
+
+  it('sintetiza análise padrão do nome de nascimento não harmonizado quando não há analise_gratuita', () => {
+    const harmonized = makeBaseAnalysis({
+      id: 'harm-only',
+      created_at: '2026-11-14T10:00:00.000Z',
+      nome_completo: 'ANA PAULA FERREIRA LIMA',
+      score_v3: 95,
+      frequencias_numeros: {
+        selectedNomeSocial: 'ANA PAULA FÉRREIRA',
+        ranking: {
+          nomeNascimento: 'ANA PAULA FERREIRA LIMA',
+          dataNascimento: '15/03/1985',
+        },
+      },
+    });
+
+    const items = buildSavedAnalysesItems([harmonized], { isAdmin: false });
+
+    assert.equal(items.length, 2);
+    assert.equal(items[0].id, 'harm-only');
+    assert.equal(items[1].id, 'harm-only__birth');
+    assert.equal(items[1].isSynthetic, true);
+    assert.equal(items[1].pdfAnalysisId, 'harm-only');
+    assert.equal(items[1].nomeExibido, 'ANA PAULA FERREIRA LIMA');
+    assert.equal(items[1].panelData.harmonizedPanel, null);
+    assert.equal(items[1].canFavorite, false);
+    assert.equal(items[1].canDelete, false);
   });
 });

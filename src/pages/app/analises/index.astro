@@ -13,8 +13,14 @@ const profile = await getProfile(user.id);
 const isAdmin = profile?.role === 'admin';
 
 const analyses = await getUserAnalyses(user.id);
-const savedItems = buildSavedAnalysesItems(analyses, { isAdmin });
-const hasPaidAnalysisHistory = savedItems.length > 0;
+const savedItems = buildSavedAnalysesItems(analyses, {
+  isAdmin,
+  profileBirthName: profile?.birth_name ?? null,
+  profileBirthDate: profile?.birth_date ?? null,
+});
+const hasPaidAnalysisHistory = savedItems.some(
+  (item) => !item.isFree && item.productType !== 'analise_gratuita',
+);
 const hasAnyPaidAccess =
   isAdmin ||
   (await Promise.all([

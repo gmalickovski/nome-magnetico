@@ -75,6 +75,7 @@ function toResultPanel(
     potencial: panel.potencial,
     bloqueiosCount: panel.bloqueiosCount,
     bloqueios: panel.bloqueios,
+    vidaBloqueiosCodigos: panel.vidaBloqueiosCodigos,
     trianguloVida: panel.trianguloVida,
     compatibilidade: panel.compatibilidade,
     isHarmonized,
@@ -189,6 +190,10 @@ function buildFallbackPanelFromColumns(
       titulo: String(b?.titulo ?? `Sequência ${b?.codigo ?? ''}`),
       triangulos: Array.isArray(b?.triangulos) ? b.triangulos : undefined,
     })),
+    vidaBloqueiosCodigos: rawBloqueios
+      .filter((b: any) => Array.isArray(b?.triangulos) && b.triangulos.includes('vida'))
+      .map((b: any) => String(b?.codigo ?? ''))
+      .filter(Boolean),
     trianguloVida: {
       topo: Number((a.triangulo_vida as any)?.arcanoRegente ?? a.arcano_regente ?? 0),
       base: Array.isArray((a.triangulo_vida as any)?.linhas?.[0])
@@ -216,24 +221,143 @@ function buildCandidatesList(ranking: any, isEmpresa: boolean): SavedAnalysisCan
   }));
 }
 
+export interface BuildSavedAnalysesOptions {
+  isAdmin: boolean;
+  profileBirthName?: string | null;
+  profileBirthDate?: string | null;
+}
+
+function buildSynthesizedBirthAnalysisItem(params: {
+  birthName: string;
+  birthDatePt: string | null;
+  sourceItem: SavedAnalysisItem | null;
+  options: BuildSavedAnalysesOptions;
+}): SavedAnalysisItem {
+  const { birthName, birthDatePt, sourceItem } = params;
+  const cleanName = birthName.trim();
+  const context = {
+    areaFoco: null as AreaFocoNomeMagnetico | null,
+    ondeAssinaRaw: [] as string[],
+  };
+  const radarLabels = getRadarAxisLabels(null);
+
+  let birthPanel: ResultPanelData;
+  let radarAxes: RadarAxesData | null = null;
+  let readingSummary: SavedAnalysisPanelData['readingSummary'] = null;
+
+  if (birthDatePt) {
+    const rawBirth = buildClientBirthNamePanel(cleanName, birthDatePt);
+    const v3Score = avaliarNome(cleanName, birthDatePt).score_v3;
+    birthPanel = toResultPanel(rawBirth, v3Score, false);
+    radarAxes = toRadarAxesData(
+      motorRadarToRecord(computeContextualRadarAxes(cleanName, birthDatePt, context)),
+    );
+    readingSummary = buildChatReadingSummary(cleanName, birthDatePt);
+  } else {
+    birthPanel = {
+      nome: cleanName,
+      score: sourceItem?.panelData.birthPanel?.score ?? 0,
+      expressao: sourceItem?.panelData.birthPanel?.expressao ?? 0,
+      destino: sourceItem?.panelData.birthPanel?.destino ?? 0,
+      motivacao: sourceItem?.panelData.birthPanel?.motivacao ?? 0,
+      missao: sourceItem?.panelData.birthPanel?.missao ?? 0,
+      impressao: sourceItem?.panelData.birthPanel?.impressao ?? 0,
+      potencial: sourceItem?.panelData.birthPanel?.potencial ?? 0,
+      bloqueiosCount: sourceItem?.panelData.birthPanel?.bloqueiosCount ?? 0,
+      bloqueios: sourceItem?.panelData.birthPanel?.bloqueios ?? [],
+      vidaBloqueiosCodigos: sourceItem?.panelData.birthPanel?.vidaBloqueiosCodigos ?? [],
+      trianguloVida: sourceItem?.panelData.birthPanel?.trianguloVida ?? { topo: 0, base: [] },
+      compatibilidade: sourceItem?.panelData.birthPanel?.compatibilidade ?? 'neutro',
+      isHarmonized: false,
+    };
+  }
+
+  const cardData: HarmonySuggestionCardData = {
+    nome: cleanName,
+    score: birthPanel.score,
+    compatibilidade: mapCompat(birthPanel.compatibilidade),
+    expressao: birthPanel.expressao,
+    destino: birthPanel.destino,
+    motivacao: birthPanel.motivacao,
+    impressao: birthPanel.impressao,
+    missao: birthPanel.missao,
+    bloqueios: birthPanel.bloqueiosCount,
+    vidaBloqueiosCodigos: birthPanel.vidaBloqueiosCodigos ?? [],
+  };
+
+  const createdAt = sourceItem?.createdAt ?? new Date().toISOString();
+  const dateFormatted = sourceItem
+    ? sourceItem.dateFormatted
+    : birthDatePt ?? new Date(createdAt).toLocaleDateString('pt-BR');
+
+  return {
+    id: sourceItem ? `${sourceItem.id}__birth` : 'birth-name-analysis',
+    pdfAnalysisId: sourceItem?.id ?? null,
+    isSynthetic: true,
+    productType: 'analise_gratuita',
+    productName: 'Nome de Nascimento',
+    status: 'complete',
+    createdAt,
+    dateFormatted,
+    nomeExibido: cleanName,
+    birthName: cleanName,
+    birthDateFormatted: birthDatePt,
+    score: birthPanel.score,
+    isV3: true,
+    isFree: true,
+    isFavorite: false,
+    canFavorite: false,
+    canDelete: false,
+    isAnalystGenerated: false,
+    recalculatedFromVersion: null,
+    parentAnalysisId: null,
+    errorMessage: null,
+    cardData,
+    panelData: {
+      birthPanel,
+      harmonizedPanel: null,
+      showScoreCard: true,
+      showStarDetail: true,
+      starPanelData: birthPanel,
+      isSuggestion: false,
+      radarAxes,
+      radarOverlayAxes: null,
+      radarLabels,
+      radarShowNumericLabels: false,
+      contextChips: [],
+      showRadar: Boolean(radarAxes),
+      readingSummary,
+      showReadingSummary: Boolean(readingSummary),
+      chosenScore: birthPanel.score,
+      baseScore: birthPanel.score,
+    },
+  };
+}
+
 export function buildSavedAnalysesItems(
   analyses: Analysis[],
-  options: { isAdmin: boolean },
+  options: BuildSavedAnalysesOptions,
 ): SavedAnalysisItem[] {
-  const paidAnalyses = analyses
-    .filter((a) => a.product_type !== 'analise_gratuita' && !a.is_free)
+  const visibleAnalyses = analyses
+    .filter((a) => {
+      const isFreeRow = a.product_type === 'analise_gratuita' || a.is_free;
+      if (isFreeRow) return a.status === 'complete';
+      return true;
+    })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  return paidAnalyses.map((a) => {
+  const items: SavedAnalysisItem[] = visibleAnalyses.map((a) => {
     const productType = a.product_type ?? 'nome_social';
+    const isFreeRow = productType === 'analise_gratuita' || Boolean(a.is_free);
     const freqData = (a as any).frequencias_numeros as any;
     const rankingBebe = freqData?.ranking ?? null;
     const rankingEmpresa = productType === 'nome_empresa' ? freqData : null;
     const rankingSocial = productType === 'nome_social' ? freqData?.ranking : null;
 
-    const nomeExibido =
-      productType === 'nome_social' &&
-      (freqData?.selectedNomeSocial || rankingSocial?.melhorNome?.nomeCompleto)
+    const nomeExibido = isFreeRow
+      ? a.nome_completo
+      : productType === 'nome_social' &&
+          (freqData?.selectedNomeSocial || rankingSocial?.melhorNome?.nomeCompleto)
         ? String(freqData?.selectedNomeSocial ?? rankingSocial.melhorNome.nomeCompleto)
         : productType === 'nome_bebe' && rankingBebe?.melhorNome?.nomeCompleto
           ? String(rankingBebe.melhorNome.nomeCompleto)
@@ -346,6 +470,7 @@ export function buildSavedAnalysesItems(
               impressao: starPanelData.impressao,
               missao: starPanelData.missao,
               bloqueios: starPanelData.bloqueiosCount,
+              vidaBloqueiosCodigos: starPanelData.vidaBloqueiosCodigos ?? [],
             };
           }
 
@@ -417,6 +542,7 @@ export function buildSavedAnalysesItems(
               impressao: Number(melhor.impressao ?? birthPanel.impressao),
               missao: Number(melhor.missao ?? birthPanel.missao),
               bloqueios: bloqueiosNum,
+              vidaBloqueiosCodigos: birthPanel.vidaBloqueiosCodigos ?? [],
             };
           } else {
             cardData = {
@@ -429,6 +555,7 @@ export function buildSavedAnalysesItems(
               impressao: birthPanel.impressao,
               missao: birthPanel.missao,
               bloqueios: birthPanel.bloqueiosCount,
+              vidaBloqueiosCodigos: birthPanel.vidaBloqueiosCodigos ?? [],
             };
           }
 
@@ -465,6 +592,7 @@ export function buildSavedAnalysesItems(
           impressao: fallback.impressao,
           missao: fallback.missao,
           bloqueios: fallback.bloqueiosCount,
+          vidaBloqueiosCodigos: fallback.vidaBloqueiosCodigos ?? [],
         };
         panelData = {
           ...emptyPanelData,
@@ -480,6 +608,8 @@ export function buildSavedAnalysesItems(
 
     return {
       id: a.id,
+      pdfAnalysisId: a.id,
+      isSynthetic: false,
       productType,
       productName: PRODUCT_LABEL[productType] ?? 'Análise',
       status: a.status,
@@ -503,4 +633,47 @@ export function buildSavedAnalysesItems(
       panelData,
     };
   });
+
+  // Garante que a análise do nome de nascimento (não harmonizado) apareça por padrão em Minhas Análises
+  const hasCompletedFreeBirthRow = items.some(
+    (item) => (item.isFree || item.productType === 'analise_gratuita') && item.status === 'complete',
+  );
+
+  if (!hasCompletedFreeBirthRow) {
+    const sourceSocial =
+      items.find(
+        (item) =>
+          item.productType === 'nome_social' &&
+          item.status === 'complete' &&
+          Boolean(item.birthName?.trim()),
+      ) ?? null;
+
+    const candidateBirthName =
+      sourceSocial?.birthName?.trim() || options.profileBirthName?.trim() || null;
+    const candidateBirthDatePt =
+      sourceSocial?.birthDateFormatted ?? toScoreDate(options.profileBirthDate) ?? null;
+
+    if (candidateBirthName) {
+      const normalizedTarget = candidateBirthName.toLowerCase();
+      const alreadyShownAsBirthAnalysis = items.some(
+        (item) =>
+          item.status === 'complete' &&
+          !item.panelData.harmonizedPanel &&
+          item.nomeExibido.trim().toLowerCase() === normalizedTarget,
+      );
+
+      if (!alreadyShownAsBirthAnalysis) {
+        items.push(
+          buildSynthesizedBirthAnalysisItem({
+            birthName: candidateBirthName,
+            birthDatePt: candidateBirthDatePt,
+            sourceItem: sourceSocial,
+            options,
+          }),
+        );
+      }
+    }
+  }
+
+  return items;
 }

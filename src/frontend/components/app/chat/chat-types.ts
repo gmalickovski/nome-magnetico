@@ -19,6 +19,7 @@ export interface ResultPanelData {
     titulo: string;
     triangulos?: string[];
   }>;
+  vidaBloqueiosCodigos?: string[];
   trianguloVida: {
     topo: number;
     base: number[];

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SavedAnalysisItem } from './types.js';
 import { ScoreCardRow } from '../../landing/ScoreCardRow.js';
+import { LifeTriangleBlockBadge } from '../../landing/LifeTriangleBlockBadge.js';
 import { ChatSidebarSection } from '../chat/ChatSidebarSection.js';
 import {
   MobileReadingBottomSheet,
@@ -87,6 +88,12 @@ function CandidateSummaryBlock({ item }: { item: SavedAnalysisItem }) {
   );
 }
 
+function resolvePdfAnalysisId(analysis: SavedAnalysisItem | null): string | null {
+  if (!analysis || analysis.status !== 'complete') return null;
+  if (analysis.pdfAnalysisId !== undefined) return analysis.pdfAnalysisId;
+  return analysis.isSynthetic ? null : analysis.id;
+}
+
 function AnalysesRightPanelChrome({
   expanded,
   onToggleExpand,
@@ -98,17 +105,32 @@ function AnalysesRightPanelChrome({
   selectedAnalysis: SavedAnalysisItem | null;
   children: React.ReactNode;
 }) {
+  const pdfAnalysisId = resolvePdfAnalysisId(selectedAnalysis);
+  const titleNode = (
+    <div className="flex items-center gap-2.5 min-w-0 pr-20">
+      <h2
+        id="desktop-summary-title"
+        data-expanded={expanded ? 'true' : 'false'}
+        className="font-cinzel font-bold uppercase tracking-[0.1em] text-[#e5e2e1] text-left break-words whitespace-normal leading-snug min-w-0"
+      >
+        Painel de análise
+      </h2>
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-0 h-full w-full relative">
-      <div className="shrink-0 relative w-full mb-3 sm:mb-4 px-1 min-h-[36px] flex items-center justify-end">
-        <div
-          className={`flex items-center justify-end gap-1.5 w-full ${
-            expanded ? 'max-w-4xl mx-auto px-4 sm:px-6' : 'pr-1 sm:pr-2'
-          }`}
-        >
-          {selectedAnalysis && selectedAnalysis.status === 'complete' && (
+      <div className="shrink-0 relative w-full mb-4 sm:mb-5 px-1 min-h-[36px] flex items-center">
+        {expanded ? (
+          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">{titleNode}</div>
+        ) : (
+          titleNode
+        )}
+
+        <div className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5">
+          {selectedAnalysis && pdfAnalysisId && (
             <PDFFeedbackButton
-              analysisId={selectedAnalysis.id}
+              analysisId={pdfAnalysisId}
               productType={selectedAnalysis.productType}
               isFree={selectedAnalysis.isFree}
               isAnalyst={selectedAnalysis.isAnalystGenerated}
@@ -252,7 +274,7 @@ export default function MyAnalysesWorkspace({
   const handleSelectAnalysis = useCallback((item: SavedAnalysisItem) => {
     setSelectedId(item.id);
     if (isMobileStackedViewport()) {
-      setMobileSheetSnap('half');
+      setMobileSheetSnap('full');
     }
   }, []);
 
@@ -273,9 +295,9 @@ export default function MyAnalysesWorkspace({
     setDeleting(true);
     try {
       const res = await fetch('/api/delete-analysis', {
-        method: 'DELETE',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analysisId: deleteTarget.id }),
+        body: JSON.stringify({ id: deleteTarget.id }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -310,7 +332,7 @@ export default function MyAnalysesWorkspace({
     (action: DockSecondaryActionId) => {
       if (action === 'reading' || action === 'summary') {
         if (!selectedAnalysis) return;
-        setMobileSheetSnap((prev) => (prev === 'closed' ? 'half' : 'closed'));
+        setMobileSheetSnap((prev) => (prev === 'closed' ? 'full' : 'closed'));
       }
     },
     [selectedAnalysis],
@@ -626,10 +648,19 @@ export default function MyAnalysesWorkspace({
                         </div>
                       </div>
 
-                      {/* Corpo enxuto: apenas nome, score e barra */}
+                      {/* Corpo enxuto: nome, score, nível, tag de bloqueio do Triângulo da Vida e barra */}
                       {item.status === 'complete' && item.cardData ? (
                         <div className="px-4 sm:px-5 pb-4 pt-1.5">
-                          <ScoreCardRow nome={item.cardData.nome} score={item.cardData.score} />
+                          <ScoreCardRow
+                            nome={item.cardData.nome}
+                            score={item.cardData.score}
+                            scoreTrailing={
+                              <LifeTriangleBlockBadge
+                                codigos={item.cardData.vidaBloqueiosCodigos}
+                                fallbackCount={item.cardData.bloqueios}
+                              />
+                            }
+                          />
                         </div>
                       ) : (
                         <div className="px-4 sm:px-5 pb-4 pt-2 flex items-center justify-between gap-3">
@@ -655,7 +686,7 @@ export default function MyAnalysesWorkspace({
           </div>
         </section>
 
-        {/* Coluna Direita (Desktop/Tablet md+): sem título, com ícone baixar PDF + expandir */}
+        {/* Coluna Direita (Desktop/Tablet md+): título "Painel de análise" sem ponto + ícone baixar PDF + expandir */}
         <aside className="hidden md:flex flex-col min-h-0 min-w-0 py-2 md:py-3 lg:py-4 w-full">
           <AnalysesRightPanelChrome
             expanded={panelExpanded}
@@ -705,27 +736,29 @@ export default function MyAnalysesWorkspace({
             baseScore: selectedAnalysis.panelData.baseScore ?? selectedAnalysis.score ?? 0,
           }}
           panelPrimary={
-            selectedAnalysis.status === 'complete'
-              ? {
-                  variant: 'pdf',
-                  onClick: () => {
-                    window.location.href = `/api/generate-pdf?id=${encodeURIComponent(selectedAnalysis.id)}`;
-                  },
-                  pdfModel: {
-                    visible: true,
-                    phase: 'ready',
-                    displayName: selectedAnalysis.nomeExibido,
-                    assinaturaLabel: selectedAnalysis.nomeExibido,
-                    suggestionRank: 0,
-                    score: selectedAnalysis.score ?? 0,
-                    isFree: selectedAnalysis.isFree,
-                    emailConfirmed: true,
-                    analysisId: selectedAnalysis.id,
-                    priceLabel: '',
-                    screen: 'analises',
-                  },
-                }
-              : null
+            (() => {
+              const targetPdfId = resolvePdfAnalysisId(selectedAnalysis);
+              if (!targetPdfId) return null;
+              return {
+                variant: 'pdf' as const,
+                onClick: () => {
+                  window.location.href = `/api/generate-pdf?id=${encodeURIComponent(targetPdfId)}`;
+                },
+                pdfModel: {
+                  visible: true,
+                  phase: 'ready' as const,
+                  displayName: selectedAnalysis.nomeExibido,
+                  assinaturaLabel: selectedAnalysis.nomeExibido,
+                  suggestionRank: 0,
+                  score: selectedAnalysis.score ?? 0,
+                  isFree: selectedAnalysis.isFree,
+                  emailConfirmed: true,
+                  analysisId: targetPdfId,
+                  priceLabel: '',
+                  screen: 'analises',
+                },
+              };
+            })()
           }
         />
       )}

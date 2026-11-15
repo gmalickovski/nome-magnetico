@@ -85,6 +85,7 @@ type ApiPanel = {
   impressao: number;
   bloqueiosCount: number;
   bloqueiosCodigos: string[];
+  vidaBloqueiosCodigos?: string[];
   compatibilidade?: string;
   trianguloVidaLinhas?: number[][];
 };
@@ -131,6 +132,7 @@ export function mapApiPanel(api: ApiPanel): ResultPanelData {
       codigo,
       titulo: `Sequência ${codigo}`,
     })),
+    vidaBloqueiosCodigos: api.vidaBloqueiosCodigos,
     trianguloVida: {
       topo: api.trianguloVidaLinhas?.[0]?.[0] ?? 0,
       base: api.trianguloVidaLinhas?.[0]?.slice(1) ?? [],
@@ -179,6 +181,12 @@ export function mapCandidate(
           impressao: Number(raw.impressao ?? 0),
           bloqueiosCount: bloqueios.length,
           bloqueiosCodigos: bloqueios.map((b: { codigo?: string }) => b.codigo ?? ''),
+          vidaBloqueiosCodigos: bloqueios
+            .filter((b: { codigo?: string; triangulos?: string[] }) =>
+              Array.isArray(b.triangulos) ? b.triangulos.includes('vida') : false,
+            )
+            .map((b: { codigo?: string }) => b.codigo ?? '')
+            .filter(Boolean),
         }),
   };
 }

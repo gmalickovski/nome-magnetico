@@ -19,6 +19,7 @@ export interface BirthNamePanelData {
   impressao: number;
   bloqueiosCount: number;
   bloqueiosCodigos: string[];
+  vidaBloqueiosCodigos: string[];
   compatibilidade: TipoCompatibilidade;
   trianguloVidaLinhas: number[][];
 }
@@ -35,6 +36,7 @@ export interface ClientBirthNamePanel {
   potencial: number;
   bloqueiosCount: number;
   bloqueios: Array<{ codigo: string; titulo: string }>;
+  vidaBloqueiosCodigos: string[];
   trianguloVida: { topo: number; base: number[] };
   compatibilidade?: string;
 }
@@ -58,6 +60,7 @@ export function buildBirthNamePanel(nome: string, dataPtBr: string): BirthNamePa
     impressao: cinco.impressao,
     bloqueiosCount: bloqueios.length,
     bloqueiosCodigos: bloqueios.map((b) => b.codigo),
+    vidaBloqueiosCodigos: triangulos.vida.sequenciasNegativas,
     compatibilidade: avaliarCompatibilidade(cinco.expressao, destino),
     trianguloVidaLinhas: triangulos.vida.linhas,
   };
@@ -78,6 +81,7 @@ export function toClientBirthNamePanel(panel: BirthNamePanelData): ClientBirthNa
       codigo,
       titulo: `Sequência ${codigo}`,
     })),
+    vidaBloqueiosCodigos: panel.vidaBloqueiosCodigos,
     trianguloVida: {
       topo: panel.trianguloVidaLinhas[0]?.[0] ?? 0,
       base: panel.trianguloVidaLinhas[0]?.slice(1) ?? [],

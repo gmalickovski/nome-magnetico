@@ -38,6 +38,8 @@ export interface SavedAnalysisPanelData {
 
 export interface SavedAnalysisItem {
   id: string;
+  pdfAnalysisId?: string | null;
+  isSynthetic?: boolean;
   productType: string;
   productName: string;
   status: string;

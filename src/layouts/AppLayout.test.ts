@@ -331,7 +331,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
       path.join(srcRoot, 'backend', 'numerology', 'saved-analyses-view.ts'),
       'utf8',
     );
-    assert.match(savedViewSrc, /a\.product_type !== 'analise_gratuita'/);
+    assert.match(savedViewSrc, /buildSynthesizedBirthAnalysisItem/);
+    assert.match(savedViewSrc, /vidaBloqueiosCodigos/);
 
     const workspaceSrc = readFileSync(
       path.join(srcRoot, 'frontend', 'components', 'app', 'analises', 'MyAnalysesWorkspace.tsx'),
@@ -339,13 +340,21 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     );
     assert.match(workspaceSrc, /favorite-analysis-btn/);
     assert.match(workspaceSrc, /<ScoreCardRow/);
+    assert.match(workspaceSrc, /<LifeTriangleBlockBadge/);
     assert.match(workspaceSrc, /<PDFFeedbackButton/);
     assert.match(workspaceSrc, /<ChatSidebarSection/);
     assert.match(workspaceSrc, /<MobileDockActionBridge/);
     assert.match(workspaceSrc, /<MobileReadingBottomSheet/);
+    assert.match(workspaceSrc, /Painel de análise/);
+    assert.doesNotMatch(workspaceSrc, /data-nm-selection-dot/);
     assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
-    assert.doesNotMatch(workspaceSrc, /Painel de análise/);
     assert.doesNotMatch(workspaceSrc, /Relatório completo/);
+
+    const pickerSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),
+      'utf8',
+    );
+    assert.match(pickerSrc, /showBlockBadgeInTags/);
   });
 
   it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado e suporta ?modo=nascimento', () => {
