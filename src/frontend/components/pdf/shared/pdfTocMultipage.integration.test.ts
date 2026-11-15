@@ -8,7 +8,7 @@ import { inspectNamedDestinations } from './pdfDestinationInspect.ts';
 
 describe('PDFTableOfContents multipágina', () => {
   it('renderiza sumário >22 entradas com segunda página de sumário', async () => {
-    const entries = buildStressTocEntries(25);
+    const entries = buildStressTocEntries(45);
     for (let i = 0; i < entries.length; i++) {
       entries[i] = { ...entries[i], page: 3 + i };
     }
@@ -35,6 +35,7 @@ describe('PDFTableOfContents multipágina', () => {
     assert.ok(!('error' in dests), `inspect: ${'error' in dests ? dests.error : ''}`);
     assert.ok(dests['pdf-sumario'] >= 1, 'primeira página do sumário');
     assert.ok(dests['pdf-sumario-cont-2'] >= dests['pdf-sumario'], 'segunda página do sumário');
+    assert.equal(dests['pdf-sumario-cont-3'], undefined, '45 entradas cabem em duas folhas sem terceira folha com uma linha');
     assert.ok(dests['pdf-stress-1'] >= dests['pdf-sumario-cont-2'], 'destino após sumário');
   });
 });

@@ -51,8 +51,9 @@ export function PDFMapaVibracional({ birth, selected, birthScore, selectedScore,
       </View>
       {birth.map((a, i) => {
         const b = selected[i]; const delta = b.valuePercent - a.valuePercent;
+        const deltaColor = delta > 0 ? '#047857' : delta < 0 ? '#B91C1C' : '#9A6B00';
         return <View key={a.key} style={[styles.row, { fontFamily: BODY_FONT, fontSize: 8, backgroundColor: i % 2 ? '#F9FAFB' : '#FFFFFF' }]}>
-          <Text style={{ flex: 1 }}>{a.label}</Text><Text style={{ width: 65 }}>{a.valuePercent}</Text><Text style={{ width: 65 }}>{b.valuePercent}</Text><Text style={{ width: 55 }}>{delta > 0 ? '+' : ''}{delta} pts</Text>
+          <Text style={{ flex: 1 }}>{a.label}</Text><Text style={{ width: 65 }}>{a.valuePercent}</Text><Text style={{ width: 65, color: deltaColor, fontFamily: BODY_FONT_BOLD }}>{b.valuePercent}</Text><Text style={{ width: 55, color: deltaColor, fontFamily: BODY_FONT_BOLD }}>{delta > 0 ? '+' : ''}{delta} pts</Text>
         </View>;
       })}
     </View>

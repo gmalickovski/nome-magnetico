@@ -14,6 +14,8 @@ export type PdfTocEntry = {
 };
 
 const ENTRIES_PER_PAGE = 22;
+// Continuação não repete cabeçalho e introdução, deixando espaço para mais linhas.
+const CONTINUATION_ENTRIES_PER_PAGE = 26;
 
 const styles = StyleSheet.create({
   page: {
@@ -79,8 +81,10 @@ function entryStyles(level: 0 | 1 | 2 | 3 = 0) {
 
 function chunkEntries(entries: PdfTocEntry[]): PdfTocEntry[][] {
   const chunks: PdfTocEntry[][] = [];
-  for (let i = 0; i < entries.length; i += ENTRIES_PER_PAGE) {
-    chunks.push(entries.slice(i, i + ENTRIES_PER_PAGE));
+  for (let i = 0; i < entries.length;) {
+    const capacity = chunks.length === 0 ? ENTRIES_PER_PAGE : CONTINUATION_ENTRIES_PER_PAGE;
+    chunks.push(entries.slice(i, i + capacity));
+    i += capacity;
   }
   return chunks.length > 0 ? chunks : [[]];
 }

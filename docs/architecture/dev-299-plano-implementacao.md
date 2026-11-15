@@ -58,3 +58,9 @@ Campo opcional e contador separado junto às sugestões. API com sessão, acesso
 - Poppler/pypdf instalados somente em pasta temporária do worktree. Chave fictícia de Stripe somente no processo dos testes para atender importação de mocks; nenhum pagamento real.
 - PDFs renderizados/inspecionados: manual inferior (42 contra 73), sugestão real do motor (94 contra 73) e nome longo/acentuado sem contexto. Sem corte superior no Mapa; camada selecionada por cima, preenchimentos a 4% e capítulo novo em página nova.
 - Navegador real: prévia com dados fictícios, foco no link do glossário e Escape com retorno ao termo; viewport de 390 × 844, popover dentro da tela e sem overflow horizontal.
+
+## Ajustes finais solicitados durante a revisão
+
+- Tabela abaixo do Mapa: ganho verde com `+`, perda vermelha com `-`, igualdade dourada sem sinal. A cor acompanha a diferença, sem mudar os valores calculados.
+- Folha de continuação do sumário aceita 26 entradas, enquanto a primeira mantém 22. O índice completo de 45 entradas cabe em duas páginas; teste real evita terceira folha com uma linha.
+- PDF completo fictício entregue para revisão: 59 páginas, três opções reais do motor em sessão de exemplo, assinatura Alêxandra (94) contra nascimento Alexandra Mendes Vale (73), conclusão fictícia e anexos completos. 47 destinos nomeados e 45 links internos, sem destino ausente. Arquivo de revisão em `output/pdf/DEV-299-analise-ficticia-completa.pdf`, fora do código versionado.
