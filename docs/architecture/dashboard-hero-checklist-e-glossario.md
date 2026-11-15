@@ -112,3 +112,12 @@ Conforme os passos são marcados em checkboxes redondos (`rounded-full`), a barr
   - Termos vêm do banco/catálogo (`src/backend/glossary/service.ts` + `src/shared/glossary/canonical-terms.ts`).
   - Páginas públicas (`/glossario`, `/glossario/[termo]`) usam o mesmo header da landing (`LandingHeader`).
   - Auto-linker (`src/shared/glossary/term-linker.ts`, `src/frontend/components/glossary/GlossaryLinkedText.tsx`, `GlossaryTermOverlay.tsx`) identifica automaticamente termos no painel de análise e nos relatórios, abrindo explicação contextual no painel lateral/modal sem quebrar o fluxo do usuário.
+
+---
+
+## 6. Minhas Análises Split-View (`/app/analises`)
+
+- **Arquivos:** `src/pages/app/analises/index.astro`, `src/backend/numerology/saved-analyses-view.ts`, `src/frontend/components/app/analises/MyAnalysesWorkspace.tsx`, `src/frontend/components/app/analises/types.ts`, `src/frontend/lib/mobile-dock-context.ts`.
+- **Layout & Superfície:** utiliza `.nm-chat-shell` (`#1a1a1a`) com `AppLayout noPadding mobileFullViewport` espelhando as fontes, espaçamentos, bordas e cores de `/app/analise/nome-social`.
+- **Desktop (`md+`):** coluna esquerda estreita com cards empilhados em ordem decrescente da última análise (`created_at DESC`) no mesmo modelo visual de sugestões (`HarmonySuggestionCard`, superfície `#1C1C1C` com borda e halo dourado na seleção); coluna direita com `<ChatSidebarPanelChrome>` (incluindo botão expandir/contrair tela na mesma posição) e `<ChatSidebarSection>` atualizado em tempo real conforme a seleção.
+- **Mobile (`< 1024px`):** `/app/analises` integra `ACTION_DOCK_PREFIXES`, adicionando o divisor dourado + botão de painel (`MobileDockActionBridge`) na `AppMobileDock`; tocar em um card no mobile (`< 768px`) ou no ícone do painel na dock abre o `<MobileReadingBottomSheet>` idêntico ao fluxo de análise.

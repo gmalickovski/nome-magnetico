@@ -136,8 +136,9 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
   it('botões Nova Análise, Começar Agora e painel /app levam ao chat /app/analise/nome-social (mobile e desktop)', () => {
     const analisesFile = path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro');
-    const analisesSrc = readFileSync(analisesFile, 'utf8');
-    const anchors = analisesSrc.match(/<a\b[\s\S]*?<\/a>/g) ?? [];
+    const workspaceFile = path.join(srcRoot, 'frontend', 'components', 'app', 'analises', 'MyAnalysesWorkspace.tsx');
+    const analisesCombined = readFileSync(analisesFile, 'utf8') + '\n' + readFileSync(workspaceFile, 'utf8');
+    const anchors = analisesCombined.match(/<a\b[\s\S]*?<\/a>/g) ?? [];
     const novaAnaliseAnchors = anchors.filter((a) => a.includes('+ Nova Análise'));
     const comecarAnchors = anchors.filter((a) => a.includes('Começar Agora'));
 
@@ -323,8 +324,26 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(checklistApiSrc, /ChecklistBodySchema\.safeParse/);
 
     const analisesSrc = readFileSync(path.join(srcRoot, 'pages', 'app', 'analises', 'index.astro'), 'utf8');
-    assert.match(analisesSrc, /favorite-analysis-btn/);
-    assert.match(analisesSrc, /analysis\.product_type !== 'analise_gratuita'/);
+    assert.match(analisesSrc, /<MyAnalysesWorkspace/);
+    assert.match(analisesSrc, /class="nm-chat-shell"/);
+
+    const savedViewSrc = readFileSync(
+      path.join(srcRoot, 'backend', 'numerology', 'saved-analyses-view.ts'),
+      'utf8',
+    );
+    assert.match(savedViewSrc, /a\.product_type !== 'analise_gratuita'/);
+
+    const workspaceSrc = readFileSync(
+      path.join(srcRoot, 'frontend', 'components', 'app', 'analises', 'MyAnalysesWorkspace.tsx'),
+      'utf8',
+    );
+    assert.match(workspaceSrc, /favorite-analysis-btn/);
+    assert.match(workspaceSrc, /<HarmonySuggestionCard/);
+    assert.match(workspaceSrc, /<ChatSidebarPanelChrome/);
+    assert.match(workspaceSrc, /<ChatSidebarSection/);
+    assert.match(workspaceSrc, /<MobileDockActionBridge/);
+    assert.match(workspaceSrc, /<MobileReadingBottomSheet/);
+    assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
   });
 
   it('Painel de análise (/app/resultado/[id]) reutiliza ChatSidebarSection sem NomeAtualResultado legado e suporta ?modo=nascimento', () => {
