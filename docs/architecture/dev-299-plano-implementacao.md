@@ -7,7 +7,8 @@ Revisado em 15/11/2026 a partir da issue e do plano do Antigravity, com autoriza
 - Preservar o conteúdo existente do PDF, acrescentar Mapa Vibracional e completar o índice. Mover somente as leituras completas de Pessoal, Social e Destino para os anexos; Vida continua principal.
 - Cinco nomes manuais únicos por sessão de chat, separados das nove sugestões automáticas. Inválidos, duplicatas e falhas não consomem avaliação concluída.
 - Essência, Harmonização, Nome Harmonizado e Anexos começam sempre em página nova, mesmo com espaço anterior. Regra permanente registrada em `AGENTS.md`.
-- Mapa do PDF usa a mesma paleta dinâmica por score do HTML, harmonizado sempre por cima e preenchimento quase transparente (4%). Nascimento: linha pontilhada fina a 55% de opacidade e quadrados; assinatura: linha contínua forte e círculos. A cor nunca é forçada por papel: um manual de nota inferior continua com sua faixa real. Folga moderada acima/abaixo do SVG e dos rótulos, sem espaços excessivos.
+- Mapa do PDF usa a mesma paleta dinâmica por score do HTML e o RGB integral da estrela, harmonizado sempre por cima e preenchimento quase transparente (4%). Nascimento: linha pontilhada fina e quadrados; assinatura: linha contínua forte e círculos. A cor nunca é forçada por papel: um manual de nota inferior continua com sua faixa real. Folga moderada acima/abaixo do SVG e dos rótulos, sem espaços excessivos.
+- Arquétipo completo em Harmonização, antes do Mapa, removido dos anexos. Sumário com blocos de capítulos nas mesmas tonalidades: vermelho, dourado, verde e escuro, fundos suaves e fonte legível.
 - Continuar o PR #148 em draft. Sem migration, merge, tag, deploy ou IA paga.
 
 ## Auditoria e ajustes ao plano original
@@ -33,7 +34,7 @@ Entradas canônicas para arquétipo, Mapa e cinco eixos. Prévia por hover/foco 
 
 ### A — PDF
 
-Mapa comparativo sob o mesmo contexto salvo, tabela de índices/deltas e ressalvas. Snapshot e versão do Mapa persistidos no JSON existente; snapshot só é reutilizado para os mesmos nomes e versão. Fallback geral explícito sem contexto. Índice em quatro níveis com destinos reais; Conclusão e ranking condicionais. Capítulos em `<Page>` próprios. Pirâmides, descrições, arcanos e bloqueios complementares preservados nos anexos. Arquétipo resumido também nas informações principais, mantendo anexo detalhado.
+Mapa comparativo sob o mesmo contexto salvo, tabela de índices/deltas e ressalvas. Snapshot e versão do Mapa persistidos no JSON existente; snapshot só é reutilizado para os mesmos nomes e versão. Fallback geral explícito sem contexto. Índice em quatro níveis com destinos reais; Conclusão e ranking condicionais. Capítulos em `<Page>` próprios. Pirâmides, descrições, arcanos e bloqueios complementares preservados nos anexos. Ficha completa do Arquétipo em Harmonização, sem repetição nos anexos.
 
 ### D — Avaliar este nome
 
@@ -50,7 +51,7 @@ Campo opcional e contador separado junto às sugestões. API com sessão, acesso
 
 ## Evidências de validação local
 
-- `npm test`: 623 testes aprovados, zero falhas.
+- `npm test`: 625 testes aprovados, zero falhas.
 - Confirmação após os últimos ajustes: 15 testes focados de API, sessão manual, contexto e PDF aprovados.
 - `npx astro check`: zero erros e zero warnings (hints legados).
 - `npm run build`: concluído. A execução final usou permissões de leitura fora do sandbox, após EPERM local na varredura do Tailwind.
@@ -62,5 +63,6 @@ Campo opcional e contador separado junto às sugestões. API com sessão, acesso
 ## Ajustes finais solicitados durante a revisão
 
 - Tabela abaixo do Mapa: ganho verde com `+`, perda vermelha com `-`, igualdade dourada sem sinal. A cor acompanha a diferença, sem mudar os valores calculados.
-- Folha de continuação do sumário aceita 26 entradas, enquanto a primeira mantém 22. O índice completo de 45 entradas cabe em duas páginas; teste real evita terceira folha com uma linha.
+- Sumário pagina pela altura real das entradas, sem limites fixos por folha. Cada entrada permanece inteira, inclusive com título longo; teste de renderização confere esse contrato e o índice completo de 45 entradas em duas páginas.
 - PDF completo fictício entregue para revisão: 59 páginas, três opções reais do motor em sessão de exemplo, assinatura Alêxandra (94) contra nascimento Alexandra Mendes Vale (73), conclusão fictícia e anexos completos. 47 destinos nomeados e 45 links internos, sem destino ausente. Arquivo de revisão em `output/pdf/DEV-299-analise-ficticia-completa.pdf`, fora do código versionado.
+- Revisão posterior: `output/pdf/DEV-299-analise-ficticia-revisada.pdf`, também com 59 páginas; arquétipo completo na página 17, Mapa na 18 e Anexos na 36. Traços do Mapa com o mesmo RGB da estrela, inclusive nascimento, e blocos do sumário coloridos por capítulo. A borda esquerda apontada na miniatura foi conferida na página renderizada em alta resolução: não há recorte no PDF original.

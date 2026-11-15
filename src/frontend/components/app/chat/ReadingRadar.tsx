@@ -167,7 +167,7 @@ export function ReadingRadar({
           strokeWidth="1.8"
           strokeDasharray="2 5"
           strokeLinejoin="round"
-          strokeOpacity="0.55"
+          strokeOpacity="1"
         />
 
         {AXIS_CONFIG.map((axis) => {
@@ -179,7 +179,7 @@ export function ReadingRadar({
               cy={y}
               r="5"
               fill={birthVisual.stroke}
-              opacity="0.55"
+              opacity="1"
               className="transition-all duration-700 ease-out"
             />
           );

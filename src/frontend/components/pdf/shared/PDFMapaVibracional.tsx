@@ -37,8 +37,8 @@ export function PDFMapaVibracional({ birth, selected, birthScore, selectedScore,
       <Svg viewBox="0 -4 470 263" width="100%" height={240} style={{ marginTop: 6, marginBottom: 4 }}>
         {[0.25, 0.5, 0.75, 1].map(v => <Polygon key={v} points={points(birth.map(() => v))} fill="none" stroke="#CBD5E1" strokeWidth={0.7} />)}
         {birth.map((_, i) => { const p = point(i, 1); return <Line key={i} x1={235} y1={123} x2={p.x} y2={p.y} stroke="#CBD5E1" strokeWidth={0.5} />; })}
-        <Polygon points={points(birth.map(a => a.value))} fill={birthVisual.stroke} fillOpacity={RADAR_SERIES_FILL_OPACITY} stroke={birthVisual.stroke} strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray="1.5 3" />
-        {birth.map((a, i) => { const p = point(i, a.value); return <Rect key={a.key} x={p.x - 2.5} y={p.y - 2.5} width={5} height={5} fill={birthVisual.stroke} opacity={0.55} />; })}
+        <Polygon points={points(birth.map(a => a.value))} fill={birthVisual.stroke} fillOpacity={RADAR_SERIES_FILL_OPACITY} stroke={birthVisual.stroke} strokeOpacity={1} strokeWidth={1.2} strokeDasharray="1.5 3" />
+        {birth.map((a, i) => { const p = point(i, a.value); return <Rect key={a.key} x={p.x - 2.5} y={p.y - 2.5} width={5} height={5} fill={birthVisual.stroke} opacity={1} />; })}
         {/* A assinatura é pintada por último, inclusive sobre os marcadores de nascimento. */}
         <Polygon points={points(selected.map(a => a.value))} fill={selectedVisual.stroke} fillOpacity={RADAR_SERIES_FILL_OPACITY} stroke={selectedVisual.stroke} strokeWidth={2.4} />
         {selected.map((a, i) => { const p = point(i, a.value); return <Circle key={a.key} cx={p.x} cy={p.y} r={3.5} fill={selectedVisual.stroke} />; })}

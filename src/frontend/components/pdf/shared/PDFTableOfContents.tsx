@@ -2,28 +2,34 @@ import { Page, View, Text, Link, StyleSheet } from '@react-pdf/renderer';
 import { PDFPageHeader } from './PDFPageHeader';
 import { PDFFooter } from './PDFFooter';
 import { BODY_FONT, BODY_FONT_BOLD, TITLE_FONT } from './PDFFonts';
+import { PDFSectionAnchor } from './PDFSectionAnchor';
 
 export type PdfTocEntry = {
   /** Destino interno (#id) — deve coincidir com id na Page/View alvo */
   id: string;
   title: string;
-  /** 0 = parte principal; 1/2 = subassunto com recuo e fonte menor */
+  /** 0 = capítulo; 1/2/3 = subassuntos com recuos progressivos. */
   level?: 0 | 1 | 2 | 3;
   /** Preenchido na renderização final (1-based, inclui capa e sumário) */
   page?: number;
 };
 
-const ENTRIES_PER_PAGE = 22;
-// Continuação não repete cabeçalho e introdução, deixando espaço para mais linhas.
-const CONTINUATION_ENTRIES_PER_PAGE = 26;
+// Mesmas tonalidades dos divisores dos capítulos em NomeSocialPDF.
+const CHAPTER_COLORS: Record<string, { text: string; background: string }> = {
+  'pdf-essencia': { text: '#991B1B', background: '#FEF2F2' },
+  'pdf-harmonizacao': { text: '#8A661C', background: '#FFFBEB' },
+  'pdf-nome-harmonizado': { text: '#166534', background: '#F0FDF4' },
+  'pdf-anexos': { text: '#1E293B', background: '#F1F5F9' },
+};
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 45,
-    paddingBottom: 65,
+    paddingTop: 108,
+    paddingBottom: 80,
     paddingHorizontal: 45,
     backgroundColor: '#FFFFFF',
   },
+  header: { position: 'absolute', top: 28, left: 45, right: 45 },
   title: {
     fontSize: 18,
     fontFamily: TITLE_FONT,
@@ -79,16 +85,6 @@ function entryStyles(level: 0 | 1 | 2 | 3 = 0) {
   return { pad, textStyle };
 }
 
-function chunkEntries(entries: PdfTocEntry[]): PdfTocEntry[][] {
-  const chunks: PdfTocEntry[][] = [];
-  for (let i = 0; i < entries.length;) {
-    const capacity = chunks.length === 0 ? ENTRIES_PER_PAGE : CONTINUATION_ENTRIES_PER_PAGE;
-    chunks.push(entries.slice(i, i + capacity));
-    i += capacity;
-  }
-  return chunks.length > 0 ? chunks : [[]];
-}
-
 export function PDFTableOfContents({
   entries,
   subtitle,
@@ -103,57 +99,38 @@ export function PDFTableOfContents({
     ...e,
     page: pageNumbers?.[e.id] ?? e.page,
   }));
-  const chunks = chunkEntries(enriched);
-
   return (
-    <>
-      {chunks.map((chunk, chunkIndex) => {
-        const pageId = chunkIndex === 0 ? 'pdf-sumario' : `pdf-sumario-cont-${chunkIndex + 1}`;
-        const bookmarkTitle =
-          chunkIndex === 0 ? 'Sumário' : `Sumário (${chunkIndex + 1})`;
-        return (
-          <Page
-            key={pageId}
-            size="A4"
-            style={styles.page}
-            id={pageId}
-            bookmark={{ title: bookmarkTitle, fit: true }}
-          >
-            {chunkIndex === 0 && <PDFPageHeader subtitle={subtitle} />}
-            {chunkIndex === 0 && <Text style={styles.title}>Sumário</Text>}
-            {chunkIndex === 0 && (
-              <Text style={styles.intro}>
-                Use os links abaixo para ir direto a cada seção deste PDF.
-              </Text>
-            )}
-            {chunkIndex > 0 && (
-              <Text style={{ ...styles.title, fontSize: 14, marginBottom: 12 }}>
-                Sumário (continuação)
-              </Text>
-            )}
-            <View>
-              {chunk.map((entry) => {
-                const level = (entry.level ?? 0) as 0 | 1 | 2 | 3;
-                const { pad, textStyle } = entryStyles(level);
-                return (
-                  <View key={`${entry.id}-${entry.title}`} style={[styles.row, ...(level === 0 ? [{ backgroundColor: '#F3F4F6', paddingHorizontal: 6 }] : [])]}>
-                    <Link
-                      src={`#${entry.id}`}
-                      style={{ textDecoration: 'none', flex: 1, paddingLeft: pad }}
-                    >
-                      <Text style={textStyle}>{entry.title}</Text>
-                    </Link>
-                    {entry.page != null && (
-                      <Text style={styles.pageNum}>{entry.page}</Text>
-                    )}
-                  </View>
-                );
-              })}
+    <Page size="A4" style={styles.page} wrap>
+      <View fixed style={{ position: 'absolute', top: 0, left: 0, height: 1, width: 1 }}
+        render={({ subPageNumber = 1 }) => <PDFSectionAnchor
+          id={subPageNumber === 1 ? 'pdf-sumario' : `pdf-sumario-cont-${subPageNumber}`}
+          bookmark={{ title: subPageNumber === 1 ? 'Sumário' : `Sumário (${subPageNumber})`, fit: true }} />}
+      />
+      <View fixed style={styles.header}>
+        <PDFPageHeader subtitle={subtitle} />
+      </View>
+      <Text fixed style={{ ...styles.title, position: 'absolute', top: 64, left: 45, right: 45, fontSize: 16 }}
+        render={({ subPageNumber = 1 }) => subPageNumber === 1 ? 'Sumário' : 'Sumário (continuação)'} />
+      <Text style={styles.intro}>
+        Use os links abaixo para ir direto a cada seção deste PDF.
+      </Text>
+      <View>
+        {enriched.map((entry) => {
+          const level = entry.level ?? 0;
+          const { pad, textStyle } = entryStyles(level);
+          const chapter = level === 0 ? CHAPTER_COLORS[entry.id] : undefined;
+          return (
+            <View key={`${entry.id}-${entry.title}`} wrap={false} minPresenceAhead={level === 0 ? 28 : 0}
+              style={[styles.row, ...(level === 0 ? [{ backgroundColor: chapter?.background ?? '#F3F4F6', paddingHorizontal: 6 }] : [])]}>
+              <Link src={`#${entry.id}`} style={{ textDecoration: 'none', flex: 1, paddingLeft: pad }}>
+                <Text style={[textStyle, ...(chapter ? [{ color: chapter.text }] : [])]}>{entry.title}</Text>
+              </Link>
+              {entry.page != null && <Text style={[styles.pageNum, ...(chapter ? [{ color: chapter.text }] : [])]}>{entry.page}</Text>}
             </View>
-            <PDFFooter />
-          </Page>
-        );
-      })}
-    </>
+          );
+        })}
+      </View>
+      <PDFFooter />
+    </Page>
   );
 }

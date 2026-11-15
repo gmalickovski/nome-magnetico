@@ -1152,15 +1152,104 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
 
 
 
+      {/* ── HARMONIZAÇÃO: ARQUÉTIPO VIBRACIONAL ─────────────────────────────────── */}
+      <Page size="A4" style={styles.pageHarmonizacao}>
+        <PDFSectionAnchor id="pdf-arquetipo" bookmark={{ title: 'Arquétipo da expressão', fit: true }} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 10 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#8A661C', opacity: 0.3 }} />
+          <View style={{ backgroundColor: '#8A661C', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
+            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              Harmonização
+            </Text>
+          </View>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#8A661C', opacity: 0.3 }} />
+        </View>
+
+        <View style={{ marginBottom: 12 }}>
+          <Text style={styles.hugeTitle}>Arquétipo Vibracional</Text>
+          <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 4 }}>
+            A Força Narrativa do Seu Nome Social
+          </Text>
+        </View>
+
+        {/* Banner do Arquétipo */}
+        <View wrap={false} style={{ backgroundColor: '#4C1D95', borderRadius: 10, padding: 14, marginBottom: 10, alignItems: 'center' }}>
+          <Text style={{ fontSize: 8, color: '#DDD6FE', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 6 }}>
+            Expressão {cincoNumSocial.expressao} — Arquétipo do Nome Social
+          </Text>
+          <Text style={{ fontFamily: TITLE_FONT, fontSize: 26, color: '#FFFFFF', textAlign: 'center', letterSpacing: 1.5, marginBottom: 4 }}>
+            {arquetipoSocial.nome}
+          </Text>
+          <Text style={{ fontSize: 10, color: '#C4B5FD', textAlign: 'center' }}>
+            Sombra: {arquetipoSocial.sombra}
+          </Text>
+        </View>
+
+        {/* Essência */}
+        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.07)', borderWidth: 1, borderColor: GOLD, borderRadius: 8, padding: 10, marginBottom: 10, alignItems: 'center' }}>
+          <Text style={{ fontSize: 8, color: '#8A661C', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>
+            Essência
+          </Text>
+          <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: GOLD, textAlign: 'center', letterSpacing: 0.5 }}>
+            "{arquetipoSocial.essencia}"
+          </Text>
+        </View>
+
+        {arquetipoSocial.numero === getArquetipo(cincoNumNasc.expressao).numero && (
+          <Text style={styles.bodyText}>O arquétipo permanece o mesmo do nome de nascimento.</Text>
+        )}
+        {/* Intro */}
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.5, marginBottom: 10 }}>
+          Na Numerologia Cabalística, o número de Expressão do nome revela não apenas qualidades — mas um padrão arquetípico profundo, uma força narrativa que organiza como você age, lidera e se relaciona com o mundo. O arquétipo não é uma limitação: é a estrutura de potencial máximo disponível para quem carrega esse campo vibracional.
+        </Text>
+
+        {/* Descrição */}
+        <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.5, marginBottom: 14 }}>
+          {arquetipoSocial.descricao}
+        </Text>
+
+        {/* Expressão positiva vs Sombra */}
+        <View wrap={false} style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+          <View style={{ flex: 1, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#166534', borderRadius: 8, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#166534', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Expressão Positiva
+            </Text>
+            {arquetipoSocial.expressaoPositiva.map((item, i) => (
+              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.45, marginBottom: 4 }}>
+                ✓ {item}
+              </Text>
+            ))}
+          </View>
+          <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#DC2626', borderRadius: 8, padding: 10 }}>
+            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Expressão Sombra
+            </Text>
+            {arquetipoSocial.expressaoSombra.map((item, i) => (
+              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.45, marginBottom: 4 }}>
+                ! {item}
+              </Text>
+            ))}
+          </View>
+        </View>
+
+        {/* Figuras míticas */}
+        <View wrap={false} style={{ borderRadius: 7, backgroundColor: '#F5F3FF', padding: 10 }}>
+          <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#7C3AED', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Figuras que Carregam Este Arquétipo
+          </Text>
+          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.45 }}>
+            {arquetipoSocial.figurasMiticas.join('  ·  ')}
+          </Text>
+        </View>
+
+        <PDFFooter />
+      </Page>
+
       <Page size="A4" style={styles.pageHarmonizacao}>
         <PDFPageHeader subtitle={`${nomeParaExibir} — A Engenharia da Harmonização`} bgColor="#FEFCE8" />
 
-        <View wrap={false} style={{ padding: 12, backgroundColor: '#F5F3FF', borderRadius: 8, marginBottom: 16 }}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 12, color: '#6D28D9', marginBottom: 6 }}>Arquétipo: {getArquetipo(cincoNumSocial.expressao).nome}</Text>
-          <Text style={styles.bodyText}>{getArquetipo(cincoNumSocial.expressao).essencia}</Text>
-          {getArquetipo(cincoNumSocial.expressao).numero === getArquetipo(cincoNumNasc.expressao).numero && <Text style={styles.bodyText}>O arquétipo permanece o mesmo do nome de nascimento.</Text>}
-          <Text style={styles.bodyText}>Síntese simbólica derivada da Expressão, sem diagnóstico ou alteração do score. Leitura completa nos anexos.</Text>
-        </View>
         <PDFSectionAnchor id="pdf-harmonizacao-mapa" bookmark={{ title: 'Mapa Vibracional', fit: true }} />
         <PDFMapaVibracional birth={radarBirth} selected={radarSelected} birthScore={scoreNasc} selectedScore={scoreSocial} hasContext={radarContext.hasContext} areaFoco={radarContext.areaFoco} usos={radarContext.ondeAssinaRaw} />
         <PDFSectionAnchor id="pdf-harmonizacao-escudo" bookmark={{ title: 'O Escudo Magnético e a Transformação', fit: true }} />
@@ -2425,98 +2514,6 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </View>
           );
         })}
-
-        <PDFFooter />
-      </Page>
-
-      {/* ── ANEXO II: ARQUÉTIPO VIBRACIONAL ─────────────────────────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFSectionAnchor id="pdf-arquetipo" bookmark={{ title: 'Arquétipo da expressão', fit: true }} />
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Anexos`} />
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 10 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
-          <View style={{ backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              Anexos
-            </Text>
-          </View>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#1E293B', opacity: 0.3 }} />
-        </View>
-
-        <View style={{ marginBottom: 12 }}>
-          <Text style={styles.hugeTitle}>Arquétipo Vibracional</Text>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 4 }}>
-            A Força Narrativa do Seu Nome Social
-          </Text>
-        </View>
-
-        {/* Banner do Arquétipo */}
-        <View wrap={false} style={{ backgroundColor: '#4C1D95', borderRadius: 10, padding: 14, marginBottom: 10, alignItems: 'center' }}>
-          <Text style={{ fontSize: 8, color: '#DDD6FE', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 6 }}>
-            Expressão {cincoNumSocial.expressao} — Arquétipo do Nome Social
-          </Text>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 26, color: '#FFFFFF', textAlign: 'center', letterSpacing: 1.5, marginBottom: 4 }}>
-            {arquetipoSocial.nome}
-          </Text>
-          <Text style={{ fontSize: 10, color: '#C4B5FD', textAlign: 'center' }}>
-            Sombra: {arquetipoSocial.sombra}
-          </Text>
-        </View>
-
-        {/* Essência */}
-        <View wrap={false} style={{ backgroundColor: 'rgba(212,175,55,0.07)', borderWidth: 1, borderColor: GOLD, borderRadius: 8, padding: 10, marginBottom: 10, alignItems: 'center' }}>
-          <Text style={{ fontSize: 8, color: '#8A661C', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>
-            Essência
-          </Text>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 13, color: GOLD, textAlign: 'center', letterSpacing: 0.5 }}>
-            "{arquetipoSocial.essencia}"
-          </Text>
-        </View>
-
-        {/* Intro */}
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.5, marginBottom: 10 }}>
-          Na Numerologia Cabalística, o número de Expressão do nome revela não apenas qualidades — mas um padrão arquetípico profundo, uma força narrativa que organiza como você age, lidera e se relaciona com o mundo. O arquétipo não é uma limitação: é a estrutura de potencial máximo disponível para quem carrega esse campo vibracional.
-        </Text>
-
-        {/* Descrição */}
-        <Text style={{ fontSize: 10, color: DARK, lineHeight: 1.5, marginBottom: 14 }}>
-          {arquetipoSocial.descricao}
-        </Text>
-
-        {/* Expressão positiva vs Sombra */}
-        <View wrap={false} style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
-          <View style={{ flex: 1, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#166534', borderRadius: 8, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#166534', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Expressão Positiva
-            </Text>
-            {arquetipoSocial.expressaoPositiva.map((item, i) => (
-              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.45, marginBottom: 4 }}>
-                ✓ {item}
-              </Text>
-            ))}
-          </View>
-          <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#DC2626', borderRadius: 8, padding: 10 }}>
-            <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#DC2626', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Expressão Sombra
-            </Text>
-            {arquetipoSocial.expressaoSombra.map((item, i) => (
-              <Text key={i} style={{ fontSize: 10, color: GRAY, lineHeight: 1.45, marginBottom: 4 }}>
-                ! {item}
-              </Text>
-            ))}
-          </View>
-        </View>
-
-        {/* Figuras míticas */}
-        <View wrap={false} style={{ borderRadius: 7, backgroundColor: '#F5F3FF', padding: 10 }}>
-          <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#7C3AED', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Figuras que Carregam Este Arquétipo
-          </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.45 }}>
-            {arquetipoSocial.figurasMiticas.join('  ·  ')}
-          </Text>
-        </View>
 
         <PDFFooter />
       </Page>

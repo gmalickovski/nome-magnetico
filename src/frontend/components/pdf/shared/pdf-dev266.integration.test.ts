@@ -143,6 +143,8 @@ describe('DEV-266 · PDF integração offline', () => {
     assert.ok(pDest['pdf-harmonizacao'] >= 1, 'pdf-harmonizacao pago');
     assert.ok(pDest['pdf-harmonizacao-comparativa'] >= 1, 'pdf-harmonizacao-comparativa pago');
     assert.ok(pDest['pdf-harmonizacao-mapa'] >= pDest['pdf-harmonizacao']);
+    assert.ok(pDest['pdf-arquetipo'] >= pDest['pdf-harmonizacao'] && pDest['pdf-arquetipo'] < pDest['pdf-harmonizacao-mapa'], 'arquétipo completo na Harmonização, antes do Mapa');
+    assert.ok(pDest['pdf-arquetipo'] < pDest['pdf-anexos'], 'arquétipo fora dos anexos');
     for (const prefix of ['pdf-essencia-triangulo-', 'pdf-harmonizado-triangulo-']) {
       for (const suffix of ['pessoal', 'social', 'destino']) assert.ok(pDest[prefix + suffix] >= pDest['pdf-anexos-triangulos']);
     }
