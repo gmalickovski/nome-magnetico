@@ -898,14 +898,9 @@ export function AppDashboard(props: AppDashboardProps) {
         )}
 
         <section className="nm-floating-card nm-reading-card flex flex-col justify-between rounded-2xl p-5 sm:p-6">
-          <header className="flex flex-col gap-1 min-w-0 text-left">
-            <p className="nm-score-eyebrow">Mapa de Alinhamento Vibracional</p>
-            <p className="nm-caption text-[#e5e2e1]/60 leading-snug text-left">
-              {activeHarmonizedAxes
-                ? `Comparação entre ${activeSlide.birthName} e ${activeSlide.nome}. Toque para detalhar.`
-                : `Ressonância inicial de ${activeSlide.nome}. Toque para abrir o painel de análise.`}
-            </p>
-          </header>
+          <h2 className="mb-2 font-cinzel text-lg font-bold text-[#e5e2e1]">
+            Mapa de Alinhamento Vibracional
+          </h2>
           <a
             href={resultadoHref}
             className="flex flex-1 items-center justify-center rounded-xl py-2 transition-opacity hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]"

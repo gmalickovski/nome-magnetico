@@ -49,7 +49,7 @@ Este documento registra a lógica funcional, a estrutura de dados e a persistên
 - Quando o card ativo é o **Nome de Nascimento Inicial** (`isFree: true`), `harmonizedRadarAxes` é `null` e `showNumericLabels` é `false` — o radar renderiza **apenas o polígono base (amarelo/cor do score de nascimento)** e os percentuais originais em dourado.
 - Quando o card ativo é uma **Assinatura Harmonizada**, `showNumericLabels={Boolean(activeHarmonizedAxes)}` ativa o cálculo de deltas comparativos idêntico ao Painel de Análise (`+X%` na cor do tier da harmonização, `-X%` em vermelho `#ef4444` quando há perda pontual no eixo, `0%` em dourado `#f2ca50` quando se mantém igual).
 - Ao navegar no carrossel, os polígonos e vértices `<circle>` animam suavemente (`transition-all duration-700 ease-out`).
-- Visual no dashboard: utiliza `.nm-floating-card.nm-reading-card`, `.nm-score-eyebrow` (`Mapa de Alinhamento Vibracional`) e `variant="dashboard"` no `ReadingRadar` (`viewBox="-24 -4 848 596"`, `radius = 212`, `.nm-radar-svg--dashboard` em `max-width: 620px`) para aproveitar melhor a largura do card mantendo o tamanho de fonte tipográfico (`24px` SVG em container `>= 28rem`, `32px` no mobile).
+- Visual no dashboard: utiliza `.nm-floating-card.nm-reading-card`, título padrão `<h2>` (`font-cinzel text-lg font-bold text-[#e5e2e1]`, `Mapa de Alinhamento Vibracional`) sem subtítulo e `variant="dashboard"` no `ReadingRadar` (`viewBox="-24 -4 848 596"`, `radius = 212`, `.nm-radar-svg--dashboard` em `max-width: 620px`) para aproveitar melhor a largura do card mantendo o tamanho de fonte tipográfico (`24px` SVG em container `>= 28rem`, `32px` no mobile).
 
 ---
 

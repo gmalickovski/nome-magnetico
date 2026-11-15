@@ -299,7 +299,7 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /showChecklistCard/);
     assert.match(dashboardSrc, /variant="dashboard"/);
     assert.match(dashboardSrc, /showNumericLabels=\{Boolean\(activeHarmonizedAxes\)\}/);
-    assert.match(dashboardSrc, /Mapa de Alinhamento Vibracional/);
+    assert.match(dashboardSrc, /<h2 className="mb-2 font-cinzel text-lg font-bold text-\[#e5e2e1\]">\s*Mapa de Alinhamento Vibracional/);
     assert.match(dashboardSrc, /nm-floating-card nm-reading-card/);
     assert.match(dashboardSrc, /label="Baixar PDF"/);
     assert.match(dashboardSrc, /Ver Painel de Análise/);
