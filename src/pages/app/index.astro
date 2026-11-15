@@ -598,51 +598,6 @@ const signatureChosenDashboard = Boolean(
 );
 const pdfReadyDashboard = Boolean(featuredAnalysis?.status === 'complete');
 
-type RecommendedReading = {
-  badge: string;
-  title: string;
-  subtitle: string;
-  href: string;
-  ctaLabel: string;
-};
-
-let recommendedReadingDashboard: RecommendedReading | null = null;
-const firstBloqueio = Array.isArray(featuredAnalysis?.bloqueios)
-  ? (featuredAnalysis.bloqueios[0] as { codigo?: string; titulo?: string } | undefined)
-  : undefined;
-const firstLicao = Array.isArray((featuredAnalysis as any)?.licoes_carmicas)
-  ? ((featuredAnalysis as any).licoes_carmicas[0] as { numero?: number; titulo?: string } | undefined)
-  : undefined;
-
-if (firstBloqueio?.codigo) {
-  const code = String(firstBloqueio.codigo).trim();
-  const knownBlockCodes = new Set(['111', '222', '333', '444', '555', '666', '777', '888', '999']);
-  const slug = knownBlockCodes.has(code) ? `bloqueio-${code}` : 'bloqueios-energeticos';
-  recommendedReadingDashboard = {
-    badge: 'Bloqueio ativo no seu mapa',
-    title: firstBloqueio.titulo?.trim() || `Bloqueio ${code}`,
-    subtitle: 'Entenda por que essa sequência repetida trava a fluidez do nome e como ela se dissolve na harmonização.',
-    href: `/app/glossario/${slug}`,
-    ctaLabel: 'Ler no glossário →',
-  };
-} else if (firstLicao?.numero != null) {
-  recommendedReadingDashboard = {
-    badge: 'Lição Kármica no seu mapa',
-    title: firstLicao.titulo?.trim() || `Lição Kármica ${firstLicao.numero}`,
-    subtitle: 'Compreenda o significado das vibrações ausentes no seu nome de nascimento e como equilibrá-las.',
-    href: '/app/glossario/licoes-karmicas',
-    ctaLabel: 'Explorar no glossário →',
-  };
-} else if (featuredAnalysis) {
-  recommendedReadingDashboard = {
-    badge: 'Fundamento do seu mapa',
-    title: 'Número de Expressão e Harmonização',
-    subtitle: 'Descubra como Expressão, Destino e os 4 Triângulos trabalham juntos para elevar seu score magnético.',
-    href: '/app/glossario/numero-de-expressao',
-    ctaLabel: 'Abrir no glossário →',
-  };
-}
-
 type DashboardHistoryRow = {
   id: string;
   nome: string;
@@ -1292,7 +1247,6 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
         featuredIsFree={featuredIsFree}
         signatureChosen={signatureChosenDashboard}
         pdfReady={pdfReadyDashboard}
-        recommendedReading={recommendedReadingDashboard}
         radarAxes={dashboardRadarAxes}
         harmonizedRadarAxes={harmonizedRadarAxesDashboard}
         radarLabels={dashboardRadarLabels}

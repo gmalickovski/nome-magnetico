@@ -279,6 +279,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(dashboardSrc, /Alternar nome exibido no score/);
     assert.doesNotMatch(dashboardSrc, /Mapa Cabalístico/);
     assert.doesNotMatch(dashboardSrc, /Treine o traçado/);
+    assert.doesNotMatch(dashboardSrc, /recommendedReading/);
+    assert.doesNotMatch(dashboardSrc, /Explorar no glossário/);
     assert.doesNotMatch(dashboardSrc, /bg-\[#131313\]\/60/);
     assert.doesNotMatch(dashboardSrc, /bg-\[#131313\]\/80/);
     assert.match(dashboardSrc, /lg:grid-cols-\[minmax\(0,1fr\)_300px\]/);
