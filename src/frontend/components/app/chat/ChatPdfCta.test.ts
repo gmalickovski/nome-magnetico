@@ -30,7 +30,9 @@ describe('ChatPdfCta / useChatPdfCta', () => {
     assert.match(ctaSrc, /ChatPdfConcludeModal/);
     assert.match(ctaSrc, /onStickyClick[\s\S]*?openConcludeModal\(\)/);
     assert.match(ctaSrc, /onDockClick[\s\S]*?openConcludeModal\(\)/);
-    assert.match(ctaSrc, /runSaveOnly[\s\S]*?waitAnalysisCompleteForPdf[\s\S]*?\/app\/analises/);
+    assert.match(ctaSrc, /runPaidPdf[\s\S]*?input\.onPdfSuccess\?\.\([\s\S]*?redirectToDashboard\(analysisId,\s*300\)/);
+    assert.match(ctaSrc, /runSaveOnly[\s\S]*?waitAnalysisCompleteForPdf[\s\S]*?redirectToDashboard\(analysisId\)/);
+    assert.match(ctaSrc, /window\.location\.href\s*=\s*'\/app'/);
 
     const modalFile = path.join(path.dirname(fileURLToPath(import.meta.url)), 'ChatPdfConcludeModal.tsx');
     const modalSrc = readFileSync(modalFile, 'utf8');
@@ -39,9 +41,9 @@ describe('ChatPdfCta / useChatPdfCta', () => {
     assert.match(modalSrc, /closeLabel="Cancelar"/);
     assert.match(modalSrc, /closeDisabled=\{isBusy\}/);
     assert.match(modalSrc, /variant="primary"[\s\S]*?Salvar e baixar PDF/);
-    assert.match(modalSrc, /Guarda em Minhas análises e inicia o download\./);
+    assert.match(modalSrc, /Guarda em Minhas análises, inicia o download e volta ao início\./);
     assert.match(modalSrc, /variant="secondary-gold"[\s\S]*?Salvar/);
-    assert.match(modalSrc, /Guarda em Minhas análises e abre essa página\./);
+    assert.match(modalSrc, /Guarda em Minhas análises e volta ao início\./);
     assert.match(modalSrc, /Você também poderá baixar o PDF depois em Minhas análises\./);
 
     const uiModalSrc = readFileSync(
@@ -50,5 +52,43 @@ describe('ChatPdfCta / useChatPdfCta', () => {
     );
     assert.match(uiModalSrc, /z-\[110\]/);
     assert.match(uiModalSrc, /data-nm-modal="true"/);
+  });
+
+  it('padroniza o modal de carregamento de PDF com spinner circular e texto novo em todo o app', () => {
+    const appDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+    const overlaySrc = readFileSync(
+      path.join(appDir, 'chat', 'ChatPdfPreparingOverlay.tsx'),
+      'utf8',
+    );
+    assert.match(overlaySrc, /Preparando seu PDF/);
+    assert.match(
+      overlaySrc,
+      /Estamos finalizando a análise completa com a assinatura escolhida e montando o PDF/,
+    );
+    assert.match(overlaySrc, /animate-spin/);
+    assert.match(overlaySrc, /<circle/);
+    assert.doesNotMatch(overlaySrc, /role="progressbar"/);
+
+    const btnSrc = readFileSync(path.join(appDir, 'PDFFeedbackButton.tsx'), 'utf8');
+    assert.match(btnSrc, /ChatPdfPreparingOverlay/);
+    assert.match(btnSrc, /usePdfDownloadOverlay/);
+    assert.doesNotMatch(btnSrc, /Preparando seu documento/);
+    assert.doesNotMatch(btnSrc, /Enquanto isso, nos diga o que achou/);
+
+    const workspaceSrc = readFileSync(
+      path.join(appDir, 'analises', 'MyAnalysesWorkspace.tsx'),
+      'utf8',
+    );
+    assert.match(workspaceSrc, /ChatPdfPreparingOverlay/);
+    assert.match(workspaceSrc, /usePdfDownloadOverlay/);
+    assert.doesNotMatch(workspaceSrc, /window\.location\.href\s*=\s*`\/api\/generate-pdf/);
+
+    const dockSrc = readFileSync(
+      path.join(appDir, 'chat', 'ResultadoMobileDock.tsx'),
+      'utf8',
+    );
+    assert.match(dockSrc, /ChatPdfPreparingOverlay/);
+    assert.match(dockSrc, /usePdfDownloadOverlay/);
+    assert.doesNotMatch(dockSrc, /window\.location\.href\s*=\s*`\/api\/generate-pdf/);
   });
 });

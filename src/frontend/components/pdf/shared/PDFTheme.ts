@@ -102,3 +102,40 @@ export const PDF_COLORS = {
   amber: '#D97706',
   blue: '#4A7FC1',
 } as const;
+
+/** Escala tipográfica canônica para documentos PDF (h1..h4 + parágrafos). */
+export const PDF_TYPOGRAPHY = {
+  h1: {
+    fontSize: 18,
+    letterSpacing: 0.5,
+  },
+  h2: {
+    fontSize: 13,
+    letterSpacing: 0.5,
+    borderBottomWidth: 1,
+    paddingBottom: 4,
+    marginBottom: 12,
+  },
+  h3: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+    paddingBottom: 4,
+    marginBottom: 8,
+  },
+  h4: {
+    fontSize: 10,
+    color: PDF_COLORS.gray,
+    marginBottom: 6,
+  },
+  paragraph: {
+    fontSize: 10,
+    color: PDF_COLORS.gray,
+    lineHeight: 1.65,
+    marginBottom: 8,
+  },
+  cardText: {
+    fontSize: 10,
+    color: PDF_COLORS.gray,
+    lineHeight: 1.55,
+  },
+} as const;

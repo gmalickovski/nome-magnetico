@@ -13,7 +13,7 @@ const AREA_LABEL: Record<AreaFocoNomeMagnetico, string> = {
   autoestima_expressao: 'autoestima e expressão',
 };
 
-const ONDE_LABEL: Record<string, string> = {
+export const ONDE_LABEL: Record<string, string> = {
   identidade_registro: 'documentos e registros oficiais',
   presenca_digital: 'redes sociais e presença digital',
   rotina_trabalho: 'trabalho, contratos e propostas',

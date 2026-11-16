@@ -4,6 +4,7 @@ import React from 'react';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { NomeAtualPDF } from './NomeAtualPDF.tsx';
 import { NomeSocialPDF } from './NomeSocialPDF.tsx';
+import { PDFTriangleDetailsBlock } from './shared/PDFTriangleDetailsBlock.tsx';
 
 describe('PDF Render Tests (DEV-192)', () => {
   const baseAnalysis = {
@@ -82,5 +83,42 @@ describe('PDF Render Tests (DEV-192)', () => {
     assert.ok(buffer);
     assert.ok(buffer.length > 1000);
     assert.equal(buffer.subarray(0, 5).toString('ascii'), '%PDF-');
+  });
+
+  it('PDFTriangleDetailsBlock ordena Pirâmide -> Bloqueios -> Arcanos', () => {
+    const tree = PDFTriangleDetailsBlock({
+      data: {
+        tipo: 'vida',
+        linhas: [[1, 1, 1], [2, 2], [4]],
+        arcanoRegente: 1,
+        sequenciasNegativas: ['111'],
+        arcanosDePassagem: [11, 22],
+        arcanoAtual: { numero: 11, periodo: '0-30', idadeInicio: 0, idadeFim: 30 },
+      },
+      triangulo: 'vida',
+      pyramidLabel: 'TRIÂNGULO DA VIDA',
+      cellSize: 12,
+      letras: ['A', 'A', 'A'],
+      bloqueiosTitle: 'Bloqueios do Triângulo da Vida',
+      arcanosTitle: 'Arcanos do Triângulo da Vida',
+      allBloqueios: [
+        {
+          codigo: '111',
+          titulo: 'Iniciação',
+          descricao: 'Teste',
+          aspectoSaude: 'Teste saúde',
+          triangulos: ['vida'],
+        },
+      ],
+    }) as React.ReactElement<{ children: React.ReactNode[] }>;
+
+    const children = React.Children.toArray(tree.props.children) as React.ReactElement[];
+    assert.equal(children.length, 3);
+    const fnName = (el: React.ReactElement) =>
+      typeof el.type === 'function' ? el.type.name : String(el.type);
+    assert.equal(fnName(children[0]), 'TrianguloPiramideInline');
+    // children[1] é o View contendo título + BloqueiosBlock
+    assert.match(JSON.stringify(children[1]), /Bloqueios do Triângulo da Vida/);
+    assert.equal(fnName(children[2]), 'PDFArcanosBlock');
   });
 });

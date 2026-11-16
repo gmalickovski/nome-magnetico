@@ -1,3 +1,5 @@
+import { getArquetipo } from './archetypes';
+import type { ArchetypeSummary } from '../../shared/archetype-summary';
 /**
  * Painel do nome de nascimento — mesmo score da análise oficial (avaliarNome · score_v3).
  * Usado em decide-live, SSR do chat e testes.
@@ -26,6 +28,7 @@ export interface BirthNamePanelData {
 
 /** Payload serializável para o chat (ResultPanelData). */
 export interface ClientBirthNamePanel {
+  arquetipo?: ArchetypeSummary;
   nome: string;
   score: number;
   expressao: number;
@@ -69,6 +72,7 @@ export function buildBirthNamePanel(nome: string, dataPtBr: string): BirthNamePa
 export function toClientBirthNamePanel(panel: BirthNamePanelData): ClientBirthNamePanel {
   return {
     nome: panel.nomeExibido,
+    arquetipo: getArquetipo(panel.expressao),
     score: panel.score,
     expressao: panel.expressao,
     destino: panel.destino,

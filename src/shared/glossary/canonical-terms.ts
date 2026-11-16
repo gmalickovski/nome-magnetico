@@ -48,6 +48,127 @@ export const GLOSSARY_CATEGORY_ORDER: GlossaryCategory[] = [
 ];
 
 export const CANONICAL_GLOSSARY_TERMS: GlossaryTermEntry[] = [
+  {
+    "slug": "arquetipo",
+    "term": "Arquétipo",
+    "category": "assinatura",
+    "aliases": [
+      "Arquétipo"
+    ],
+    "shortSummary": "Síntese simbólica derivada do Número de Expressão, com qualidades e pontos de atenção. Não é diagnóstico nem altera o score.",
+    "definitionMarkdown": "### Arquétipo\n\nSíntese simbólica derivada do Número de Expressão, com qualidades e pontos de atenção. Não é diagnóstico nem altera o score.\n\nO arquétipo é a camada narrativa associada à Expressão pelo catálogo vigente. Nomes com a mesma Expressão mantêm o mesmo arquétipo. A leitura reúne essência, expressão positiva e pontos de atenção; não mede personalidade nem prevê resultados.",
+    "relatedNumber": null,
+    "tags": [
+      "Arquétipo"
+    ],
+    "relatedSlugs": [
+      "numero-de-expressao"
+    ]
+  },
+  {
+    "slug": "mapa-vibracional",
+    "term": "Mapa Vibracional",
+    "category": "assinatura",
+    "aliases": [
+      "Mapa Vibracional",
+      "Mapa de Alinhamento Vibracional"
+    ],
+    "shortSummary": "Comparação de cinco índices de 0 a 100 calculados pelo motor com a área de foco e o contexto de uso informados. Não altera o score.",
+    "definitionMarkdown": "### Mapa Vibracional\n\nComparação de cinco índices de 0 a 100 calculados pelo motor com a área de foco e o contexto de uso informados. Não altera o score.\n\nOs eixos são Foco do Momento, Equilíbrio da Alma, Sintonia de Destino, Magnetismo Social e Fluidez. Compare nascimento e assinatura sob o mesmo contexto. Sem contexto salvo, o motor usa a leitura geral, sem personalização. Os índices não representam probabilidades de sucesso; diferenças são pontos de índice, não variação percentual relativa.",
+    "relatedNumber": null,
+    "tags": [
+      "Mapa Vibracional"
+    ],
+    "relatedSlugs": [
+      "foco-do-momento",
+      "fluidez"
+    ]
+  },
+  {
+    "slug": "foco-do-momento",
+    "term": "Foco do Momento",
+    "category": "assinatura",
+    "aliases": [
+      "Foco do Momento"
+    ],
+    "shortSummary": "Relaciona a Expressão à área de foco declarada e às sequências do Triângulo da Vida.",
+    "definitionMarkdown": "### Foco do Momento\n\nRelaciona a Expressão à área de foco declarada e às sequências do Triângulo da Vida.\n\nCom área de foco válida, usa a matriz de afinidade do motor; sem ela, usa a compatibilidade geral entre Expressão e Destino. As sequências da Vida compõem as resistências deste eixo.",
+    "relatedNumber": null,
+    "tags": [
+      "Mapa Vibracional"
+    ],
+    "relatedSlugs": [
+      "mapa-vibracional"
+    ]
+  },
+  {
+    "slug": "equilibrio-da-alma",
+    "term": "Equilíbrio da Alma",
+    "category": "assinatura",
+    "aliases": [
+      "Equilíbrio da Alma"
+    ],
+    "shortSummary": "Combina a relação entre Motivação e Expressão com os reflexos do Triângulo Pessoal.",
+    "definitionMarkdown": "### Equilíbrio da Alma\n\nCombina a relação entre Motivação e Expressão com os reflexos do Triângulo Pessoal.\n\nEste índice reúne a ressonância da Motivação com a Expressão e as sequências do Triângulo Pessoal. É uma leitura contextual de autoconhecimento e não um diagnóstico emocional.",
+    "relatedNumber": null,
+    "tags": [
+      "Mapa Vibracional"
+    ],
+    "relatedSlugs": [
+      "mapa-vibracional"
+    ]
+  },
+  {
+    "slug": "sintonia-de-destino",
+    "term": "Sintonia de Destino",
+    "category": "assinatura",
+    "aliases": [
+      "Sintonia de Destino"
+    ],
+    "shortSummary": "Relaciona Expressão e Missão ao Destino, conforme as compatibilidades do motor.",
+    "definitionMarkdown": "### Sintonia de Destino\n\nRelaciona Expressão e Missão ao Destino, conforme as compatibilidades do motor.\n\nO Destino permanece vinculado à data de nascimento. O eixo compara as relações numerológicas do nome com esse Destino com reforço pela Missão, sem alterar a nota global.",
+    "relatedNumber": null,
+    "tags": [
+      "Mapa Vibracional"
+    ],
+    "relatedSlugs": [
+      "mapa-vibracional"
+    ]
+  },
+  {
+    "slug": "magnetismo-social",
+    "term": "Magnetismo Social",
+    "category": "assinatura",
+    "aliases": [
+      "Magnetismo Social"
+    ],
+    "shortSummary": "Combina Impressão, contexto de uso informado e reflexos do Triângulo Social.",
+    "definitionMarkdown": "### Magnetismo Social\n\nCombina Impressão, contexto de uso informado e reflexos do Triângulo Social.\n\nO motor considera a Impressão do nome, a afinidade com os canais de uso declarados e as sequências do Triângulo Social. O índice não é uma previsão de reconhecimento ou êxito profissional.",
+    "relatedNumber": null,
+    "tags": [
+      "Mapa Vibracional"
+    ],
+    "relatedSlugs": [
+      "mapa-vibracional"
+    ]
+  },
+  {
+    "slug": "fluidez",
+    "term": "Fluidez",
+    "category": "assinatura",
+    "aliases": [
+      "Fluidez"
+    ],
+    "shortSummary": "Indica a presença ou ausência de sequências repetidas no Triângulo da Vida conforme o motor vigente.",
+    "definitionMarkdown": "### Fluidez\n\nIndica a presença ou ausência de sequências repetidas no Triângulo da Vida conforme o motor vigente.\n\nO eixo parte das sequências da Vida e dos descontos correspondentes no motor. As leituras complementares Pessoal e Social não descontam diretamente da nota global. Um índice maior não é garantia de resultado na vida.",
+    "relatedNumber": null,
+    "tags": [
+      "Mapa Vibracional"
+    ],
+    "relatedSlugs": [
+      "mapa-vibracional"
+    ]
+  },
   // ── 1. NÚMEROS PRINCIPAIS ────────────────────────────────────────────────
   {
     slug: 'numero-de-expressao',

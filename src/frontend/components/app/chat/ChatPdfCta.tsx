@@ -116,8 +116,8 @@ export function useChatPdfCta(input: {
   ensureAnalysisId?: (signal: AbortSignal) => Promise<string | undefined>;
   /** Callback acionado após salvar a análise em "Salvar". */
   onSaveSuccess?: (analysisId: string) => void;
-  /** Navegação customizada para /app/analises após salvar (opcional para testes). */
-  onNavigateToAnalyses?: (analysisId: string) => void;
+  /** Navegação customizada para o dashboard após concluir (opcional para testes). */
+  onNavigateToDashboard?: (analysisId: string) => void;
   /** Callback acionado após a geração e download bem-sucedidos da análise/PDF. */
   onPdfSuccess?: (analysisId?: string) => void;
   isFree: boolean;
@@ -143,14 +143,36 @@ export function useChatPdfCta(input: {
   const shownRef = useRef(false);
   const pdfRunLockRef = useRef(false);
   const pdfAbortRef = useRef<AbortController | null>(null);
+  const redirectTimerRef = useRef<number | null>(null);
   const prevDisplayNameRef = useRef('');
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     return () => {
       pdfAbortRef.current?.abort();
+      if (redirectTimerRef.current !== null) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
     };
   }, []);
+
+  const redirectToDashboard = useCallback(
+    (analysisId: string, delayMs = 0) => {
+      if (input.onNavigateToDashboard) {
+        input.onNavigateToDashboard(analysisId);
+        return;
+      }
+      if (typeof window === 'undefined') return;
+      if (delayMs > 0) {
+        redirectTimerRef.current = window.setTimeout(() => {
+          window.location.href = '/app';
+        }, delayMs);
+        return;
+      }
+      window.location.href = '/app';
+    },
+    [input.onNavigateToDashboard]
+  );
 
   const visible = input.suggestionSelected && Boolean(input.selectedNome?.trim());
   const displayName = input.selectedNome?.trim() ?? '';
@@ -227,6 +249,7 @@ export function useChatPdfCta(input: {
     setPhase('loading');
     setOverlayPhase('preparing');
     const started = performance.now();
+    let navigated = false;
     try {
       let analysisId = input.analysisId;
       if (!analysisId && input.ensureAnalysisId) {
@@ -262,15 +285,18 @@ export function useChatPdfCta(input: {
       a.href = objectUrl;
       a.download = filename;
       a.click();
-      URL.revokeObjectURL(objectUrl);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
       setPhase('ready');
       setOverlayPhase('idle');
+      setConcludeModalOpen(false);
       capturePostHogEvent('nm_pdf_generated', {
         duration_ms: Math.round(performance.now() - started),
         suggestion_rank: input.suggestionRank,
         ...(opts?.auto ? { auto: true } : {}),
       });
       input.onPdfSuccess?.(analysisId);
+      navigated = true;
+      redirectToDashboard(analysisId, 300);
       return true;
     } catch (err) {
       if (signal.aborted) {
@@ -285,10 +311,19 @@ export function useChatPdfCta(input: {
       });
       return false;
     } finally {
-      pdfRunLockRef.current = false;
-      setConcludeBusyAction(null);
+      if (!navigated) {
+        pdfRunLockRef.current = false;
+        setConcludeBusyAction(null);
+      }
     }
-  }, [input.analysisId, input.ensureAnalysisId, input.onPdfSuccess, input.suggestionRank, addToast]);
+  }, [
+    input.analysisId,
+    input.ensureAnalysisId,
+    input.onPdfSuccess,
+    input.suggestionRank,
+    redirectToDashboard,
+    addToast,
+  ]);
 
   const runSaveOnly = useCallback(async (): Promise<boolean> => {
     if (pdfRunLockRef.current) return false;
@@ -329,13 +364,10 @@ export function useChatPdfCta(input: {
         screen: input.screen,
         suggestion_rank: input.suggestionRank,
       });
+      setConcludeModalOpen(false);
       input.onSaveSuccess?.(analysisId);
       navigated = true;
-      if (input.onNavigateToAnalyses) {
-        input.onNavigateToAnalyses(analysisId);
-      } else if (typeof window !== 'undefined') {
-        window.location.href = '/app/analises';
-      }
+      redirectToDashboard(analysisId);
       return true;
     } catch (err) {
       if (signal.aborted) {
@@ -359,7 +391,7 @@ export function useChatPdfCta(input: {
     input.analysisId,
     input.ensureAnalysisId,
     input.onSaveSuccess,
-    input.onNavigateToAnalyses,
+    redirectToDashboard,
     input.screen,
     input.suggestionRank,
   ]);

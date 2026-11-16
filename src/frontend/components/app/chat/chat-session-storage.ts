@@ -40,6 +40,9 @@ export interface PersistedChatSession {
   harmonizedSummaries?: Record<string, ChatReadingSummary>;
   activeSuggestionId: string | null;
   suggestions: CandidateSuggestion[];
+  manualChatKey?: string;
+  manualSessionId?: string;
+  manualUsed?: number;
   analysisId?: string;
   chatPhase?: 'onboarding' | 'free_paywall' | 'subscriber';
   freePdfDownloaded?: boolean;

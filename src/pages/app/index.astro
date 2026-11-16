@@ -1,4 +1,6 @@
 ---
+import { resolveRadarContext, readContextualRadarSnapshot } from '../../shared/interactive-engine/radar-context';
+import { getArquetipo } from '../../backend/numerology/archetypes';
 import AppLayout from '../../layouts/AppLayout.astro';
 import { getActiveSubscription, hasActiveSubscription, hasAnySubscription, getRefundableSubscriptions } from '../../backend/db/subscriptions';
 import { createUserClient, supabase } from '../../backend/db/supabase';
@@ -660,32 +662,8 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
     || row.nome_completo;
   const dataPt = toPtBrBirthDate(ranking?.dataNascimento || row.data_nascimento || rawBirthRadar);
 
-  const areaFocoRow =
-    (typeof ranking?.areaFoco === 'string'
-      ? ranking.areaFoco
-      : typeof ranking?.area_foco === 'string'
-        ? ranking.area_foco
-        : typeof freqData?.areaFoco === 'string'
-          ? freqData.areaFoco
-          : typeof freqData?.area_foco === 'string'
-            ? freqData.area_foco
-            : typeof freqData?.parametros_usuario?.areaFoco === 'string'
-              ? freqData.parametros_usuario.areaFoco
-              : featuredAreaFoco);
-  const ondeAssinaRow = Array.isArray(freqData?.ondeVaiUsar)
-    ? freqData.ondeVaiUsar
-    : Array.isArray(freqData?.onde_vai_usar)
-      ? freqData.onde_vai_usar
-      : Array.isArray(ranking?.ondeVaiUsar)
-        ? ranking.ondeVaiUsar
-        : Array.isArray(ranking?.onde_vai_usar)
-          ? ranking.onde_vai_usar
-          : featuredOndeAssina;
-  const rowContext = {
-    areaFoco: areaFocoRow,
-    ondeAssinaRaw: ondeAssinaRow,
-  };
-  const radarLabels = getRadarAxisLabels(areaFocoRow);
+  const rowContext = resolveRadarContext(freqData, ranking);
+  const radarLabels = getRadarAxisLabels(rowContext.areaFoco);
 
   let slideScore = Math.max(0, Math.min(100, Math.round(row.score_v3 ?? row.score ?? 0)));
   if (getScoreVersion() === 'v3' && nomeExibido && dataPt) {
@@ -774,6 +752,11 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
     }
   }
 
+  const savedRadar = readContextualRadarSnapshot(freqData, birthNameForRow, nomeExibido);
+  if (savedRadar) {
+    birthRadarAxes = motorRadarToRecord(savedRadar.birth);
+    harmonizedRadarAxes = isFreeRow ? null : motorRadarToRecord(savedRadar.selected);
+  }
   return {
     id: row.id,
     nome: nomeExibido,
@@ -784,6 +767,9 @@ function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHe
     bloqueiosTitulos,
     compatibilidade,
     starNumbers,
+    arquetipo: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
+    arquetipoNascimento: birthNameForRow && dataPt ? getArquetipo(calcularCincoNumeros(birthNameForRow, dataPt).expressao) : null,
+    origem: freqData?.ranking?.nomesCandidatos?.find((c: any) => c.nomeCompleto?.trim().toLowerCase() === nomeExibido.trim().toLowerCase())?.origem,
     productType: row.product_type ?? 'nome_social',
     isFree: isFreeRow,
     isFavorite: !isFreeRow && Boolean(freqData?.is_favorite),
@@ -853,6 +839,8 @@ function buildSynthesizedBirthSlide(
     bloqueiosTitulos,
     compatibilidade,
     starNumbers,
+    arquetipo: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
+    arquetipoNascimento: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
     productType: 'analise_gratuita',
     isFree: true,
     isFavorite: false,

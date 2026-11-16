@@ -14,6 +14,8 @@ import type {
   DockSecondaryActionId,
 } from '../chat/mobile-dock-screen.js';
 import { PDFFeedbackButton } from '../PDFFeedbackButton.js';
+import { ChatPdfPreparingOverlay } from '../chat/ChatPdfPreparingOverlay.js';
+import { usePdfDownloadOverlay } from '../../../lib/pdf-download.js';
 import {
   getStoredFavoriteAnalysisId,
   persistFavoriteAnalysis,
@@ -133,6 +135,11 @@ function AnalysesRightPanelChrome({
               analysisId={pdfAnalysisId}
               productType={selectedAnalysis.productType}
               isFree={selectedAnalysis.isFree}
+              forceFreePdf={
+                selectedAnalysis.isFree ||
+                selectedAnalysis.productType === 'analise_gratuita' ||
+                (selectedAnalysis.productType === 'nome_social' && !selectedAnalysis.panelData.harmonizedPanel)
+              }
               isAnalyst={selectedAnalysis.isAnalystGenerated}
               showFab={false}
               showLabel={false}
@@ -220,6 +227,13 @@ export default function MyAnalysesWorkspace({
   });
   const [deleteTarget, setDeleteTarget] = useState<SavedAnalysisItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const {
+    phase: pdfOverlayPhase,
+    isDownloading: isPdfDownloading,
+    startDownload: startPdfDownload,
+    retry: retryPdfDownload,
+    dismiss: dismissPdfOverlay,
+  } = usePdfDownloadOverlay();
 
   useEffect(() => {
     const sync = () => syncAnaliseCtaLabels();
@@ -736,11 +750,22 @@ export default function MyAnalysesWorkspace({
               return {
                 variant: 'pdf' as const,
                 onClick: () => {
-                  window.location.href = `/api/generate-pdf?id=${encodeURIComponent(targetPdfId)}`;
+                  void startPdfDownload({
+                    analysisId: targetPdfId,
+                    productType: selectedAnalysis.productType,
+                    forceFreePdf:
+                      selectedAnalysis.isFree ||
+                      selectedAnalysis.productType === 'analise_gratuita' ||
+                      (selectedAnalysis.productType === 'nome_social' && !selectedAnalysis.panelData.harmonizedPanel),
+                  });
                 },
                 pdfModel: {
                   visible: true,
-                  phase: 'ready' as const,
+                  phase: isPdfDownloading
+                    ? ('loading' as const)
+                    : pdfOverlayPhase === 'error'
+                      ? ('error' as const)
+                      : ('ready' as const),
                   displayName: selectedAnalysis.nomeExibido,
                   assinaturaLabel: selectedAnalysis.nomeExibido,
                   suggestionRank: 0,
@@ -799,6 +824,12 @@ export default function MyAnalysesWorkspace({
           </div>
         </div>
       )}
+
+      <ChatPdfPreparingOverlay
+        phase={pdfOverlayPhase}
+        onRetry={retryPdfDownload}
+        onDismissError={dismissPdfOverlay}
+      />
     </div>
   );
 }

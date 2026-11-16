@@ -1,3 +1,7 @@
+import { GlossaryInlineTerm } from '../../glossary/GlossaryInlineTerm';
+import { resolveArchetypeSummary } from '../../../../shared/archetype-summary';
+import { getCanonicalGlossaryBySlug } from '../../../../shared/glossary/canonical-terms';
+import { ArquetipoResumoCard } from '../ArquetipoResumoCard';
 import React from 'react';
 import type {
   ChatReadingSummary,
@@ -91,6 +95,12 @@ export function ChatSidebarSection({
 }: ChatSidebarSectionProps) {
   const hasScore = showScoreCard && Boolean(birthPanel);
   const hasStar = showStarDetail && Boolean(starPanelData) && Boolean(birthPanel);
+  const resolvedStarArchetype = hasStar
+    ? resolveArchetypeSummary(starPanelData?.arquetipo, starPanelData?.expressao)
+    : null;
+  const resolvedBirthArchetype = hasStar
+    ? resolveArchetypeSummary(birthPanel?.arquetipo, birthPanel?.expressao)
+    : null;
   const hasReadingBlocks =
     showReadingSummary && (Boolean(readingSummary) || readingSummaryLoading);
 
@@ -115,9 +125,26 @@ export function ChatSidebarSection({
         />
       )}
 
+      {hasStar && starPanelData && resolvedStarArchetype && (
+        <ReadingTopicCard
+          eyebrow="Arquétipo Vibracional"
+          title={resolvedStarArchetype.nome}
+          subtitle={`${starPanelData.nome || 'Nome em análise'} · Expressão ${starPanelData.expressao ?? resolvedStarArchetype.numero}${resolvedStarArchetype.sombra ? ` · Sombra: ${resolvedStarArchetype.sombra}` : ''}`}
+        >
+          <ArquetipoResumoCard
+            variant="panel"
+            arquetipo={resolvedStarArchetype}
+            expressao={starPanelData.expressao}
+            arquetipoNascimento={isSuggestion ? resolvedBirthArchetype : undefined}
+            expressaoNascimento={isSuggestion ? birthPanel?.expressao : undefined}
+            isSuggestion={isSuggestion}
+          />
+        </ReadingTopicCard>
+      )}
+
       {showRadar && radarAxes && (
         <ReadingTopicCard
-          eyebrow="Mapa de Alinhamento Vibracional"
+          eyebrow="Mapa Vibracional"
           subtitle="Ressonância da assinatura com o seu momento"
         >
           <ReadingRadar
@@ -155,6 +182,7 @@ export function ChatSidebarSection({
                   ? getScoreTierVisual(harmonizedPanel.score)
                   : null;
               return RADAR_AXES_EXPLANATIONS.map((axis) => {
+                const slug = ({ expressao: 'foco-do-momento', motivacao: 'equilibrio-da-alma', destino: 'sintonia-de-destino', harmonia_triangulo: 'magnetismo-social', sequencias: 'fluidez' } as const)[axis.key];
                 const axisLabel = radarLabels?.[axis.key] ?? axis.defaultLabel;
                 const basePct = Math.round((radarAxes[axis.key] ?? 0.35) * 100);
                 const overlayPct = radarOverlayAxes
@@ -173,17 +201,17 @@ export function ChatSidebarSection({
                 const deltaText =
                   delta != null
                     ? delta > 0
-                      ? `+${delta}%`
-                      : `${delta}%`
+                      ? `+${delta} pts`
+                      : `${delta} pts`
                     : null;
 
                 return (
                   <div key={axis.key} className="space-y-1 text-left">
                     <p className="nm-reading-item-title font-inter font-semibold text-[#f2ca50] text-base leading-snug flex flex-wrap items-center gap-1.5">
                       <span>
-                        {axisLabel}{' '}
+                        <GlossaryInlineTerm slug={slug}>{axisLabel}</GlossaryInlineTerm>{' '}
                         <span className="font-bold" style={{ color: activeVisual.text }}>
-                          = {activePct}%
+                          = {activePct}
                         </span>
                       </span>
                       {radarShowNumericLabels && radarOverlayAxes && deltaText && deltaColor && (
@@ -195,7 +223,7 @@ export function ChatSidebarSection({
                         </span>
                       )}
                     </p>
-                    <p className="nm-card-text text-gray-300">{axis.description}</p>
+                    <p className="nm-card-text text-gray-300">{getCanonicalGlossaryBySlug(slug)?.shortSummary ?? axis.description}</p>
                   </div>
                 );
               });
@@ -203,7 +231,6 @@ export function ChatSidebarSection({
           </div>
         </ReadingTopicCard>
       )}
-
 
       {hasReadingBlocks && (
         <ChatReadingSummaryPanel summary={readingSummary} loading={readingSummaryLoading} />

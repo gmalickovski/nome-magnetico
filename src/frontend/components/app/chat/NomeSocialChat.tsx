@@ -1,3 +1,5 @@
+import { NOME_SOCIAL_MAX_MANUAIS, normalizarChaveNome, validarNomeManual } from '../../../../shared/nome-social/manual-name-limits';
+import { resolveRadarContext } from '../../../../shared/interactive-engine/radar-context';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type {
   ChatMessage,
@@ -219,6 +221,14 @@ export function NomeSocialChat({
   const [readingSummaryLoading, setReadingSummaryLoading] = useState(false);
   const [basePanel, setBasePanel] = useState<ResultPanelData | null>(initialBirthPanel);
   const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(null);
+  const [manualChatKey, setManualChatKey] = useState('');
+  const [manualSessionId, setManualSessionId] = useState<string | undefined>();
+  const [manualUsed, setManualUsed] = useState(0);
+  const [manualDraft, setManualDraft] = useState('');
+  const [manualNotice, setManualNotice] = useState<string | null>(null);
+  const [manualLoading, setManualLoading] = useState(false);
+  const manualLock = useRef(false);
+  const manualAbort = useRef<AbortController | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
@@ -314,7 +324,30 @@ export function NomeSocialChat({
     capturePostHogEvent('chat_step_viewed', { step: currentStepId });
   }, [currentStepId, birthConfirmed]);
 
+  useEffect(() => () => manualAbort.current?.abort(), []);
+  useEffect(() => {
+    const syncManuals = (event: StorageEvent) => {
+      if (event.key !== `nm-chat-v2:${userId}`) return;
+      const saved = loadChatSession(userId);
+      if (!saved || saved.manualChatKey !== manualChatKey) return;
+      setSuggestions(prev => {
+        const incoming = saved.suggestions.filter(s => s.origem === 'manual' && !prev.some(p => normalizarChaveNome(p.nome) === normalizarChaveNome(s.nome)));
+        return incoming.length ? mergeChatSuggestionsCumulative(prev, incoming) : prev;
+      });
+      setManualUsed(prev => Math.max(prev, saved.manualUsed ?? 0));
+      if (saved.manualSessionId) setManualSessionId(saved.manualSessionId);
+    };
+    window.addEventListener('storage', syncManuals);
+    return () => window.removeEventListener('storage', syncManuals);
+  }, [userId, manualChatKey]);
+
   const applyFreshSession = () => {
+    manualAbort.current?.abort();
+    setManualChatKey(crypto.randomUUID());
+    setManualSessionId(undefined);
+    setManualUsed(0);
+    setManualDraft('');
+    setManualNotice(null);
     setDraftNome(initialBirthName);
     setDraftDate(initialBirthDate);
     setDraftGender(initialProfileGender);
@@ -378,6 +411,9 @@ export function NomeSocialChat({
     setBasePanel(saved.basePanel);
     setActiveSuggestionId(collectionComplete ? saved.activeSuggestionId : null);
     setSuggestions(collectionComplete ? saved.suggestions : []);
+    setManualChatKey(saved.manualChatKey ?? crypto.randomUUID());
+    setManualSessionId(saved.manualSessionId);
+    setManualUsed(saved.manualUsed ?? saved.suggestions.filter(s => s.origem === 'manual').length);
     setAnalysisId(saved.analysisId);
     if (collectionComplete && saved.suggestions.length > 0) {
       lastAnalyzeSuggestionsFingerprintRef.current = chatSuggestionsExportFingerprint(
@@ -432,6 +468,7 @@ export function NomeSocialChat({
     activeSuggestionId,
     suggestions,
     analysisId,
+    manualChatKey, manualSessionId, manualUsed,
     chatPhase,
     freePdfDownloaded,
     freeAnalysisId,
@@ -465,6 +502,7 @@ export function NomeSocialChat({
     saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
 
     const handleBeforeLeave = () => {
+      if (sessionClearedRef.current) return;
       saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
     };
     window.addEventListener('pagehide', handleBeforeLeave);
@@ -498,6 +536,7 @@ export function NomeSocialChat({
     activeSuggestionId,
     suggestions,
     analysisId,
+    manualChatKey, manualSessionId, manualUsed,
     chatPhase,
     freePdfDownloaded,
     freeAnalysisId,
@@ -861,7 +900,7 @@ export function NomeSocialChat({
       }
       setFreePdfOverlayPhase('generating');
       const buildPdfUrl = () =>
-        `/api/generate-pdf?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+        `/api/generate-pdf?id=${encodeURIComponent(id)}&formato=gratuito&t=${Date.now()}`;
       let res = await fetchWithAuth(buildPdfUrl(), { signal });
       if (signal.aborted) return;
       if (res.status === 202) {
@@ -1302,6 +1341,7 @@ export function NomeSocialChat({
       setScrollHarmonizedOnEnter(false);
       openSheetAfterCardTapRef.current = null;
     }
+    if (id && suggestions.find(s => s.id === id)?.origem === 'manual') capturePostHogEvent('manual_name_selected', {});
     setActiveSuggestionId(id);
   };
 
@@ -1506,23 +1546,79 @@ export function NomeSocialChat({
     }
   };
 
+  const handleEvaluateManual = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (manualLock.current || isRegenerating) return;
+    const invalid = validarNomeManual(manualDraft);
+    if (invalid) { setManualNotice(invalid); return; }
+    const existing = suggestions.find(s => normalizarChaveNome(s.nome) === normalizarChaveNome(manualDraft));
+    if (existing) {
+      setManualNotice('Este nome já está na comparação. Veja o resultado existente, sem consumir avaliação.');
+      // Duplicata não substitui o nome já selecionado.
+      document.getElementById(`candidate-${existing.id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      capturePostHogEvent('manual_name_duplicate', {});
+      return;
+    }
+    manualLock.current = true; setManualLoading(true); setManualNotice(null);
+    const abort = new AbortController(); manualAbort.current = abort;
+    capturePostHogEvent('manual_name_started', {});
+    try {
+      let sessionId = manualSessionId;
+      if (!sessionId) {
+        const context = resolveRadarContext(collectState);
+        const start = await fetchWithAuth('/api/evaluate-name', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: abort.signal,
+          body: JSON.stringify({ action: 'start', chatKey: manualChatKey, nomeNascimento: confirmedName, dataNascimento: confirmedDate, areaFoco: context.areaFoco, ondeAssinaRaw: context.ondeAssinaRaw, sugestoesExistentes: suggestions.map(s => s.nome) }),
+        });
+        const data = await start.json();
+        if (!start.ok) throw new Error(data.error || 'Não foi possível iniciar a avaliação.');
+        sessionId = data.sessionId; setManualSessionId(sessionId);
+        flushChatSessionToStorage({ manualSessionId: sessionId, manualChatKey });
+      }
+      const response = await fetchWithAuth('/api/evaluate-name', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: abort.signal,
+        body: JSON.stringify({ action: 'evaluate', sessionId, nome: manualDraft, sugestoesExistentes: suggestions.map(s => s.nome) }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (data.limiteManuais) setManualUsed(NOME_SOCIAL_MAX_MANUAIS);
+        capturePostHogEvent(data.limiteManuais ? 'manual_name_limit' : 'manual_name_failed', { status: response.status });
+        throw new Error(data.error || 'Não foi possível avaliar. Tente novamente.');
+      }
+      setManualUsed(data.used);
+      if (data.candidate) {
+        setSuggestions(prev => mergeChatSuggestionsCumulative(prev, data.candidates ?? [data.candidate]));
+        setAnalysisId(undefined); clearChatPdfEnsureInflight();
+        lastAnalyzeSuggestionsFingerprintRef.current = null;
+      }
+      setManualNotice(data.duplicata ? 'Este nome já foi avaliado. Resultado mantido, sem consumir nova avaliação.' : 'Nome incluído na comparação com a nota real, mesmo quando inferior à de nascimento.');
+      capturePostHogEvent(data.duplicata ? 'manual_name_duplicate' : 'manual_name_succeeded', { used: data.used });
+      setManualDraft('');
+    } catch (error) {
+      if (!abort.signal.aborted) setManualNotice(error instanceof Error ? error.message : 'Não foi possível avaliar. Tente novamente.');
+    } finally {
+      manualLock.current = false; setManualLoading(false);
+    }
+  };
+
   const handleRegenerate = async () => {
+    if (manualLock.current || isRegenerating) return;
     if (!confirmedName.trim() || !confirmedDate.trim()) return;
     setIsRegenerating(true);
     setRegenerateNotice(null);
     try {
-      const nomesExcluidos = suggestions.map((s) => s.nome);
+      const nomesExcluidos = suggestions.filter(s => s.origem !== 'manual').map((s) => s.nome);
       const res = await fetchWithAuth('/api/regenerate-suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          buildRegenerateRequestBody({
+          { ...buildRegenerateRequestBody({
             analysisId,
             nomeNascimento: confirmedName,
             dataNascimento: confirmedDate,
             collect: collectState,
             nomesExcluidos,
-          })
+          }), nomesManuaisExcluidos: suggestions.filter(s => s.origem === 'manual').map(s => s.nome) }
         ),
       });
 
@@ -1588,7 +1684,7 @@ export function NomeSocialChat({
     if (!confirmedName.trim() || !confirmedDate.trim()) return;
     try {
       const record = motorRadarToRecord(
-        computeContextualRadarAxes(confirmedName, confirmedDate, collectState)
+        computeContextualRadarAxes(confirmedName, confirmedDate, resolveRadarContext(collectState))
       );
       setRadarAxes(record);
     } catch {
@@ -1603,7 +1699,7 @@ export function NomeSocialChat({
     }
     try {
       const record = motorRadarToRecord(
-        computeContextualRadarAxes(activeSuggestion.nome, confirmedDate, collectState)
+        computeContextualRadarAxes(activeSuggestion.nome, confirmedDate, resolveRadarContext(collectState))
       );
       setRadarOverlayAxes(record);
     } catch {
@@ -1648,7 +1744,7 @@ export function NomeSocialChat({
     canRegenerate:
       profileCollectionComplete &&
       suggestions.length > 0 &&
-      podePedirGerarMais(suggestions.length),
+      podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length),
     suggestionSelected,
     freePaywallActive,
     summaryPanelOpen: omitRestartFromDockLayout,
@@ -1772,13 +1868,11 @@ export function NomeSocialChat({
     suggestionRank: suggestionRank || 1,
     analysisId,
     ensureAnalysisId: paidAccessActive ? ensurePaidAnalysisIdForPdf : undefined,
-    onSaveSuccess: (savedAnalysisId) => {
-      sessionClearedRef.current = false;
-      flushChatSessionToStorage({ analysisId: savedAnalysisId });
+    onSaveSuccess: () => {
+      resetChat();
     },
-    onPdfSuccess: (savedAnalysisId) => {
-      sessionClearedRef.current = false;
-      flushChatSessionToStorage(savedAnalysisId ? { analysisId: savedAnalysisId } : undefined);
+    onPdfSuccess: () => {
+      resetChat();
     },
     isFree: !paidAccessActive,
     emailConfirmed,
@@ -2162,7 +2256,46 @@ export function NomeSocialChat({
                       onRegenerate={handleRegenerate}
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
-                      canRegenerate={podePedirGerarMais(suggestions.length)}
+                      canRegenerate={!manualLoading && podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length)}
+                      extraActionSlot={(
+                        <form
+                          onSubmit={handleEvaluateManual}
+                          className="flex flex-col sm:flex-row flex-1 min-w-0 items-stretch sm:items-center gap-3"
+                        >
+                          <input
+                            id="manual-name"
+                            type="text"
+                            value={manualDraft}
+                            onChange={e => setManualDraft(e.target.value)}
+                            maxLength={150}
+                            autoComplete="off"
+                            disabled={manualLoading || isRegenerating}
+                            aria-label="Avaliar um nome que você escolheu (opcional)"
+                            aria-describedby="manual-name-help manual-name-status"
+                            placeholder="Avaliar um nome que você escolheu (opcional)"
+                            className="w-full sm:flex-1 min-w-0 rounded-full font-inter transition-all duration-150 min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] bg-[#1C1C1C] border border-[#D4AF37]/40 text-[#e5e2e1] placeholder:text-[#e5e2e1]/60 focus:placeholder:text-transparent hover:border-[#D4AF37] focus:outline-none focus:border-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                          <button
+                            type="submit"
+                            disabled={manualLoading || isRegenerating || manualUsed >= NOME_SOCIAL_MAX_MANUAIS}
+                            className="inline-flex items-center justify-center rounded-full font-inter transition-all duration-150 focus-visible:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] font-semibold w-full sm:w-auto shrink-0 bg-[#D4AF37] text-[#111111] border border-[#D4AF37] hover:bg-[#f2ca50]"
+                          >
+                            {manualLoading ? 'Avaliando...' : 'Avaliar este nome'}
+                          </button>
+                        </form>
+                      )}
+                      extraNoticeSlot={(
+                        <div className="space-y-1">
+                          <p id="manual-name-help" className="text-xs leading-relaxed text-[#e5e2e1]/70">
+                            {manualUsed} de {NOME_SOCIAL_MAX_MANUAIS} nomes manuais avaliados nesta sessão. Cota separada das 9 sugestões automáticas.
+                          </p>
+                          {manualNotice && (
+                            <p id="manual-name-status" role="status" className="text-sm leading-relaxed text-[#d7c6ff]">
+                              {manualNotice}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     />
                   </NmBubble>
                 );

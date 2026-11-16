@@ -1,3 +1,4 @@
+import { resolveRadarContext as extractSocialContext } from '../../shared/interactive-engine/radar-context';
 /**
  * Helper SSR que prepara a lista ordenada (mais recente primeiro) de análises
  * salvas para a tela /app/analises com cards estilo sugestão e dados completos
@@ -66,6 +67,7 @@ function toResultPanel(
 ): ResultPanelData {
   return {
     nome: panel.nome,
+    arquetipo: panel.arquetipo,
     score: overrideScore != null ? overrideScore : panel.score,
     expressao: panel.expressao,
     destino: panel.destino,
@@ -113,53 +115,6 @@ function resolveScoreForAnalysis(
   return a.score ?? null;
 }
 
-function extractSocialContext(freqData: any, rankingSocial: any): {
-  areaFoco: AreaFocoNomeMagnetico | null;
-  ondeAssinaRaw: string[];
-  contextChips: string[];
-} {
-  const areaFoco = (
-    typeof rankingSocial?.areaFoco === 'string'
-      ? rankingSocial.areaFoco
-      : typeof rankingSocial?.area_foco === 'string'
-        ? rankingSocial.area_foco
-        : typeof freqData?.areaFoco === 'string'
-          ? freqData.areaFoco
-          : typeof freqData?.area_foco === 'string'
-            ? freqData.area_foco
-            : typeof freqData?.parametros_usuario?.areaFoco === 'string'
-              ? freqData.parametros_usuario.areaFoco
-              : null
-  ) as AreaFocoNomeMagnetico | null;
-
-  const rawOnde = Array.isArray(freqData?.ondeVaiUsar)
-    ? freqData.ondeVaiUsar
-    : Array.isArray(freqData?.onde_vai_usar)
-      ? freqData.onde_vai_usar
-      : Array.isArray(rankingSocial?.ondeVaiUsar)
-        ? rankingSocial.ondeVaiUsar
-        : Array.isArray(rankingSocial?.onde_vai_usar)
-          ? rankingSocial.onde_vai_usar
-          : [];
-
-  const ondeAssinaRaw = rawOnde.filter(
-    (x: unknown): x is string => typeof x === 'string' && x.trim().length > 0,
-  );
-
-  const assinaturaAtual =
-    typeof freqData?.assinaturaAtual === 'string' && freqData.assinaturaAtual.trim()
-      ? freqData.assinaturaAtual.trim()
-      : typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
-        ? rankingSocial.assinaturaAtual.trim()
-        : null;
-
-  const contextChips = [
-    ...(assinaturaAtual ? [assinaturaAtual] : []),
-    ...ondeAssinaRaw,
-  ];
-
-  return { areaFoco, ondeAssinaRaw, contextChips };
-}
 
 function buildFallbackPanelFromColumns(
   a: Analysis,

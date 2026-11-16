@@ -1,3 +1,4 @@
+import { buildPaidTocEntries } from './pdfTocCatalog.ts';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
@@ -123,27 +124,52 @@ describe('DEV-266 · PDF integração offline', () => {
       PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
+    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     const compactText = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, '').toLowerCase();
     const paidTextPages = pdfToText(Buffer.from(pagoBuf)).split('\f');
     // Letter spacing pode aparecer como espaços entre letras na extração Poppler.
-    const numbersHeaderPage = paidTextPages.find((page) => compactText(page).includes('os5numerosfundamentais'));
+    assert.ok(!('error' in pDest));
+    const numbersHeaderPage = paidTextPages[pDest['pdf-harmonizacao-corpo'] - 1];
     assert.ok(numbersHeaderPage, 'cabeçalho do comparativo numérico presente');
     assert.ok(compactText(numbersHeaderPage).includes('datadenascimento'), 'cabeçalho permanece na página da primeira linha');
 
     const gDest = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
-    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     assert.ok(!('error' in gDest), `gratuito destinos: ${'error' in gDest ? gDest.error : ''}`);
     assert.ok(!('error' in pDest), `pago destinos: ${'error' in pDest ? pDest.error : ''}`);
 
     assert.ok(gDest['pdf-essencia'] >= 1, 'pdf-essencia gratuito');
     assert.ok(gDest['pdf-sumario'] >= 1, 'pdf-sumario gratuito');
+    assert.ok(
+      gDest['pdf-essencia-arquetipo'] >= gDest['pdf-essencia'] &&
+        gDest['pdf-essencia-arquetipo'] < gDest['pdf-essencia-triangulo-vida'],
+      'gratuito: arquétipo na Essência antes do Triângulo da Vida',
+    );
+    assert.ok(
+      gDest['pdf-essencia-karma'] >= gDest['pdf-essencia-triangulo-vida'],
+      'gratuito: O Peso do Passado após Triângulo da Vida',
+    );
     assert.ok(pDest['pdf-essencia'] >= 1, 'pdf-essencia pago');
     assert.ok(pDest['pdf-harmonizacao'] >= 1, 'pdf-harmonizacao pago');
     assert.ok(pDest['pdf-harmonizacao-comparativa'] >= 1, 'pdf-harmonizacao-comparativa pago');
+    assert.ok(pDest['pdf-harmonizacao-mapa'] >= pDest['pdf-harmonizacao']);
+    assert.ok(pDest['pdf-essencia-arquetipo'] >= pDest['pdf-essencia'] && pDest['pdf-essencia-arquetipo'] < pDest['pdf-essencia-triangulo-vida'], 'arquétipo de nascimento na Essência antes do Triângulo da Vida');
+    assert.ok(pDest['pdf-harmonizado-arquetipo'] >= pDest['pdf-nome-harmonizado'] && pDest['pdf-harmonizado-arquetipo'] < pDest['pdf-harmonizado-triangulo-vida'], 'arquétipo harmonizado no Nome Social antes do Triângulo da Vida');
+    assert.ok(pDest['pdf-harmonizado-arquetipo'] < pDest['pdf-anexos'], 'arquétipo fora dos anexos');
+    const annexFirstPage = paidTextPages[pDest['pdf-anexos'] - 1];
+    const annexLines = annexFirstPage.split('\n').map(compactText);
+    assert.ok(annexLines.includes('anexos'), 'divisor Anexos abre o capítulo antes dos triângulos');
+    assert.ok(compactText(annexFirstPage).includes('leituracomplementardostriangulos'), 'leitura complementar abre o capítulo Anexos');
+    assert.equal(pDest['pdf-anexos-triangulos'], pDest['pdf-anexos'], 'triângulos pertencem à abertura de Anexos');
+    for (const prefix of ['pdf-essencia-triangulo-', 'pdf-harmonizado-triangulo-']) {
+      for (const suffix of ['pessoal', 'social', 'destino']) assert.ok(pDest[prefix + suffix] >= pDest['pdf-anexos-triangulos']);
+    }
+    assert.ok(pDest['pdf-essencia-triangulo-vida'] < pDest['pdf-anexos-triangulos']);
+    assert.ok(pDest['pdf-harmonizado-triangulo-vida'] < pDest['pdf-anexos-triangulos']);
+
 
     for (const [label, dests, ids] of [
       ['gratuito', gDest, PDF_TOC_ANCHOR_IDS.gratuito],
-      ['pago', pDest, PDF_TOC_ANCHOR_IDS.nome_social],
+      ['pago', pDest, buildPaidTocEntries(true).map(e => e.id)],
     ] as const) {
       const sumarioPage = dests['pdf-sumario'];
       for (const id of ids) {
@@ -164,6 +190,17 @@ describe('DEV-266 · PDF integração offline', () => {
       pDest['pdf-harmonizacao'] <= pDest['pdf-essencia'] + 20,
       `Harmonização não deve cair no fim do bloco longo (got p${pDest['pdf-harmonizacao']})`,
     );
+
+    const gratuitoCompact = compactText(pdfToText(Buffer.from(gratuitoBuf)));
+    assert.ok(gratuitoCompact.includes('arquetipovibracional'), 'gratuito contém Arquétipo Vibracional');
+    assert.ok(gratuitoCompact.includes('otriangulodavida(nascimento)'), 'gratuito contém Triângulo da Vida');
+    for (const removedTitle of [
+      'otriangulopessoal(nascimento)',
+      'otriangulosocial(nascimento)',
+      'otriangulododestino(nascimento)',
+    ]) {
+      assert.equal(gratuitoCompact.includes(removedTitle), false, `gratuito não deve conter ${removedTitle}`);
+    }
 
     for (const buf of [gratuitoBuf, pagoBuf]) {
       const text = pdfToText(Buffer.from(buf));

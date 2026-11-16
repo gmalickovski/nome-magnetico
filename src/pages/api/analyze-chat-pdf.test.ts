@@ -1,3 +1,4 @@
+import { avaliarNome } from '../../backend/numerology/score';
 import { describe, it, mock, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -8,6 +9,8 @@ let mockReusableFreeAnalysis: { id: string; status: string } | null = null;
 let mockHasUsedFreeAnalysis = false;
 let mockCreatedAnalysisId = 'created-free-id-1';
 let createAnalysisCalls = 0;
+let paidAccess = false;
+let updates: Record<string, any>[] = [];
 
 const mockUserSupabase = {
   from: (_table: string) => {
@@ -41,7 +44,7 @@ mock.module('../../backend/db/supabase', {
 
 mock.module('../../backend/db/subscriptions', {
   namedExports: {
-    hasActiveSubscription: async () => false,
+    hasActiveSubscription: async () => paidAccess,
   },
 });
 
@@ -54,7 +57,7 @@ mock.module('../../backend/db/analyses', {
       mockHasUsedFreeAnalysis = true;
       return { id, status: 'pending' };
     },
-    updateAnalysis: async () => null,
+    updateAnalysis: async (_id: string, value: Record<string, any>) => { updates.push(value); return null; },
     saveMagneticNames: async () => [],
     hasUsedFreeAnalysis: async () => mockHasUsedFreeAnalysis,
     findRecentNomeSocialAnalysisForPdf: async () => null,
@@ -69,6 +72,8 @@ mock.module('../../backend/db/analysis-processing', {
     STALE_ERROR_MESSAGE: 'stale',
   },
 });
+
+mock.module('../../backend/notifications/analysis-complete', { namedExports: { notifyPaidAnalysisComplete: async () => {} } });
 
 const { buildSelectedSocialSummary, POST } = await import('./analyze.ts');
 
@@ -89,6 +94,7 @@ describe('analyze chat PDF (sem LLM)', () => {
     mockHasUsedFreeAnalysis = false;
     mockCreatedAnalysisId = 'free-analysis-123';
     createAnalysisCalls = 0;
+    paidAccess = false; updates = [];
   });
 
   it('reutiliza análise recente quando nome_ja_escolhido + nome_social_principal', () => {
@@ -198,4 +204,25 @@ describe('analyze chat PDF (sem LLM)', () => {
     assert.match(nomeSocialChatSrc, /freePdfAbortRef/);
     assert.match(nomeSocialChatSrc, /waitAnalysisCompleteForPdf/);
   });
+});
+
+it('DEV-299 salva manual com nota inferior, proveniência e contexto para reabertura/PDF', async () => {
+  paidAccess = true; updates = [];
+  const nome = 'Aaaaaaa';
+  const response = await POST({ request: new Request('http://localhost/api/analyze', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ product_type: 'nome_social', nome_completo: 'Alexandra Mendes Vale', data_nascimento: '07/03/1992', nome_social_principal: nome, nome_ja_escolhido: true, nomes_candidatos: [nome], nomes_manuais: [nome], ranking_somente_chat: true, area_foco: 'carreira_negocios', onde_vai_usar: ['contratos'] }),
+  }), locals: { user: { id: 'fixture-owner', email: 'fixture@example.com' }, accessToken: 'token-fixture' } } as any);
+  assert.equal(response.status, 200);
+  for (let attempt = 0; attempt < 20 && !updates.some(u => u.status === 'complete'); attempt++) await new Promise<void>(resolve => setImmediate(resolve));
+  const saved = updates.find(u => u.frequencias_numeros?.ranking);
+  assert.ok(saved, 'persistiu frequência/ranking no background');
+  const data = saved.frequencias_numeros;
+  assert.equal(data.selectedNomeSocial, nome);
+  assert.equal(data.ranking.nomesCandidatos[0].origem, 'manual');
+  assert.equal(data.ranking.nomesCandidatos[0].score, avaliarNome(nome, '07/03/1992').score_v3);
+  assert.equal(data.radarVersion, 'contextual-v1');
+  assert.equal(data.radarSnapshot.birth.length, 5);
+  assert.equal(data.radarSnapshot.selectedName, nome);
+  assert.equal(data.areaFoco, 'carreira_negocios');
 });

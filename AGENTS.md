@@ -51,6 +51,7 @@ Validação mínima quando a mudança tocar TS/Astro/frontend/backend/build: `np
 - **IA:** toda chamada passa pelo LoopGuard; config só em `src/backend/ai/config/` e `prompts/`.
 - **Numerologia:** sempre os 4 triângulos (`calcularTodosTriangulos`); copy “Tensão Vibracional”, não “incompatível”; sem radiestesia/pêndulo.
 - **Landing pública:** não alterar layout, design system nem animações — **apenas texto/copy**, salvo pedido explícito.
+- **PDF:** as seções pai Essência, Harmonização, Nome Harmonizado e Anexos sempre começam em página nova, mesmo com espaço na anterior. Preservar essa separação em `<Page>` independentes e no sumário/bookmarks.
 - **Documentação nova:** em `docs/architecture/`, `docs/sops/`, `docs/snippets/` ou `docs/devops/` — nunca `.md` solto na raiz de `docs/`.
 
 ## Playbooks Studio MLK (obrigatório) <!-- pragma: allowlist secret -->

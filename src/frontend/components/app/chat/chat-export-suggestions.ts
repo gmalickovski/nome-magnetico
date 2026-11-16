@@ -10,7 +10,7 @@ export function chatSuggestionsToExportNames(suggestions: CandidateSuggestion[])
     const key = nome.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(nome);
+    out.push(s.nome);
   }
   return out;
 }
@@ -27,7 +27,7 @@ export function mergeChatSuggestionsCumulative(
   }
   for (const s of incoming) {
     const key = s.nome.trim().toLowerCase();
-    if (key.length >= 2) byKey.set(key, s);
+    if (key.length >= 2 && byKey.get(key)?.origem !== 'manual') byKey.set(key, s);
   }
   const order: CandidateSuggestion[] = [];
   const seen = new Set<string>();

@@ -96,12 +96,12 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.doesNotMatch(src, /<NomeSocialResultado/);
   });
 
-  it('chat posiciona ChatPdfStickyDesktop no header superior (ChatProgress) sem link de voltar e preserva conversa após PDF', () => {
+  it('chat posiciona ChatPdfStickyDesktop no header superior (ChatProgress) sem link de voltar e reinicia conversa após salvar/PDF', () => {
     const file = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'NomeSocialChat.tsx');
     const src = readFileSync(file, 'utf8');
-    assert.match(src, /onSaveSuccess:\s*\(savedAnalysisId\)\s*=>\s*\{[^}]*flushChatSessionToStorage/);
-    assert.match(src, /onPdfSuccess:\s*\(savedAnalysisId\)\s*=>\s*\{[^}]*flushChatSessionToStorage/);
-    assert.doesNotMatch(src, /onPdfSuccess:\s*resetChat/);
+    assert.match(src, /onSaveSuccess:\s*\(\)\s*=>\s*\{[^}]*resetChat\(\)/);
+    assert.match(src, /onPdfSuccess:\s*\(\)\s*=>\s*\{[^}]*resetChat\(\)/);
+    assert.match(src, /handleBeforeLeave[\s\S]*?if\s*\(sessionClearedRef\.current\)\s*return/);
     assert.match(src, /trailing=\{[\s\S]*?<ChatPdfStickyDesktop/);
     assert.doesNotMatch(src, /leading=\{[\s\S]*?Minhas análises/);
   });
@@ -307,13 +307,13 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(dashboardSrc, /showChecklistCard/);
     assert.match(dashboardSrc, /variant="dashboard"/);
     assert.match(dashboardSrc, /showNumericLabels=\{Boolean\(activeHarmonizedAxes\)\}/);
-    assert.match(dashboardSrc, /<h2 className="mb-2 font-cinzel text-lg font-bold text-\[#e5e2e1\]">\s*Mapa de Alinhamento Vibracional/);
+    assert.match(dashboardSrc, /<h2 className="mb-2 font-cinzel text-lg font-bold text-\[#e5e2e1\]">\s*<GlossaryInlineTerm slug="mapa-vibracional">Mapa Vibracional/);
     assert.match(dashboardSrc, /borderColor: `\$\{activeVisual\.stroke\}59`/);
     assert.match(dashboardSrc, /nm-reading-card flex flex-col justify-between rounded-2xl bg-\[#1C1C1C\]/);
     assert.match(dashboardSrc, /if \(offerDismissed \|\| props\.isAdmin\) return false;/);
     assert.match(dashboardSrc, /text-\[#f2ca50\] break-words sm:truncate sm:text-lg/);
     assert.match(dashboardSrc, /item\.key === 'destino' \? 'col-span-2 sm:col-span-1'/);
-    assert.match(dashboardSrc, /Mapa de Alinhamento Vibracional[\s\S]*Jornada de Ativação/);
+    assert.match(dashboardSrc, /Mapa Vibracional[\s\S]*Jornada de Ativação/);
     assert.match(dashboardSrc, /Abrir Painel/);
     assert.match(dashboardSrc, /rowVisual\.barGradient/);
     assert.match(dashboardSrc, /label="Baixar PDF"/);

@@ -293,7 +293,7 @@ if (isSocialSummaryView && dataScoreSocial) {
 }
 ---
 
-<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
+<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} forceFreePdf={isFree || forceBirthMode || (isNomeSocial && !showDualCertificate)} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
   <div>
 
     {/* ── PROCESSANDO ─────────────────────────────────────────────── */}
@@ -652,6 +652,9 @@ if (isSocialSummaryView && dataScoreSocial) {
             readingSummary={socialReadingSummary}
             showReadingSummary={Boolean(socialReadingSummary)}
           />
+        )}
+        {isNomeSocial && rankingSocial?.nomesCandidatos?.some((c: any) => c.origem === 'manual' && c.nomeCompleto?.trim().toLowerCase() === nomeExibido.trim().toLowerCase()) && (
+          <p class="mt-4 text-sm text-[#d7c6ff]">Nome informado por você</p>
         )}
         {isSocialSummaryView && <span id="guia-assinatura" class="sr-only scroll-mt-24"></span>}
 

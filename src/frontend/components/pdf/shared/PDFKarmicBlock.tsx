@@ -5,7 +5,7 @@
  * no texto da análise, co-localizando as informações gráficas com o texto explicativo.
  */
 import { View, Text, StyleSheet } from '@react-pdf/renderer';
-import { PDF_COLORS } from './PDFTheme';
+import { PDF_COLORS, PDF_TYPOGRAPHY } from './PDFTheme';
 import { obterInterpretacaoEspecifica } from '../../../../utils/blockageInterpretations';
 
 const GOLD = PDF_COLORS.gold;
@@ -40,9 +40,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   bloqueioDesc: {
-    fontSize: 10,
-    color: GRAY,
-    lineHeight: 1.4,
+    ...PDF_TYPOGRAPHY.cardText,
   },
   bloqueioTriangulos: {
     fontSize: 9,
@@ -79,9 +77,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   debitoDesc: {
-    fontSize: 10,
-    color: GRAY,
-    lineHeight: 1.4,
+    ...PDF_TYPOGRAPHY.cardText,
   },
   debitoNoneBox: {
     backgroundColor: '#ECFDF5',
@@ -111,9 +107,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   licaoDesc: {
-    fontSize: 10,
-    color: GRAY,
-    lineHeight: 1.4,
+    ...PDF_TYPOGRAPHY.cardText,
   },
   licaoNoneBox: {
     backgroundColor: 'rgba(56,189,248,0.06)',
@@ -143,17 +137,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   tendenciaDesc: {
-    fontSize: 10,
-    color: GRAY,
-    lineHeight: 1.4,
+    ...PDF_TYPOGRAPHY.cardText,
   },
   tendenciaNoneBox: {
     backgroundColor: 'rgba(167,139,250,0.08)',
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#a78bfa',
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 6,
+    padding: 11,
+    borderRadius: 6,
+    marginBottom: 8,
   },
   tendenciaNoneText: {
     fontSize: 10,
@@ -260,9 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   licaoHarmonizacaoText: {
-    fontSize: 10,
-    color: '#1A202C',
-    lineHeight: 1.6,
+    ...PDF_TYPOGRAPHY.cardText,
   },
 });
 
@@ -518,10 +508,10 @@ function FrequencyBar({ frequencias }: { frequencias: Record<string, number> }) 
   const max = Math.max(...entries.map(e => e.count), 1);
   return (
     <View style={{ marginBottom: 20 }} wrap={false}>
-      <Text style={[styles.sectionLabel, { color: '#6d28d9', fontSize: 11, marginBottom: 4, textTransform: 'none' }]}>
+      <Text style={[styles.sectionLabel, { ...PDF_TYPOGRAPHY.h3, paddingBottom: 0, color: '#6d28d9', marginBottom: 4, textTransform: 'none' }]}>
         Mapeamento de Repetição Energética
       </Text>
-      <Text style={{ fontSize: 10, color: GRAY, marginBottom: 12, lineHeight: 1.4 }}>
+      <Text style={{ ...PDF_TYPOGRAPHY.paragraph, marginBottom: 12 }}>
         Este gráfico tangibiliza o ímpeto magnético presente em seu nome. As barras mais densas indicam talentos que você vivencia em extremo excesso, apontando com exatidão onde o seu potencial transborda para a desordem.
       </Text>
       {entries.map(({ num, count }) => {
@@ -560,12 +550,12 @@ export function TendenciasBlock({
   showSolution?: boolean;
 }) {
   return (
-    <View style={styles.sectionBlock} wrap={false}>
+    <View style={styles.sectionBlock}>
       {frequencias && Object.keys(frequencias).length > 0 ? (
         <FrequencyBar frequencias={frequencias} />
       ) : null}
       {tendencias.length === 0 ? (
-        <View style={styles.tendenciaNoneBox}>
+        <View style={styles.tendenciaNoneBox} wrap={false}>
           <Text style={styles.tendenciaNoneText}>
             Nenhuma tendência oculta detectada — nenhum número se repete excessivamente.
           </Text>

@@ -29,6 +29,7 @@ export function buildChatPdfAnalyzePayload(input: {
     assinatura_atual: ranking.assinaturaAtual ?? input.collect.nomeUsoBase ?? undefined,
     objetivo_apresentacao: input.collect.objetivoTexto.trim() || undefined,
     nomes_candidatos: exportNames.length > 0 ? exportNames : undefined,
+    nomes_manuais: input.suggestions.filter(s => s.origem === 'manual').map(s => s.nome),
     /** Com histórico vazio: não pedir ranking do motor (lista vazia explícita). */
     ranking_somente_chat: true,
     ranking_vazio_sem_autogeracao: exportNames.length === 0,

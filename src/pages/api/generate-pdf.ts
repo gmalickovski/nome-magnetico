@@ -13,6 +13,7 @@ import { NomeEmpresaPDF } from '../../frontend/components/pdf/NomeEmpresaPDF';
 import { logError } from '../../backend/utils/error-logger';
 import { getEffectivePrice } from '../../backend/payments/prices';
 import { guardConfirmedEmail } from '../../backend/auth/requireConfirmedEmail';
+import { shouldUseFreeBirthPdf } from '../../shared/pdf-format';
 
 // Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile ou re-download próximo)
 const pdfCache = new Map<string, { buffer: Buffer; expiresAt: number }>();
@@ -76,14 +77,36 @@ export const GET: APIRoute = async ({ url, locals }) => {
       .replace(/^-|-$/g, '');
   }
 
+  const requestedFormat = url.searchParams.get('formato');
+  const requestedMode = url.searchParams.get('modo');
   const productType = analysis.product_type ?? 'nome_social';
-  const isGratuita = productType === 'analise_gratuita' || (analysis as any).is_free === true;
   const socialFreqData = (analysis as any).frequencias_numeros as any;
-  const selectedSocialName =
+  const birthName =
+    (typeof socialFreqData?.ranking?.nomeNascimento === 'string' && socialFreqData.ranking.nomeNascimento.trim())
+      ? socialFreqData.ranking.nomeNascimento.trim()
+      : analysis.nome_completo;
+  const extractedSocialName =
+    String((analysis as any).analise_texto ?? '').match(/^#\s*Relatorio do Nome Social:\s*(.+)$/im)?.[1]?.trim() ?? null;
+  const harmonizedName =
+    (typeof (analysis as any).nome_harmonizado === 'string' && (analysis as any).nome_harmonizado.trim())
+      ? (analysis as any).nome_harmonizado.trim()
+      : null;
+  const selectedSocialNameCandidate =
     socialFreqData?.selectedNomeSocial ??
-    String((analysis as any).analise_texto ?? '').match(/^#\s*Relatorio do Nome Social:\s*(.+)$/im)?.[1]?.trim() ??
+    extractedSocialName ??
+    harmonizedName ??
     socialFreqData?.ranking?.melhorNome?.nomeCompleto ??
-    analysis.nome_completo;
+    null;
+  const isGratuita = shouldUseFreeBirthPdf({
+    productType,
+    isFree: (analysis as any).is_free === true,
+    birthName,
+    selectedSocialName: selectedSocialNameCandidate,
+    harmonizedName,
+    requestedFormat,
+    requestedMode,
+  });
+  const selectedSocialName = selectedSocialNameCandidate ?? analysis.nome_completo;
   let filename: string;
 
   if (productType === 'nome_bebe') {
@@ -96,7 +119,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     const nomeEmpresa = freqData?.melhorNome?.nomeEmpresa ?? analysis.nome_completo;
     filename = `analise-nome-empresa-${toSlug(nomeEmpresa)}-nome-magnetico.pdf`;
   } else if (isGratuita) {
-    filename = `analise-gratuita-${toSlug(analysis.nome_completo)}-nome-magnetico.pdf`;
+    filename = `analise-gratuita-${toSlug(birthName)}-nome-magnetico.pdf`;
   } else {
     filename = `analise-nome-social-${toSlug(selectedSocialName)}-nome-magnetico.pdf`;
   }
@@ -120,7 +143,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
     if (val.expiresAt < agora) pdfCache.delete(key);
   }
 
-  const cacheKey = `${analysisId}-${productType}-${selectedSocialName}-${(analysis as any).completed_at ?? ''}`;
+  const cacheVariant = isGratuita ? 'gratuita' : productType;
+  const cacheNameKey = isGratuita ? birthName : selectedSocialName;
+  const cacheKey = `${analysisId}-${cacheVariant}-${cacheNameKey}-${(analysis as any).completed_at ?? ''}`;
   const cached = pdfCache.get(cacheKey);
   let pdfBuffer: Buffer;
 
