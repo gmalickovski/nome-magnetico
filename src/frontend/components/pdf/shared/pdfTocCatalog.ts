@@ -15,15 +15,34 @@ const essenciaSubassuntos: PdfTocEntry[] = [
   { id: 'pdf-essencia-tendencias', title: 'Tendências ocultas', level: 2 },
 ];
 
-/** Entradas do sumário gratuito (preserva ids raiz da revisão Growth 05/11). */
-export function buildGratuitoTocEntries(): PdfTocEntry[] {
+function buildEssenciaTocEntries(): PdfTocEntry[] {
+  const entry = (id: string, title: string, level: 0 | 1 | 2 | 3): PdfTocEntry => ({ id, title, level });
   return [
-    { id: 'pdf-intro-leitura', title: 'Como ler este relatório', level: 0 },
-    { id: 'pdf-essencia', title: 'A Essência — nome de nascimento', level: 0 },
-    ...essenciaSubassuntos,
+    entry('pdf-essencia', 'A Essência (Nome de Nascimento)', 0),
+    entry('pdf-essencia-destino', 'O Destino: A Estrada Imutável', 1),
+    ...essenciaSubassuntos
+      .filter(
+        (e) =>
+          !e.id.includes('triangulo-') &&
+          e.id !== 'pdf-essencia-destino' &&
+          !['debitos', 'licoes', 'tendencias'].some((k) => e.id.endsWith(k))
+      )
+      .map((e) => (e.id === 'pdf-essencia-expressao' ? { ...e, title: 'Os Números do Nome', level: 1 as const } : e)),
+    entry('pdf-essencia-arquetipo', 'Arquétipo Vibracional (Nascimento)', 1),
+    entry('pdf-essencia-triangulo-vida', 'Triângulo da Vida (Nascimento)', 1),
+    entry('pdf-essencia-karma', 'O Peso do Passado: Débitos e Tendências', 1),
+    ...essenciaSubassuntos.filter((e) => ['debitos', 'licoes', 'tendencias'].some((k) => e.id.endsWith(k))),
+  ];
+}
+
+/** Entradas do sumário gratuito (alinhado ao bloco A Essência + páginas finais). */
+export function buildGratuitoTocEntries(options: { hasPotencialCta?: boolean } = {}): PdfTocEntry[] {
+  const hasPotencialCta = options.hasPotencialCta !== false;
+  return [
+    ...buildEssenciaTocEntries(),
     { id: 'pdf-mapa', title: 'O que este mapa mostrou', level: 0 },
     { id: 'pdf-score', title: 'Como calculamos o score', level: 1 },
-    { id: 'pdf-nome-social', title: 'Potencial da sua assinatura', level: 1 },
+    ...(hasPotencialCta ? [{ id: 'pdf-nome-social', title: 'Potencial da sua assinatura', level: 1 as const }] : []),
   ];
 }
 
@@ -33,15 +52,9 @@ export function buildPaidTocEntries(hasRanking: boolean, options: { hasConclusio
   return [
     entry('pdf-intro-leitura', 'Como ler este relatório', 0),
     ...(hasRanking ? [entry('pdf-ranking', 'Opções avaliadas no chat', 0)] : []),
-    entry('pdf-essencia', 'A Essência (Nome de Nascimento)', 0),
-    entry('pdf-essencia-destino', 'O Destino: A Estrada Imutável', 1),
-    ...essenciaSubassuntos.filter(e => !e.id.includes('triangulo-') && e.id !== 'pdf-essencia-destino' && !['debitos', 'licoes', 'tendencias'].some(k => e.id.endsWith(k))).map(e => e.id === 'pdf-essencia-expressao' ? { ...e, title: 'Os Números do Nome', level: 1 as const } : e),
-    entry('pdf-essencia-triangulo-vida', 'Triângulo da Vida (Nascimento)', 1),
-    entry('pdf-essencia-karma', 'O Peso do Passado: Débitos e Tendências', 1),
-    ...essenciaSubassuntos.filter(e => ['debitos', 'licoes', 'tendencias'].some(k => e.id.endsWith(k))),
+    ...buildEssenciaTocEntries(),
     entry('pdf-harmonizacao', 'A Engenharia da Harmonização', 0),
     entry('pdf-harmonizacao-estrela', 'Assinatura, Estrela Comparativa e Score', 1),
-    entry('pdf-arquetipo', 'Arquétipo Vibracional', 1),
     entry('pdf-harmonizacao-mapa', 'Mapa Vibracional', 1),
     entry('pdf-harmonizacao-escudo', 'O Escudo Magnético e a Transformação', 1),
     entry('pdf-harmonizacao-comparativa', 'A Leitura Comparativa', 1),
@@ -51,6 +64,7 @@ export function buildPaidTocEntries(hasRanking: boolean, options: { hasConclusio
     entry('pdf-nome-harmonizado', 'O Nome Social (Nome Harmonizado)', 0),
     entry('pdf-harmonizado-ressonancia', 'A Ressonância e o Poder da Nova Frequência', 1),
     entry('pdf-harmonizado-numeros', 'O Destino e os Números do Nome Harmonizado', 1),
+    entry('pdf-harmonizado-arquetipo', 'Arquétipo Vibracional (Harmonizado)', 1),
     entry('pdf-harmonizado-triangulo-vida', 'Triângulo da Vida (Harmonizado)', 1),
     entry('pdf-harmonizado-karma', 'O Campo Kármico (Harmonizado)', 1),
     entry('pdf-harmonizado-debitos', 'Débitos Kármicos', 2),

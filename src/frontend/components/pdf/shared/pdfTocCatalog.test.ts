@@ -16,11 +16,15 @@ describe('pdfTocCatalog', () => {
     assert.equal(pages, 2);
   });
 
-  it('gratuito inclui ids raiz da revisão Growth 05/11', () => {
+  it('gratuito inclui ids raiz da revisão Growth 05/11 e Arquétipo sem triângulos complementares', () => {
     const ids = buildGratuitoTocEntries().map((e) => e.id);
-    for (const id of ['pdf-essencia', 'pdf-mapa', 'pdf-score', 'pdf-nome-social']) {
+    for (const id of ['pdf-essencia', 'pdf-essencia-arquetipo', 'pdf-essencia-triangulo-vida', 'pdf-essencia-karma', 'pdf-mapa', 'pdf-score', 'pdf-nome-social']) {
       assert.ok(ids.includes(id), `faltando ${id}`);
     }
+    for (const removed of ['pdf-essencia-triangulo-pessoal', 'pdf-essencia-triangulo-social', 'pdf-essencia-triangulo-destino']) {
+      assert.ok(!ids.includes(removed), `não deveria incluir ${removed}`);
+    }
+    assert.ok(!buildGratuitoTocEntries({ hasPotencialCta: false }).some((e) => e.id === 'pdf-nome-social'));
   });
 
   it('pago inclui ids raiz e subassuntos principais', () => {
@@ -37,7 +41,8 @@ describe('pdfTocCatalog', () => {
       'pdf-essencia-triangulo-vida',
       'pdf-essencia-debitos',
       'pdf-harmonizacao-corpo',
-      'pdf-arquetipo',
+      'pdf-essencia-arquetipo',
+      'pdf-harmonizado-arquetipo',
     ]) {
       assert.ok(ids.includes(id), `faltando ${id}`);
     }

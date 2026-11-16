@@ -839,6 +839,8 @@ function buildSynthesizedBirthSlide(
     bloqueiosTitulos,
     compatibilidade,
     starNumbers,
+    arquetipo: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
+    arquetipoNascimento: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
     productType: 'analise_gratuita',
     isFree: true,
     isFavorite: false,

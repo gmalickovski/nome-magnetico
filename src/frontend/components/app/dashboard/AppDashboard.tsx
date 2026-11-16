@@ -613,6 +613,12 @@ export function AppDashboard(props: AppDashboardProps) {
                     </span>
                   )}
 
+                  {activeSlide.origem === 'manual' && (
+                    <span className="inline-flex items-center rounded-full border border-[#bea5ff]/30 bg-[#bea5ff]/10 px-3.5 py-1 text-xs font-semibold text-[#d7c6ff]">
+                      Nome informado por você
+                    </span>
+                  )}
+
                   {activeSlide.isFree &&
                     activeSlide.bloqueiosTitulos.slice(0, 2).map((titulo) => (
                       <span
@@ -651,15 +657,13 @@ export function AppDashboard(props: AppDashboardProps) {
                   </div>
                 </div>
 
-                <ArquetipoResumoCard arquetipo={activeSlide.arquetipo} expressao={activeSlide.starNumbers.expressao} arquetipoNascimento={activeSlide.arquetipoNascimento} />
-                {activeSlide.origem === 'manual' && <p className="mt-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
-
                 {/* Apenas dois botões: Baixar PDF e Ver Painel de Análise */}
                 <div className="mt-6 flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center lg:w-auto">
                   <PDFFeedbackButton
                     analysisId={pdfAnalysisId}
                     productType={activeSlide.productType}
                     isFree={activeSlide.isFree}
+                    forceFreePdf={Boolean(activeSlide.isFree || !hasDistinctHarmonizedName)}
                     label="Baixar PDF"
                     showLabel
                     showFab={false}
@@ -932,6 +936,53 @@ export function AppDashboard(props: AppDashboardProps) {
           </section>
         )}
       </div>
+
+      {/* Resumo do Arquétipo vinculado ao card selecionado no carrossel */}
+      {activeSlide.arquetipo && activeSlide.starNumbers.expressao > 0 && (
+        <section
+          className="rounded-2xl bg-[#1C1C1C] p-5 sm:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.28)]"
+          aria-label="Arquétipo do nome selecionado"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-cinzel text-lg font-bold text-[#e5e2e1]">
+                <GlossaryInlineTerm slug="arquetipo">Arquétipo</GlossaryInlineTerm>: {activeSlide.arquetipo.nome}
+              </h2>
+              <p className="mt-0.5 text-xs text-[#A0A0A0]">
+                {activeSlide.nome}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-[#221F2A] px-3 py-1 text-xs font-medium text-[#d7c6ff]">
+                <GlossaryInlineTerm slug="numero-de-expressao">Expressão</GlossaryInlineTerm>&nbsp;{activeSlide.starNumbers.expressao}
+              </span>
+              {activeSlide.arquetipo.sombra && (
+                <span className="inline-flex items-center rounded-full bg-[#241B1A] px-3 py-1 text-xs font-medium text-[#f5b79f]">
+                  Sombra: {activeSlide.arquetipo.sombra}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <ArquetipoResumoCard
+            variant="dashboard"
+            arquetipo={activeSlide.arquetipo}
+            expressao={activeSlide.starNumbers.expressao}
+            arquetipoNascimento={
+              !activeSlide.isFree &&
+              activeSlide.birthName &&
+              activeSlide.nome.trim().toLowerCase() !== activeSlide.birthName.trim().toLowerCase()
+                ? activeSlide.arquetipoNascimento
+                : undefined
+            }
+            isSuggestion={
+              !activeSlide.isFree &&
+              Boolean(activeSlide.birthName) &&
+              activeSlide.nome.trim().toLowerCase() !== activeSlide.birthName.trim().toLowerCase()
+            }
+          />
+        </section>
+      )}
 
       {/* Histórico */}
       {props.history.length > 0 && (

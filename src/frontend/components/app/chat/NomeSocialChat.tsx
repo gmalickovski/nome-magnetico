@@ -1,4 +1,3 @@
-import { Input } from '../../ui/Input';
 import { NOME_SOCIAL_MAX_MANUAIS, normalizarChaveNome, validarNomeManual } from '../../../../shared/nome-social/manual-name-limits';
 import { resolveRadarContext } from '../../../../shared/interactive-engine/radar-context';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -503,6 +502,7 @@ export function NomeSocialChat({
     saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
 
     const handleBeforeLeave = () => {
+      if (sessionClearedRef.current) return;
       saveChatSession(userId, buildPersistedChatSession(buildCurrentSessionSnapshot()));
     };
     window.addEventListener('pagehide', handleBeforeLeave);
@@ -900,7 +900,7 @@ export function NomeSocialChat({
       }
       setFreePdfOverlayPhase('generating');
       const buildPdfUrl = () =>
-        `/api/generate-pdf?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+        `/api/generate-pdf?id=${encodeURIComponent(id)}&formato=gratuito&t=${Date.now()}`;
       let res = await fetchWithAuth(buildPdfUrl(), { signal });
       if (signal.aborted) return;
       if (res.status === 202) {
@@ -1868,13 +1868,11 @@ export function NomeSocialChat({
     suggestionRank: suggestionRank || 1,
     analysisId,
     ensureAnalysisId: paidAccessActive ? ensurePaidAnalysisIdForPdf : undefined,
-    onSaveSuccess: (savedAnalysisId) => {
-      sessionClearedRef.current = false;
-      flushChatSessionToStorage({ analysisId: savedAnalysisId });
+    onSaveSuccess: () => {
+      resetChat();
     },
-    onPdfSuccess: (savedAnalysisId) => {
-      sessionClearedRef.current = false;
-      flushChatSessionToStorage(savedAnalysisId ? { analysisId: savedAnalysisId } : undefined);
+    onPdfSuccess: () => {
+      resetChat();
     },
     isFree: !paidAccessActive,
     emailConfirmed,
@@ -2259,18 +2257,46 @@ export function NomeSocialChat({
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
                       canRegenerate={!manualLoading && podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length)}
+                      extraActionSlot={(
+                        <form
+                          onSubmit={handleEvaluateManual}
+                          className="flex flex-col sm:flex-row flex-1 min-w-0 items-stretch sm:items-center gap-3"
+                        >
+                          <input
+                            id="manual-name"
+                            type="text"
+                            value={manualDraft}
+                            onChange={e => setManualDraft(e.target.value)}
+                            maxLength={150}
+                            autoComplete="off"
+                            disabled={manualLoading || isRegenerating}
+                            aria-label="Avaliar um nome que você escolheu (opcional)"
+                            aria-describedby="manual-name-help manual-name-status"
+                            placeholder="Avaliar um nome que você escolheu (opcional)"
+                            className="w-full sm:flex-1 min-w-0 rounded-full font-inter transition-all duration-150 min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] bg-[#1C1C1C] border border-[#D4AF37]/40 text-[#e5e2e1] placeholder:text-[#e5e2e1]/60 focus:placeholder:text-transparent hover:border-[#D4AF37] focus:outline-none focus:border-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                          <button
+                            type="submit"
+                            disabled={manualLoading || isRegenerating || manualUsed >= NOME_SOCIAL_MAX_MANUAIS}
+                            className="inline-flex items-center justify-center rounded-full font-inter transition-all duration-150 focus-visible:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] font-semibold w-full sm:w-auto shrink-0 bg-[#D4AF37] text-[#111111] border border-[#D4AF37] hover:bg-[#f2ca50]"
+                          >
+                            {manualLoading ? 'Avaliando...' : 'Avaliar este nome'}
+                          </button>
+                        </form>
+                      )}
+                      extraNoticeSlot={(
+                        <div className="space-y-1">
+                          <p id="manual-name-help" className="text-xs leading-relaxed text-[#e5e2e1]/70">
+                            {manualUsed} de {NOME_SOCIAL_MAX_MANUAIS} nomes manuais avaliados nesta sessão. Cota separada das 9 sugestões automáticas.
+                          </p>
+                          {manualNotice && (
+                            <p id="manual-name-status" role="status" className="text-sm leading-relaxed text-[#d7c6ff]">
+                              {manualNotice}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     />
-                    <form onSubmit={handleEvaluateManual} className="mt-6 space-y-3">
-                      <Input id="manual-name" label="Avaliar um nome que você escolheu (opcional)" value={manualDraft}
-                        onChange={e => setManualDraft(e.target.value)} maxLength={150} autoComplete="off"
-                        disabled={manualLoading || isRegenerating} aria-describedby="manual-name-help manual-name-status"
-                        className="!text-base !text-[#e5e2e1] placeholder:!text-[#e5e2e1]/65" />
-                      <p id="manual-name-help" className="text-sm leading-relaxed text-[#e5e2e1]/80">{manualUsed} de {NOME_SOCIAL_MAX_MANUAIS} nomes manuais avaliados nesta sessão. Cota separada das 9 sugestões automáticas.</p>
-                      <Button type="submit" disabled={manualLoading || isRegenerating || manualUsed >= NOME_SOCIAL_MAX_MANUAIS}>
-                        {manualLoading ? 'Avaliando...' : 'Avaliar este nome'}
-                      </Button>
-                      <p id="manual-name-status" role="status" className="text-sm leading-relaxed text-[#d7c6ff]">{manualNotice}</p>
-                    </form>
                   </NmBubble>
                 );
               }

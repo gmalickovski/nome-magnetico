@@ -1,4 +1,5 @@
 import { GlossaryInlineTerm } from '../../glossary/GlossaryInlineTerm';
+import { resolveArchetypeSummary } from '../../../../shared/archetype-summary';
 import { getCanonicalGlossaryBySlug } from '../../../../shared/glossary/canonical-terms';
 import { ArquetipoResumoCard } from '../ArquetipoResumoCard';
 import React from 'react';
@@ -94,6 +95,12 @@ export function ChatSidebarSection({
 }: ChatSidebarSectionProps) {
   const hasScore = showScoreCard && Boolean(birthPanel);
   const hasStar = showStarDetail && Boolean(starPanelData) && Boolean(birthPanel);
+  const resolvedStarArchetype = hasStar
+    ? resolveArchetypeSummary(starPanelData?.arquetipo, starPanelData?.expressao)
+    : null;
+  const resolvedBirthArchetype = hasStar
+    ? resolveArchetypeSummary(birthPanel?.arquetipo, birthPanel?.expressao)
+    : null;
   const hasReadingBlocks =
     showReadingSummary && (Boolean(readingSummary) || readingSummaryLoading);
 
@@ -116,6 +123,23 @@ export function ChatSidebarSection({
           isSuggestion={isSuggestion}
           onResetToBase={onResetToBase}
         />
+      )}
+
+      {hasStar && starPanelData && resolvedStarArchetype && (
+        <ReadingTopicCard
+          eyebrow="Arquétipo Vibracional"
+          title={resolvedStarArchetype.nome}
+          subtitle={`${starPanelData.nome || 'Nome em análise'} · Expressão ${starPanelData.expressao ?? resolvedStarArchetype.numero}${resolvedStarArchetype.sombra ? ` · Sombra: ${resolvedStarArchetype.sombra}` : ''}`}
+        >
+          <ArquetipoResumoCard
+            variant="panel"
+            arquetipo={resolvedStarArchetype}
+            expressao={starPanelData.expressao}
+            arquetipoNascimento={isSuggestion ? resolvedBirthArchetype : undefined}
+            expressaoNascimento={isSuggestion ? birthPanel?.expressao : undefined}
+            isSuggestion={isSuggestion}
+          />
+        </ReadingTopicCard>
       )}
 
       {showRadar && radarAxes && (
@@ -208,8 +232,6 @@ export function ChatSidebarSection({
         </ReadingTopicCard>
       )}
 
-
-      {hasStar && starPanelData?.arquetipo && <ArquetipoResumoCard arquetipo={starPanelData.arquetipo} expressao={starPanelData.expressao} arquetipoNascimento={isSuggestion ? birthPanel?.arquetipo : undefined} />}
       {hasReadingBlocks && (
         <ChatReadingSummaryPanel summary={readingSummary} loading={readingSummaryLoading} />
       )}

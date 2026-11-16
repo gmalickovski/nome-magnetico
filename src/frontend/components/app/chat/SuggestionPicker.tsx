@@ -13,6 +13,8 @@ export interface SuggestionPickerProps {
   isRegenerating?: boolean;
   regenerateNotice?: string | null;
   canRegenerate?: boolean;
+  extraActionSlot?: React.ReactNode;
+  extraNoticeSlot?: React.ReactNode;
   className?: string;
 }
 
@@ -29,6 +31,8 @@ export function SuggestionPicker({
   isRegenerating = false,
   regenerateNotice = null,
   canRegenerate = true,
+  extraActionSlot,
+  extraNoticeSlot,
   className = '',
 }: SuggestionPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -120,20 +124,23 @@ export function SuggestionPicker({
         </p>
       )}
 
-      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-2">
         <Pill
           label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
           size="lg"
           disabled={isRegenerating || !canRegenerate}
           onClick={onRegenerate}
+          className="w-full sm:w-auto shrink-0"
         />
-        {!canRegenerate && suggestions.length > 0 && (
-          <p className="text-xs text-chat-muted leading-relaxed">
-            Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
-            combinações.
-          </p>
-        )}
+        {extraActionSlot}
       </div>
+      {!canRegenerate && suggestions.length > 0 && (
+        <p className="text-xs text-chat-muted leading-relaxed">
+          Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
+          combinações.
+        </p>
+      )}
+      {extraNoticeSlot}
     </div>
   );
 }

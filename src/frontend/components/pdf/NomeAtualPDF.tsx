@@ -3,23 +3,25 @@
  *
  * Estrutura de páginas:
  *   1. Capa
- *   2+. A Essência — O Nome de Nascimento Original
+ *   2. Sumário
+ *   3+. A Essência — O Nome de Nascimento Original
  *       - Banner do nome + O Som do Seu Nascimento
  *       - Destino card + 4 cards de números + Detalhamento dos 5 números
- *       - Os 4 Triângulos completos (Vida, Pessoal, Social, Destino) com Arcanos e Bloqueios
+ *       - Arquétipo Vibracional do Nome de Nascimento
+ *       - Triângulo da Vida (Nascimento) com Arcanos e Bloqueios
  *       - O Peso do Passado: Débitos, Lições e Tendências Ocultas
- *   N-2. O Diagnóstico É Claro (fundo escuro)
- *   N-1. Ação Imediata: O Escudo Provisório (fundo escuro)
- *   N. CTA / Oferta para a Harmonização (Nome Social)
+ *   N-2. O que este mapa mostrou
+ *   N-1. Como Calculamos o Seu Score Cabalístico
+ *   N. Potencial da Assinatura / CTA (Nome Social)
  */
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
-import { THEME_NOME_ATUAL } from './shared/PDFTheme';
+import { THEME_NOME_ATUAL, PDF_TYPOGRAPHY } from './shared/PDFTheme';
 import { PDFCover } from './shared/PDFCover';
 import { PDFPageHeader } from './shared/PDFPageHeader';
 import { PDFFooter } from './shared/PDFFooter';
-import { TrianguloPiramideInline } from './shared/PDFMarkdownRenderer';
-import { BloqueiosBlock, DebitosBlock, LicoesBlock, TendenciasBlock } from './shared/PDFKarmicBlock';
-import { PDFArcanosBlock } from './shared/PDFArcanosBlock';
+import { DebitosBlock, LicoesBlock, TendenciasBlock } from './shared/PDFKarmicBlock';
+import { PDFArquetipoDetailBlock } from './shared/PDFArquetipoDetailBlock';
+import { PDFTriangleDetailsBlock } from './shared/PDFTriangleDetailsBlock';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
 import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
 import { PDFTableOfContents } from './shared/PDFTableOfContents';
@@ -28,7 +30,7 @@ import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
 import { PDFComoCalculamosScore } from './shared/PDFComoCalculamosScore';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
-import { getArcano } from '../../../backend/numerology/arcanos';
+import { getArquetipo } from '../../../backend/numerology/archetypes';
 import {
   avaliarNome,
   calcularScoreV1SemOcorrenciasExtras,
@@ -124,16 +126,7 @@ const styles = StyleSheet.create({
     paddingBottom: 56,
     paddingHorizontal: 48,
     fontFamily: BODY_FONT,
-    color: DARK,
-  },
-  // Seção A Essência — fundo branco, cabeçalho rosado
-  pageEssencia: {
-    backgroundColor: '#FFFFFF',
-    paddingTop: 56,
-    paddingBottom: 56,
-    paddingHorizontal: 48,
-    fontFamily: BODY_FONT,
-    color: DARK,
+    color: GRAY,
   },
   darkPage: {
     backgroundColor: DARK,
@@ -153,39 +146,36 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 16 },
   sectionTitle: {
-    fontSize: 13,
+    ...PDF_TYPOGRAPHY.h2,
+    fontFamily: TITLE_FONT,
+    color: GOLD,
+    borderBottomColor: GOLD,
+  },
+  subSectionTitle: {
+    ...PDF_TYPOGRAPHY.h3,
     fontFamily: TITLE_FONT,
     color: GOLD,
     borderBottomWidth: 1,
     borderBottomColor: GOLD,
-    paddingBottom: 4,
-    marginBottom: 12,
-    letterSpacing: 0.5,
+  },
+  subHeading: {
+    ...PDF_TYPOGRAPHY.h4,
+    fontFamily: BODY_FONT_BOLD,
   },
   hugeTitle: {
-    fontSize: 18,
+    ...PDF_TYPOGRAPHY.h1,
     fontFamily: TITLE_FONT,
     color: GOLD,
     textAlign: 'center',
     marginBottom: 16,
-    letterSpacing: 0.5,
-  },
-  fixedText: {
-    fontSize: 10,
-    fontFamily: BODY_FONT,
-    color: GRAY,
-    lineHeight: 1.6,
-    marginBottom: 16,
-    marginTop: 6,
-    padding: 0,
-    backgroundColor: 'transparent',
-    textAlign: 'justify',
   },
   bodyText: {
-    fontSize: 10,
-    color: DARK,
-    lineHeight: 1.75,
-    marginBottom: 8,
+    ...PDF_TYPOGRAPHY.paragraph,
+    fontFamily: BODY_FONT,
+  },
+  cardBodyText: {
+    ...PDF_TYPOGRAPHY.cardText,
+    fontFamily: BODY_FONT,
   },
   conclusaoCard: {
     borderWidth: 1,
@@ -324,8 +314,8 @@ export function NomeAtualPDF({
 }: ProductPDFProps) {
   const logoSrc = loadLogoSrc();
   const freqData = analysis.frequencias_numeros as any;
-  const nomeParaExibir = analysis.nome_completo;
-  const nomeNascimento = analysis.nome_completo;
+  const nomeNascimento = freqData?.ranking?.nomeNascimento ?? analysis.nome_completo;
+  const nomeParaExibir = nomeNascimento;
   const dataNascimento = formatDate(
     freqData?.ranking?.dataNascimento ?? analysis.data_nascimento
   );
@@ -336,12 +326,10 @@ export function NomeAtualPDF({
     freqData?.ranking?.dataNascimento ?? analysis.data_nascimento ?? '',
   );
   const cincoNumNasc = calcularCincoNumeros(nomeNascimento, dataNascimentoRaw);
+  const arquetipoNasc = getArquetipo(cincoNumNasc.expressao ?? 1);
   const triangulosNasc = calcularTodosTriangulos(nomeNascimento, dataNascimentoRaw);
   const bloqueios = detectarBloqueios(triangulosNasc);
-  const tVida    = triangulosNasc.vida;
-  const tPessoal = triangulosNasc.pessoal;
-  const tSocial  = triangulosNasc.social;
-  const tDestino = triangulosNasc.destino;
+  const tVida = triangulosNasc.vida;
   const licoes     = detectarLicoesCarmicas(nomeNascimento);
   const tendencias = detectarTendenciasOcultas(nomeNascimento);
   const debitos    = calcularDebitosCarmicos(
@@ -361,37 +349,34 @@ export function NomeAtualPDF({
     .split('');
 
   const TRIANGLE_FULL_WIDTH = 430;
-  const baseLen = Math.max(
-    tVida?.linhas[0]?.length ?? 1,
-    tPessoal?.linhas[0]?.length ?? 1,
-    tSocial?.linhas[0]?.length ?? 1,
-    tDestino?.linhas[0]?.length ?? 1,
-  );
+  const baseLen = tVida?.linhas[0]?.length ?? 1;
   const triCellSize = Math.min(18, Math.max(5, Math.floor(TRIANGLE_FULL_WIDTH / baseLen) - 1));
 
   // ── Score v3 (para a CTA final e comparativo) ────────────────────────────
   const storedV3 = normalizeScore((analysis as { score_v3?: number }).score_v3);
   const storedScore = normalizeScore(analysis.score);
   const birthForScore =
-    typeof analysis.data_nascimento === 'string'
-      ? analysis.data_nascimento.includes('-')
-        ? (() => {
-            const p = analysis.data_nascimento.split('-');
-            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : analysis.data_nascimento;
-          })()
-        : analysis.data_nascimento
-      : '';
+    typeof dataNascimentoRaw === 'string' && dataNascimentoRaw.length > 0
+      ? dataNascimentoRaw
+      : typeof analysis.data_nascimento === 'string'
+        ? analysis.data_nascimento.includes('-')
+          ? (() => {
+              const p = analysis.data_nascimento.split('-');
+              return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : analysis.data_nascimento;
+            })()
+          : analysis.data_nascimento
+        : '';
 
   const isV3 = isAnaliseV3(analysis as any) || isScoreV3();
 
   const avaliacaoV3 =
-    analysis.nome_completo && birthForScore && isV3
-      ? avaliarNome(analysis.nome_completo, birthForScore, { calcularPotencial: true })
+    nomeNascimento && birthForScore && isV3
+      ? avaliarNome(nomeNascimento, birthForScore, { calcularPotencial: true })
       : null;
 
   const rawScore = isV3
     ? (avaliacaoV3?.score_v3 ?? storedV3 ?? storedScore)
-    : (storedScore ?? (analysis.nome_completo && birthForScore && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
+    : (storedScore ?? (nomeNascimento && birthForScore && cincoNumNasc.expressao != null && cincoNumNasc.destino != null
         ? calcularScoreV1SemOcorrenciasExtras({
             bloqueios,
             licoesCarmicas: licoes.length,
@@ -436,8 +421,6 @@ export function NomeAtualPDF({
     }
   }
 
-  const tocEntries = buildGratuitoTocEntries();
-
   const potencialGravado = analysis as {
     potencial_assinatura_calculado?: boolean;
     potencial_assinatura_nota_base?: number;
@@ -451,17 +434,19 @@ export function NomeAtualPDF({
           notaBase: potencialGravado.potencial_assinatura_nota_base ?? rawScore ?? 0,
           potencialMax: potencialGravado.potencial_assinatura_max ?? null,
         }
-      : analysis.nome_completo && birthForScore && isV3
-        ? calcularPotencialAssinaturaPdfGratuito(analysis.nome_completo, birthForScore)
+      : nomeNascimento && birthForScore && isV3
+        ? calcularPotencialAssinaturaPdfGratuito(nomeNascimento, birthForScore)
         : { calculado: false, notaBase: 0, potencialMax: null as number | null };
 
-  const potencialCtaUrl = buildPotencialCtaUrl(analysis.nome_completo);
+  const potencialCtaUrl = buildPotencialCtaUrl(nomeNascimento);
   const exibirBlocoPotencial = potencialAssinatura.calculado && potencialAssinatura.notaBase > 0;
   const variantePotencial =
     potencialAssinatura.potencialMax != null &&
     notaEstritamenteMaiorQueBase(potencialAssinatura.potencialMax, potencialAssinatura.notaBase)
       ? ('com_cta' as const)
       : ('sem_cta' as const);
+
+  const tocEntries = buildGratuitoTocEntries({ hasPotencialCta: exibirBlocoPotencial });
 
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
@@ -487,13 +472,9 @@ export function NomeAtualPDF({
 
       {/* ═══════════════════════════════════════════════════════════════════════
        *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
-       *  (Bloco completo — idêntico à seção "A Essência" do NomeSocialPDF)
+       *  (Bloco espelhado da seção "A Essência" do NomeSocialPDF)
        * ═══════════════════════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.pageEssencia}>
-        <PDFSectionAnchor
-          id="pdf-intro-leitura"
-          bookmark={{ title: 'Como ler este relatório', fit: true }}
-        />
+      <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-essencia" bookmark={{ title: 'A Essência', fit: true }} />
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
@@ -537,7 +518,7 @@ export function NomeAtualPDF({
           <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#8A661C', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
             O Papel da Frequência Original
           </Text>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7 }}>
+          <Text style={styles.bodyText}>
             O nome de nascimento é o motor interno da sua jornada — ele emana qualidades permanentes, inscritas antes mesmo de qualquer escolha consciente. Esses talentos brutos são genuínos e poderosos, mas por serem energia pura e não lapidada, podem atrair interferências que se manifestam como bloqueios: padrões em loop que drenam o que você planta antes de colher. É exatamente para organizar essa frequência que a Harmonização de Assinatura existe — não para apagar quem você é, mas para que a sua essência originária possa fluir sem obstáculos.
           </Text>
         </View>
@@ -567,7 +548,7 @@ export function NomeAtualPDF({
 
           <View style={{ borderRadius: 8, backgroundColor: '#F5F3FF', padding: 12, marginBottom: 16 }}>
             <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#5b21b6', marginBottom: 6 }}>O Que Não Pode Ser Mudado</Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
+            <Text style={styles.cardBodyText}>
               Calculado a partir da data de nascimento, o Destino representa a trilha que sua alma escolheu antes de receber um nome. Não pode ser alterado por nenhuma prática ou mudança de nome — está gravado no tecido do tempo. A Harmonização de Assinatura não altera o Destino; ela organiza o campo vibracional para que a jornada rumo a ele aconteça com menos resistência e mais fluidez.
             </Text>
           </View>
@@ -583,7 +564,7 @@ export function NomeAtualPDF({
             </Text>
             <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
           </View>
-          <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.55, marginBottom: 12 }}>
+          <Text style={styles.bodyText}>
             Derivados das letras do nome de nascimento, estes quatro números revelam as qualidades inatas, os dons, a percepção externa e a vocação que estão codificados na semente original. Diferente do Destino, eles respondem à vibração das letras — e podem ser reorganizados pela Harmonização de Assinatura.
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
@@ -628,13 +609,13 @@ export function NomeAtualPDF({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>{item.label}</Text>
-                <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.6 }}>{item.desc}</Text>
+                <Text style={styles.cardBodyText}>{item.desc}</Text>
                 {item.richDesc ? (
                   <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
                     <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
                       O Significado do seu Número {item.num}:
                     </Text>
-                    <Text style={{ fontSize: 10, color: '#374151', lineHeight: 1.6, textAlign: 'justify' }}>
+                    <Text style={[styles.cardBodyText, { textAlign: 'justify' }]}>
                       {item.richDesc}
                     </Text>
                   </View>
@@ -644,49 +625,40 @@ export function NomeAtualPDF({
           ))}
         </View>
 
-      {/* ── SEÇÃO A ESSÊNCIA: OS 4 TRIÂNGULOS DO NOME DE NASCIMENTO ──────── */}
-      {(tVida || tPessoal || tSocial || tDestino) && (
-        <View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
-            <View style={{ backgroundColor: '#991B1B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-              <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                A ESSÊNCIA
-              </Text>
-            </View>
-            <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
-          </View>
-          <View style={{ marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>Os 4 Triângulos: O Fluxo de Nascimento</Text>
+      <PDFArquetipoDetailBlock
+        arquetipo={arquetipoNasc}
+        expressao={cincoNumNasc.expressao ?? 1}
+        anchorId="pdf-essencia-arquetipo"
+        bookmarkTitle="Arquétipo Vibracional (Nascimento)"
+        subtitle="A Força Narrativa do Seu Nome de Nascimento"
+        eyebrowLabel="Arquétipo do Nome de Nascimento"
+        accentColor={GOLD}
+      />
+
+      {/* ── SEÇÃO A ESSÊNCIA: TRIÂNGULO DA VIDA DO NOME DE NASCIMENTO ──────── */}
+      {tVida && (
+        <View break>
+          <View style={{ marginTop: 12, marginBottom: 14 }}>
+            <Text style={styles.hugeTitle}>Triângulo da Vida: O Fluxo de Nascimento</Text>
           </View>
 
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada.
+          <Text style={[styles.bodyText, { marginBottom: 14 }]}>
+            Calculado a partir do nome de nascimento, o Triângulo da Vida revela a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para dissolvê-los e recuperar a fluidez.
           </Text>
-
-          {/* Destaque Triângulo da Vida no motor v3 */}
-          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', padding: 10, marginBottom: 12 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#92640F', marginBottom: 4 }}>
-              O Triângulo da Vida Define a Sua Pontuação
-            </Text>
-            <Text style={{ fontSize: 9, color: GRAY, lineHeight: 1.5 }}>
-              No motor v3, as sequências repetidas que subtraem pontos do score baseiam-se estritamente no Triângulo da Vida (a vibração pura do seu nome). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e atuam como reflexos vibracionais, sem gerar descontos no score.
-            </Text>
-          </View>
 
           {/* Arcanos info box */}
           <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED', padding: 12, marginBottom: 10 }}>
             <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#7C3AED', marginBottom: 6 }}>O Que São os Arcanos</Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 6 }}>
+            <Text style={[styles.bodyText, { marginBottom: 6 }]}>
               A Numerologia Cabalística é a ciência que decodifica as vibrações ocultas por trás do seu nome. Para revelar as forças que regem o seu destino, ela utiliza os <Text style={{ fontFamily: BODY_FONT_BOLD }}>Arcanos</Text> — arquétipos profundos de energia. Embora a estrutura principal da vida seja governada por 22 Arcanos Maiores (as forças primordiais), a sua jornada diária desdobra-se em ciclos menores e mais sutis, expandindo essa roda para até 99 vibrações numerológicas para mapear o dia a dia. Dentro de cada triângulo, você encontrará três tipos de Arcanos atuando em conjunto:
             </Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
+            <Text style={[styles.bodyText, { marginBottom: 4 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>1. Arcano Regente:</Text> É a grande força dominante. Sempre um dos 22 Arcanos Maiores, ele é o "sol" que ilumina e governa aquela dimensão da sua vida desde o nascimento. É a fundação do seu cenário.
             </Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 4 }}>
+            <Text style={[styles.bodyText, { marginBottom: 4 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>2. Sequência de Passagem:</Text> É a sua linha do tempo. Representa os capítulos cronológicos da sua estrada. Utilizando as vibrações menores (até 99), ela revela por onde a sua energia vai caminhar, ciclo após ciclo.
             </Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
+            <Text style={[styles.bodyText, { marginBottom: 0 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>3. Arcano de Trânsito:</Text> É o seu "aqui e agora". É o capítulo específico e a vibração exata de provação, renovação ou colheita que você está atravessando neste exato momento.
             </Text>
           </View>
@@ -694,209 +666,70 @@ export function NomeAtualPDF({
           {/* Bloqueios info box */}
           <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', padding: 12, marginBottom: 8 }}>
             <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#DC2626', marginBottom: 6 }}>O Que São os Bloqueios Energéticos</Text>
-            <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
+            <Text style={[styles.bodyText, { marginBottom: 0 }]}>
               Na numerologia cabalística, quando um mesmo número aparece três ou mais vezes consecutivas na pirâmide, ele cria uma densidade vibracional que chamamos de Bloqueio. Não é um castigo, mas uma interrupção temporária no fluxo da energia vital. Identificar essas áreas (nas marcações em vermelho abaixo) permite que você traga consciência para as esferas da vida que exigem maior cuidado e alinhamento.
             </Text>
           </View>
 
+          {/* Destaque Triângulo da Vida no motor v3 */}
+          {isV3 && (
+            <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', padding: 10, marginBottom: 12 }}>
+              <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#92640F', marginBottom: 4 }}>
+                O Triângulo da Vida Define a Sua Pontuação
+              </Text>
+              <Text style={styles.cardBodyText}>
+                No motor v3, as sequências repetidas que subtraem pontos do Score Cabalístico baseiam-se estritamente no Triângulo da Vida (a vibração pura do seu nome). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e atuam como reflexos vibracionais, sem gerar descontos no score.
+              </Text>
+            </View>
+          )}
+
           {/* ─── TRIÂNGULO DA VIDA ─── */}
-          {tVida && (
-            <View>
-              <PDFSectionAnchor
-                id="pdf-essencia-triangulo-vida"
-                bookmark={{ title: 'Triângulo da Vida', fit: true }}
-              />
-              <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo da Vida (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa sua energia de base e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
-              </Text>
-              <TrianguloPiramideInline data={tVida} label="TRIÂNGULO DA VIDA" cellSize={triCellSize} letras={letrasNomeBatismo} />
-              {tVida.arcanoRegente != null && (() => {
-                const arc = getArcano(tVida.arcanoRegente!);
-                const arcAtual = tVida.arcanoAtual?.numero ? getArcano(tVida.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock
-                    title="Arcanos do Triângulo da Vida"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tVida.arcanosDePassagem}
-                    arcanoAtual={tVida.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueios.filter((b: any) => b.triangulos?.includes('vida')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo da Vida
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('vida'))}hideTriangulos={true} isNomeSocial={true} triangulo="vida" />
-                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* ─── TRIÂNGULO PESSOAL ─── */}
-          {tPessoal && (
-            <View>
-              <PDFSectionAnchor
-                id="pdf-essencia-triangulo-pessoal"
-                bookmark={{ title: 'Triângulo Pessoal', fit: true }}
-              />
-              <Text style={[styles.sectionTitle, { color: '#7C3AED', borderBottomColor: '#7C3AED', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo Pessoal (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — Esta dimensão penetra no santuário mais reservado da sua alma, ativada e moldada pelo dia exato do seu nascimento. Ela governa a sua inteligência emocional, a forma como você processa sentimentos íntimos em segredo, sua tolerância a pressões internas e a dinâmica com os seus entes mais próximos. Quando existem bloqueios nesta pirâmide de origem, a vida afetiva tende a repetir ciclos e roteiros repetitivos de frustração ou incompreensão, atuando como espelhos de conflitos internos ainda não resolvidos.
-              </Text>
-              <TrianguloPiramideInline data={tPessoal} label="TRIÂNGULO PESSOAL" cellSize={triCellSize} letras={letrasNomeBatismo} />
-              {tPessoal.arcanoRegente != null && (() => {
-                const arc = getArcano(tPessoal.arcanoRegente!);
-                const arcAtual = tPessoal.arcanoAtual?.numero ? getArcano(tPessoal.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock
-                    title="Arcanos do Triângulo Pessoal"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tPessoal.arcanosDePassagem}
-                    arcanoAtual={tPessoal.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueios.filter((b: any) => b.triangulos?.includes('pessoal')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo Pessoal
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('pessoal'))}hideTriangulos={true} isNomeSocial={true} triangulo="pessoal" />
-                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* ─── TRIÂNGULO SOCIAL ─── */}
-          {tSocial && (
-            <View>
-              <PDFSectionAnchor
-                id="pdf-essencia-triangulo-social"
-                bookmark={{ title: 'Triângulo Social', fit: true }}
-              />
-              <Text style={[styles.sectionTitle, { color: '#059669', borderBottomColor: '#059669', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo Social (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#059669' }}>[Carreira, Visibilidade Pública e Magnetismo Social]</Text> — Esta pirâmide irradia a sua assinatura vibracional para o mundo externo, moldada pela influência do mês do seu nascimento. Ela governa a forma como a sociedade te percebe, o carisma que você emana em ambientes públicos e as oportunidades profissionais que você atrai ou repele. É a frequência que determina a sua reputação, a sua capacidade de vendas, parcerias profissionais e o reconhecimento do seu talento pelo coletivo. Bloqueios aqui geram invisibilidade, sabotagem profissional ou dificuldades de comunicação com o público.
-              </Text>
-              <TrianguloPiramideInline data={tSocial} label="TRIÂNGULO SOCIAL" cellSize={triCellSize} letras={letrasNomeBatismo} />
-              {tSocial.arcanoRegente != null && (() => {
-                const arc = getArcano(tSocial.arcanoRegente!);
-                const arcAtual = tSocial.arcanoAtual?.numero ? getArcano(tSocial.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock
-                    title="Arcanos do Triângulo Social"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tSocial.arcanosDePassagem}
-                    arcanoAtual={tSocial.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueios.filter((b: any) => b.triangulos?.includes('social')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo Social
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('social'))}hideTriangulos={true} isNomeSocial={true} triangulo="social" />
-                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* ─── TRIÂNGULO DO DESTINO ─── */}
-          {tDestino && (
-            <View>
-              <PDFSectionAnchor
-                id="pdf-essencia-triangulo-destino"
-                bookmark={{ title: 'Triângulo do Destino', fit: true }}
-              />
-              <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-                O Triângulo do Destino (Nascimento)
-              </Text>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — A pirâmide mais reveladora e soberana de toda a sua jornada terrestre. Ela entrelaça de forma divina a totalidade do seu nome com as coordenadas do seu nascimento (dia + mês reduzidos). Este triângulo governa a colheita prática da sua jornada: a materialização concreta dos seus esforços, a execução do seu propósito de alma e o legado indelével que você construirá no tempo. Quando há bloqueios nesta área, você pode sentir que despende uma quantidade colossal de energia no trabalho sem nunca alcançar os frutos correspondentes na realidade material.
-              </Text>
-              <TrianguloPiramideInline data={tDestino} label="TRIÂNGULO DO DESTINO" cellSize={triCellSize} letras={letrasNomeBatismo} />
-              {tDestino.arcanoRegente != null && (() => {
-                const arc = getArcano(tDestino.arcanoRegente!);
-                const arcAtual = tDestino.arcanoAtual?.numero ? getArcano(tDestino.arcanoAtual.numero) : null;
-                return (
-                  <PDFArcanosBlock
-                    title="Arcanos do Triângulo do Destino"
-                    titleColor="#7C3AED"
-                    arcanoRegente={arc}
-                    arcanosDePassagem={tDestino.arcanosDePassagem}
-                    arcanoAtual={tDestino.arcanoAtual}
-                    arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
-                  />
-                );
-              })()}
-              {bloqueios.filter((b: any) => b.triangulos?.includes('destino')).length > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.sectionTitle, { color: '#DC2626', borderBottomColor: '#DC2626', fontSize: 11, marginBottom: 8 }]}>
-                    Bloqueios do Triângulo do Destino
-                  </Text>
-                  <BloqueiosBlock bloqueios={bloqueios.filter((b: any) => b.triangulos?.includes('destino'))}hideTriangulos={true} isNomeSocial={true} triangulo="destino" />
-                  <Text style={{ fontSize: 8, color: '#7C3AED', marginTop: 8, fontStyle: 'italic' }}>
-                    * A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no PDF pago.
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
+          <View>
+            <PDFSectionAnchor
+              id="pdf-essencia-triangulo-vida"
+              bookmark={{ title: 'Triângulo da Vida', fit: true }}
+            />
+            <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
+              O Triângulo da Vida (Nascimento)
+            </Text>
+            <Text style={[styles.bodyText, { marginBottom: 10 }]}>
+              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa sua energia de base e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
+            </Text>
+            <PDFTriangleDetailsBlock
+              data={tVida}
+              triangulo="vida"
+              pyramidLabel="TRIÂNGULO DA VIDA"
+              cellSize={triCellSize}
+              letras={letrasNomeBatismo}
+              bloqueiosTitle="Bloqueios do Triângulo da Vida"
+              arcanosTitle="Arcanos do Triângulo da Vida"
+              allBloqueios={bloqueios}
+              bloqueiosFootnote="* A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no relatório completo."
+            />
+          </View>
         </View>
       )}
 
         <PDFFooter bgColor="#FEF2F2" />
       </Page>
 
-      {/* Karma — página dedicada (evita fragmento de card na p.18) */}
-      <Page size="A4" style={styles.pageEssencia}>
+      {/* Karma — página dedicada (evita fragmento de card) */}
+      <Page size="A4" style={styles.page}>
         <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
 
       {/* ── SEÇÃO A ESSÊNCIA: O PESO DO PASSADO ───────────────────── */}
       <View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 18 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
-          <View style={{ backgroundColor: '#991B1B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              A ESSÊNCIA
-            </Text>
-          </View>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
-        </View>
-        <View style={{ marginBottom: 8 }}>
+        <View style={{ marginTop: 24, marginBottom: 8 }}>
+          <PDFSectionAnchor id="pdf-essencia-karma" bookmark={{ title: 'O Peso do Passado', fit: true }} />
           <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
         </View>
 
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 16 }}>
+        <Text style={[styles.bodyText, { marginBottom: 16 }]}>
           Além dos bloqueios detectados nos triângulos, o nome de nascimento carrega padrões kármicos mais profundos: os Débitos (contas de encarnações passadas ainda ativas), as Lições (vibrações ausentes que precisam ser desenvolvidas) e as Tendências Ocultas (excessos que criam ciclos de sabotagem).
         </Text>
 
         {/* Débitos Kármicos */}
-        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
+        <View style={{ ...styles.section, marginTop: 0 }}>
           <PDFSectionAnchor id="pdf-essencia-debitos" bookmark={{ title: 'Débitos kármicos', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
             Débitos Kármicos
@@ -904,7 +737,7 @@ export function NomeAtualPDF({
           <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
             Os Débitos Kármicos emergem como ecos de vidas anteriores — áreas onde o livre-arbítrio foi utilizado em desequilíbrio. Não são punições, mas leis de compensação que exigem reintegração. Os mesmos cenários de traição, perda ou esforço redobrado tendem a se repetir até que a lição seja integrada conscientemente.
           </Text>
-          {debitosFixos.length > 0 && (
+          {isV3 && debitosFixos.length > 0 && (
             <View wrap={false} style={{ borderRadius: 6, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: '#F59E0B', padding: 8, marginBottom: 8 }}>
               <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#D97706', marginBottom: 2 }}>
                 Marca da sua data ({debitosFixos.map(d => d.numero).join(', ')}) — Sem impacto no score do nome
@@ -918,7 +751,7 @@ export function NomeAtualPDF({
         </View>
 
         {/* Lições Kármicas */}
-        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
+        <View style={{ ...styles.section, marginTop: 0 }}>
           <PDFSectionAnchor id="pdf-essencia-licoes" bookmark={{ title: 'Lições kármicas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
             Lições Kármicas
@@ -930,7 +763,7 @@ export function NomeAtualPDF({
         </View>
 
         {/* Tendências Ocultas */}
-        <View wrap={false} style={{ ...styles.section, marginTop: 0 }}>
+        <View style={{ ...styles.section, marginTop: 0 }}>
           <PDFSectionAnchor id="pdf-essencia-tendencias" bookmark={{ title: 'Tendências ocultas', fit: true }} />
           <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
             Tendências Ocultas
@@ -965,7 +798,7 @@ export function NomeAtualPDF({
           {/* Bloqueios */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
+            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{bloqueios.length} bloqueio{bloqueios.length !== 1 ? 's' : ''} {bloqueios.length !== 1 ? 'energéticos' : 'energético'}</Text>
               {' '}detectado{bloqueios.length !== 1 ? 's' : ''} nos 4 triângulos do nome de nascimento — loops vibracionais ativos 24h/dia, independente de esforço ou força de vontade.
             </Text>
@@ -974,7 +807,7 @@ export function NomeAtualPDF({
           {/* Débitos */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
+            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{debitos.length} débito{debitos.length !== 1 ? 's' : ''} kármico{debitos.length !== 1 ? 's' : ''}</Text>
               {' '}ativo{debitos.length !== 1 ? 's' : ''} — padrões de encarnações passadas que criam ciclos de resistência em áreas específicas da vida.
             </Text>
@@ -983,7 +816,7 @@ export function NomeAtualPDF({
           {/* Lições */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
+            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{licoes.length} lição{licoes.length !== 1 ? 'ões' : ''} kármica{licoes.length !== 1 ? 's' : ''}</Text>
               {' '}identificada{licoes.length !== 1 ? 's' : ''} — vibrações ausentes no nome que criam pontos cegos e lacunas de talento.
             </Text>
@@ -992,7 +825,7 @@ export function NomeAtualPDF({
           {/* Tendências */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
             <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={{ flex: 1, fontSize: 10, color: GRAY, lineHeight: 1.6 }}>
+            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
               <Text style={{ fontFamily: BODY_FONT_BOLD }}>{tendencias.length} tendência{tendencias.length !== 1 ? 's' : ''} oculta{tendencias.length !== 1 ? 's' : ''}</Text>
               {' '}— frequências em excesso que operam como compulsão automática, sabotando exatamente onde você mais quer prosperar.
             </Text>
@@ -1010,16 +843,16 @@ export function NomeAtualPDF({
           borderWidth: 1,
           borderColor: '#E5E7EB',
         }}>
-          <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, textAlign: 'center' }}>
+          <Text style={[styles.bodyText, { textAlign: 'center', marginBottom: 0 }]}>
             Esses padrões são descritos pela numerologia cabalística como tensões vibracionais no nome atual — não como diagnóstico ou promessa de cura. A harmonização propõe outras formas de assinar para você comparar scores, bloqueios e triângulos lado a lado, sem garantia de eliminação ou melhora automática.
           </Text>
         </View>
 
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7, marginTop: 16, textAlign: 'justify' }}>
+        <Text style={[styles.bodyText, { marginTop: 16, textAlign: 'justify', marginBottom: 0 }]}>
           No Nome Social você compara outras formas de assinar; o convite e o passo a passo estão na seção final deste PDF.
         </Text>
 
-        <Text style={{ fontSize: 9, color: '#8A661C', lineHeight: 1.65, marginTop: 12, textAlign: 'center', fontStyle: 'italic' }}>
+        <Text style={{ fontSize: 9, color: '#6B7280', lineHeight: 1.65, marginTop: 12, textAlign: 'center', fontStyle: 'italic' }}>
           Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
         </Text>
 

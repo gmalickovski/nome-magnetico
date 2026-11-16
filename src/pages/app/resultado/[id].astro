@@ -293,7 +293,7 @@ if (isSocialSummaryView && dataScoreSocial) {
 }
 ---
 
-<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
+<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} forceFreePdf={isFree || forceBirthMode || (isNomeSocial && !showDualCertificate)} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
   <div>
 
     {/* ── PROCESSANDO ─────────────────────────────────────────────── */}

@@ -8,11 +8,12 @@ export interface Props {
   analysisId: string;
   productType?: string;
   isFree?: boolean;
+  forceFreePdf?: boolean;
   showActions?: boolean;
   isAnalyst?: boolean;
 }
 
-const { title, analysisId, productType = 'nome_social', isFree = false, showActions = true, isAnalyst = false } = Astro.props;
+const { title, analysisId, productType = 'nome_social', isFree = false, forceFreePdf = false, showActions = true, isAnalyst = false } = Astro.props;
 ---
 
 <AppLayout
@@ -25,6 +26,7 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
       analysisId={analysisId}
       productType={productType}
       isFree={isFree}
+      forceFreePdf={forceFreePdf}
       showFab={false}
       isAnalyst={isAnalyst}
     />
@@ -40,6 +42,7 @@ const { title, analysisId, productType = 'nome_social', isFree = false, showActi
       analysisId={analysisId}
       productType={productType}
       isFree={isFree}
+      forceFreePdf={forceFreePdf}
       redoHref={`/app/analise/${productType.replace('_', '-')}`}
     />
   )}

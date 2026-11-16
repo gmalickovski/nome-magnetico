@@ -93,7 +93,7 @@ export function ChatPdfConcludeModal({
               )}
             </Button>
             <p className="text-xs text-gray-300 text-center leading-relaxed">
-              Guarda em Minhas análises e inicia o download.
+              Guarda em Minhas análises, inicia o download e volta ao início.
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export function ChatPdfConcludeModal({
               )}
             </Button>
             <p className="text-xs text-gray-400 text-center leading-relaxed">
-              Guarda em Minhas análises e abre essa página.
+              Guarda em Minhas análises e volta ao início.
             </p>
           </div>
         </div>
