@@ -177,6 +177,8 @@ function buildCandidatesList(ranking: any, isEmpresa: boolean): SavedAnalysisCan
 }
 
 export interface BuildSavedAnalysesOptions {
+  /** Resolve a birth card linked from the dashboard using an owned source row. */
+  preferredBirthSourceAnalysisId?: string | null;
   isAdmin: boolean;
   profileBirthName?: string | null;
   profileBirthDate?: string | null;
@@ -596,6 +598,7 @@ export function buildSavedAnalysesItems(
 
   if (!hasCompletedFreeBirthRow) {
     const sourceSocial =
+      items.find(item => item.id === options.preferredBirthSourceAnalysisId && item.productType === 'nome_social' && item.status === 'complete' && Boolean(item.birthName?.trim())) ??
       items.find(
         (item) =>
           item.productType === 'nome_social' &&

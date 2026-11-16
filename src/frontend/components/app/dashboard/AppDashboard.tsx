@@ -1,4 +1,6 @@
 import { ArquetipoResumoCard } from '../ArquetipoResumoCard';
+import { createDashboardSwipe } from './dashboard-swipe';
+import { buildSavedAnalysisPanelHref } from '../../../lib/analysis-panel-navigation';
 import type { ArchetypeSummary } from '../../../../shared/archetype-summary';
 import { GlossaryInlineTerm } from '../../glossary/GlossaryInlineTerm';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -331,6 +333,7 @@ export function AppDashboard(props: AppDashboardProps) {
   }, [props.userId, serverFavoriteId]);
 
   const [slidePhase, setSlidePhase] = useState<'idle' | 'entering-next' | 'entering-prev'>('idle');
+  const swipeRef = useRef(createDashboardSwipe());
 
   const safeIndex = Math.min(activeIndex, Math.max(0, orderedSlides.length - 1));
   const activeSlide = orderedSlides[safeIndex] ?? orderedSlides[0];
@@ -447,7 +450,7 @@ export function AppDashboard(props: AppDashboardProps) {
     return false;
   }, [offerDismissed, props]);
 
-  const resultadoHref = activeSlide.resultadoHrefOverride ?? `/app/resultado/${activeSlide.id}`;
+  const resultadoHref = buildSavedAnalysisPanelHref(activeSlide.id);
   const pdfAnalysisId = activeSlide.pdfAnalysisId ?? activeSlide.id;
   const isCurrentFavorite = !activeSlide.isFree && favoriteId === activeSlide.id;
   const gainPts = activeSlide.score - activeSlide.birthScore;
@@ -507,7 +510,31 @@ export function AppDashboard(props: AppDashboardProps) {
 
           <div
             className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-5 sm:p-8 lg:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+            onPointerDown={(event) => {
+              swipeRef.current.consumeClick();
+              if (event.pointerType !== 'touch' || !hasMultipleSlides) return;
+              const target = event.target as Element;
+              const eligible = !target.closest('button,input,textarea,select,[contenteditable="true"],[role="slider"]');
+              swipeRef.current.start(event.pointerId, event.clientX, event.clientY, eligible);
+            }}
+            onPointerMove={(event) => {
+              if (event.pointerType !== 'touch') return;
+              if (swipeRef.current.move(event.pointerId, event.clientX, event.clientY)) {
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }
+            }}
+            onPointerUp={(event) => {
+              if (event.pointerType !== 'touch') return;
+              const direction = swipeRef.current.end(event.pointerId, event.clientX, event.clientY);
+              if (direction === 'next') goNextSlide();
+              if (direction === 'prev') goPrevSlide();
+            }}
+            onPointerCancel={(event) => swipeRef.current.cancel(event.pointerId)}
+            onClickCapture={(event) => {
+              if (swipeRef.current.consumeClick()) { event.preventDefault(); event.stopPropagation(); }
+            }}
             style={{
+              touchAction: 'pan-y pinch-zoom',
               borderColor: `${activeVisual.stroke}59`,
               transition: 'border-color 0.7s ease',
             }}
