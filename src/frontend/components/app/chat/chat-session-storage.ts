@@ -16,6 +16,10 @@ import type { ChatCollectState } from './decide-live-bridge.js';
 export const CHAT_SESSION_STORAGE_VERSION = 7 as const;
 
 const STORAGE_VERSION = CHAT_SESSION_STORAGE_VERSION;
+export const CHAT_SESSION_CHANGED_EVENT = 'nm-chat-session-change';
+function notifyChatSessionChanged(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHAT_SESSION_CHANGED_EVENT));
+}
 
 export interface PersistedChatSession {
   version: typeof STORAGE_VERSION;
@@ -94,6 +98,7 @@ export function saveChatSession(userId: string, session: PersistedChatSession): 
   if (!userId || typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(storageKey(userId), JSON.stringify(session));
+    notifyChatSessionChanged();
   } catch {
     // quota / private mode — falha silenciosa
   }
@@ -103,6 +108,7 @@ export function clearChatSession(userId: string): void {
   if (!userId || typeof localStorage === 'undefined') return;
   try {
     localStorage.removeItem(storageKey(userId));
+    notifyChatSessionChanged();
   } catch {
     // ignore
   }

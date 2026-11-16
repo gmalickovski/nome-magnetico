@@ -938,7 +938,7 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
 
 ---
 
-<AppLayout title="Dashboard">
+<AppLayout title="Dashboard" showMobileAnalysisCta={hasNomeSocial}>
   {hasNomeSocial && (
     <a
       slot="header-actions"

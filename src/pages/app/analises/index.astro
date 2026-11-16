@@ -13,7 +13,9 @@ const profile = await getProfile(user.id);
 const isAdmin = profile?.role === 'admin';
 
 const analyses = await getUserAnalyses(user.id);
+const initialSelectedId = Astro.url.searchParams.get('id');
 const savedItems = buildSavedAnalysesItems(analyses, {
+  preferredBirthSourceAnalysisId: initialSelectedId?.endsWith('__birth') ? initialSelectedId.slice(0, -7) : null,
   isAdmin,
   profileBirthName: profile?.birth_name ?? null,
   profileBirthDate: profile?.birth_date ?? null,
@@ -29,10 +31,9 @@ const hasAnyPaidAccess =
     hasActiveSubscription(user.id, 'nome_empresa'),
   ]).then((results) => results.some(Boolean)));
 const isLocked = !hasAnyPaidAccess && !hasPaidAnalysisHistory;
-const initialSelectedId = Astro.url.searchParams.get('id');
 ---
 
-<AppLayout title="Minhas Análises" noPadding mobileFullViewport>
+<AppLayout title="Minhas Análises" noPadding mobileFullViewport showMobileAnalysisCta={!isLocked && hasAnyPaidAccess}>
   {!isLocked && hasAnyPaidAccess && (
     <a
       slot="header-actions"
@@ -55,6 +56,7 @@ const initialSelectedId = Astro.url.searchParams.get('id');
       hasAnyPaidAccess={hasAnyPaidAccess}
       isLocked={isLocked}
       initialSelectedId={initialSelectedId}
+      initialPanelOpen={Astro.url.searchParams.get('painel') === '1'}
     />
   </div>
 </AppLayout>

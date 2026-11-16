@@ -143,15 +143,16 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const novaAnaliseAnchors = anchors.filter((a) => a.includes('+ Nova Análise'));
     const comecarAnchors = anchors.filter((a) => a.includes('Começar Agora'));
 
-    assert.equal(novaAnaliseAnchors.length, 2, 'deve ter botão + Nova Análise no header e no mobile');
+    assert.equal(novaAnaliseAnchors.length, 1, 'o CTA desktop permanece; o mobile usa o header compartilhado');
     for (const a of novaAnaliseAnchors) {
       assert.match(a, /href="\/app\/analise\/nome-social"/);
       assert.doesNotMatch(a, /href="\/app"/);
     }
-    assert.ok(
-      novaAnaliseAnchors.some((a) => a.includes('lg:hidden')),
-      'botão mobile + Nova Análise deve usar lg:hidden para cobrir <1024px'
-    );
+    const mobileHeader = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'AppMobileHeader.tsx'), 'utf8');
+    assert.match(mobileHeader, /lg:hidden/);
+    assert.match(mobileHeader, /href="\/app\/analise\/nome-social"/);
+    assert.match(mobileHeader, /hasUnfinishedSession \? 'Retomar Análise' : 'Nova Análise'/);
+    assert.match(readFileSync(analisesFile, 'utf8'), /showMobileAnalysisCta=\{!isLocked && hasAnyPaidAccess\}/);
 
     assert.equal(comecarAnchors.length, 1);
     assert.match(comecarAnchors[0], /href="\/app\/analise\/nome-social"/);

@@ -29,6 +29,7 @@ export interface MyAnalysesWorkspaceProps {
   hasAnyPaidAccess: boolean;
   isLocked: boolean;
   initialSelectedId?: string | null;
+  initialPanelOpen?: boolean;
 }
 
 const PRODUCT_LABEL: Record<string, string> = {
@@ -209,6 +210,7 @@ export default function MyAnalysesWorkspace({
   hasAnyPaidAccess,
   isLocked,
   initialSelectedId = null,
+  initialPanelOpen = false,
 }: MyAnalysesWorkspaceProps) {
   const [items, setItems] = useState<SavedAnalysisItem[]>(initialItems);
   const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -219,7 +221,9 @@ export default function MyAnalysesWorkspace({
     return initialItems[0]?.id ?? null;
   });
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [mobileSheetSnap, setMobileSheetSnap] = useState<ReadingSheetSnap>('closed');
+  const [mobileSheetSnap, setMobileSheetSnap] = useState<ReadingSheetSnap>(
+    initialPanelOpen && initialItems.some(item => item.id === initialSelectedId) ? 'full' : 'closed',
+  );
   const [favoriteId, setFavoriteId] = useState<string | null>(() => {
     const fromServer = initialItems.find((item) => item.isFavorite)?.id ?? null;
     if (fromServer) return fromServer;
@@ -483,18 +487,6 @@ export default function MyAnalysesWorkspace({
               <h1 className="font-cinzel text-2xl sm:text-[1.65rem] font-bold text-[#e5e2e1] tracking-wide leading-tight">
                 Minhas Análises
               </h1>
-              {hasAnyPaidAccess && (
-                <a
-                  href="/app/analise/nome-social"
-                  data-nm-header-cta="analise"
-                  data-user-id={userId}
-                  data-default-label="+ Nova Análise"
-                  data-resume-label="Retomar Análise"
-                  className="lg:hidden inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.3)] hover:bg-[#f2ca50] transition-all w-full sm:w-auto"
-                >
-                  + Nova Análise
-                </a>
-              )}
             </div>
 
             {/* Filtros por produto */}

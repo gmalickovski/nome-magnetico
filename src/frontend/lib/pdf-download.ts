@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { track } from './analytics';
+import { preparePdfDownload } from './pdf-download-lifecycle';
 
 export type PdfOverlayPhase =
   | 'idle'
   | 'preparing'
   | 'generating'
+  | 'ready'
   | 'error'
   | 'email_not_confirmed';
 
@@ -33,7 +35,7 @@ export function buildPdfRequestUrl(
   return `${withFormat}${withFormat.includes('?') ? '&' : '?'}t=${Date.now()}`;
 }
 
-function resolveDownloadFilename(
+export function resolveDownloadFilename(
   contentDisposition: string,
   productType = 'nome_social',
 ): string {
@@ -100,14 +102,10 @@ export async function downloadAnalysisPdf({
   if (isWebView) {
     window.open(resolvedUrl, '_blank');
   } else {
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+    const download = preparePdfDownload(blob, filename);
+    download.start();
+    // A browser may consume the Blob asynchronously, especially on mobile.
+    window.setTimeout(download.dispose, 60_000);
   }
 
   return { ok: true, filename };
