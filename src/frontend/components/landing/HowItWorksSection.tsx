@@ -28,8 +28,8 @@ const steps = [
   },
   {
     stepNumber: '03',
-    title: 'Escolha Entre 3 Opções',
-    body: 'Mudança mínima, nome encurtado ou acento sutil: cada opção mostra nota, nível e o que mudou.',
+    title: 'Compare Variações Rankeadas',
+    body: 'Mudança mínima, nome encurtado ou acento sutil: sugestões acima da sua nota atual (até 9 no total), com nível e o que mudou.',
     Figure: ChooseFigure,
   },
   {
@@ -350,8 +350,8 @@ export function HowItWorksSection() {
                     title="Quatro Passos Até a Sua Nova Assinatura"
                     description={
                       reduceMotion
-                        ? 'Do seu nome de hoje às 3 opções, por regras fixas.'
-                        : 'Do seu nome de hoje às 3 opções, com cálculo por regras fixas da numerologia cabalística.'
+                        ? 'Do seu nome de hoje às melhores variações, por regras fixas.'
+                        : 'Do seu nome de hoje às variações harmonizadas, com cálculo por regras fixas da numerologia cabalística.'
                     }
                     className="text-center"
                     revealed={true}
@@ -460,8 +460,8 @@ export function HowItWorksSection() {
               title="Quatro Passos Até a Sua Nova Assinatura"
               description={
                 reduceMotion
-                  ? 'Do seu nome de hoje às 3 opções, por regras fixas.'
-                  : 'Do seu nome de hoje às 3 opções, com cálculo por regras fixas da numerologia cabalística.'
+                  ? 'Do seu nome de hoje às melhores variações, por regras fixas.'
+                  : 'Do seu nome de hoje às variações harmonizadas, com cálculo por regras fixas da numerologia cabalística.'
               }
               className="text-center"
               revealed={true}

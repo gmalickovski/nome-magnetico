@@ -22,11 +22,11 @@ type ProductType = SellableProductType;
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
 
 const NOME_SOCIAL_DELIVERABLES = [
-  '3 opções com nota, nível e o que mudou',
+  'sugestões rankeadas acima da sua nota (até 9 variações)',
   'triângulos Pessoal, Social e do Destino',
   'lições kármicas e arquétipo',
   'compare os nomes que você quiser',
-  'PDF com guia de 30 dias',
+  'guia prático de 30 dias no PDF',
 ] as const;
 
 function promotionAppliesToProduct(
@@ -323,7 +323,7 @@ export function PricingSection({
                       : 'bg-[#D4AF37] text-[#1A1A1A] hover:bg-[#f2ca50] shadow-lg shadow-[#D4AF37]/25'
                   }`}
                 >
-                  Ver Minhas 3 Opções
+                  Ver Minhas Opções de Nome
                 </button>
               </div>
             </div>

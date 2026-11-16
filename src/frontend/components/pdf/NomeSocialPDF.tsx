@@ -270,6 +270,7 @@ function scoreColor(score: number, isV3: boolean = false): string {
   if (isV3) {
     return getScoreTierVisual(score).stroke;
   }
+  // Legado v1 (pré-v3): mantido apenas para análises históricas anteriores à régua v3.
   if (score >= 90) return '#10B981'; // Excelente
   if (score >= 70) return '#84CC16'; // Bom
   if (score >= 40) return '#FACC15'; // Aceitável
@@ -901,7 +902,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </View>
 
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
-            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para dissolvê-los e recuperar a fluidez.
+            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para reorganizar sua assinatura e recuperar a fluidez.
           </Text>
 
           {/* Arcanos info box */}
@@ -1953,7 +1954,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             O Poder da Nova Frequência
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7 }}>
-            O nome social harmonizado é a camada de refinamento sobre o campo original — ele emana qualidades reorganizadas, escolhidas com precisão vibracional. Quando usado consistentemente na assinatura, nas redes sociais e nas apresentações do dia a dia, ele reconfigura o campo magnético pessoal: dissolve as sequências de resistência dos triângulos e amplifica as qualidades genuínas que estavam sendo bloqueadas pelo padrão anterior.
+            O nome social harmonizado é a camada de refinamento sobre o campo original — ele emana qualidades reorganizadas, escolhidas com precisão vibracional. Quando usado consistentemente na assinatura, nas redes sociais e nas apresentações do dia a dia, ele reconfigura o campo magnético pessoal: evita as sequências repetitivas de resistência nos triângulos e amplifica as qualidades genuínas que estavam sendo bloqueadas pelo padrão anterior.
           </Text>
         </View>
         <View wrap={false}>
