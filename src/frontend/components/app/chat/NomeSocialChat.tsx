@@ -2281,8 +2281,14 @@ export function NomeSocialChat({
                       extraActionSlot={(
                         <form
                           onSubmit={handleEvaluateManual}
-                          className="flex flex-col sm:flex-row flex-1 min-w-0 items-stretch sm:items-center gap-3"
+                          className="flex flex-col flex-1 min-w-0 gap-2"
                         >
+                          <label htmlFor="manual-name" className="text-xs sm:text-sm leading-relaxed text-[#e5e2e1]/80">
+                            <span className="font-semibold text-[#f2ca50]">Teste um nome seu:</span> digite o nome que você
+                            prefere e veja a nota dele. É diferente do <span className="whitespace-nowrap">“Gerar mais”</span>,
+                            que traz novas sugestões do sistema.
+                          </label>
+                          <div className="flex flex-col sm:flex-row min-w-0 items-stretch sm:items-center gap-3">
                           <input
                             id="manual-name"
                             type="text"
@@ -2293,7 +2299,7 @@ export function NomeSocialChat({
                             disabled={manualLoading || isRegenerating}
                             aria-label="Avaliar um nome que você escolheu (opcional)"
                             aria-describedby="manual-name-help manual-name-status"
-                            placeholder="Avaliar um nome que você escolheu (opcional)"
+                            placeholder="Digite um nome para testar"
                             className="w-full sm:flex-1 min-w-0 rounded-full font-inter transition-all duration-150 min-h-[44px] lg:min-h-0 lg:h-10 px-4 text-[15px] bg-[#1C1C1C] border border-[#D4AF37]/40 text-[#e5e2e1] placeholder:text-[#e5e2e1]/60 focus:placeholder:text-transparent hover:border-[#D4AF37] focus:outline-none focus:border-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-50"
                           />
                           <button
@@ -2303,6 +2309,7 @@ export function NomeSocialChat({
                           >
                             {manualLoading ? 'Avaliando...' : 'Avaliar este nome'}
                           </button>
+                          </div>
                         </form>
                       )}
                       extraNoticeSlot={(
