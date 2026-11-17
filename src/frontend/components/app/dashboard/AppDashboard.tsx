@@ -235,10 +235,10 @@ function StarIcon({ filled, className = 'h-3.5 w-3.5' }: { filled: boolean; clas
   );
 }
 
-function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
+function ChevronIcon({ direction, small = false }: { direction: 'left' | 'right'; small?: boolean }) {
   return (
     <svg
-      className="h-7 w-7"
+      className={small ? 'h-5 w-5' : 'h-7 w-7'}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -793,7 +793,7 @@ export function AppDashboard(props: AppDashboardProps) {
 
         {/* Navegação do carrossel no mobile + indicadores */}
         {hasMultipleSlides && (
-          <div className="order-first mb-4 flex items-center justify-center gap-4 sm:order-none sm:mb-0 sm:mt-4">
+          <div className="order-first -mt-3 mb-2.5 flex items-center justify-center gap-3 sm:order-none sm:mb-0 sm:mt-4 sm:gap-4">
             <button
               type="button"
               onClick={goPrevSlide}
@@ -807,7 +807,7 @@ export function AppDashboard(props: AppDashboardProps) {
                   : 'pointer-events-none opacity-0'
               }`}
             >
-              <ChevronIcon direction="left" />
+              <ChevronIcon direction="left" small />
             </button>
 
             <div className="flex items-center gap-2" role="tablist" aria-label="Selecionar análise">
@@ -847,7 +847,7 @@ export function AppDashboard(props: AppDashboardProps) {
                   : 'pointer-events-none opacity-0'
               }`}
             >
-              <ChevronIcon direction="right" />
+              <ChevronIcon direction="right" small />
             </button>
           </div>
         )}
