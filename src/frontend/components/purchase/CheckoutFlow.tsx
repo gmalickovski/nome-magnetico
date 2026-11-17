@@ -51,7 +51,7 @@ const PRODUCT_STATIC: Record<ProductType, {
       'Ranking das assinaturas candidatas com score 0–100',
       'Nome social recomendado e variações harmonizadas',
       '5 números principais: Expressão, Destino, Motivação, Missão e Impressão',
-      '4 triângulos cabalísticos: Vida, Pessoal, Social e Destino',
+      'Triângulo da Vida como leitura principal, com Pessoal, Social e Destino como complementares',
       'Arcanos regentes, sequências de passagem e trânsito atual',
       'Bloqueios, débitos, lições kármicas e tendências ocultas',
       'Compatibilidade Expressão × Destino',
