@@ -21,7 +21,16 @@ import {
   inferGlossaryCategory,
 } from '../src/shared/glossary/canonical-terms.ts';
 
-const FORCAR_TEXTO = new Set(['nome-de-ouro']);
+// DEV-312: verbetes cujo texto no banco precisa ser substituído pelo do catálogo (sem saúde, sem travessão).
+const FORCAR_TEXTO = new Set([
+  'nome-de-ouro',
+  'bloqueios-energeticos',
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `bloqueio-${n}${n}${n}`),
+  'triangulo-da-vida',
+  'tensao-vibracional',
+  'numero-de-expressao',
+  'estrela-cabalistica',
+]);
 const dryRun = process.argv.includes('--dry-run');
 
 const url = process.env.SUPABASE_URL;

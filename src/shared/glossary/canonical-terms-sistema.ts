@@ -205,7 +205,7 @@ O nome começa com **100 pontos** e recebe descontos, cada grupo com teto:
 | O que desconta | Quanto | Teto |
 | --- | --- | --- |
 | Sequências no Triângulo da Vida | 15 por bloqueio, +2 por linha extra | 45 |
-| Compatibilidade Expressão × Destino | Neutra: 6 · Tensão Vibracional: 18 | 18 |
+| Compatibilidade Expressão e Destino | Neutra: 6 · Tensão Vibracional: 18 | 18 |
 | Débitos Kármicos | 8 por origem, +4 se acentuado | 20 |
 | Tendências Ocultas | 3 cada | 9 |
 | Lições Kármicas | 2 cada | 8 |
@@ -241,11 +241,12 @@ As sugestões do sistema começam sempre em **Favorável** ou acima.`,
   },
   {
     slug: 'compatibilidade-expressao-destino',
-    term: 'Compatibilidade Expressão × Destino',
+    term: 'Compatibilidade entre Expressão e Destino',
     category: 'calculo',
     aliases: [
-      'Compatibilidade Expressão × Destino',
+      'Compatibilidade Expressão e Destino',
       'Compatibilidade Expressão x Destino',
+      'Compatibilidade Expressão × Destino',
       'compatibilidade vibracional',
     ],
     exactCaseAliases: ['Compatibilidade'],

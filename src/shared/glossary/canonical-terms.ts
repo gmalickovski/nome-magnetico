@@ -193,7 +193,7 @@ const TERMOS_BASE: GlossaryTermEntry[] = [
       'Calculado pela soma de todas as letras do nome completo; revela seus talentos naturais, postura profissional e forma de agir no mundo.',
     definitionMarkdown: `### O que é o Número de Expressão
 
-O **Número de Expressão** nasce da conversão de **todas as letras do nome completo** (prenome e sobrenomes) segundo a tabela cabalística, considerando o valor dos acentos (agudo +2, til +3, circunflexo +7, grave e trema ×2; veja **Acentos no Cálculo**).
+O **Número de Expressão** nasce da conversão de **todas as letras do nome completo** (prenome e sobrenomes) segundo a tabela cabalística, considerando o valor dos acentos (agudo +2, til +3, circunflexo +7, grave e trema, vezes 2; veja **Acentos no Cálculo**).
 
 ### Como ele atua na prática
 
@@ -220,7 +220,7 @@ O **Número de Destino** é obtido pela soma reduzida do dia, mês e ano de nasc
 
 ### Relação com o nome de uso
 
-O nome nunca muda o seu Destino — ele muda a **qualidade da ponte** entre quem você é e o que o Destino pede que você realize. Quando o nome e o Destino possuem compatibilidade total ou complementar, oportunidades, parcerias e clareza de propósito fluem com menor resistência.`,
+O nome nunca muda o seu Destino, ele muda a **qualidade da ponte** entre quem você é e o que o Destino pede que você realize. Quando o nome e o Destino possuem compatibilidade total ou complementar, oportunidades, parcerias e clareza de propósito fluem com menor resistência.`,
   },
   {
     slug: 'numero-de-motivacao',
@@ -269,7 +269,7 @@ O Destino é fixo (vem da data) e a Expressão vem do nome. Por isso a Missão �
     slug: 'numero-de-personalidade',
     term: 'Número de Impressão (Personalidade)',
     category: 'numeros',
-    aliases: ['Número de Impressão', 'Número de Personalidade', 'Impressão — A Máscara Social'],
+    aliases: ['Número de Impressão', 'Número de Personalidade', 'Impressão, a Máscara Social'],
     exactCaseAliases: ['Impressão', 'Personalidade'],
     relatedNumber: null,
     tags: ['Números Principais', 'Consoantes', 'Identidade'],
@@ -354,17 +354,17 @@ Sem suporte estrutural nos triângulos, a carga do 22 pode se converter em sobre
     category: 'triangulos',
     aliases: ['Triângulo da Vida', 'Triângulo Básico', 'Pirâmide da Vida'],
     relatedNumber: null,
-    tags: ['4 Triângulos', 'Base do Score', 'Vitalidade'],
+    tags: ['4 Triângulos', 'Base da Nota', 'Estrutura'],
     relatedSlugs: ['triangulo-pessoal', 'triangulo-social', 'bloqueios-energeticos'],
     shortSummary:
-      'Construído apenas com o valor puro de cada letra do nome; revela a estrutura fundamental de existência e concentra os bloqueios que pesam no score.',
+      'Construído apenas com o valor puro de cada letra do nome; revela a estrutura fundamental do nome e concentra os bloqueios que pesam na nota.',
     definitionMarkdown: `### A pirâmide fundamental
 
 O **Triângulo da Vida** é formado alinhando o valor numérico de cada letra do nome completo e reduzindo pares adjacentes linha após linha até restar o **Arcano Regente** no vértice.
 
-### Papel determinante no score
+### Papel determinante na nota
 
-No motor cabalístico do Nome Magnético, as sequências de três ou mais algarismos repetidos no Triângulo da Vida compõem os bloqueios estruturais que impactam diretamente a pontuação do nome, pois retratam a vitalidade de base e o fluxo de prosperidade cotidiana.`,
+No motor cabalístico do Nome Magnético, as sequências de três ou mais algarismos repetidos no Triângulo da Vida compõem os bloqueios estruturais que impactam diretamente a pontuação do nome, pois retratam a base do nome e o fluxo do dia a dia.`,
   },
   {
     slug: 'triangulo-pessoal',
@@ -378,7 +378,7 @@ No motor cabalístico do Nome Magnético, as sequências de três ou mais algari
       'Calculado somando o dia reduzido de nascimento ao valor das letras; espelha a vida íntima, afetiva e as reações emocionais internas.',
     definitionMarkdown: `### O espelho da vida íntima
 
-O **Triângulo Pessoal** cruza a assinatura de cada letra com a vibração do **dia do seu nascimento reduzido**. Ele revela como você reage emocionalmente quando está fora dos papéis sociais — nos vínculos próximos, em casa e no diálogo interior.
+O **Triângulo Pessoal** cruza a assinatura de cada letra com a vibração do **dia do seu nascimento reduzido**. Ele revela como você reage emocionalmente quando está fora dos papéis sociais, nos vínculos próximos, em casa e no diálogo interior.
 
 ### Reflexos vibracionais
 
@@ -418,7 +418,7 @@ O **Triângulo do Destino** aplica à base do nome a soma reduzida de **dia + m�
 
 ### O que observar
 
-Atritos nessa camada frequentemente aparecem quando há muita dedicação diária com colheita abaixo do potencial — algo que variações harmonizadas buscam destravar integralmente.`,
+Atritos nessa camada frequentemente aparecem quando há muita dedicação diária com colheita abaixo do potencial, algo que variações harmonizadas buscam destravar integralmente.`,
   },
 
   // ── 3. BLOQUEIOS ENERGÉTICOS ─────────────────────────────────────────────
@@ -444,11 +444,11 @@ Sempre que o mesmo algarismo aparece **três ou mais vezes em sequência** (como
 
 ### Por que analisar todos os 4 triângulos
 
-Uma variação de nome só pode ser considerada verdadeiramente limpa quando elimina repetições tanto no **Triângulo da Vida** quanto nos triângulos **Pessoal, Social e de Destino**, além de observar o aspecto de saúde e vitalidade associado a cada código.`,
+Uma variação de nome só pode ser considerada verdadeiramente limpa quando elimina repetições tanto no **Triângulo da Vida** quanto nos triângulos **Pessoal, Social e de Destino**.`,
   },
   {
     slug: 'bloqueio-111',
-    term: 'Bloqueio 111 — Iniciação e Coragem',
+    term: 'Bloqueio 111: Iniciação e Coragem',
     category: 'bloqueios',
     aliases: ['Bloqueio 111', 'Sequência 111', '111'],
     relatedNumber: 1,
@@ -458,15 +458,11 @@ Uma variação de nome só pode ser considerada verdadeiramente limpa quando eli
       'Trava a tomada de iniciativa, gerando hesitação prolongada para iniciar projetos novos ou assumir liderança própria.',
     definitionMarkdown: `### O que o 111 representa
 
-Quando o número **1** se repete em bloco (**111**), a energia de começo e pioneirismo fica congestionada. Ideias ficam no papel por insegurança, procrastinação ou dificuldade em dar o primeiro passo sem aprovação externa.
-
-### Aspecto de vitalidade
-
-Costuma associar-se a tensão craniana, dores de cabeça recorrentes e fadiga ligada à pressão por decidir sozinho.`,
+Quando o número **1** se repete em bloco (**111**), a energia de começo e pioneirismo fica congestionada. Ideias ficam no papel por insegurança, procrastinação ou dificuldade em dar o primeiro passo sem aprovação externa.`,
   },
   {
     slug: 'bloqueio-222',
-    term: 'Bloqueio 222 — Associação e Vínculos',
+    term: 'Bloqueio 222: Associação e Vínculos',
     category: 'bloqueios',
     aliases: ['Bloqueio 222', 'Sequência 222', '222'],
     relatedNumber: 2,
@@ -476,15 +472,11 @@ Costuma associar-se a tensão craniana, dores de cabeça recorrentes e fadiga li
       'Gera oscilação em parcerias, indecisão afetiva ou dificuldade para estabelecer limites saudáveis em colaborações.',
     definitionMarkdown: `### O que o 222 representa
 
-O bloqueio **222** concentra excesso de dúvida na vibração da cooperação. A pessoa tende a ceder demais para evitar conflitos ou a viver sociedades e relacionamentos marcados por instabilidade e falta de reciprocidade clara.
-
-### Aspecto de vitalidade
-
-Relaciona-se frequentemente a sensibilidade digestiva ou retenção emocional por não expressar desacordos na hora certa.`,
+O bloqueio **222** concentra excesso de dúvida na vibração da cooperação. A pessoa tende a ceder demais para evitar conflitos ou a viver sociedades e relacionamentos marcados por instabilidade e falta de reciprocidade clara.`,
   },
   {
     slug: 'bloqueio-333',
-    term: 'Bloqueio 333 — Expressão e Comunicação',
+    term: 'Bloqueio 333: Expressão e Comunicação',
     category: 'bloqueios',
     aliases: ['Bloqueio 333', 'Sequência 333', '333'],
     relatedNumber: 3,
@@ -494,15 +486,11 @@ Relaciona-se frequentemente a sensibilidade digestiva ou retenção emocional po
       'Obstrui a fluidez comunicativa e criativa, gerando ruídos de interpretação, receio de se expor ou dispersão de talentos.',
     definitionMarkdown: `### O que o 333 representa
 
-A sequência **333** trava justamente o fluxo da expressão criativa e da comunicação aberta. Mesmo quem tem ótimo repertório sente dificuldade para divulgar seu trabalho, precificar ideias ou se posicionar com leveza.
-
-### Aspecto de vitalidade
-
-Tende a reverberar em garganta, cordas vocais, tensão cervical e exaustão por excesso de falas não ditas.`,
+A sequência **333** trava justamente o fluxo da expressão criativa e da comunicação aberta. Mesmo quem tem ótimo repertório sente dificuldade para divulgar seu trabalho, precificar ideias ou se posicionar com leveza.`,
   },
   {
     slug: 'bloqueio-444',
-    term: 'Bloqueio 444 — Estruturação e Trabalho',
+    term: 'Bloqueio 444: Estruturação e Trabalho',
     category: 'bloqueios',
     aliases: ['Bloqueio 444', 'Sequência 444', '444'],
     relatedNumber: 4,
@@ -512,15 +500,11 @@ Tende a reverberar em garganta, cordas vocais, tensão cervical e exaustão por 
       'Cria sensação de peso, sobrecarga operacional e esforço desproporcional para construir estabilidade material e profissional.',
     definitionMarkdown: `### O que o 444 representa
 
-O bloqueio **444** cristaliza a energia da disciplina em rigidez ou excesso de carga. É comum sentir que tudo depende de trabalho duro sem alívio, com atrasos burocráticos ou dificuldade em estruturar processos duradouros.
-
-### Aspecto de vitalidade
-
-Pode se manifestar em rigidez muscular, coluna, articulações e sensação crônica de esgotamento físico.`,
+O bloqueio **444** cristaliza a energia da disciplina em rigidez ou excesso de carga. É comum sentir que tudo depende de trabalho duro sem alívio, com atrasos burocráticos ou dificuldade em estruturar processos duradouros.`,
   },
   {
     slug: 'bloqueio-555',
-    term: 'Bloqueio 555 — Liberdade e Mudanças',
+    term: 'Bloqueio 555: Liberdade e Mudanças',
     category: 'bloqueios',
     aliases: ['Bloqueio 555', 'Sequência 555', '555'],
     relatedNumber: 5,
@@ -530,15 +514,11 @@ Pode se manifestar em rigidez muscular, coluna, articulações e sensação crô
       'Provoca inquietação constante, mudanças abruptas sem base firme ou medo de sair da zona de conforto.',
     definitionMarkdown: `### O que o 555 representa
 
-O **555** desordena a energia de movimento e adaptação. Ora gera impaciência que interrompe projetos antes da maturação, ora cria bloqueio frente a transições inevitáveis na carreira ou rotina.
-
-### Aspecto de vitalidade
-
-Associa-se a agitação do sistema nervoso, insônia leve e oscilação metabólica ligada à ansiedade.`,
+O **555** desordena a energia de movimento e adaptação. Ora gera impaciência que interrompe projetos antes da maturação, ora cria bloqueio frente a transições inevitáveis na carreira ou rotina.`,
   },
   {
     slug: 'bloqueio-666',
-    term: 'Bloqueio 666 — Harmonia e Afeto',
+    term: 'Bloqueio 666: Harmonia e Afeto',
     category: 'bloqueios',
     aliases: ['Bloqueio 666', 'Sequência 666', '666'],
     relatedNumber: 6,
@@ -548,15 +528,11 @@ Associa-se a agitação do sistema nervoso, insônia leve e oscilação metaból
       'Indica atritos no equilíbrio afetivo e doméstico, perfeccionismo relacional ou tendência a carregar responsabilidades familiares além da conta.',
     definitionMarkdown: `### O que o 666 representa
 
-Longe de superstições, na numerologia cabalística a sequência **666** aponta congestionamento na área do afeto, da estética e da vida familiar: cobrança exagerada por harmonia perfeita, ciúme ou desgaste tentando resolver problemas de todos ao redor.
-
-### Aspecto de vitalidade
-
-Relaciona-se ao sistema cardiovascular emocional e tensão na região torácica e ombros.`,
+Longe de superstições, na numerologia cabalística a sequência **666** aponta congestionamento na área do afeto, da estética e da vida familiar: cobrança exagerada por harmonia perfeita, ciúme ou desgaste tentando resolver problemas de todos ao redor.`,
   },
   {
     slug: 'bloqueio-777',
-    term: 'Bloqueio 777 — Conexão e Confiança',
+    term: 'Bloqueio 777: Conexão e Confiança',
     category: 'bloqueios',
     aliases: ['Bloqueio 777', 'Sequência 777', '777'],
     relatedNumber: 7,
@@ -566,15 +542,11 @@ Relaciona-se ao sistema cardiovascular emocional e tensão na região torácica 
       'Favorece isolamento excessivo, excesso de análise crítica que paralisa ações ou ceticismo quanto à própria intuição.',
     definitionMarkdown: `### O que o 777 representa
 
-O bloqueio **777** intensifica a busca por respostas perfeitas até o ponto de desconectar a pessoa do convívio prático. Gera receio de confiar, hipervigilância mental e tendência à solidão defensiva.
-
-### Aspecto de vitalidade
-
-Pode refletir em distúrbios do sono, fadiga mental e baixa reserva energética por excesso de ruminação.`,
+O bloqueio **777** intensifica a busca por respostas perfeitas até o ponto de desconectar a pessoa do convívio prático. Gera receio de confiar, hipervigilância mental e tendência à solidão defensiva.`,
   },
   {
     slug: 'bloqueio-888',
-    term: 'Bloqueio 888 — Poder e Abundância',
+    term: 'Bloqueio 888: Poder e Abundância',
     category: 'bloqueios',
     aliases: ['Bloqueio 888', 'Sequência 888', '888'],
     relatedNumber: 8,
@@ -584,29 +556,21 @@ Pode refletir em distúrbios do sono, fadiga mental e baixa reserva energética 
       'Aponta ciclos financeiros de altos e baixos, dificuldade na gestão de poder pessoal ou travas no retorno financeiro do trabalho.',
     definitionMarkdown: `### O que o 888 representa
 
-Apesar do apelo popular do 8, nos triângulos a repetição **888** opera como bloqueio: cria extremos entre ambição intensa e travas de fluxo financeiro, cobranças injustas, prejuízos inesperados ou medo de exercer autoridade.
-
-### Aspecto de vitalidade
-
-Comumente associado a sobrecarga adrenal, pressão arterial flutuante e estresse ligado a metas materiais.`,
+Apesar do apelo popular do 8, nos triângulos a repetição **888** opera como bloqueio: cria extremos entre ambição intensa e travas de fluxo financeiro, cobranças injustas, prejuízos inesperados ou medo de exercer autoridade.`,
   },
   {
     slug: 'bloqueio-999',
-    term: 'Bloqueio 999 — Encerramentos e Desapego',
+    term: 'Bloqueio 999: Encerramentos e Desapego',
     category: 'bloqueios',
     aliases: ['Bloqueio 999', 'Sequência 999', '999'],
     relatedNumber: 9,
     tags: ['Bloqueios', '999', 'Ciclos'],
     relatedSlugs: ['bloqueios-energeticos', 'bloqueio-777'],
     shortSummary:
-      'Dificulta fechar ciclos antigos — mantendo vínculos, hábitos ou projetos desgastados ativos por tempo demais.',
+      'Dificulta fechar ciclos antigos, mantendo vínculos, hábitos ou projetos desgastados ativos por tempo demais.',
     definitionMarkdown: `### O que o 999 representa
 
-O número 9 simboliza síntese e conclusão. Em bloqueio (**999**), há resistência para encerrar capítulos superados ou, inversamente, exaustão emocional por absorver causas e dores alheias sem filtro.
-
-### Aspecto de vitalidade
-
-Pode manifestar cansaço imunológico recorrente e necessidade frequente de recolhimento para recompor forças.`,
+O número 9 simboliza síntese e conclusão. Em bloqueio (**999**), há resistência para encerrar capítulos superados ou, inversamente, exaustão emocional por absorver causas e dores alheias sem filtro.`,
   },
 
   // ── 4. LIÇÕES, TENDÊNCIAS E DÉBITOS KÁRMICOS ──────────────────────────────
@@ -622,7 +586,7 @@ Pode manifestar cansaço imunológico recorrente e necessidade frequente de reco
       'Representadas pelos números de 1 a 8 (e 9 na leitura estendida) que não aparecem em nenhuma letra do nome de nascimento; indicam habilidades a desenvolver.',
     definitionMarkdown: `### O que a ausência de um número indica
 
-Ao mapear todas as letras do nome de nascimento na tabela cabalística, os algarismos de **1 a 8** que ficam com frequência zero apontam **Lições Kármicas** — qualidades que exigem aprendizado consciente porque não vêm de forma automática na base natal.
+Ao mapear todas as letras do nome de nascimento na tabela cabalística, os algarismos de **1 a 8** que ficam com frequência zero apontam **Lições Kármicas**: qualidades que exigem aprendizado consciente porque não vêm de forma automática na base natal.
 
 ### Como trabalhar e harmonizar
 
@@ -644,7 +608,7 @@ Se um dígito (de 1 a 8, ou 9 na tabela estendida) se repete **4 ou mais vezes**
 
 ### Exemplo no uso empresarial
 
-Em nomes de empresas, por exemplo, tendência oculta elevada no número 8 costuma acentuar cobrança material extrema — critério objetivamente ponderado pelo motor do Nome Magnético.`,
+Em nomes de empresas, por exemplo, tendência oculta elevada no número 8 costuma acentuar cobrança material extrema, critério objetivamente ponderado pelo motor do Nome Magnético.`,
   },
   {
     slug: 'debitos-karmicos',
@@ -753,7 +717,7 @@ Com o nome ajustado, sua ativação acontece pelo uso consistente na **assinatur
     category: 'assinatura',
     aliases: ['Tensão Vibracional', 'Tensões Vibracionais', 'atrito vibracional'],
     relatedNumber: null,
-    tags: ['Compatibilidade', 'Expressão × Destino', 'Ajuste'],
+    tags: ['Compatibilidade', 'Expressão e Destino', 'Ajuste'],
     relatedSlugs: ['harmonizacao-do-nome', 'numero-de-expressao', 'numero-de-destino'],
     shortSummary:
       'Quando o número do nome (Expressão) entra em atrito com o número da data (Destino). Desconta 18 pontos da nota.',
@@ -806,7 +770,7 @@ Use o novo nome social nos perfis digitais, e-mails, cartões e pratique o traç
       'Número final no vértice inferior do triângulo numerológico; sintetiza a energia dominante que rege o conjunto do nome naquela dimensão.',
     definitionMarkdown: `### O ápice invertido da pirâmide
 
-Após todas as reduções da base do nome até sobrar um par ou dígito final entre **1 e 22** (ou correspondência maior tradicional), encontra-se o **Arcano Regente** — o arquétipo síntese daquela pirâmide.
+Após todas as reduções da base do nome até sobrar um par ou dígito final entre **1 e 22** (ou correspondência maior tradicional), encontra-se o **Arcano Regente**: o arquétipo síntese daquela pirâmide.
 
 ### Aplicação prática
 
@@ -849,11 +813,11 @@ A leitura da **Sequência de Passagem** nos degraus dos triângulos mostra os **
     definitionMarkdown: `### Visão panorâmica das 5 pontas
 
 A **Estrela Cabalística** reúne os cinco pilares vibracionais do mapa em equilíbrio visual:
-1. **Expressão** — o que você realiza com o nome completo.
-2. **Destino** — o chamado da data de nascimento.
-3. **Motivação (Alma)** — o propósito interno das vogais.
-4. **Impressão** — a presença externa das consoantes.
-5. **Missão** — Destino + Expressão, o papel que você cumpre.
+1. **Expressão**: o que você realiza com o nome completo.
+2. **Destino**: o chamado da data de nascimento.
+3. **Motivação (Alma)**: o propósito interno das vogais.
+4. **Impressão**: a presença externa das consoantes.
+5. **Missão**: Destino + Expressão, o papel que você cumpre.
 
 Quando todas as pontas sustentam o centro sem bloqueios nem excessos, a pontuação global atinge níveis elevados de fluidez magnética.`,
   },

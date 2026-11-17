@@ -30,7 +30,7 @@ const COLUMNS =
   'id, slug, term, summary, definition_markdown, category, synonyms, exact_case_aliases, related_slugs, related_number, tags, meta_title, meta_description, sort_order, is_published, updated_at';
 
 /** Vocabulário que nunca pode ir para o cliente (CLAUDE.md). */
-const COPY_PROIBIDA = /radiest|p[êe]ndulo|\bincompat[íi]vel\b|entrega em \d|receba sua an[áa]lise/i;
+const COPY_PROIBIDA = /radiest|p[êe]ndulo|\bincompat[íi]vel\b|entrega em \d|receba sua an[áa]lise|vitalidade|sa[úu]de|sintoma|dores? de cabe[çc]a|ins[ôo]nia|—|×/i;
 
 const lista = z
   .array(z.string().trim().min(1).max(80))
