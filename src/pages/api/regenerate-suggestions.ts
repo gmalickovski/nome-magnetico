@@ -16,7 +16,11 @@ import {
   analisarNomesSocial,
   scoreNascimentoNomeSocial,
 } from '../../backend/numerology/products/nome-social';
-import { passaGanhoMinimo, getGanhoMinimoPontos } from '../../backend/numerology/suggestion-birth-invariant';
+import {
+  mensagemNaoOfertavel,
+  motivoNaoOfertavel,
+  scoreMinimoSugestao,
+} from '../../backend/numerology/suggestion-birth-invariant';
 import {
   NOME_SOCIAL_MAX_SUGESTOES_TOTAL,
   validarPedidoGerarMais,
@@ -261,11 +265,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         c => c.nomeCompleto.trim().toLowerCase() === alvoNorm
       ) ?? analisarNomeSocial(selecionarComoPrincipal.trim(), dataNascimento, 'ia');
 
-    if (!passaGanhoMinimo(escolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+    const motivoInelegivel = motivoNaoOfertavel(escolhido, scoreNasc);
+    if (motivoInelegivel !== null) {
       return new Response(
         JSON.stringify({
-          error:
-            'Esta assinatura não tem nota acima da do seu nome de nascimento. Escolha outra opção ou ajuste suas preferências.',
+          error: mensagemNaoOfertavel(motivoInelegivel, scoreMinimoSugestao(scoreNasc)),
           codigo: 'SUGESTAO_INELEGIVEL',
         }),
         { status: 422, headers: { 'Content-Type': 'application/json' } },
@@ -365,6 +369,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         poolEsgotado,
         semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
         scoreNascimento: resultado.scoreNascimento,
+        scoreMinimoSugestao: resultado.scoreMinimoSugestao,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
@@ -446,6 +451,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       poolEsgotado,
       semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
       scoreNascimento: resultado.scoreNascimento,
+      scoreMinimoSugestao: resultado.scoreMinimoSugestao,
     }),
     {
       status: 200,

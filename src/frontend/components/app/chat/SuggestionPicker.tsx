@@ -109,6 +109,13 @@ export function SuggestionPicker({
                   }`}
                 />
               </div>
+              {sug.maiorNota && sug.origem !== 'manual' && (
+                <p className="px-4 sm:px-5 pb-3 -mt-1">
+                  <span className="inline-block rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
+                    ★ Maior nota
+                  </span>
+                </p>
+              )}
               {sug.origem === 'manual' && <p className="px-4 pb-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
               {sug.destaque && (
                 <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>

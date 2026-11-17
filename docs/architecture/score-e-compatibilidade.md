@@ -80,3 +80,20 @@ O ecossistema do Nome Magnético garante unificação total entre as ferramentas
 | **Componente de Badge UI** | `src/frontend/components/app/CompatibilityBadge.tsx` |
 | **Relatório Impresso PDF** | `src/frontend/components/pdf/NomeSocialPDF.tsx` |
 | **Relatório Interativo HTML** | `src/frontend/components/app/resultado/NomeSocialResultado.astro` |
+
+---
+
+## 7. Regras de oferta de sugestões (Nome Social · motor v4 · DEV-301)
+
+A nota **não muda**; estas regras definem o que pode ser oferecido ao usuário:
+
+| Regra | Descrição |
+| :--- | :--- |
+| **R1** | Zero bloqueio nos 4 triângulos. |
+| **R2** | Nota mínima `max(70, nascimento + 1)`. Nascimento abaixo de 70 → sugestões a partir de 70; nascimento ≥ 70 → sempre acima, nunca igual. `NOME_SOCIAL_GANHO_MINIMO_PONTOS` só sobe o mínimo. |
+| **R3** | O Nome de Ouro equilibra nota e perfil do cliente (curto, sem um sobrenome, só o primeiro nome), mantendo a ordem de prioridade do comparador, apenas entre as válidas. |
+| **R3a** | A opção válida de maior nota sempre aparece entre as visíveis (`maiorNota`). |
+| **R3b** | "Gerar mais" traz as próximas válidas de nota alta, sem repetir. |
+| **R4** | Regra dura nunca é relaxada. Sem opção válida → estado vazio. |
+
+Nomes do usuário que não passam em R1/R2 ficam em `comparacao` e não viram sugestão. O potencial (`calcularPotencialV3`) considera só variantes que passariam em R1/R2. Rollback: `NOME_SOCIAL_MOTOR_V4=false`. Código: `suggestion-birth-invariant.ts`, `products/nome-social.ts`, `score-config.ts`.

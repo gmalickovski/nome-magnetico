@@ -10,6 +10,7 @@
  * há opção acima da base, o V3 permanece no teto do nascimento e `potencialMax` fica null.
  */
 import { isScoreV3 } from '../score-version';
+import { motivoNaoOfertavel } from '../suggestion-birth-invariant';
 import { calcularPotencialV3 } from '../score';
 import {
   analisarNomeSocial,
@@ -32,7 +33,7 @@ export function notaEstritamenteMaiorQueBase(potencialMax: number, notaBase: num
 
 /**
  * Elegível no padrão da análise paga sem entrevista: gerador determinístico,
- * sem sequência no Triângulo da Vida e nota estritamente acima do nascimento.
+ * sem bloqueios (4 triângulos) e nota >= max(70, nascimento + 1) (DEV-301).
  */
 export function calcularPotencialAssinaturaPdfGratuito(
   nomeNascimento: string,
@@ -53,7 +54,7 @@ export function calcularPotencialAssinaturaPdfGratuito(
   for (const { nome } of gerarCandidatosComNivel(nasc)) {
     const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
     if (!analise.semSequenciaVida) continue;
-    if (analise.score <= notaBase) continue;
+    if (motivoNaoOfertavel(analise, notaBase) !== null) continue;
     if (potencialMax === null || analise.score > potencialMax) {
       potencialMax = analise.score;
     }

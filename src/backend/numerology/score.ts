@@ -2,7 +2,7 @@
  * Score Unificado — v1 (legado) e v3 (motor NM v3 · DEV-185).
  */
 
-import { calcularTodosTriangulos, type Triangulo, type Bloqueio, type TodosTriangulos } from './triangle';
+import { calcularTodosTriangulos, detectarBloqueios, type Triangulo, type Bloqueio, type TodosTriangulos } from './triangle';
 
 import { calcularExpressao, calcularDestino, calcularMotivacao } from './numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos, type DebitoCarmicoInfo, type DebitoFonte } from './karmic';
@@ -10,6 +10,7 @@ import { avaliarCompatibilidade, type TipoCompatibilidade } from './harmonizatio
 import { listarNomesCandidatosGerador } from './products/nome-social';
 import { SCORE_CONFIG_V3, SCORE_VERSION_V3 } from './score-config';
 import { isScoreV3 } from './score-version';
+import { isMotorV4, motivoNaoOfertavel } from './suggestion-birth-invariant';
 
 function listarCandidatosPotencial(nomeNascimento: string): string[] {
   return listarNomesCandidatosGerador(nomeNascimento);
@@ -332,13 +333,23 @@ function calcularScoreV3Interno(
   };
 }
 
-/** Melhor score v3 entre variantes do gerador (chamar no máximo 1× por análise). */
+/**
+ * Melhor score v3 entre variantes do gerador (chamar no máximo 1× por análise).
+ * Motor v4 (DEV-301): só conta variantes que poderiam ser oferecidas (zero
+ * bloqueio e nota >= max(70, nascimento + 1)); sem nenhuma, o potencial é a base.
+ */
 export function calcularPotencialV3(nomeNascimento: string, dataNascimento: string): number {
   const base = calcularScoreV3Interno(nomeNascimento.trim(), dataNascimento).score_v3;
+  const exigeOfertavel = isMotorV4();
   let potencial = base;
   for (const candidato of listarCandidatosPotencial(nomeNascimento)) {
     const alt = calcularScoreV3Interno(candidato, dataNascimento).score_v3;
-    if (alt > potencial) potencial = alt;
+    if (alt <= potencial) continue;
+    if (exigeOfertavel) {
+      const temBloqueio = detectarBloqueios(calcularTodosTriangulos(candidato, dataNascimento)).length > 0;
+      if (motivoNaoOfertavel({ score: alt, temBloqueio }, base) !== null) continue;
+    }
+    potencial = alt;
   }
   return potencial;
 }

@@ -136,6 +136,8 @@ export interface CandidateSuggestion {
     espiritual: number;
   };
   destaque?: string;
+  /** DEV-301: sugestão de maior nota entre as oferecidas. */
+  maiorNota?: boolean;
   panel: ResultPanelData;
 }
 
@@ -198,6 +200,8 @@ export interface DecideLiveResponse {
   previewTop3: CandidateSuggestion[];
   semOpcoesElegiveis?: boolean;
   scoreNascimento?: number;
+  /** DEV-301: nota mínima de qualquer sugestão (piso 70 / acima do nascimento). */
+  scoreMinimoSugestao?: number;
   analysisId?: string;
   next_question?: NextQuestionSpec;
   providerUsed?: string;

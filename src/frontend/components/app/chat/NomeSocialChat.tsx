@@ -1204,7 +1204,7 @@ export function NomeSocialChat({
       if (data.semOpcoesElegiveis) {
         setSuggestions([]);
         setRegenerateNotice(
-          'Com o que você pediu, nenhuma assinatura teve nota maior que a do seu nome de nascimento. Ajuste suas preferências para explorar outras combinações.',
+          `Com o que você pediu, nenhuma assinatura ficou sem bloqueios e com nota de ${data.scoreMinimoSugestao ?? 70} ou mais, acima da do seu nome de nascimento. Ajuste suas preferências para explorar outras combinações.`,
         );
       } else if (data.previewTop3 && data.previewTop3.length > 0) {
         setSuggestions(data.previewTop3);
@@ -1637,7 +1637,7 @@ export function NomeSocialChat({
 
       if (data.semOpcoesElegiveis) {
         setRegenerateNotice(
-          'Não encontramos novas assinaturas com nota acima da do seu nome de nascimento dentro das suas preferências atuais.',
+          `Não encontramos novas assinaturas sem bloqueios e com nota de ${data.scoreMinimoSugestao ?? 70} ou mais dentro das suas preferências atuais. Revise sobrenomes ou o quanto você topa mudar para ver outras combinações.`,
         );
         return;
       }

@@ -5,6 +5,8 @@ import {
   buildNextQuestion,
   buildSobrenomePillOptions,
   INITIAL_COLLECT_STATE,
+  mapDecideLiveResponse,
+  mapRegenerateApiToCandidates,
 } from './decide-live-bridge.js';
 
 describe('buildNextQuestion · sobrenomes_uso', () => {
@@ -43,5 +45,41 @@ describe('buildNextQuestion · sobrenomes_uso', () => {
       }
     );
     assert.deepEqual(next.subfocosOrdenados, ['lideranca_promocao', 'foco_execucao']);
+  });
+});
+
+describe('DEV-301 · maior nota visível e estado vazio no chat', () => {
+  const item = (nomeCompleto: string, score: number, maiorNota = false) => ({
+    nomeCompleto,
+    score,
+    maiorNota,
+    expressao: 3,
+    bloqueios: [],
+  });
+
+  it('mapRegenerateApiToCandidates mantém a maior nota dentro do corte de 3', () => {
+    const out = mapRegenerateApiToCandidates(
+      {
+        melhorNome: item('Ana A', 80),
+        top3: [item('Ana B', 78), item('Ana C', 79), item('Ana D', 95, true)],
+      },
+      3,
+    );
+    assert.equal(out.length, 3);
+    assert.ok(out.some((c) => c.nome === 'Ana D' && c.maiorNota === true));
+  });
+
+  it('mapDecideLiveResponse repassa semOpcoesElegiveis e a nota mínima', () => {
+    const mapped = mapDecideLiveResponse({
+      next_step: 'fim_coleta',
+      remaining: 0,
+      previewTop3: [],
+      semOpcoesElegiveis: true,
+      scoreNascimento: 91,
+      scoreMinimoSugestao: 92,
+    } as never);
+    assert.equal(mapped.semOpcoesElegiveis, true);
+    assert.equal(mapped.scoreMinimoSugestao, 92);
+    assert.equal(mapped.scoreNascimento, 91);
   });
 });

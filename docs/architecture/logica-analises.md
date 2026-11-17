@@ -146,11 +146,28 @@ PROCESSAMENTO
   9. generateSuggestions() -> IA ranqueia sugestoes
   10. saveMagneticNames() -> salva no banco
 
-SUGESTOES DE NOMES
-  Criterios: sem bloqueios (ou menos que o original), compatibilidade
-  total/complementar Expressao x Destino, criterios grafoscopicos formais
-  (legibilidade, inclinacao ascendente, sem tracos cortantes).
-  Modulo: src/backend/numerology/suggestions.ts
+SUGESTOES DE NOMES (motor v4 · DEV-301)
+  Toda sugestao oferecida (Nome de Ouro, top 3, lista do chat, gerar mais, export,
+  potencial do PDF gratuito) obedece:
+    R1  zero bloqueio nos 4 triangulos (temBloqueio = false)
+    R2  nota >= max(70, nota do nascimento + 1): piso 70 e nunca igual ao nascimento.
+        NOME_SOCIAL_GANHO_MINIMO_PONTOS so sobe o minimo, nunca baixa o piso.
+    R3  Nome de Ouro = equilibrio nota x perfil: ordem de prioridade do comparador
+        (etapas, estilo, sobrenomes, curto x formal, ortografia) so entre as validas.
+    R3a a opcao valida de maior nota sempre aparece entre as visiveis (maiorNota = true)
+    R3b gerar mais traz as proximas validas, sem repetir
+    R4  regra dura nunca relaxa para encher lista; sem opcao valida = estado vazio
+  Preferencias do questionario relaxam em cascata, sempre dentro do conjunto valido:
+  grafia artificial > teto de nivel > sobrenomes excluidos > etapa 3. Restricao legal
+  (contratos/documentos) nao relaxa sozinha.
+  Nomes do usuario (uso diario, assinatura atual, digitados) sao avaliados e, se nao
+  passarem em R1/R2, ficam em `comparacao` (nunca viram sugestao).
+  Grafia: anel, acento duplo novo, acento na inicial do sobrenome e til na inicial sao
+  proibidos; til fora de a final/ao/ae e oe e 'artificial' e so entra sem alternativa.
+  Rollback: NOME_SOCIAL_MOTOR_V4=false.
+  Modulos: products/nome-social.ts (gerarSugestoesAutoSocialV4, analisarNomesSocial),
+  suggestion-birth-invariant.ts (validador), score-config.ts (SUGESTAO_CONFIG_V4).
+  Legado (deprecated): src/backend/numerology/suggestions.ts
 
 ESTRUTURA NO BANCO (tabela analyses)
   numero_expressao   : number

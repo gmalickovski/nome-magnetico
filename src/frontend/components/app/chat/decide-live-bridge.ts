@@ -101,6 +101,9 @@ export type RawDecideLiveResponse = {
   panel?: ApiPanel;
   radarAxes?: Array<{ key: string; label: string; value: number }>;
   previewTop3?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
+  semOpcoesElegiveis?: boolean;
+  scoreNascimento?: number;
+  scoreMinimoSugestao?: number;
   diagramNodes?: Array<{ label: string; eyebrow: string }>;
   subfocoMomento?: string;
   areaFoco?: string;
@@ -168,6 +171,7 @@ export function mapCandidate(
     compatibilidade: String(raw.compatibilidade ?? 'neutro'),
     bloqueiosEliminados: 0,
     bloqueiosRestantes: bloqueios.length,
+    maiorNota: raw.maiorNota === true,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
     panel: raw.panel
@@ -273,6 +277,9 @@ export function mapDecideLiveResponse(
     readingSummary: raw.readingSummary,
     panel: raw.panel ? mapApiPanel(raw.panel) : undefined,
     previewTop3: (raw.previewTop3 ?? []).map(mapCandidate),
+    semOpcoesElegiveis: raw.semOpcoesElegiveis ?? false,
+    scoreNascimento: raw.scoreNascimento,
+    scoreMinimoSugestao: raw.scoreMinimoSugestao,
     providerUsed: raw.providerUsed,
     next_question: ctx
       ? buildNextQuestion(raw, ctx.nomeCompleto, ctx.collect, ctx.sobrenomesDetectados ?? [])
@@ -466,6 +473,9 @@ export type RegenerateSuggestionsApiPayload = {
   top3?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
   nossasSugestoes?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
   poolEsgotado?: boolean;
+  semOpcoesElegiveis?: boolean;
+  scoreNascimento?: number;
+  scoreMinimoSugestao?: number;
 };
 
 /** Flatten API regenerate response into up to 3 unique candidates (chat cards). */
@@ -480,14 +490,21 @@ export function mapRegenerateApiToCandidates(
     ...(Array.isArray(data.top3) ? data.top3 : []),
     ...(Array.isArray(data.nossasSugestoes) ? data.nossasSugestoes : []),
   ];
+  const unicos: typeof rawList = [];
   for (const raw of rawList) {
     if (!raw?.nomeCompleto) continue;
     const key = raw.nomeCompleto.trim().toLowerCase();
     if (vistos.has(key)) continue;
     vistos.add(key);
-    out.push(mapCandidate(raw));
-    if (out.length >= limit) break;
+    unicos.push(raw);
   }
+  // DEV-301 (R3a): a sugestão de maior nota nunca fica de fora do corte visível.
+  const visiveis = unicos.slice(0, limit);
+  const maior = unicos.find((raw) => raw.maiorNota === true);
+  if (maior && !visiveis.includes(maior) && visiveis.length > 0) {
+    visiveis[visiveis.length - 1] = maior;
+  }
+  for (const raw of visiveis) out.push(mapCandidate(raw));
   return out;
 }
 
