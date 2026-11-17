@@ -929,7 +929,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           </View>
 
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 14 }}>
-            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para dissolvê-los e recuperar a fluidez.
+            Calculados a partir do nome de nascimento, estes quatro triângulos revelam a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios, padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas um primeiro passo de autoconhecimento.
           </Text>
 
           {/* Arcanos info box */}
@@ -978,7 +978,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 O Triângulo da Vida (Nascimento)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa sua energia de base e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Base e Identidade]</Text> Este triângulo representa a fundação mais profunda do nome. Calculado a partir do valor puro de cada letra do seu nome de nascimento, ele é a leitura principal da análise e concentra as sequências repetidas que pesam na nota.
               </Text>
               <PDFTriangleDetailsBlock
                 data={tVidaNasc}
@@ -1849,7 +1849,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             O Poder da Nova Frequência
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7 }}>
-            O nome social harmonizado é a camada de refinamento sobre o campo original — ele emana qualidades reorganizadas, escolhidas com precisão vibracional. Quando usado consistentemente na assinatura, nas redes sociais e nas apresentações do dia a dia, ele reconfigura o campo magnético pessoal: dissolve as sequências de resistência dos triângulos e amplifica as qualidades genuínas que estavam sendo bloqueadas pelo padrão anterior.
+            O nome social harmonizado é a camada de refinamento sobre o seu nome de nascimento. Quando usado com consistência na assinatura, nas redes sociais e nas apresentações do dia a dia, ele apresenta uma leitura sem as sequências repetidas do Triângulo da Vida e coloca em evidência as qualidades que o padrão anterior deixava em segundo plano. Esta é uma leitura simbólica, pensada para o autoconhecimento.
           </Text>
         </View>
         <View wrap={false}>
@@ -2000,7 +2000,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 O Triângulo da Vida (Harmonizado)
               </Text>
               <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 10 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — A fundação energética mais profunda do seu ser, agora recalculada e harmonizada pelo seu novo nome. Esta nova configuração atua como um escudo vibracional e redireciona os seus canais de atração financeira. Ao sintonizar as frequências de base com uma vibração livre de resistências, o Triângulo da Vida Harmonizado abre espaço para que a vitalidade e a prosperidade fluam de forma leve e natural. Compare esta pirâmide com a de nascimento para contemplar a dissolução dos antigos bloqueios.
+                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Base e Identidade]</Text> A fundação mais profunda do nome, agora recalculada com a sua nova assinatura. Nesta sugestão, o Triângulo da Vida harmonizado não traz as sequências repetidas que aparecem no de nascimento, o que dá mais leveza a essa base. Compare esta pirâmide com a de nascimento para ver a diferença.
               </Text>
               <PDFTriangleDetailsBlock
                 data={triangulosSocial.vida}
