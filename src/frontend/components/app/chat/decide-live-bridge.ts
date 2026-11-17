@@ -172,6 +172,7 @@ export function mapCandidate(
     bloqueiosEliminados: 0,
     bloqueiosRestantes: bloqueios.length,
     maiorNota: raw.maiorNota === true,
+    destaque: typeof raw.explicacaoPerfil === 'string' ? raw.explicacaoPerfil : undefined,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
     panel: raw.panel
@@ -532,6 +533,7 @@ export function buildRegenerateRequestBody(input: {
       assinaturaAtual: ranking.assinaturaAtual,
       restricaoDocumentosLegais: ranking.restricaoDocumentosLegais,
       maxNivelGeracao: ranking.maxNivelGeracao,
+      afinidades: ranking.afinidades,
     },
   };
 

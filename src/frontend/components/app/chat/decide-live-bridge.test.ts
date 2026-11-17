@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   applyQuestionnaireStep,
   buildNextQuestion,
+  buildRegenerateRequestBody,
+  mapCandidate,
   buildSobrenomePillOptions,
   INITIAL_COLLECT_STATE,
   mapDecideLiveResponse,
@@ -81,5 +83,39 @@ describe('DEV-301 · maior nota visível e estado vazio no chat', () => {
     assert.equal(mapped.semOpcoesElegiveis, true);
     assert.equal(mapped.scoreMinimoSugestao, 92);
     assert.equal(mapped.scoreNascimento, 91);
+  });
+});
+
+describe('DEV-302 · perfil da entrevista no chat', () => {
+  it('mapCandidate mostra "por que este nome para você" em destaque', () => {
+    const c = mapCandidate({
+      nomeCompleto: 'Ana Silva',
+      score: 90,
+      expressao: 8,
+      bloqueios: [],
+      explicacaoPerfil: 'Expressão 8 combina com o seu foco em dinheiro e prosperidade.',
+    });
+    assert.equal(c.destaque, 'Expressão 8 combina com o seu foco em dinheiro e prosperidade.');
+    assert.equal(mapCandidate({ nomeCompleto: 'Ana Silva', score: 90, bloqueios: [] }).destaque, undefined);
+  });
+
+  it('o pedido de "gerar mais" reenvia as afinidades do perfil', () => {
+    const body = buildRegenerateRequestBody({
+      nomeNascimento: 'Ana Silva Santos',
+      dataNascimento: '01/01/1990',
+      nomesExcluidos: [],
+      collect: {
+        ...INITIAL_COLLECT_STATE,
+        areaFoco: 'carreira_negocios',
+        estiloPresenca: ['firme_confiavel'],
+        subfocosOrdenados: ['lideranca_promocao'],
+      },
+    });
+    const ranking = body.rankingChat as { afinidades?: { area?: string; estilo?: string[]; subfocos?: string[] } };
+    assert.deepEqual(ranking.afinidades, {
+      estilo: ['firme_confiavel'],
+      area: 'carreira_negocios',
+      subfocos: ['lideranca_promocao'],
+    });
   });
 });
