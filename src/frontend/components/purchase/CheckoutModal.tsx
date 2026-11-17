@@ -28,7 +28,7 @@ const PRODUCT_META: Record<ProductType, { name: string; eyebrow: string; icon: s
       'Compare nome de nascimento e variações de nome social.',
       'Ranking dos candidatos com score 0-100.',
       'Nome recomendado e sugestões harmonizadas.',
-      '4 triângulos cabalísticos: Vida, Pessoal, Social e Destino.',
+      'Triângulo da Vida como leitura principal, com Pessoal, Social e Destino como complementares.',
       'Bloqueios, débitos, lições kármicas e tendências ocultas.',
       'Relatório PDF premium para baixar e consultar.',
     ],

@@ -25,7 +25,7 @@ const HIDDEN_ITEMS = [
   'Triângulo de Destino — resultados, missão e previsões',
   'Lições Kármicas — o que você veio desenvolver nesta encarnação',
   'Número de Motivação da Alma — o desejo oculto que guia suas escolhas',
-  '3 variações do seu nome já harmonizadas e prontas para assinar',
+  'Sugestões de assinatura sem bloqueios, cada uma com nota de 0 a 100',
 ];
 
 export function CalculadoraGratis() {

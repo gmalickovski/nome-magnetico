@@ -12,79 +12,95 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
 
 <LandingLayout
   title="Análise Gratuita do Seu Nome de Nascimento | Nome Magnético"
-  description="Descubra os bloqueios energéticos, lições kármicas e tendências ocultas do seu nome. Análise com o Triângulo da Vida do seu nome, gratuita e enviada por e-mail em PDF."
-  keywords="análise gratuita nome, bloqueios energéticos nome, numerologia gratuita, lições kármicas, triângulos numerológicos, numerologia cabalística"
+  description="Veja grátis a nota do seu nome de nascimento e até onde ela pode chegar. PDF com Triângulo da Vida, bloqueios, lições kármicas e arquétipo, enviado por e-mail."
+  keywords="análise gratuita nome, nota do nome, numerologia gratuita, triângulo da vida, lições kármicas, numerologia cabalística"
 >
   <LandingHeader client:load />
 
-  <main class="min-h-screen bg-[#111111] pt-14 sm:pt-20 pb-24">
-    <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3.5 sm:px-6 md:px-10 lg:px-12">
+  <main class="bg-[#111111]">
 
-    <!-- HERO (centralizado, coluna única) -->
-    <section class="max-w-2xl mx-auto pt-8 sm:pt-16 pb-10 text-center">
-
-      <div class="inline-flex items-center gap-2 bg-[#d7c6ff]/10 border border-[#d7c6ff]/30 rounded-full px-4 sm:px-5 py-2 mb-8">
-        <span class="text-[#d7c6ff] text-xs" aria-hidden="true">✦</span>
-        <span class="text-[#d7c6ff] text-xs sm:text-sm font-medium tracking-wide">Análise Gratuita — Uma por Conta</span>
-        <span class="text-[#d7c6ff] text-xs" aria-hidden="true">✦</span>
+    {/* ── HERO + FORMULÁRIO ── */}
+    <section class="relative isolate overflow-hidden bg-[#111111] pt-[88px] sm:pt-28 lg:pt-32 pb-12 sm:pb-16">
+      <div class="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[560px] sm:h-[560px] lg:w-[760px] lg:h-[760px] bg-[#D4AF37]/15 rounded-full blur-[110px] sm:blur-[140px]"></div>
+        <div class="absolute bottom-0 right-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/10 rounded-full blur-[100px]"></div>
       </div>
 
-      <h1 class="font-cinzel text-3xl sm:text-4xl md:text-5xl font-bold text-[#e5e2e1] mb-5 leading-tight">
-        Descubra a<br/>
-        <span style="background: linear-gradient(135deg, #2DD4BF, #0D9488, #0F766E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-          Frequência do Seu Nome
-        </span>
-      </h1>
+      <div class="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="max-w-2xl mx-auto text-center">
+          <p class="nm-eyebrow mb-3">Análise gratuita</p>
+          <h1 class="nm-h1">Conheça a nota do seu nome</h1>
+          <p class="nm-body-lg mt-5 mx-auto max-w-[56ch]">
+            Digite seu nome de nascimento e sua data. Você vê a nota de hoje, até onde ela pode chegar e recebe um PDF com a leitura do Triângulo da Vida, bloqueios, lições kármicas e um arquétipo simbólico.
+          </p>
+          <ul class="mt-6 flex flex-col sm:flex-row sm:flex-wrap items-center sm:justify-center gap-x-6 gap-y-2">
+            {[
+              'Resultado na hora, sem cartão',
+              'PDF enviado para o seu e-mail',
+              'Uma análise gratuita por pessoa',
+            ].map(item => (
+              <li class="flex items-center gap-2 nm-caption">
+                <span class="text-[#D4AF37] text-xs" aria-hidden="true">✦</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <p class="text-gray-400 text-base md:text-lg leading-relaxed mb-8">
-        Calcule agora os bloqueios energéticos, lições kármicas e os 5 números principais
-        do seu nome de nascimento. Você receberá o relatório completo em PDF direto no seu e-mail.
-      </p>
-
-      <!-- Bullets -->
-      <ul class="flex flex-col sm:flex-row sm:flex-wrap items-center sm:justify-center gap-x-6 gap-y-2 mb-8">
-        {[
-          'Relatório em PDF enviado por e-mail',
-          'Triângulo da Vida do seu nome, calculado letra a letra',
-          'Identificação de bloqueios e lições kármicas',
-        ].map(item => (
-          <li class="flex items-center gap-2 text-gray-400 text-sm">
-            <span class="text-[#D4AF37] text-xs">✦</span>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <!-- FORMULÁRIO / RESULTADO — largura completa no desktop -->
-    <section class="max-w-4xl mx-auto pb-4">
-      <PublicAnalysisForm client:load />
-    </section>
-
-    <!-- O QUE A ANÁLISE REVELA -->
-    <section class="max-w-4xl mx-auto py-16">
-      <h2 class="font-cinzel text-2xl md:text-3xl font-bold text-center text-white mb-12">
-        O Que Sua Análise Vai Revelar
-      </h2>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {[
-          { icon: '🔺', title: 'Triângulo da Vida', desc: 'A base da sua nota de 0 a 100: cada letra vira um número e mostra onde o seu nome flui e onde ele trava.' },
-          { icon: '⚡', title: 'Bloqueios Energéticos', desc: 'Sequências repetidas no triângulo que criam padrões de travamento, identificadas com cálculo.' },
-          { icon: '🌀', title: 'Lições Kármicas', desc: 'Números ausentes no seu nome revelam qualidades que você veio desenvolver nesta encarnação.' },
-          { icon: '📊', title: 'Tendências Ocultas', desc: 'Números que aparecem em excesso no seu nome, revelando qualidades hiperativas que podem gerar desequilíbrio.' },
-          { icon: '🔢', title: '5 Números Principais', desc: 'Expressão, Destino, Motivação, Missão e Personalidade — o mapa vibracional completo do seu nome.' },
-          { icon: '📄', title: 'Relatório em PDF', desc: 'Baixe sua análise completa em PDF com todos os dados, acesso permanente em "Minhas Análises".' },
-        ].map(item => (
-          <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-6">
-            <div class="text-2xl mb-3">{item.icon}</div>
-            <h3 class="font-cinzel text-base font-bold text-white mb-2">{item.title}</h3>
-            <p class="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
+        <div class="max-w-4xl mx-auto mt-10">
+          <PublicAnalysisForm client:load />
+        </div>
       </div>
     </section>
 
-    </div>
+    {/* ── O QUE O PDF TRAZ ── */}
+    <section class="py-12 sm:py-16 md:py-20 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="text-center mx-auto max-w-3xl">
+          <p class="nm-eyebrow mb-3">No seu PDF</p>
+          <h2 class="nm-h2">O que a análise gratuita mostra</h2>
+        </div>
+        <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-5xl mx-auto">
+          {[
+            { icon: '◇', title: 'Nota de 0 a 100', desc: 'A nota do seu nome de nascimento hoje, com o nível em que ela se encontra e até onde ela pode chegar.' },
+            { icon: '△', title: 'Triângulo da Vida', desc: 'A leitura principal: cada letra vira um número e mostra onde o seu nome flui e onde aparecem sequências repetidas.' },
+            { icon: '⚠', title: 'Bloqueios', desc: 'Sequências de três ou mais números iguais, lidas pelo método como padrões simbólicos, com o tema de cada código.' },
+            { icon: '☯', title: 'Lições kármicas', desc: 'Números ausentes no nome, lidos como qualidades a desenvolver, e tendências ocultas, quando um número se repete em excesso.' },
+            { icon: '⬠', title: '5 números principais', desc: 'Expressão, Destino, Motivação, Impressão e Missão.' },
+            { icon: '✦', title: 'Arquétipo simbólico', desc: 'Uma leitura para explorar qualidades e pontos de atenção associados à sua análise.' },
+          ].map(item => (
+            <div class="nm-floating-card-interactive p-6 text-left">
+              <p class="text-[#D4AF37] text-2xl mb-3" aria-hidden="true">{item.icon}</p>
+              <h3 class="nm-h4 mb-2">{item.title}</h3>
+              <p class="nm-body">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* ── PRÓXIMO PASSO ── */}
+    <section class="pb-16 sm:pb-24 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="nm-floating-card max-w-3xl mx-auto px-6 py-10 sm:px-10 text-center">
+          <p class="nm-eyebrow mb-3">E depois da nota?</p>
+          <h2 class="nm-h3 mb-3">Explore novas formas de assinatura</h2>
+          <p class="nm-body mb-6 mx-auto max-w-[58ch]">
+            A análise completa compara o seu nome com variações de assinatura sem bloqueios, cada uma com nota de 0 a 100, e traz as leituras complementares dos triângulos Pessoal, Social e Destino.
+          </p>
+          <a
+            href="/nome-social"
+            data-cta-id="nome_social"
+            data-cta-position="analise_gratuita_final"
+            class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-8 py-3.5 text-base font-semibold text-[#1A1A1A] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-500"
+          >
+            Conhecer o Nome Social
+          </a>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <LandingFooter client:load />
