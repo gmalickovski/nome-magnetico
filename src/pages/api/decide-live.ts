@@ -1,4 +1,3 @@
-import { NOME_SOCIAL_SUGESTOES_INICIAIS } from '../../shared/nome-social/gerar-mais-limits';
 import { getArquetipo } from '../../backend/numerology/archetypes';
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
@@ -343,8 +342,8 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
         vistosPreview.add(k);
         return true;
       });
-    // DEV-301 (R3a): a sugestão de maior nota sempre entra nas 6 do preview.
-    const previewVisiveis = previewTop3Raw.slice(0, NOME_SOCIAL_SUGESTOES_INICIAIS);
+    // DEV-301 (R3a): a sugestão de maior nota sempre entra nas 3 do preview.
+    const previewVisiveis = previewTop3Raw.slice(0, 3);
     const previewMaiorNota = previewTop3Raw.find((c) => c.maiorNota === true);
     if (previewMaiorNota && !previewVisiveis.includes(previewMaiorNota) && previewVisiveis.length > 0) {
       previewVisiveis[previewVisiveis.length - 1] = previewMaiorNota;

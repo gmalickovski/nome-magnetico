@@ -311,7 +311,27 @@ export function NomeSocialChat({
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // DEV-305: quando chegam sugestões novas (fim da entrevista ou "gerar mais"), o foco vai para o
+  // primeiro card novo (a melhor opção) e não para o fim da lista.
+  const sugestoesVistasRef = useRef<Set<string>>(new Set());
+  const bloqueiaScrollFimAteRef = useRef(0);
   useEffect(() => {
+    const novas = suggestions.filter((s) => s.origem !== 'manual' && !sugestoesVistasRef.current.has(s.id));
+    if (novas.length === 0) return;
+    for (const s of suggestions) sugestoesVistasRef.current.add(s.id);
+    bloqueiaScrollFimAteRef.current = Date.now() + 2000;
+    const idsNovos = new Set(novas.map((s) => `candidate-${s.id}`));
+    const timer = window.setTimeout(() => {
+      const primeiro = Array.from(document.querySelectorAll<HTMLElement>('[id^="candidate-"]')).find((el) =>
+        idsNovos.has(el.id),
+      );
+      primeiro?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [suggestions]);
+
+  useEffect(() => {
+    if (Date.now() < bloqueiaScrollFimAteRef.current) return;
     scrollToBottom();
   }, [messages, loading]);
 

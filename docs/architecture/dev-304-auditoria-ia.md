@@ -95,6 +95,6 @@ Resultado final, com as chaves reais do TESTE, nos 3 provedores isolados: JEV (`
 ### 2.9 Preferências estruturais e vitrine de 6 opções
 
 - **Preferências estruturais mandam** (quantos/quais sobrenomes, "só o primeiro nome", manter o primeiro nome): quem as atende vem primeiro, ordenado pela **melhor nota**; as demais vêm por **menor distorção do nome**. Nova resposta exclusiva "Só o primeiro nome" na pergunta de sobrenomes (vale só se nenhum sobrenome for marcado junto).
-- **Vitrine**: 6 opções de início (Nome de Ouro + 5), "Gerar mais" traz mais 3 (1 pedido), teto de 9. As 3 primeiras do Top seguem diversas; as demais seguem a ordem de preferência da entrevista.
-- **A de maior nota sempre aparece entre as 6**, mesmo fora do padrão escolhido (a pessoa pode mudar de ideia). Se a preferência restringe demais e as notas caem, a de maior nota fica visível com o selo.
-- Constantes em `src/shared/nome-social/gerar-mais-limits.ts` (`SUGESTOES_INICIAIS=6`, `POR_RODADA=3`, `MAX_PEDIDOS=1`, `MAX_TOTAL=9`).
+- **Vitrine** (DEV-305 voltou a 3 opções): 3 de início, "Gerar mais" traz mais 3 por pedido (2 pedidos), teto de 9. A experiência de 6 de início foi testada na v1.37.0 e revertida a pedido do Guilherme.
+- **A de maior nota sempre aparece entre as 3**, mesmo fora do padrão escolhido (a pessoa pode mudar de ideia). Se a preferência restringe demais e as notas caem, a de maior nota fica visível com o selo.
+- Constantes em `src/shared/nome-social/gerar-mais-limits.ts` (`SUGESTOES_INICIAIS=3`, `POR_RODADA=3`, `MAX_PEDIDOS=2`, `MAX_TOTAL=9`).

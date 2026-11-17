@@ -5,8 +5,9 @@ import {
   validarPedidoGerarMais,
 } from './gerar-mais-limits.ts';
 
-describe('DEV-304 · 6 opções de início, +3 no gerar mais, teto de 9', () => {
+describe('DEV-305 · 3 opções de início, +3 por pedido (2 pedidos), teto de 9', () => {
   it('permite pedidos até completar 9 sugestões', () => {
+    assert.equal(validarPedidoGerarMais(3).ok, true);
     assert.equal(validarPedidoGerarMais(6).ok, true);
     assert.equal(validarPedidoGerarMais(6).ok && (validarPedidoGerarMais(6) as {limiteNovos:number}).limiteNovos, 3);
   });

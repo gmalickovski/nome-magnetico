@@ -1,10 +1,10 @@
 /**
- * DEV-275/DEV-304 — Teto de "Gerar mais": 6 opções de início e mais 3 por pedido, até 9 (1 pedido extra).
+ * DEV-275/DEV-305 — Teto de "Gerar mais": 3 opções de início e mais 3 por pedido, até 9 (2 pedidos extras).
  */
 
-export const NOME_SOCIAL_SUGESTOES_INICIAIS = 6;
+export const NOME_SOCIAL_SUGESTOES_INICIAIS = 3;
 export const NOME_SOCIAL_SUGESTOES_POR_RODADA = 3;
-export const NOME_SOCIAL_MAX_PEDIDOS_GERAR_MAIS = 1;
+export const NOME_SOCIAL_MAX_PEDIDOS_GERAR_MAIS = 2;
 export const NOME_SOCIAL_MAX_SUGESTOES_TOTAL = 9;
 
 export function podePedirGerarMais(totalJaExibidos: number): boolean {
@@ -39,7 +39,7 @@ export function validarPedidoGerarMais(totalJaExibidos: number): ValidacaoGerarM
       ok: false,
       codigo: 'LIMITE_GERAR_MAIS',
       mensagem:
-        'Você já usou o pedido extra de sugestões. Ajuste suas preferências para explorar outras combinações.',
+        'Você já usou os dois pedidos extras de sugestões. Ajuste suas preferências para explorar outras combinações.',
     };
   }
 

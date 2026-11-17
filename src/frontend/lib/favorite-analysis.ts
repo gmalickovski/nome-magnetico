@@ -82,3 +82,34 @@ export function orderSlidesWithFavorite<T extends { id: string; isFree?: boolean
   const fav = slides[idx];
   return [fav, ...slides.slice(0, idx), ...slides.slice(idx + 1)];
 }
+
+// DEV-305: na primeira análise paga (só havia o nome de nascimento), o nome escolhido vira favorito.
+export function favoriteAutoStorageKey(userId: string): string {
+  return `nm:favorite-auto:v1:${userId}`;
+}
+
+export function pickAutoFavoriteId(input: {
+  favoriteId: string | null;
+  alreadyApplied: boolean;
+  slides: ReadonlyArray<{ id: string; isFree?: boolean }>;
+}): string | null {
+  if (input.favoriteId || input.alreadyApplied) return null;
+  const pagas = input.slides.filter((s) => !s.isFree);
+  return pagas.length === 1 ? pagas[0]!.id : null;
+}
+
+export function wasAutoFavoriteApplied(userId: string): boolean {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(favoriteAutoStorageKey(userId)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markAutoFavoriteApplied(userId: string): void {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(favoriteAutoStorageKey(userId), '1');
+  } catch {
+    /* ignore */
+  }
+}

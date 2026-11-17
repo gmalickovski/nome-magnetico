@@ -36,7 +36,7 @@ export default function AppMobileHeader({ nome, isAdmin, userId, showAnalysisCta
           href="/app"
           className="flex min-h-11 items-center justify-center transition-opacity hover:opacity-80"
         >
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="h-auto w-[88px] min-[360px]:w-[124px] min-[390px]:w-[140px] sm:w-[160px]" />
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="h-auto w-[96px] min-[360px]:w-[132px] min-[390px]:w-[150px] sm:w-[160px]" />
         </a>
         <div className="min-w-0 justify-self-end">
           {showAnalysisCta && userId && (
