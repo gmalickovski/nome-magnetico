@@ -5,6 +5,7 @@ export const OPS_STAFF_ROUTES: Record<string, string> = {
   '/subscriptions': '/ops/subscriptions',
   '/billing': '/ops/billing',
   '/promocoes': '/ops/promocoes',
+  '/glossario': '/ops/glossario',
   '/monitor': '/ops/monitor',
   '/faq': '/ops/faq',
   '/support': '/ops/support',

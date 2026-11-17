@@ -198,7 +198,8 @@ async function handlePublicHost(context: APIContext, next: MiddlewareNext): Prom
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     const opsUrl = adminOpsUrl();
     if (opsUrl) return context.redirect(`${opsUrl}/`);
-    return context.redirect('https://hq.studiomlk.com.br');
+    // DEV-307: o HQ foi desativado; o admin agora fica no próprio Nome Magnético.
+    return context.redirect('https://admin.nomemagnetico.com.br/');
   }
 
   const accessToken =

@@ -85,9 +85,10 @@ React Component → fetch /api/endpoint → Astro API route → backend/service 
 
 ### Roteamento de Auth
 - `/app/*` → requer session + subscription ativa (ou is_test válido, ou admin)
-- `/admin/*` → **REDIRECIONA para `https://hq.studiomlk.com.br`** (painel admin removido do SaaS)
+- **Painel admin:** `admin.nomemagnetico.com.br` (mesmo app, rotas `src/pages/ops/*`, APIs `/api/ops/*`), protegido pelo Cloudflare Access + `profiles.role = 'admin'`. Detalhe em `docs/architecture/admin-ops.md`. **O HQ (`hq.studiomlk.com.br`) não existe mais.**
+- `/admin/*` no site público → redireciona para `ADMIN_OPS_URL` (o admin)
 - `/api/admin/*` → ainda protegido por `role='admin'` (endpoints legados mantidos temporariamente)
-- `/acesso` → público — landing page para links trial gerados pelo HQ
+- `/acesso` → público — landing page para links trial gerados no admin (`/promocoes`, códigos de acesso)
 - `/acesso/resgatar` → requer session — efetiva o resgate do trial
 - `/api/redeem-trial` → requer session — endpoint para resgatar código trial via POST
 - `/api/teste-bloqueio` → público, rate limit por IP (3/hora)
@@ -277,31 +278,32 @@ Pagamento único por ciclo de 30 dias (não recorrente)
 ### Migrations aplicadas
 - `001_nome_magnetico.sql` — schema base completo (schema public no Supabase Cloud)
 - `002_expand_analyses.sql` — expansão para 4 triângulos, lições kármics, tendências ocultas, produtos nome_bebe e nome_empresa
-- `020_test_users.sql` — campos `is_test` + `test_ends_at` na tabela `profiles`, tabela `trial_redemptions` para rastreabilidade do HQ
+- `020_test_users.sql` — campos `is_test` + `test_ends_at` na tabela `profiles`, tabela `trial_redemptions` para rastreabilidade dos resgates
 - `024_payment_provider.sql` — colunas `payment_provider` (stripe/asaas) e `asaas_payment_id` na tabela `subscriptions`
 
 ---
 
-## Integração HQ StudioMLK
+## Painel Admin (`admin.nomemagnetico.com.br`)
 
-O HQ (`hq.studiomlk.com.br`) gerencia centralmente usuários, trials e billing de todos os SaaS do estúdio.
-
-### Painel Admin
-- O painel `/admin/*` foi **removido** do Nome Magnético — tudo é gerenciado pelo HQ.
-- Rotas `/admin/*` redirecionam automaticamente para `https://hq.studiomlk.com.br`.
+O HQ (`hq.studiomlk.com.br`) **não existe mais**. Usuários, trials, assinaturas, promoções, códigos de acesso e o glossário são administrados no próprio Nome Magnético, em `admin.nomemagnetico.com.br`:
+- Mesmo processo Astro; o middleware reescreve as URLs limpas para `src/pages/ops/*`. APIs em `/api/ops/*` (só respondem no host admin).
+- Acesso: Cloudflare Access na frente + login de staff (`profiles.role = 'admin'`), conferido no middleware e em cada API (`opsGate`).
+- `service_role` só no servidor (`src/backend/**`, `src/pages/api/ops/**`).
+- Telas: `/users`, `/subscriptions`, `/promocoes`, `/glossario` e outras (ver `src/shared/ops-routes.ts`).
+- Detalhe completo: `docs/architecture/admin-ops.md`. Credenciais (Cloudflare, Supabase) no 1Password: cofre `Studio MLK` (produção) e `Studio MLK - TESTE`.
 
 ### Usuários Teste (Trial)
 Dois campos foram adicionados à tabela `profiles`:
-- `is_test: boolean` — marcado como true quando o HQ cria um acesso trial
+- `is_test: boolean` — marcado como true quando o admin libera um acesso teste
 - `test_ends_at: timestamptz | null` — data de expiração (`null` = sem expiração)
 
 Regra de acesso: se `is_test=true` E (`test_ends_at IS NULL` OU `test_ends_at > now()`), o usuário tem acesso completo sem subscription paga.
 
-### Fluxo 1 — Usuário existente (via HQ)
-HQ → Usuários → ícone Experimento → "Marcar como teste" → o HQ atualiza `is_test` diretamente no Supabase.
+### Fluxo 1 — Usuário existente (via admin)
+Admin → `/users/:id` → acesso teste (liga/desliga e data de fim) → `PATCH /api/ops/users/:id` atualiza `profiles`.
 
 ### Fluxo 2 — Novo usuário via link
-Link gerado pelo HQ: `https://nomemagnetico.com.br/acesso?code=CODE`
+Link com código criado no admin (`/promocoes`, aba códigos de acesso): `https://nomemagnetico.com.br/acesso?code=CODE`
 1. Usuário acessa o link → `/acesso.astro` valida o código em `access_codes`
 2. Se não logado: redireciona para cadastro/login com redirect para `/acesso/resgatar?code=...`
 3. Após auth: `/acesso/resgatar.astro` aplica `trial_days` e `product_types` do banco (não da URL) e redireciona para `/app?trial=ativado`
@@ -315,16 +317,12 @@ O `CheckoutFlow.tsx` possui campo de código promocional opcional.
 Tabela `trial_redemptions` registra cada resgate com `user_id`, `trial_code`, `source` ('link' | 'manual' | 'gift').
 `access_code_uses` conta o uso real para limite (`max_uses`). Um mesmo código não é resgatado duas vezes pelo mesmo usuário.
 
-### Plano de implementação do lado HQ
-As mudanças necessárias no projeto `C:\Dev\hq-studiomlk-refine` estão documentadas em:
-`C:\Dev\hq-studiomlk-refine\docs\agente-hq-test-users-sync.md`
+## Glossário (fonte: banco)
 
-Resumo do que o HQ ainda precisa fazer:
-- `POST /access-codes/test-users` → também setar `profiles.is_test=true` no Supabase do SaaS
-- `DELETE /access-codes/test-users/:userId` → também setar `profiles.is_test=false` no SaaS
-- `POST /access-codes/:id/apply` → criar subscriptions com produtos válidos + setar `is_test`
-- `GET /users` select → incluir `is_test, test_ends_at` para mostrar tag "TESTE" na lista
-- `UserList.tsx` → toggle marcar/remover teste com feedback visual
+Os textos do glossário (`/glossario` e `/app/glossario`, e os termos clicáveis do relatório) vêm **só** da tabela `public.glossary_terms` (DEV-307). O catálogo em `src/shared/glossary/canonical-terms*.ts` é reserva para quando o banco não responde.
+- Editar, criar, publicar e despublicar: no admin (`/glossario`) ou por agente direto na tabela via Supabase MCP. Ver `docs/sops/glossario-edicao.md`.
+- Campos: `slug`, `term`, `summary`, `definition_markdown`, `category`, `synonyms`, `exact_case_aliases`, `related_slugs`, `related_number`, `tags`, `meta_title`, `meta_description`, `sort_order`, `is_published`.
+- Cache de 10 min no servidor; o admin invalida ao salvar.
 
 ---
 

@@ -1160,6 +1160,38 @@
   box-shadow: 12px 18px 24px -10px rgba(0, 0, 0, 0.65);
 }
 
+/* DEV-306 · Card do glossário: hover sutil e lento (ritmo meditativo do design system). */
+.nm-glossary-card {
+  position: relative;
+  border-radius: 1rem;
+  background-color: #181818;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.1), 0 10px 24px -8px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nm-glossary-card:hover,
+.nm-glossary-card:focus-visible {
+  transform: translateY(-1px);
+  background-color: #1d1d1d;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.22), 0 20px 50px -18px rgba(0, 0, 0, 0.6);
+}
+
+.nm-glossary-card:focus-visible {
+  outline: 2px solid #bea5ff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nm-glossary-card,
+  .nm-glossary-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
 .nm-floating-tile {
   position: relative;
   border-radius: 0.875rem;

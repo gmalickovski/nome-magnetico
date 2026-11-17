@@ -69,13 +69,13 @@ export function GlossaryExplorer({
       {/* Destaque personalizado dentro da área logada */}
       {personalizedMatches.length > 0 && (
         <section className="nm-floating-card rounded-2xl p-5 sm:p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#f2ca50]">
-                Leitura Direcionada ao Seu Mapa
+                No seu mapa
               </p>
               <h2 className="mt-1 font-cinzel text-xl font-bold text-[#e5e2e1] sm:text-2xl">
-                Termos Presentes no Seu Mapa
+                Termos da sua análise
               </h2>
             </div>
             <span className="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-xs font-semibold text-[#f2ca50]">
@@ -88,20 +88,20 @@ export function GlossaryExplorer({
               <a
                 key={item.slug}
                 href={`${baseHref}/${item.slug}`}
-                className="group flex flex-col justify-between rounded-2xl bg-[#131313]/85 p-4 ring-1 ring-[#D4AF37]/25 transition-all duration-300 hover:bg-[#1C1C1C] hover:ring-[#f2ca50]/55"
+                className="group nm-glossary-card flex flex-col justify-between p-5"
               >
                 <div>
                   <span className="inline-flex items-center rounded-full bg-[#D4AF37]/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f2ca50]">
                     {item.reasonBadge}
                   </span>
-                  <h3 className="mt-2.5 font-cinzel text-base font-bold text-[#e5e2e1] group-hover:text-[#f2ca50] transition-colors">
+                  <h3 className="mt-2.5 font-cinzel text-base font-bold text-[#e5e2e1] transition-colors duration-700 group-hover:text-[#f2ca50]">
                     {item.term}
                   </h3>
                   <p className="mt-1.5 text-xs leading-relaxed text-[#A0A0A0] line-clamp-2">
                     {item.shortSummary}
                   </p>
                 </div>
-                <span className="mt-3 text-xs font-semibold text-[#D4AF37] group-hover:translate-x-0.5 transition-transform">
+                <span className="mt-3 text-xs font-semibold text-[#D4AF37] opacity-80 transition-opacity duration-700 group-hover:opacity-100">
                   Estudar conceito →
                 </span>
               </a>
@@ -253,7 +253,7 @@ export function GlossaryExplorer({
             <a
               key={item.slug}
               href={`${baseHref}/${item.slug}`}
-              className="group nm-floating-card flex flex-col justify-between rounded-2xl p-5 transition-all duration-300 hover:bg-[#202020] hover:ring-1 hover:ring-[#D4AF37]/40"
+              className="group nm-glossary-card flex flex-col justify-between p-5 sm:p-6"
             >
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -267,7 +267,7 @@ export function GlossaryExplorer({
                   )}
                 </div>
 
-                <h3 className="mt-3 font-cinzel text-lg font-bold leading-snug text-[#e5e2e1] group-hover:text-[#f2ca50] transition-colors">
+                <h3 className="mt-3 font-cinzel text-lg font-bold leading-snug text-[#e5e2e1] transition-colors duration-700 group-hover:text-[#f2ca50]">
                   {item.term}
                 </h3>
 
@@ -276,7 +276,7 @@ export function GlossaryExplorer({
                 </p>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/[0.06]">
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-1.5">
                   {item.tags.slice(0, 2).map((tag) => (
                     <span
@@ -287,7 +287,7 @@ export function GlossaryExplorer({
                     </span>
                   ))}
                 </div>
-                <span className="text-xs font-semibold text-[#D4AF37] group-hover:translate-x-0.5 transition-transform">
+                <span className="text-xs font-semibold text-[#D4AF37] opacity-80 transition-opacity duration-700 group-hover:opacity-100">
                   Ler mais →
                 </span>
               </div>

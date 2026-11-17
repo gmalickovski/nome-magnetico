@@ -16,7 +16,11 @@ Hosts de ops:
 
 No host admin, marketing, `/app` e `/comprar` redirecionam para `APP_URL` (padrão `https://www.nomemagnetico.com.br`). APIs que não são `/api/ops/*` respondem 404.
 
-No site público, `/ops/*` responde 404 e `/api/ops/*` responde 403. `/admin` vai para `ADMIN_OPS_URL` quando a variável está preenchida; se estiver vazia, continua em `https://hq.studiomlk.com.br`.
+No site público, `/ops/*` responde 404 e `/api/ops/*` responde 403. `/admin` vai para `ADMIN_OPS_URL`. O HQ (`hq.studiomlk.com.br`) foi desativado; mantenha `ADMIN_OPS_URL=https://admin.nomemagnetico.com.br` em produção.
+
+## Cloudflare Access
+
+O host admin fica atrás do Cloudflare Access (Zero Trust). Só e-mails autorizados chegam ao login do painel. A conta Cloudflare está no 1Password, cofre `Studio MLK`. O login de staff continua obrigatório depois do Access.
 
 ## Auth
 
@@ -37,6 +41,7 @@ URLs limpas no host admin. O middleware reescreve para `src/pages/ops/*`.
 | `/users/:id` | Ficha, papel e acesso teste |
 | `/subscriptions` | Assinaturas, somente leitura |
 | `/promocoes` | Promoções e códigos de acesso: criar, listar, desativar e reativar |
+| `/glossario` | Glossário: listar, buscar, criar, editar, publicar e despublicar (DEV-307) |
 | `/billing`, `/monitor`, `/faq`, `/support`, `/blog`, `/mensagens`, `/settings` | Stub “Em breve” |
 
 ### Usuários

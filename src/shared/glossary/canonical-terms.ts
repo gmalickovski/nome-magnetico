@@ -4,8 +4,11 @@
  * React no frontend sem acoplamento direto a `src/backend/`.
  */
 
+import { TERMOS_DO_SISTEMA } from './canonical-terms-sistema.js';
+
 export type GlossaryCategory =
   | 'numeros'
+  | 'calculo'
   | 'triangulos'
   | 'bloqueios'
   | 'karma'
@@ -31,6 +34,7 @@ export interface GlossaryTermEntry {
 
 export const GLOSSARY_CATEGORY_LABELS: Record<GlossaryCategory, string> = {
   numeros: 'Números Principais',
+  calculo: 'Cálculo & Nota',
   triangulos: 'Os 4 Triângulos',
   bloqueios: 'Bloqueios Energéticos',
   karma: 'Lições & Débitos Kármicos',
@@ -40,6 +44,7 @@ export const GLOSSARY_CATEGORY_LABELS: Record<GlossaryCategory, string> = {
 
 export const GLOSSARY_CATEGORY_ORDER: GlossaryCategory[] = [
   'numeros',
+  'calculo',
   'triangulos',
   'bloqueios',
   'karma',
@@ -47,7 +52,7 @@ export const GLOSSARY_CATEGORY_ORDER: GlossaryCategory[] = [
   'arcanos',
 ];
 
-export const CANONICAL_GLOSSARY_TERMS: GlossaryTermEntry[] = [
+const TERMOS_BASE: GlossaryTermEntry[] = [
   {
     "slug": "arquetipo",
     "term": "Arquétipo",
@@ -188,7 +193,7 @@ export const CANONICAL_GLOSSARY_TERMS: GlossaryTermEntry[] = [
       'Calculado pela soma de todas as letras do nome completo; revela seus talentos naturais, postura profissional e forma de agir no mundo.',
     definitionMarkdown: `### O que é o Número de Expressão
 
-O **Número de Expressão** nasce da conversão de **todas as letras do nome completo** (prenome e sobrenomes) segundo a tabela cabalística, considerando inclusive a influência de acentos agudos (+2), til (+3) e crase (x3).
+O **Número de Expressão** nasce da conversão de **todas as letras do nome completo** (prenome e sobrenomes) segundo a tabela cabalística, considerando o valor dos acentos (agudo +2, til +3, circunflexo +7, grave e trema ×2; veja **Acentos no Cálculo**).
 
 ### Como ele atua na prática
 
@@ -243,46 +248,45 @@ Uma **Motivação** em sintonia com o restante da **Estrela Cabalística** imped
   },
   {
     slug: 'numero-de-missao',
-    term: 'Número de Missão (Impressão)',
+    term: 'Número de Missão',
     category: 'numeros',
-    aliases: [
-      'Número de Missão',
-      'Número de Impressão',
-      'Missão/Impressão',
-      'Impressão Externa',
-    ],
-    exactCaseAliases: ['Missão', 'Impressão'],
-    relatedNumber: 4,
-    tags: ['Números Principais', 'Consoantes', 'Imagem Pública'],
-    relatedSlugs: ['numero-de-motivacao', 'triangulo-social', 'assinatura-magnetica'],
+    aliases: ['Número de Missão'],
+    exactCaseAliases: ['Missão'],
+    relatedNumber: null,
+    tags: ['Números Principais', 'Propósito'],
+    relatedSlugs: ['numero-de-destino', 'numero-de-expressao', 'numeros-mestres'],
     shortSummary:
-      'Formado pela soma das consoantes do nome completo; reflete a primeira impressão que você transmite e o papel prático que assume em grupo.',
-    definitionMarkdown: `### A estrutura das consoantes
+      'Soma do Destino com a Expressão. Mostra o papel que você tende a cumprir quando o nome e a data trabalham juntos.',
+    definitionMarkdown: `### Como é calculado
 
-Enquanto as vogais expressam o desejo da alma, as **consoantes** funcionam como o contorno externo do nome — a forma como clientes, equipes, recrutadores e novas pessoas percebem sua presença logo no primeiro contato.
+**Missão = Destino + Expressão**, reduzida até 1–9, preservando os Números Mestres 11 e 22. Não usa a Regra do 2 e do 4.
 
-### Impacto profissional
+### Como ler
 
-Para quem trabalha com atendimento, liderança, vendas ou imagem pública, alinhar o **Número de Impressão** reduz mal-entendidos de posicionamento e fortalece a autoridade percebida.`,
+O Destino é fixo (vem da data) e a Expressão vem do nome. Por isso a Missão é o número que conecta os dois: o tipo de contribuição que flui com mais naturalidade no trabalho e na vida em grupo. Quando o nome muda, a Missão pode mudar junto.`
   },
   {
     slug: 'numero-de-personalidade',
-    term: 'Número de Personalidade',
+    term: 'Número de Impressão (Personalidade)',
     category: 'numeros',
-    aliases: ['Número de Personalidade', 'vibração do primeiro nome'],
-    exactCaseAliases: ['Personalidade'],
-    relatedNumber: 5,
-    tags: ['Números Principais', 'Primeiro Nome', 'Identidade'],
-    relatedSlugs: ['numero-de-expressao', 'numero-de-motivacao', 'triangulo-pessoal'],
+    aliases: ['Número de Impressão', 'Número de Personalidade', 'Impressão — A Máscara Social'],
+    exactCaseAliases: ['Impressão', 'Personalidade'],
+    relatedNumber: null,
+    tags: ['Números Principais', 'Consoantes', 'Identidade'],
+    relatedSlugs: ['numero-de-expressao', 'numero-de-motivacao', 'vogais-e-consoantes'],
     shortSummary:
-      'Derivado do primeiro nome; mostra como você se apresenta cotidianamente no trato direto e nas interações espontâneas.',
-    definitionMarkdown: `### A frequência do prenome
+      'Soma das consoantes do nome completo. Mostra a primeira impressão que você causa, a "máscara social". Sempre de 1 a 9.',
+    definitionMarkdown: `### Como é calculado
 
-Na rotina diária, somos chamados pelo **primeiro nome** dezenas de vezes ao dia. Esse som repetido cria uma camada imediata de temperamento, espontaneidade e postura social.
+Somam-se apenas as **consoantes** do nome completo (com o valor dos acentos) e reduz-se até 1–9. A Impressão **não preserva** os Números Mestres 11 e 22 e não usa a Regra do 2 e do 4.
 
-### Conexão com o Nome Social
+### Como ler
 
-Pequenos ajustes na grafia ou na composição de nome e sobrenome podem preservar seu primeiro nome habitual enquanto reorganizam completamente a soma final da Expressão e dissolvem bloqueios nas linhas do triângulo.`,
+É o que os outros percebem antes de te conhecer: postura, estilo, a forma como o nome soa por fora. Enquanto a Motivação (vogais) fala do que te move por dentro, a Impressão fala da imagem que chega primeiro.
+
+### No Nome Social
+
+Trocar um sobrenome ou um acento pode mudar a Impressão sem mexer no primeiro nome que as pessoas usam com você.`
   },
   {
     slug: 'numeros-mestres',
@@ -297,6 +301,10 @@ Pequenos ajustes na grafia ou na composição de nome e sobrenome podem preserva
     definitionMarkdown: `### Por que 11 e 22 não se reduzem
 
 Na **Numerologia Cabalística**, quando a soma intermediária resulta em **11** ou **22**, preserva-se o número duplo. Eles combinam a força de sua base reduzida (2 ou 4) com uma carga extra de responsabilidade, visão e impacto coletivo.
+
+### Onde são preservados
+
+O 11 e o 22 são mantidos na Expressão, no Destino, na Motivação e na Missão. Na **Impressão** eles são sempre reduzidos (11 vira 2; 22 vira 4). Eles também **não geram Débito Kármico**.
 
 ### Atenção no uso cotidiano
 
@@ -724,7 +732,6 @@ O **19** (que reduz ao 1) chama à autonomia responsável: conquistar protagonis
       'Harmonização do Nome',
       'harmonização cabalística',
       'nome harmonizado',
-      'compatibilidade Expressão × Destino',
     ],
     relatedNumber: null,
     tags: ['Harmonização', 'Nome Social', 'Score'],
@@ -735,7 +742,7 @@ O **19** (que reduz ao 1) chama à autonomia responsável: conquistar protagonis
 
 A harmonização do Nome Magnético utiliza exclusivamente critérios matemáticos e formais:
 1. Eliminação total de bloqueios repetidos nos **4 Triângulos**.
-2. Compatibilidade favorável entre **Expressão** e **Destino** (total, complementar ou aceitável).
+2. Compatibilidade **Harmônica** (ou ao menos Neutra) entre **Expressão** e **Destino**.
 3. Redução de **Débitos Kármicos variáveis** e equilíbrio das **Tendências Ocultas** e **Lições Kármicas**.
 
 Com o nome ajustado, sua ativação acontece pelo uso consistente na **assinatura manuscrita** (legível, levemente ascendente, sem traços cortantes) e na presença digital e profissional.`,
@@ -749,14 +756,14 @@ Com o nome ajustado, sua ativação acontece pelo uso consistente na **assinatur
     tags: ['Compatibilidade', 'Expressão × Destino', 'Ajuste'],
     relatedSlugs: ['harmonizacao-do-nome', 'numero-de-expressao', 'numero-de-destino'],
     shortSummary:
-      'Ocorre quando o Número de Expressão do nome não possui relação harmônica direta com o Número de Destino, exigindo maior esforço para fluir.',
+      'Quando o número do nome (Expressão) entra em atrito com o número da data (Destino). Desconta 18 pontos da nota.',
     definitionMarkdown: `### O que significa estar em Tensão Vibracional
 
-Na matriz de compatibilidade entre **Expressão** e **Destino**, certas duplas somam com naturalidade (mesma vibração, soma 9, 11 ou 22, ou diferença de 1 unidade). Nas demais combinações, ocorre **Tensão Vibracional**.
+O sistema compara o **Número de Expressão** do nome com o **Número de Destino** da data, usando uma tabela fixa de harmonização. Para cada Destino, alguns números são favoráveis, outros neutros e outros em tensão (ex.: Destino 1 com Expressão 6). É o pior dos três resultados e desconta 18 pontos da nota.
 
 ### Como isso se resolve
 
-Tensão Vibracional não é sentença definitiva — ela sinaliza um desalinhamento mecânico do nome atual. Na harmonização, basta ajustar acentos, sobrenomes ou partículas de ligação para migrar a Expressão para um par altamente compatível com o seu Destino.`,
+Não é uma sentença. O Destino não muda, mas a Expressão sim: um sobrenome a menos ou um acento sutil podem levar o nome para um número Harmônico com o seu Destino, sem criar bloqueios.`,
   },
   {
     slug: 'assinatura-magnetica',
@@ -838,19 +845,41 @@ A leitura da **Sequência de Passagem** nos degraus dos triângulos mostra os **
       'numero-de-personalidade',
     ],
     shortSummary:
-      'Representação integrada das cinco forças centrais do mapa: Expressão, Destino, Motivação, Impressão/Missão e Personalidade.',
+      'Representação integrada das cinco forças centrais do mapa: Expressão, Destino, Motivação, Impressão e Missão.',
     definitionMarkdown: `### Visão panorâmica das 5 pontas
 
 A **Estrela Cabalística** reúne os cinco pilares vibracionais do mapa em equilíbrio visual:
 1. **Expressão** — o que você realiza com o nome completo.
 2. **Destino** — o chamado da data de nascimento.
 3. **Motivação (Alma)** — o propósito interno das vogais.
-4. **Missão / Impressão** — a presença externa das consoantes.
-5. **Personalidade** — o trato diário do primeiro nome.
+4. **Impressão** — a presença externa das consoantes.
+5. **Missão** — Destino + Expressão, o papel que você cumpre.
 
 Quando todas as pontas sustentam o centro sem bloqueios nem excessos, a pontuação global atinge níveis elevados de fluidez magnética.`,
   },
 ];
+
+// DEV-306: verbetes dos termos do sistema (cálculo, nota, sugestões e produtos).
+export const CANONICAL_GLOSSARY_TERMS: GlossaryTermEntry[] = [...TERMOS_BASE, ...TERMOS_DO_SISTEMA];
+
+/**
+ * DEV-306: verbetes antigos do banco (`public.glossary_terms`) que duplicam um verbete canônico.
+ * Ficam fora da lista e o link antigo redireciona (301) para o verbete canônico.
+ */
+export const GLOSSARY_SLUG_REDIRECTS: Readonly<Record<string, string>> = Object.freeze({
+  'tabela-cabalistica': 'tabela-cabalistica-das-letras',
+  'reducao-numerologica': 'reducao-numerica',
+  'score-vibracional': 'nota-do-nome',
+  'compatibilidade-vibracional': 'compatibilidade-expressao-destino',
+  'triangulo-de-destino': 'triangulo-do-destino',
+  'bloqueio-energetico': 'bloqueios-energeticos',
+  'bloqueio-numerologico': 'bloqueios-energeticos',
+  'nome-harmonizado': 'harmonizacao-do-nome',
+});
+
+export function resolveGlossaryRedirect(slug: string): string | null {
+  return GLOSSARY_SLUG_REDIRECTS[slug] ?? null;
+}
 
 const SLUG_MAP = new Map(CANONICAL_GLOSSARY_TERMS.map((item) => [item.slug, item]));
 
