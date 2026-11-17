@@ -80,3 +80,33 @@ itDev306('DEV-306 · verbetes duplicados do banco ficam fora da lista', () => {
   assertDev306.ok(slugs.includes('tabela-cabalistica-das-letras'));
   assertDev306.ok(slugs.includes('grafosofia'));
 });
+
+import { glossaryTermsFromDb } from './glossary-service.ts';
+
+describe('DEV-307 · banco como fonte única', () => {
+  it('só os termos do banco aparecem; termo do catálogo fora do banco não entra', () => {
+    const lista = glossaryTermsFromDb([
+      { slug: 'nome-de-ouro', term: 'Nome de Ouro', definition_markdown: 'Texto do banco.', sort_order: 20 },
+      { slug: 'novo-termo', term: 'Novo Termo', definition_markdown: 'Criado pelo admin.', category: 'calculo', synonyms: ['Novo Termo'], sort_order: 10 },
+    ]);
+    assert.deepEqual(lista.map((t) => t.slug), ['novo-termo', 'nome-de-ouro']);
+    assert.equal(lista[1]!.definitionMarkdown, 'Texto do banco.');
+    assert.equal(lista[0]!.category, 'calculo');
+  });
+
+  it('campos vazios no banco usam o metadado do catálogo do mesmo slug', () => {
+    const [t] = glossaryTermsFromDb([{ slug: 'bloqueio-444', term: 'Bloqueio 444', definition_markdown: 'x' }]);
+    assert.equal(t!.category, 'bloqueios');
+    assert.ok(t!.aliases.includes('Bloqueio 444'));
+    assert.ok(t!.shortSummary.length > 10);
+  });
+
+  it('categoria inválida no banco não quebra e slugs duplicados ficam de fora', () => {
+    const lista = glossaryTermsFromDb([
+      { slug: 'xyz', term: 'Termo Xyz', definition_markdown: 'Texto.', category: 'inexistente' },
+      { slug: 'score-vibracional', term: 'Score Vibracional', definition_markdown: 'antigo' },
+    ]);
+    assert.equal(lista.length, 1);
+    assert.ok(['numeros', 'assinatura', 'calculo'].includes(lista[0]!.category));
+  });
+});

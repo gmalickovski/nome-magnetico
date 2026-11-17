@@ -1,6 +1,6 @@
 # Arquitetura e regras detalhadas — Nome Magnético
 
-Documento de referência para agentes e devs. Entrada rápida: [`AGENTS.md`](../AGENTS.md) na raiz. Referência canônica extendida (numerologia, banco, HQ, componentes): [`CLAUDE.md`](../CLAUDE.md).
+Documento de referência para agentes e devs. Entrada rápida: [`AGENTS.md`](../AGENTS.md) na raiz. Referência canônica extendida (numerologia, banco, admin, componentes): [`CLAUDE.md`](../CLAUDE.md).
 
 ---
 
@@ -126,15 +126,15 @@ A partir de 30/10/2026 o Supabase exige `GRANT` explícito em tabelas novas do s
 
 Referência oficial: [Supabase Database Roles Documentation](https://supabase.com/docs/guides/database/postgres/roles).
 
-## Auth, Admin e HQ
+## Auth e Admin
 
 - `/app/*`: exige session e acesso ativo.
-- `/admin/*`: redireciona para `https://hq.studiomlk.com.br`.
+- Admin em `admin.nomemagnetico.com.br` (`src/pages/ops/*`, `/api/ops/*`), atrás do Cloudflare Access + staff. `/admin/*` no site público redireciona para lá. O HQ não existe mais.
 - `/api/admin/*`: endpoints legados ainda protegidos por `role='admin'`.
-- `/acesso` e `/acesso/resgatar`: fluxo de trial vindo do HQ.
+- `/acesso` e `/acesso/resgatar`: fluxo de trial com códigos criados no admin.
 - Usuarios teste usam `profiles.is_test` e `profiles.test_ends_at`.
 
-Integração HQ, trials e checkout: ver [`CLAUDE.md`](../CLAUDE.md) (seções Banco de Dados e Integração HQ StudioMLK).
+Admin, trials, checkout e glossário: ver [`CLAUDE.md`](../CLAUDE.md) (seções Painel Admin e Glossário) e [`architecture/admin-ops.md`](architecture/admin-ops.md).
 
 ## Emails e Notificacoes
 

@@ -193,7 +193,7 @@ const TERMOS_BASE: GlossaryTermEntry[] = [
       'Calculado pela soma de todas as letras do nome completo; revela seus talentos naturais, postura profissional e forma de agir no mundo.',
     definitionMarkdown: `### O que é o Número de Expressão
 
-O **Número de Expressão** nasce da conversão de **todas as letras do nome completo** (prenome e sobrenomes) segundo a tabela cabalística, considerando inclusive a influência de acentos agudos (+2), til (+3) e crase (x3).
+O **Número de Expressão** nasce da conversão de **todas as letras do nome completo** (prenome e sobrenomes) segundo a tabela cabalística, considerando o valor dos acentos (agudo +2, til +3, circunflexo +7, grave e trema ×2; veja **Acentos no Cálculo**).
 
 ### Como ele atua na prática
 
@@ -845,15 +845,15 @@ A leitura da **Sequência de Passagem** nos degraus dos triângulos mostra os **
       'numero-de-personalidade',
     ],
     shortSummary:
-      'Representação integrada das cinco forças centrais do mapa: Expressão, Destino, Motivação, Impressão/Missão e Personalidade.',
+      'Representação integrada das cinco forças centrais do mapa: Expressão, Destino, Motivação, Impressão e Missão.',
     definitionMarkdown: `### Visão panorâmica das 5 pontas
 
 A **Estrela Cabalística** reúne os cinco pilares vibracionais do mapa em equilíbrio visual:
 1. **Expressão** — o que você realiza com o nome completo.
 2. **Destino** — o chamado da data de nascimento.
 3. **Motivação (Alma)** — o propósito interno das vogais.
-4. **Missão / Impressão** — a presença externa das consoantes.
-5. **Personalidade** — o trato diário do primeiro nome.
+4. **Impressão** — a presença externa das consoantes.
+5. **Missão** — Destino + Expressão, o papel que você cumpre.
 
 Quando todas as pontas sustentam o centro sem bloqueios nem excessos, a pontuação global atinge níveis elevados de fluidez magnética.`,
   },

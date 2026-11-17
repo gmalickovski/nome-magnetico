@@ -6,6 +6,7 @@ const LABELS: Record<string, string> = {
   '/subscriptions': 'Assinaturas',
   '/billing': 'Billing',
   '/promocoes': 'Promoções',
+  '/glossario': 'Glossário',
   '/monitor': 'Monitor',
   '/faq': 'FAQ',
   '/support': 'Suporte',

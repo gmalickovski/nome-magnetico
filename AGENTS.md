@@ -89,7 +89,8 @@ React island → fetch /api/* → Astro API route → src/backend/* → Supabase
 ```
 
 - `/app/*` — sessão + acesso ativo  
-- `/admin/*` — redireciona para HQ (`hq.studiomlk.com.br`)  
+- Admin: `admin.nomemagnetico.com.br` (rotas `src/pages/ops/*`, Cloudflare Access + staff). O HQ não existe mais. Ver `docs/architecture/admin-ops.md`  
+- Glossário: textos só na tabela `glossary_terms`; editar pelo admin ou via Supabase (`docs/sops/glossario-edicao.md`)  
 - Produtos: `nome_social` | `nome_bebe` | `nome_empresa` — pagamento único por ciclo de 30 dias, self-service (“Acesso imediato”)
 
 ## Links úteis
