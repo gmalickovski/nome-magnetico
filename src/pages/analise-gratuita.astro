@@ -12,7 +12,7 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
 
 <LandingLayout
   title="Análise Gratuita do Seu Nome de Nascimento | Nome Magnético"
-  description="Descubra os bloqueios energéticos, lições kármicas e tendências ocultas do seu nome. Análise completa com os 4 triângulos numerológicos — gratuita, sem limite de tempo."
+  description="Descubra os bloqueios energéticos, lições kármicas e tendências ocultas do seu nome. Análise com o Triângulo da Vida do seu nome, gratuita e enviada por e-mail em PDF."
   keywords="análise gratuita nome, bloqueios energéticos nome, numerologia gratuita, lições kármicas, triângulos numerológicos, numerologia cabalística"
 >
   <LandingHeader client:load />
@@ -45,7 +45,7 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
       <ul class="flex flex-col sm:flex-row sm:flex-wrap items-center sm:justify-center gap-x-6 gap-y-2 mb-8">
         {[
           'Relatório em PDF enviado por e-mail',
-          '4 triângulos numerológicos cabalísticos',
+          'Triângulo da Vida do seu nome, calculado letra a letra',
           'Identificação de bloqueios e lições kármicas',
         ].map(item => (
           <li class="flex items-center gap-2 text-gray-400 text-sm">
@@ -68,8 +68,8 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
       </h2>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {[
-          { icon: '🔺', title: '4 Triângulos Numerológicos', desc: 'Triângulo da Vida, Pessoal, Social e do Destino — cada um revela uma dimensão diferente da influência do seu nome.' },
-          { icon: '⚡', title: 'Bloqueios Energéticos', desc: 'Sequências repetidas nos triângulos que criam padrões de travamento — identificados com precisão matemática.' },
+          { icon: '🔺', title: 'Triângulo da Vida', desc: 'A base da sua nota de 0 a 100: cada letra vira um número e mostra onde o seu nome flui e onde ele trava.' },
+          { icon: '⚡', title: 'Bloqueios Energéticos', desc: 'Sequências repetidas no triângulo que criam padrões de travamento, identificadas com cálculo.' },
           { icon: '🌀', title: 'Lições Kármicas', desc: 'Números ausentes no seu nome revelam qualidades que você veio desenvolver nesta encarnação.' },
           { icon: '📊', title: 'Tendências Ocultas', desc: 'Números que aparecem em excesso no seu nome, revelando qualidades hiperativas que podem gerar desequilíbrio.' },
           { icon: '🔢', title: '5 Números Principais', desc: 'Expressão, Destino, Motivação, Missão e Personalidade — o mapa vibracional completo do seu nome.' },

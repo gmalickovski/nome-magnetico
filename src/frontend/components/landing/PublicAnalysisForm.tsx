@@ -17,7 +17,8 @@ interface FreeAnalysisPreview {
   score: number;
   nivelCodigo: string;
   nivelRotulo: string;
-  potencial: number;
+  /** Nota máxima que o nome pode alcançar (a mesma do PDF); null quando não há ganho. */
+  potencialMax: number | null;
   marcaDaDataPresente: boolean;
 }
 
@@ -116,13 +117,13 @@ export function PublicAnalysisForm() {
       setShowSuccessModal(true);
       track('analise_gratis_submit', {
         score: previewData?.score,
-        potencial: previewData?.potencial,
+        potencial_max: previewData?.potencialMax ?? null,
         nivel: previewData?.nivelCodigo,
       });
       if (previewData) {
         track('analise_gratis_preview_view', {
           score: previewData.score,
-          potencial: previewData.potencial,
+          potencial_max: previewData.potencialMax,
           nivel: previewData.nivelCodigo,
         });
       }
@@ -267,115 +268,126 @@ export function PublicAnalysisForm() {
         </p>
       </form>
 
-      {/* Popup de Confirmação */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl border border-[#D4AF37]/30 bg-[#131313] p-6 sm:p-8 shadow-2xl shadow-black/70 relative animate-fade-in my-auto">
-            {/* Badge de envio do PDF */}
-            <div className="mb-4 flex items-center justify-center gap-2 rounded-full border border-[#2DD4BF]/30 bg-[#2DD4BF]/10 px-3.5 py-1.5 text-xs font-medium text-[#2DD4BF] w-fit mx-auto">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 shrink-0">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <span>PDF completo de 9 páginas enviado para {submittedEmail || 'seu e-mail'}</span>
+      {/* Popup de resultado (DEV-314): primeiro gancho de compra, com a nota máxima igual à do PDF */}
+      {showSuccessModal && (() => {
+        const temGanho = preview != null && preview.potencialMax != null && preview.potencialMax > preview.score;
+        const emailExibido = submittedEmail || 'seu e-mail';
+        const upsellHref =
+          '/nome-social?utm_source=modal_resultado_gratis&utm_medium=upsell_imediato&utm_campaign=analise_gratis';
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm overflow-y-auto">
+            <div className="w-full max-w-lg rounded-2xl border border-[#D4AF37]/30 bg-[#131313] p-6 sm:p-8 shadow-2xl shadow-black/70 relative animate-fade-in my-auto">
+              {preview ? (
+                <>
+                  <p className="text-center text-xs uppercase tracking-[0.18em] text-[#D4AF37] mb-2">
+                    A nota do seu nome hoje
+                  </p>
+                  <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] text-center mb-1">
+                    {preview.firstName ? `${preview.firstName}, ` : ''}
+                    {temGanho ? 'veja até onde ele pode chegar' : 'seu nome já está em ótima harmonia'}
+                  </h2>
+                  <p className="text-center text-xs font-medium text-amber-400 mb-5">{preview.nivelRotulo}</p>
+
+                  {temGanho ? (
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+                      <div className="rounded-2xl bg-[#1a1a1a] p-4 text-center">
+                        <p className="nm-score-eyebrow mb-1">Hoje</p>
+                        <p className="font-cinzel text-3xl font-bold text-[#e5e2e1]">
+                          {preview.score}
+                          <span className="text-sm text-gray-500 font-normal">/100</span>
+                        </p>
+                      </div>
+                      <span aria-hidden="true" className="text-xl text-[#D4AF37]">
+                        →
+                      </span>
+                      <div className="rounded-2xl bg-[#D4AF37]/[0.10] p-4 text-center">
+                        <p className="nm-score-eyebrow mb-1">Pode chegar a</p>
+                        <p className="font-cinzel text-3xl font-bold text-[#f2ca50]">
+                          {preview.potencialMax}
+                          <span className="text-sm text-[#D4AF37]/70 font-normal">/100</span>
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mx-auto w-fit rounded-2xl bg-[#1a1a1a] px-8 py-4 text-center">
+                      <p className="font-cinzel text-3xl font-bold text-[#e5e2e1]">
+                        {preview.score}
+                        <span className="text-sm text-gray-500 font-normal">/100</span>
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="mt-5 text-sm text-gray-300 text-center leading-relaxed">
+                    {temGanho
+                      ? `Ajustes sutis na forma de assinar podem levar o seu nome até ${preview.potencialMax}, sem mudar os seus documentos.`
+                      : 'O PDF completo mostra os detalhes da sua análise e como cada número aparece no seu nome.'}
+                  </p>
+
+                  <div className="mt-6 space-y-3">
+                    {temGanho && (
+                      <a
+                        href={upsellHref}
+                        onClick={() =>
+                          track('upsell_modal_click', {
+                            score: preview.score,
+                            potencial_max: preview.potencialMax,
+                            nivel: preview.nivelCodigo,
+                          })
+                        }
+                        className="flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-5 py-4 text-center text-xs sm:text-sm font-bold uppercase tracking-wide text-[#131313] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-700"
+                      >
+                        <span>Ver minhas opções de assinatura</span>
+                        <span aria-hidden="true">→</span>
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowSuccessModal(false)}
+                      className="w-full rounded-full bg-white/5 hover:bg-white/10 py-3 text-xs font-medium text-gray-300 transition-colors duration-700"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+
+                  <p className="mt-4 text-[11px] text-gray-500 text-center leading-relaxed">
+                    O PDF completo da sua análise está a caminho de {emailExibido}. Se não chegar em 2 minutos,
+                    confira as abas Spam e Promoções.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] text-center mb-3">
+                    Análise solicitada
+                  </h2>
+                  <div className="space-y-4 text-sm text-gray-300 text-center leading-relaxed">
+                    <p>O PDF completo da sua análise está a caminho de {emailExibido}.</p>
+                    <p className="rounded-2xl bg-[#1a1a1a] p-4 text-xs text-gray-400">
+                      Se não encontrar a mensagem em alguns minutos, confira as abas <strong>Spam</strong> e{' '}
+                      <strong>Promoções</strong>.
+                    </p>
+                  </div>
+                  <div className="mt-6 space-y-3">
+                    <a
+                      href={upsellHref}
+                      onClick={() => track('upsell_modal_click')}
+                      className="block w-full text-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-bold py-3.5 transition-colors duration-700 tracking-wide uppercase text-xs"
+                    >
+                      Conhecer o Nome Social →
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setShowSuccessModal(false)}
+                      className="w-full text-gray-400 hover:text-gray-200 py-2 text-xs transition-colors"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-
-            <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] text-center mb-2">
-              {preview?.firstName ? `${preview.firstName}, aqui está a prévia do seu diagnóstico` : 'Análise Solicitada com Sucesso'}
-            </h2>
-
-            {preview ? (
-              <div className="mt-5 space-y-5">
-                {/* Placar comparativo: Nota Hoje vs Potencial Harmonizado */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-4 text-center">
-                    <p className="nm-score-eyebrow mb-1">
-                      Sua Nota Hoje
-                    </p>
-                    <p className="font-cinzel text-2xl sm:text-3xl font-bold text-[#e5e2e1]">
-                      {preview.score}<span className="text-sm text-gray-500 font-normal">/100</span>
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-amber-400">
-                      {preview.nivelRotulo}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/[0.08] p-4 text-center">
-                    <p className="nm-score-eyebrow mb-1">
-                      Potencial da Assinatura
-                    </p>
-                    <p className="font-cinzel text-2xl sm:text-3xl font-bold text-[#f2ca50]">
-                      até {preview.potencial}<span className="text-sm text-[#D4AF37]/70 font-normal">/100</span>
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-[#e5e2e1]">
-                      Com Nome Social Harmonizado
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-300 text-center leading-relaxed">
-                  Enquanto o PDF detalhado chega na sua caixa de entrada, veja como criamos 3 opções de assinatura magnética prontas para destravar o seu potencial máximo.
-                </p>
-
-                <div className="space-y-3 pt-1">
-                  <a
-                    href="/nome-social?utm_source=modal_resultado_gratis&utm_medium=upsell_imediato&utm_campaign=analise_gratis"
-                    onClick={() =>
-                      track('upsell_modal_click', {
-                        score: preview.score,
-                        potencial: preview.potencial,
-                        nivel: preview.nivelCodigo,
-                      })
-                    }
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4AF37] hover:bg-[#f2ca50] px-5 py-4 text-center text-xs sm:text-sm font-bold uppercase tracking-wide text-[#131313] shadow-lg shadow-[#D4AF37]/20 transition-colors"
-                  >
-                    <span>Ver Como Chegar a {preview.potencial}/100 no Nome Social</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowSuccessModal(false)}
-                    className="w-full rounded-xl border border-white/10 bg-transparent hover:bg-white/5 py-3 text-xs font-medium text-gray-400 hover:text-gray-200 transition-colors"
-                  >
-                    Fechar e aguardar o PDF no meu e-mail
-                  </button>
-                </div>
-
-                <p className="text-[11px] text-gray-500 text-center">
-                  Caso não encontre o e-mail em até 2 minutos, confira as abas Spam e Promoções.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-4 text-sm text-gray-300 text-center leading-relaxed mt-4">
-                  <p>
-                    Em alguns minutos, você receberá um e-mail contendo o PDF da análise vibracional completa do seu nome.
-                  </p>
-                  <p className="bg-[#1a1a1a] p-4 rounded-xl border border-white/5 text-xs text-gray-400 italic">
-                    Caso não veja a mensagem em sua caixa de entrada, verifique sua pasta de <strong>Spam</strong> ou de <strong>Promoções</strong>.
-                  </p>
-                </div>
-                <div className="mt-6 space-y-3">
-                  <a
-                    href="/nome-social?utm_source=modal_resultado_gratis&utm_medium=upsell_imediato&utm_campaign=analise_gratis"
-                    onClick={() => track('upsell_modal_click')}
-                    className="block w-full text-center bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-bold py-3.5 rounded-xl transition-colors tracking-wide uppercase text-xs"
-                  >
-                    Conhecer a Harmonização do Nome Social →
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setShowSuccessModal(false)}
-                    className="w-full text-gray-400 hover:text-gray-200 py-2 text-xs transition-colors"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </>
-            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Popup de Análise Já Solicitada */}
       {showDuplicateModal && (
