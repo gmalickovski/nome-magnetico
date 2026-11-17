@@ -67,6 +67,36 @@ describe('DEV-235 · Motor Interativo e Partitura (4 Camadas)', () => {
       subfocoDecidido: true,
       aberturaMudanca: 'acento_ou_letra',
     });
+    // DEV-303: depois da abertura vêm as preferências e a prioridade.
+    assert.equal(s.nextStep, 'preferencias_assinatura');
+
+    s = determineNextStep({
+      ...base,
+      nomeUsoDefinido: true,
+      sobrenomesDecididos: true,
+      relacaoNome: 'gosto_muito',
+      ondeAssinaDecidido: true,
+      estiloPresencaDecidido: true,
+      areaFoco: 'carreira_negocios',
+      subfocoDecidido: true,
+      aberturaMudanca: 'acento_ou_letra',
+      preferenciasDecididas: true,
+    });
+    assert.equal(s.nextStep, 'prioridade_conflito');
+
+    s = determineNextStep({
+      ...base,
+      nomeUsoDefinido: true,
+      sobrenomesDecididos: true,
+      relacaoNome: 'gosto_muito',
+      ondeAssinaDecidido: true,
+      estiloPresencaDecidido: true,
+      areaFoco: 'carreira_negocios',
+      subfocoDecidido: true,
+      aberturaMudanca: 'acento_ou_letra',
+      preferenciasDecididas: true,
+      prioridadeConflito: 'nota_mais_alta',
+    });
     assert.equal(s.nextStep, 'palpite');
 
     s = determineNextStep({
@@ -79,6 +109,8 @@ describe('DEV-235 · Motor Interativo e Partitura (4 Camadas)', () => {
       areaFoco: 'carreira_negocios',
       subfocoDecidido: true,
       aberturaMudanca: 'acento_ou_letra',
+      preferenciasDecididas: true,
+      prioridadeConflito: 'nota_mais_alta',
       palpiteStatus: 'acertou',
     });
     assert.equal(s.nextStep, 'fim_coleta');

@@ -27,6 +27,7 @@ import type {
 } from './primitives';
 import {
   runJevDecision,
+  type JevCallOptions,
   type JevDecisionInputState,
   type JevDecisionResult,
 } from './providers/jev-provider';
@@ -46,8 +47,11 @@ export class InteractiveDecisionEngine {
     this.brand = brand;
   }
 
-  async evaluate(state: JevDecisionInputState): Promise<InteractiveEngineOutput> {
-    const decision = await runJevDecision(state);
+  async evaluate(
+    state: JevDecisionInputState,
+    options?: JevCallOptions,
+  ): Promise<InteractiveEngineOutput> {
+    const decision = await runJevDecision(state, options);
     const bloqueioPrincipal = state.bloqueios_triangulos[0] ?? null;
 
     const palpiteTexto = buildProfilePalpiteText({

@@ -65,9 +65,9 @@ Endpoint: `POST /api/adaptive-interview` — Zod, `AdaptiveSessionGuard` (limite
 
 ## Lacunas conhecidas (decisão humana antes de chamadas reais)
 
-1. **LoopGuard DB** (`src/backend/ai/loop-guard.ts`) ainda não envolve `decide-live` / JEV (apontado na DEV-267).
-2. **`decide-live` é público** sem gate de assinatura (preview gratuito); habilitar JEV real exige teto server-side.
-3. **Autorização Guilherme** para consumo TypeSafe/Groq/OpenAI e telemetria de tokens (DEV-267 In Review).
+1. ~~**LoopGuard DB** não envolve `decide-live` / JEV~~ — **resolvido na DEV-303**: `decide-live` passa um `LoopGuard` (3 tentativas, 50k tokens) e registra o uso em `ai_usage`. Ver [DEV-303](dev-303-questionario-adaptativo-jev.md).
+2. ~~**`decide-live` é público** sem teto server-side~~ — **resolvido na DEV-303**: teto por visitante/usuário, por hora e de tokens, mais o kill switch `NM_JEV_REMOTE_DISABLED`. O preview gratuito continua, com teto. Limite: contador em memória por processo.
+3. **Autorização Guilherme** para consumo TypeSafe/Groq/OpenAI e telemetria de tokens (DEV-267 In Review). Segue pendente; a validação da saída e a telemetria sanitizada já existem (DEV-303).
 4. **UI do resumo confirmável** (card Marca × Marketing) — backend pronto em `profile-summary.ts`; ligação no `NomeSocialChat` fica para Parte 2 / DEV-275.
 5. **Título do card e CTA** — divergência registrada no comentário 12/11 na issue.
 

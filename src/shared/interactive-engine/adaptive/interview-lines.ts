@@ -11,6 +11,9 @@ export const STEP_TO_INTERVIEW_LINE: Record<QuestionnaireStepId, InterviewLine> 
   area_foco: 'objetivos',
   subfoco: 'objetivos',
   abertura_mudanca: 'tolerancia_mudanca',
+  // DEV-303
+  preferencias_assinatura: 'tolerancia_mudanca',
+  prioridade_conflito: 'tolerancia_mudanca',
 };
 
 export const INTERVIEW_LINE_ORDER: InterviewLine[] = [

@@ -11,6 +11,9 @@ import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { buildBirthNamePanel } from '../../backend/numerology/birth-name-panel';
 import { buildChatReadingSummary } from '../../backend/numerology/chat-reading-summary';
 import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engine';
+import { LoopGuard, logAIUsage } from '../../backend/ai/loop-guard';
+import { getClientIp, hashClientIp } from '../../backend/security/apiRateLimit';
+import { sanitizeOutroText } from '../../shared/interactive-engine/questionnaire-adaptive';
 import { determineNextStep } from '../../shared/interactive-engine/router';
 import { buildProfilePalpiteText } from '../../shared/interactive-engine/chat-profile-copy';
 import { computeRadarAxes } from '../../shared/interactive-engine/radar-axes';
@@ -95,6 +98,13 @@ const decideLiveSchema = z.object({
   abertura_mudanca: z.string().max(40).optional(),
   nome_artistico: z.string().max(80).optional(),
   contexto_leitura: z.array(z.string().max(120)).max(20).optional(),
+  // DEV-303: perguntas novas do questionário
+  preferencias_assinatura: z
+    .array(z.enum(['manter_primeiro_nome', 'sem_acento', 'tanto_faz']))
+    .max(3)
+    .optional(),
+  prioridade_conflito: z.enum(['nota_mais_alta', 'mudar_o_minimo']).optional(),
+  area_foco_outro: z.string().max(60).optional(),
 });
 
 function normalizeDateToPtBr(raw: string): string | null {
@@ -141,7 +151,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
   };
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   let rawBody: unknown;
   try {
     rawBody = await request.json();
@@ -180,6 +190,9 @@ export const POST: APIRoute = async ({ request }) => {
     abertura_mudanca,
     nome_artistico,
     contexto_leitura,
+    preferencias_assinatura,
+    prioridade_conflito,
+    area_foco_outro,
   } = parsed.data;
 
   const dataPtBr = normalizeDateToPtBr(data_nascimento);
@@ -209,6 +222,9 @@ export const POST: APIRoute = async ({ request }) => {
       aberturaMudanca: abertura_mudanca ?? null,
       nomeArtistico: nome_artistico ?? null,
       contextoLeituraOutros: contexto_leitura ?? [],
+      preferenciasAssinatura: preferencias_assinatura ?? [],
+      prioridadeConflito: prioridade_conflito ?? null,
+      areaFocoOutro: area_foco_outro ? sanitizeOutroText(area_foco_outro) || null : null,
     };
 
     const rankingOpcoes = profileToRankingOpcoes(questionnaireProfile, {
@@ -242,14 +258,25 @@ export const POST: APIRoute = async ({ request }) => {
       areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? null,
       subfocoDecidido: Boolean(subfocos_ordenados?.length),
       aberturaMudanca: abertura_mudanca ?? null,
+      ondeAssinaRaw: onde_assina_raw ?? [],
+      preferenciasDecididas: Boolean(preferencias_assinatura?.length),
+      prioridadeConflito: prioridade_conflito ?? null,
       palpiteStatus: palpite_status ?? null,
       estiloPreferido: estilo_preferido ?? null,
       detalheInformado: objetivo_texto,
     });
 
+    // DEV-303: teto de custo por visitante/usuário, guarda de tentativas e registro de uso.
+    // Chave sem IP puro: `u:<usuário>` ou `ip:<hash>`.
+    const userId = locals.user?.id;
+    const budgetKey = userId
+      ? `u:${userId}`
+      : `ip:${hashClientIp(getClientIp(request, clientAddress))}`;
+
     // Motor JEV
     const engine = new InteractiveDecisionEngine('nome-magnetico');
-    const decision = await engine.evaluate({
+    const decision = await engine.evaluate(
+      {
       nome_completo: nomeLimpo,
       numero_destino: destino,
       nota_hoje: notaHoje,
@@ -260,7 +287,25 @@ export const POST: APIRoute = async ({ request }) => {
       onde_assina_chips: onde_assina,
       estilo_preferido_chip: estilo_preferido,
       subfoco_momento_chip: subfoco_momento,
-    });
+      },
+      {
+        budgetKey,
+        guard: new LoopGuard(),
+        onUsage: (usage) => {
+          void logAIUsage({
+            userId: userId ?? null,
+            analysisId: null,
+            provider: usage.provider,
+            model: usage.model,
+            task: 'jev-decision',
+            tokensInput: usage.tokensInput,
+            tokensOutput: usage.tokensOutput,
+            attemptNumber: usage.attemptNumber,
+            similarToPrevious: false,
+          });
+        },
+      },
+    );
 
     // Palpite de perfil: só no passo palpite, sem números (copy a partir das respostas)
     let reading = '';
@@ -330,7 +375,18 @@ export const POST: APIRoute = async ({ request }) => {
       palpiteStatus: palpite_status,
     });
 
-    console.info('[api/decide-live] providerUsed', decision.providerUsed);
+    // Telemetria sanitizada (sem nome, sem relato, sem chaves): provider, motivo do fallback, tokens e latência.
+    const jevTelemetry = decision.telemetry
+      ? {
+          providerPath: decision.providerPath ?? [],
+          fallbackReason: decision.telemetry.fallbackReason ?? null,
+          budgetDenial: decision.telemetry.budgetDenial ?? null,
+          attempts: decision.telemetry.attempts,
+          tokens: decision.telemetry.tokens,
+          latencyMs: decision.telemetry.latencyMs,
+        }
+      : null;
+    console.info('[api/decide-live] jev', JSON.stringify({ providerUsed: decision.providerUsed, ...jevTelemetry }));
 
     return new Response(
       JSON.stringify({
@@ -348,6 +404,7 @@ export const POST: APIRoute = async ({ request }) => {
         scoreMinimoSugestao: resultadoSocial.scoreMinimoSugestao,
         avisoSobrenomeExigido: resultadoSocial.avisoSobrenomeExigido ?? null,
         providerUsed: decision.providerUsed,
+        jevTelemetry,
         escopoPronto: decision.escopoPronto,
         areaFoco: decision.areaFoco,
         ondeAssina: decision.ondeAssina,

@@ -73,6 +73,7 @@ import {
 import { podePedirGerarMais } from '../../../../shared/nome-social/gerar-mais-limits.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
 import {
+  QUESTIONNAIRE_STEP_ORDER,
   detectShownBlockTransitions,
   resolveBlockTransition,
   type BlockTransitionId,
@@ -204,7 +205,7 @@ export function NomeSocialChat({
   const [stepIndex, setStepIndex] = useState(0);
   const [currentStepId, setCurrentStepId] = useState('nome_nascimento');
   const [remaining, setRemaining] = useState(7);
-  const totalSteps = 9;
+  const totalSteps = QUESTIONNAIRE_STEP_ORDER.length + 1;
 
   const [birthConfirmed, setBirthConfirmed] = useState(false);
   const [collectState, setCollectState] = useState<ChatCollectState>(INITIAL_COLLECT_STATE);

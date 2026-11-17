@@ -33,7 +33,9 @@ export type QuestionnaireStepId =
   | 'estilo_presenca'
   | 'area_foco'
   | 'subfoco'
-  | 'abertura_mudanca';
+  | 'abertura_mudanca'
+  | 'preferencias_assinatura'
+  | 'prioridade_conflito';
 
 export const QUESTIONNAIRE_STEP_ORDER: QuestionnaireStepId[] = [
   'nome_uso',
@@ -44,6 +46,15 @@ export const QUESTIONNAIRE_STEP_ORDER: QuestionnaireStepId[] = [
   'area_foco',
   'subfoco',
   'abertura_mudanca',
+  // DEV-303: máximo de 10 passos; os dois últimos são pulados quando já inferidos.
+  'preferencias_assinatura',
+  'prioridade_conflito',
+];
+
+/** Passos novos da DEV-303, fora do roteiro do mock adaptativo da DEV-274. */
+export const DEV303_NEW_STEPS: readonly QuestionnaireStepId[] = [
+  'preferencias_assinatura',
+  'prioridade_conflito',
 ];
 
 export type SelectionMode = 'single' | 'multi';
@@ -94,6 +105,8 @@ const AREA_FOCO_OPTIONS: QuestionOption[] = [
   { id: 'carreira_negocios', label: 'Carreira e negócios' },
   { id: 'relacionamentos_harmonia', label: 'Relacionamentos' },
   { id: 'autoestima_expressao', label: 'Autoestima e expressão' },
+  // DEV-303: texto livre (até 60 caracteres). O id termina em `_outro`, que abre o campo de texto.
+  { id: 'area_outro', label: 'Outro foco' },
 ];
 
 const ABERTURA_OPTIONS: QuestionOption[] = [
@@ -101,6 +114,17 @@ const ABERTURA_OPTIONS: QuestionOption[] = [
   { id: 'acento_ou_letra', label: 'Um acento ou letra a mais' },
   { id: 'tirar_trocar_sobrenome', label: 'Tirar ou trocar um sobrenome' },
   { id: 'o_que_fizer_sentido', label: 'O que fizer sentido' },
+];
+
+const PREFERENCIAS_ASSINATURA_OPTIONS: QuestionOption[] = [
+  { id: 'manter_primeiro_nome', label: 'Manter meu primeiro nome' },
+  { id: 'sem_acento', label: 'Prefiro sem acento' },
+  { id: 'tanto_faz', label: 'Tanto faz' },
+];
+
+const PRIORIDADE_CONFLITO_OPTIONS: QuestionOption[] = [
+  { id: 'nota_mais_alta', label: 'A nota mais alta' },
+  { id: 'mudar_o_minimo', label: 'Mudar o mínimo' },
 ];
 
 const SUBFOCO_BY_AREA: Record<AreaFocoNomeMagnetico, QuestionOption[]> = {
@@ -232,6 +256,8 @@ export function getQuestionSpec(
         id: stepId,
         prompt: 'O que mais pede a sua atenção agora?',
         mode: 'single',
+        allowOther: true,
+        otherMaxLength: 60,
         staticOptions: AREA_FOCO_OPTIONS,
       };
     case 'subfoco': {
@@ -251,6 +277,23 @@ export function getQuestionSpec(
         prompt: 'Quanto você topa mudar na assinatura?',
         mode: 'single',
         staticOptions: ABERTURA_OPTIONS,
+      };
+    case 'preferencias_assinatura':
+      return {
+        id: stepId,
+        prompt: 'Tem algo que você quer manter ou evitar na assinatura?',
+        mode: 'multi',
+        minSelect: 1,
+        maxSelect: 2,
+        captionMultiLimit: (n) => `Escolha até ${n}`,
+        staticOptions: PREFERENCIAS_ASSINATURA_OPTIONS,
+      };
+    case 'prioridade_conflito':
+      return {
+        id: stepId,
+        prompt: 'Se for preciso escolher, o que pesa mais para você?',
+        mode: 'single',
+        staticOptions: PRIORIDADE_CONFLITO_OPTIONS,
       };
     default:
       return {
@@ -389,4 +432,58 @@ export function needsNomeArtisticoField(ondeIds: string[]): boolean {
 
 export function isQuestionnaireStep(stepId: string): stepId is QuestionnaireStepId {
   return (QUESTIONNAIRE_STEP_ORDER as string[]).includes(stepId);
+}
+
+// ── DEV-303 · texto livre, inferência e pulo de perguntas ────────────────────
+
+/** Texto livre do chat: sem controle, sem marcação e no máximo `max` caracteres. */
+export function sanitizeOutroText(text: string, max = 60): string {
+  return text
+    .replace(/[\u0000-\u001f\u007f<>`{}\[\]\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+/** Área de foco por palavras-chave (mesma regra do determinístico do JEV). `null` sem pista. */
+export function inferAreaFocoFromText(text: string): AreaFocoNomeMagnetico | null {
+  const t = text.toLowerCase();
+  if (/(dinheiro|financ|renda|d[ií]vida|pagar|conta|prosper|lucro|reserva|ganho)/.test(t)) {
+    return 'prosperidade_financeira';
+  }
+  if (/(amor|casamento|relacionamento|fam[ií]lia|parceir|afeto|casa|filh)/.test(t)) {
+    return 'relacionamentos_harmonia';
+  }
+  if (/(confian[cç]a|autoestima|timidez|inseguran[cç]a|falar|express|clareza|prop[oó]sito)/.test(t)) {
+    return 'autoestima_expressao';
+  }
+  if (/(trabalh|carreira|neg[oó]cio|client|contrato|venda|empresa|cargo|promo[cç][aã]o)/.test(t)) {
+    return 'carreira_negocios';
+  }
+  return null;
+}
+
+export interface QuestionnaireSkipContext {
+  relacaoNome?: string | null;
+  aberturaMudanca?: string | null;
+  ondeAssinaRaw?: readonly string[] | null;
+}
+
+/**
+ * Perguntas que o roteiro pula porque a resposta já está implícita:
+ * - "Não me representa" já indica abertura para mudar (abertura_mudanca);
+ * - "Quase nada" ou uso em contratos e documentos já indicam mudar o mínimo (prioridade_conflito).
+ */
+export function isQuestionnaireStepSkipped(
+  stepId: QuestionnaireStepId,
+  ctx: QuestionnaireSkipContext,
+): boolean {
+  if (stepId === 'abertura_mudanca') return ctx.relacaoNome === 'nao_representa';
+  if (stepId === 'prioridade_conflito') {
+    return (
+      ctx.aberturaMudanca === 'quase_nada' ||
+      Boolean(ctx.ondeAssinaRaw?.includes('contratos_documentos'))
+    );
+  }
+  return false;
 }

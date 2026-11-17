@@ -42,6 +42,10 @@ const rankingChatSchema = z.object({
       subfocos: z.array(z.string().max(60)).max(4).optional(),
     })
     .optional(),
+  // DEV-303
+  manterPrimeiroNome: z.boolean().optional(),
+  acentoNaAssinatura: z.enum(['prefere_sem']).optional(),
+  prioridadeConflito: z.enum(['nota', 'mudanca']).optional(),
 });
 
 const regenerateSchema = z
@@ -246,6 +250,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     maxNivelGeracao:
       rankingChat?.maxNivelGeracao ?? parametrosAnteriores.maxNivelGeracao,
     afinidades: rankingChat?.afinidades ?? parametrosAnteriores.afinidades,
+    manterPrimeiroNome:
+      rankingChat?.manterPrimeiroNome ?? Boolean(parametrosAnteriores.manterPrimeiroNome),
+    acentoNaAssinatura:
+      rankingChat?.acentoNaAssinatura ?? parametrosAnteriores.acentoNaAssinatura,
+    prioridadeConflito:
+      rankingChat?.prioridadeConflito ?? parametrosAnteriores.prioridadeConflito,
   };
 
   const resultado = analisarNomesSocial([], nomeNascimento, dataNascimento, {
@@ -264,6 +274,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais || undefined,
     maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
     afinidades: rankingChatMerged.afinidades,
+    manterPrimeiroNome: rankingChatMerged.manterPrimeiroNome || undefined,
+    acentoNaAssinatura: rankingChatMerged.acentoNaAssinatura,
+    prioridadeConflito: rankingChatMerged.prioridadeConflito,
   });
 
   if (selecionarComoPrincipal && selecionarComoPrincipal.trim().length >= 2) {
@@ -330,6 +343,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais,
     maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
     afinidades: rankingChatMerged.afinidades,
+    manterPrimeiroNome: rankingChatMerged.manterPrimeiroNome,
+    acentoNaAssinatura: rankingChatMerged.acentoNaAssinatura,
+    prioridadeConflito: rankingChatMerged.prioridadeConflito,
   };
 
   const resumoAtualizado = buildSelectedSocialSummary({

@@ -17,6 +17,8 @@ import {
   mapOndeAssinaToApi,
   mapSubfocoToEnum,
   type QuestionnaireStepId,
+  inferAreaFocoFromText,
+  sanitizeOutroText,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
 import type {
   AreaFocoNomeMagnetico,
@@ -48,6 +50,10 @@ export interface ChatCollectState {
   estiloPreferido: string | null;
   palpiteStatus: 'acertou' | 'parcial' | 'nao' | null;
   objetivoTexto: string;
+  /** DEV-303 */
+  preferenciasAssinatura: string[];
+  prioridadeConflito: string | null;
+  areaFocoOutro: string | null;
 }
 
 export function isProfileCollectionComplete(nextStep: string): boolean {
@@ -72,6 +78,9 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
   estiloPreferido: null,
   palpiteStatus: null,
   objetivoTexto: '',
+  preferenciasAssinatura: [],
+  prioridadeConflito: null,
+  areaFocoOutro: null,
 };
 
 type ApiPanel = {
@@ -315,6 +324,11 @@ export function buildDecideLiveBody(
     subfocos_ordenados: collect.subfocosOrdenados.length ? collect.subfocosOrdenados : undefined,
     abertura_mudanca: collect.aberturaMudanca ?? undefined,
     nome_artistico: collect.nomeArtistico ?? undefined,
+    preferencias_assinatura: collect.preferenciasAssinatura?.length
+      ? collect.preferenciasAssinatura
+      : undefined,
+    prioridade_conflito: collect.prioridadeConflito ?? undefined,
+    area_foco_outro: collect.areaFocoOutro ?? undefined,
   };
 }
 
@@ -358,6 +372,10 @@ export function applyQuestionnaireStep(
 
   if (stepId === 'relacao_nome') {
     next.relacaoNome = ids[0] ?? null;
+    // DEV-303: "Não me representa" já indica abertura para mudar; a pergunta de abertura é pulada.
+    if (next.relacaoNome === 'nao_representa' && !next.aberturaMudanca) {
+      next.estiloPreferido = mapAberturaToEstilo(null, next.relacaoNome, next.nomeArtistico);
+    }
     return next;
   }
 
@@ -373,6 +391,15 @@ export function applyQuestionnaireStep(
   }
 
   if (stepId === 'area_foco') {
+    // DEV-303: "Outro foco" (texto livre, até 60 caracteres) vira a área mais próxima por palavras-chave.
+    if (ids[0] === 'nome_outro' || ids[0] === 'area_outro') {
+      const texto = sanitizeOutroText(payload.otherText ?? labels[0] ?? '');
+      next.areaFocoOutro = texto || null;
+      next.areaFoco = inferAreaFocoFromText(texto) ?? 'carreira_negocios';
+      next.contextoLeitura = mergeContextoLeitura(next.contextoLeitura, stepId, texto);
+      return next;
+    }
+    next.areaFocoOutro = null;
     next.areaFoco = ids[0] ?? null;
     return next;
   }
@@ -385,7 +412,19 @@ export function applyQuestionnaireStep(
 
   if (stepId === 'abertura_mudanca') {
     next.aberturaMudanca = ids[0] ?? null;
-    next.estiloPreferido = mapAberturaToEstilo(next.aberturaMudanca, next.relacaoNome);
+    next.estiloPreferido = mapAberturaToEstilo(next.aberturaMudanca, next.relacaoNome, next.nomeArtistico);
+    return next;
+  }
+
+  if (stepId === 'preferencias_assinatura') {
+    // "Tanto faz" sozinho vale como resposta; junto de outra escolha, vale a escolha.
+    const escolhidas = ids.filter((id) => id !== 'tanto_faz');
+    next.preferenciasAssinatura = escolhidas.length > 0 ? escolhidas : ['tanto_faz'];
+    return next;
+  }
+
+  if (stepId === 'prioridade_conflito') {
+    next.prioridadeConflito = ids[0] ?? null;
     return next;
   }
 
@@ -466,6 +505,9 @@ export function collectStateToRankingPatch(collect: ChatCollectState): RankingOp
     aberturaMudanca: collect.aberturaMudanca,
     nomeArtistico: collect.nomeArtistico,
     contextoLeituraOutros: collect.contextoLeitura,
+    preferenciasAssinatura: collect.preferenciasAssinatura ?? [],
+    prioridadeConflito: collect.prioridadeConflito ?? null,
+    areaFocoOutro: collect.areaFocoOutro ?? null,
   });
 }
 
@@ -534,6 +576,9 @@ export function buildRegenerateRequestBody(input: {
       restricaoDocumentosLegais: ranking.restricaoDocumentosLegais,
       maxNivelGeracao: ranking.maxNivelGeracao,
       afinidades: ranking.afinidades,
+      manterPrimeiroNome: ranking.manterPrimeiroNome,
+      acentoNaAssinatura: ranking.acentoNaAssinatura,
+      prioridadeConflito: ranking.prioridadeConflito,
     },
   };
 
