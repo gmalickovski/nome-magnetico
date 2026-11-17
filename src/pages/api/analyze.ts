@@ -16,7 +16,6 @@ import {
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
-import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
 import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
 import {
   avaliarNome,
@@ -33,7 +32,7 @@ import {
   analisarNomesSocial,
   scoreNascimentoNomeSocial,
 } from '../../backend/numerology/products/nome-social';
-import { getGanhoMinimoPontos, passaGanhoMinimo } from '../../backend/numerology/suggestion-birth-invariant';
+import { motivoNaoOfertavel } from '../../backend/numerology/suggestion-birth-invariant';
 import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { logError } from '../../backend/utils/error-logger';
@@ -348,6 +347,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         if (somenteChat && manualNames.size > 0) {
           const seen = new Set<string>();
+          const scoreNascChat = scoreNascimentoNomeSocial(nome_completo, data_nascimento);
           resultado.nomesCandidatos = candidatos.filter(n => {
             const key = normalizarChaveNome(n);
             if (seen.has(key)) return false;
@@ -355,7 +355,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
           }).map(n => {
             const evaluated = analisarNomeSocial(n, data_nascimento, 'usuario');
             return { ...evaluated, score: avaliarNome(n, data_nascimento).score_v3, nomeCompleto: n, origem: manualNames.has(normalizarChaveNome(n)) ? 'manual' as const : 'gerado' as const };
-          });
+          }).filter(c =>
+            // Nome digitado pelo usuário é escolha dele; sugestão do sistema segue R1/R2 (DEV-301).
+            c.origem === 'manual' || motivoNaoOfertavel(c, scoreNascChat) === null
+          );
         }
         if (nome_social_principal) {
           const principalNormalizado = nome_social_principal.trim().toLowerCase();
@@ -365,7 +368,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               candidato => candidato.nomeCompleto.trim().toLowerCase() === principalNormalizado
             ) ?? analisarNomeSocial(nome_social_principal, data_nascimento, 'usuario');
 
-          if (!manualNames.has(principalNormalizado) && !passaGanhoMinimo(nomeEscolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+          if (!manualNames.has(principalNormalizado) && motivoNaoOfertavel(nomeEscolhido, scoreNasc) !== null) {
             resultado.melhorNome = null;
             resultado.semOpcoesElegiveis = true;
           } else {

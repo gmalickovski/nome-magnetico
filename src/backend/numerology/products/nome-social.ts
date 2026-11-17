@@ -43,12 +43,15 @@ import { avaliarNome, calcularScoreTeto, calcularScoreV1ComOcorrenciasExtras } f
 import { isScoreV3 } from '../score-version';
 import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic';
 import type { Bloqueio } from '../triangle';
+import { SUGESTAO_CONFIG_V4 } from '../score-config';
 import {
   dedupeCandidatosEstavel,
-  filtrarCandidatosElegiveis,
+  filtrarOfertaveis,
   getGanhoMinimoPontos,
+  isMotorV4,
+  motivoNaoOfertavel,
   ordenarPorNotaDescEstavel,
-  passaGanhoMinimo,
+  scoreMinimoSugestao,
 } from '../suggestion-birth-invariant';
 
 // ── Tabelas de acentos ────────────────────────────────────────────────────────
@@ -287,6 +290,53 @@ export function pontuarOrtografiaPortugues(nome: string): number {
   return score;
 }
 
+// ── Grafia plausível (DEV-301 · motor v4) ─────────────────────────────────────
+
+export type ClasseGrafia = 'natural' | 'artificial' | 'proibida';
+
+const REGEX_ACENTO_VOGAL = /[áàãâéêíóôõúÁÀÃÂÉÊÍÓÔÕÚ]/g;
+const REGEX_ACENTO_INICIAL = /^[áàãâéêíóôõúÁÀÃÂÉÊÍÓÔÕÚ]/;
+
+/**
+ * Classifica a grafia de uma variação em relação ao nome de nascimento.
+ * - proibida: anel (°), mais de 1 acento novo por palavra, til na letra inicial,
+ *   acento novo na vogal inicial de sobrenome. Nunca é oferecida.
+ * - artificial: til novo fora de ã (final, ão, ãe) ou õ (õe). Só entra quando
+ *   não há opções suficientes com grafia natural.
+ * - natural: o resto.
+ */
+export function classificarGrafia(nome: string, nomeNascimento: string): ClasseGrafia {
+  const originais = new Map<string, string>();
+  for (const w of nomeNascimento.trim().split(/\s+/)) originais.set(normalizarToken(w), w);
+
+  const palavras = nome.trim().split(/\s+/).filter(Boolean);
+  let artificial = false;
+
+  for (let i = 0; i < palavras.length; i++) {
+    const w = palavras[i]!;
+    if (w.normalize('NFD').includes('̊')) return 'proibida';
+
+    const ow = originais.get(normalizarToken(w)) ?? '';
+    const novos = (w.match(REGEX_ACENTO_VOGAL) ?? []).length - (ow.match(REGEX_ACENTO_VOGAL) ?? []).length;
+    if (novos > 1) return 'proibida';
+
+    if (REGEX_ACENTO_INICIAL.test(w) && w.charAt(0) !== ow.charAt(0)) {
+      if (/^[ãõÃÕ]/.test(w) || i >= 1) return 'proibida';
+    }
+
+    for (let k = 0; k < w.length; k++) {
+      const ch = w[k]!;
+      if (!/[ãõÃÕ]/.test(ch) || ow[k] === ch) continue;
+      const prox = (w[k + 1] ?? '').toLowerCase();
+      const ehA = ch === 'ã' || ch === 'Ã';
+      const natural = ehA ? k === w.length - 1 || prox === 'o' || prox === 'e' : prox === 'e';
+      if (!natural) artificial = true;
+    }
+  }
+
+  return artificial ? 'artificial' : 'natural';
+}
+
 /** Identifica a etapa (1, 2 ou 3) a partir do nível de geração. */
 export function etapaDoNivel(nivel: number): 1 | 2 | 3 {
   if (nivel <= 25) return 1;
@@ -344,6 +394,11 @@ export interface AnaliseNomeSocial {
   tipoOpcao?: TipoOpcaoSugestao;
   explicacao?: string;
   semSequenciaVida?: boolean;
+  /** DEV-301: sugestão de maior nota entre as oferecidas (selo "Maior nota"). */
+  maiorNota?: boolean;
+  /** DEV-301: false quando o nome do usuário não passa em R1/R2 (só comparação). */
+  ofertavel?: boolean;
+  motivoNaoOfertavel?: 'bloqueio' | 'abaixo_do_nascimento' | 'abaixo_do_piso';
 }
 
 export interface ResultadoNomeSocial {
@@ -359,6 +414,11 @@ export interface ResultadoNomeSocial {
   /** Nenhuma sugestão passou do ganho mínimo sobre o nascimento. */
   semOpcoesElegiveis?: boolean;
   ganhoMinimoPontos?: number;
+  /** DEV-301: menor nota que uma sugestão podia ter nesta análise. */
+  scoreMinimoSugestao?: number;
+  /** DEV-301: nomes do usuário avaliados que não podem ser oferecidos (comparação). */
+  comparacao?: AnaliseNomeSocial[];
+  motorV4?: boolean;
 }
 
 // ── Análise de um nome ────────────────────────────────────────────────────────
@@ -867,6 +927,125 @@ function gerarSugestoesAutoSocial(
 }
 
 /**
+ * Mantém a sugestão de maior nota dentro da fatia visível (R3a · DEV-301).
+ * `ordenados` já está na ordem de prioridade do comparador.
+ */
+function garantirMaiorNotaNaFatia(
+  ordenados: AnaliseNomeSocial[],
+  max: number,
+): AnaliseNomeSocial[] {
+  const fatia = ordenados.slice(0, Math.max(max, 1));
+  const maior = ordenarPorNotaDescEstavel(ordenados)[0];
+  if (maior && fatia.length > 0 && !fatia.includes(maior)) {
+    fatia[fatia.length - 1] = maior;
+  }
+  return fatia;
+}
+
+/**
+ * Motor v4 (DEV-301): só devolve sugestões que passam em R1 (zero bloqueio nos
+ * 4 triângulos) e R2 (nota >= max(70, nascimento + 1)). Preferências do
+ * questionário relaxam em cascata, sempre dentro do conjunto válido:
+ * grafia artificial → teto de nível → sobrenomes excluídos → etapa 3.
+ * Nunca devolve candidato inválido, mesmo que a lista fique curta ou vazia.
+ */
+function gerarSugestoesAutoSocialV4(
+  nomeNascimento: string,
+  dataNascimento: string,
+  maxSugestoes: number,
+  scoreNasc: number,
+  opcoes?: OpcoesRankingNomeSocial,
+): AnaliseNomeSocial[] {
+  const todosCandidatos = gerarCandidatosComNivel(nomeNascimento).filter(
+    (c) => classificarGrafia(c.nome, nomeNascimento) !== 'proibida',
+  );
+  const liberaEtapa3Apelido = Boolean(
+    !opcoes?.restricaoDocumentosLegais &&
+      (opcoes?.aceitaEncurtarOuApelido ||
+        opcoes?.estiloPreferido === 'curto_direto' ||
+        opcoes?.motivoRefinamento === 'preferir_nome_curto'),
+  );
+  const maxNivel = opcoes?.maxNivelGeracao;
+  const nomesExcluidosSet = new Set(
+    (opcoes?.nomesExcluidos ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean),
+  );
+  const sobrenomesExcluidosNorm = (opcoes?.sobrenomesExcluidos ?? [])
+    .map(normalizarToken)
+    .filter(Boolean);
+  const acentosNascimento = contarAcentos(nomeNascimento);
+
+  const cache = new Map<string, AnaliseNomeSocial>();
+  function enriquecer({ nome, nivel }: { nome: string; nivel: number }): AnaliseNomeSocial {
+    const chave = nome.toLowerCase();
+    const emCache = cache.get(chave);
+    if (emCache) return emCache;
+    const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
+    const etapa = etapaDoNivel(nivel);
+    const enriquecida: AnaliseNomeSocial = {
+      ...analise,
+      nivelGerado: nivel,
+      etapa,
+      etapaGeracao: etapa,
+      temAcentoAdicionado: contarAcentos(nome) > acentosNascimento,
+      quantidadeSobrenomes: contarSobrenomesSignificativos(nome),
+      explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
+    };
+    cache.set(chave, enriquecida);
+    return enriquecida;
+  }
+
+  interface Relaxamento {
+    ignorarMaxNivel?: boolean;
+    ignorarSobrenomesExcluidos?: boolean;
+  }
+
+  function aplicarFiltros(lista: AnaliseNomeSocial[], relax: Relaxamento): AnaliseNomeSocial[] {
+    let filtrada = nomesExcluidosSet.size > 0
+      ? lista.filter((c) => !nomesExcluidosSet.has(c.nomeCompleto.trim().toLowerCase()))
+      : [...lista];
+    if (!relax.ignorarSobrenomesExcluidos && sobrenomesExcluidosNorm.length > 0) {
+      filtrada = filtrada.filter(
+        (c) => !sobrenomesExcluidosNorm.some((sob) => candidatoContemSobrenome(c.nomeCompleto, sob)),
+      );
+    }
+    // Uso em contratos/documentos é restrição legal: não relaxa sozinha.
+    if (opcoes?.restricaoDocumentosLegais) {
+      filtrada = filtrada.filter((c) => (c.etapa ?? etapaDoNivel(c.nivelGerado ?? 999)) <= 2);
+    }
+    if (!relax.ignorarMaxNivel && maxNivel != null && Number.isFinite(maxNivel)) {
+      filtrada = filtrada.filter((c) => (c.nivelGerado ?? 999) <= maxNivel);
+    }
+    return filtrada;
+  }
+
+  const poolInicial = todosCandidatos.filter(
+    (c) => c.nivel <= 85 || (liberaEtapa3Apelido && c.nivel >= 110),
+  );
+  const estagios: { pool: typeof todosCandidatos; relax: Relaxamento; artificial: boolean }[] = [
+    { pool: poolInicial, relax: {}, artificial: false },
+    { pool: poolInicial, relax: {}, artificial: true },
+    { pool: poolInicial, relax: { ignorarMaxNivel: true }, artificial: true },
+    { pool: poolInicial, relax: { ignorarMaxNivel: true, ignorarSobrenomesExcluidos: true }, artificial: true },
+    { pool: todosCandidatos, relax: { ignorarMaxNivel: true, ignorarSobrenomesExcluidos: true }, artificial: true },
+  ];
+
+  let escolhidos: AnaliseNomeSocial[] = [];
+  for (const estagio of estagios) {
+    const validos = estagio.pool
+      .map(enriquecer)
+      .filter((a) => motivoNaoOfertavel(a, scoreNasc) === null)
+      .filter(
+        (a) => estagio.artificial || classificarGrafia(a.nomeCompleto, nomeNascimento) === 'natural',
+      );
+    escolhidos = aplicarFiltros(validos, estagio.relax);
+    if (escolhidos.length >= SUGESTAO_CONFIG_V4.minimoVisiveis) break;
+  }
+
+  escolhidos.sort(criarComparadorCandidatosV3(opcoes));
+  return garantirMaiorNotaNaFatia(escolhidos, maxSugestoes);
+}
+
+/**
  * Constrói o Top 3 Diverso (§8.6):
  * 1. Mudança mínima
  * 2. Nome encurtado
@@ -1000,11 +1179,37 @@ export function analisarNomesSocial(
 
   const scoreNasc = scoreNascimentoNomeSocial(nomeNascimento, dataNascimento);
   const ganhoMinimoPontos = getGanhoMinimoPontos();
+  const motorV4 = isMotorV4();
+  const scoreMinimo = scoreMinimoSugestao(scoreNasc, ganhoMinimoPontos);
+
+  /** R1 + R2: separa o que pode ser oferecido do que fica só como comparação. */
+  function separarOfertaveis(lista: AnaliseNomeSocial[]) {
+    const ofertaveis: AnaliseNomeSocial[] = [];
+    const comparacao: AnaliseNomeSocial[] = [];
+    for (const a of lista) {
+      const motivo = motivoNaoOfertavel(a, scoreNasc, ganhoMinimoPontos);
+      if (motivo === null) {
+        a.ofertavel = true;
+        ofertaveis.push(a);
+      } else {
+        a.ofertavel = false;
+        a.motivoNaoOfertavel = motivo;
+        comparacao.push(a);
+      }
+    }
+    return { ofertaveis, comparacao };
+  }
+
+  /** R3a: marca a sugestão de maior nota entre as oferecidas. */
+  function marcarMaiorNota(ofertadas: AnaliseNomeSocial[]) {
+    const maior = ordenarPorNotaDescEstavel(ofertadas)[0];
+    for (const a of ofertadas) a.maiorNota = a === maior;
+  }
 
   if (resolvedOpcoes?.somenteCandidatosInformados) {
-    const elegiveis = dedupeCandidatosEstavel(
-      filtrarCandidatosElegiveis(analisesUsuario, scoreNasc, ganhoMinimoPontos),
-    );
+    const { ofertaveis, comparacao } = separarOfertaveis(analisesUsuario);
+    const elegiveis = dedupeCandidatosEstavel(ofertaveis);
+    marcarMaiorNota(elegiveis);
     return {
       nomeNascimento,
       dataNascimento,
@@ -1016,33 +1221,44 @@ export function analisarNomesSocial(
       scoreNascimento: scoreNasc,
       semOpcoesElegiveis: elegiveis.length === 0,
       ganhoMinimoPontos,
+      scoreMinimoSugestao: scoreMinimo,
+      comparacao,
+      motorV4,
     };
   }
 
   // Sugestões do sistema
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));
-  let sugestoesIA = gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
-    .filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
+  let sugestoesIA = (
+    motorV4
+      ? gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, 10, scoreNasc, resolvedOpcoes)
+      : gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
+  ).filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
 
-  analisesUsuario = filtrarCandidatosElegiveis(analisesUsuario, scoreNasc, ganhoMinimoPontos);
-  sugestoesIA = filtrarCandidatosElegiveis(sugestoesIA, scoreNasc, ganhoMinimoPontos);
-
-  // Pool de seleção do melhor nome (Nome de Ouro) — só elegíveis acima do nascimento
-  type Candidato = AnaliseNomeSocial & { nivelEfetivo: number };
-  const aptosN5: Candidato[] = [
-    ...analisesUsuario.filter(a => a.score >= 85).map(a => ({ ...a, nivelEfetivo: 0 })),
-    ...sugestoesIA.filter(a => a.score >= 85 && a.semSequenciaVida).map(a => ({ ...a, nivelEfetivo: a.nivelGerado ?? 999 })),
-  ];
+  const usuarios = separarOfertaveis(analisesUsuario);
+  analisesUsuario = usuarios.ofertaveis;
+  sugestoesIA = separarOfertaveis(sugestoesIA).ofertaveis;
 
   const comparador = criarComparadorCandidatosV3(resolvedOpcoes);
-  aptosN5.sort(comparador);
+  let melhorNome: AnaliseNomeSocial | null;
 
-  // Melhor nome (pode privilegiar aderência à entrevista via comparador, sempre elegível)
-  const melhorNome: AnaliseNomeSocial | null =
-  aptosN5[0] ??
-    ordenarPorNotaDescEstavel(analisesUsuario)[0] ??
-    ordenarPorNotaDescEstavel(sugestoesIA)[0] ??
-    null;
+  if (motorV4) {
+    // Nome de Ouro: ordem de prioridade atual (nota alta + perfil/estilo), só entre as válidas.
+    const validos = dedupeCandidatosEstavel([...analisesUsuario, ...sugestoesIA]);
+    melhorNome = [...validos].sort(comparador)[0] ?? null;
+  } else {
+    type Candidato = AnaliseNomeSocial & { nivelEfetivo: number };
+    const aptosN5: Candidato[] = [
+      ...analisesUsuario.filter(a => a.score >= 85).map(a => ({ ...a, nivelEfetivo: 0 })),
+      ...sugestoesIA.filter(a => a.score >= 85 && a.semSequenciaVida).map(a => ({ ...a, nivelEfetivo: a.nivelGerado ?? 999 })),
+    ];
+    aptosN5.sort(comparador);
+    melhorNome =
+      aptosN5[0] ??
+      ordenarPorNotaDescEstavel(analisesUsuario)[0] ??
+      ordenarPorNotaDescEstavel(sugestoesIA)[0] ??
+      null;
+  }
 
   if (melhorNome && !melhorNome.tipoOpcao) {
     const p = melhorNome.nomeCompleto.split(/\s+/);
@@ -1053,9 +1269,16 @@ export function analisarNomesSocial(
   const todasOrdenadas = dedupeCandidatosEstavel(
     ordenarPorNotaDescEstavel([...analisesUsuario, ...sugestoesIA]),
   );
-  const top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento).filter((c) =>
-    passaGanhoMinimo(c.score, scoreNasc, ganhoMinimoPontos),
-  );
+  let top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
+  if (motorV4) {
+    const maior = todasOrdenadas[0];
+    if (maior && maior !== melhorNome && !top3.includes(maior)) {
+      maior.tipoOpcao = maior.tipoOpcao ?? 'alternativa';
+      top3 = top3.length < 3 ? [...top3, maior] : [...top3.slice(0, 2), maior];
+    }
+  }
+  top3 = filtrarOfertaveis(top3, scoreNasc, ganhoMinimoPontos);
+  marcarMaiorNota(todasOrdenadas);
 
   // Verifica transparência de bloqueio nativo quando um sobrenome obrigatório precisou de acento sutil
   let avisoSobrenomeExigido: AvisoSobrenomeExigido | null = null;
@@ -1086,7 +1309,7 @@ export function analisarNomesSocial(
     destino,
     nomesCandidatos: todasOrdenadas,
     melhorNome:
-      melhorNome && passaGanhoMinimo(melhorNome.score, scoreNasc, ganhoMinimoPontos)
+      melhorNome && motivoNaoOfertavel(melhorNome, scoreNasc, ganhoMinimoPontos) === null
         ? melhorNome
         : null,
     top3,
@@ -1094,5 +1317,8 @@ export function analisarNomesSocial(
     scoreNascimento: scoreNasc,
     semOpcoesElegiveis: todasOrdenadas.length === 0,
     ganhoMinimoPontos,
+    scoreMinimoSugestao: scoreMinimo,
+    comparacao: usuarios.comparacao,
+    motorV4,
   };
 }

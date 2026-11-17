@@ -18,7 +18,7 @@ describe('ranking somente chat — lista exata', () => {
   const birth = 'Maria Silva Santos';
   const date = '01/01/1990';
 
-  it('6 sugestões permanecem 6 (sem unshift de assinatura_atual)', () => {
+  it('ordem preservada e sem unshift de assinatura_atual (R1/R2 aplicados)', () => {
     const ordem = [
       'Maria Santos',
       'Maria',
@@ -31,11 +31,17 @@ describe('ranking somente chat — lista exata', () => {
       somenteCandidatosInformados: true,
       assinaturaAtual: 'Assinatura Diferente Hoje',
     });
-    assert.equal(res.nomesCandidatos.length, 6);
-    assert.deepEqual(
-      res.nomesCandidatos.map((c) => c.nomeCompleto),
-      ordem,
-    );
+    // DEV-301: o chat preserva a ordem recebida e não injeta assinatura_atual;
+    // só o que passa em R1/R2 é oferecido, o resto vai para `comparacao`.
+    const ofertados = res.nomesCandidatos.map((c) => c.nomeCompleto);
+    const comparacao = (res.comparacao ?? []).map((c) => c.nomeCompleto);
+    assert.deepEqual(ofertados, ordem.filter((n) => ofertados.includes(n)));
+    assert.deepEqual([...ofertados, ...comparacao].sort(), [...ordem].sort());
+    assert.ok(!ofertados.includes('Assinatura Diferente Hoje'));
+    for (const c of res.nomesCandidatos) {
+      assert.equal(c.temBloqueio, false);
+      assert.ok(c.score >= (res.scoreMinimoSugestao ?? 70));
+    }
   });
 
   it('histórico vazio permanece 0 (sem baseline de assinatura_atual)', () => {
