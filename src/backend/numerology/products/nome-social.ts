@@ -1396,7 +1396,7 @@ export function analisarNomesSocial(
       destino,
       nomesCandidatos: elegiveis,
       melhorNome: elegiveis[0] ?? null,
-      top3: elegiveis.slice(0, Math.max(1, NOME_SOCIAL_SUGESTOES_INICIAIS - 1)),
+      top3: elegiveis.slice(0, 3),
       avisoSobrenomeExigido: null,
       scoreNascimento: scoreNasc,
       semOpcoesElegiveis: elegiveis.length === 0,
@@ -1462,9 +1462,9 @@ export function analisarNomesSocial(
     ordenarPorNotaDescEstavel([...analisesUsuario, ...sugestoesIA]),
   );
   let top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
-  // DEV-304: a vitrine inicial tem 6 opções (Nome de Ouro + 5). Depois das 3 diversas, as demais vêm
-  // na ordem de preferência da entrevista (atendem primeiro, depois menor distorção), nunca por nota.
-  const capacidadeTop = Math.max(1, NOME_SOCIAL_SUGESTOES_INICIAIS - 1);
+  // DEV-305: a vitrine inicial tem 3 opções por rodada. Se faltar variedade, as demais vêm na ordem de
+  // preferência da entrevista (atendem primeiro, depois menor distorção), nunca por nota.
+  const capacidadeTop = Math.max(3, NOME_SOCIAL_SUGESTOES_INICIAIS);
   if (motorV4) {
     const usados = new Set([melhorNome, ...top3].filter(Boolean).map((c) => c!.nomeCompleto.toLowerCase()));
     for (const c of [...todasOrdenadas].sort(comparador)) {

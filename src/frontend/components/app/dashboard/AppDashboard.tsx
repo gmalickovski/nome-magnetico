@@ -28,6 +28,9 @@ import {
   FAVORITE_ANALYSIS_CHANGE_EVENT,
   getStoredFavoriteAnalysisId,
   persistFavoriteAnalysis,
+  pickAutoFavoriteId,
+  wasAutoFavoriteApplied,
+  markAutoFavoriteApplied,
 } from '../../../lib/favorite-analysis';
 
 /** CTA dourado do painel: primário da marca (#D4AF37), hover #f2ca50; texto #111111 */
@@ -332,6 +335,21 @@ export function AppDashboard(props: AppDashboardProps) {
     };
   }, [props.userId, serverFavoriteId]);
 
+  // DEV-305: primeira análise paga vira favorita sozinha e aparece como card principal.
+  useEffect(() => {
+    const id = pickAutoFavoriteId({
+      favoriteId: serverFavoriteId ?? getStoredFavoriteAnalysisId(props.userId),
+      alreadyApplied: wasAutoFavoriteApplied(props.userId),
+      slides: baseSlides,
+    });
+    if (!id) return;
+    markAutoFavoriteApplied(props.userId);
+    setFavoriteId(id);
+    const idx = baseSlides.findIndex((x) => x.id === id);
+    if (idx >= 0) setActiveIndex(idx);
+    void persistFavoriteAnalysis(props.userId, id);
+  }, [props.userId, baseSlides, serverFavoriteId]);
+
   const [slidePhase, setSlidePhase] = useState<'idle' | 'entering-next' | 'entering-prev'>('idle');
   const swipeRef = useRef(createDashboardSwipe());
 
@@ -488,7 +506,7 @@ export function AppDashboard(props: AppDashboardProps) {
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
       {/* Card Hero principal + carrossel quando houver múltiplas análises */}
-      <section className="relative" aria-label="Resumo da análise principal">
+      <section className="relative flex flex-col" aria-label="Resumo da análise principal">
         <div className="flex items-center gap-2 lg:gap-3">
           {hasMultipleSlides && (
             <button
@@ -775,7 +793,7 @@ export function AppDashboard(props: AppDashboardProps) {
 
         {/* Navegação do carrossel no mobile + indicadores */}
         {hasMultipleSlides && (
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="order-first mb-4 flex items-center justify-center gap-4 sm:order-none sm:mb-0 sm:mt-4">
             <button
               type="button"
               onClick={goPrevSlide}

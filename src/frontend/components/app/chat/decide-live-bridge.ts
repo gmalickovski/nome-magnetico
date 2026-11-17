@@ -526,7 +526,7 @@ export type RegenerateSuggestionsApiPayload = {
 /** Flatten API regenerate response into up to 3 unique candidates (chat cards). */
 export function mapRegenerateApiToCandidates(
   data: RegenerateSuggestionsApiPayload,
-  limit = 6
+  limit = 3
 ): CandidateSuggestion[] {
   const vistos = new Set<string>();
   const out: CandidateSuggestion[] = [];

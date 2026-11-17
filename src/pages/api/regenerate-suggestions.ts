@@ -23,7 +23,6 @@ import {
 } from '../../backend/numerology/suggestion-birth-invariant';
 import {
   NOME_SOCIAL_MAX_SUGESTOES_TOTAL,
-  NOME_SOCIAL_SUGESTOES_INICIAIS,
   validarPedidoGerarMais,
 } from '../../backend/numerology/suggestion-gerar-mais-limits';
 import { NOME_MAGNETICO_COPY } from '../../shared/interactive-engine/presets/nome-magnetico';
@@ -308,7 +307,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     ];
     resultado.top3 = resultado.nomesCandidatos
       .filter(c => c.nomeCompleto.trim().toLowerCase() !== alvoNorm)
-      .slice(0, NOME_SOCIAL_SUGESTOES_INICIAIS - 1);
+      .slice(0, 3);
   }
 
   const melhor = resultado.melhorNome;

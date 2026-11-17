@@ -89,11 +89,12 @@ describe('DEV-301 · tabela de valores e acentos continuam iguais', () => {
 });
 
 describe('DEV-301 · limites mantidos: 9 sugestões automáticas e 5 nomes manuais', () => {
-  it('6 iniciais + 1 pedido de 3 = 9', () => {
-    assert.equal(NOME_SOCIAL_SUGESTOES_INICIAIS, 6);
+  it('3 iniciais + 2 pedidos de 3 = 9', () => {
+    assert.equal(NOME_SOCIAL_SUGESTOES_INICIAIS, 3);
     assert.equal(NOME_SOCIAL_SUGESTOES_POR_RODADA, 3);
-    assert.equal(NOME_SOCIAL_MAX_PEDIDOS_GERAR_MAIS, 1);
+    assert.equal(NOME_SOCIAL_MAX_PEDIDOS_GERAR_MAIS, 2);
     assert.equal(NOME_SOCIAL_MAX_SUGESTOES_TOTAL, 9);
+    assert.equal(validarPedidoGerarMais(3).ok, true);
     assert.equal(validarPedidoGerarMais(6).ok, true);
     assert.equal(validarPedidoGerarMais(9).ok, false);
   });

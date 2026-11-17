@@ -4,6 +4,7 @@ import {
   favoriteAnalysisStorageKey,
   isFreeAnalysisRecord,
   orderSlidesWithFavorite,
+  pickAutoFavoriteId,
 } from './favorite-analysis.js';
 
 describe('favorite-analysis helpers', () => {
@@ -44,5 +45,22 @@ describe('favorite-analysis helpers', () => {
 
   it('gera chave de storage por usuário', () => {
     assert.equal(favoriteAnalysisStorageKey('user-123'), 'nm:favorite-analysis:v1:user-123');
+  });
+});
+
+describe('DEV-305 · favorito automático na primeira análise', () => {
+  const nasc = { id: 'n', isFree: true };
+  const paga = { id: 'p', isFree: false };
+  it('marca a única análise paga como favorita quando não há favorito', () => {
+    assert.equal(pickAutoFavoriteId({ favoriteId: null, alreadyApplied: false, slides: [nasc, paga] }), 'p');
+  });
+  it('não mexe se já há favorito, se já foi aplicado, ou se há mais de uma análise paga', () => {
+    assert.equal(pickAutoFavoriteId({ favoriteId: 'x', alreadyApplied: false, slides: [nasc, paga] }), null);
+    assert.equal(pickAutoFavoriteId({ favoriteId: null, alreadyApplied: true, slides: [nasc, paga] }), null);
+    assert.equal(
+      pickAutoFavoriteId({ favoriteId: null, alreadyApplied: false, slides: [nasc, paga, { id: 'q' }] }),
+      null,
+    );
+    assert.equal(pickAutoFavoriteId({ favoriteId: null, alreadyApplied: false, slides: [nasc] }), null);
   });
 });
