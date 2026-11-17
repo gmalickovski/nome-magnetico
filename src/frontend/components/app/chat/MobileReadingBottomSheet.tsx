@@ -274,7 +274,7 @@ export function MobileReadingBottomSheet({
             onClick={() => onClose('x')}
             title="Fechar painel de análise"
             aria-label="Fechar painel de análise"
-            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#e5e2e1]/80 transition-colors duration-200 hover:text-[#f2ca50] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
           >
             <IconX className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
           </button>
