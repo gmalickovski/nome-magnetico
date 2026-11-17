@@ -147,7 +147,7 @@ O sistema indicou que a pessoa se identifica com o gênero: **${gender}**. Adapt
 
 ${isFreeAnalysis
   ? `MODO DIAGNÓSTICO: Máximo 2 parágrafos curtos por seção (≤120 palavras cada). Estilo: autoconhecimento reflexivo e direto, não clínico. NÃO descreva virtudes de forma isolada — sempre conecte a qualidade ao conflito com outro número que a sabota ou ao problema que ela não resolve sozinha. O objetivo é o usuário reconhecer um padrão relevante, não sentir-se bem consigo mesmo.`
-  : `Escreva cada seção com pelo menos 3 parágrafos densos e específicos. Evite generalidades — cada afirmação deve estar ancorada nos números concretos desta pessoa. Este relatório vale R$150+ e deve justificar esse valor com revelações que a pessoa nunca ouviu sobre si mesma.`}
+  : `Escreva cada seção com pelo menos 3 parágrafos densos e específicos. Evite generalidades — cada afirmação deve estar ancorada nos números concretos desta pessoa. Este é um relatório premium (nunca cite preço ou valor no texto) e deve justificar essa expectativa com revelações que a pessoa nunca ouviu sobre si mesma.`}
 
 Siga EXATAMENTE esta estrutura de seções, nesta ordem:
 

@@ -11,7 +11,7 @@ export const TASK_CONFIG: Record<AITask, TaskConfig> = {
     maxTokens: 6000,
   },
   suggestions: {
-    temperature: 0.8,
+    temperature: 0.4,
     maxTokens: 2048,
   },
   guide: {

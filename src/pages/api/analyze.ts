@@ -16,7 +16,7 @@ import {
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
-import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
+import { generateAnalysis, generateSocialAnalysis } from '../../backend/ai/brain';
 import {
   avaliarNome,
   calcularPotencialV3,
