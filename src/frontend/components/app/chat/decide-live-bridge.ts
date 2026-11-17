@@ -26,6 +26,7 @@ import type {
 } from '../../../../shared/interactive-engine/copy.js';
 import {
   applySobrenomesUsoSelection,
+  selecionouSoPrimeiroNome,
   mapAberturaToEstilo,
   mergeContextoLeitura,
   profileToRankingOpcoes,
@@ -366,7 +367,8 @@ export function applyQuestionnaireStep(
     );
     next.sobrenomesObrigatorios = obrigatorios;
     next.sobrenomesExcluidos = excluidos;
-    next.sobrenomesDecididos = obrigatorios.length > 0;
+    next.sobrenomesDecididos =
+      obrigatorios.length > 0 || selecionouSoPrimeiroNome(labels, sobrenomesDetectados);
     return next;
   }
 
@@ -524,7 +526,7 @@ export type RegenerateSuggestionsApiPayload = {
 /** Flatten API regenerate response into up to 3 unique candidates (chat cards). */
 export function mapRegenerateApiToCandidates(
   data: RegenerateSuggestionsApiPayload,
-  limit = 3
+  limit = 6
 ): CandidateSuggestion[] {
   const vistos = new Set<string>();
   const out: CandidateSuggestion[] = [];

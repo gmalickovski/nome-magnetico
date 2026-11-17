@@ -196,11 +196,16 @@ export function buildNomeUsoOptions(nomeCompleto: string): QuestionOption[] {
   return opts;
 }
 
+/** DEV-304: opção para quem assina só com o primeiro nome (nenhum sobrenome). */
+export const SOBRENOMES_SO_PRIMEIRO_NOME_LABEL = 'Só o primeiro nome';
+
 export function buildSobrenomesUsoOptions(sobrenomes: string[]): QuestionOption[] {
-  return sobrenomes.map((s) => ({
+  const opts: QuestionOption[] = sobrenomes.map((s) => ({
     id: `sob_${s.toLowerCase().replace(/\s+/g, '_')}`,
     label: s,
   }));
+  opts.push({ id: 'sob_nenhum', label: SOBRENOMES_SO_PRIMEIRO_NOME_LABEL });
+  return opts;
 }
 
 export function getQuestionSpec(

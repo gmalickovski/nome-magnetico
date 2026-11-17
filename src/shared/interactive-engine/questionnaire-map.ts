@@ -161,6 +161,13 @@ export function profileToRankingOpcoes(
   };
 }
 
+/** DEV-304: "Só o primeiro nome" vale apenas quando nenhum sobrenome foi marcado junto. */
+export function selecionouSoPrimeiroNome(selectedLabels: string[], todosSobrenomes: string[]): boolean {
+  const sel = new Set(selectedLabels.map((x) => x.toLowerCase()));
+  if (!sel.has('só o primeiro nome')) return false;
+  return !todosSobrenomes.some((sob) => sel.has(sob.toLowerCase()));
+}
+
 export function applySobrenomesUsoSelection(
   selectedLabels: string[],
   todosSobrenomes: string[]

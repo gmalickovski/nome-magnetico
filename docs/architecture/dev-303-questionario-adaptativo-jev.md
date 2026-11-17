@@ -65,7 +65,7 @@ Nome artístico (já coletado em "Onde assina"): prioriza a forma curta (`curto_
 
 As preferências relaxam, nesta ordem, quando não há 3 sugestões válidas, **sempre dentro do conjunto válido** (zero bloqueio e nota mínima da DEV-301):
 
-1. grafia artificial → 2. teto de nível → 3. prefiro sem acento → 4. primeiro nome intacto → 5. sobrenomes excluídos → 6. etapa 3.
+1. teto de nível → 2. prefiro sem acento → 3. primeiro nome intacto → 4. sobrenomes excluídos → 5. etapa 3 → 6. grafia artificial (último recurso, sempre atrás das naturais; ajustado na DEV-304 depois do teste real).
 
 A restrição legal (contratos e documentos) não relaxa sozinha.
 

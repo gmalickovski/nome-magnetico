@@ -1,3 +1,4 @@
+import { NOME_SOCIAL_SUGESTOES_INICIAIS } from '../../shared/nome-social/gerar-mais-limits';
 import { CONTEXTUAL_RADAR_VERSION } from '../../shared/interactive-engine/radar-context';
 import { normalizarChaveNome, validarNomeManual } from '../../shared/nome-social/manual-name-limits';
 import { computeContextualRadarAxes } from '../../shared/interactive-engine/motor-radar';
@@ -16,7 +17,7 @@ import {
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
-import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
+import { generateAnalysis, generateSocialAnalysis } from '../../backend/ai/brain';
 import {
   avaliarNome,
   calcularPotencialV3,
@@ -382,7 +383,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               ];
               resultado.top3 = resultado.nomesCandidatos
                 .filter(candidato => candidato.nomeCompleto.trim().toLowerCase() !== principalNormalizado)
-                .slice(0, 3);
+                .slice(0, NOME_SOCIAL_SUGESTOES_INICIAIS - 1);
             }
           }
         }

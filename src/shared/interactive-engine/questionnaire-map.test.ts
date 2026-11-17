@@ -65,3 +65,16 @@ describe('questionnaire-map · filtros do gerador (sem score)', () => {
     assert.ok(res.melhorNome);
   });
 });
+
+import { selecionouSoPrimeiroNome } from './questionnaire-map.ts';
+import { buildSobrenomesUsoOptions } from './questionnaire-adaptive.ts';
+import { it as itSolo } from 'node:test';
+import assertSolo from 'node:assert/strict';
+
+itSolo('DEV-304 · opção "Só o primeiro nome" existe e só vale sem sobrenomes marcados', () => {
+  const opts = buildSobrenomesUsoOptions(['Dias', 'Nunes']);
+  assertSolo.equal(opts[opts.length - 1]!.id, 'sob_nenhum');
+  assertSolo.equal(selecionouSoPrimeiroNome(['Só o primeiro nome'], ['Dias', 'Nunes']), true);
+  assertSolo.equal(selecionouSoPrimeiroNome(['Só o primeiro nome', 'Dias'], ['Dias', 'Nunes']), false);
+  assertSolo.equal(selecionouSoPrimeiroNome(['Dias'], ['Dias', 'Nunes']), false);
+});

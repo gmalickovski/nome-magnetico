@@ -18,6 +18,9 @@ const keys = [
   'NM_JEV_MAX_CALLS_PER_USER',
   'NM_JEV_MAX_CALLS_PER_HOUR',
   'NM_JEV_MAX_TOKENS_PER_HOUR',
+  'NM_JEV_STRUCTURED_TIMEOUT_MS',
+  'GROQ_DECIDE_MODEL',
+  'OPENAI_DECIDE_MODEL',
 ] as const;
 const previous = new Map(keys.map((key) => [key, process.env[key]]));
 
@@ -27,6 +30,8 @@ let sdkCalls = 0;
 let fetchCalls = 0;
 let fetchBody: unknown = null;
 let fetchStatus = 200;
+let fetchDelayMs = 0;
+const fetchRequests: Array<{ url: string; body: Record<string, any> }> = [];
 
 const answers = {
   escopo_pronto: { noul: 0.8 },
@@ -55,8 +60,18 @@ class FakeTypeSafeClient {
 }
 
 const originalFetch = globalThis.fetch;
-globalThis.fetch = (async () => {
+globalThis.fetch = (async (url: string, init?: { body?: string; signal?: AbortSignal }) => {
   fetchCalls++;
+  fetchRequests.push({ url: String(url), body: init?.body ? JSON.parse(init.body) : {} });
+  if (fetchDelayMs > 0) {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, fetchDelayMs);
+      init?.signal?.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+      });
+    });
+  }
   return {
     ok: fetchStatus >= 200 && fetchStatus < 300,
     status: fetchStatus,
@@ -71,7 +86,8 @@ const named = Object.fromEntries(Object.entries(sdk).filter(([name]) => name !==
 mock.module('@typesafe-ai/sdk', { namedExports: { ...named, TypeSafeClient: FakeTypeSafeClient } });
 
 const { runJevDecision } = await import('./jev-provider');
-const { JevBudget, jevBudget, createJevCallGuard, classifyJevFailure, parseStructuredDecision } = await import('./jev-safety');
+const { JevBudget, jevBudget, createJevCallGuard, classifyJevFailure, parseStructuredDecision, readStructuredTimeoutMs } =
+  await import('./jev-safety');
 
 const state = {
   nome_completo: 'Pessoa Exemplo',
@@ -99,6 +115,8 @@ beforeEach(() => {
   sdkCalls = 0;
   fetchCalls = 0;
   fetchStatus = 200;
+  fetchDelayMs = 0;
+  fetchRequests.length = 0;
   fetchBody = structuredOk;
 });
 
@@ -346,7 +364,7 @@ describe('DEV-303 · guarda de chamada (espelho do LoopGuard)', () => {
     assert.equal(tentativas, 1);
     assert.equal(respostas, 1);
     assert.deepEqual(registros, [
-      { provider: 'groq-structured', model: 'llama-3.3-70b-versatile', tokensInput: 120, tokensOutput: 30, attemptNumber: 1 },
+      { provider: 'groq-structured', model: 'openai/gpt-oss-20b', tokensInput: 120, tokensOutput: 30, attemptNumber: 1 },
     ]);
   });
 
@@ -363,5 +381,111 @@ describe('DEV-303 · guarda de chamada (espelho do LoopGuard)', () => {
     assert.equal(r.providerUsed, 'deterministic');
     assert.equal(sdkCalls, 0);
     assert.equal(r.telemetry?.attempts[0]?.outcome, 'guard-blocked');
+  });
+});
+
+describe('DEV-304 · caminho real do Groq e do OpenAI (achados do teste com as chaves do TESTE)', () => {
+  it('Groq usa um modelo atual (o llama-3.3-70b-versatile foi aposentado e dava 404)', async () => {
+    process.env.GROQ_API_KEY = 'k2';
+    await runJevDecision(state);
+    const req = fetchRequests[0]!;
+    assert.match(req.url, /api\.groq\.com/);
+    assert.equal(req.body.model, 'openai/gpt-oss-20b');
+    assert.doesNotMatch(String(req.body.model), /llama-3\.(1|3)/);
+  });
+
+  it('gpt-oss pede raciocínio baixo e tem folga de tokens (200 ficava no limite)', async () => {
+    process.env.GROQ_API_KEY = 'k2';
+    await runJevDecision(state);
+    const body = fetchRequests[0]!.body;
+    assert.equal(body.reasoning_effort, 'low');
+    assert.ok(body.max_tokens >= 600);
+  });
+
+  it('modelo escolhido por env vale, e sem gpt-oss não manda reasoning_effort', async () => {
+    process.env.GROQ_API_KEY = 'k2';
+    process.env.GROQ_DECIDE_MODEL = 'outro/modelo-atual';
+    await runJevDecision(state);
+    const body = fetchRequests[0]!.body;
+    assert.equal(body.model, 'outro/modelo-atual');
+    assert.equal('reasoning_effort' in body, false);
+  });
+
+  it('OpenAI usa gpt-4o-mini sem reasoning_effort', async () => {
+    process.env.OPENAI_API_KEY = 'k3';
+    await runJevDecision(state);
+    const req = fetchRequests[0]!;
+    assert.match(req.url, /api\.openai\.com/);
+    assert.equal(req.body.model, 'gpt-4o-mini');
+    assert.equal('reasoning_effort' in req.body, false);
+  });
+
+  it('o schema fecha o score em 0, 1 ou 2 e deixa o noul para a validação Zod', async () => {
+    process.env.OPENAI_API_KEY = 'k3';
+    await runJevDecision(state);
+    const props = fetchRequests[0]!.body.response_format.json_schema.schema.properties;
+    assert.deepEqual(props.clareza_relato_score.enum, [0, 1, 2]);
+    assert.equal(props.clareza_relato_score.type, 'integer');
+    assert.equal(props.escopo_pronto_noul.type, 'number');
+    assert.equal('enum' in props.escopo_pronto_noul, false);
+    assert.equal('enum' in props.alerta_compliance_legal_noul, false);
+    assert.equal(fetchRequests[0]!.body.response_format.json_schema.strict, true);
+  });
+
+  it('nenhum enum numérico mistura inteiro e decimal (o Groq recusa com HTTP 400)', async () => {
+    process.env.GROQ_API_KEY = 'k2';
+    await runJevDecision(state);
+    const props = fetchRequests[0]!.body.response_format.json_schema.schema.properties as Record<
+      string,
+      { type: string; enum?: unknown[] }
+    >;
+    for (const [nome, def] of Object.entries(props)) {
+      const numeros = (def.enum ?? []).filter((v): v is number => typeof v === 'number');
+      if (numeros.length === 0) continue;
+      const todosInteiros = numeros.every((n) => Number.isInteger(n));
+      const nenhumInteiro = numeros.every((n) => !Number.isInteger(n));
+      assert.ok(todosInteiros || nenhumInteiro, `${nome} mistura inteiros e decimais`);
+      if (todosInteiros) assert.equal(def.type, 'integer', `${nome}: enum inteiro pede type integer`);
+    }
+  });
+
+  it('o score fora de 0 a 2 que o OpenAI chegou a devolver (8) cai no determinístico', async () => {
+    process.env.OPENAI_API_KEY = 'k3';
+    fetchBody = { ...structuredOk, clareza_relato_score: 8 };
+    const r = await runJevDecision(state);
+    assert.equal(r.providerUsed, 'deterministic');
+    assert.equal(r.telemetry?.attempts[0]?.outcome, 'invalid-output');
+  });
+
+  it('tempo limite: Groq 3,5 s e OpenAI 4 s por padrão (OpenAI leva 1,6 a 1,9 s), com override e limites', () => {
+    assert.equal(readStructuredTimeoutMs('groq-structured'), 3500);
+    assert.equal(readStructuredTimeoutMs('openai-structured'), 4000);
+    process.env.NM_JEV_STRUCTURED_TIMEOUT_MS = '2500';
+    assert.equal(readStructuredTimeoutMs('groq-structured'), 2500);
+    assert.equal(readStructuredTimeoutMs('openai-structured'), 2500);
+    process.env.NM_JEV_STRUCTURED_TIMEOUT_MS = '10';
+    assert.equal(readStructuredTimeoutMs('groq-structured'), 500);
+    process.env.NM_JEV_STRUCTURED_TIMEOUT_MS = '999999';
+    assert.equal(readStructuredTimeoutMs('openai-structured'), 15000);
+  });
+
+  it('resposta mais lenta que o limite vira timeout, e uma de 2 s passa com o limite padrão', async () => {
+    process.env.OPENAI_API_KEY = 'k3';
+    process.env.NM_JEV_STRUCTURED_TIMEOUT_MS = '500';
+    fetchDelayMs = 900;
+    const lenta = await runJevDecision(state);
+    assert.equal(lenta.providerUsed, 'deterministic');
+    assert.equal(lenta.telemetry?.attempts[0]?.outcome, 'timeout');
+
+    delete process.env.NM_JEV_STRUCTURED_TIMEOUT_MS;
+    fetchDelayMs = 2000;
+    const normal = await runJevDecision(state);
+    assert.equal(normal.providerUsed, 'openai-structured');
+  });
+
+  it('404 e 400 ganham código próprio (404 do Groq é modelo aposentado)', () => {
+    assert.equal(classifyJevFailure(new Error('groq-structured HTTP 404')), 'http-404');
+    assert.equal(classifyJevFailure(new Error('openai-structured HTTP 400')), 'http-400');
+    assert.equal(classifyJevFailure(Object.assign(new Error('x'), { status: 404 })), 'http-404');
   });
 });

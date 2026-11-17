@@ -122,7 +122,8 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
   describe('Top 3 Diverso e Explicação', () => {
     it('o Top 3 tem sugestões distintas com explicação preenchida', () => {
       const res = analisarNomesSocial([], 'Guilherme Malickovski Correa', '14/02/1990');
-      assert.equal(res.top3.length, 3);
+      // DEV-304: vitrine inicial de 6 (Nome de Ouro + até 5)
+      assert.ok(res.top3.length >= 3 && res.top3.length <= 5, `top3 com ${res.top3.length}`);
 
       for (const item of res.top3) {
         assert.ok(item.explicacao, `Sugestão ${item.nomeCompleto} deve ter explicacao`);

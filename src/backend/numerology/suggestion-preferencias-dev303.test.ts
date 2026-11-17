@@ -203,3 +203,45 @@ describe('DEV-303 · rollback e compatibilidade', () => {
     assert.equal(b.melhorNome?.nomeCompleto, a.melhorNome?.nomeCompleto);
   });
 });
+
+describe('DEV-304 · grafia natural vem antes da artificial (achado do teste real)', () => {
+  // Perfil do teste real: "não me representa", nome artístico, sem acento, nota mais alta.
+  const perfilReal: OpcoesRankingNomeSocial = {
+    estiloPreferido: 'curto_direto',
+    aceitaEncurtarOuApelido: true,
+    sobrenomesObrigatorios: ['Souza', 'Rocha'],
+    ondeVaiUsar: ['marca_autoria'],
+    acentoNaAssinatura: 'prefere_sem',
+    prioridadeConflito: 'nota',
+    afinidades: { area: 'carreira_negocios', estilo: ['criatividade'], subfocos: ['novo_ciclo_profissional'] },
+  };
+
+  it('com a mesma nota, o Nome de Ouro e as sugestões visíveis não ficam atrás de grafia artificial', () => {
+    const r = analisarNomesSocial([], NASC, DATA, perfilReal);
+    invariantes(r);
+    const ouro = r.melhorNome!;
+    assert.notEqual(ouro.grafiaArtificial, true, `${ouro.nomeCompleto} é artificial`);
+    const naturaisNoPatamar = r.nomesCandidatos.filter(
+      (c) => c.grafiaArtificial !== true && c.score >= 85 === ouro.score >= 85,
+    );
+    assert.ok(naturaisNoPatamar.length > 0);
+  });
+
+  it('sem "nota mais alta" a grafia natural também vence no mesmo patamar', () => {
+    const r = analisarNomesSocial([], NASC, DATA, { ...perfilReal, prioridadeConflito: 'mudanca' });
+    invariantes(r);
+    const ouro = r.melhorNome!;
+    const naturaisNoPatamar = r.nomesCandidatos.filter(
+      (c) => c.grafiaArtificial !== true && c.score >= 85 === ouro.score >= 85,
+    );
+    if (naturaisNoPatamar.length > 0) assert.notEqual(ouro.grafiaArtificial, true);
+  });
+
+  it('o til fora de ã final, ão, ãe e õe fica marcado como artificial', () => {
+    const r = analisarNomesSocial([], NASC, DATA, perfilReal);
+    for (const c of r.nomesCandidatos) {
+      const temTilFora = /[ãõ]/i.test(c.nomeCompleto.normalize('NFC')) && !/ã$|ão|ãe|õe/i.test(c.nomeCompleto.normalize('NFC'));
+      if (temTilFora) assert.equal(c.grafiaArtificial, true, c.nomeCompleto);
+    }
+  });
+});

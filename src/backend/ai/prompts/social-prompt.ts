@@ -102,9 +102,15 @@ ${candidatosTexto}
 
 ---
 
+## Regras para os nomes desta análise
+
+Use SOMENTE os nomes listados acima (Nome Mais Indicado, Top 3 e Ranking). Não crie, não sugira e não compare com nomes que não estejam nesta lista. Todos eles já passaram nas regras do produto (sem bloqueios, nota mínima 70 e acima da nota do nome de nascimento); a lista está na ordem de nota, e o Nome Mais Indicado pode não ter a maior nota porque também considera o perfil da pessoa.
+${melhorNome ? '' : '\n**Sem opção válida:** o motor não encontrou nenhum nome que passe nas regras. Escreva com honestidade que o nome de nascimento já está muito próximo do máximo para esta data, valorize essa harmonia e NÃO invente nenhum nome alternativo.\n'}
+---
+
 ## Sua Tarefa
 
-Você é um numerólogo cabalístico especializado em identidade vibracional e Nome Social. Com base nos dados acima, elabore um relatório completo, profundo e personalizado para esta pessoa. Este relatório vale R$150+ e cada seção deve conter revelações específicas e acionáveis que ela não encontrará em nenhum outro lugar.
+Você é um numerólogo cabalístico especializado em identidade vibracional e Nome Social. Com base nos dados acima, elabore um relatório completo, profundo e personalizado para esta pessoa. Este é um relatório premium (nunca cite preço ou valor no texto) e cada seção deve conter revelações específicas e acionáveis que ela não encontrará em nenhum outro lugar.
 
 Escreva pelo menos 2–3 parágrafos por seção principal. Evite generalidades — cada afirmação deve ser ancorada nos números concretos desta pessoa.
 
