@@ -263,7 +263,11 @@ export function matchUserGlossaryTerms(
   if (typeof analysis.numero_destino === 'number') {
     pushMatch('numero-de-destino', `Seu Destino ${analysis.numero_destino}`);
   }
+  if (typeof analysis.numero_personalidade === 'number') {
+    pushMatch('numero-de-personalidade', `Sua Impressão ${analysis.numero_personalidade}`);
+  }
   pushMatch('triangulo-da-vida', 'Base do seu score');
+  pushMatch('nota-do-nome', 'Como sua nota é calculada');
 
   return matched;
 }
