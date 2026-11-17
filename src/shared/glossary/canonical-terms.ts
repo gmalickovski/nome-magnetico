@@ -862,6 +862,25 @@ Quando todas as pontas sustentam o centro sem bloqueios nem excessos, a pontuaç
 // DEV-306: verbetes dos termos do sistema (cálculo, nota, sugestões e produtos).
 export const CANONICAL_GLOSSARY_TERMS: GlossaryTermEntry[] = [...TERMOS_BASE, ...TERMOS_DO_SISTEMA];
 
+/**
+ * DEV-306: verbetes antigos do banco (`public.glossary_terms`) que duplicam um verbete canônico.
+ * Ficam fora da lista e o link antigo redireciona (301) para o verbete canônico.
+ */
+export const GLOSSARY_SLUG_REDIRECTS: Readonly<Record<string, string>> = Object.freeze({
+  'tabela-cabalistica': 'tabela-cabalistica-das-letras',
+  'reducao-numerologica': 'reducao-numerica',
+  'score-vibracional': 'nota-do-nome',
+  'compatibilidade-vibracional': 'compatibilidade-expressao-destino',
+  'triangulo-de-destino': 'triangulo-do-destino',
+  'bloqueio-energetico': 'bloqueios-energeticos',
+  'bloqueio-numerologico': 'bloqueios-energeticos',
+  'nome-harmonizado': 'harmonizacao-do-nome',
+});
+
+export function resolveGlossaryRedirect(slug: string): string | null {
+  return GLOSSARY_SLUG_REDIRECTS[slug] ?? null;
+}
+
 const SLUG_MAP = new Map(CANONICAL_GLOSSARY_TERMS.map((item) => [item.slug, item]));
 
 export function getCanonicalGlossaryBySlug(slug: string): GlossaryTermEntry | undefined {

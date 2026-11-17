@@ -5,6 +5,7 @@ import {
   extractSummaryFromMarkdown,
   getCanonicalGlossaryBySlug,
   inferGlossaryCategory,
+  resolveGlossaryRedirect,
   type GlossaryTermEntry,
 } from '../../shared/glossary/canonical-terms';
 
@@ -66,6 +67,8 @@ export function mergeGlossaryTerms(dbRows: RawGlossaryDbRow[]): GlossaryTermEntr
   for (const row of dbRows) {
     const slug = String(row.slug || '').trim();
     if (!slug) continue;
+    // DEV-306: duplicata de verbete canônico; o link antigo redireciona.
+    if (resolveGlossaryRedirect(slug)) continue;
 
     const canonical = getCanonicalGlossaryBySlug(slug);
     const dbMarkdown = typeof row.definition_markdown === 'string' ? row.definition_markdown.trim() : '';

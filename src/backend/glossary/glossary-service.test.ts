@@ -65,3 +65,18 @@ describe('glossary-service', () => {
     assert.ok(slugs.includes('numero-de-destino'));
   });
 });
+
+import { it as itDev306 } from 'node:test';
+import assertDev306 from 'node:assert/strict';
+import { mergeGlossaryTerms as mergeDev306 } from './glossary-service.ts';
+
+itDev306('DEV-306 · verbetes duplicados do banco ficam fora da lista', () => {
+  const lista = mergeDev306([
+    { slug: 'tabela-cabalistica', term: 'Tabela Cabalística', definition_markdown: 'texto antigo' },
+    { slug: 'grafosofia', term: 'Grafosofia', definition_markdown: 'Estudo da escrita.' },
+  ]);
+  const slugs = lista.map((t) => t.slug);
+  assertDev306.ok(!slugs.includes('tabela-cabalistica'));
+  assertDev306.ok(slugs.includes('tabela-cabalistica-das-letras'));
+  assertDev306.ok(slugs.includes('grafosofia'));
+});
