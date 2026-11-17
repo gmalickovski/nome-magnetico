@@ -1,3 +1,4 @@
+import { APP_REFUND_SOURCE } from './refund-notify';
 import Stripe from 'stripe';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -186,6 +187,8 @@ export async function createRefund(paymentIntentId: string): Promise<Stripe.Refu
   return stripe.refunds.create({
     payment_intent: paymentIntentId,
     reason: 'requested_by_customer',
+    // DEV-163: o webhook charge.refunded não reenvia o e-mail de reembolsos iniciados aqui.
+    metadata: { source: APP_REFUND_SOURCE },
   });
 }
 
