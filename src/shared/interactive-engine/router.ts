@@ -6,6 +6,7 @@ import type { PassoChatId } from './partitura';
 import type { AreaFocoNomeMagnetico } from './copy';
 import {
   QUESTIONNAIRE_STEP_ORDER,
+  isQuestionnaireStepSkipped,
   type QuestionnaireStepId,
 } from './questionnaire-adaptive';
 
@@ -24,17 +25,46 @@ export interface RouterState {
   /** Legado — preenchido pelo mapeamento da abertura_mudanca */
   estiloPreferido?: string | null;
   detalheInformado?: string | null;
+  /** DEV-303 */
+  ondeAssinaRaw?: string[];
+  preferenciasDecididas?: boolean;
+  prioridadeConflito?: string | null;
 }
 
+function isStepAnswered(step: QuestionnaireStepId, state: RouterState): boolean {
+  switch (step) {
+    case 'nome_uso':
+      return Boolean(state.nomeUsoDefinido);
+    case 'sobrenomes_uso':
+      return Boolean(state.sobrenomesDecididos);
+    case 'relacao_nome':
+      return Boolean(state.relacaoNome);
+    case 'onde_assina':
+      return Boolean(state.ondeAssinaDecidido);
+    case 'estilo_presenca':
+      return Boolean(state.estiloPresencaDecidido);
+    case 'area_foco':
+      return Boolean(state.areaFoco);
+    case 'subfoco':
+      return Boolean(state.subfocoDecidido);
+    case 'abertura_mudanca':
+      return Boolean(state.aberturaMudanca);
+    case 'preferencias_assinatura':
+      return Boolean(state.preferenciasDecididas);
+    case 'prioridade_conflito':
+      return Boolean(state.prioridadeConflito);
+    default:
+      return true;
+  }
+}
+
+/** DEV-303: pula o que já está inferido (ex.: "Não me representa" dispensa a abertura para mudar). */
 function nextQuestionnaireStep(state: RouterState): QuestionnaireStepId | null {
-  if (!state.nomeUsoDefinido) return 'nome_uso';
-  if (!state.sobrenomesDecididos) return 'sobrenomes_uso';
-  if (!state.relacaoNome) return 'relacao_nome';
-  if (!state.ondeAssinaDecidido) return 'onde_assina';
-  if (!state.estiloPresencaDecidido) return 'estilo_presenca';
-  if (!state.areaFoco) return 'area_foco';
-  if (!state.subfocoDecidido) return 'subfoco';
-  if (!state.aberturaMudanca) return 'abertura_mudanca';
+  for (const step of QUESTIONNAIRE_STEP_ORDER) {
+    if (isStepAnswered(step, state)) continue;
+    if (isQuestionnaireStepSkipped(step, state)) continue;
+    return step;
+  }
   return null;
 }
 
@@ -47,18 +77,17 @@ const PROMPTS: Record<QuestionnaireStepId, string> = {
   area_foco: 'O que mais pede a sua atenção agora?',
   subfoco: 'O que mais combina com esse foco agora?',
   abertura_mudanca: 'Quanto você topa mudar na assinatura?',
+  preferencias_assinatura: 'Tem algo que você quer manter ou evitar na assinatura?',
+  prioridade_conflito: 'Se for preciso escolher, o que pesa mais para você?',
 };
 
 export function questionnaireStepsRemaining(state: RouterState): number {
   let n = 0;
-  if (!state.nomeUsoDefinido) n++;
-  if (!state.sobrenomesDecididos) n++;
-  if (!state.relacaoNome) n++;
-  if (!state.ondeAssinaDecidido) n++;
-  if (!state.estiloPresencaDecidido) n++;
-  if (!state.areaFoco) n++;
-  if (!state.subfocoDecidido) n++;
-  if (!state.aberturaMudanca) n++;
+  for (const step of QUESTIONNAIRE_STEP_ORDER) {
+    if (isStepAnswered(step, state)) continue;
+    if (isQuestionnaireStepSkipped(step, state)) continue;
+    n++;
+  }
   if (!state.palpiteStatus) n++;
   return n;
 }

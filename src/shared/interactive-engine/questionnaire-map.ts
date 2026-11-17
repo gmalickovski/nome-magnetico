@@ -21,6 +21,10 @@ export interface RankingOpcoesPatch {
   maxNivelGeracao?: number;
   /** DEV-302: afinidades do perfil (só desempatam entre sugestões válidas). */
   afinidades?: { estilo?: string[]; area?: string | null; subfocos?: string[] };
+  /** DEV-303: preferências moles. Nunca relaxam zero bloqueio nem a nota mínima. */
+  manterPrimeiroNome?: boolean;
+  acentoNaAssinatura?: 'prefere_sem';
+  prioridadeConflito?: 'nota' | 'mudanca';
 }
 
 export interface QuestionnaireProfile {
@@ -35,11 +39,16 @@ export interface QuestionnaireProfile {
   aberturaMudanca: string | null;
   nomeArtistico: string | null;
   contextoLeituraOutros: string[];
+  /** DEV-303 */
+  preferenciasAssinatura?: string[];
+  prioridadeConflito?: string | null;
+  areaFocoOutro?: string | null;
 }
 
 export function mapAberturaToEstilo(
   abertura: string | null,
-  relacaoNome: string | null
+  relacaoNome: string | null,
+  nomeArtistico?: string | null
 ): EstiloAssinaturaPreferido {
   const ousado =
     abertura === 'o_que_fizer_sentido' ||
@@ -49,6 +58,8 @@ export function mapAberturaToEstilo(
   if (abertura === 'quase_nada') return 'ajuste_sutil';
   if (abertura === 'acento_ou_letra') return 'ajuste_sutil';
   if (abertura === 'tirar_trocar_sobrenome') return 'sobrenome_forte';
+  // DEV-303: quem tem nome artístico prioriza a forma curta.
+  if (nomeArtistico?.trim()) return 'curto_direto';
   if (ousado) return 'qualquer';
   return 'ajuste_sutil';
 }
@@ -83,6 +94,17 @@ export function maxNivelGeracaoPorAbertura(
   return 120;
 }
 
+/** DEV-303: "Se for preciso escolher" explícito, ou inferido de "quase nada" e de contratos. */
+export function resolvePrioridadeConflito(
+  profile: QuestionnaireProfile,
+  restricaoLegal: boolean
+): 'nota' | 'mudanca' | undefined {
+  if (profile.prioridadeConflito === 'nota_mais_alta') return 'nota';
+  if (profile.prioridadeConflito === 'mudar_o_minimo') return 'mudanca';
+  if (profile.aberturaMudanca === 'quase_nada' || restricaoLegal) return 'mudanca';
+  return undefined;
+}
+
 export function profileToAfinidades(
   profile: QuestionnaireProfile,
 ): RankingOpcoesPatch['afinidades'] | undefined {
@@ -101,7 +123,11 @@ export function profileToRankingOpcoes(
   extras?: Partial<RankingOpcoesPatch>
 ): RankingOpcoesPatch {
   const ondeApi = mapOndeAssinaToApi(profile.ondeAssinaRaw);
-  const estilo = mapAberturaToEstilo(profile.aberturaMudanca, profile.relacaoNome);
+  const estilo = mapAberturaToEstilo(
+    profile.aberturaMudanca,
+    profile.relacaoNome,
+    profile.nomeArtistico
+  );
   const legal = restricaoDocumentosLegais(profile.ondeAssinaRaw);
   const maxNivel = maxNivelGeracaoPorAbertura(
     profile.aberturaMudanca,
@@ -118,14 +144,19 @@ export function profileToRankingOpcoes(
     sobrenomesExcluidos:
       profile.sobrenomesExcluidos.length > 0 ? profile.sobrenomesExcluidos : undefined,
     estiloPreferido: estilo,
-    aceitaEncurtarOuApelido: aceitaEncurtarPorAbertura(
-      profile.aberturaMudanca,
-      profile.relacaoNome
-    ),
+    aceitaEncurtarOuApelido:
+      aceitaEncurtarPorAbertura(profile.aberturaMudanca, profile.relacaoNome) ||
+      (Boolean(profile.nomeArtistico?.trim()) &&
+        !legal &&
+        profile.aberturaMudanca !== 'quase_nada' &&
+        profile.aberturaMudanca !== 'acento_ou_letra'),
     assinaturaAtual,
     restricaoDocumentosLegais: legal || undefined,
     maxNivelGeracao: maxNivel,
     afinidades: profileToAfinidades(profile),
+    manterPrimeiroNome: profile.preferenciasAssinatura?.includes('manter_primeiro_nome') || undefined,
+    acentoNaAssinatura: profile.preferenciasAssinatura?.includes('sem_acento') ? 'prefere_sem' : undefined,
+    prioridadeConflito: resolvePrioridadeConflito(profile, legal),
     ...extras,
   };
 }

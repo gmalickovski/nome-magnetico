@@ -51,8 +51,11 @@ describe('DEV-302 · o mapa cobre todas as respostas do questionário', () => {
   });
 
   it('area_foco: todos os ids têm afinidade', () => {
-    const ids = (getQuestionSpec('area_foco', { ...CTX, areaFoco: null }).staticOptions ?? []).map((o) => o.id);
+    const spec = getQuestionSpec('area_foco', { ...CTX, areaFoco: null });
+    // DEV-303: "Outro foco" é texto livre e vira uma das 4 áreas por palavras-chave.
+    const ids = (spec.staticOptions ?? []).map((o) => o.id).filter((id) => !id.endsWith('_outro'));
     assert.equal(ids.length, 4);
+    assert.equal(spec.allowOther, true);
     for (const id of ids) assert.ok(AFINIDADE_AREA[id], `sem afinidade para área ${id}`);
   });
 

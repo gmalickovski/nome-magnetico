@@ -706,6 +706,16 @@ export interface OpcoesRankingNomeSocial {
    * entre sugestões válidas (R1/R2); não muda nota nem cria candidatos.
    */
   afinidades?: AfinidadesPerfil;
+  /**
+   * DEV-303: preferências moles do questionário. Só valem dentro do conjunto válido (R1/R2) e
+   * relaxam em cascata quando faltam sugestões; nunca relaxam zero bloqueio nem a nota mínima.
+   */
+  /** "Manter meu primeiro nome": o primeiro nome da sugestão fica igual ao do nascimento. */
+  manterPrimeiroNome?: boolean;
+  /** "Prefiro sem acento": prefere sugestões sem acento novo. */
+  acentoNaAssinatura?: 'prefere_sem';
+  /** "Se for preciso escolher": nota mais alta primeiro ou menor mudança primeiro. */
+  prioridadeConflito?: 'nota' | 'mudanca';
 }
 
 /**
@@ -736,6 +746,10 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
 
   const prefereSemAcento =
     estilo === 'sobrenome_forte' || motivo === 'preferir_sem_acento';
+  // DEV-303: "Prefiro sem acento" vale para qualquer sugestão sem acento novo (só no motor v4).
+  const preferenciaSemAcento = isMotorV4() && opcoes?.acentoNaAssinatura === 'prefere_sem';
+  // DEV-303: "a nota mais alta pesa mais" (só no motor v4).
+  const prioridadeNota = isMotorV4() && opcoes?.prioridadeConflito === 'nota';
   const prefereCompletoComAcento =
     estilo === 'ajuste_sutil' || motivo === 'preferir_nome_completo';
   const prefereCurtoExplicito =
@@ -798,7 +812,12 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
     const n5B = b.score >= 85 ? 1 : 0;
 
     // Preferências explícitas de estilo ou motivo de refinamento entre candidatos N5 (ou de mesmo patamar)
-    if (n5A === n5B) {
+    if (n5A === n5B && !prioridadeNota) {
+      if (preferenciaSemAcento) {
+        const acentoA = a.temAcentoAdicionado ? 1 : 0;
+        const acentoB = b.temAcentoAdicionado ? 1 : 0;
+        if (acentoA !== acentoB) return acentoA - acentoB;
+      }
       if (prefereSemAcento) {
         const semAcentoForteA = !a.temAcentoAdicionado && (a.quantidadeSobrenomes ?? 0) >= 1 ? 1 : 0;
         const semAcentoForteB = !b.temAcentoAdicionado && (b.quantidadeSobrenomes ?? 0) >= 1 ? 1 : 0;
@@ -828,8 +847,13 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
       }
     }
 
-    // Se ambos atingiram N5: a etapa menor vence (Etapa 1 vence Etapa 2, etc.)
-    if (n5A && n5B) {
+    if (prioridadeNota) {
+      // DEV-303: N5 primeiro, depois a nota; a etapa (menor mudança) só desempata.
+      if (n5A !== n5B) return n5B - n5A;
+      if (a.score !== b.score) return b.score - a.score;
+      if (etapaA !== etapaB) return etapaA - etapaB;
+    } else if (n5A && n5B) {
+      // Se ambos atingiram N5: a etapa menor vence (Etapa 1 vence Etapa 2, etc.)
       if (etapaA !== etapaB) return etapaA - etapaB;
       if (a.score !== b.score) return b.score - a.score;
     } else if (n5A !== n5B) {
@@ -987,7 +1011,8 @@ function garantirMaiorNotaNaFatia(
  * Motor v4 (DEV-301): só devolve sugestões que passam em R1 (zero bloqueio nos
  * 4 triângulos) e R2 (nota >= max(70, nascimento + 1)). Preferências do
  * questionário relaxam em cascata, sempre dentro do conjunto válido:
- * grafia artificial → teto de nível → sobrenomes excluídos → etapa 3.
+ * grafia artificial → teto de nível → sem acento → primeiro nome intacto → sobrenomes
+ * excluídos → etapa 3.
  * Nunca devolve candidato inválido, mesmo que a lista fique curta ou vazia.
  */
 function gerarSugestoesAutoSocialV4(
@@ -1038,7 +1063,11 @@ function gerarSugestoesAutoSocialV4(
   interface Relaxamento {
     ignorarMaxNivel?: boolean;
     ignorarSobrenomesExcluidos?: boolean;
+    ignorarSemAcento?: boolean;
+    ignorarPrimeiroNome?: boolean;
   }
+
+  const primeiroNomeOriginal = nomeNascimento.trim().split(/\s+/)[0] ?? '';
 
   function aplicarFiltros(lista: AnaliseNomeSocial[], relax: Relaxamento): AnaliseNomeSocial[] {
     let filtrada = nomesExcluidosSet.size > 0
@@ -1056,6 +1085,13 @@ function gerarSugestoesAutoSocialV4(
     if (!relax.ignorarMaxNivel && maxNivel != null && Number.isFinite(maxNivel)) {
       filtrada = filtrada.filter((c) => (c.nivelGerado ?? 999) <= maxNivel);
     }
+    // DEV-303: preferências do questionário (moles; relaxam antes dos sobrenomes excluídos).
+    if (opcoes?.acentoNaAssinatura === 'prefere_sem' && !relax.ignorarSemAcento) {
+      filtrada = filtrada.filter((c) => !c.temAcentoAdicionado);
+    }
+    if (opcoes?.manterPrimeiroNome && !relax.ignorarPrimeiroNome) {
+      filtrada = filtrada.filter((c) => c.nomeCompleto.trim().split(/\s+/)[0] === primeiroNomeOriginal);
+    }
     return filtrada;
   }
 
@@ -1066,8 +1102,32 @@ function gerarSugestoesAutoSocialV4(
     { pool: poolInicial, relax: {}, artificial: false },
     { pool: poolInicial, relax: {}, artificial: true },
     { pool: poolInicial, relax: { ignorarMaxNivel: true }, artificial: true },
-    { pool: poolInicial, relax: { ignorarMaxNivel: true, ignorarSobrenomesExcluidos: true }, artificial: true },
-    { pool: todosCandidatos, relax: { ignorarMaxNivel: true, ignorarSobrenomesExcluidos: true }, artificial: true },
+    { pool: poolInicial, relax: { ignorarMaxNivel: true, ignorarSemAcento: true }, artificial: true },
+    {
+      pool: poolInicial,
+      relax: { ignorarMaxNivel: true, ignorarSemAcento: true, ignorarPrimeiroNome: true },
+      artificial: true,
+    },
+    {
+      pool: poolInicial,
+      relax: {
+        ignorarMaxNivel: true,
+        ignorarSemAcento: true,
+        ignorarPrimeiroNome: true,
+        ignorarSobrenomesExcluidos: true,
+      },
+      artificial: true,
+    },
+    {
+      pool: todosCandidatos,
+      relax: {
+        ignorarMaxNivel: true,
+        ignorarSemAcento: true,
+        ignorarPrimeiroNome: true,
+        ignorarSobrenomesExcluidos: true,
+      },
+      artificial: true,
+    },
   ];
 
   let escolhidos: AnaliseNomeSocial[] = [];

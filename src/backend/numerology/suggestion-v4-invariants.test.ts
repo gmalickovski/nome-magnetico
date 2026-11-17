@@ -202,6 +202,11 @@ describe('DEV-301 · propriedade sobre perfis do questionário', () => {
       estiloPreferido: 'curto_direto',
       aceitaEncurtarOuApelido: true,
     },
+    // DEV-303: preferências novas do questionário, sempre moles.
+    { manterPrimeiroNome: true },
+    { acentoNaAssinatura: 'prefere_sem' },
+    { prioridadeConflito: 'nota' },
+    { manterPrimeiroNome: true, acentoNaAssinatura: 'prefere_sem', prioridadeConflito: 'mudanca', maxNivelGeracao: 50 },
   ];
 
   it('0 bloqueios, 0 abaixo do mínimo, maior nota sempre visível, 0 grafia proibida', () => {

@@ -10,7 +10,7 @@ import type {
   ReadingSummaryItem,
   ResultPanelData,
 } from './chat-types.js';
-import type { ChatCollectState } from './decide-live-bridge.js';
+import { INITIAL_COLLECT_STATE, type ChatCollectState } from './decide-live-bridge.js';
 
 /** Bump quando copy/fluxo do palpite mudar (invalida sessões antigas com leitura duplicada). */
 export const CHAT_SESSION_STORAGE_VERSION = 7 as const;
@@ -74,6 +74,8 @@ export function loadChatSession(userId: string): PersistedChatSession | null {
     return {
       ...parsed,
       version: STORAGE_VERSION,
+      // DEV-303: sessões salvas antes dos passos novos ganham os campos com valor inicial.
+      collectState: { ...INITIAL_COLLECT_STATE, ...(parsed.collectState ?? {}) },
       birthReadingSummary: parsed.birthReadingSummary ?? null,
       harmonizedSummaries: parsed.harmonizedSummaries ?? {},
     };
