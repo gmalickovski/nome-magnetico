@@ -369,6 +369,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         poolEsgotado,
         semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
         scoreNascimento: resultado.scoreNascimento,
+        scoreMinimoSugestao: resultado.scoreMinimoSugestao,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
@@ -450,6 +451,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       poolEsgotado,
       semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
       scoreNascimento: resultado.scoreNascimento,
+      scoreMinimoSugestao: resultado.scoreMinimoSugestao,
     }),
     {
       status: 200,

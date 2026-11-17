@@ -296,10 +296,15 @@ export const POST: APIRoute = async ({ request }) => {
         if (vistosPreview.has(k)) return false;
         vistosPreview.add(k);
         return true;
-      })
-      .slice(0, 3);
+      });
+    // DEV-301 (R3a): a sugestão de maior nota sempre entra nas 3 do preview.
+    const previewVisiveis = previewTop3Raw.slice(0, 3);
+    const previewMaiorNota = previewTop3Raw.find((c) => c.maiorNota === true);
+    if (previewMaiorNota && !previewVisiveis.includes(previewMaiorNota) && previewVisiveis.length > 0) {
+      previewVisiveis[previewVisiveis.length - 1] = previewMaiorNota;
+    }
 
-    const previewTop3 = previewTop3Raw.map(c => {
+    const previewTop3 = previewVisiveis.map(c => {
       const candPanel = buildPanelData(c.nomeCompleto, dataPtBr, destino);
       return {
         ...c,
@@ -340,6 +345,7 @@ export const POST: APIRoute = async ({ request }) => {
         previewTop3,
         semOpcoesElegiveis: resultadoSocial.semOpcoesElegiveis ?? false,
         scoreNascimento: resultadoSocial.scoreNascimento ?? notaHoje,
+        scoreMinimoSugestao: resultadoSocial.scoreMinimoSugestao,
         avisoSobrenomeExigido: resultadoSocial.avisoSobrenomeExigido ?? null,
         providerUsed: decision.providerUsed,
         escopoPronto: decision.escopoPronto,
