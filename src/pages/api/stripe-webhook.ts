@@ -34,6 +34,7 @@ import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-
 import { parsePurchaseKind } from '../../backend/payments/renewal';
 import { captureFluxoException } from '../../sentry/fluxo';
 import { invalidateUserSubscriptionsCache } from '../../backend/cache/memo';
+import { buildDashboardRefundPayload, isAppInitiatedRefund } from '../../backend/payments/refund-notify';
 import { getPublicBaseUrl } from '../../utils/public-url';
 import { productAnalysisAppPath } from '../../backend/payments/checkout-access';
 import { shouldNotifyAdminSlackForProvider } from '../../backend/payments/admin-slack';
@@ -528,7 +529,8 @@ export const POST: APIRoute = async ({ request }) => {
       case 'charge.refunded': {
         const charge = event.data.object as {
           payment_intent?: string | null;
-          refunds?: { data?: Array<{ id: string }> };
+          amount_refunded?: number | null;
+          refunds?: { data?: Array<{ id: string; metadata?: Record<string, string> | null }> };
         };
         const paymentIntentId = typeof charge.payment_intent === 'string'
           ? charge.payment_intent
@@ -541,6 +543,28 @@ export const POST: APIRoute = async ({ request }) => {
             await refundSubscription(subscription.id, stripeRefundId, 'Reembolso via Stripe Dashboard');
             invalidateUserSubscriptionsCache(subscription.user_id);
             console.log('[stripe-webhook] Acesso revogado por reembolso manual:', subscription.id);
+            // DEV-163: avisa o cliente (n8n) só quando o reembolso não veio do próprio app.
+            if (!isAppInitiatedRefund(charge)) {
+              try {
+                const refundProfile = await getProfile(subscription.user_id);
+                if (refundProfile) {
+                  await notify(
+                    'payment.refunded',
+                    buildDashboardRefundPayload({
+                      charge,
+                      profile: refundProfile,
+                      userId: subscription.user_id,
+                      productType: subscription.product_type,
+                      productName: PRODUCT_NAMES[subscription.product_type as ProductType],
+                      amountPaidCents: subscription.amount_paid,
+                      skipAdminSlack: !shouldNotifyAdminSlackForProvider(subscription.payment_provider),
+                    }),
+                  );
+                }
+              } catch (err) {
+                console.error('[stripe-webhook] Falha ao avisar reembolso:', err);
+              }
+            }
             try {
               await publishAccessAttributes({
                 event: 'marketing.access_refunded',
