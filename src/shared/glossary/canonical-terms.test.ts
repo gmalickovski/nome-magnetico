@@ -65,3 +65,13 @@ describe('DEV-306 · catálogo do glossário', () => {
     }
   });
 });
+
+describe('DEV-312 · texto ao cliente sem saúde, travessão ou ×', () => {
+  const PROIBIDO = /vitalidade|sa[úu]de|sintoma|dores? de cabe[çc]a|ins[ôo]nia|cardiovascular|sistema nervoso|—|×/i;
+  it('nenhum verbete tem saúde, travessão ou × no título, resumo ou definição', () => {
+    for (const t of CANONICAL_GLOSSARY_TERMS) {
+      const texto = `${t.term}\n${t.shortSummary}\n${t.definitionMarkdown}`;
+      assert.ok(!PROIBIDO.test(texto), `${t.slug}: ${texto.match(PROIBIDO)?.[0]}`);
+    }
+  });
+});
