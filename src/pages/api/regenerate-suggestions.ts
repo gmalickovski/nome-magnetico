@@ -35,6 +35,13 @@ const rankingChatSchema = z.object({
   assinaturaAtual: z.string().max(150).optional(),
   restricaoDocumentosLegais: z.boolean().optional(),
   maxNivelGeracao: z.number().finite().optional(),
+  afinidades: z
+    .object({
+      estilo: z.array(z.string().max(60)).max(4).optional(),
+      area: z.string().max(60).nullable().optional(),
+      subfocos: z.array(z.string().max(60)).max(4).optional(),
+    })
+    .optional(),
 });
 
 const regenerateSchema = z
@@ -238,6 +245,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       Boolean(parametrosAnteriores.restricaoDocumentosLegais),
     maxNivelGeracao:
       rankingChat?.maxNivelGeracao ?? parametrosAnteriores.maxNivelGeracao,
+    afinidades: rankingChat?.afinidades ?? parametrosAnteriores.afinidades,
   };
 
   const resultado = analisarNomesSocial([], nomeNascimento, dataNascimento, {
@@ -255,6 +263,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     variacaoPropria,
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais || undefined,
     maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
+    afinidades: rankingChatMerged.afinidades,
   });
 
   if (selecionarComoPrincipal && selecionarComoPrincipal.trim().length >= 2) {
@@ -320,6 +329,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     assinaturaAtual: rankingChatMerged.assinaturaAtual,
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais,
     maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
+    afinidades: rankingChatMerged.afinidades,
   };
 
   const resumoAtualizado = buildSelectedSocialSummary({

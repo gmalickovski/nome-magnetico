@@ -195,6 +195,13 @@ describe('DEV-301 · propriedade sobre perfis do questionário', () => {
     { estiloPreferido: 'curto_direto', aceitaEncurtarOuApelido: true },
     { estiloPreferido: 'sobrenome_forte' },
     { ondeVaiUsar: ['contratos'] },
+    // DEV-302: afinidades do perfil só desempatam entre válidas; invariantes seguem valendo.
+    { afinidades: { area: 'prosperidade_financeira', estilo: ['firme_confiavel'], subfocos: ['reter_ganhos'] } },
+    {
+      afinidades: { area: 'relacionamentos_harmonia', estilo: ['leve_acolhimento'] },
+      estiloPreferido: 'curto_direto',
+      aceitaEncurtarOuApelido: true,
+    },
   ];
 
   it('0 bloqueios, 0 abaixo do mínimo, maior nota sempre visível, 0 grafia proibida', () => {
@@ -231,6 +238,6 @@ describe('DEV-301 · propriedade sobre perfis do questionário', () => {
         }
       }
     }
-    assert.ok(casos >= 48);
+    assert.ok(casos >= primeiros.length * perfis.length);
   });
 });

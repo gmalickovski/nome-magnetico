@@ -97,3 +97,7 @@ A nota **não muda**; estas regras definem o que pode ser oferecido ao usuário:
 | **R4** | Regra dura nunca é relaxada. Sem opção válida → estado vazio. |
 
 Nomes do usuário que não passam em R1/R2 ficam em `comparacao` e não viram sugestão. O potencial (`calcularPotencialV3`) considera só variantes que passariam em R1/R2. Rollback: `NOME_SOCIAL_MOTOR_V4=false`. Código: `suggestion-birth-invariant.ts`, `products/nome-social.ts`, `score-config.ts`.
+
+### 7.1 Perfil da entrevista (DEV-302)
+
+Respostas de estilo ("como você quer ser percebido"), foco e subfoco viram números preferidos de Expressão, Motivação e Impressão (`src/backend/numerology/profile-affinity.ts`). A aderência só **desempata** entre sugestões que já passaram em R1/R2, dentro da mesma faixa de 5 pontos de nota (faixas alinhadas em 70, 85, 90...), depois das preferências explícitas de estilo e sobrenome. Não altera a nota, não cria candidatos e não esconde a sugestão de maior nota (R3a). O texto "por que este nome para você" cita só afinidades realmente atendidas.

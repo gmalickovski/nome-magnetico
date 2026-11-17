@@ -45,6 +45,12 @@ import type { LicaoCarmica, TendenciaOculta, DebitoCarmicoInfo } from '../karmic
 import type { Bloqueio } from '../triangle';
 import { SUGESTAO_CONFIG_V4 } from '../score-config';
 import {
+  explicarAderenciaPerfil,
+  pontuarAderenciaPerfil,
+  temAfinidades,
+  type AfinidadesPerfil,
+} from '../profile-affinity';
+import {
   dedupeCandidatosEstavel,
   filtrarOfertaveis,
   getGanhoMinimoPontos,
@@ -399,6 +405,10 @@ export interface AnaliseNomeSocial {
   /** DEV-301: false quando o nome do usuário não passa em R1/R2 (só comparação). */
   ofertavel?: boolean;
   motivoNaoOfertavel?: 'bloqueio' | 'abaixo_do_nascimento' | 'abaixo_do_piso';
+  /** DEV-302: aderência (0 a 1) dos números do nome ao perfil da entrevista. Não altera a nota. */
+  aderenciaPerfil?: number;
+  /** DEV-302: "por que este nome para você", só com afinidades realmente atendidas. */
+  explicacaoPerfil?: string;
 }
 
 export interface ResultadoNomeSocial {
@@ -691,6 +701,11 @@ export interface OpcoesRankingNomeSocial {
    * sem gerar sugestões automáticas do motor (gerarSugestoesAutoSocial).
    */
   somenteCandidatosInformados?: boolean;
+  /**
+   * DEV-302: afinidades do perfil (como quer ser percebido, foco e subfoco). Só desempata
+   * entre sugestões válidas (R1/R2); não muda nota nem cria candidatos.
+   */
+  afinidades?: AfinidadesPerfil;
 }
 
 /**
@@ -701,6 +716,23 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
   const excluidos = (opcoes?.sobrenomesExcluidos ?? []).map(normalizarToken).filter(Boolean);
   const estilo = opcoes?.estiloPreferido;
   const motivo = opcoes?.motivoRefinamento;
+  const afinidades =
+    isMotorV4() && temAfinidades(opcoes?.afinidades) ? opcoes!.afinidades : undefined;
+  const faixaDeNota = (score: number) => Math.floor(score / 5);
+  const aderenciaEmCache = new WeakMap<AnaliseNomeSocial, number>();
+  function aderenciaQuantizada(a: AnaliseNomeSocial): number {
+    let valor = aderenciaEmCache.get(a);
+    if (valor === undefined) {
+      valor = Math.round(
+        pontuarAderenciaPerfil(
+          { expressao: a.expressao, motivacao: a.motivacao, impressao: a.impressao },
+          afinidades,
+        ) * 4,
+      );
+      aderenciaEmCache.set(a, valor);
+    }
+    return valor;
+  }
 
   const prefereSemAcento =
     estilo === 'sobrenome_forte' || motivo === 'preferir_sem_acento';
@@ -784,6 +816,15 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
         const wordsA = a.nomeCompleto.trim().split(/\s+/).length;
         const wordsB = b.nomeCompleto.trim().split(/\s+/).length;
         if (wordsA !== wordsB) return wordsA - wordsB;
+      }
+
+      // DEV-302: perfil da entrevista (afinidade numérica) desempata só dentro da mesma faixa
+      // de 5 pontos de nota (faixas alinhadas em 70, 85, 90...), então nunca derruba a nota
+      // do Nome de Ouro em 5 pontos ou mais por afinidade.
+      if (afinidades && faixaDeNota(a.score) === faixaDeNota(b.score)) {
+        const afinA = aderenciaQuantizada(a);
+        const afinB = aderenciaQuantizada(b);
+        if (afinA !== afinB) return afinB - afinA;
       }
     }
 
@@ -1238,6 +1279,14 @@ export function analisarNomesSocial(
   const usuarios = separarOfertaveis(analisesUsuario);
   analisesUsuario = usuarios.ofertaveis;
   sugestoesIA = separarOfertaveis(sugestoesIA).ofertaveis;
+
+  if (motorV4 && temAfinidades(resolvedOpcoes?.afinidades)) {
+    for (const a of [...analisesUsuario, ...sugestoesIA]) {
+      const numeros = { expressao: a.expressao, motivacao: a.motivacao, impressao: a.impressao };
+      a.aderenciaPerfil = pontuarAderenciaPerfil(numeros, resolvedOpcoes!.afinidades);
+      a.explicacaoPerfil = explicarAderenciaPerfil(numeros, resolvedOpcoes!.afinidades);
+    }
+  }
 
   const comparador = criarComparadorCandidatosV3(resolvedOpcoes);
   let melhorNome: AnaliseNomeSocial | null;

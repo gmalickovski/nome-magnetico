@@ -19,6 +19,8 @@ export interface RankingOpcoesPatch {
   assinaturaAtual?: string;
   restricaoDocumentosLegais?: boolean;
   maxNivelGeracao?: number;
+  /** DEV-302: afinidades do perfil (só desempatam entre sugestões válidas). */
+  afinidades?: { estilo?: string[]; area?: string | null; subfocos?: string[] };
 }
 
 export interface QuestionnaireProfile {
@@ -81,6 +83,19 @@ export function maxNivelGeracaoPorAbertura(
   return 120;
 }
 
+export function profileToAfinidades(
+  profile: QuestionnaireProfile,
+): RankingOpcoesPatch['afinidades'] | undefined {
+  const estilo = profile.estiloPresenca.filter(Boolean);
+  const subfocos = profile.subfocosOrdenados.filter(Boolean);
+  if (estilo.length === 0 && !profile.areaFoco && subfocos.length === 0) return undefined;
+  return {
+    estilo: estilo.length > 0 ? estilo : undefined,
+    area: profile.areaFoco ?? undefined,
+    subfocos: subfocos.length > 0 ? subfocos : undefined,
+  };
+}
+
 export function profileToRankingOpcoes(
   profile: QuestionnaireProfile,
   extras?: Partial<RankingOpcoesPatch>
@@ -110,6 +125,7 @@ export function profileToRankingOpcoes(
     assinaturaAtual,
     restricaoDocumentosLegais: legal || undefined,
     maxNivelGeracao: maxNivel,
+    afinidades: profileToAfinidades(profile),
     ...extras,
   };
 }

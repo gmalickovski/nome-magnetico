@@ -164,7 +164,16 @@ SUGESTOES DE NOMES (motor v4 · DEV-301)
   passarem em R1/R2, ficam em `comparacao` (nunca viram sugestao).
   Grafia: anel, acento duplo novo, acento na inicial do sobrenome e til na inicial sao
   proibidos; til fora de a final/ao/ae e oe e 'artificial' e so entra sem alternativa.
-  Rollback: NOME_SOCIAL_MOTOR_V4=false.
+  Perfil da entrevista (DEV-302): estilo_presenca, area_foco e subfoco apontam numeros
+  preferidos de Expressao, Motivacao e Impressao (profile-affinity.ts). A aderencia
+  (0 a 1; Expressao 50%, Motivacao 30%, Impressao 20%; area 40%, estilo 40%, subfoco 20%)
+  so DESEMPATA entre sugestoes validas, dentro da mesma faixa de 5 pontos de nota, depois
+  das preferencias explicitas de estilo/sobrenome. Nao muda nota, nao cria candidato e nao
+  esconde a sugestao de maior nota. O texto 'por que este nome para voce' (explicacaoPerfil)
+  cita no maximo 2 afinidades realmente atendidas. Sem afinidades, nada muda.
+  Mapa: prosperidade 8,4 | carreira 1,8,22 | relacionamentos 2,6 | autoestima 3,5,1 |
+  firme_confiavel 4,8 | leve_acolhimento 2,6 | criatividade 3,5 | elegancia_discreta 7,6.
+  Rollback: NOME_SOCIAL_MOTOR_V4=false (tambem desliga as afinidades).
   Modulos: products/nome-social.ts (gerarSugestoesAutoSocialV4, analisarNomesSocial),
   suggestion-birth-invariant.ts (validador), score-config.ts (SUGESTAO_CONFIG_V4).
   Legado (deprecated): src/backend/numerology/suggestions.ts
