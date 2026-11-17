@@ -50,11 +50,36 @@ Regras em `COPY_PROIBIDA`: radiestesia e pêndulo, "incompatível" (usar "Tensã
 - Temperatura de `suggestions`: 0.8 para 0.4 (escolher entre candidatas dadas não pede criatividade).
 - `models.ts`, `providers.ts` e os limites de tokens ficam como estão (ver abaixo).
 
+### 2.7 Teste real com as credenciais do cofre TESTE (17/11/2026)
+
+Com autorização do Guilherme e tetos baixos (6 chamadas por visitante, 20 por hora, 30 mil tokens por hora, 100 mil tokens por usuário por dia), o `decide-live` foi chamado de verdade em cada provedor, e a entrevista guiada foi percorrida passo a passo. Achados e correções:
+
+| Achado | Evidência | Correção |
+| --- | --- | --- |
+| **O Groq do caminho de decisão usava um modelo aposentado.** O padrão era `llama-3.3-70b-versatile`, que a Groq retirou em 16/08/2026. Toda chamada dava 404 e a cadeia caía no OpenAI **pago**, sem ninguém perceber. | HTTP 404 "model does not exist" (170 ms) | Padrão agora `openai/gpt-oss-20b` (gratuito, o mesmo grupo de modelos do `models.ts`), trocável por `GROQ_DECIDE_MODEL`. Groq volta a ser o principal e o OpenAI só reserva. |
+| **O OpenAI estourava o tempo limite.** O limite era 1,8 s e o `gpt-4o-mini` responde em 1,6 a 1,9 s. | 3 chamadas: 1944, 1663 e 1623 ms | Tempo limite 3,5 s (Groq) e 4 s (OpenAI), trocável por `NM_JEV_STRUCTURED_TIMEOUT_MS` (500 a 15000). |
+| **O OpenAI devolvia valor fora da escala.** `clareza_relato_score: 8` para uma escala de 0 a 2. | resposta real; a validação da DEV-303 barrou e caiu no determinístico | Score virou inteiro com `enum` [0, 1, 2] no schema. |
+| **O Groq recusa `enum` que mistura inteiros e decimais.** Fechar também a nota `noul` (0, 0,1…1) deu HTTP 400. | 6 variantes de schema testadas | A nota `noul` fica número livre; a faixa 0 a 1 é garantida pela validação Zod. Teste impede um enum numérico misto. |
+| **`max_tokens: 200` ficava no limite com `gpt-oss`.** O raciocínio consome o limite: 182 e 199 tokens usados. | 2 chamadas com `finish=stop`, mas a 1 token do corte | `max_tokens` 600 e `reasoning_effort: 'low'` para modelos `gpt-oss`. |
+| **A telemetria escondia o motivo da falha** (`http-other`). | foi preciso um diagnóstico à parte | Códigos próprios `http-400` e `http-404`. |
+| **Grafia artificial ("Pedrõ", "Rõcha") ia para o topo** ao relaxar "prefiro sem acento", e vencia grafias naturais de mesma nota. | entrevista real com nome artístico | A grafia artificial passou a ser o último recurso da cascata e, no comparador, fica atrás da natural no mesmo patamar de nota. |
+
+### 2.8 A entrevista manda; sem estilo definido, a assinatura que menos muda o nome
+
+Regra de produto do Guilherme (17/11/2026): a preferência descrita na entrevista sempre prevalece, mas a maioria das pessoas quer uma assinatura que mude pouco, de preferência o primeiro nome mais um dos sobrenomes; acento e o que destoa do nome real ficam por último.
+
+- **Padrão sem estilo definido** (entrevista aberta, "o que fizer sentido", "não me representa"): entre as sugestões com nota até 15 pontos da melhor, o Nome de Ouro é a que menos distorce o nome (`distorcaoDoNome`): primeiro nome + 1 sobrenome → tirar 1 sobrenome → acento leve → só o primeiro nome → duplicação, corte e apelido → grafia artificial. A de maior nota continua sempre visível, com o selo.
+- **A entrevista passa na frente**: estilo explícito ("um acento ou letra", "tirar ou trocar um sobrenome", curto), "Prefiro sem acento" e os sobrenomes que a pessoa disse usar valem **antes** da faixa de nota (antes, só desempatavam dentro dela); "nota mais alta" põe a nota na frente.
+- Exemplo (nascimento 01/01/1990, "Camila Dias Nunes"): entrevista aberta → `Camila Nunes` (76), com `Camilã Diás Nunes` (89) como maior nota ao lado; "um acento ou letra" → `Camilã Días Nunes`; "nota mais alta" → o de 89.
+- Os goldens do Growth (DEV-186 e DEV-260) continuam passando.
+
+Resultado final, com as chaves reais do TESTE, nos 3 provedores isolados: JEV (`typesafe-jev`, cerca de 210 a 310 ms por passo), Groq (`groq-structured`, cerca de 1 s, 720 tokens) e OpenAI (`openai-structured`, cerca de 1,9 s, 540 tokens), todos com `outcome: ok`. A entrevista completa (12 passos no caminho comum, 9 em "Não me representa") usou só o JEV e gerou 3 sugestões válidas.
+
 ## 3. Achados que NÃO mudei (decisão do Guilherme)
 
 1. **Provedor padrão ignora `APP_ENV`.** O `CLAUDE.md` diz que produção usa Claude e desenvolvimento usa Groq, e o comentário do `router.ts` diz "padrão por APP_ENV", mas `getDefaultProvider()` devolve `groq` sempre, salvo `AI_DEFAULT_PROVIDER` ou uma linha ativa em `ai_config`. Mudar o padrão pode trocar o provedor de produção e o custo. Conferir o que a produção usa hoje (linha em `ai_config` ou env) antes de decidir.
 2. **Modelos Claude podem estar defasados.** A configuração usa `claude-sonnet-4-6` e `claude-haiku-4-5-20251001`; existem versões mais novas (família 5). Trocar muda custo e tom do texto: testar no TESTE com chave e teto de gasto autorizados antes.
-3. **Risco de texto cortado com `openai/gpt-oss-120b` (Groq).** Modelos com raciocínio gastam parte de `max_tokens` pensando; a análise completa tem 9 seções e `analysis` usa 6000. Ninguém checa `finish_reason = length`, então um texto cortado seria salvo como completo. Medir em chamada real (autorizada) e, se confirmar, subir o limite ou reduzir o esforço de raciocínio.
+3. **Risco de texto cortado com `openai/gpt-oss-120b` (Groq) na análise completa.** Medido só para a decisão do JEV (182 e 199 tokens usados de 200, já corrigido). A análise completa tem 9 seções e `analysis` usa 6000, e ninguém checa `finish_reason = length`, então um texto cortado seria salvo como completo. Medir com uma análise real (consome tokens) e, se confirmar, subir o limite ou reduzir o esforço de raciocínio.
 4. **Código sem uso:** `PRODUCT_AI_CONFIG`, `streamAnalysis`, `generateGuide`, `generateBabyAnalysis` e `generateCompanyAnalysis` não têm chamador. Remover é uma limpeza própria.
 5. **Cota por tipo de erro:** `QUOTA_EXCEEDED` (limite do provedor) e `USER_TOKEN_LIMIT` (limite do usuário) são erros diferentes, mas a tela ainda não os separa.
 
@@ -66,3 +91,10 @@ Regras em `COPY_PROIBIDA`: radiestesia e pêndulo, "incompatível" (usar "Tensã
 ## 5. Rollback
 - `AI_MAX_TOKENS_PER_USER_DAY=0` desliga o teto diário.
 - A guarda de vocabulário e a de nomes ficam no código: para desligar, reverter o commit. Sem migration e sem mudança de schema.
+
+### 2.9 Preferências estruturais e vitrine de 6 opções
+
+- **Preferências estruturais mandam** (quantos/quais sobrenomes, "só o primeiro nome", manter o primeiro nome): quem as atende vem primeiro, ordenado pela **melhor nota**; as demais vêm por **menor distorção do nome**. Nova resposta exclusiva "Só o primeiro nome" na pergunta de sobrenomes (vale só se nenhum sobrenome for marcado junto).
+- **Vitrine**: 6 opções de início (Nome de Ouro + 5), "Gerar mais" traz mais 3 (1 pedido), teto de 9. As 3 primeiras do Top seguem diversas; as demais seguem a ordem de preferência da entrevista.
+- **A de maior nota sempre aparece entre as 6**, mesmo fora do padrão escolhido (a pessoa pode mudar de ideia). Se a preferência restringe demais e as notas caem, a de maior nota fica visível com o selo.
+- Constantes em `src/shared/nome-social/gerar-mais-limits.ts` (`SUGESTOES_INICIAIS=6`, `POR_RODADA=3`, `MAX_PEDIDOS=1`, `MAX_TOTAL=9`).

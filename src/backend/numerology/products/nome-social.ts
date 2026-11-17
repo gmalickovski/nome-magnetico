@@ -35,6 +35,7 @@
  * - Top 3 diverso: mudança mínima, encurtado e alternativa, cada um com campo `explicacao`
  */
 
+import { NOME_SOCIAL_SUGESTOES_INICIAIS } from '../../../shared/nome-social/gerar-mais-limits';
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../triangle';
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularMissao, calcularImpressao } from '../numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../karmic';
@@ -402,6 +403,8 @@ export interface AnaliseNomeSocial {
   semSequenciaVida?: boolean;
   /** DEV-301: sugestão de maior nota entre as oferecidas (selo "Maior nota"). */
   maiorNota?: boolean;
+  /** DEV-304: til fora de ã final/ão/ãe/õe. Só entra quando faltam opções naturais e fica atrás delas. */
+  grafiaArtificial?: boolean;
   /** DEV-301: false quando o nome do usuário não passa em R1/R2 (só comparação). */
   ofertavel?: boolean;
   motivoNaoOfertavel?: 'bloqueio' | 'abaixo_do_nascimento' | 'abaixo_do_piso';
@@ -721,7 +724,28 @@ export interface OpcoesRankingNomeSocial {
 /**
  * Função de ordenação do ranking v3 (DEV-186 + DEV-190 §6 + DEV-235).
  */
-function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
+/**
+ * Quanto a sugestão distorce o nome real (menor é melhor). A maioria das pessoas quer uma assinatura
+ * que mude pouco, de preferência o primeiro nome mais UM dos sobrenomes; acento vem depois e o que
+ * foge do nome real (apagar todos os sobrenomes, duplicar letra, cortar, apelido) fica por último.
+ * Só serve de padrão quando a entrevista não define o estilo: a entrevista sempre manda.
+ */
+export function distorcaoDoNome(a: Pick<AnaliseNomeSocial, 'nivelGerado' | 'etapa' | 'grafiaArtificial'>): number {
+  const nivel = a.nivelGerado ?? 999;
+  const etapa = a.etapa ?? etapaDoNivel(nivel);
+  let d: number;
+  if (nivel === 0 || nivel === 20) d = 0; // nome do próprio usuário, ou primeiro nome + 1 sobrenome
+  else if (nivel === 10) d = 1; // tirar 1 sobrenome e manter os outros
+  else if (nivel === 25) d = 95; // só o primeiro nome: apaga todos os sobrenomes (depois do acento leve)
+  else if (etapa === 2) d = 10 + nivel; // acento sutil, do mais leve ao mais carregado (60 a 90)
+  else d = 100 + nivel; // duplicação, corte e apelido (etapa 3)
+  return a.grafiaArtificial ? d + 1000 : d;
+}
+
+function criarComparadorCandidatosV3(
+  opcoes?: OpcoesRankingNomeSocial,
+  contexto?: { scoreMaximo?: number; primeiroNomeOriginal?: string },
+) {
   const obrigatorios = (opcoes?.sobrenomesObrigatorios ?? []).map(normalizarToken).filter(Boolean);
   const excluidos = (opcoes?.sobrenomesExcluidos ?? []).map(normalizarToken).filter(Boolean);
   const estilo = opcoes?.estiloPreferido;
@@ -770,6 +794,19 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
         ))
   );
 
+  // Estilo explícito vem da entrevista (ou do refinamento): nesse caso não se aplica o padrão.
+  const estiloExplicito =
+    prefereSemAcento || prefereCompletoComAcento || prefereCurtoExplicito || preferenciaSemAcento;
+  const naturalidadePadrao =
+    isMotorV4() &&
+    contexto?.scoreMaximo !== undefined &&
+    !prioridadeNota &&
+    !estiloExplicito;
+  const limiteNaturalidade = Math.max(
+    SUGESTAO_CONFIG_V4.pisoAbsoluto,
+    (contexto?.scoreMaximo ?? 0) - SUGESTAO_CONFIG_V4.janelaNaturalidade,
+  );
+
   function contarObrigatoriosAtendidos(nome: string): number {
     if (obrigatorios.length === 0) return 0;
     let count = 0;
@@ -777,6 +814,19 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
       if (candidatoContemSobrenome(nome, sob)) count++;
     }
     return count;
+  }
+
+  // DEV-304: preferências ESTRUTURAIS da entrevista (quantos/quais sobrenomes, manter o primeiro nome).
+  // Quem atende todas vem primeiro, ordenado pela melhor nota; as demais vêm por menor distorção.
+  const primeiroOriginal = normalizarToken(contexto?.primeiroNomeOriginal ?? '');
+  const manterPrimeiro = Boolean(opcoes?.manterPrimeiroNome) && primeiroOriginal !== '';
+  const temPrefEstrutural =
+    isMotorV4() && (obrigatorios.length > 0 || excluidos.length > 0 || manterPrimeiro);
+  function atendePrefEstrutural(a: AnaliseNomeSocial): boolean {
+    if (temExcluido(a.nomeCompleto)) return false;
+    if (obrigatorios.length > 0 && contarObrigatoriosAtendidos(a.nomeCompleto) < obrigatorios.length) return false;
+    if (manterPrimeiro && normalizarToken(a.nomeCompleto.trim().split(/\s+/)[0] ?? '') !== primeiroOriginal) return false;
+    return true;
   }
 
   function temExcluido(nome: string): boolean {
@@ -803,6 +853,34 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
       if (obrA !== obrB) return obrB - obrA;
     }
 
+    // DEV-304: preferências estruturais primeiro. Quem atende vem antes; entre quem atende vale a
+    // melhor nota (depois das outras preferências explícitas); entre quem não atende, a menor distorção.
+    let atendeAmbas = false;
+    if (temPrefEstrutural && !prioridadeNota) {
+      const atA = atendePrefEstrutural(a);
+      const atB = atendePrefEstrutural(b);
+      if (atA !== atB) return atA ? -1 : 1;
+      if (atA) atendeAmbas = true;
+      else {
+        const distA = distorcaoDoNome(a);
+        const distB = distorcaoDoNome(b);
+        if (distA !== distB) return distA - distB;
+      }
+    }
+
+    // DEV-304: naturalidade padrão. Só vale quando a entrevista NÃO definiu o estilo (a entrevista manda):
+    // entre as sugestões com nota perto da melhor, vence a que menos distorce o nome.
+    if (naturalidadePadrao && !temPrefEstrutural) {
+      const foraA = a.score >= limiteNaturalidade ? 0 : 1;
+      const foraB = b.score >= limiteNaturalidade ? 0 : 1;
+      if (foraA !== foraB) return foraA - foraB;
+      if (foraA === 0) {
+        const distA = distorcaoDoNome(a);
+        const distB = distorcaoDoNome(b);
+        if (distA !== distB) return distA - distB;
+      }
+    }
+
     const nivelA = a.nivelGerado ?? 999;
     const nivelB = b.nivelGerado ?? 999;
     const etapaA = a.etapa ?? etapaDoNivel(nivelA);
@@ -811,8 +889,12 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
     const n5A = a.score >= 85 ? 1 : 0;
     const n5B = b.score >= 85 ? 1 : 0;
 
-    // Preferências explícitas de estilo ou motivo de refinamento entre candidatos N5 (ou de mesmo patamar)
-    if (n5A === n5B && !prioridadeNota) {
+    // Preferências explícitas da entrevista (estilo, sem acento, refinamento) e grafia natural.
+    // DEV-304: a entrevista manda, então valem ANTES da faixa de nota (N5). Todas as sugestões aqui
+    // já passaram em R1/R2, e a de maior nota continua visível (R3a).
+    if (!prioridadeNota) {
+      // A grafia natural vem antes da artificial.
+      if (Boolean(a.grafiaArtificial) !== Boolean(b.grafiaArtificial)) return a.grafiaArtificial ? 1 : -1;
       if (preferenciaSemAcento) {
         const acentoA = a.temAcentoAdicionado ? 1 : 0;
         const acentoB = b.temAcentoAdicionado ? 1 : 0;
@@ -847,10 +929,13 @@ function criarComparadorCandidatosV3(opcoes?: OpcoesRankingNomeSocial) {
       }
     }
 
+    if (atendeAmbas && a.score !== b.score) return b.score - a.score;
+
     if (prioridadeNota) {
       // DEV-303: N5 primeiro, depois a nota; a etapa (menor mudança) só desempata.
       if (n5A !== n5B) return n5B - n5A;
       if (a.score !== b.score) return b.score - a.score;
+      if (Boolean(a.grafiaArtificial) !== Boolean(b.grafiaArtificial)) return a.grafiaArtificial ? 1 : -1;
       if (etapaA !== etapaB) return etapaA - etapaB;
     } else if (n5A && n5B) {
       // Se ambos atingiram N5: a etapa menor vence (Etapa 1 vence Etapa 2, etc.)
@@ -1011,8 +1096,8 @@ function garantirMaiorNotaNaFatia(
  * Motor v4 (DEV-301): só devolve sugestões que passam em R1 (zero bloqueio nos
  * 4 triângulos) e R2 (nota >= max(70, nascimento + 1)). Preferências do
  * questionário relaxam em cascata, sempre dentro do conjunto válido:
- * grafia artificial → teto de nível → sem acento → primeiro nome intacto → sobrenomes
- * excluídos → etapa 3.
+ * teto de nível → sem acento → primeiro nome intacto → sobrenomes excluídos → etapa 3 → grafia
+ * artificial (último recurso, sempre atrás das naturais).
  * Nunca devolve candidato inválido, mesmo que a lista fique curta ou vazia.
  */
 function gerarSugestoesAutoSocialV4(
@@ -1053,6 +1138,7 @@ function gerarSugestoesAutoSocialV4(
       etapa,
       etapaGeracao: etapa,
       temAcentoAdicionado: contarAcentos(nome) > acentosNascimento,
+      grafiaArtificial: classificarGrafia(nome, nomeNascimento) === 'artificial',
       quantidadeSobrenomes: contarSobrenomesSignificativos(nome),
       explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
     };
@@ -1098,36 +1184,26 @@ function gerarSugestoesAutoSocialV4(
   const poolInicial = todosCandidatos.filter(
     (c) => c.nivel <= 85 || (liberaEtapa3Apelido && c.nivel >= 110),
   );
+  // Grafia natural é qualidade, não preferência: a artificial só entra no último recurso, depois de
+  // relaxar tudo (achado do teste real: ao relaxar "sem acento", "Pedrõ" e "Rõcha" entravam junto).
+  const relaxTudo: Relaxamento = {
+    ignorarMaxNivel: true,
+    ignorarSemAcento: true,
+    ignorarPrimeiroNome: true,
+    ignorarSobrenomesExcluidos: true,
+  };
   const estagios: { pool: typeof todosCandidatos; relax: Relaxamento; artificial: boolean }[] = [
     { pool: poolInicial, relax: {}, artificial: false },
-    { pool: poolInicial, relax: {}, artificial: true },
-    { pool: poolInicial, relax: { ignorarMaxNivel: true }, artificial: true },
-    { pool: poolInicial, relax: { ignorarMaxNivel: true, ignorarSemAcento: true }, artificial: true },
+    { pool: poolInicial, relax: { ignorarMaxNivel: true }, artificial: false },
+    { pool: poolInicial, relax: { ignorarMaxNivel: true, ignorarSemAcento: true }, artificial: false },
     {
       pool: poolInicial,
       relax: { ignorarMaxNivel: true, ignorarSemAcento: true, ignorarPrimeiroNome: true },
-      artificial: true,
+      artificial: false,
     },
-    {
-      pool: poolInicial,
-      relax: {
-        ignorarMaxNivel: true,
-        ignorarSemAcento: true,
-        ignorarPrimeiroNome: true,
-        ignorarSobrenomesExcluidos: true,
-      },
-      artificial: true,
-    },
-    {
-      pool: todosCandidatos,
-      relax: {
-        ignorarMaxNivel: true,
-        ignorarSemAcento: true,
-        ignorarPrimeiroNome: true,
-        ignorarSobrenomesExcluidos: true,
-      },
-      artificial: true,
-    },
+    { pool: poolInicial, relax: relaxTudo, artificial: false },
+    { pool: todosCandidatos, relax: relaxTudo, artificial: false },
+    { pool: todosCandidatos, relax: relaxTudo, artificial: true },
   ];
 
   let escolhidos: AnaliseNomeSocial[] = [];
@@ -1142,7 +1218,10 @@ function gerarSugestoesAutoSocialV4(
     if (escolhidos.length >= SUGESTAO_CONFIG_V4.minimoVisiveis) break;
   }
 
-  escolhidos.sort(criarComparadorCandidatosV3(opcoes));
+  const scoreMaximoEscolhidos = escolhidos.reduce((m, a) => Math.max(m, a.score), 0);
+  escolhidos.sort(
+    criarComparadorCandidatosV3(opcoes, { scoreMaximo: scoreMaximoEscolhidos, primeiroNomeOriginal }),
+  );
   return garantirMaiorNotaNaFatia(escolhidos, maxSugestoes);
 }
 
@@ -1317,7 +1396,7 @@ export function analisarNomesSocial(
       destino,
       nomesCandidatos: elegiveis,
       melhorNome: elegiveis[0] ?? null,
-      top3: elegiveis.slice(0, 3),
+      top3: elegiveis.slice(0, Math.max(1, NOME_SOCIAL_SUGESTOES_INICIAIS - 1)),
       avisoSobrenomeExigido: null,
       scoreNascimento: scoreNasc,
       semOpcoesElegiveis: elegiveis.length === 0,
@@ -1348,7 +1427,11 @@ export function analisarNomesSocial(
     }
   }
 
-  const comparador = criarComparadorCandidatosV3(resolvedOpcoes);
+  const scoreMaximoValidas = [...analisesUsuario, ...sugestoesIA].reduce((m, a) => Math.max(m, a.score), 0);
+  const comparador = criarComparadorCandidatosV3(resolvedOpcoes, {
+    scoreMaximo: scoreMaximoValidas,
+    primeiroNomeOriginal: nomeNascimento.trim().split(/\s+/)[0] ?? '',
+  });
   let melhorNome: AnaliseNomeSocial | null;
 
   if (motorV4) {
@@ -1379,11 +1462,24 @@ export function analisarNomesSocial(
     ordenarPorNotaDescEstavel([...analisesUsuario, ...sugestoesIA]),
   );
   let top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
+  // DEV-304: a vitrine inicial tem 6 opções (Nome de Ouro + 5). Depois das 3 diversas, as demais vêm
+  // na ordem de preferência da entrevista (atendem primeiro, depois menor distorção), nunca por nota.
+  const capacidadeTop = Math.max(1, NOME_SOCIAL_SUGESTOES_INICIAIS - 1);
   if (motorV4) {
+    const usados = new Set([melhorNome, ...top3].filter(Boolean).map((c) => c!.nomeCompleto.toLowerCase()));
+    for (const c of [...todasOrdenadas].sort(comparador)) {
+      if (top3.length >= capacidadeTop) break;
+      const k = c.nomeCompleto.toLowerCase();
+      if (usados.has(k)) continue;
+      usados.add(k);
+      c.tipoOpcao = c.tipoOpcao ?? 'alternativa';
+      top3.push(c);
+    }
+    // A de maior nota SEMPRE aparece, mesmo fora do padrão da entrevista (a pessoa pode mudar de ideia).
     const maior = todasOrdenadas[0];
     if (maior && maior !== melhorNome && !top3.includes(maior)) {
       maior.tipoOpcao = maior.tipoOpcao ?? 'alternativa';
-      top3 = top3.length < 3 ? [...top3, maior] : [...top3.slice(0, 2), maior];
+      top3 = top3.length < capacidadeTop ? [...top3, maior] : [...top3.slice(0, capacidadeTop - 1), maior];
     }
   }
   top3 = filtrarOfertaveis(top3, scoreNasc, ganhoMinimoPontos);

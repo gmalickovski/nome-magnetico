@@ -69,4 +69,10 @@ export const SUGESTAO_CONFIG_V4 = Object.freeze({
   ganhoPreferencial: 5,
   /** Quantidade mínima de sugestões válidas antes de relaxar preferências moles. */
   minimoVisiveis: 3,
+  /**
+   * Naturalidade padrão: quando a entrevista não define o estilo, entre as sugestões com nota até
+   * esta distância da melhor, vence a que menos distorce o nome (primeiro nome + um sobrenome,
+   * depois os acentos, depois o que foge do nome real).
+   */
+  janelaNaturalidade: 15,
 });

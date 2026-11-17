@@ -157,8 +157,16 @@ SUGESTOES DE NOMES (motor v4 · DEV-301)
     R3a a opcao valida de maior nota sempre aparece entre as visiveis (maiorNota = true)
     R3b gerar mais traz as proximas validas, sem repetir
     R4  regra dura nunca relaxa para encher lista; sem opcao valida = estado vazio
+  A ENTREVISTA MANDA, e sem estilo definido vale a naturalidade (DEV-304): a maioria das pessoas
+  quer uma assinatura que mude pouco. Entre as sugestoes com nota ate 15 pontos da melhor,
+  vence a que menos distorce o nome: primeiro nome + 1 sobrenome, depois tirar 1 sobrenome,
+  depois acento leve, depois so o primeiro nome, e por ultimo duplicacao, corte, apelido e
+  grafia artificial. Estilo explicito (um acento ou letra, tirar sobrenome, curto, sem acento),
+  sobrenomes que a pessoa disse usar e 'nota mais alta' passam na frente. A de maior nota
+  continua sempre visivel. Funcao: distorcaoDoNome (nome-social.ts); janela em score-config.ts.
   Preferencias do questionario relaxam em cascata, sempre dentro do conjunto valido:
-  grafia artificial > teto de nivel > sobrenomes excluidos > etapa 3. Restricao legal
+  teto de nivel > sem acento > primeiro nome intacto > sobrenomes excluidos > etapa 3 >
+  grafia artificial (ultimo recurso, sempre atras das naturais). Restricao legal
   (contratos/documentos) nao relaxa sozinha.
   Nomes do usuario (uso diario, assinatura atual, digitados) sao avaliados e, se nao
   passarem em R1/R2, ficam em `comparacao` (nunca viram sugestao).

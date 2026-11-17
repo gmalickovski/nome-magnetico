@@ -20,6 +20,7 @@ import {
   jevBudget,
   parseStructuredDecision,
   parseTypesafeAnswers,
+  readStructuredTimeoutMs,
   type JevAttempt,
   type JevCallGuard,
   type JevTelemetry,
@@ -169,6 +170,10 @@ async function evaluateWithTypeSafeJev(
  * Avalia exatamente o mesmo state e as mesmas questions quando TYPESAFE_API_KEY não estiver definida
  * ou quando a conta TypeSafe estiver sem créditos (HTTP 401/402/403/429/5xx).
  */
+// O modo strict não aceita minimum/maximum, e o OpenAI chegou a devolver `clareza_relato_score: 8`
+// para uma escala de 0 a 2: por isso o score é inteiro com enum [0, 1, 2]. A nota `noul` (0 a 1)
+// fica número livre porque o Groq recusa (HTTP 400) um enum que mistura inteiros e decimais;
+// quem garante a faixa é a validação Zod de `jev-safety.ts`.
 const SYSTEM_ONE_DECISIONS_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -187,7 +192,8 @@ const SYSTEM_ONE_DECISIONS_SCHEMA = {
       description: 'Probabilidade de 0 a 1 de o relato já ter contexto suficiente.',
     },
     clareza_relato_score: {
-      type: 'number',
+      type: 'integer',
+      enum: [0, 1, 2],
       description: 'Nível de detalhamento do relato de 0 (vazio) a 2 (detalhado).',
     },
     area_foco: {
@@ -291,7 +297,7 @@ async function callOpenAiCompatibleStructuredDecision(
   providerUsed: 'groq-structured' | 'openai-structured'
 ): Promise<RemoteDecision> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 1800);
+  const timer = setTimeout(() => controller.abort(), readStructuredTimeoutMs(providerUsed));
 
   try {
     const res = await fetch(endpoint, {
@@ -304,7 +310,9 @@ async function callOpenAiCompatibleStructuredDecision(
       body: JSON.stringify({
         model,
         temperature: 0,
-        max_tokens: 200,
+        // Modelos gpt-oss gastam parte do limite raciocinando: 200 ficava no limite (182 a 199 usados).
+        max_tokens: 600,
+        ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
         messages: buildStructuredDecisionMessages(state),
         response_format: {
           type: 'json_schema',
@@ -339,7 +347,7 @@ async function evaluateWithGroqStructuredOutputs(
   state: JevDecisionInputState,
   groqKey: string
 ): Promise<RemoteDecision> {
-  const model = getEnvKey('GROQ_DECIDE_MODEL') || 'llama-3.3-70b-versatile';
+  const model = getEnvKey('GROQ_DECIDE_MODEL') || 'openai/gpt-oss-20b';
   return callOpenAiCompatibleStructuredDecision(
     state,
     groqKey,

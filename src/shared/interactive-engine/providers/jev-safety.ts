@@ -63,6 +63,17 @@ export function readJevBudgetLimits(): JevBudgetLimits {
   };
 }
 
+/**
+ * Tempo limite das chamadas estruturadas (Groq e OpenAI). Medido em chamada real (17/11/2026):
+ * Groq `gpt-oss` responde em cerca de 0,7 a 1,1 s e o OpenAI `gpt-4o-mini` em 1,6 a 1,9 s,
+ * então o limite antigo de 1,8 s derrubava o OpenAI metade das vezes.
+ * `NM_JEV_STRUCTURED_TIMEOUT_MS` vale para os dois.
+ */
+export function readStructuredTimeoutMs(provider: 'groq-structured' | 'openai-structured'): number {
+  const fallback = provider === 'groq-structured' ? 3500 : 4000;
+  return readInt('NM_JEV_STRUCTURED_TIMEOUT_MS', fallback, 500, 15_000);
+}
+
 // ── Orçamento (em memória, por processo) ──────────────────────────────────────
 
 export type JevBudgetDenial = 'per-key' | 'global' | 'tokens';
@@ -263,9 +274,11 @@ export type JevAttemptOutcome =
   | 'timeout'
   | 'budget-exceeded'
   | 'guard-blocked'
+  | 'http-400'
   | 'http-401'
   | 'http-402'
   | 'http-403'
+  | 'http-404'
   | 'http-429'
   | 'http-5xx'
   | 'http-other'
@@ -304,9 +317,12 @@ export function classifyJevFailure(error: unknown): JevAttemptOutcome {
     Number((error as { status?: number } | null)?.status) ||
     Number(/HTTP (\d{3})/.exec(message)?.[1]) ||
     0;
+  if (status === 400) return 'http-400';
   if (status === 401) return 'http-401';
   if (status === 402) return 'http-402';
   if (status === 403) return 'http-403';
+  // 404 no Groq costuma ser modelo aposentado (ver ai-groq-model-fallback.md).
+  if (status === 404) return 'http-404';
   if (status === 429) return 'http-429';
   if (status >= 500 && status <= 599) return 'http-5xx';
   if (status > 0) return 'http-other';
