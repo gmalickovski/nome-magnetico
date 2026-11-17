@@ -55,16 +55,14 @@ export function IconGlossario({ className = 'h-5 w-5' }: IconProps) {
   );
 }
 
-/** Lucide LifeBuoy */
+/** Lucide MessageCircleMore (balão de conversa: suporte) */
 export function IconSuporte({ className = 'h-5 w-5' }: IconProps) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-      <circle cx="12" cy="12" r="10" strokeWidth={STROKE} />
-      <path strokeWidth={STROKE} d="m4.93 4.93 4.24 4.24" />
-      <path strokeWidth={STROKE} d="m14.83 9.17 4.24-4.24" />
-      <path strokeWidth={STROKE} d="m14.83 14.83 4.24 4.24" />
-      <path strokeWidth={STROKE} d="m9.17 14.83-4.24 4.24" />
-      <circle cx="12" cy="12" r="4" strokeWidth={STROKE} />
+      <path strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round" d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+      <path strokeWidth={2} strokeLinecap="round" d="M8 12h.01" />
+      <path strokeWidth={2} strokeLinecap="round" d="M12 12h.01" />
+      <path strokeWidth={2} strokeLinecap="round" d="M16 12h.01" />
     </svg>
   );
 }

@@ -257,15 +257,27 @@ export function MobileReadingBottomSheet({
           transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
         }}
       >
-        <div
-          className="flex h-11 w-full shrink-0 touch-none items-center justify-center"
-          onPointerDown={onHandlePointerDown}
-          onPointerMove={onHandlePointerMove}
-          onPointerUp={onHandlePointerUp}
-          onPointerCancel={onHandlePointerCancel}
-          aria-hidden="true"
-        >
-          <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" style={{ width: 36, height: 4 }} />
+        {/* DEV-310: o X fica na mesma linha do puxador, no canto superior direito; o puxador segue centralizado. */}
+        <div className="relative h-11 w-full shrink-0">
+          <div
+            className="flex h-full w-full touch-none items-center justify-center"
+            onPointerDown={onHandlePointerDown}
+            onPointerMove={onHandlePointerMove}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerCancel}
+            aria-hidden="true"
+          >
+            <span className="h-1 w-9 rounded-full bg-[#A0A0A0]/60" style={{ width: 36, height: 4 }} />
+          </div>
+          <button
+            type="button"
+            onClick={() => onClose('x')}
+            title="Fechar painel de análise"
+            aria-label="Fechar painel de análise"
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#e5e2e1]/80 transition-colors duration-200 hover:text-[#f2ca50] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
+          >
+            <IconX className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
+          </button>
         </div>
 
         <div className="shrink-0 border-b border-white/[0.06] px-4 pb-3">
@@ -274,19 +286,10 @@ export function MobileReadingBottomSheet({
               ref={titleRef}
               id="mobile-summary-title"
               tabIndex={-1}
-              className="font-cinzel text-base font-bold uppercase tracking-[0.12em] text-[#e5e2e1] text-center px-10 truncate"
+              className="font-cinzel text-base font-bold uppercase tracking-[0.12em] text-[#e5e2e1] text-center px-4 truncate"
             >
               Painel de análise
             </h2>
-            <button
-              type="button"
-              onClick={() => onClose('x')}
-              title="Fechar painel de análise"
-              aria-label="Fechar painel de análise"
-              className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-transparent text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors duration-200 flex shrink-0 items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70"
-            >
-              <IconX className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
-            </button>
           </div>
         </div>
 
