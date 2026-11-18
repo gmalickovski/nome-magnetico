@@ -55,6 +55,8 @@ export interface SavedAnalysisItem {
   canFavorite: boolean;
   canDelete: boolean;
   isAnalystGenerated: boolean;
+  /** DEV-317: de onde veio o nome do card (tag visível em Minhas análises). */
+  origemNome?: 'nascimento' | 'sistema' | 'teste';
   recalculatedFromVersion: string | null;
   parentAnalysisId: string | null;
   errorMessage: string | null;

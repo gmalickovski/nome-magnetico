@@ -176,6 +176,24 @@ function buildCandidatesList(ranking: any, isEmpresa: boolean): SavedAnalysisCan
   }));
 }
 
+/** DEV-317: tag do card. Nome de nascimento, sugestão do sistema ou nome testado pela pessoa. */
+export function resolverOrigemNome(
+  isFreeRow: boolean,
+  productType: string,
+  nomeExibido: string,
+  birthName: string | null,
+  rankingSocial: any,
+): 'nascimento' | 'sistema' | 'teste' | undefined {
+  if (isFreeRow) return 'nascimento';
+  if (productType !== 'nome_social') return undefined;
+  const chave = (t: string) => t.trim().toLowerCase();
+  if (birthName && chave(birthName) === chave(nomeExibido)) return 'nascimento';
+  const candidatos: any[] = Array.isArray(rankingSocial?.nomesCandidatos) ? rankingSocial.nomesCandidatos : [];
+  const achado = candidatos.find((c) => typeof c?.nomeCompleto === 'string' && chave(c.nomeCompleto) === chave(nomeExibido));
+  if (achado?.origem === 'manual' || achado?.origemSugerida === 'usuario') return 'teste';
+  return 'sistema';
+}
+
 export interface BuildSavedAnalysesOptions {
   /** Resolve a birth card linked from the dashboard using an owned source row. */
   preferredBirthSourceAnalysisId?: string | null;
@@ -266,6 +284,7 @@ function buildSynthesizedBirthAnalysisItem(params: {
     canFavorite: false,
     canDelete: false,
     isAnalystGenerated: false,
+    origemNome: 'nascimento',
     recalculatedFromVersion: null,
     parentAnalysisId: null,
     errorMessage: null,
@@ -583,6 +602,7 @@ export function buildSavedAnalysesItems(
         a.status === 'complete' && productType !== 'analise_gratuita' && !a.is_free,
       canDelete: !a.is_free || options.isAdmin,
       isAnalystGenerated: Boolean(a.is_analyst_generated),
+      origemNome: resolverOrigemNome(isFreeRow, productType, nomeExibido, birthName, rankingSocial),
       recalculatedFromVersion: a.recalculated_from_version ?? null,
       parentAnalysisId: a.parent_analysis_id ?? null,
       errorMessage: a.error_message ?? null,
