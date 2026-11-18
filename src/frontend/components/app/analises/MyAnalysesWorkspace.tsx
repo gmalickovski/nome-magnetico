@@ -39,6 +39,16 @@ const PRODUCT_LABEL: Record<string, string> = {
   nome_empresa: 'Nome Empresarial',
 };
 
+type OrigemNome = NonNullable<SavedAnalysisItem['origemNome']>;
+
+/** DEV-317: tags de origem do nome (só em Minhas análises). */
+const ORIGEM_TAG: Record<OrigemNome, { rotulo: string; classe: string }> = {
+  nascimento: { rotulo: 'Nome de nascimento', classe: 'bg-white/[0.06] text-[#e5e2e1]' },
+  sistema: { rotulo: 'Sugestão do sistema', classe: 'bg-[#D4AF37]/15 text-[#D4AF37]' },
+  teste: { rotulo: 'Seu teste', classe: 'bg-[#bea5ff]/15 text-[#d7c6ff]' },
+};
+const ORIGEM_ORDEM: OrigemNome[] = ['nascimento', 'sistema', 'teste'];
+
 const MOBILE_STACK_QUERY = '(max-width: 767px)';
 
 function isMobileStackedViewport(): boolean {
@@ -214,6 +224,16 @@ export default function MyAnalysesWorkspace({
 }: MyAnalysesWorkspaceProps) {
   const [items, setItems] = useState<SavedAnalysisItem[]>(initialItems);
   const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [origemFilter, setOrigemFilter] = useState<OrigemNome | 'todas'>('todas');
+  const [filtroAberto, setFiltroAberto] = useState(false);
+  useEffect(() => {
+    if (!filtroAberto) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFiltroAberto(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [filtroAberto]);
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     if (initialSelectedId && initialItems.some((item) => item.id === initialSelectedId)) {
       return initialSelectedId;
@@ -270,9 +290,17 @@ export default function MyAnalysesWorkspace({
   const hasMultipleProducts = uniqueProducts.length > 1;
 
   const filteredItems = useMemo(() => {
-    if (activeFilter === 'all') return items;
-    return items.filter((item) => item.productType === activeFilter);
-  }, [items, activeFilter]);
+    return items.filter(
+      (item) =>
+        (activeFilter === 'all' || item.productType === activeFilter) &&
+        (origemFilter === 'todas' || item.origemNome === origemFilter),
+    );
+  }, [items, activeFilter, origemFilter]);
+  const contagemOrigem = useMemo(() => {
+    const c: Record<OrigemNome, number> = { nascimento: 0, sistema: 0, teste: 0 };
+    for (const item of items) if (item.origemNome) c[item.origemNome]++;
+    return c;
+  }, [items]);
 
   useEffect(() => {
     if (filteredItems.length === 0) {
@@ -483,10 +511,75 @@ export default function MyAnalysesWorkspace({
         >
           <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-lg:pb-[var(--nm-mobile-dock-clearance)] lg:pb-6 pr-0.5 sm:pr-1">
             {/* Cabeçalho da coluna esquerda */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-0.5">
+            <div className="relative flex items-center justify-between gap-3 px-0.5">
               <h1 className="font-cinzel text-2xl sm:text-[1.65rem] font-bold text-[#e5e2e1] tracking-wide leading-tight">
                 Minhas Análises
               </h1>
+              <button
+                type="button"
+                onClick={() => setFiltroAberto((v) => !v)}
+                aria-expanded={filtroAberto}
+                aria-controls="analises-filtro"
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors duration-300 ${
+                  origemFilter !== 'todas'
+                    ? 'bg-[#D4AF37] text-[#131313]'
+                    : 'bg-[#1C1C1C] text-[#e5e2e1] hover:bg-white/[0.06]'
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />
+                </svg>
+                {origemFilter === 'todas' ? 'Filtrar' : ORIGEM_TAG[origemFilter].rotulo}
+              </button>
+              {filtroAberto && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Fechar filtro"
+                    onClick={() => setFiltroAberto(false)}
+                    className="fixed inset-0 z-[84] cursor-default bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-0"
+                  />
+                  <div
+                    id="analises-filtro"
+                    role="dialog"
+                    aria-label="Filtrar análises"
+                    className="fixed inset-x-3 bottom-[calc(var(--nm-mobile-dock-clearance,5.5rem)+0.5rem)] z-[85] rounded-2xl bg-[#1c1c1c] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)] md:absolute md:inset-x-auto md:right-0 md:top-full md:bottom-auto md:mt-2 md:w-72"
+                  >
+                    <p className="nm-eyebrow px-2 pb-2 pt-1">Mostrar</p>
+                    <div className="flex flex-col gap-1">
+                      {(['todas', ...ORIGEM_ORDEM] as const).map((op) => {
+                        const ativo = origemFilter === op;
+                        const total = op === 'todas' ? items.length : contagemOrigem[op];
+                        return (
+                          <button
+                            key={op}
+                            type="button"
+                            onClick={() => {
+                              setOrigemFilter(op);
+                              setFiltroAberto(false);
+                            }}
+                            aria-pressed={ativo}
+                            className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm transition-colors duration-300 ${
+                              ativo ? 'bg-[#D4AF37]/12 text-[#f2ca50]' : 'text-[#e5e2e1]/85 hover:bg-white/[0.04]'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              {op === 'todas' ? (
+                                'Todas as análises'
+                              ) : (
+                                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${ORIGEM_TAG[op].classe}`}>
+                                  {ORIGEM_TAG[op].rotulo}
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-xs text-[#A0A0A0]">{total}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Filtros por produto */}
@@ -569,9 +662,16 @@ export default function MyAnalysesWorkspace({
                     >
                       {/* Cabeçalho do card: apenas data + favoritar/excluir */}
                       <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 pt-3.5 pb-1">
-                        <span className="text-[10px] text-[#A0A0A0] px-2.5 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
-                          {item.dateFormatted}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] text-[#A0A0A0] px-2.5 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
+                            {item.dateFormatted}
+                          </span>
+                          {item.origemNome && (
+                            <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${ORIGEM_TAG[item.origemNome].classe}`}>
+                              {ORIGEM_TAG[item.origemNome].rotulo}
+                            </span>
+                          )}
+                        </div>
 
                         <div
                           className="flex items-center gap-1.5 shrink-0"

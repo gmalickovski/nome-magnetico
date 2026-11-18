@@ -15,6 +15,8 @@ export interface SuggestionPickerProps {
   canRegenerate?: boolean;
   extraActionSlot?: React.ReactNode;
   extraNoticeSlot?: React.ReactNode;
+  /** DEV-317: área "Teste um nome seu" (texto, campo e avisos). Fica sempre no fim, depois do "Gerar mais". */
+  manualSlot?: React.ReactNode;
   className?: string;
 }
 
@@ -33,8 +35,19 @@ export function SuggestionPicker({
   canRegenerate = true,
   extraActionSlot,
   extraNoticeSlot,
+  manualSlot,
   className = '',
 }: SuggestionPickerProps) {
+  const sistema = suggestions.filter((s) => s.origem !== 'manual');
+  const manuais = suggestions.filter((s) => s.origem === 'manual');
+  const [manuaisAbertos, setManuaisAbertos] = useState(true);
+  const [sistemaAberto, setSistemaAberto] = useState(true);
+  const totalManuais = useRef(manuais.length);
+  useEffect(() => {
+    // Nome novo testado: abre a lista para a pessoa ver o card na hora.
+    if (manuais.length > totalManuais.current) setManuaisAbertos(true);
+    totalManuais.current = manuais.length;
+  }, [manuais.length]);
   const rootRef = useRef<HTMLDivElement>(null);
   const [stagger, setStagger] = useState(false);
   const [touchPulseId, setTouchPulseId] = useState<string | null>(null);
@@ -54,107 +67,152 @@ export function SuggestionPicker({
     onSelect(nextSelected);
   };
 
+  // DEV-317: a ordem vem do motor (Principal, Maior nota e depois a ordem de tentativas). Não reordenar.
+  const renderCard = (sug: CandidateSuggestion, index: number) => {
+      const isCurrentSelected = selectedId === sug.id;
+      const touchPulse = touchPulseId === sug.id;
+      const card = mapCandidateToHarmonySuggestion(sug);
+      return (
+        <div
+          key={sug.id}
+          id={`candidate-${sug.id}`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={isCurrentSelected}
+          onClick={() => handleCardClick(sug.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCardClick(sug.id);
+            }
+          }}
+          className={`relative min-w-0 w-full text-left cursor-pointer rounded-2xl transition-all duration-150 select-none bg-[#1C1C1C] border focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${
+            isCurrentSelected
+              ? 'border-2 border-[#D4AF37] shadow-[0_0_0_4px_rgba(212,175,55,0.15)] scale-100 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
+              : touchPulse
+                ? 'border border-[#D4AF37]/60 scale-[0.98]'
+                : 'border border-[#D4AF37]/20 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
+          }`}
+        >
+          {isCurrentSelected && (
+            <>
+              <span className="absolute inset-0 rounded-2xl bg-[#D4AF37]/[0.06] pointer-events-none" />
+              <span className="absolute top-2 right-2 z-10 rounded-full bg-[#D4AF37] text-[#111111] text-[10px] font-semibold px-2 py-0.5">
+                ✓ Escolhido
+              </span>
+            </>
+          )}
+          <div className={isCurrentSelected ? '[&_.nm-score-eyebrow]:text-[#D4AF37]' : ''}>
+            <HarmonySuggestionCard
+              c={card}
+              stagger={stagger}
+              delayIndex={index}
+              showBlockBadgeInTags
+              className={`!shadow-none !bg-transparent !border-0 ${
+                isCurrentSelected ? '[&_.nm-h3]:text-[#D4AF37]' : ''
+              }`}
+            />
+          </div>
+          {(sug.principal || sug.maiorNota) && sug.origem !== 'manual' && (
+            <p className="px-4 sm:px-5 pb-3 -mt-1 flex flex-wrap gap-1.5">
+              {sug.principal && (
+                <span className="inline-block rounded-full bg-gradient-to-r from-[#bea5ff]/25 to-[#d7c6ff]/15 text-[#d7c6ff] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
+                  ✦ Principal
+                </span>
+              )}
+              {sug.maiorNota && (
+                <span className="inline-block rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
+                  ★ Maior nota
+                </span>
+              )}
+            </p>
+          )}
+          {sug.origem === 'manual' && <p className="px-4 pb-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
+          {sug.destaque && (
+            <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>
+          )}
+        </div>
+      );
+  };
+
+  const cabecalho = (
+    id: string,
+    titulo: string,
+    total: number,
+    aberto: boolean,
+    alternar: () => void,
+    controla: string,
+    cor: string,
+  ) => (
+    <div className="flex items-center justify-between gap-3">
+      <h3 id={id} className={`font-cinzel text-base sm:text-lg font-bold ${cor}`}>
+        {titulo}
+        {total > 0 && <span className="ml-2 font-inter text-xs font-medium text-chat-muted">({total})</span>}
+      </h3>
+      {total > 0 && (
+        <button
+          type="button"
+          onClick={alternar}
+          aria-expanded={aberto}
+          aria-controls={controla}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-chat-ink transition-colors duration-300 hover:bg-white/5"
+        >
+          <span aria-hidden="true">{aberto ? '▾' : '▸'}</span>
+          {aberto ? 'Esconder' : 'Mostrar'}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div ref={rootRef} className={`w-full space-y-4 ${className}`}>
-      <div className="space-y-1">
-        <h3 className="nm-h3 text-gold">{suggestions.some(s => s.origem === 'manual') ? 'Assinaturas para comparar' : 'Suas assinaturas recomendadas'}</h3>
+      <section aria-labelledby="system-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
+        {cabecalho('system-names-title', 'Sugestões do sistema', sistema.length, sistemaAberto, () => setSistemaAberto((v) => !v), 'system-names-list', 'text-gold')}
         <p className="text-xs sm:text-sm text-chat-ink leading-relaxed">
           Toque em uma assinatura para ver a comparação detalhada no painel lateral.
         </p>
-      </div>
+        {sistemaAberto && (
+          <div id="system-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+            {sistema.map((sug, index) => renderCard(sug, index))}
+          </div>
+        )}
 
-      <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
-        {suggestions.map((sug, originalIndex) => ({ sug, originalIndex })).sort((a, b) => b.sug.score - a.sug.score || (a.sug.origem === 'manual' ? 1 : 0) - (b.sug.origem === 'manual' ? 1 : 0) || a.originalIndex - b.originalIndex).map(({ sug }, index) => {
-          const isCurrentSelected = selectedId === sug.id;
-          const touchPulse = touchPulseId === sug.id;
-          const card = mapCandidateToHarmonySuggestion(sug);
-          return (
-            <div
-              key={sug.id}
-              id={`candidate-${sug.id}`}
-              role="button"
-              tabIndex={0}
-              aria-pressed={isCurrentSelected}
-              onClick={() => handleCardClick(sug.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleCardClick(sug.id);
-                }
-              }}
-              className={`relative min-w-0 w-full text-left cursor-pointer rounded-2xl transition-all duration-150 select-none bg-[#1C1C1C] border focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${
-                isCurrentSelected
-                  ? 'border-2 border-[#D4AF37] shadow-[0_0_0_4px_rgba(212,175,55,0.15)] scale-100 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
-                  : touchPulse
-                    ? 'border border-[#D4AF37]/60 scale-[0.98]'
-                    : 'border border-[#D4AF37]/20 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
-              }`}
-            >
-              {isCurrentSelected && (
-                <>
-                  <span className="absolute inset-0 rounded-2xl bg-[#D4AF37]/[0.06] pointer-events-none" />
-                  <span className="absolute top-2 right-2 z-10 rounded-full bg-[#D4AF37] text-[#111111] text-[10px] font-semibold px-2 py-0.5">
-                    ✓ Escolhido
-                  </span>
-                </>
-              )}
-              <div className={isCurrentSelected ? '[&_.nm-score-eyebrow]:text-[#D4AF37]' : ''}>
-                <HarmonySuggestionCard
-                  c={card}
-                  stagger={stagger}
-                  delayIndex={index}
-                  showBlockBadgeInTags
-                  className={`!shadow-none !bg-transparent !border-0 ${
-                    isCurrentSelected ? '[&_.nm-h3]:text-[#D4AF37]' : ''
-                  }`}
-                />
-              </div>
-              {(sug.principal || sug.maiorNota) && sug.origem !== 'manual' && (
-                <p className="px-4 sm:px-5 pb-3 -mt-1 flex flex-wrap gap-1.5">
-                  {sug.principal && (
-                    <span className="inline-block rounded-full bg-gradient-to-r from-[#bea5ff]/25 to-[#d7c6ff]/15 text-[#d7c6ff] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
-                      ✦ Principal
-                    </span>
-                  )}
-                  {sug.maiorNota && (
-                    <span className="inline-block rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
-                      ★ Maior nota
-                    </span>
-                  )}
-                </p>
-              )}
-              {sug.origem === 'manual' && <p className="px-4 pb-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
-              {sug.destaque && (
-                <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>
-              )}
+        {regenerateNotice && (
+          <p className="text-sm text-amber-300/90 leading-relaxed px-0.5" role="status">
+            {regenerateNotice}
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-1">
+          <Pill
+            label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
+            size="lg"
+            disabled={isRegenerating || !canRegenerate}
+            onClick={onRegenerate}
+            className="w-full sm:w-auto shrink-0"
+          />
+          {extraActionSlot}
+        </div>
+        {!canRegenerate && sistema.length > 0 && (
+          <p className="text-xs text-chat-muted leading-relaxed">
+            Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
+            combinações.
+          </p>
+        )}
+        {extraNoticeSlot}
+      </section>
+
+      {manualSlot && (
+        <section aria-labelledby="manual-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
+          {cabecalho('manual-names-title', 'Seus testes', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-[#d7c6ff]')}
+          {manualSlot}
+          {manuais.length > 0 && manuaisAbertos && (
+            <div id="manual-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+              {[...manuais].reverse().map((sug, index) => renderCard(sug, index))}
             </div>
-          );
-        })}
-      </div>
-
-      {regenerateNotice && (
-        <p className="text-sm text-amber-300/90 leading-relaxed px-0.5" role="status">
-          {regenerateNotice}
-        </p>
+          )}
+        </section>
       )}
-
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-2">
-        <Pill
-          label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
-          size="lg"
-          disabled={isRegenerating || !canRegenerate}
-          onClick={onRegenerate}
-          className="w-full sm:w-auto shrink-0"
-        />
-        {extraActionSlot}
-      </div>
-      {!canRegenerate && suggestions.length > 0 && (
-        <p className="text-xs text-chat-muted leading-relaxed">
-          Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
-          combinações.
-        </p>
-      )}
-      {extraNoticeSlot}
     </div>
   );
 }

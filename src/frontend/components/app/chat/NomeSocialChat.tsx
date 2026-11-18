@@ -2283,15 +2283,15 @@ export function NomeSocialChat({
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
                       canRegenerate={!manualLoading && podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length)}
-                      extraActionSlot={(
+                      manualSlot={(
+                        <div className="space-y-3">
                         <form
                           onSubmit={handleEvaluateManual}
                           className="flex flex-col flex-1 min-w-0 gap-2"
                         >
                           <label htmlFor="manual-name" className="text-xs sm:text-sm leading-relaxed text-[#e5e2e1]/80">
-                            <span className="font-semibold text-[#f2ca50]">Teste um nome seu:</span> digite o nome que você
-                            prefere e veja a nota dele. É diferente do <span className="whitespace-nowrap">“Gerar mais”</span>,
-                            que traz novas sugestões do sistema.
+                            Digite o nome que você prefere e veja a nota real dele, pelo cálculo puro, sem os filtros
+                            das sugestões. Ele aparece aqui embaixo, num card igual aos outros.
                           </label>
                           <div className="flex flex-col sm:flex-row min-w-0 items-stretch sm:items-center gap-3">
                           <input
@@ -2316,8 +2316,6 @@ export function NomeSocialChat({
                           </button>
                           </div>
                         </form>
-                      )}
-                      extraNoticeSlot={(
                         <div className="space-y-1">
                           <p id="manual-name-help" className="text-xs leading-relaxed text-[#e5e2e1]/70">
                             {manualUsed} de {NOME_SOCIAL_MAX_MANUAIS} nomes manuais avaliados nesta sessão. Cota separada das 9 sugestões automáticas.
@@ -2327,6 +2325,7 @@ export function NomeSocialChat({
                               {manualNotice}
                             </p>
                           )}
+                        </div>
                         </div>
                       )}
                     />
