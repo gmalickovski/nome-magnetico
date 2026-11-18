@@ -410,6 +410,10 @@ export interface AnaliseNomeSocial {
   motivoNaoOfertavel?: 'bloqueio' | 'abaixo_do_nascimento' | 'abaixo_do_piso';
   /** DEV-317: sem bloqueio e acima do nascimento, mas abaixo de 70 (entra só quando faltam opções >= 70). */
   pisoRelaxado?: boolean;
+  /** DEV-317: atende às preferências da entrevista (nomes do próprio usuário contam como sim). */
+  atendePerfil?: boolean;
+  /** DEV-317: selo "Principal": maior nota entre as que atendem à entrevista. */
+  principal?: boolean;
   /** DEV-302: aderência (0 a 1) dos números do nome ao perfil da entrevista. Não altera a nota. */
   aderenciaPerfil?: number;
   /** DEV-302: "por que este nome para você", só com afinidades realmente atendidas. */
@@ -509,152 +513,215 @@ export function analisarNomeSocial(
 // ── Geração de sugestões do sistema (3 Etapas · DEV-186) ──────────────────────
 
 /**
- * Gera candidatos com fases de prioridade explícitas reorganizadas nas 3 etapas.
- * Retorna array deduplicado, cada item com nome e nivel (fase).
+ * DEV-317 · Ordem de tentativas definida pelo Guilherme (18/11/2026), da mudança mais sutil à mais
+ * severa. O número do nível É a ordem: quanto menor, mais perto do nome de nascimento.
+ *
+ *  V1 (10–14)  tirar sobrenome(s), mantendo o primeiro nome e pelo menos 1 sobrenome;
+ *              sobrenome extra informado na entrevista entra aqui também
+ *  V2 (28–35)  nome completo sem os acentos de nascimento (28), com 1 acento sutil (30) ou 2 (35)
+ *  V3 (38–45)  formas da V1 sem acento (38), com 1 acento (40) ou 2 (45)
+ *  V4 (50)     só o primeiro nome
+ *  V5 (53–55)  primeiro nome sem acento (53) ou com 1 acento (55)
+ *  D  (56–59)  apelido/diminutivo do primeiro nome nas mesmas estruturas, depois com acento
+ *  V6 (60–62)  só os sobrenomes, sem o primeiro nome (2 ou mais)
+ *  V7 (63–65)  V6 sem acento ou com acento
+ *  V8 (70)     1 sobrenome sozinho (cada um)
+ *  Quem usa o sobrenome profissionalmente (entrevista) vê V6–V8 antes do apelido (D vai para 76–79).
+ *  X (130–157) último recurso, só com `incluirSevero`: dobrar 1 consoante que não muda o som
+ *              (ll, nn, mm, tt, dd, ff, pp, bb) nas mesmas estruturas, depois com acento.
+ *
+ * Saíram (descaracterizam o nome): tirar letras ("Cáudia") e o corte no meio ("Guilher").
  */
+export const NIVEL_SEVERO_MIN = 100;
+
+/** Consoantes que, dobradas no meio da palavra, mantêm a pronúncia. */
+const CONSOANTES_DUPLICACAO_SUTIL = 'lnmtdfpb';
+
+function semAcentos(t: string): string {
+  return t.normalize('NFD').replace(/[̀-ͯ]/g, '').normalize('NFC');
+}
+
+/** Duplica 1 consoante que não muda o som. Nunca a 1ª nem a última letra, nunca ao lado de outra igual. */
+function gerarDuplicacaoSutil(nome: string): string[] {
+  const partes = nome.split(/\s+/);
+  const out: string[] = [];
+  for (let wi = 0; wi < partes.length; wi++) {
+    const palavra = partes[wi]!;
+    if (PARTICULAS_SOBRENOME.has(palavra.toLowerCase())) continue;
+    for (let ci = 1; ci < palavra.length - 1; ci++) {
+      const ch = palavra[ci]!.toLowerCase();
+      if (!CONSOANTES_DUPLICACAO_SUTIL.includes(ch)) continue;
+      if (palavra[ci - 1]?.toLowerCase() === ch || palavra[ci + 1]?.toLowerCase() === ch) continue;
+      const p = [...partes];
+      p[wi] = palavra.slice(0, ci + 1) + palavra[ci] + palavra.slice(ci + 1);
+      out.push(p.join(' '));
+    }
+  }
+  return out;
+}
+
+/** 1 acento sutil, ou 2 acentos em palavras diferentes. Partículas ("da", "de") não recebem acento. */
+function comAcentos(base: string, quantos: 1 | 2): string[] {
+  const partes = base.split(/\s+/);
+  const indices = partes
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => !PARTICULAS_SOBRENOME.has(p.toLowerCase()))
+    .map(({ i }) => i);
+  const out: string[] = [];
+  if (quantos === 1) {
+    for (const wi of indices) out.push(...gerarVariacoesAcentoPalavra(base, wi));
+    return out;
+  }
+  for (let a = 0; a < indices.length; a++) {
+    for (let b = a + 1; b < indices.length; b++) {
+      for (const v1 of gerarVariacoesAcentoPalavra(base, indices[a]!)) {
+        for (const v2 of gerarVariacoesAcentoPalavra(v1, indices[b]!)) out.push(v2);
+      }
+    }
+  }
+  return out;
+}
+
+/** Agrupa partículas com o sobrenome seguinte: "da Silva" conta como 1 sobrenome. */
+export function agruparSobrenomes(tokens: string[]): string[] {
+  const out: string[] = [];
+  let pendente = '';
+  for (const t of tokens) {
+    if (PARTICULAS_SOBRENOME.has(t.toLowerCase())) {
+      pendente = pendente ? `${pendente} ${t}` : t;
+      continue;
+    }
+    out.push(pendente ? `${pendente} ${t}` : t);
+    pendente = '';
+  }
+  if (pendente && out.length > 0) out[out.length - 1] = `${out[out.length - 1]} ${pendente}`;
+  return out;
+}
+
+/** Subconjuntos dos sobrenomes (mantendo a ordem), de `min` até `max` itens. Mais sobrenomes primeiro. */
+function combinacoesSobrenomes(sobs: string[], min: number, max: number): string[][] {
+  const out: string[][] = [];
+  const n = Math.min(sobs.length, 8);
+  for (let mask = 1; mask < 1 << n; mask++) {
+    const sel = sobs.slice(0, n).filter((_, i) => mask & (1 << i));
+    if (sel.length >= min && sel.length <= max) out.push(sel);
+  }
+  return out.sort((a, b) => b.length - a.length);
+}
+
+export interface OpcoesGeradorCandidatos {
+  /** Último recurso: duplicação sutil de consoante. */
+  incluirSevero?: boolean;
+  /** Sobrenomes informados na entrevista que não estão no nome de nascimento. */
+  sobrenomesExtras?: string[];
+  /** Entrevista indica uso profissional do sobrenome: V6–V8 vêm antes do apelido. */
+  sobrenomeAntesDoApelido?: boolean;
+}
+
 export function gerarCandidatosComNivel(
   nomeNascimento: string,
-  incluirEtapa4 = false,
+  opcoesOuSevero: boolean | OpcoesGeradorCandidatos = false,
 ): { nome: string; nivel: number }[] {
-  const partes = nomeNascimento.trim().split(/\s+/);
-  const prim = partes[0]!;
-  const sobs = partes.slice(1);
-  const nomeFull = partes.join(' ');
+  const opts: OpcoesGeradorCandidatos =
+    typeof opcoesOuSevero === 'boolean' ? { incluirSevero: opcoesOuSevero } : opcoesOuSevero;
+  const tokens = nomeNascimento.trim().split(/\s+/).filter(Boolean);
+  const prim = tokens[0]!;
+  const sobs = agruparSobrenomes(tokens.slice(1));
+  const nomeFull = tokens.join(' ');
   const origLow = nomeFull.toLowerCase();
+  const sobsNorm = new Set(sobs.map((s) => normalizarToken(s)));
+  const extras = (opts.sobrenomesExtras ?? [])
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 2 && !sobsNorm.has(normalizarToken(s)));
 
   const todos: { nome: string; nivel: number }[] = [];
   function add(nome: string, nivel: number) {
-    if (nome.toLowerCase() !== origLow) todos.push({ nome, nivel });
+    const limpo = nome.trim().replace(/\s+/g, ' ');
+    if (limpo.length >= 2 && limpo.toLowerCase() !== origLow) todos.push({ nome: limpo, nivel });
+  }
+  function addAcentuadas(base: string, nivelSem: number, nivel1: number, nivel2: number) {
+    if (semAcentos(base) !== base) add(semAcentos(base), nivelSem);
+    for (const v of comAcentos(base, 1)) add(v, nivel1);
+    for (const v of comAcentos(base, 2)) add(v, nivel2);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ETAPA 1: Encurtar sem acento (fases 10, 20 e 25)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Fase 10: remove 1 sobrenome, nenhuma modificação — só se tiver 2+
-  if (sobs.length >= 2) {
-    for (let i = 0; i < sobs.length; i++) {
-      add([prim, ...sobs.filter((_, j) => j !== i)].join(' '), 10);
-    }
+  // Estruturas (sem mudar letras)
+  const v1Bases: { nome: string; nivel: number }[] = [];
+  for (const sel of combinacoesSobrenomes(sobs, 1, Math.max(1, sobs.length - 1))) {
+    if (sel.length === sobs.length) continue;
+    v1Bases.push({ nome: [prim, ...sel].join(' '), nivel: sel.length === sobs.length - 1 ? 10 : 12 });
   }
-
-  // Fase 15 (DEV-317): tirar os acentos do nome de nascimento. A pronúncia continua a mesma.
-  const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
-  if (semAcento(nomeFull) !== nomeFull) {
-    add(semAcento(nomeFull), 15);
-    if (sobs.length >= 2) {
-      for (let i = 0; i < sobs.length; i++) {
-        add(semAcento([prim, ...sobs.filter((_, j) => j !== i)].join(' ')), 15);
-      }
-    }
-    for (const sob of sobs) add(semAcento(`${prim} ${sob}`), 22);
-    if (sobs.length > 0) add(semAcento(prim), 27);
+  for (const extra of extras) {
+    v1Bases.push({ nome: [prim, ...sobs, extra].join(' '), nivel: 14 });
+    v1Bases.push({ nome: `${prim} ${extra}`, nivel: 14 });
   }
-
-  // Fase 20: primeiro nome + 1 sobrenome, sem modificação
-  for (const sob of sobs) add(`${prim} ${sob}`, 20);
-
-  // Fase 25: apenas primeiro nome, sem modificação (subiu da antiga fase 100)
-  if (sobs.length > 0) add(prim, 25);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ETAPA 2: Acento sutil (fases 50, 60, 65, 70 e 80)
-  // Forma curta (2a) vem ANTES do nome completo (2b e 2c)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // 2a - Fase 50: (n-1) sobrenomes + 1 acento
-  if (sobs.length >= 2) {
-    for (let i = 0; i < sobs.length; i++) {
-      const base = [prim, ...sobs.filter((_, j) => j !== i)].join(' ');
-      for (const v of gerarVariacoesAcento(base)) add(v, 50);
-    }
-  }
-
-  // 2a - Fase 60: primeiro nome + 1 sobrenome + 1 acento
-  for (const sob of sobs) {
-    for (const v of gerarVariacoesAcento(`${prim} ${sob}`)) add(v, 60);
-  }
-
-  // 2a - Fase 65: primeiro nome + acento (antiga fase 110)
-  for (const v of gerarVariacoesAcento(prim)) add(v, 65);
-
-  // 2b - Fase 70: nome completo + 1 acento em qualquer palavra (antiga fase 30)
-  for (const v of gerarVariacoesAcento(nomeFull)) add(v, 70);
-
-  // 2c - Fase 80: nome completo + 2 acentos em 2 palavras diferentes (antiga fase 40)
-  for (let wi = 0; wi < partes.length; wi++) {
-    const varW = gerarVariacoesAcentoPalavra(nomeFull, wi);
-    for (let wj = wi + 1; wj < partes.length; wj++) {
-      for (const v1 of varW) {
-        for (const v2 of gerarVariacoesAcentoPalavra(v1, wj)) add(v2, 80);
-      }
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ETAPA 3: Último recurso (fases 90, 95, 100, 105, 110 e 120)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Fase 90: primeiro nome + 1 sobrenome + 1 duplicação
-  for (const sob of sobs) {
-    for (const v of gerarVariacoesDuplicacao(`${prim} ${sob}`)) add(v, 90);
-  }
-
-  // Fase 95: (n-1) sobrenomes + 1 duplicação
-  if (sobs.length >= 2) {
-    for (let i = 0; i < sobs.length; i++) {
-      const base = [prim, ...sobs.filter((_, j) => j !== i)].join(' ');
-      for (const v of gerarVariacoesDuplicacao(base)) add(v, 95);
-    }
-  }
-
-  // Fase 100: nome completo + 1 duplicação (antiga fase 70)
-  for (const v of gerarVariacoesDuplicacao(nomeFull)) add(v, 100);
-
-  // Fase 105: primeiro nome + duplicação (antiga fase 120)
-  for (const v of gerarVariacoesDuplicacao(prim)) add(v, 105);
-
-  // Fase 110: corte no meio ("Guilher", "Guilher Correa", etc. · nova variante)
-  for (const v of gerarVariacoesCorteNoMeio(nomeNascimento)) add(v, 110);
-
-  // Fase 120: diminutivo tradicional (cortar na 2ª vogal) + sobrenomes (antiga fase 130)
-  for (const v of gerarVariacoesDiminutivo(nomeNascimento)) add(v, 120);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ETAPA 4 (DEV-317): combinações para nomes em que nenhuma variação simples
-  // sai sem bloqueio. Ficam por último (maior distorção) e só pesam quando faltam
-  // opções das etapas anteriores.
-  // ═══════════════════════════════════════════════════════════════════════════
-  if (incluirEtapa4) {
-  const basesCurtas = sobs.map((sob) => `${prim} ${sob}`);
-  const basesLongas = sobs.length >= 2
-    ? sobs.map((_, i) => [prim, ...sobs.filter((__, j) => j !== i)].join(' '))
+  const v6Bases = sobs.length >= 2
+    ? combinacoesSobrenomes(sobs, 2, sobs.length).map((sel) => ({
+        nome: sel.join(' '),
+        nivel: sel.length === sobs.length ? 60 : 62,
+      }))
     : [];
 
-  // Fase 130: 1 duplicação + 1 acento
-  for (const base of [prim, ...basesCurtas, ...basesLongas, nomeFull]) {
-    for (const d of gerarVariacoesDuplicacao(base)) {
-      for (const v of gerarVariacoesAcento(d)) add(v, 130);
+  // V1
+  for (const b of v1Bases) add(b.nome, b.nivel);
+  // V2
+  addAcentuadas(nomeFull, 28, 30, 35);
+  // V3
+  for (const b of v1Bases) addAcentuadas(b.nome, 38, 40, 45);
+  // V4 e V5
+  if (sobs.length > 0) {
+    add(prim, 50);
+    if (semAcentos(prim) !== prim) add(semAcentos(prim), 53);
+    for (const v of comAcentos(prim, 1)) add(v, 55);
+  }
+  // D: apelido/diminutivo do primeiro nome
+  const dOffset = opts.sobrenomeAntesDoApelido ? 20 : 0;
+  const dim = gerarDiminutivo(prim);
+  if (dim) {
+    const comDim = (nome: string) => [dim, ...nome.split(/\s+/).slice(1)].join(' ');
+    if (sobs.length > 0) add([dim, ...sobs].join(' '), 56 + dOffset);
+    for (const b of v1Bases) add(comDim(b.nome), 57 + dOffset);
+    add(dim, 58 + dOffset);
+    if (sobs.length > 0) for (const v of comAcentos([dim, ...sobs].join(' '), 1)) add(v, 59 + dOffset);
+    for (const b of v1Bases) for (const v of comAcentos(comDim(b.nome), 1)) add(v, 59 + dOffset);
+    for (const v of comAcentos(dim, 1)) add(v, 59 + dOffset);
+  }
+  // V6 e V7
+  for (const b of v6Bases) add(b.nome, b.nivel);
+  for (const b of v6Bases) {
+    if (semAcentos(b.nome) !== b.nome) add(semAcentos(b.nome), 63);
+    for (const v of comAcentos(b.nome, 1)) add(v, 65);
+  }
+  // V8
+  if (sobs.length >= 2) for (const sob of sobs) add(sob, 70);
+
+  // X: duplicação sutil (último recurso)
+  if (opts.incluirSevero) {
+    for (const d of gerarDuplicacaoSutil(nomeFull)) add(d, 130);
+    for (const b of v1Bases) for (const d of gerarDuplicacaoSutil(b.nome)) add(d, 132);
+    for (const d of gerarDuplicacaoSutil(nomeFull)) for (const v of comAcentos(d, 1)) add(v, 135);
+    for (const b of v1Bases) {
+      for (const d of gerarDuplicacaoSutil(b.nome)) for (const v of comAcentos(d, 1)) add(v, 137);
+    }
+    for (const d of gerarDuplicacaoSutil(prim)) add(d, 140);
+    for (const d of gerarDuplicacaoSutil(prim)) for (const v of comAcentos(d, 1)) add(v, 145);
+    if (dim && sobs.length > 0) {
+      for (const d of gerarDuplicacaoSutil([dim, ...sobs].join(' '))) add(d, 148);
+    }
+    for (const b of v6Bases) for (const d of gerarDuplicacaoSutil(b.nome)) add(d, 150);
+    for (const b of v6Bases) {
+      for (const d of gerarDuplicacaoSutil(b.nome)) for (const v of comAcentos(d, 1)) add(v, 155);
     }
   }
 
-  // Fase 140: 2 duplicações em posições diferentes
-  for (const base of [prim, ...basesCurtas, nomeFull]) {
-    for (const d1 of gerarVariacoesDuplicacao(base)) {
-      for (const d2 of gerarVariacoesDuplicacao(d1)) add(d2, 140);
-    }
-  }
-  }
-
-  // Deduplica mantendo o nível mais baixo para cada nome repetido
+  // Deduplica mantendo o nível mais baixo (mais sutil)
   const dedup = new Map<string, { nome: string; nivel: number }>();
   for (const c of todos) {
     const key = c.nome.toLowerCase();
     const ex = dedup.get(key);
     if (!ex || c.nivel < ex.nivel) dedup.set(key, c);
   }
-
-  return Array.from(dedup.values());
+  return Array.from(dedup.values()).sort((a, b) => a.nivel - b.nivel);
 }
 
 /** Nomes candidatos do gerador atual (potencial v3 · DEV-185 e DEV-186). */
@@ -775,14 +842,8 @@ export interface OpcoesRankingNomeSocial {
  * Só serve de padrão quando a entrevista não define o estilo: a entrevista sempre manda.
  */
 export function distorcaoDoNome(a: Pick<AnaliseNomeSocial, 'nivelGerado' | 'etapa' | 'grafiaArtificial'>): number {
-  const nivel = a.nivelGerado ?? 999;
-  const etapa = a.etapa ?? etapaDoNivel(nivel);
-  let d: number;
-  if (nivel === 0 || nivel === 20) d = 0; // nome do próprio usuário, ou primeiro nome + 1 sobrenome
-  else if (nivel === 10) d = 1; // tirar 1 sobrenome e manter os outros
-  else if (nivel === 25) d = 95; // só o primeiro nome: apaga todos os sobrenomes (depois do acento leve)
-  else if (etapa === 2) d = 10 + nivel; // acento sutil, do mais leve ao mais carregado (60 a 90)
-  else d = 100 + nivel; // duplicação, corte e apelido (etapa 3)
+  // DEV-317: o nível do gerador já é a ordem da mudança mais sutil à mais severa.
+  const d = a.nivelGerado ?? 999;
   return a.grafiaArtificial ? d + 1000 : d;
 }
 
@@ -1144,7 +1205,18 @@ function garantirMaiorNotaNaFatia(
  * artificial (último recurso, sempre atrás das naturais).
  * Nunca devolve candidato inválido, mesmo que a lista fique curta ou vazia.
  */
-/** DEV-317: se as etapas 1 a 3 não acham opção válida, tenta de novo com a etapa 4. */
+/** DEV-317: sem a exigência de 70, a sugestão ainda precisa subir pelo menos isto sobre o nascimento. */
+export const GANHO_MINIMO_SEM_PISO = 5;
+
+/**
+ * Motor v4 + ordem DEV-317. Regras, nesta prioridade:
+ *  1. nunca sugerir nome com bloqueio (4 triângulos);
+ *  2. preferir nota >= max(70, nascimento + 1);
+ *  3. seguir a entrevista (quem atende vem antes);
+ *  4. da mudança mais sutil à mais severa (nível do gerador).
+ * Passadas: normais com 70 → normais sem 70 (ganho >= 5) → duplicação com 70 → duplicação sem 70.
+ * Só gera a passada seguinte se as anteriores não somam `maxSugestoes`.
+ */
 function gerarSugestoesAutoSocialV4ComReserva(
   nomeNascimento: string,
   dataNascimento: string,
@@ -1152,147 +1224,160 @@ function gerarSugestoesAutoSocialV4ComReserva(
   scoreNasc: number,
   opcoes?: OpcoesRankingNomeSocial,
 ): AnaliseNomeSocial[] {
-  const base = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes);
-  if (base.length >= 9) return base;
-  const extra = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes, true);
-  const fortes = extra.length > base.length ? extra : base;
-  if (fortes.length >= 9) return fortes;
-  // Na falta de opções >= 70: completa com as sem bloqueio acima do nascimento, sempre depois das fortes.
-  const vistos = new Set(fortes.map((a) => a.nomeCompleto.trim().toLowerCase()));
-  const reserva = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes, true, true)
-    .filter((a) => a.pisoRelaxado && !vistos.has(a.nomeCompleto.trim().toLowerCase()));
-  return [...fortes, ...reserva].slice(0, Math.max(maxSugestoes, fortes.length));
-}
-
-function gerarSugestoesAutoSocialV4(
-  nomeNascimento: string,
-  dataNascimento: string,
-  maxSugestoes: number,
-  scoreNasc: number,
-  opcoes?: OpcoesRankingNomeSocial,
-  incluirEtapa4 = false,
-  semPiso = false,
-): AnaliseNomeSocial[] {
-  const todosCandidatos = gerarCandidatosComNivel(nomeNascimento, incluirEtapa4).filter(
-    (c) => classificarGrafia(c.nome, nomeNascimento) !== 'proibida',
-  );
-  const liberaEtapa3Apelido = Boolean(
-    !opcoes?.restricaoDocumentosLegais &&
-      (opcoes?.aceitaEncurtarOuApelido ||
-        opcoes?.estiloPreferido === 'curto_direto' ||
-        opcoes?.motivoRefinamento === 'preferir_nome_curto'),
-  );
-  const maxNivel = opcoes?.maxNivelGeracao;
+  const acentosNascimento = contarAcentos(nomeNascimento);
+  const primeiroNomeOriginal = nomeNascimento.trim().split(/\s+/)[0] ?? '';
   const nomesExcluidosSet = new Set(
     (opcoes?.nomesExcluidos ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean),
   );
-  const sobrenomesExcluidosNorm = (opcoes?.sobrenomesExcluidos ?? [])
-    .map(normalizarToken)
-    .filter(Boolean);
-  const acentosNascimento = contarAcentos(nomeNascimento);
-
-  const cache = new Map<string, AnaliseNomeSocial>();
-  function enriquecer({ nome, nivel }: { nome: string; nivel: number }): AnaliseNomeSocial {
-    const chave = nome.toLowerCase();
-    const emCache = cache.get(chave);
-    if (emCache) return emCache;
-    const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
-    const etapa = etapaDoNivel(nivel);
-    const enriquecida: AnaliseNomeSocial = {
-      ...analise,
-      nivelGerado: nivel,
-      etapa,
-      etapaGeracao: etapa,
-      temAcentoAdicionado: contarAcentos(nome) > acentosNascimento,
-      grafiaArtificial: classificarGrafia(nome, nomeNascimento) === 'artificial',
-      quantidadeSobrenomes: contarSobrenomesSignificativos(nome),
-      explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
-    };
-    cache.set(chave, enriquecida);
-    return enriquecida;
-  }
-
-  interface Relaxamento {
-    ignorarMaxNivel?: boolean;
-    ignorarSobrenomesExcluidos?: boolean;
-    ignorarSemAcento?: boolean;
-    ignorarPrimeiroNome?: boolean;
-  }
-
-  const primeiroNomeOriginal = nomeNascimento.trim().split(/\s+/)[0] ?? '';
-
-  function aplicarFiltros(lista: AnaliseNomeSocial[], relax: Relaxamento): AnaliseNomeSocial[] {
-    let filtrada = nomesExcluidosSet.size > 0
-      ? lista.filter((c) => !nomesExcluidosSet.has(c.nomeCompleto.trim().toLowerCase()))
-      : [...lista];
-    if (!relax.ignorarSobrenomesExcluidos && sobrenomesExcluidosNorm.length > 0) {
-      filtrada = filtrada.filter(
-        (c) => !sobrenomesExcluidosNorm.some((sob) => candidatoContemSobrenome(c.nomeCompleto, sob)),
-      );
-    }
-    // Uso em contratos/documentos é restrição legal: não relaxa sozinha.
-    if (opcoes?.restricaoDocumentosLegais) {
-      filtrada = filtrada.filter((c) => (c.etapa ?? etapaDoNivel(c.nivelGerado ?? 999)) <= 2);
-    }
-    if (!relax.ignorarMaxNivel && maxNivel != null && Number.isFinite(maxNivel)) {
-      filtrada = filtrada.filter((c) => (c.nivelGerado ?? 999) <= maxNivel);
-    }
-    // DEV-303: preferências do questionário (moles; relaxam antes dos sobrenomes excluídos).
-    if (opcoes?.acentoNaAssinatura === 'prefere_sem' && !relax.ignorarSemAcento) {
-      filtrada = filtrada.filter((c) => !c.temAcentoAdicionado);
-    }
-    if (opcoes?.manterPrimeiroNome && !relax.ignorarPrimeiroNome) {
-      filtrada = filtrada.filter((c) => c.nomeCompleto.trim().split(/\s+/)[0] === primeiroNomeOriginal);
-    }
-    return filtrada;
-  }
-
-  const poolInicial = todosCandidatos.filter(
-    (c) => c.nivel <= 85 || (liberaEtapa3Apelido && c.nivel >= 110),
-  );
-  // Grafia natural é qualidade, não preferência: a artificial só entra no último recurso, depois de
-  // relaxar tudo (achado do teste real: ao relaxar "sem acento", "Pedrõ" e "Rõcha" entravam junto).
-  const relaxTudo: Relaxamento = {
-    ignorarMaxNivel: true,
-    ignorarSemAcento: true,
-    ignorarPrimeiroNome: true,
-    ignorarSobrenomesExcluidos: true,
+  const sobrenomesExcluidosNorm = (opcoes?.sobrenomesExcluidos ?? []).map(normalizarToken).filter(Boolean);
+  const maxNivel = opcoes?.maxNivelGeracao;
+  const pisoForte = scoreMinimoSugestao(scoreNasc);
+  const minimoSemPiso = Math.max(scoreNasc + 1, scoreNasc + GANHO_MINIMO_SEM_PISO);
+  const geradorBase: OpcoesGeradorCandidatos = {
+    sobrenomesExtras: opcoes?.sobrenomesObrigatorios ?? [],
+    sobrenomeAntesDoApelido: opcoes?.estiloPreferido === 'sobrenome_forte',
   };
-  const estagios: { pool: typeof todosCandidatos; relax: Relaxamento; artificial: boolean }[] = [
-    { pool: poolInicial, relax: {}, artificial: false },
-    { pool: poolInicial, relax: { ignorarMaxNivel: true }, artificial: false },
-    { pool: poolInicial, relax: { ignorarMaxNivel: true, ignorarSemAcento: true }, artificial: false },
-    {
-      pool: poolInicial,
-      relax: { ignorarMaxNivel: true, ignorarSemAcento: true, ignorarPrimeiroNome: true },
-      artificial: false,
-    },
-    { pool: poolInicial, relax: relaxTudo, artificial: false },
-    { pool: todosCandidatos, relax: relaxTudo, artificial: false },
-    { pool: todosCandidatos, relax: relaxTudo, artificial: true },
-  ];
 
-  let escolhidos: AnaliseNomeSocial[] = [];
-  for (const estagio of estagios) {
-    const validos = estagio.pool
-      .map(enriquecer)
-      .filter((a) => motivoNaoOfertavel(a, scoreNasc, undefined, { semPiso }) === null)
-      .map((a) => {
-        if (semPiso && a.score < scoreMinimoSugestao(scoreNasc)) a.pisoRelaxado = true;
-        return a;
-      })
-      .filter(
-        (a) => estagio.artificial || classificarGrafia(a.nomeCompleto, nomeNascimento) === 'natural',
-      );
-    escolhidos = aplicarFiltros(validos, estagio.relax);
-    if (escolhidos.length >= SUGESTAO_CONFIG_V4.minimoVisiveis) break;
+  const sobrenomesObrigatoriosNasc = (opcoes?.sobrenomesObrigatorios ?? []).filter((sob) =>
+    candidatoContemSobrenome(nomeNascimento, sob),
+  );
+  const palavrasNasc = nomeNascimento.trim().split(/\s+/).length;
+
+  function atendePerfil(a: AnaliseNomeSocial): boolean {
+    const palavras = a.nomeCompleto.trim().split(/\s+/).length;
+    // V6 e V8 começam pelo sobrenome: confere todas as palavras, não só as depois do primeiro nome.
+    const tokens = a.nomeCompleto.trim().split(/\s+/).map(normalizarToken);
+    const contem = (sob: string) => tokens.includes(normalizarToken(sob));
+    if (sobrenomesExcluidosNorm.some((sob) => tokens.includes(sob))) return false;
+    if (sobrenomesObrigatoriosNasc.some((sob) => !contem(sob))) return false;
+    // Estilo da entrevista
+    if (opcoes?.estiloPreferido === 'curto_direto' && palavras >= palavrasNasc) return false;
+    if (opcoes?.estiloPreferido === 'ajuste_sutil' && palavras !== palavrasNasc) return false;
+    if (opcoes?.estiloPreferido === 'sobrenome_forte' && (a.temAcentoAdicionado || palavras < 2)) return false;
+    if (opcoes?.acentoNaAssinatura === 'prefere_sem' && a.temAcentoAdicionado) return false;
+    // Manter o primeiro nome: tirar o acento de nascimento (Cláudia → Claudia) ainda conta como manter.
+    // Acento novo (Pedro → Pêdro) não conta.
+    if (opcoes?.manterPrimeiroNome) {
+      const primeiro = (a.nomeCompleto.trim().split(/\s+/)[0] ?? '').toLowerCase();
+      const aceitos = [primeiroNomeOriginal.toLowerCase(), semAcentos(primeiroNomeOriginal).toLowerCase()];
+      if (!aceitos.includes(primeiro)) return false;
+    }
+    if (maxNivel != null && Number.isFinite(maxNivel) && (a.nivelGerado ?? 999) > maxNivel) return false;
+    return true;
   }
 
-  const scoreMaximoEscolhidos = escolhidos.reduce((m, a) => Math.max(m, a.score), 0);
-  escolhidos.sort(
-    criarComparadorCandidatosV3(opcoes, { scoreMaximo: scoreMaximoEscolhidos, primeiroNomeOriginal }),
-  );
-  return garantirMaiorNotaNaFatia(escolhidos, maxSugestoes);
+  function avaliar(lista: { nome: string; nivel: number }[]): AnaliseNomeSocial[] {
+    const out: AnaliseNomeSocial[] = [];
+    for (const { nome, nivel } of lista) {
+      if (nomesExcluidosSet.has(nome.toLowerCase())) continue;
+      // Uso em contratos/documentos: só nome com primeiro nome e sobrenome, sem apelido nem letra dobrada.
+      if (opcoes?.restricaoDocumentosLegais && nivel > 55) continue;
+      const grafia = classificarGrafia(nome, nomeNascimento);
+      if (grafia === 'proibida') continue;
+      const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
+      if (analise.temBloqueio) continue;
+      if (analise.score < minimoSemPiso && analise.score < pisoForte) continue;
+      const etapa = etapaDoNivel(nivel);
+      const a: AnaliseNomeSocial = {
+        ...analise,
+        nivelGerado: nivel,
+        etapa,
+        etapaGeracao: etapa,
+        temAcentoAdicionado: contarAcentos(nome) > acentosNascimento,
+        grafiaArtificial: grafia === 'artificial',
+        quantidadeSobrenomes: contarSobrenomesSignificativos(nome),
+        explicacao: gerarExplicacaoSugestao(nome, nomeNascimento, etapa),
+        pisoRelaxado: analise.score < pisoForte,
+      };
+      a.atendePerfil = atendePerfil(a);
+      out.push(a);
+    }
+    return out;
+  }
+
+  const ordem = (a: AnaliseNomeSocial, b: AnaliseNomeSocial) =>
+    Number(b.atendePerfil) - Number(a.atendePerfil) ||
+    Number(a.grafiaArtificial) - Number(b.grafiaArtificial) ||
+    (a.nivelGerado ?? 999) - (b.nivelGerado ?? 999) ||
+    b.score - a.score ||
+    a.nomeCompleto.localeCompare(b.nomeCompleto, 'pt-BR');
+
+  const escolhidos: AnaliseNomeSocial[] = [];
+  const vistos = new Set<string>();
+  function juntar(lista: AnaliseNomeSocial[]) {
+    for (const a of [...lista].sort(ordem)) {
+      const k = a.nomeCompleto.trim().toLowerCase();
+      if (vistos.has(k)) continue;
+      vistos.add(k);
+      escolhidos.push(a);
+    }
+  }
+
+  // Entrevista: com 3 ou mais opções que atendem, as que não atendem ficam de fora.
+  const efetivos = () => {
+    const atendem = escolhidos.filter((a) => a.atendePerfil);
+    return atendem.length >= SUGESTAO_CONFIG_V4.minimoVisiveis ? atendem : escolhidos;
+  };
+  const normais = avaliar(gerarCandidatosComNivel(nomeNascimento, geradorBase));
+  juntar(normais.filter((a) => !a.pisoRelaxado));
+  if (efetivos().length < maxSugestoes) juntar(normais.filter((a) => a.pisoRelaxado));
+  if (efetivos().length < maxSugestoes) {
+    const severos = avaliar(
+      gerarCandidatosComNivel(nomeNascimento, { ...geradorBase, incluirSevero: true }).filter(
+        (c) => c.nivel >= NIVEL_SEVERO_MIN,
+      ),
+    );
+    juntar(severos.filter((a) => !a.pisoRelaxado));
+    if (efetivos().length < maxSugestoes) juntar(severos.filter((a) => a.pisoRelaxado));
+  }
+  // A lista sai na ordem e com no máximo maxSugestoes itens, mas a maior nota de todas e a maior que
+  // atende à entrevista sempre entram (são os selos Maior nota e Principal).
+  const todos = efetivos();
+  const lista = todos.slice(0, maxSugestoes);
+  for (const destaque of [
+    ordenarPorNotaDescEstavel(todos)[0],
+    ordenarPorNotaDescEstavel(todos.filter((a) => a.atendePerfil))[0],
+  ]) {
+    if (destaque && !lista.includes(destaque)) lista.push(destaque);
+  }
+  return lista;
+}
+
+/** DEV-317: selos "Principal" (maior nota que atende à entrevista) e "Maior nota" (a maior de todas). */
+function marcarSelos(validas: AnaliseNomeSocial[], scoreNasc: number, opcoes?: OpcoesRankingNomeSocial): void {
+  const maior = ordenarPorNotaDescEstavel(validas)[0];
+  const atendemTodas = validas.filter((a) => a.atendePerfil !== false && a.score > scoreNasc);
+  // Grafia artificial (til no meio, ex.: "Pãula") só vira Principal se não houver opção natural.
+  const naturais = atendemTodas.filter((a) => !a.grafiaArtificial);
+  const atendem = ordenarPorNotaDescEstavel(naturais.length > 0 ? naturais : atendemTodas);
+  let harmonizado: AnaliseNomeSocial | undefined;
+  if (isMotorV4() && opcoes?.prioridadeConflito === 'nota') {
+    harmonizado = maior;
+  } else if (atendem.length > 0) {
+    // Afinidades do perfil desempatam entre notas próximas (até 4 pontos abaixo da maior que atende).
+    const teto = atendem[0]!.score;
+    const proximas = atendem.filter((a) => teto - a.score < 5);
+    harmonizado = [...proximas].sort(
+      (a, b) => (b.aderenciaPerfil ?? 0) - (a.aderenciaPerfil ?? 0) || b.score - a.score,
+    )[0];
+  }
+  for (const a of validas) {
+    a.maiorNota = a === maior;
+    a.principal = a === harmonizado;
+  }
+}
+
+/** DEV-317: Principal em 1º, Maior nota logo depois (se for outra), e o resto na ordem de prioridade. */
+function ordenarComSelos(
+  validas: AnaliseNomeSocial[],
+  scoreNasc: number,
+  opcoes?: OpcoesRankingNomeSocial,
+): AnaliseNomeSocial[] {
+  marcarSelos(validas, scoreNasc, opcoes);
+  const principal = validas.find((a) => a.principal);
+  const maior = validas.find((a) => a.maiorNota);
+  const topo = [principal, maior].filter((a, i, arr): a is AnaliseNomeSocial => Boolean(a) && arr.indexOf(a) === i);
+  return [...topo, ...validas.filter((a) => !topo.includes(a))];
 }
 
 /**
@@ -1504,10 +1589,13 @@ export function analisarNomesSocial(
   });
   let melhorNome: AnaliseNomeSocial | null;
 
+  for (const a of analisesUsuario) a.atendePerfil = true;
+  // DEV-317: no motor v4 a lista segue a ordem de prioridade (sem bloqueio > 70 > entrevista > mais sutil).
+  const ordemV4 = motorV4
+    ? ordenarComSelos(dedupeCandidatosEstavel([...[...analisesUsuario].sort(comparador), ...sugestoesIA]), scoreNasc, resolvedOpcoes)
+    : [];
   if (motorV4) {
-    // Nome de Ouro: ordem de prioridade atual (nota alta + perfil/estilo), só entre as válidas.
-    const validos = dedupeCandidatosEstavel([...analisesUsuario, ...sugestoesIA]);
-    melhorNome = [...validos].sort(comparador)[0] ?? null;
+    melhorNome = ordemV4[0] ?? null;
   } else {
     type Candidato = AnaliseNomeSocial & { nivelEfetivo: number };
     const aptosN5: Candidato[] = [
@@ -1528,32 +1616,25 @@ export function analisarNomesSocial(
     melhorNome.tipoOpcao = p.length < origP.length ? 'encurtado' : 'mudanca_minima';
   }
 
-  const todasOrdenadas = dedupeCandidatosEstavel(
-    ordenarPorNotaDescEstavel([...analisesUsuario, ...sugestoesIA]),
-  );
-  let top3 = construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
+  const todasOrdenadas = motorV4
+    ? ordemV4
+    : dedupeCandidatosEstavel(ordenarPorNotaDescEstavel([...analisesUsuario, ...sugestoesIA]));
+  let top3 = motorV4
+    ? ordemV4.filter((c) => c !== melhorNome).slice(0, Math.max(3, NOME_SOCIAL_SUGESTOES_INICIAIS))
+    : construirTop3Diverso(todasOrdenadas, melhorNome, nomeNascimento);
   // DEV-305: a vitrine inicial tem 3 opções por rodada. Se faltar variedade, as demais vêm na ordem de
   // preferência da entrevista (atendem primeiro, depois menor distorção), nunca por nota.
   const capacidadeTop = Math.max(3, NOME_SOCIAL_SUGESTOES_INICIAIS);
   if (motorV4) {
-    const usados = new Set([melhorNome, ...top3].filter(Boolean).map((c) => c!.nomeCompleto.toLowerCase()));
-    for (const c of [...todasOrdenadas].sort(comparador)) {
-      if (top3.length >= capacidadeTop) break;
-      const k = c.nomeCompleto.toLowerCase();
-      if (usados.has(k)) continue;
-      usados.add(k);
-      c.tipoOpcao = c.tipoOpcao ?? 'alternativa';
-      top3.push(c);
-    }
-    // A de maior nota SEMPRE aparece, mesmo fora do padrão da entrevista (a pessoa pode mudar de ideia).
-    const maior = todasOrdenadas[0];
-    if (maior && maior !== melhorNome && !top3.includes(maior)) {
-      maior.tipoOpcao = maior.tipoOpcao ?? 'alternativa';
-      top3 = top3.length < capacidadeTop ? [...top3, maior] : [...top3.slice(0, capacidadeTop - 1), maior];
+    for (const a of ordemV4) {
+      if (a.tipoOpcao) continue;
+      const nPal = a.nomeCompleto.trim().split(/\s+/).length;
+      const nNasc = nomeNascimento.trim().split(/\s+/).length;
+      a.tipoOpcao = nPal < nNasc ? 'encurtado' : nPal === nNasc ? 'mudanca_minima' : 'alternativa';
     }
   }
   top3 = filtrarOfertaveis(top3, scoreNasc, ganhoMinimoPontos);
-  marcarMaiorNota(todasOrdenadas);
+  if (!motorV4) marcarMaiorNota(todasOrdenadas);
 
   // Verifica transparência de bloqueio nativo quando um sobrenome obrigatório precisou de acento sutil
   let avisoSobrenomeExigido: AvisoSobrenomeExigido | null = null;

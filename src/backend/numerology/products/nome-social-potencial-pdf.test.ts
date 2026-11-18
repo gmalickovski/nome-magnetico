@@ -59,6 +59,7 @@ describe('nome-social-potencial-pdf (DEV-275)', () => {
     const v3Gui = potencialV3Existente('Guilherme Malickovski Correa', '14/02/1990');
     assert.equal(guilherme.notaBase, 64);
     assert.equal(v3Gui, 93);
+    // DEV-317: o PDF usa a mesma lista da análise paga.
     assert.equal(guilherme.potencialMax, 93);
 
     const ana = calcularPotencialAssinaturaPdfGratuito('Ana Clara Silva', '15/03/1988');
@@ -66,7 +67,7 @@ describe('nome-social-potencial-pdf (DEV-275)', () => {
     assert.equal(ana.potencialMax, 84);
 
     const rosa = calcularPotencialAssinaturaPdfGratuito('Rosa Maria Oliveira', '10/05/1975');
-    assert.equal(calcularPotencialV3('Rosa Maria Oliveira', '10/05/1975'), 93);
+    assert.equal(calcularPotencialV3('Rosa Maria Oliveira', '10/05/1975'), 96);
     assert.equal(rosa.notaBase, 93);
     assert.equal(rosa.potencialMax, 96);
   });

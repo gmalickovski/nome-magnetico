@@ -182,6 +182,7 @@ export function mapCandidate(
     bloqueiosEliminados: 0,
     bloqueiosRestantes: bloqueios.length,
     maiorNota: raw.maiorNota === true,
+    principal: raw.principal === true,
     destaque: typeof raw.explicacaoPerfil === 'string' ? raw.explicacaoPerfil : undefined,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
@@ -545,9 +546,11 @@ export function mapRegenerateApiToCandidates(
   }
   // DEV-301 (R3a): a sugestão de maior nota nunca fica de fora do corte visível.
   const visiveis = unicos.slice(0, limit);
-  const maior = unicos.find((raw) => raw.maiorNota === true);
-  if (maior && !visiveis.includes(maior) && visiveis.length > 0) {
-    visiveis[visiveis.length - 1] = maior;
+  // DEV-317: os 2 selos (Principal e Maior nota) sempre entram no corte visível.
+  for (const destaque of [unicos.find((raw) => raw.principal === true), unicos.find((raw) => raw.maiorNota === true)]) {
+    if (!destaque || visiveis.includes(destaque) || visiveis.length === 0) continue;
+    const idx = [...visiveis].reverse().findIndex((raw) => raw.maiorNota !== true && raw.principal !== true);
+    if (idx >= 0) visiveis[visiveis.length - 1 - idx] = destaque;
   }
   for (const raw of visiveis) out.push(mapCandidate(raw));
   return out;

@@ -138,6 +138,8 @@ export interface CandidateSuggestion {
   destaque?: string;
   /** DEV-301: sugestão de maior nota entre as oferecidas. */
   maiorNota?: boolean;
+  /** DEV-317: maior nota entre as que atendem à entrevista. */
+  principal?: boolean;
   panel: ResultPanelData;
 }
 

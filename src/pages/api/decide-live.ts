@@ -344,9 +344,11 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       });
     // DEV-301 (R3a): a sugestão de maior nota sempre entra nas 3 do preview.
     const previewVisiveis = previewTop3Raw.slice(0, 3);
-    const previewMaiorNota = previewTop3Raw.find((c) => c.maiorNota === true);
-    if (previewMaiorNota && !previewVisiveis.includes(previewMaiorNota) && previewVisiveis.length > 0) {
-      previewVisiveis[previewVisiveis.length - 1] = previewMaiorNota;
+    // DEV-317: os 2 selos (Principal e Maior nota) sempre entram nas 3 do preview.
+    for (const destaque of [previewTop3Raw.find((c) => c.principal === true), previewTop3Raw.find((c) => c.maiorNota === true)]) {
+      if (!destaque || previewVisiveis.includes(destaque) || previewVisiveis.length === 0) continue;
+      const idx = [...previewVisiveis].reverse().findIndex((c) => c.maiorNota !== true && c.principal !== true);
+      if (idx >= 0) previewVisiveis[previewVisiveis.length - 1 - idx] = destaque;
     }
 
     const previewTop3 = previewVisiveis.map(c => {
