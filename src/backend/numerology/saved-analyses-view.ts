@@ -190,7 +190,7 @@ export function resolverOrigemNome(
   if (birthName && chave(birthName) === chave(nomeExibido)) return 'nascimento';
   const candidatos: any[] = Array.isArray(rankingSocial?.nomesCandidatos) ? rankingSocial.nomesCandidatos : [];
   const achado = candidatos.find((c) => typeof c?.nomeCompleto === 'string' && chave(c.nomeCompleto) === chave(nomeExibido));
-  // Só o campo "Seu teste" grava origem 'manual'. Os nomes escolhidos entre as sugestões chegam ao
+  // Só o campo de testar nome ("Suas sugestões") grava origem 'manual'. Os nomes escolhidos entre as sugestões chegam ao
   // analyze como lista do usuário (origemSugerida 'usuario'), mas foram gerados pelo sistema.
   if (achado?.origem === 'manual') return 'teste';
   return 'sistema';

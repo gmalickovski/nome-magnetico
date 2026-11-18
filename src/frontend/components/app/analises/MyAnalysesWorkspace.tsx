@@ -46,15 +46,25 @@ const ORIGEM_TAG: Record<OrigemNome, { rotulo: string; classe: string }> = {
   nascimento: { rotulo: 'Nome de nascimento', classe: 'bg-white/[0.06] text-[#e5e2e1]' },
   // Sem tag no card: só nascimento e teste recebem tag. No filtro aparece como "Sugestões do sistema".
   sistema: { rotulo: 'Sugestões do sistema', classe: '' },
-  teste: { rotulo: 'Seu teste', classe: 'bg-[#bea5ff]/15 text-[#d7c6ff]' },
+  teste: { rotulo: 'Suas sugestões', classe: 'bg-[#bea5ff]/15 text-[#d7c6ff]' },
 };
-const ORIGEM_ORDEM: OrigemNome[] = ['nascimento', 'sistema', 'teste'];
+
+/**
+ * DEV-317: filtros de Minhas análises, nesta ordem. "Nome Social" junta todas as harmonizações
+ * (sistema + suas sugestões). Opções somáveis: o card aparece se bater com qualquer uma marcada.
+ */
+const FILTROS_ORIGEM: { id: string; rotulo: string; origens: OrigemNome[] }[] = [
+  { id: 'nascimento', rotulo: 'Nome de nascimento', origens: ['nascimento'] },
+  { id: 'social', rotulo: 'Nome Social', origens: ['sistema', 'teste'] },
+  { id: 'teste', rotulo: 'Suas sugestões', origens: ['teste'] },
+  { id: 'sistema', rotulo: 'Sugestões do sistema', origens: ['sistema'] },
+];
 
 const MOBILE_STACK_QUERY = '(max-width: 767px)';
 
 interface OpcaoFiltro {
   id: string;
-  grupo: 'produto' | 'origem';
+  grupo: 'origem';
   rotulo: string;
   total: number;
 }
@@ -356,25 +366,22 @@ export default function MyAnalysesWorkspace({
 
   // Só o Nome Social está à venda: o filtro é só pela origem do nome (sem filtro de produto).
   const filteredItems = useMemo(() => {
-    const origens = [...filtros].filter((f) => f.startsWith('origem:')).map((f) => f.slice(7));
+    const aceitas = new Set(
+      FILTROS_ORIGEM.filter((f) => filtros.has(f.id)).flatMap((f) => f.origens),
+    );
     return items.filter(
-      (item) => origens.length === 0 || (item.origemNome != null && origens.includes(item.origemNome)),
+      (item) => aceitas.size === 0 || (item.origemNome != null && aceitas.has(item.origemNome)),
     );
   }, [items, filtros]);
-  const contagemOrigem = useMemo(() => {
-    const c: Record<OrigemNome, number> = { nascimento: 0, sistema: 0, teste: 0 };
-    for (const item of items) if (item.origemNome) c[item.origemNome]++;
-    return c;
-  }, [items]);
   const opcoesFiltro: OpcaoFiltro[] = useMemo(
     () =>
-      ORIGEM_ORDEM.filter((o) => contagemOrigem[o] > 0).map((o) => ({
-        id: `origem:${o}`,
+      FILTROS_ORIGEM.map((f) => ({
+        id: f.id,
         grupo: 'origem' as const,
-        rotulo: ORIGEM_TAG[o].rotulo,
-        total: contagemOrigem[o],
-      })),
-    [contagemOrigem],
+        rotulo: f.rotulo,
+        total: items.filter((i) => i.origemNome != null && f.origens.includes(i.origemNome)).length,
+      })).filter((o) => o.total > 0),
+    [items],
   );
 
   useEffect(() => {
@@ -621,7 +628,7 @@ export default function MyAnalysesWorkspace({
                     aria-label="Filtrar análises"
                     className="hidden md:block absolute left-0 top-full z-[85] mt-2 w-72 rounded-2xl bg-[#1c1c1c] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
                   >
-                    {(['produto', 'origem'] as const).map((grupo) => {
+                    {(['origem'] as const).map((grupo) => {
                       const ops = opcoesFiltro.filter((o) => o.grupo === grupo);
                       if (ops.length === 0) return null;
                       return (

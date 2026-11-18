@@ -226,7 +226,7 @@ export function SuggestionPicker({
 
       {manualSlot && (
         <section aria-labelledby="manual-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
-          {cabecalho('manual-names-title', 'Seus testes', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-gold')}
+          {cabecalho('manual-names-title', 'Suas sugestões', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-gold')}
           {manualSlot}
           {manuais.length > 0 && manuaisAbertos && (
             <div id="manual-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
