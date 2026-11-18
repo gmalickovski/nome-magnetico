@@ -139,7 +139,7 @@ describe('DEV-301 · nomes do usuário só como comparação', () => {
     const res = analisarNomesSocial(['Ana Santos Souza'], 'Marcos Silva Santos', '18/03/1992', {});
     for (const c of res.nomesCandidatos) {
       assert.equal(c.temBloqueio, false);
-      assert.ok(c.score >= (res.scoreMinimoSugestao ?? 70));
+      assert.ok(c.score >= (res.scoreMinimoSugestao ?? 70) || c.pisoRelaxado === true);
     }
   });
 });
@@ -158,7 +158,7 @@ describe('DEV-301 · "gerar mais" e estado vazio (R3b/R4)', () => {
       const lista = [...(res.melhorNome ? [res.melhorNome] : []), ...res.top3, ...res.nomesCandidatos];
       for (const c of lista) {
         assert.equal(c.temBloqueio, false, `${c.nomeCompleto} tem bloqueio`);
-        assert.ok(c.score >= minimo, `${c.nomeCompleto} (${c.score}) abaixo de ${minimo}`);
+        assert.ok(c.score >= minimo || c.pisoRelaxado === true, `${c.nomeCompleto} (${c.score}) abaixo de ${minimo}`);
         assert.ok(!vistos.has(c.nomeCompleto.toLowerCase()), `${c.nomeCompleto} repetido`);
       }
       if (res.semOpcoesElegiveis) {
@@ -228,7 +228,7 @@ describe('DEV-301 · propriedade sobre perfis do questionário', () => {
 
         for (const c of [...visiveis, ...res.nomesCandidatos]) {
           assert.equal(c.temBloqueio, false, `${birth} ${date}: ${c.nomeCompleto} com bloqueio`);
-          assert.ok(c.score >= minimo, `${birth} ${date}: ${c.nomeCompleto} (${c.score}) < ${minimo}`);
+          assert.ok(c.score >= minimo || c.pisoRelaxado === true, `${birth} ${date}: ${c.nomeCompleto} (${c.score}) < ${minimo}`);
           assert.notEqual(classificarGrafia(c.nomeCompleto, birth), 'proibida', c.nomeCompleto);
         }
 

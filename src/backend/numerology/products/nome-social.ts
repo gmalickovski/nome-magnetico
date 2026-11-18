@@ -188,23 +188,6 @@ function gerarVariacoesDuplicacao(nome: string): string[] {
   return out;
 }
 
-/** DEV-317: tira 1 letra de uma palavra (nunca a 1ª; palavra fica com 3+ letras). */
-function gerarVariacoesRemocao(nome: string): string[] {
-  const partes = nome.split(/\s+/);
-  const out: string[] = [];
-  for (let wi = 0; wi < partes.length; wi++) {
-    const palavra = partes[wi]!;
-    if (palavra.length < 4) continue;
-    for (let ci = 1; ci < palavra.length; ci++) {
-      if (palavra[ci - 1]?.toLowerCase() === palavra[ci]!.toLowerCase()) continue;
-      const p = [...partes];
-      p[wi] = palavra.slice(0, ci) + palavra.slice(ci + 1);
-      out.push(p.join(' '));
-    }
-  }
-  return out;
-}
-
 /**
  * Diminutivo/apelido: corta até a 2ª vogal.
  * "Guilherme" → "Gui", "Claudia" → "Clau", "Malickovski" → "Mali".
@@ -425,6 +408,8 @@ export interface AnaliseNomeSocial {
   /** DEV-301: false quando o nome do usuário não passa em R1/R2 (só comparação). */
   ofertavel?: boolean;
   motivoNaoOfertavel?: 'bloqueio' | 'abaixo_do_nascimento' | 'abaixo_do_piso';
+  /** DEV-317: sem bloqueio e acima do nascimento, mas abaixo de 70 (entra só quando faltam opções >= 70). */
+  pisoRelaxado?: boolean;
   /** DEV-302: aderência (0 a 1) dos números do nome ao perfil da entrevista. Não altera a nota. */
   aderenciaPerfil?: number;
   /** DEV-302: "por que este nome para você", só com afinidades realmente atendidas. */
@@ -553,6 +538,19 @@ export function gerarCandidatosComNivel(
     }
   }
 
+  // Fase 15 (DEV-317): tirar os acentos do nome de nascimento. A pronúncia continua a mesma.
+  const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
+  if (semAcento(nomeFull) !== nomeFull) {
+    add(semAcento(nomeFull), 15);
+    if (sobs.length >= 2) {
+      for (let i = 0; i < sobs.length; i++) {
+        add(semAcento([prim, ...sobs.filter((_, j) => j !== i)].join(' ')), 15);
+      }
+    }
+    for (const sob of sobs) add(semAcento(`${prim} ${sob}`), 22);
+    if (sobs.length > 0) add(semAcento(prim), 27);
+  }
+
   // Fase 20: primeiro nome + 1 sobrenome, sem modificação
   for (const sob of sobs) add(`${prim} ${sob}`, 20);
 
@@ -644,14 +642,6 @@ export function gerarCandidatosComNivel(
   for (const base of [prim, ...basesCurtas, nomeFull]) {
     for (const d1 of gerarVariacoesDuplicacao(base)) {
       for (const d2 of gerarVariacoesDuplicacao(d1)) add(d2, 140);
-    }
-  }
-
-  // Fase 150: tirar 1 letra (nunca a primeira de cada palavra) e, se preciso, 1 acento
-  for (const base of [prim, ...basesCurtas, nomeFull]) {
-    for (const r of gerarVariacoesRemocao(base)) {
-      add(r, 150);
-      for (const v of gerarVariacoesAcento(r)) add(v, 155);
     }
   }
   }
@@ -1165,7 +1155,13 @@ function gerarSugestoesAutoSocialV4ComReserva(
   const base = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes);
   if (base.length >= 9) return base;
   const extra = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes, true);
-  return extra.length > base.length ? extra : base;
+  const fortes = extra.length > base.length ? extra : base;
+  if (fortes.length >= 9) return fortes;
+  // Na falta de opções >= 70: completa com as sem bloqueio acima do nascimento, sempre depois das fortes.
+  const vistos = new Set(fortes.map((a) => a.nomeCompleto.trim().toLowerCase()));
+  const reserva = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes, true, true)
+    .filter((a) => a.pisoRelaxado && !vistos.has(a.nomeCompleto.trim().toLowerCase()));
+  return [...fortes, ...reserva].slice(0, Math.max(maxSugestoes, fortes.length));
 }
 
 function gerarSugestoesAutoSocialV4(
@@ -1175,6 +1171,7 @@ function gerarSugestoesAutoSocialV4(
   scoreNasc: number,
   opcoes?: OpcoesRankingNomeSocial,
   incluirEtapa4 = false,
+  semPiso = false,
 ): AnaliseNomeSocial[] {
   const todosCandidatos = gerarCandidatosComNivel(nomeNascimento, incluirEtapa4).filter(
     (c) => classificarGrafia(c.nome, nomeNascimento) !== 'proibida',
@@ -1279,7 +1276,11 @@ function gerarSugestoesAutoSocialV4(
   for (const estagio of estagios) {
     const validos = estagio.pool
       .map(enriquecer)
-      .filter((a) => motivoNaoOfertavel(a, scoreNasc) === null)
+      .filter((a) => motivoNaoOfertavel(a, scoreNasc, undefined, { semPiso }) === null)
+      .map((a) => {
+        if (semPiso && a.score < scoreMinimoSugestao(scoreNasc)) a.pisoRelaxado = true;
+        return a;
+      })
       .filter(
         (a) => estagio.artificial || classificarGrafia(a.nomeCompleto, nomeNascimento) === 'natural',
       );

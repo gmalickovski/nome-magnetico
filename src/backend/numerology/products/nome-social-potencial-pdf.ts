@@ -52,11 +52,11 @@ export function calcularPotencialAssinaturaPdfGratuito(
   let potencialMax: number | null = null;
 
   // DEV-317: etapa 4 só quando as etapas 1 a 3 não acham opção (mesma regra da análise paga).
-  for (const incluirEtapa4 of [false, true]) {
+  for (const [incluirEtapa4, semPiso] of [[false, false], [true, false], [true, true]] as const) {
     for (const { nome } of gerarCandidatosComNivel(nasc, incluirEtapa4)) {
       const analise = analisarNomeSocial(nome, dataNascimento, 'ia');
       if (!analise.semSequenciaVida) continue;
-      if (motivoNaoOfertavel(analise, notaBase) !== null) continue;
+      if (motivoNaoOfertavel(analise, notaBase, undefined, { semPiso }) !== null) continue;
       if (potencialMax === null || analise.score > potencialMax) {
         potencialMax = analise.score;
       }
