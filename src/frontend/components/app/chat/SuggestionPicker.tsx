@@ -121,9 +121,6 @@ export function SuggestionPicker({
           {isCurrentSelected && (
             <>
               <span className="absolute inset-0 rounded-2xl bg-[#D4AF37]/[0.06] pointer-events-none" />
-              <span className="absolute top-2 right-2 z-10 rounded-full bg-[#D4AF37] text-[#111111] text-[10px] font-semibold px-2 py-0.5">
-                ✓ Escolhido
-              </span>
             </>
           )}
           <div className={isCurrentSelected ? '[&_.nm-score-eyebrow]:text-[#D4AF37]' : ''}>
@@ -179,10 +176,20 @@ export function SuggestionPicker({
           onClick={alternar}
           aria-expanded={aberto}
           aria-controls={controla}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-chat-ink transition-colors duration-300 hover:bg-white/5"
+          aria-label={`${aberto ? 'Esconder' : 'Mostrar'} ${titulo}`}
+          title={aberto ? 'Esconder' : 'Mostrar'}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-chat-ink transition-colors duration-300 hover:bg-white/5"
         >
-          <span aria-hidden="true">{aberto ? '▾' : '▸'}</span>
-          {aberto ? 'Esconder' : 'Mostrar'}
+          <svg
+            className={`h-5 w-5 transition-transform duration-300 ${aberto ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+          </svg>
         </button>
       )}
     </div>
