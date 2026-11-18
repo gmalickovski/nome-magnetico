@@ -43,10 +43,9 @@ type OrigemNome = NonNullable<SavedAnalysisItem['origemNome']>;
 
 /** DEV-317: tags de origem do nome (só em Minhas análises). */
 const ORIGEM_TAG: Record<OrigemNome, { rotulo: string; classe: string }> = {
-  nascimento: { rotulo: 'Nome de nascimento', classe: 'bg-white/[0.06] text-[#e5e2e1]' },
-  // Sem tag no card: só nascimento e teste recebem tag. No filtro aparece como "Sugestões do sistema".
-  sistema: { rotulo: 'Sugestões do sistema', classe: '' },
-  teste: { rotulo: 'Suas sugestões', classe: 'bg-[#bea5ff]/15 text-[#d7c6ff]' },
+  nascimento: { rotulo: 'Nome de Nascimento', classe: 'bg-white/[0.06] text-[#e5e2e1]' },
+  sistema: { rotulo: 'Sugestões do Sistema', classe: 'bg-[#D4AF37]/15 text-[#D4AF37]' },
+  teste: { rotulo: 'Minhas Sugestões', classe: 'bg-[#bea5ff]/15 text-[#d7c6ff]' },
 };
 
 /**
@@ -54,10 +53,10 @@ const ORIGEM_TAG: Record<OrigemNome, { rotulo: string; classe: string }> = {
  * (sistema + suas sugestões). Opções somáveis: o card aparece se bater com qualquer uma marcada.
  */
 const FILTROS_ORIGEM: { id: string; rotulo: string; origens: OrigemNome[] }[] = [
-  { id: 'nascimento', rotulo: 'Nome de nascimento', origens: ['nascimento'] },
+  { id: 'nascimento', rotulo: 'Nome de Nascimento', origens: ['nascimento'] },
   { id: 'social', rotulo: 'Nome Social', origens: ['sistema', 'teste'] },
-  { id: 'teste', rotulo: 'Suas sugestões', origens: ['teste'] },
-  { id: 'sistema', rotulo: 'Sugestões do sistema', origens: ['sistema'] },
+  { id: 'teste', rotulo: 'Minhas Sugestões', origens: ['teste'] },
+  { id: 'sistema', rotulo: 'Sugestões do Sistema', origens: ['sistema'] },
 ];
 
 const MOBILE_STACK_QUERY = '(max-width: 767px)';
@@ -71,8 +70,8 @@ interface OpcaoFiltro {
 
 const CHIP_BASE =
   'flex-shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors duration-300 cursor-pointer';
-const CHIP_ATIVO = 'bg-[#D4AF37] text-[#131313]';
-const CHIP_INATIVO = 'bg-[#1C1C1C] text-[#A0A0A0] hover:text-[#e5e2e1]';
+const CHIP_ATIVO = 'border border-[#D4AF37] bg-[#D4AF37] text-[#131313]';
+const CHIP_INATIVO = 'border border-[#D4AF37]/70 bg-[#131313] text-[#e5e2e1]';
 
 /** DEV-317: faixa de chips com rolagem por toque, sem barra; setas sutis aparecem só quando há mais para um lado. */
 function ChipScroller({ children, label }: { children: React.ReactNode; label: string }) {
@@ -107,7 +106,7 @@ function ChipScroller({ children, label }: { children: React.ReactNode; label: s
       aria-label={dir === 1 ? 'Ver mais filtros à direita' : 'Ver mais filtros à esquerda'}
       onClick={() => rolar(dir)}
       tabIndex={visivel ? 0 : -1}
-      className={`absolute top-1/2 z-10 -translate-y-1/2 px-0.5 text-sm text-[#A0A0A0] transition-opacity duration-300 ${
+      className={`absolute top-1/2 z-10 -translate-y-1/2 px-0.5 text-xl leading-none text-[#A0A0A0] transition-opacity duration-300 ${
         dir === 1 ? 'right-0' : 'left-0'
       } ${visivel ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
     >
@@ -766,7 +765,7 @@ export default function MyAnalysesWorkspace({
                           <span className="text-[10px] text-[#A0A0A0] px-2.5 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
                             {item.dateFormatted}
                           </span>
-                          {item.origemNome && item.origemNome !== 'sistema' && (
+                          {item.origemNome && (
                             <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${ORIGEM_TAG[item.origemNome].classe}`}>
                               {ORIGEM_TAG[item.origemNome].rotulo}
                             </span>
