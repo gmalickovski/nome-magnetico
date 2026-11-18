@@ -188,6 +188,23 @@ function gerarVariacoesDuplicacao(nome: string): string[] {
   return out;
 }
 
+/** DEV-317: tira 1 letra de uma palavra (nunca a 1ª; palavra fica com 3+ letras). */
+function gerarVariacoesRemocao(nome: string): string[] {
+  const partes = nome.split(/\s+/);
+  const out: string[] = [];
+  for (let wi = 0; wi < partes.length; wi++) {
+    const palavra = partes[wi]!;
+    if (palavra.length < 4) continue;
+    for (let ci = 1; ci < palavra.length; ci++) {
+      if (palavra[ci - 1]?.toLowerCase() === palavra[ci]!.toLowerCase()) continue;
+      const p = [...partes];
+      p[wi] = palavra.slice(0, ci) + palavra.slice(ci + 1);
+      out.push(p.join(' '));
+    }
+  }
+  return out;
+}
+
 /**
  * Diminutivo/apelido: corta até a 2ª vogal.
  * "Guilherme" → "Gui", "Claudia" → "Clau", "Malickovski" → "Mali".
@@ -510,7 +527,10 @@ export function analisarNomeSocial(
  * Gera candidatos com fases de prioridade explícitas reorganizadas nas 3 etapas.
  * Retorna array deduplicado, cada item com nome e nivel (fase).
  */
-export function gerarCandidatosComNivel(nomeNascimento: string): { nome: string; nivel: number }[] {
+export function gerarCandidatosComNivel(
+  nomeNascimento: string,
+  incluirEtapa4 = false,
+): { nome: string; nivel: number }[] {
   const partes = nomeNascimento.trim().split(/\s+/);
   const prim = partes[0]!;
   const sobs = partes.slice(1);
@@ -601,6 +621,40 @@ export function gerarCandidatosComNivel(nomeNascimento: string): { nome: string;
 
   // Fase 120: diminutivo tradicional (cortar na 2ª vogal) + sobrenomes (antiga fase 130)
   for (const v of gerarVariacoesDiminutivo(nomeNascimento)) add(v, 120);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ETAPA 4 (DEV-317): combinações para nomes em que nenhuma variação simples
+  // sai sem bloqueio. Ficam por último (maior distorção) e só pesam quando faltam
+  // opções das etapas anteriores.
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (incluirEtapa4) {
+  const basesCurtas = sobs.map((sob) => `${prim} ${sob}`);
+  const basesLongas = sobs.length >= 2
+    ? sobs.map((_, i) => [prim, ...sobs.filter((__, j) => j !== i)].join(' '))
+    : [];
+
+  // Fase 130: 1 duplicação + 1 acento
+  for (const base of [prim, ...basesCurtas, ...basesLongas, nomeFull]) {
+    for (const d of gerarVariacoesDuplicacao(base)) {
+      for (const v of gerarVariacoesAcento(d)) add(v, 130);
+    }
+  }
+
+  // Fase 140: 2 duplicações em posições diferentes
+  for (const base of [prim, ...basesCurtas, nomeFull]) {
+    for (const d1 of gerarVariacoesDuplicacao(base)) {
+      for (const d2 of gerarVariacoesDuplicacao(d1)) add(d2, 140);
+    }
+  }
+
+  // Fase 150: tirar 1 letra (nunca a primeira de cada palavra) e, se preciso, 1 acento
+  for (const base of [prim, ...basesCurtas, nomeFull]) {
+    for (const r of gerarVariacoesRemocao(base)) {
+      add(r, 150);
+      for (const v of gerarVariacoesAcento(r)) add(v, 155);
+    }
+  }
+  }
 
   // Deduplica mantendo o nível mais baixo para cada nome repetido
   const dedup = new Map<string, { nome: string; nivel: number }>();
@@ -1100,14 +1154,29 @@ function garantirMaiorNotaNaFatia(
  * artificial (último recurso, sempre atrás das naturais).
  * Nunca devolve candidato inválido, mesmo que a lista fique curta ou vazia.
  */
-function gerarSugestoesAutoSocialV4(
+/** DEV-317: se as etapas 1 a 3 não acham opção válida, tenta de novo com a etapa 4. */
+function gerarSugestoesAutoSocialV4ComReserva(
   nomeNascimento: string,
   dataNascimento: string,
   maxSugestoes: number,
   scoreNasc: number,
   opcoes?: OpcoesRankingNomeSocial,
 ): AnaliseNomeSocial[] {
-  const todosCandidatos = gerarCandidatosComNivel(nomeNascimento).filter(
+  const base = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes);
+  if (base.length >= 9) return base;
+  const extra = gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, maxSugestoes, scoreNasc, opcoes, true);
+  return extra.length > base.length ? extra : base;
+}
+
+function gerarSugestoesAutoSocialV4(
+  nomeNascimento: string,
+  dataNascimento: string,
+  maxSugestoes: number,
+  scoreNasc: number,
+  opcoes?: OpcoesRankingNomeSocial,
+  incluirEtapa4 = false,
+): AnaliseNomeSocial[] {
+  const todosCandidatos = gerarCandidatosComNivel(nomeNascimento, incluirEtapa4).filter(
     (c) => classificarGrafia(c.nome, nomeNascimento) !== 'proibida',
   );
   const liberaEtapa3Apelido = Boolean(
@@ -1411,7 +1480,7 @@ export function analisarNomesSocial(
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));
   let sugestoesIA = (
     motorV4
-      ? gerarSugestoesAutoSocialV4(nomeNascimento, dataNascimento, 10, scoreNasc, resolvedOpcoes)
+      ? gerarSugestoesAutoSocialV4ComReserva(nomeNascimento, dataNascimento, 10, scoreNasc, resolvedOpcoes)
       : gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
   ).filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
 

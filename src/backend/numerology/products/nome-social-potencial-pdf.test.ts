@@ -39,10 +39,16 @@ describe('nome-social-potencial-pdf (DEV-275)', () => {
     }
   });
 
-  it('caso 3: sem assinatura elegível acima da base', () => {
+  it('DEV-317: base alta (93) ainda acha opção acima pela etapa 4', () => {
     const pdf = calcularPotencialAssinaturaPdfGratuito('Rosa Maria Oliveira', '10/05/1975');
     assert.equal(pdf.calculado, true);
-    assert.equal(pdf.potencialMax, null);
+    assert.equal(pdf.potencialMax, 96);
+  });
+
+  it('DEV-317: Cláudia Delanni Vitória ganha opção sem bloqueio', () => {
+    const pdf = calcularPotencialAssinaturaPdfGratuito('Cláudia Delanni Vitória', '31/05/1991');
+    assert.equal(pdf.notaBase, 57);
+    assert.ok((pdf.potencialMax ?? 0) > 57);
   });
 
   it('potencial V3 (modal) vs máximo elegível do PDF: exemplos numéricos', () => {
@@ -62,7 +68,7 @@ describe('nome-social-potencial-pdf (DEV-275)', () => {
     const rosa = calcularPotencialAssinaturaPdfGratuito('Rosa Maria Oliveira', '10/05/1975');
     assert.equal(calcularPotencialV3('Rosa Maria Oliveira', '10/05/1975'), 93);
     assert.equal(rosa.notaBase, 93);
-    assert.equal(rosa.potencialMax, null);
+    assert.equal(rosa.potencialMax, 96);
   });
 
   it('sem potencial calculado quando motor v3 desligado', () => {
