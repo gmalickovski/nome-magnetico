@@ -1,13 +1,6 @@
 import { PRODUCT_LABELS, PRODUCT_TYPES } from '../../../shared/product-labels';
 
-export const fieldClass =
-  'w-full rounded-full bg-[#0c0c0c] px-4 py-2.5 text-sm text-[#e5e2e1] outline outline-1 outline-[#d7c6ff]/15 placeholder:text-[#76746a] focus:outline-[#d7c6ff]/40 disabled:opacity-50';
-
-export const primaryButtonClass =
-  'rounded-full bg-[#f2ca50] px-6 py-2.5 text-sm font-medium text-[#131313] shadow-[0_0_24px_rgba(242,202,80,0.18)] transition-colors duration-700 hover:bg-[#d4af37] disabled:opacity-50';
-
-export const ghostButtonClass =
-  'rounded-full bg-white/5 px-4 py-2 text-xs text-[#e5e2e1] transition-colors duration-700 hover:bg-white/10 disabled:opacity-50';
+export { fieldClass, primaryButtonClass, ghostButtonClass } from '../ui/controls';
 
 export function ProductChips({
   value,
