@@ -49,7 +49,7 @@ function invariantes(r: ReturnType<typeof analisarNomesSocial>, nasc = NASC, dat
   const minimo = scoreMinimoSugestao(scoreNascimentoNomeSocial(nasc, data));
   for (const c of visiveis(r)) {
     assert.equal(c.temBloqueio, false, `${c.nomeCompleto} com bloqueio`);
-    assert.ok(c.score >= minimo, `${c.nomeCompleto} (${c.score}) abaixo de ${minimo}`);
+    assert.ok(c.score >= minimo || c.pisoRelaxado === true, `${c.nomeCompleto} (${c.score}) abaixo de ${minimo}`);
   }
   if (r.nomesCandidatos.length > 0) {
     const maxLista = Math.max(...r.nomesCandidatos.map((c) => c.score));

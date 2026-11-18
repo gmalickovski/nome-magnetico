@@ -22,14 +22,11 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
     else process.env.SCORE_VERSION = prevVersion;
   });
 
-  it('corte no meio gera "Guilher" para "Guilherme"', () => {
-    const corte = gerarCorteNoMeio('Guilherme');
-    assert.equal(corte, 'Guilher');
-
-    const candidatos = gerarCandidatosComNivel('Guilherme Malickovski Correa');
-    const nomes = candidatos.map(c => c.nome);
-    assert.ok(nomes.includes('Guilher'), 'Deve conter "Guilher" como variante de corte no meio');
-    assert.ok(nomes.includes('Guilher Correa'), 'Deve conter "Guilher Correa"');
+  it('DEV-317: o corte no meio ("Guilher") saiu do gerador, porque descaracteriza o nome', () => {
+    assert.equal(gerarCorteNoMeio('Guilherme'), 'Guilher');
+    const nomes = gerarCandidatosComNivel('Guilherme Malickovski Correa', { incluirSevero: true }).map(c => c.nome);
+    assert.ok(!nomes.includes('Guilher'));
+    assert.ok(!nomes.includes('Guilher Correa'));
   });
 
   it('classificação correta das 3 etapas pelos níveis', () => {
@@ -52,20 +49,19 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
     assert.equal(etapaDoNivel(120), 3);
   });
 
-  it('só o primeiro nome subiu para a Etapa 1', () => {
+  it('DEV-317: só o primeiro nome é a V4 (nível 50), depois das formas com acento', () => {
     const candidatos = gerarCandidatosComNivel('Guilherme Malickovski Correa');
     const primeiroNome = candidatos.find(c => c.nome === 'Guilherme');
     assert.ok(primeiroNome, 'Deve conter "Guilherme"');
-    assert.equal(etapaDoNivel(primeiroNome!.nivel), 1, 'Primeiro nome deve estar na Etapa 1');
-    assert.equal(primeiroNome!.nivel, 25);
+    assert.equal(primeiroNome!.nivel, 50);
   });
 
-  it('forma curta com acento (2a) vem antes de nome completo com 2 acentos (2c)', () => {
+  it('DEV-317: tirar sobrenome (V1) < nome completo com acento (V2) < forma curta com acento (V3)', () => {
     const candidatos = gerarCandidatosComNivel('Guilherme Malickovski Correa');
-    const acentoCurto = candidatos.find(c => c.nome === 'Guilherme Málickovski');
-    assert.ok(acentoCurto, 'Deve conter "Guilherme Málickovski"');
-    assert.ok([50, 60].includes(acentoCurto!.nivel), 'Fase 50 ou 60 (2a)');
-    assert.equal(etapaDoNivel(acentoCurto!.nivel), 2);
+    const nivel = (n: string) => candidatos.find(c => c.nome === n)?.nivel;
+    assert.equal(nivel('Guilherme Correa'), 10);
+    assert.equal(nivel('Guilherme Málickovski Correa'), 30);
+    assert.equal(nivel('Guilherme Málickovski'), 40);
   });
 
 
@@ -91,13 +87,14 @@ describe('DEV-186 · Gerador em 3 Etapas e Regras v3', () => {
     });
 
 
-    it('Juliana Martins Rocha · 18/03/1992: melhor na etapa 1 é "Juliana Rocha" 91 N5 (DEV-260: Lição 9)', () => {
+    it('Juliana Martins Rocha · 18/03/1992: Principal é "Juliana Rochã" 93; "Juliana Rocha" 91 vem logo depois (DEV-317)', () => {
       const res = analisarNomesSocial([], 'Juliana Martins Rocha', '18/03/1992');
       assert.ok(res.melhorNome);
-      assert.equal(res.melhorNome!.nomeCompleto, 'Juliana Rocha');
+      assert.equal(res.melhorNome!.nomeCompleto, 'Juliana Rochã');
+      assert.equal(res.melhorNome!.score, 93);
       // DEV-260: regra do curso (Lição 9 ausente desconta 2 pts: 93 -> 91)
-      assert.equal(res.melhorNome!.score, 91);
-      assert.equal(res.melhorNome!.etapa, 1);
+      assert.equal(res.nomesCandidatos[1]!.nomeCompleto, 'Juliana Rocha');
+      assert.equal(res.nomesCandidatos[1]!.score, 91);
     });
 
     it('Lucas Henrique Barbosa · 27/04/1991: melhor na etapa 2 é "Lucas Hénrique" 94 N5 (DEV-260: Lição 9)', () => {

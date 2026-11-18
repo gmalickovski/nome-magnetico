@@ -36,23 +36,9 @@ function candidato(nivel: number | undefined, extra: Partial<AnaliseNomeSocial> 
 }
 
 describe('DEV-304 · distorcaoDoNome (menor muda menos o nome)', () => {
-  it('primeiro nome + 1 sobrenome e o nome do usuário vêm primeiro, depois tirar 1 sobrenome', () => {
-    assert.equal(distorcaoDoNome(candidato(20)), 0);
-    assert.equal(distorcaoDoNome(candidato(0)), 0);
-    assert.equal(distorcaoDoNome(candidato(10)), 1);
-  });
-
-  it('acento leve vem antes de só o primeiro nome, e a etapa 3 por último', () => {
-    const acentoLeve = distorcaoDoNome(candidato(50));
-    const acentoNoNomeCompleto = distorcaoDoNome(candidato(70));
-    const duasAcentos = distorcaoDoNome(candidato(80));
-    const soPrimeiro = distorcaoDoNome(candidato(25));
-    const duplicacao = distorcaoDoNome(candidato(90));
-    const apelido = distorcaoDoNome(candidato(120));
-    assert.ok(distorcaoDoNome(candidato(10)) < acentoLeve);
-    assert.ok(acentoLeve < acentoNoNomeCompleto && acentoNoNomeCompleto < duasAcentos);
-    assert.ok(duasAcentos < soPrimeiro, 'só o primeiro nome apaga todos os sobrenomes');
-    assert.ok(soPrimeiro < duplicacao && duplicacao < apelido);
+  it('DEV-317: a distorção segue a ordem de tentativas (V1 < V2 < V3 < V4 < V5 < apelido < V6 < V8 < dobra)', () => {
+    const ordem = [0, 10, 30, 40, 50, 55, 56, 60, 70, 130].map((n) => distorcaoDoNome(candidato(n)));
+    for (let i = 1; i < ordem.length; i++) assert.ok(ordem[i - 1]! < ordem[i]!, `posição ${i}`);
   });
 
   it('grafia artificial fica sempre atrás, em qualquer nível', () => {
@@ -83,23 +69,26 @@ const FIXTURES: Array<[string, string]> = [
 ];
 
 describe('DEV-304 · entrevista aberta: o que muda menos o nome vence, e a maior nota continua visível', () => {
-  it('se há opção que muda pouco com nota perto da melhor, ela é o Nome de Ouro', () => {
-    let casosComNatural = 0;
+  it('DEV-317: sem entrevista, o selo Principal é a maior nota e vem em 1º; o resto segue a ordem', () => {
+    let casos = 0;
     for (const [nasc, data] of FIXTURES) {
       const r = analisarNomesSocial([], nasc, data, {});
       if (!r.melhorNome) continue;
-      const maxima = Math.max(...r.nomesCandidatos.map((c) => c.score));
-      const limite = Math.max(SUGESTAO_CONFIG_V4.pisoAbsoluto, maxima - SUGESTAO_CONFIG_V4.janelaNaturalidade);
-      const quemMudaPouco = r.nomesCandidatos.filter((c) => c.score >= limite && distorcaoDoNome(c) <= 1);
-      if (quemMudaPouco.length > 0) {
-        casosComNatural++;
-        assert.ok(
-          distorcaoDoNome(r.melhorNome) <= 1,
-          `${nasc} ${data}: ouro "${r.melhorNome.nomeCompleto}" distorce mais que ${quemMudaPouco[0]!.nomeCompleto}`,
-        );
+      casos++;
+      // Grafia artificial (til no meio) só é Principal se não houver natural.
+      const naturais = r.nomesCandidatos.filter((c) => !c.grafiaArtificial);
+      const maxima = Math.max(...(naturais.length ? naturais : r.nomesCandidatos).map((c) => c.score));
+      assert.equal(r.melhorNome.score, maxima, `${nasc} ${data}`);
+      assert.equal(r.melhorNome.principal, true);
+      assert.equal(r.nomesCandidatos[0], r.melhorNome);
+      const resto = r.nomesCandidatos.slice(1).filter((c) => !c.maiorNota);
+      for (let i = 1; i < resto.length; i++) {
+        if (resto[i - 1]!.pisoRelaxado !== resto[i]!.pisoRelaxado) continue;
+        if ((resto[i - 1]!.nivelGerado ?? 0) >= 100 !== (resto[i]!.nivelGerado ?? 0) >= 100) continue;
+        assert.ok((resto[i - 1]!.nivelGerado ?? 0) <= (resto[i]!.nivelGerado ?? 0), `${nasc}: ordem ${i}`);
       }
     }
-    assert.ok(casosComNatural >= 6, `só ${casosComNatural} casos exercitaram a regra`);
+    assert.ok(casos >= 6, `só ${casos} casos`);
   });
 
   it('a sugestão de maior nota sempre aparece, mesmo quando não é o Nome de Ouro', () => {
@@ -112,12 +101,11 @@ describe('DEV-304 · entrevista aberta: o que muda menos o nome vence, e a maior
     }
   });
 
-  it('Camila Dias Nunes: sem estilo vem "Camila Nunes" (nota menor), com a maior nota ao lado', () => {
+  it('DEV-317: Camila Dias Nunes sem estilo: a 1ª é a de maior nota (Principal e Maior nota)', () => {
     const r = analisarNomesSocial([], 'Camila Dias Nunes', '01/01/1990', {});
-    assert.equal(r.melhorNome!.nomeCompleto, 'Camila Nunes');
     const maior = r.nomesCandidatos.reduce((m, c) => (c.score > m.score ? c : m));
-    assert.ok(maior.score > r.melhorNome!.score);
-    assert.ok([r.melhorNome!, ...r.top3].some((c) => c.nomeCompleto === maior.nomeCompleto));
+    assert.equal(r.melhorNome!.score, maior.score);
+    assert.equal(r.melhorNome!.maiorNota, true);
   });
 });
 
@@ -125,11 +113,12 @@ describe('DEV-304 · a entrevista manda sobre o padrão', () => {
   const nasc = 'Camila Dias Nunes';
   const data = '01/01/1990';
 
-  it('"um acento ou letra" (estilo ajuste sutil) escolhe a variação com acento', () => {
-    const aberta = analisarNomesSocial([], nasc, data, {});
+  it('"um acento ou letra" (estilo ajuste sutil): o Principal mantém o nome completo', () => {
     const sutil = analisarNomesSocial([], nasc, data, { estiloPreferido: 'ajuste_sutil' });
-    assert.notEqual(sutil.melhorNome!.nomeCompleto, aberta.melhorNome!.nomeCompleto);
-    assert.ok(distorcaoDoNome(sutil.melhorNome!) >= 60, `${sutil.melhorNome!.nomeCompleto} deveria ter acento`);
+    const principal = sutil.nomesCandidatos.find((c) => c.principal);
+    assert.ok(principal);
+    assert.equal(principal!.nomeCompleto.split(/\s+/).length, nasc.split(/\s+/).length, principal!.nomeCompleto);
+    assert.equal(sutil.melhorNome, principal);
   });
 
   it('"a nota mais alta" vence a naturalidade', () => {

@@ -203,13 +203,12 @@ describe('DEV-302 · efeito no motor de sugestões', () => {
     afinidades: { area: 'relacionamentos_harmonia', estilo: ['leve_acolhimento'], subfocos: ['harmonia_afetiva'] },
   };
 
-  it('perfis diferentes podem gerar Nome de Ouro diferente, sempre válido', () => {
+  it('DEV-317: o perfil só desempata notas próximas; o Principal é sempre válido', () => {
     const scoreNasc = scoreNascimentoNomeSocial(nasc, data);
     const minimo = scoreMinimoSugestao(scoreNasc);
     const a = analisarNomesSocial([], nasc, data, prosperidade);
     const b = analisarNomesSocial([], nasc, data, relacionamentos);
     assert.ok(a.melhorNome && b.melhorNome);
-    assert.notEqual(a.melhorNome!.nomeCompleto, b.melhorNome!.nomeCompleto);
     for (const r of [a, b]) {
       assert.equal(r.melhorNome!.temBloqueio, false);
       assert.ok(r.melhorNome!.score >= minimo);

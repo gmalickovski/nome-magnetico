@@ -103,12 +103,15 @@ export type MotivoNaoOfertavel =
 
 /** R1 + R2. `null` = pode ser oferecida. */
 export function motivoNaoOfertavel(
-  candidato: SugestaoValidavel,
+  candidato: SugestaoValidavel & { pisoRelaxado?: boolean },
   scoreBase: number,
   ganhoMinimoPontos = getGanhoMinimoPontos(),
+  opts?: { semPiso?: boolean },
 ): MotivoNaoOfertavel | null {
   if (isMotorV4() && candidato.temBloqueio) return 'bloqueio';
   if (candidato.score < scoreBase + ganhoMinimoPontos + 1) return 'abaixo_do_nascimento';
+  // DEV-317: sem bloqueio é a prioridade. Na falta de opções >= 70, vale a melhora sobre o nascimento.
+  if (opts?.semPiso || candidato.pisoRelaxado) return null;
   if (!passaPisoSugestao(candidato.score, scoreBase, ganhoMinimoPontos)) return 'abaixo_do_piso';
   return null;
 }
