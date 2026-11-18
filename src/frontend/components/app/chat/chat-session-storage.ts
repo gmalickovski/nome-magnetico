@@ -13,7 +13,7 @@ import type {
 import { INITIAL_COLLECT_STATE, type ChatCollectState } from './decide-live-bridge.js';
 
 /** Bump quando copy/fluxo do palpite mudar (invalida sessões antigas com leitura duplicada). */
-export const CHAT_SESSION_STORAGE_VERSION = 7 as const;
+export const CHAT_SESSION_STORAGE_VERSION = 8 as const;
 
 const STORAGE_VERSION = CHAT_SESSION_STORAGE_VERSION;
 export const CHAT_SESSION_CHANGED_EVENT = 'nm-chat-session-change';

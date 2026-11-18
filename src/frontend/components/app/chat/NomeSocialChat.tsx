@@ -429,7 +429,12 @@ export function NomeSocialChat({
     setSummaryItems(saved.summaryItems);
     setBirthReadingSummary(saved.birthReadingSummary ?? null);
     setHarmonizedSummaries(saved.harmonizedSummaries ?? {});
-    setBasePanel(saved.basePanel);
+    // DEV-317: a nota do nascimento vem do servidor (motor atual), nunca de uma cópia antiga do navegador.
+    const mesmoNome =
+      initialBirthPanel &&
+      saved.basePanel &&
+      initialBirthPanel.nome?.trim().toLowerCase() === saved.basePanel.nome?.trim().toLowerCase();
+    setBasePanel(mesmoNome ? initialBirthPanel : saved.basePanel);
     setActiveSuggestionId(collectionComplete ? saved.activeSuggestionId : null);
     setSuggestions(collectionComplete ? saved.suggestions : []);
     setManualChatKey(saved.manualChatKey ?? crypto.randomUUID());
