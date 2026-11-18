@@ -35,7 +35,10 @@
  * - Top 3 diverso: mudança mínima, encurtado e alternativa, cada um com campo `explicacao`
  */
 
-import { NOME_SOCIAL_SUGESTOES_INICIAIS } from '../../../shared/nome-social/gerar-mais-limits';
+import {
+  NOME_SOCIAL_MAX_SUGESTOES_TOTAL,
+  NOME_SOCIAL_SUGESTOES_INICIAIS,
+} from '../../../shared/nome-social/gerar-mais-limits';
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../triangle';
 import { calcularExpressao, calcularDestino, calcularMotivacao, calcularMissao, calcularImpressao } from '../numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, calcularDebitosCarmicos } from '../karmic';
@@ -1563,10 +1566,18 @@ export function analisarNomesSocial(
   }
 
   // Sugestões do sistema
+  const nomesJaMostrados = new Set(
+    (resolvedOpcoes?.nomesExcluidos ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean),
+  );
   const usuariosSet = new Set(analisesUsuario.map(a => a.nomeCompleto.toLowerCase()));
   let sugestoesIA = (
     motorV4
-      ? gerarSugestoesAutoSocialV4ComReserva(nomeNascimento, dataNascimento, 10, scoreNasc, resolvedOpcoes)
+      ? // DEV-317: "Gerar mais" não recalcula a ordem. A lista completa (até 9 + selos) sai sempre igual
+        // para as mesmas preferências; as já mostradas (nomesExcluidos) só saem depois dos selos.
+        gerarSugestoesAutoSocialV4ComReserva(nomeNascimento, dataNascimento, NOME_SOCIAL_MAX_SUGESTOES_TOTAL + 1, scoreNasc, {
+          ...resolvedOpcoes,
+          nomesExcluidos: [],
+        })
       : gerarSugestoesAutoSocial(nomeNascimento, dataNascimento, 10, resolvedOpcoes)
   ).filter(s => !usuariosSet.has(s.nomeCompleto.toLowerCase()));
 
@@ -1593,6 +1604,7 @@ export function analisarNomesSocial(
   // DEV-317: no motor v4 a lista segue a ordem de prioridade (sem bloqueio > 70 > entrevista > mais sutil).
   const ordemV4 = motorV4
     ? ordenarComSelos(dedupeCandidatosEstavel([...[...analisesUsuario].sort(comparador), ...sugestoesIA]), scoreNasc, resolvedOpcoes)
+        .filter((c) => c.origemSugerida !== 'ia' || !nomesJaMostrados.has(c.nomeCompleto.trim().toLowerCase()))
     : [];
   if (motorV4) {
     melhorNome = ordemV4[0] ?? null;
