@@ -21,6 +21,10 @@ describe('DEV-317 · tag de origem do nome em Minhas análises', () => {
   it('sugestão gerada é do sistema', () => {
     assert.equal(resolverOrigemNome(false, 'nome_social', 'Claudia Delanni Vitoria', 'Cláudia Delanni Vitória', ranking), 'sistema');
   });
+  it('nome escolhido entre as sugestões (origemSugerida usuario, origem gerado) é do sistema', () => {
+    const r = { nomesCandidatos: [{ nomeCompleto: 'Guilherme Málickovski', origem: 'gerado', origemSugerida: 'usuario' }] };
+    assert.equal(resolverOrigemNome(false, 'nome_social', 'Guilherme Málickovski', 'Guilherme Malickovski Correa', r), 'sistema');
+  });
   it('outros produtos não recebem tag', () => {
     assert.equal(resolverOrigemNome(false, 'nome_bebe', 'Ana', null, null), undefined);
   });
