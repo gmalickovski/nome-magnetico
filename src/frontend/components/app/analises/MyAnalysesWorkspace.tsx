@@ -300,6 +300,12 @@ export default function MyAnalysesWorkspace({
   // DEV-317: filtros somáveis (produto e origem). Dentro do mesmo grupo vale "ou"; entre grupos, "e".
   const [filtros, setFiltros] = useState<Set<string>>(() => new Set());
   const [filtroAberto, setFiltroAberto] = useState(false);
+  // DEV-317: depois de editar o nome de nascimento nas configurações, recarrega para recalcular os cards.
+  useEffect(() => {
+    const recarregar = () => window.setTimeout(() => window.location.reload(), 900);
+    window.addEventListener('nm-birth-data-updated', recarregar);
+    return () => window.removeEventListener('nm-birth-data-updated', recarregar);
+  }, []);
   const alternarFiltro = (id: string) =>
     setFiltros((prev) => {
       const next = new Set(prev);
@@ -806,6 +812,24 @@ export default function MyAnalysesWorkspace({
                               <span className="fav-label">
                                 {isFav ? 'Principal' : 'Favoritar'}
                               </span>
+                            </button>
+                          )}
+
+                          {item.origemNome === 'nascimento' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.dispatchEvent(new Event('nm-open-settings'));
+                              }}
+                              title="Editar nome e data de nascimento"
+                              aria-label="Editar nome e data de nascimento"
+                              className="p-1.5 rounded-full text-gray-500 hover:text-[#f2ca50] hover:bg-white/[0.06] transition-colors cursor-pointer"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487 18.55 2.8a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                              </svg>
                             </button>
                           )}
 

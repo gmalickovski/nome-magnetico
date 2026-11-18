@@ -99,6 +99,17 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
     }
   }
 
+  // DEV-317: "Editar" no card do nome de nascimento abre os dados da conta. Só o menu visível responde
+  // (o cabeçalho de desktop e o de celular têm cada um o seu).
+  useEffect(() => {
+    const abrir = () => {
+      if (!buttonRef.current || buttonRef.current.offsetParent === null) return;
+      void openSettings();
+    };
+    window.addEventListener('nm-open-settings', abrir);
+    return () => window.removeEventListener('nm-open-settings', abrir);
+  });
+
   async function openSettings() {
     setIsOpen(false);
     setSettingsOpen(true);
@@ -154,6 +165,7 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Erro ao salvar dados de analise.');
       setMessage('Dados de analise atualizados.');
+      window.dispatchEvent(new Event('nm-birth-data-updated'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar dados de analise.');
     } finally {

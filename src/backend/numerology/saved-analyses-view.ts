@@ -316,10 +316,16 @@ export function buildSavedAnalysesItems(
   analyses: Analysis[],
   options: BuildSavedAnalysesOptions,
 ): SavedAnalysisItem[] {
+  // DEV-317: o card de nascimento segue o nome salvo no perfil. Se a pessoa corrigiu o nome,
+  // a análise grátis feita com o nome antigo sai da lista (continua no banco) e o card é refeito.
+  const nomePerfil = options.profileBirthName?.trim().toLowerCase() || null;
   const visibleAnalyses = analyses
     .filter((a) => {
       const isFreeRow = a.product_type === 'analise_gratuita' || a.is_free;
-      if (isFreeRow) return a.status === 'complete';
+      if (isFreeRow) {
+        if (a.status !== 'complete') return false;
+        return !nomePerfil || (a.nome_completo ?? '').trim().toLowerCase() === nomePerfil;
+      }
       return true;
     })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -602,7 +608,8 @@ export function buildSavedAnalysesItems(
       isFavorite,
       canFavorite:
         a.status === 'complete' && productType !== 'analise_gratuita' && !a.is_free,
-      canDelete: !a.is_free || options.isAdmin,
+      // DEV-317: o nome de nascimento não se exclui (é a base das notas); só se edita nos dados da conta.
+      canDelete: !isFreeRow,
       isAnalystGenerated: Boolean(a.is_analyst_generated),
       origemNome: resolverOrigemNome(isFreeRow, productType, nomeExibido, birthName, rankingSocial),
       recalculatedFromVersion: a.recalculated_from_version ?? null,
