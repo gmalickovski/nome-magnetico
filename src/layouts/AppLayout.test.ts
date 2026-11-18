@@ -173,7 +173,9 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const chatSrc = readFileSync(chatFile, 'utf8');
     assert.doesNotMatch(chatSrc, /buildPostSuggestionChoiceBlock/);
     assert.match(chatSrc, /if \(msg\.id\.startsWith\('sug-choice-'\)\) return null;/);
-    assert.match(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"\s+className="!max-w-full"/);
+    // DEV-317: sem balão pai; os containers de sugestões ficam soltos na largura total.
+    assert.doesNotMatch(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"/);
+    assert.match(chatSrc, /<div key=\{msg\.id\} className="w-full my-2 animate-fade-in">\s*<SuggestionPicker/);
   });
 
   it('painel lateral desktop usa título Painel de análise e bolinha dourada condicional na seleção', () => {

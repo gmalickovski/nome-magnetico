@@ -17,6 +17,10 @@ export interface SuggestionPickerProps {
   extraNoticeSlot?: React.ReactNode;
   /** DEV-317: área "Teste um nome seu" (texto, campo e avisos). Fica sempre no fim, depois do "Gerar mais". */
   manualSlot?: React.ReactNode;
+  /** DEV-317: muda quando a análise termina; rola até o início das sugestões. */
+  scrollSistemaToken?: number;
+  /** DEV-317: card a mostrar inteiro depois de testar um nome. */
+  scrollCandidato?: { id: string; n: number } | null;
   className?: string;
 }
 
@@ -36,12 +40,32 @@ export function SuggestionPicker({
   extraActionSlot,
   extraNoticeSlot,
   manualSlot,
+  scrollSistemaToken = 0,
+  scrollCandidato = null,
   className = '',
 }: SuggestionPickerProps) {
+  const sistemaRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!scrollSistemaToken) return;
+    const id = window.setTimeout(() => {
+      sistemaRef.current?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, [scrollSistemaToken]);
   const sistema = suggestions.filter((s) => s.origem !== 'manual');
   const manuais = suggestions.filter((s) => s.origem === 'manual');
   const [manuaisAbertos, setManuaisAbertos] = useState(true);
   const [sistemaAberto, setSistemaAberto] = useState(true);
+  useEffect(() => {
+    if (!scrollCandidato) return;
+    setManuaisAbertos(true);
+    const id = window.setTimeout(() => {
+      document
+        .getElementById(`candidate-${scrollCandidato.id}`)
+        ?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }, 160);
+    return () => window.clearTimeout(id);
+  }, [scrollCandidato]);
   const totalManuais = useRef(manuais.length);
   useEffect(() => {
     // Nome novo testado: abre a lista para a pessoa ver o card na hora.
@@ -166,11 +190,12 @@ export function SuggestionPicker({
 
   return (
     <div ref={rootRef} className={`w-full space-y-4 ${className}`}>
-      <section aria-labelledby="system-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
+      <section
+        ref={sistemaRef}
+        aria-labelledby="system-names-title"
+        className="scroll-mt-3 rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4"
+      >
         {cabecalho('system-names-title', 'Sugestões do sistema', sistema.length, sistemaAberto, () => setSistemaAberto((v) => !v), 'system-names-list', 'text-gold')}
-        <p className="text-xs sm:text-sm text-chat-ink leading-relaxed">
-          Toque em uma assinatura para ver a comparação detalhada no painel lateral.
-        </p>
         {sistemaAberto && (
           <div id="system-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
             {sistema.map((sug, index) => renderCard(sug, index))}
@@ -178,7 +203,7 @@ export function SuggestionPicker({
         )}
 
         {regenerateNotice && (
-          <p className="text-sm text-amber-300/90 leading-relaxed px-0.5" role="status">
+          <p className="text-xs text-amber-300/90 leading-relaxed px-0.5" role="status">
             {regenerateNotice}
           </p>
         )}
@@ -194,17 +219,14 @@ export function SuggestionPicker({
           {extraActionSlot}
         </div>
         {!canRegenerate && sistema.length > 0 && (
-          <p className="text-xs text-chat-muted leading-relaxed">
-            Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
-            combinações.
-          </p>
+          <p className="text-xs text-chat-muted leading-relaxed">Você já viu todas as sugestões desta rodada.</p>
         )}
         {extraNoticeSlot}
       </section>
 
       {manualSlot && (
         <section aria-labelledby="manual-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
-          {cabecalho('manual-names-title', 'Seus testes', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-[#d7c6ff]')}
+          {cabecalho('manual-names-title', 'Suas sugestões', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-gold')}
           {manualSlot}
           {manuais.length > 0 && manuaisAbertos && (
             <div id="manual-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">

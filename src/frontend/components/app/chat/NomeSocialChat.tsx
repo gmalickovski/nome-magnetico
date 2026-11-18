@@ -227,6 +227,9 @@ export function NomeSocialChat({
   const [manualUsed, setManualUsed] = useState(0);
   const [manualDraft, setManualDraft] = useState('');
   const [manualNotice, setManualNotice] = useState<string | null>(null);
+  // DEV-317: rola até as sugestões quando a análise termina e até o card do nome testado.
+  const [scrollSistemaToken, setScrollSistemaToken] = useState(0);
+  const [scrollCandidato, setScrollCandidato] = useState<{ id: string; n: number } | null>(null);
   const [manualLoading, setManualLoading] = useState(false);
   const manualLock = useRef(false);
   const manualAbort = useRef<AbortController | null>(null);
@@ -1234,6 +1237,7 @@ export function NomeSocialChat({
         );
       } else if (data.previewTop3 && data.previewTop3.length > 0) {
         setSuggestions(data.previewTop3);
+        setScrollSistemaToken((n) => n + 1);
       }
     }
 
@@ -1617,7 +1621,8 @@ export function NomeSocialChat({
         setAnalysisId(undefined); clearChatPdfEnsureInflight();
         lastAnalyzeSuggestionsFingerprintRef.current = null;
       }
-      setManualNotice(data.duplicata ? 'Este nome já foi avaliado. Resultado mantido, sem consumir nova avaliação.' : 'Nome incluído na comparação com a nota real, mesmo quando inferior à de nascimento.');
+      setManualNotice(data.duplicata ? 'Este nome já foi testado.' : null);
+      if (data.candidate?.id) setScrollCandidato({ id: String(data.candidate.id), n: Date.now() });
       capturePostHogEvent(data.duplicata ? 'manual_name_duplicate' : 'manual_name_succeeded', { used: data.used });
       setManualDraft('');
     } catch (error) {
@@ -2269,13 +2274,10 @@ export function NomeSocialChat({
                 if (!paidAccessActive) return null;
                 if (!profileCollectionComplete) return null;
                 return (
-                  <NmBubble
-                    key={msg.id}
-                    wide
-                    eyebrow="OPÇÕES HARMONIZADAS"
-                    className="!max-w-full"
-                  >
+                  <div key={msg.id} className="w-full my-2 animate-fade-in">
                     <SuggestionPicker
+                      scrollSistemaToken={scrollSistemaToken}
+                      scrollCandidato={scrollCandidato}
                       suggestions={suggestions}
                       selectedId={activeSuggestionId}
                       onSelect={handleSuggestionSelect}
@@ -2289,9 +2291,8 @@ export function NomeSocialChat({
                           onSubmit={handleEvaluateManual}
                           className="flex flex-col flex-1 min-w-0 gap-2"
                         >
-                          <label htmlFor="manual-name" className="text-xs sm:text-sm leading-relaxed text-[#e5e2e1]/80">
-                            Digite o nome que você prefere e veja a nota real dele, pelo cálculo puro, sem os filtros
-                            das sugestões. Ele aparece aqui embaixo, num card igual aos outros.
+                          <label htmlFor="manual-name" className="sr-only">
+                            Teste um nome da sua escolha
                           </label>
                           <div className="flex flex-col sm:flex-row min-w-0 items-stretch sm:items-center gap-3">
                           <input
@@ -2318,10 +2319,10 @@ export function NomeSocialChat({
                         </form>
                         <div className="space-y-1">
                           <p id="manual-name-help" className="text-xs leading-relaxed text-[#e5e2e1]/70">
-                            {manualUsed} de {NOME_SOCIAL_MAX_MANUAIS} nomes manuais avaliados nesta sessão. Cota separada das 9 sugestões automáticas.
+                            {manualUsed} de {NOME_SOCIAL_MAX_MANUAIS} testes usados
                           </p>
                           {manualNotice && (
-                            <p id="manual-name-status" role="status" className="text-sm leading-relaxed text-[#d7c6ff]">
+                            <p id="manual-name-status" role="status" className="text-xs leading-relaxed text-amber-300/90">
                               {manualNotice}
                             </p>
                           )}
@@ -2329,7 +2330,7 @@ export function NomeSocialChat({
                         </div>
                       )}
                     />
-                  </NmBubble>
+                  </div>
                 );
               }
 
