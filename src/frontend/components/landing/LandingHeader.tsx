@@ -96,7 +96,7 @@ export function LandingHeader() {
         {/* Coluna Esquerda: Logo permanece no mesmo lugar */}
         <div className="flex-1 flex items-center justify-start">
           <a ref={logoRef} href="/" className="hover:opacity-80 transition-opacity shrink-0">
-            <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-8 sm:h-10 md:h-11 w-auto max-w-none aspect-[2447/500]" />
+            <img src="/logo-nm-header.svg" alt="Nome Magnético" className="block h-9 sm:h-10 md:h-11 w-auto max-w-none aspect-[2447/500]" />
           </a>
         </div>
 

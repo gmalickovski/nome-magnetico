@@ -40,7 +40,8 @@ const {
 
 const user = Astro.locals.user;
 if (!user) {
-  return Astro.redirect('/auth/login?redirect=' + encodeURIComponent(Astro.url.pathname));
+  // DEV-317: mantém a query (?id=…&painel=1) para o link do e-mail abrir a análise certa depois do login.
+  return Astro.redirect('/auth/login?redirect=' + encodeURIComponent(Astro.url.pathname + Astro.url.search));
 }
 
 let isAdmin = false;

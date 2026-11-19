@@ -36,13 +36,30 @@ export default function AppMobileHeader({ nome, isAdmin, userId, showAnalysisCta
           href="/app"
           className="flex min-h-11 items-center justify-center transition-opacity hover:opacity-80"
         >
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="h-auto w-[96px] min-[360px]:w-[132px] min-[390px]:w-[150px] sm:w-[160px]" />
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" className="h-9 w-auto max-w-[56vw] object-contain" />
         </a>
         <div className="min-w-0 justify-self-end">
           {showAnalysisCta && userId && (
             <a href="/app/analise/nome-social" data-nm-mobile-header-cta="analise"
-              className="relative isolate inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full px-2 text-[11px] font-semibold text-[#131313] before:absolute before:inset-x-0 before:inset-y-1.5 before:-z-10 before:rounded-full before:bg-[#D4AF37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]">
-              {hasUnfinishedSession ? 'Retomar Análise' : 'Nova Análise'}
+              aria-label={hasUnfinishedSession ? 'Retomar análise' : 'Nova análise'}
+              title={hasUnfinishedSession ? 'Retomar análise' : 'Nova análise'}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#D4AF37] text-[#131313] transition-colors duration-300 hover:bg-[#f2ca50] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]">
+              {/* DEV-317: mesma folha (família Lucide do sistema); "+" para nova, seta para retomar. */}
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                {hasUnfinishedSession ? (
+                  <>
+                    <path d="M8 14h7" />
+                    <path d="m12.5 11 3 3-3 3" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M12 11v6" />
+                    <path d="M9 14h6" />
+                  </>
+                )}
+              </svg>
             </a>
           )}
         </div>
