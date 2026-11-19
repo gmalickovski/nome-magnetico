@@ -151,7 +151,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const mobileHeader = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'AppMobileHeader.tsx'), 'utf8');
     assert.match(mobileHeader, /lg:hidden/);
     assert.match(mobileHeader, /href="\/app\/analise\/nome-social"/);
-    assert.match(mobileHeader, /hasUnfinishedSession \? 'Retomar Análise' : 'Nova Análise'/);
+    // DEV-317: no celular o botão é só ícone, com o nome no aria-label.
+    assert.match(mobileHeader, /aria-label=\{hasUnfinishedSession \? 'Retomar análise' : 'Nova análise'\}/);
     assert.match(readFileSync(analisesFile, 'utf8'), /showMobileAnalysisCta=\{!isLocked && hasAnyPaidAccess\}/);
 
     assert.equal(comecarAnchors.length, 1);
