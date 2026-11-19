@@ -301,7 +301,7 @@ export default function MyAnalysesWorkspace({
   const [filtroAberto, setFiltroAberto] = useState(false);
   // DEV-317: depois de editar o nome de nascimento nas configurações, recarrega para recalcular os cards.
   useEffect(() => {
-    const recarregar = () => window.setTimeout(() => window.location.reload(), 900);
+    const recarregar = () => window.location.reload();
     window.addEventListener('nm-birth-data-updated', recarregar);
     return () => window.removeEventListener('nm-birth-data-updated', recarregar);
   }, []);
