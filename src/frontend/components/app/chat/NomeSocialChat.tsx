@@ -1268,7 +1268,7 @@ export function NomeSocialChat({
         data.next_step,
         nomeBase,
         blockTransitionsShown.current,
-        { avisoArtisticoContratos }
+        { avisoArtisticoContratos, ramoArtistico }
       );
       if (transition) {
         blockTransitionsShown.current.add(transition.id);

@@ -481,7 +481,7 @@ export function resolveBlockTransition(
   nextStepId: string,
   nomeCurto: string,
   alreadyShown: ReadonlySet<BlockTransitionId>,
-  extras?: { avisoArtisticoContratos?: boolean }
+  extras?: { avisoArtisticoContratos?: boolean; ramoArtistico?: boolean }
 ): { id: BlockTransitionId; text: string } | null {
   if (
     !alreadyShown.has('aviso_artistico_contratos') &&
@@ -516,7 +516,10 @@ export function resolveBlockTransition(
   ) {
     return {
       id: 'before_suggestions',
-      text: 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
+      // DEV-321: no ramo artístico são nomes artísticos, não assinaturas.
+      text: extras?.ramoArtistico
+        ? 'Pronto. Cruzei suas respostas com o seu mapa e separei os nomes artísticos que mais combinam com você.'
+        : 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
     };
   }
 
@@ -526,7 +529,8 @@ export function resolveBlockTransition(
 const TRANSITION_MARKERS: Record<BlockTransitionId, string> = {
   after_nome_block: 'Agora quero entender onde a sua assinatura aparece.',
   before_area_foco: 'Agora vamos ao que mais pede a sua atenção.',
-  before_suggestions: 'separei as assinaturas que mais combinam com você.',
+  // Comum às duas versões do texto (padrão e artístico).
+  before_suggestions: 'que mais combinam com você.',
   aviso_artistico_contratos: 'Uma informação importante sobre nome artístico',
 };
 
