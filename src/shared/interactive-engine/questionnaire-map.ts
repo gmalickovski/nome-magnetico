@@ -8,6 +8,9 @@ import {
   mapSubfocoToEnum,
   type QuestionnaireStepId,
 } from './questionnaire-adaptive';
+import { profileToRankingOpcoesArtistico } from './ramos/artistico';
+
+export { profileToRankingOpcoesArtistico };
 
 /** Campos aceitos pelo ranking/filtro de nome-social (não alteram fórmula do score). */
 export interface RankingOpcoesPatch {
@@ -78,51 +81,6 @@ export function profileToPerfilChat(profile: QuestionnaireProfile): PerfilChatPe
     imagemArtistica: lista(profile.imagemArtistica),
     tipoNomeArtistico: profile.tipoNomeArtistico ?? undefined,
     outrosUsos: lista(profile.outrosUsos),
-  };
-}
-
-/** DEV-320: imagem artística vira a afinidade de estilo que o motor já entende (DEV-302). */
-const IMAGEM_PARA_ESTILO: Record<string, string> = {
-  marcante: 'criatividade',
-  sofisticada: 'elegancia_discreta',
-  divertida: 'leve_acolhimento',
-  misteriosa: 'elegancia_discreta',
-  popular: 'leve_acolhimento',
-};
-
-/**
- * DEV-320: ramo artístico com nome próximo do nascimento (F1).
- * Forma curta, apelido e encurtamento liberados; sem teto de nível; sem restrição legal
- * (contratos seguem o nome civil, ver aviso informativo). Zero bloqueio e nota mínima seguem valendo.
- * "Totalmente diferente" ainda usa o motor de nomes próximos até a F2 (DEV-321).
- */
-export function profileToRankingOpcoesArtistico(
-  profile: QuestionnaireProfile,
-  extras?: Partial<RankingOpcoesPatch>
-): RankingOpcoesPatch {
-  const estilo = [
-    ...new Set((profile.imagemArtistica ?? []).map((i) => IMAGEM_PARA_ESTILO[i]).filter(Boolean)),
-  ];
-  return {
-    ondeVaiUsar: ['marca_autoria', 'presenca_digital'],
-    sobrenomesObrigatorios:
-      profile.sobrenomesObrigatorios.length > 0 ? profile.sobrenomesObrigatorios : undefined,
-    sobrenomesExcluidos:
-      profile.sobrenomesExcluidos.length > 0 ? profile.sobrenomesExcluidos : undefined,
-    estiloPreferido: 'curto_direto',
-    aceitaEncurtarOuApelido: true,
-    assinaturaAtual: profile.nomeUsoBase?.trim() || undefined,
-    restricaoDocumentosLegais: undefined,
-    maxNivelGeracao: undefined,
-    afinidades: {
-      estilo: estilo.length > 0 ? estilo : undefined,
-      area: 'autoestima_expressao',
-      subfocos: ['voz_seguranca'],
-    },
-    manterPrimeiroNome: profile.preferenciasAssinatura?.includes('manter_primeiro_nome') || undefined,
-    acentoNaAssinatura: profile.preferenciasAssinatura?.includes('sem_acento') ? 'prefere_sem' : undefined,
-    prioridadeConflito: profile.tipoNomeArtistico === 'proximo' ? 'mudanca' : 'nota',
-    ...extras,
   };
 }
 
