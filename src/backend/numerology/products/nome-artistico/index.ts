@@ -14,6 +14,7 @@
 import {
   avaliarCandidatoLivre,
   candidatoOfertavel,
+  NOTA_MINIMA_NOME_NOVO,
   type AvaliacaoCandidato,
 } from '../shared/avaliar-candidato';
 import { afinidadeExpressaoArea, explicarAfinidade } from './afinidade-area';
@@ -105,8 +106,17 @@ function segundaPalavra(s: NomeArtisticoSugerido): string | null {
 }
 
 /** Escolhe os melhores sem repetir a mesma forma de origem nem a mesma segunda palavra. */
-function escolher<T extends NomeArtisticoSugerido>(lista: T[], quantidade: number, chave: (s: T) => string): T[] {
-  const ordenada = [...lista].sort((x, y) => pontuar(y) - pontuar(x) || x.nomeCompleto.localeCompare(y.nomeCompleto, 'pt-BR'));
+function escolher<T extends NomeArtisticoSugerido>(
+  lista: T[],
+  quantidade: number,
+  chave: (s: T) => string,
+  /** Nomes novos: do mais próximo de 100 para baixo (a afinidade e a técnica só desempatam). */
+  porNota = false,
+): T[] {
+  const ordenada = [...lista].sort((x, y) =>
+    (porNota ? y.score - x.score : 0) ||
+    pontuar(y) - pontuar(x) ||
+    x.nomeCompleto.localeCompare(y.nomeCompleto, 'pt-BR'));
   const usadas = new Set<string>();
   const segundas = new Set<string>();
   const escolhidos: T[] = [];
@@ -173,8 +183,8 @@ export function gerarNomesArtisticos(entrada: EntradaNomesArtisticos): Resultado
     const ideias = filtrarIdeiasNovas(entrada.ideiasIA ?? [], partes).filter(livre);
     const daIA = ideias
       .map((n) => avaliar(n, dataNascimento, perfil, 'novo', 'ia'))
-      .filter((s) => candidatoOfertavel(s));
-    novos = escolher(daIA, quantidade, (s) => s.nomeCompleto.split(' ')[0]!.toLowerCase());
+      .filter((s) => candidatoOfertavel(s, NOTA_MINIMA_NOME_NOVO));
+    novos = escolher(daIA, quantidade, (s) => s.nomeCompleto.split(' ')[0]!.toLowerCase(), true);
     if (novos.length < quantidade) {
       const jaTem = new Set(novos.map((s) => s.nomeCompleto.toLowerCase()));
       const banco = filtrarIdeiasNovas(
@@ -186,14 +196,16 @@ export function gerarNomesArtisticos(entrada: EntradaNomesArtisticos): Resultado
       )
         .filter((n) => livre(n) && !jaTem.has(n.toLowerCase()))
         .map((n) => avaliar(n, dataNascimento, perfil, 'novo', 'banco'))
-        .filter((s) => candidatoOfertavel(s));
+        .filter((s) => candidatoOfertavel(s, NOTA_MINIMA_NOME_NOVO));
       const usados = new Set(novos.map((s) => s.nomeCompleto.split(' ')[0]!.toLowerCase()));
       const complemento = escolher(
         banco.filter((s) => !usados.has(s.nomeCompleto.split(' ')[0]!.toLowerCase())),
         quantidade - novos.length,
         (s) => s.nomeCompleto.split(' ')[0]!.toLowerCase(),
+        true,
       );
-      novos = [...novos, ...complemento];
+      // Do mais próximo de 100 para baixo, também depois de juntar as ideias da IA com o banco.
+      novos = [...novos, ...complemento].sort((a, b) => b.score - a.score || a.nomeCompleto.localeCompare(b.nomeCompleto, 'pt-BR'));
     }
   }
 

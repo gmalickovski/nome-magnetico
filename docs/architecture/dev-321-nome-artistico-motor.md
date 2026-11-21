@@ -14,7 +14,7 @@ No ramo artístico, depois do palpite, o chat mostra duas seções dentro de "Su
 
 "Gerar outras opções" traz mais nomes das mesmas seções, sem repetir os já vistos (respeita o limite de `podePedirGerarMais`).
 
-Todo nome sugerido tem **zero bloqueio nos 4 triângulos**, **sem tensão vibracional** com o Destino e **nota de 70 ou mais**. Cada card explica por que o número favorece a área (sem dígitos no texto).
+Todo nome sugerido tem **zero bloqueio nos 4 triângulos**, **sem tensão vibracional** com o Destino e **nota de 70 ou mais** nos nomes próximos do nascimento. Nos **nomes totalmente novos** (que não partem do nome de nascimento) a nota mínima é **80**, listados do mais próximo de 100 para baixo (a afinidade com a área só desempata). Regra geral definida em 21/11/2026. O motor do Nome Social não é afetado: este motor é separado. Cada card explica por que o número favorece a área (sem dígitos no texto).
 
 ## 2. Separação dos motores (regra de manutenção)
 
