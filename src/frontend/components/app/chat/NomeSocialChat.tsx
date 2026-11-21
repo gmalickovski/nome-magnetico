@@ -55,7 +55,7 @@ import {
 import { SuggestionPicker } from './SuggestionPicker.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { ChatSidebarPanelChrome } from './ChatSidebarPanelChrome.js';
-import { isInteractionPending } from './chat-interaction-pending.js';
+import { isInteractionPending, isOnboardingStepId } from './chat-interaction-pending.js';
 import { ChatStepInteraction, ChatChoicePills } from './ChatStepInteraction.js';
 import {
   INITIAL_COLLECT_STATE,
@@ -80,6 +80,13 @@ import {
   type RawArtisticNamesResponse,
 } from './artistic-suggestions-client.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
+import {
+  POST_BIRTH_FLOW_STEPS,
+  getPreviousFlowStep,
+  planBackNavigation,
+  rewindCollectStateToStep,
+  type PostBirthFlowStep,
+} from './chat-dock-step-back.js';
 import {
   QUESTIONNAIRE_STEP_ORDER,
   detectShownBlockTransitions,
@@ -1505,6 +1512,51 @@ export function NomeSocialChat({
     });
   };
 
+  /** DEV-324: pergunta anterior para onde o "Voltar" leva (null quando não há como voltar). */
+  const previousStepFor = (stepId: string): PostBirthFlowStep | null => {
+    if (!birthConfirmed || freePaywallActive || chatPhase === 'free_paywall') return null;
+    const prev = getPreviousFlowStep(stepId, collectState);
+    if (!prev || prev === 'suggestions') return null;
+    // O palpite só volta se ainda for o cartão de resposta (não foi virado em campo de texto).
+    if (prev === 'palpite' && !messages.some((m) => m.stepId === 'palpite' && m.type === 'guess')) return null;
+    return prev;
+  };
+
+  /**
+   * DEV-324: volta uma pergunta, sem recomeçar. Corta o chat até a pergunta de destino, apaga
+   * as respostas dela e das seguintes e reapresenta as opções, sem chamar a API de novo.
+   * O "Recomeçar" da dock continua zerando tudo.
+   */
+  const handleGoBack = () => {
+    if (loading || isRegenerating || manualLock.current) return;
+    const target = previousStepFor(currentStepId);
+    if (!target) return;
+    const plan = planBackNavigation(messages, target);
+    if (!plan) return;
+    const { kept, removedAnswers, undoneStepIds: desfazidos } = plan;
+    const cameFromSuggestions = currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
+
+    setMessages(kept);
+    setCollectState(rewindCollectStateToStep(collectState, target));
+    setAnswers((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !desfazidos.has(k))));
+    setCurrentStepId(target);
+    setRemaining(remaining + removedAnswers);
+    setStepIndex(Math.max(1, totalSteps - (remaining + removedAnswers)));
+    blockTransitionsShown.current = detectShownBlockTransitions(kept);
+    setNomeArtisticoDraft('');
+    setPendingPalpiteFeedback(null);
+    if (cameFromSuggestions) {
+      setSuggestions([]);
+      setActiveSuggestionId(null);
+      setAnalysisId(undefined);
+      clearChatPdfEnsureInflight();
+      lastAnalyzeSuggestionsFingerprintRef.current = null;
+      lastAnalyzeSelectedNameRef.current = null;
+      setRegenerateNotice(null);
+    }
+    capturePostHogEvent('chat_step_back', { from: currentStepId, to: target });
+  };
+
   const handleUserAnswer = async (text: string, optionId?: string) => {
     if (!text.trim() || loading) return;
 
@@ -2356,6 +2408,7 @@ export function NomeSocialChat({
                       selectedId={activeSuggestionId}
                       onSelect={handleSuggestionSelect}
                       onRegenerate={handleRegenerate}
+                      onBack={previousStepFor('fim_coleta') ? handleGoBack : undefined}
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
                       canRegenerate={!manualLoading && podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length)}
@@ -2417,6 +2470,7 @@ export function NomeSocialChat({
                       onExact={handleGuessExact}
                       onPartial={() => handleGuessPartial(msg.id)}
                       onOther={() => handleGuessOther(msg.id)}
+                      onBack={previousStepFor('palpite') ? handleGoBack : undefined}
                       disabled={loading}
                     />
                   )}
@@ -2470,6 +2524,8 @@ export function NomeSocialChat({
                           (JSON.parse(msg.hypotheticalText || '{}') as { caption?: string }).caption
                         }
                         disabled={loading}
+                        onBack={previousStepFor(msg.stepId) ? handleGoBack : undefined}
+                        otherPlaceholder={msg.stepId === 'area_artistica' ? 'Qual é a sua área?' : undefined}
                         onSubmitSingle={(id, label, other) =>
                           handleQuestionnaireSingle(msg.stepId!, id, label, other)
                         }

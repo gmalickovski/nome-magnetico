@@ -4,6 +4,7 @@ import { Pill } from '../../ui/Pill.js';
 import { toggleSelection } from './selection.js';
 import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
+import { ChatBackButton } from './ChatBackButton.js';
 import { dividirPorSecao, temSecoesArtisticas } from './artistic-suggestions-client.js';
 
 export interface SuggestionPickerProps {
@@ -22,6 +23,8 @@ export interface SuggestionPickerProps {
   scrollSistemaToken?: number;
   /** DEV-317: card a mostrar inteiro depois de testar um nome. */
   scrollCandidato?: { id: string; n: number } | null;
+  /** DEV-324: volta ao palpite. */
+  onBack?: () => void;
   className?: string;
 }
 
@@ -43,6 +46,7 @@ export function SuggestionPicker({
   manualSlot,
   scrollSistemaToken = 0,
   scrollCandidato = null,
+  onBack,
   className = '',
 }: SuggestionPickerProps) {
   const sistemaRef = useRef<HTMLElement>(null);
@@ -243,6 +247,14 @@ export function SuggestionPicker({
         )}
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-1">
+          {onBack && (
+            <ChatBackButton
+              onClick={onBack}
+              disabled={isRegenerating}
+              label="Voltar ao palpite"
+              className="self-start"
+            />
+          )}
           <Pill
             label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
             size="lg"
