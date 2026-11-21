@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEV303_NEW_STEPS,
+  DEV320_STEPS,
   QUESTIONNAIRE_STEP_ORDER,
   getQuestionSpec,
   inferAreaFocoFromText,
@@ -84,15 +85,18 @@ function percorrer(respostas: {
 }
 
 describe('DEV-303 · roteiro com no máximo 10 passos', () => {
+  // DEV-320: sem o fluxo com motivo ligado, os passos novos da DEV-320 não aparecem.
+  const ROTEIRO_DEV303 = QUESTIONNAIRE_STEP_ORDER.filter((s) => !DEV320_STEPS.includes(s));
+
   it('a ordem tem 10 passos e os 2 novos vêm por último', () => {
-    assert.equal(QUESTIONNAIRE_STEP_ORDER.length, 10);
-    assert.deepEqual(QUESTIONNAIRE_STEP_ORDER.slice(-2), ['preferencias_assinatura', 'prioridade_conflito']);
+    assert.equal(ROTEIRO_DEV303.length, 10);
+    assert.deepEqual(ROTEIRO_DEV303.slice(-2), ['preferencias_assinatura', 'prioridade_conflito']);
     assert.deepEqual([...DEV303_NEW_STEPS], ['preferencias_assinatura', 'prioridade_conflito']);
   });
 
   it('caminho comum: 10 perguntas', () => {
     const feitas = percorrer({ relacaoNome: 'gosto_muito' });
-    assert.deepEqual(feitas, [...QUESTIONNAIRE_STEP_ORDER]);
+    assert.deepEqual(feitas, [...ROTEIRO_DEV303]);
     assert.ok(feitas.length <= 10);
   });
 

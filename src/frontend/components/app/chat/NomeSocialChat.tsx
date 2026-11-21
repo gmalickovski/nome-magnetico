@@ -76,6 +76,7 @@ import {
   QUESTIONNAIRE_STEP_ORDER,
   detectShownBlockTransitions,
   resolveBlockTransition,
+  precisaAvisoArtisticoContratos,
   type BlockTransitionId,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
 import {
@@ -1215,7 +1216,8 @@ export function NomeSocialChat({
   const applyDecisionResponse = (
     data: DecideLiveResponse,
     completedStepId?: string,
-    nomeCurto?: string | null
+    nomeCurto?: string | null,
+    avisoArtisticoContratos = false
   ) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
@@ -1252,7 +1254,8 @@ export function NomeSocialChat({
         completedStepId,
         data.next_step,
         nomeBase,
-        blockTransitionsShown.current
+        blockTransitionsShown.current,
+        { avisoArtisticoContratos }
       );
       if (transition) {
         blockTransitionsShown.current.add(transition.id);
@@ -1417,7 +1420,12 @@ export function NomeSocialChat({
       }
 
       await sleepMs(computeChatRevealDelayMs(submittedAt));
-      applyDecisionResponse(responseData, stepId, nextCollect.nomeUsoBase ?? confirmedName);
+      applyDecisionResponse(
+        responseData,
+        stepId,
+        nextCollect.nomeUsoBase ?? confirmedName,
+        precisaAvisoArtisticoContratos(nextCollect.motivoHarmonizacao, nextCollect.outrosUsos),
+      );
     } catch (err) {
       console.error(err);
       setMessages((prev) => [

@@ -74,6 +74,19 @@ const schema = z.object({
   ranking_somente_chat: z.boolean().optional(),
   /** Histórico de sugestões vazio no export — não autogerar candidatos. */
   ranking_vazio_sem_autogeracao: z.boolean().optional(),
+  /** DEV-320: perfil do chat (motivo e ramo artístico), guardado em `frequencias_numeros.perfilChat`. */
+  perfil_chat: z
+    .object({
+      motivo: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco']).optional(),
+      areaArtistica: z.string().max(40).optional(),
+      areaArtisticaOutro: z.string().max(60).optional(),
+      detalheArtistico: z.array(z.string().max(40)).max(2).optional(),
+      generoPersona: z.enum(['feminino', 'masculino', 'neutro']).optional(),
+      imagemArtistica: z.array(z.string().max(40)).max(2).optional(),
+      tipoNomeArtistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
+      outrosUsos: z.array(z.string().max(40)).max(6).optional(),
+    })
+    .optional(),
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
   gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
@@ -431,6 +444,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               ondeVaiUsar: onde_vai_usar ?? [],
             },
             rankingSomenteChat: somenteChat,
+            ...(parsed.data.perfil_chat ? { perfilChat: parsed.data.perfil_chat } : {}),
             scoreVersion: scoreFieldsSocial.score_version ?? (isScoreV3() ? 'v3' : 'v1'),
             radarVersion: CONTEXTUAL_RADAR_VERSION,
             radarSnapshot: nome_social_principal ? {

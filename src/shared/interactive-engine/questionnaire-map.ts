@@ -43,6 +43,87 @@ export interface QuestionnaireProfile {
   preferenciasAssinatura?: string[];
   prioridadeConflito?: string | null;
   areaFocoOutro?: string | null;
+  /** DEV-320 */
+  motivoHarmonizacao?: string | null;
+  areaArtistica?: string | null;
+  areaArtisticaOutro?: string | null;
+  detalheArtistico?: string[];
+  generoPersona?: string | null;
+  imagemArtistica?: string[];
+  tipoNomeArtistico?: string | null;
+  outrosUsos?: string[];
+}
+
+/** DEV-320: perfil do chat guardado junto da análise (`parametros_usuario.perfilChat`). */
+export interface PerfilChatPersistido {
+  motivo?: string;
+  areaArtistica?: string;
+  areaArtisticaOutro?: string;
+  detalheArtistico?: string[];
+  generoPersona?: string;
+  imagemArtistica?: string[];
+  tipoNomeArtistico?: string;
+  outrosUsos?: string[];
+}
+
+export function profileToPerfilChat(profile: QuestionnaireProfile): PerfilChatPersistido | undefined {
+  if (!profile.motivoHarmonizacao) return undefined;
+  const lista = (v?: string[]) => (v && v.length > 0 ? v : undefined);
+  return {
+    motivo: profile.motivoHarmonizacao,
+    areaArtistica: profile.areaArtistica ?? undefined,
+    areaArtisticaOutro: profile.areaArtisticaOutro ?? undefined,
+    detalheArtistico: lista(profile.detalheArtistico),
+    generoPersona: profile.generoPersona ?? undefined,
+    imagemArtistica: lista(profile.imagemArtistica),
+    tipoNomeArtistico: profile.tipoNomeArtistico ?? undefined,
+    outrosUsos: lista(profile.outrosUsos),
+  };
+}
+
+/** DEV-320: imagem artística vira a afinidade de estilo que o motor já entende (DEV-302). */
+const IMAGEM_PARA_ESTILO: Record<string, string> = {
+  marcante: 'criatividade',
+  sofisticada: 'elegancia_discreta',
+  divertida: 'leve_acolhimento',
+  misteriosa: 'elegancia_discreta',
+  popular: 'leve_acolhimento',
+};
+
+/**
+ * DEV-320: ramo artístico com nome próximo do nascimento (F1).
+ * Forma curta, apelido e encurtamento liberados; sem teto de nível; sem restrição legal
+ * (contratos seguem o nome civil, ver aviso informativo). Zero bloqueio e nota mínima seguem valendo.
+ * "Totalmente diferente" ainda usa o motor de nomes próximos até a F2 (DEV-321).
+ */
+export function profileToRankingOpcoesArtistico(
+  profile: QuestionnaireProfile,
+  extras?: Partial<RankingOpcoesPatch>
+): RankingOpcoesPatch {
+  const estilo = [
+    ...new Set((profile.imagemArtistica ?? []).map((i) => IMAGEM_PARA_ESTILO[i]).filter(Boolean)),
+  ];
+  return {
+    ondeVaiUsar: ['marca_autoria', 'presenca_digital'],
+    sobrenomesObrigatorios:
+      profile.sobrenomesObrigatorios.length > 0 ? profile.sobrenomesObrigatorios : undefined,
+    sobrenomesExcluidos:
+      profile.sobrenomesExcluidos.length > 0 ? profile.sobrenomesExcluidos : undefined,
+    estiloPreferido: 'curto_direto',
+    aceitaEncurtarOuApelido: true,
+    assinaturaAtual: profile.nomeUsoBase?.trim() || undefined,
+    restricaoDocumentosLegais: undefined,
+    maxNivelGeracao: undefined,
+    afinidades: {
+      estilo: estilo.length > 0 ? estilo : undefined,
+      area: 'autoestima_expressao',
+      subfocos: ['voz_seguranca'],
+    },
+    manterPrimeiroNome: profile.preferenciasAssinatura?.includes('manter_primeiro_nome') || undefined,
+    acentoNaAssinatura: profile.preferenciasAssinatura?.includes('sem_acento') ? 'prefere_sem' : undefined,
+    prioridadeConflito: profile.tipoNomeArtistico === 'proximo' ? 'mudanca' : 'nota',
+    ...extras,
+  };
 }
 
 export function mapAberturaToEstilo(
@@ -122,6 +203,9 @@ export function profileToRankingOpcoes(
   profile: QuestionnaireProfile,
   extras?: Partial<RankingOpcoesPatch>
 ): RankingOpcoesPatch {
+  if (profile.motivoHarmonizacao === 'artistico') {
+    return profileToRankingOpcoesArtistico(profile, extras);
+  }
   const ondeApi = mapOndeAssinaToApi(profile.ondeAssinaRaw);
   const estilo = mapAberturaToEstilo(
     profile.aberturaMudanca,
