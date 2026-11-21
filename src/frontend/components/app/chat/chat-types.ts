@@ -120,6 +120,8 @@ export interface ChatDebitoCarmico {
 
 export interface CandidateSuggestion {
   origem?: 'manual' | 'gerado';
+  /** DEV-321: seção do ramo artístico (nomes próximos do nascimento ou nomes novos). */
+  secao?: 'proximo' | 'novo';
   scoreVersion?: 'v3';
   radarAxes?: RadarAxesData;
   id: string;

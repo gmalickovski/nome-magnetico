@@ -6,6 +6,7 @@ import {
   isQuestionnaireStepSkipped,
   precisaAvisoArtisticoContratos,
   resolveBlockTransition,
+  detectShownBlockTransitions,
   type QuestionnaireStepId,
 } from './questionnaire-adaptive.ts';
 import { determineNextStep, type RouterState } from './router.ts';
@@ -217,5 +218,16 @@ describe('DEV-320 · ponte do chat e voltar', () => {
     assert.equal(getPreviousFlowStep('outros_usos', state), 'preferencias_assinatura');
     assert.equal(getPreviousFlowStep('nome_uso', state), 'motivo_harmonizacao');
     assert.equal(getPreviousFlowStep('nome_uso', { relacaoNome: null, aberturaMudanca: null, ondeAssinaRaw: [] }), null);
+  });
+});
+
+describe('DEV-320 · transição antes das sugestões', () => {
+  it('no ramo artístico fala de nomes artísticos e a restauração de sessão reconhece as duas versões', () => {
+    const art = resolveBlockTransition('palpite', 'fim_coleta', 'Ana', new Set(), { ramoArtistico: true });
+    const pad = resolveBlockTransition('palpite', 'fim_coleta', 'Ana', new Set());
+    assert.match(art!.text, /nomes artísticos/);
+    assert.match(pad!.text, /assinaturas/);
+    assert.equal(detectShownBlockTransitions([{ content: art!.text }]).has('before_suggestions'), true);
+    assert.equal(detectShownBlockTransitions([{ content: pad!.text }]).has('before_suggestions'), true);
   });
 });

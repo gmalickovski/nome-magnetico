@@ -4,6 +4,7 @@ import { Pill } from '../../ui/Pill.js';
 import { toggleSelection } from './selection.js';
 import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
+import { dividirPorSecao, temSecoesArtisticas } from './artistic-suggestions-client.js';
 
 export interface SuggestionPickerProps {
   suggestions: CandidateSuggestion[];
@@ -205,7 +206,33 @@ export function SuggestionPicker({
         {cabecalho('system-names-title', 'Sugestões do sistema', sistema.length, sistemaAberto, () => setSistemaAberto((v) => !v), 'system-names-list', 'text-gold')}
         {sistemaAberto && (
           <div id="system-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
-            {sistema.map((sug, index) => renderCard(sug, index))}
+            {temSecoesArtisticas(sistema) ? (
+              // DEV-321: ramo artístico, duas seções (próximos do nascimento e nomes novos).
+              (() => {
+                const s = dividirPorSecao(sistema);
+                const grupo = (titulo: string, dica: string, itens: typeof sistema, inicio: number) =>
+                  itens.length > 0 && (
+                    <div className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
+                      <div>
+                        <h4 className="font-inter text-[11px] font-medium uppercase tracking-[0.1em] text-[#d7c6ff]">
+                          {titulo} <span className="text-chat-muted">({itens.length})</span>
+                        </h4>
+                        <p className="text-xs text-chat-muted mt-0.5">{dica}</p>
+                      </div>
+                      {itens.map((sug, i) => renderCard(sug, inicio + i))}
+                    </div>
+                  );
+                return (
+                  <>
+                    {grupo('Nomes artísticos próximos do seu', 'Formas do seu próprio nome, pensadas para o palco.', s.proximos, 0)}
+                    {grupo('Nomes totalmente novos', 'Nomes criados para o seu estilo e testados no seu mapa.', s.novos, s.proximos.length)}
+                    {s.outros.map((sug, i) => renderCard(sug, s.proximos.length + s.novos.length + i))}
+                  </>
+                );
+              })()
+            ) : (
+              sistema.map((sug, index) => renderCard(sug, index))
+            )}
           </div>
         )}
 

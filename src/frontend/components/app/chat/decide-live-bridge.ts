@@ -205,6 +205,7 @@ export function mapCandidate(
     bloqueiosRestantes: bloqueios.length,
     maiorNota: raw.maiorNota === true,
     principal: raw.principal === true,
+    secao: raw.secao === 'proximo' || raw.secao === 'novo' ? raw.secao : undefined,
     destaque: typeof raw.explicacaoPerfil === 'string' ? raw.explicacaoPerfil : undefined,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },

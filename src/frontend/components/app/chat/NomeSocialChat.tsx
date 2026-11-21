@@ -71,6 +71,14 @@ import {
   type ChatCollectState,
 } from './decide-live-bridge.js';
 import { podePedirGerarMais } from '../../../../shared/nome-social/gerar-mais-limits.js';
+import {
+  NOTICE_CRIANDO_NOMES_ARTISTICOS,
+  artisticNamesNotice,
+  buildArtisticNamesBody,
+  isRamoArtisticoCollect,
+  mapArtisticNamesToCandidates,
+  type RawArtisticNamesResponse,
+} from './artistic-suggestions-client.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
 import {
   QUESTIONNAIRE_STEP_ORDER,
@@ -1217,7 +1225,8 @@ export function NomeSocialChat({
     data: DecideLiveResponse,
     completedStepId?: string,
     nomeCurto?: string | null,
-    avisoArtisticoContratos = false
+    avisoArtisticoContratos = false,
+    ramoArtistico = false
   ) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
@@ -1231,7 +1240,11 @@ export function NomeSocialChat({
     const collectionComplete =
       data.next_step === 'fim_coleta' || data.next_step === 'conclusao';
 
-    if (collectionComplete) {
+    if (collectionComplete && ramoArtistico) {
+      // DEV-321: as sugestões do ramo artístico vêm de /api/artistic-names (carregadas pelo chamador).
+      setSuggestions([]);
+      setRegenerateNotice(NOTICE_CRIANDO_NOMES_ARTISTICOS);
+    } else if (collectionComplete) {
       if (data.semOpcoesElegiveis) {
         setSuggestions([]);
         setRegenerateNotice(
@@ -1255,7 +1268,7 @@ export function NomeSocialChat({
         data.next_step,
         nomeBase,
         blockTransitionsShown.current,
-        { avisoArtisticoContratos }
+        { avisoArtisticoContratos, ramoArtistico }
       );
       if (transition) {
         blockTransitionsShown.current.add(transition.id);
@@ -1425,7 +1438,14 @@ export function NomeSocialChat({
         stepId,
         nextCollect.nomeUsoBase ?? confirmedName,
         precisaAvisoArtisticoContratos(nextCollect.motivoHarmonizacao, nextCollect.outrosUsos),
+        isRamoArtisticoCollect(nextCollect),
       );
+      if (
+        (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') &&
+        isRamoArtisticoCollect(nextCollect)
+      ) {
+        void carregarNomesArtisticos(nextCollect, []);
+      }
     } catch (err) {
       console.error(err);
       setMessages((prev) => [
@@ -1640,9 +1660,55 @@ export function NomeSocialChat({
     }
   };
 
+  /** DEV-321: nomes do ramo artístico (3 próximos e 3 novos) pelo endpoint próprio. */
+  const carregarNomesArtisticos = async (collect: ChatCollectState, excluir: string[]) => {
+    const maisUma = excluir.length > 0;
+    setIsRegenerating(true);
+    if (!maisUma) setRegenerateNotice(NOTICE_CRIANDO_NOMES_ARTISTICOS);
+    try {
+      const res = await fetchWithAuth('/api/artistic-names', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildArtisticNamesBody(confirmedName, confirmedDate, collect, excluir)),
+      });
+      const data = (await res.json()) as RawArtisticNamesResponse;
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao criar os nomes artísticos');
+      const candidatos = mapArtisticNamesToCandidates(data);
+      if (candidatos.length > 0) {
+        setSuggestions((prev) => mergeChatSuggestionsCumulative(prev, candidatos));
+        setActiveSuggestionId(null);
+        if (!maisUma) setScrollSistemaToken((n) => n + 1);
+        setRegenerateNotice(artisticNamesNotice(data, collect.tipoNomeArtistico ?? null));
+      } else {
+        setRegenerateNotice(
+          maisUma
+            ? 'Não encontramos outros nomes diferentes dos que você já viu. Ajuste suas preferências para ver outras combinações.'
+            : artisticNamesNotice(data, collect.tipoNomeArtistico ?? null) ??
+                'Não foi possível criar nomes artísticos agora. Tente de novo.',
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setRegenerateNotice(
+        err instanceof Error ? err.message : 'Não foi possível criar os nomes artísticos. Tente de novo.',
+      );
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const handleRegenerate = async () => {
     if (manualLock.current || isRegenerating) return;
     if (!confirmedName.trim() || !confirmedDate.trim()) return;
+    if (isRamoArtisticoCollect(collectState)) {
+      // DEV-321: "Gerar outras opções" do ramo artístico usa o motor próprio, sem misturar com o Nome Social.
+      setRegenerateNotice(null);
+      await carregarNomesArtisticos(
+        collectState,
+        suggestions.filter((s) => s.origem !== 'manual').map((s) => s.nome),
+      );
+      return;
+    }
     setIsRegenerating(true);
     setRegenerateNotice(null);
     try {
