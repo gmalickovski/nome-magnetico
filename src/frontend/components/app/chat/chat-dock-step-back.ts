@@ -124,6 +124,8 @@ function clearStepFields(state: ChatCollectState, stepId: string): void {
     // DEV-320
     case 'motivo_harmonizacao':
       state.motivoHarmonizacao = null;
+      state.bebeMae = null;
+      state.bebePai = null;
       state.bebeSituacao = null;
       state.bebeDataTipo = null;
       state.bebeSexo = null;
@@ -158,6 +160,10 @@ function clearStepFields(state: ChatCollectState, stepId: string): void {
       state.outrosUsos = [];
       break;
     // DEV-326
+    case 'bebe_pais':
+      state.bebeMae = null;
+      state.bebePai = null;
+      break;
     case 'bebe_situacao':
       state.bebeSituacao = null;
       break;

@@ -41,6 +41,7 @@ export interface RouterState {
   tipoNomeArtistico?: string | null;
   outrosUsosDecididos?: boolean;
   /** DEV-326 */
+  bebePaisDecididos?: boolean;
   bebeSituacao?: string | null;
   bebeDataTipo?: string | null;
   bebeSexo?: string | null;
@@ -64,6 +65,8 @@ function isStepAnswered(step: QuestionnaireStepId, state: RouterState): boolean 
       return Boolean(state.tipoNomeArtistico);
     case 'outros_usos':
       return Boolean(state.outrosUsosDecididos);
+    case 'bebe_pais':
+      return Boolean(state.bebePaisDecididos);
     case 'bebe_situacao':
       return Boolean(state.bebeSituacao);
     case 'bebe_data_tipo':
@@ -119,6 +122,7 @@ const PROMPTS: Record<QuestionnaireStepId, string> = {
     'Você aceita um nome próximo do seu, um nome totalmente diferente ou as duas coisas?',
   outros_usos: 'Vai usar esse nome em mais algum lugar?',
   // DEV-326 (textos em `ramos/bebe.ts`)
+  bebe_pais: BEBE_PROMPTS.bebe_pais!,
   bebe_situacao: BEBE_PROMPTS.bebe_situacao!,
   bebe_data_tipo: BEBE_PROMPTS.bebe_data_tipo!,
   bebe_sexo: BEBE_PROMPTS.bebe_sexo!,
@@ -160,10 +164,12 @@ export interface NextStepDecision {
 }
 
 export function determineNextStep(state: RouterState): NextStepDecision {
+  // DEV-326: o caminho do bebê não usa a certidão do usuário (pede o nome da mãe e do pai).
   if (
-    !state.nomeCompleto ||
-    state.nomeCompleto.trim().split(/\s+/).length < 2 ||
-    !state.dataNascimento
+    !pulaPalpite(state) &&
+    (!state.nomeCompleto ||
+      state.nomeCompleto.trim().split(/\s+/).length < 2 ||
+      !state.dataNascimento)
   ) {
     return {
       nextStep: 'nome_nascimento',

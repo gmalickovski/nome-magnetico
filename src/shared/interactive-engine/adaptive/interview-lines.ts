@@ -23,6 +23,7 @@ export const STEP_TO_INTERVIEW_LINE: Record<QuestionnaireStepId, InterviewLine> 
   tipo_nome_artistico: 'tolerancia_mudanca',
   outros_usos: 'uso',
   // DEV-326
+  bebe_pais: 'sobrenomes',
   bebe_situacao: 'objetivos',
   bebe_data_tipo: 'objetivos',
   bebe_sexo: 'identidade',

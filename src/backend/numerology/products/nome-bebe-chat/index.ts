@@ -64,6 +64,8 @@ export interface ResultadoNomesBebe {
   /** Nomes dos pais ignorados por não serem válidos (texto com números, muito longos). */
   nomesPaisIgnorados: string[];
   semSugestoes: boolean;
+  /** Grupos pedidos (pelo sexo escolhido) que ficaram sem nenhuma sugestão. */
+  gruposSemSugestoes: Array<'menina' | 'menino' | 'neutro'>;
   /**
    * Por que não saíram sugestões: `sobrenomes_bloqueiam` quando os sobrenomes escolhidos já formam
    * uma sequência em todos os nomes testados (nenhum primeiro nome resolve); `regras` nos demais casos.
@@ -76,6 +78,8 @@ export interface ResultadoNomesBebe {
 export const FRACAO_MINIMA_DIAS_BONS = 0.5;
 export const MAX_NOMES_PAIS = 5;
 const MAX_SOBRENOMES_PERMUTADOS = 3;
+/** Quanto cada etiqueta de estilo atendida pesa no ordenamento (em pontos de nota). */
+const PESO_ESTILO = 12;
 
 const NOME_VALIDO = /^[A-Za-zÀ-ÖØ-öø-ÿ' ]{2,30}$/;
 
@@ -194,7 +198,7 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
       ? gerarJanelaDatas(entrada.data, entrada.janelaDias ?? JANELA_PADRAO_DIAS, entrada.janelaDias ?? JANELA_PADRAO_DIAS)
       : null;
   if (!parseDataPt(entrada.data)) {
-    return { seusNomes: [], sugestoes: [], nomesPaisIgnorados: [], semSugestoes: true, motivoSemSugestoes: 'data_invalida', janela: null };
+    return { seusNomes: [], sugestoes: [], nomesPaisIgnorados: [], semSugestoes: true, gruposSemSugestoes: [], motivoSemSugestoes: 'data_invalida', janela: null };
   }
   const datas = janelaDatas?.datas ?? [entrada.data];
   const centro = janelaDatas?.centro ?? entrada.data;
@@ -222,7 +226,7 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
   }
 
   if (entrada.apenasAnalisar) {
-    return { seusNomes, sugestoes: [], nomesPaisIgnorados: ignorados, semSugestoes: false, motivoSemSugestoes: null, janela: null };
+    return { seusNomes, sugestoes: [], nomesPaisIgnorados: ignorados, semSugestoes: false, gruposSemSugestoes: [], motivoSemSugestoes: null, janela: null };
   }
 
   // 2) Sugestões por grupo.
@@ -235,13 +239,14 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
   const sugestoes: NomeBebeSugerido[] = [];
   let testados = 0;
   let testadosComBloqueio = 0;
+  const gruposSemSugestoes: Array<'menina' | 'menino' | 'neutro'> = [];
   for (const grupo of ['menina', 'menino', 'neutro'] as const) {
     const quant = quantidades[grupo];
     if (quant <= 0) continue;
     const doGrupo = pool.filter((p) => p.grupo === grupo);
-    // Se houver estilo escolhido e nomes suficientes, só os que combinam; senão, todos.
-    const combinam = doGrupo.filter((p) => aderenciaEstilo(p, estilos) > 0);
-    const candidatos = estilos.length > 0 && combinam.length >= quant * 2 ? combinam : doGrupo;
+    // O estilo é preferência: os nomes que combinam vêm primeiro, mas não eliminam os demais
+    // (com certos sobrenomes, poucos nomes passam nas regras).
+    const candidatos = doGrupo;
 
     // Fase 1: data de referência, melhor ordem de sobrenomes.
     const fase1 = candidatos
@@ -249,7 +254,7 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
         const ordem = melhorOrdem(p.nome, ordens, centro);
         testados++;
         if (ordem.avaliacao.temBloqueio) testadosComBloqueio++;
-        return { p, ordem, pontos: ordem.avaliacao.score + 4 * aderenciaEstilo(p, estilos) };
+        return { p, ordem, pontos: ordem.avaliacao.score + PESO_ESTILO * aderenciaEstilo(p, estilos) };
       })
       .filter((x) => candidatoOfertavel(x.ordem.avaliacao))
       .sort((a, b) => b.pontos - a.pontos || a.p.nome.localeCompare(b.p.nome, 'pt-BR'))
@@ -265,14 +270,18 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
       .sort(
         (a, b) =>
           b.est.diasBons - a.est.diasBons ||
-          b.est.mediaNota + 4 * aderenciaEstilo(b.p, estilos) - (a.est.mediaNota + 4 * aderenciaEstilo(a.p, estilos)) ||
+          b.est.mediaNota + PESO_ESTILO * aderenciaEstilo(b.p, estilos) - (a.est.mediaNota + PESO_ESTILO * aderenciaEstilo(a.p, estilos)) ||
           a.p.nome.localeCompare(b.p.nome, 'pt-BR'),
       )
       .slice(0, quant);
 
     for (const x of fase2) {
-      sugestoes.push(montar(x.p.nome, 'sugestao', grupo, x.ordem, x.est, ''));
+      const foraDoEstilo = estilos.length > 0 && aderenciaEstilo(x.p, estilos) === 0;
+      sugestoes.push(
+        montar(x.p.nome, 'sugestao', grupo, x.ordem, x.est, foraDoEstilo ? 'Fora do estilo escolhido, mas combina com o mapa do bebê.' : ''),
+      );
     }
+    if (fase2.length === 0) gruposSemSugestoes.push(grupo);
   }
 
   return {
@@ -280,6 +289,7 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
     sugestoes,
     nomesPaisIgnorados: ignorados,
     semSugestoes: sugestoes.length === 0,
+    gruposSemSugestoes,
     motivoSemSugestoes:
       sugestoes.length > 0 ? null : testados > 0 && testadosComBloqueio === testados ? 'sobrenomes_bloqueiam' : 'regras',
     janela: janelaDatas ? { dias: janelaDatas.datas.length, centro: janelaDatas.centro } : null,

@@ -103,7 +103,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     if (d.situacao === 'nasceu_registrado') {
       const nome = d.nome_registrado ? analisarNomeRegistradoBebe(d.nome_registrado, d.data) : null;
       if (!nome) return json({ error: 'Confira o nome completo e a data de nascimento do bebê.' }, 400);
-      return json({ seusNomes: [paraChat(nome)], sugestoes: [], semSugestoes: false, motivoSemSugestoes: null, nomesPaisIgnorados: [], janela: null });
+      return json({ seusNomes: [paraChat(nome)], sugestoes: [], semSugestoes: false, gruposSemSugestoes: [], motivoSemSugestoes: null, nomesPaisIgnorados: [], janela: null });
     }
 
     const r = gerarNomesBebe({
@@ -120,6 +120,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       seusNomes: r.seusNomes.map(paraChat),
       sugestoes: r.sugestoes.map(paraChat),
       semSugestoes: r.semSugestoes,
+      gruposSemSugestoes: r.gruposSemSugestoes,
       motivoSemSugestoes: r.motivoSemSugestoes,
       nomesPaisIgnorados: r.nomesPaisIgnorados,
       janela: r.janela,

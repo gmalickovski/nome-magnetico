@@ -51,6 +51,7 @@ function extrairSobrenomesLocal(nomeCompleto: string): string[] {
 
 export type QuestionnaireStepId =
   | 'motivo_harmonizacao'
+  | 'bebe_pais'
   | 'bebe_situacao'
   | 'bebe_data_tipo'
   | 'bebe_sexo'
@@ -77,6 +78,7 @@ export const QUESTIONNAIRE_STEP_ORDER: QuestionnaireStepId[] = [
   // DEV-320: motivo e outros usos só entram com o fluxo novo ligado (`fluxoMotivoAtivo`).
   'motivo_harmonizacao',
   // DEV-326: caminho do bebê (só com motivo "bebe").
+  'bebe_pais',
   'bebe_situacao',
   'bebe_data_tipo',
   'bebe_sexo',
@@ -211,12 +213,14 @@ const PRIORIDADE_CONFLITO_OPTIONS: QuestionOption[] = [
 
 export type MotivoHarmonizacao = 'dia_a_dia' | 'carreira' | 'artistico' | 'recomeco' | 'bebe';
 
+/**
+ * Primeira pergunta do chat (DEV-326): o caminho. Vem antes de qualquer confirmação de nome.
+ * `dia_a_dia` é a harmonização do próprio nome (o caminho que já existia).
+ * Os ids `carreira` e `recomeco` só existem em sessões antigas; não são mais oferecidos.
+ */
 export const MOTIVO_HARMONIZACAO_OPTIONS: QuestionOption[] = [
-  { id: 'dia_a_dia', label: 'Dia a dia e assinatura pessoal' },
-  { id: 'carreira', label: 'Carreira e negócios' },
-  { id: 'artistico', label: 'Nome artístico ou persona' },
-  { id: 'recomeco', label: 'Um novo ciclo pessoal' },
-  // DEV-326: caminho do bebê.
+  { id: 'dia_a_dia', label: 'Harmonizar o meu nome' },
+  { id: 'artistico', label: 'Criar um nome artístico' },
   { id: 'bebe', label: 'Escolher o nome do meu bebê' },
 ];
 
@@ -325,10 +329,13 @@ export function getQuestionSpec(
     case 'motivo_harmonizacao':
       return {
         id: stepId,
-        prompt: 'Para quem ou para quê é esse nome?',
+        prompt: 'O que você quer fazer hoje?',
         mode: 'single',
         staticOptions: MOTIVO_HARMONIZACAO_OPTIONS,
       };
+    case 'bebe_pais':
+      // Formulário próprio (nome da mãe e do pai): sem opções de escolha.
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_pais!, mode: 'single', staticOptions: [] };
     case 'bebe_situacao':
       return { id: stepId, prompt: BEBE_PROMPTS.bebe_situacao!, mode: 'single', staticOptions: BEBE_SITUACAO_OPTIONS };
     case 'bebe_data_tipo':

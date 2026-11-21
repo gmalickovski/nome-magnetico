@@ -29,6 +29,8 @@ export interface SuggestionPickerProps {
   onBack?: () => void;
   /** DEV-326: no caminho do bebê não há palpite; o rótulo do botão é outro. */
   backLabel?: string;
+  /** DEV-326: o teste de nome usa o nome de nascimento do usuário; não se aplica ao bebê. */
+  semTesteManual?: boolean;
   className?: string;
 }
 
@@ -52,6 +54,7 @@ export function SuggestionPicker({
   scrollCandidato = null,
   onBack,
   backLabel = 'Voltar ao palpite',
+  semTesteManual = false,
   className = '',
 }: SuggestionPickerProps) {
   const sistemaRef = useRef<HTMLElement>(null);
@@ -304,7 +307,7 @@ export function SuggestionPicker({
         {extraNoticeSlot}
       </section>
 
-      {manualSlot && (
+      {manualSlot && !semTesteManual && (
         <section aria-labelledby="manual-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
           {cabecalho('manual-names-title', 'Suas sugestões', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-gold')}
           {manualSlot}

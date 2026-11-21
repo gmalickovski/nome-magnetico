@@ -14,6 +14,8 @@ import {
 export interface BabyDataFormProps {
   situacao: string | null;
   dataTipo: string | null;
+  /** Sobrenomes sugeridos a partir dos nomes da mãe e do pai (editáveis). */
+  sobrenomesSugeridos?: string[];
   disabled?: boolean;
   onSubmit: (dados: DadosBebe) => void;
   onBack?: () => void;
@@ -26,10 +28,17 @@ const campoClasse =
  * Formulário do caminho do bebê (DEV-326): data, sobrenomes e, para quem ainda escolhe, os nomes
  * que os pais já estão pensando (opcional). Para o bebê já registrado, pede o nome completo.
  */
-export function BabyDataForm({ situacao, dataTipo, disabled = false, onSubmit, onBack }: BabyDataFormProps) {
+export function BabyDataForm({
+  situacao,
+  dataTipo,
+  sobrenomesSugeridos = [],
+  disabled = false,
+  onSubmit,
+  onBack,
+}: BabyDataFormProps) {
   const registrado = situacao === 'nasceu_registrado';
   const [data, setData] = useState('');
-  const [sobrenomes, setSobrenomes] = useState('');
+  const [sobrenomes, setSobrenomes] = useState(sobrenomesSugeridos.join(', '));
   const [nomesPais, setNomesPais] = useState('');
   const [nomeRegistrado, setNomeRegistrado] = useState('');
   const [erro, setErro] = useState('');

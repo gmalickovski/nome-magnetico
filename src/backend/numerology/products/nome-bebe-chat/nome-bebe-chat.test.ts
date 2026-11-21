@@ -149,3 +149,27 @@ describe('DEV-326 · motor completo', () => {
     assert.deepEqual(a.sugestoes.map((s) => s.nomeCompleto), b.sugestoes.map((s) => s.nomeCompleto));
   });
 });
+
+describe('DEV-326 · estilo como preferência e grupos sem sugestão', () => {
+  const lima = { sobrenomes: ['Lima', 'Silva'], data: '15/03/2027', modoData: 'janela' as const, sexo: 'menina' as const };
+
+  it('o estilo não elimina nomes: com sobrenomes difíceis ainda saem sugestões', () => {
+    const semEstilo = gerarNomesBebe(lima);
+    const comEstilo = gerarNomesBebe({ ...lima, estilos: ['classico'] });
+    assert.ok(semEstilo.sugestoes.length > 0);
+    assert.ok(comEstilo.sugestoes.length >= semEstilo.sugestoes.length, 'o estilo não pode reduzir as sugestões');
+    // Todo nome ou combina com o estilo escolhido ou diz, no cartão, que está fora dele.
+    const pool = poolPorSexo('menina');
+    for (const s of comEstilo.sugestoes) {
+      const doPool = pool.find((p) => p.nome === s.primeiroNome);
+      const combina = doPool ? aderenciaEstilo(doPool, ['classico']) > 0 : false;
+      assert.ok(combina || /Fora do estilo escolhido/.test(s.explicacao), `${s.primeiroNome} sem aviso de estilo`);
+    }
+  });
+
+  it('grupo do sexo escolhido sem nenhuma sugestão é informado', () => {
+    const r = gerarNomesBebe({ ...lima, sobrenomes: ['Malickovski'], sexo: 'menina', modoData: 'exata' });
+    assert.ok(r.gruposSemSugestoes.includes('menina'));
+    assert.equal(r.semSugestoes, true);
+  });
+});

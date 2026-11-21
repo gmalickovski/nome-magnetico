@@ -24,6 +24,7 @@ export type PassoChatId =
   | 'tipo_nome_artistico'
   | 'outros_usos'
   // DEV-326
+  | 'bebe_pais'
   | 'bebe_situacao'
   | 'bebe_data_tipo'
   | 'bebe_sexo'

@@ -35,6 +35,7 @@ export interface RawBabyNamesResponse {
   seusNomes?: Array<Record<string, unknown> & { nomeCompleto: string }>;
   sugestoes?: Array<Record<string, unknown> & { nomeCompleto: string }>;
   semSugestoes?: boolean;
+  gruposSemSugestoes?: Array<'menina' | 'menino' | 'neutro'>;
   motivoSemSugestoes?: 'sobrenomes_bloqueiam' | 'regras' | 'data_invalida' | null;
   nomesPaisIgnorados?: string[];
   janela?: { dias: number; centro: string } | null;
@@ -62,6 +63,13 @@ export function babyNamesNotice(raw: RawBabyNamesResponse, situacao: string | nu
       raw.motivoSemSugestoes === 'sobrenomes_bloqueiam'
         ? 'Com esses sobrenomes, todos os nomes que testei formam uma sequência que pede atenção no mapa do bebê. Veja a leitura dos nomes que vocês pensaram ou confira a grafia dos sobrenomes.'
         : 'Não encontrei nomes que combinem com o mapa do bebê dentro do que você pediu. Tente outro estilo.',
+    );
+  }
+  // O sexo escolhido ficou sem nenhuma sugestão (os sobrenomes bloqueiam quase todos os nomes).
+  const faltantes = (raw.gruposSemSugestoes ?? []).filter((g) => g === 'menina' || g === 'menino');
+  if (!raw.semSugestoes && faltantes.length > 0) {
+    partes.push(
+      `Não encontrei nomes de ${faltantes[0] === 'menina' ? 'menina' : 'menino'} que combinem com o mapa do bebê com esses sobrenomes. Veja as outras sugestões ou confira a grafia dos sobrenomes.`,
     );
   }
   return partes.length > 0 ? partes.join(' ') : null;

@@ -14,6 +14,7 @@ import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engin
 import { LoopGuard, logAIUsage } from '../../backend/ai/loop-guard';
 import { getClientIp, hashClientIp } from '../../backend/security/apiRateLimit';
 import { sanitizeOutroText } from '../../shared/interactive-engine/questionnaire-adaptive';
+import { isFluxoMotivoAtivo } from '../../backend/env/chat-flags';
 import { determineNextStep } from '../../shared/interactive-engine/router';
 import { buildProfilePalpiteText } from '../../shared/interactive-engine/chat-profile-copy';
 import { computeRadarAxes } from '../../shared/interactive-engine/radar-axes';
@@ -118,15 +119,6 @@ const decideLiveSchema = z.object({
     .max(2)
     .optional(),
   tipo_nome_artistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
-  // DEV-326: caminho do bebê (só o que o roteador precisa; sem nomes nem sobrenomes)
-  bebe_situacao: z.enum(['nao_nasceu', 'nasceu_sem_registro', 'nasceu_registrado']).optional(),
-  bebe_data_tipo: z.enum(['marcada', 'prevista']).optional(),
-  bebe_sexo: z.enum(['menina', 'menino', 'indefinido']).optional(),
-  bebe_dados_ok: z.boolean().optional(),
-  bebe_estilos: z
-    .array(z.enum(['classico', 'moderno', 'curto', 'biblico', 'internacional', 'tanto_faz']))
-    .max(2)
-    .optional(),
   outros_usos: z
     .array(
       z.enum(['empresa_cnpj', 'contratos', 'redes_sociais', 'registro_marca', 'documentos', 'nenhum_outro'])
@@ -134,15 +126,6 @@ const decideLiveSchema = z.object({
     .max(6)
     .optional(),
 });
-
-/** DEV-320: fluxo com motivo e ramo artístico. Desligar com `NM_CHAT_MOTIVO_ARTISTICO=false`. */
-function isFluxoMotivoAtivo(): boolean {
-  const raw = (process.env.NM_CHAT_MOTIVO_ARTISTICO ?? import.meta.env?.NM_CHAT_MOTIVO_ARTISTICO ?? '')
-    .toString()
-    .trim()
-    .toLowerCase();
-  return raw !== 'false' && raw !== '0' && raw !== 'off';
-}
 
 function normalizeDateToPtBr(raw: string): string | null {
   const trimmed = raw.trim();
@@ -238,11 +221,6 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     imagem_artistica,
     tipo_nome_artistico,
     outros_usos,
-    bebe_situacao,
-    bebe_data_tipo,
-    bebe_sexo,
-    bebe_dados_ok,
-    bebe_estilos,
   } = parsed.data;
   const fluxoMotivoAtivo = isFluxoMotivoAtivo();
   // Com o fluxo desligado, o motivo é ignorado (roteiro e motor da DEV-303).
@@ -330,11 +308,6 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       imagemArtisticaDecidida: Boolean(imagem_artistica?.length),
       tipoNomeArtistico: tipo_nome_artistico ?? null,
       outrosUsosDecididos: Boolean(outros_usos?.length),
-      bebeSituacao: bebe_situacao ?? null,
-      bebeDataTipo: bebe_data_tipo ?? null,
-      bebeSexo: bebe_sexo ?? null,
-      bebeDadosDecididos: Boolean(bebe_dados_ok),
-      bebeEstiloDecidido: Boolean(bebe_estilos?.length),
       palpiteStatus: palpite_status ?? null,
       estiloPreferido: estilo_preferido ?? null,
       detalheInformado: objetivo_texto,

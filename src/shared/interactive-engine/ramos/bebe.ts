@@ -13,6 +13,7 @@ import type { QuestionOption, QuestionnaireStepId } from '../questionnaire-adapt
 
 /** Passos do caminho do bebê, na ordem em que são perguntados. */
 export const BEBE_STEPS: readonly QuestionnaireStepId[] = [
+  'bebe_pais',
   'bebe_situacao',
   'bebe_data_tipo',
   'bebe_sexo',
@@ -21,6 +22,7 @@ export const BEBE_STEPS: readonly QuestionnaireStepId[] = [
 ];
 
 export const BEBE_PROMPTS: Record<string, string> = {
+  bebe_pais: 'Para começar, me conte o nome de nascimento de quem vai ser mãe e de quem vai ser pai.',
   bebe_situacao: 'Seu bebê já nasceu?',
   bebe_data_tipo: 'Já existe uma data marcada para o nascimento?',
   bebe_sexo: 'Já sabem o sexo do bebê?',
@@ -155,6 +157,58 @@ export function resumoDadosBebe(d: DadosBebe): string {
     if (d.nomesPais.length > 0) partes.push(`${d.nomesPais.length} nome${d.nomesPais.length > 1 ? 's' : ''} em mente`);
   }
   return partes.join(' · ');
+}
+
+// ── Mãe e pai (substitui a certidão do usuário no caminho do bebê) ─────────
+
+export interface DadosPais {
+  /** Nome completo de nascimento da mãe (ou null). */
+  mae: string | null;
+  /** Nome completo de nascimento do pai (ou null). */
+  pai: string | null;
+}
+
+/**
+ * Nome completo de nascimento: pelo menos nome e sobrenome, só letras (aceita apóstrofo).
+ * Devolve o nome limpo ou `null`.
+ */
+export function parseNomeCompletoPessoa(texto: string): string | null {
+  const t = String(texto ?? '').replace(/\s+/g, ' ').trim();
+  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' ]{4,80}$/.test(t)) return null;
+  return t.split(' ').filter(Boolean).length >= 2 ? t : null;
+}
+
+/** Pelo menos um dos dois nomes precisa existir (mães e pais solos). */
+export function paisValidos(d: DadosPais): boolean {
+  return Boolean(d.mae) || Boolean(d.pai);
+}
+
+const PARTICULAS = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
+
+function ultimoSobrenome(nomeCompleto: string): string | null {
+  const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
+  for (let i = partes.length - 1; i >= 1; i--) {
+    if (!PARTICULAS.has(partes[i]!.toLowerCase())) return partes[i]!;
+  }
+  return null;
+}
+
+/**
+ * Sobrenomes sugeridos para o bebê a partir dos nomes dos pais: o último sobrenome da mãe e depois
+ * o do pai (sem repetir). A pessoa pode editar no formulário.
+ */
+export function sobrenomesSugeridosBebe(d: DadosPais): string[] {
+  const lista = [d.mae, d.pai]
+    .map((n) => (n ? ultimoSobrenome(n) : null))
+    .filter((s): s is string => Boolean(s))
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+  return lista.filter((s, i) => lista.findIndex((x) => x.toLowerCase() === s.toLowerCase()) === i);
+}
+
+/** Resumo mostrado como a resposta da pessoa (sem repetir os nomes). */
+export function resumoDadosPais(d: DadosPais): string {
+  if (d.mae && d.pai) return 'Mãe e pai informados';
+  return d.mae ? 'Só a mãe informada' : 'Só o pai informado';
 }
 
 // ── Avisos informativos ──────────────────────────────────────────────────────

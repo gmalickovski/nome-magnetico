@@ -2,6 +2,7 @@
  * Ponte entre o chat v2 (DEV-235) e POST /api/decide-live.
  */
 
+import { determineNextStep } from '../../../../shared/interactive-engine/router.js';
 import type {
   CandidateSuggestion,
   ChatReadingSummary,
@@ -67,6 +68,8 @@ export interface ChatCollectState {
   tipoNomeArtistico?: string | null;
   outrosUsos?: string[];
   /** DEV-326 · caminho do bebê */
+  bebeMae?: string | null;
+  bebePai?: string | null;
   bebeSituacao?: string | null;
   bebeDataTipo?: string | null;
   bebeSexo?: string | null;
@@ -111,6 +114,8 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
   imagemArtistica: [],
   tipoNomeArtistico: null,
   outrosUsos: [],
+  bebeMae: null,
+  bebePai: null,
   bebeSituacao: null,
   bebeDataTipo: null,
   bebeSexo: null,
@@ -387,12 +392,6 @@ export function buildDecideLiveBody(
     imagem_artistica: collect.imagemArtistica?.length ? collect.imagemArtistica : undefined,
     tipo_nome_artistico: collect.tipoNomeArtistico ?? undefined,
     outros_usos: collect.outrosUsos?.length ? collect.outrosUsos : undefined,
-    // DEV-326: só o que o roteador precisa. Nomes e sobrenomes do bebê não vão para o /api/decide-live.
-    bebe_situacao: collect.bebeSituacao ?? undefined,
-    bebe_data_tipo: collect.bebeDataTipo ?? undefined,
-    bebe_sexo: collect.bebeSexo ?? undefined,
-    bebe_dados_ok: collect.bebeData ? true : undefined,
-    bebe_estilos: collect.bebeEstilos?.length ? collect.bebeEstilos : undefined,
   };
 }
 
@@ -498,6 +497,8 @@ export function applyQuestionnaireStep(
     next.motivoHarmonizacao = ids[0] ?? null;
     if (next.motivoHarmonizacao === 'bebe') {
       // O caminho do bebê usa os dados do bebê, não o nome do usuário.
+      next.bebeMae = null;
+      next.bebePai = null;
       next.bebeSituacao = null;
       next.bebeDataTipo = null;
       next.bebeSexo = null;
@@ -804,5 +805,34 @@ export function applyBebeDados(
     bebeSobrenomes: dados.sobrenomes,
     bebeNomesPais: dados.nomesPais,
     bebeNomeRegistrado: dados.nomeRegistrado,
+  };
+}
+
+/** DEV-326: nomes de nascimento da mãe e do pai (pelo menos um). */
+export function applyBebePais(prev: ChatCollectState, pais: { mae: string | null; pai: string | null }): ChatCollectState {
+  return { ...prev, bebeMae: pais.mae, bebePai: pais.pai };
+}
+
+/**
+ * DEV-326: o caminho do bebê roda inteiro no navegador. O roteador é código puro compartilhado,
+ * então nenhum dado do bebê ou dos pais passa pelo /api/decide-live.
+ */
+export function routeBabyLocally(collect: ChatCollectState): RawDecideLiveResponse {
+  const decisao = determineNextStep({
+    fluxoMotivoAtivo: true,
+    motivoHarmonizacao: collect.motivoHarmonizacao ?? 'bebe',
+    bebePaisDecididos: Boolean(collect.bebeMae || collect.bebePai),
+    bebeSituacao: collect.bebeSituacao ?? null,
+    bebeDataTipo: collect.bebeDataTipo ?? null,
+    bebeSexo: collect.bebeSexo ?? null,
+    bebeDadosDecididos: Boolean(collect.bebeData),
+    bebeEstiloDecidido: Boolean(collect.bebeEstilos?.length),
+  });
+  return {
+    next_step: decisao.nextStep,
+    remaining: decisao.remainingSteps,
+    promptSugestao: decisao.promptSugestao,
+    eyebrow: decisao.eyebrow,
+    fluxoMotivoAtivo: true,
   };
 }
