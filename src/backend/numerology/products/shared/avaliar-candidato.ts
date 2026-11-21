@@ -30,6 +30,13 @@ import { isScoreV3 } from '../../score-version';
 /** Piso absoluto de nota para sugerir um nome livre (mesmo piso do motor v4, DEV-301). */
 export const NOTA_MINIMA_NOME_LIVRE = 70;
 
+/**
+ * Regra geral (Guilherme, 21/11/2026): nomes NOVOS, que não partem do nome de nascimento (nomes
+ * artísticos totalmente novos e sugestões do caminho do bebê), só são sugeridos com nota de 80 ou
+ * mais, do mais próximo de 100 para baixo. Em qualquer caminho, sugestão sem bloqueio.
+ */
+export const NOTA_MINIMA_NOME_NOVO = 80;
+
 export interface AvaliacaoCandidato {
   nomeCompleto: string;
   expressao: number;
