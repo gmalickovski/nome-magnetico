@@ -84,11 +84,18 @@ describe('DEV-321 · motor completo', () => {
     for (const s of [...r.proximos, ...r.novos]) {
       assert.equal(s.temBloqueio, false, `${s.nomeCompleto} tem bloqueio`);
       assert.notEqual(s.compatibilidade, 'desfavoravel');
-      assert.ok(s.score >= 70, `${s.nomeCompleto} abaixo de 70`);
+      assert.ok(s.score >= (s.secao === 'novo' ? 80 : 70), `${s.nomeCompleto} abaixo da nota mínima`);
       assert.ok(candidatoOfertavel(avaliarCandidatoLivre(s.nomeCompleto, DATA)));
     }
     assert.ok(r.proximos.every((s) => s.secao === 'proximo'));
     assert.ok(r.novos.every((s) => s.secao === 'novo'));
+  });
+
+  it('novos vêm com nota 80 ou mais, do mais próximo de 100 para baixo', () => {
+    const r = gerarNomesArtisticos({ nomeNascimento: NASC, dataNascimento: DATA, perfil });
+    assert.ok(r.novos.every((s) => s.score >= 80 && !s.temBloqueio));
+    const notas = r.novos.map((s) => s.score);
+    assert.deepEqual(notas, [...notas].sort((a, b) => b - a));
   });
 
   it('novos não usam o nome de nascimento e não repetem a primeira palavra', () => {
