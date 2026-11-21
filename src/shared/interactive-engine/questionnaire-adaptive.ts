@@ -226,6 +226,20 @@ const DETALHE_ARTISTICO_BY_AREA: Partial<Record<AreaArtistica, QuestionOption[]>
   ],
 };
 
+/** DEV-320: rótulos das opções do ramo artístico (para o palpite do chat). */
+export function labelAreaArtistica(id: string | null | undefined): string | null {
+  return AREA_ARTISTICA_OPTIONS.find((o) => o.id === id)?.label ?? null;
+}
+
+export function labelDetalheArtistico(area: string | null | undefined, id: string): string | null {
+  const opts = area ? DETALHE_ARTISTICO_BY_AREA[area as AreaArtistica] : undefined;
+  return opts?.find((o) => o.id === id)?.label ?? null;
+}
+
+export function labelImagemArtistica(id: string): string | null {
+  return IMAGEM_ARTISTICA_OPTIONS.find((o) => o.id === id)?.label ?? null;
+}
+
 /** Áreas que têm a pergunta de detalhe (gênero musical, tipo de papel ou estilo). */
 export function areaTemDetalheArtistico(area: string | null | undefined): boolean {
   return Boolean(area && DETALHE_ARTISTICO_BY_AREA[area as AreaArtistica]);

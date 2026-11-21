@@ -367,9 +367,25 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     if (routerDecision.nextStep === 'palpite') {
       reading = buildProfilePalpiteText({
         nomeCompleto: nomeLimpo,
-        areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
+        areaFoco:
+          motivo === 'artistico'
+            ? null
+            : (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
         subfocoMomento: subfoco_momento ?? decision.subfocoMomento,
         ondeAssina: onde_assina ?? [],
+        artistico:
+          motivo === 'artistico'
+            ? {
+                areaArtistica: area_artistica ?? null,
+                areaArtisticaOutro: area_artistica_outro
+                  ? sanitizeOutroText(area_artistica_outro) || null
+                  : null,
+                detalheArtistico: detalhe_artistico ?? [],
+                generoPersona: genero_persona ?? null,
+                imagemArtistica: imagem_artistica ?? [],
+                tipoNomeArtistico: tipo_nome_artistico ?? null,
+              }
+            : undefined,
         sobrenomesObrigatorios: sobrenomes_obrigatorios,
         sobrenomesExcluidos: sobrenomes_excluidos,
         relatoUsuario: [objetivo_texto, ...(contexto_leitura ?? [])].filter(Boolean).join(' '),

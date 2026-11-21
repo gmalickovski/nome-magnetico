@@ -5,6 +5,7 @@
 
 import type { AreaFocoNomeMagnetico, SubfocoMomento } from './primitives';
 import { SUBFOCO_QUESTIONS_BY_AREA } from './copy';
+import { labelAreaArtistica, labelDetalheArtistico, labelImagemArtistica } from './questionnaire-adaptive';
 
 const AREA_LABEL: Record<AreaFocoNomeMagnetico, string> = {
   prosperidade_financeira: 'finanças e prosperidade',
@@ -43,6 +44,47 @@ export interface ProfilePalpiteInput {
   /** Texto após "O que faltou?" (Em parte / Não). */
   textoCorrecao?: string;
   alertaComplianceLegal?: boolean;
+  /** DEV-320: no ramo artístico o retrato fala do perfil artístico, não de foco de carreira. */
+  artistico?: {
+    areaArtistica?: string | null;
+    areaArtisticaOutro?: string | null;
+    detalheArtistico?: string[];
+    generoPersona?: string | null;
+    imagemArtistica?: string[];
+    tipoNomeArtistico?: string | null;
+  };
+}
+
+function listaPt(itens: string[]): string {
+  return itens.length <= 1 ? (itens[0] ?? '') : `${itens.slice(0, -1).join(', ')} e ${itens[itens.length - 1]}`;
+}
+
+/** DEV-320: frases do retrato artístico (sem números, sem travessão, sem jargão). */
+export function buildArtisticoPalpiteLines(a: NonNullable<ProfilePalpiteInput['artistico']>): string[] {
+  const lines: string[] = [];
+  const area =
+    a.areaArtistica === 'outra'
+      ? a.areaArtisticaOutro?.trim() || 'artista'
+      : (labelAreaArtistica(a.areaArtistica)?.toLowerCase() ?? 'artista');
+  const detalhes = (a.detalheArtistico ?? [])
+    .map((id) => labelDetalheArtistico(a.areaArtistica, id)?.toLowerCase())
+    .filter((x): x is string => Boolean(x));
+  lines.push(
+    `Você busca um nome artístico para atuar como ${area}${detalhes.length > 0 ? `, no estilo ${listaPt(detalhes)}` : ''}.`
+  );
+  const imagens = (a.imagemArtistica ?? [])
+    .map((id) => labelImagemArtistica(id)?.toLowerCase())
+    .filter((x): x is string => Boolean(x));
+  if (imagens.length > 0) lines.push(`Quer passar uma imagem ${listaPt(imagens)}.`);
+  if (a.generoPersona === 'feminino') lines.push('O nome deve soar feminino.');
+  else if (a.generoPersona === 'masculino') lines.push('O nome deve soar masculino.');
+  else if (a.generoPersona === 'neutro') lines.push('O nome deve soar neutro ou ambíguo.');
+  if (a.tipoNomeArtistico === 'proximo') lines.push('Aceita um nome próximo do seu.');
+  else if (a.tipoNomeArtistico === 'diferente') lines.push('Aceita um nome totalmente diferente do seu.');
+  else if (a.tipoNomeArtistico === 'ambos') {
+    lines.push('Aceita tanto um nome próximo do seu quanto um totalmente diferente.');
+  }
+  return lines;
 }
 
 /**
@@ -65,16 +107,19 @@ export function buildProfilePalpiteText(input: ProfilePalpiteInput): string {
     parts.push(`${nome}, pelo que você contou até aqui:`);
   }
 
-  if (input.areaFoco) {
+  if (input.artistico) {
+    parts.push(...buildArtisticoPalpiteLines(input.artistico));
+  } else if (input.areaFoco) {
     let areaLine = `seu foco agora é ${AREA_LABEL[input.areaFoco]}`;
     const sub = subfocoLabel(input.areaFoco, input.subfocoMomento ?? null);
     if (sub) areaLine += `, com prioridade em ${sub.toLowerCase()}`;
     parts.push(areaLine.charAt(0).toUpperCase() + areaLine.slice(1) + '.');
   }
 
-  const onde = (input.ondeAssina ?? [])
-    .map((id) => ONDE_LABEL[id])
-    .filter(Boolean);
+  // No ramo artístico, "onde assina" é inferido; o retrato já descreve o uso artístico.
+  const onde = input.artistico
+    ? []
+    : (input.ondeAssina ?? []).map((id) => ONDE_LABEL[id]).filter(Boolean);
   if (onde.length > 0) {
     const lista =
       onde.length === 1

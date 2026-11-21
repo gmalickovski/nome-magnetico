@@ -9,6 +9,7 @@ import {
   type QuestionnaireStepId,
 } from './questionnaire-adaptive.ts';
 import { determineNextStep, type RouterState } from './router.ts';
+import { buildProfilePalpiteText } from './chat-profile-copy.ts';
 import { profileToPerfilChat, profileToRankingOpcoes, type QuestionnaireProfile } from './questionnaire-map.ts';
 import {
   INITIAL_COLLECT_STATE,
@@ -154,6 +155,40 @@ describe('DEV-320 · motor e aviso', () => {
     assert.equal(t?.id, 'aviso_artistico_contratos');
     assert.match(AVISO_ARTISTICO_CONTRATOS_TEXT, /advogado/);
     assert.doesNotMatch(AVISO_ARTISTICO_CONTRATOS_TEXT, /[—–]/);
+  });
+});
+
+describe('DEV-320 · palpite do ramo artístico', () => {
+  it('fala do perfil artístico e não afirma foco de carreira nem canais inferidos', () => {
+    const t = buildProfilePalpiteText({
+      nomeCompleto: 'Guilherme Malickovski Correa',
+      areaFoco: null,
+      ondeAssina: ['presenca_digital'],
+      sobrenomesObrigatorios: ['Malickovski'],
+      artistico: {
+        areaArtistica: 'cantor',
+        detalheArtistico: ['pop', 'rock'],
+        generoPersona: 'neutro',
+        imagemArtistica: ['marcante'],
+        tipoNomeArtistico: 'ambos',
+      },
+    });
+    assert.match(t, /nome artístico para atuar como cantor ou cantora, no estilo pop e rock/);
+    assert.match(t, /imagem marcante/);
+    assert.match(t, /neutro ou ambíguo/);
+    assert.match(t, /próximo do seu quanto um totalmente diferente/);
+    assert.match(t, /manter Malickovski/);
+    assert.doesNotMatch(t, /carreira|redes sociais/);
+    assert.doesNotMatch(t, /[—–\d]/);
+  });
+
+  it('"Outra área" usa o texto livre', () => {
+    const t = buildProfilePalpiteText({
+      nomeCompleto: 'Ana Silva',
+      areaFoco: null,
+      artistico: { areaArtistica: 'outra', areaArtisticaOutro: 'mágica' },
+    });
+    assert.match(t, /atuar como mágica/);
   });
 });
 
