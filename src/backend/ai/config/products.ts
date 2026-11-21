@@ -8,7 +8,8 @@ export interface ProductAIConfig {
 
 export const PRODUCT_AI_CONFIG: Record<ProductType, ProductAIConfig> = {
   nome_social: {
-    tasks: ['analysis', 'suggestions', 'guide'],
+    // DEV-321: o caminho artístico do chat roda dentro do produto nome_social.
+    tasks: ['analysis', 'suggestions', 'guide', 'artistic_names'],
     systemPromptKey: 'kabbalistic',
   },
   nome_bebe: {

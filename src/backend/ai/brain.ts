@@ -18,6 +18,11 @@ import { buildGuidePrompt, type GuidePromptParams } from './prompts/guide-prompt
 import { buildBabyAnalysisPrompt, type BabyPromptParams } from './prompts/baby-prompt';
 import { buildCompanyAnalysisPrompt, type CompanyPromptParams } from './prompts/company-prompt';
 import { buildSocialAnalysisPrompt, type SocialPromptParams } from './prompts/social-prompt';
+import {
+  SYSTEM_ARTISTIC_NAMES,
+  buildArtisticNamesPrompt,
+  type ArtisticNamesPromptParams,
+} from './prompts/artistic-prompt';
 import { getModel, type AITask } from './config/models';
 import { getArquetipo } from '../numerology/archetypes';
 import { calcularTodosTriangulos, detectarBloqueios } from '../numerology/triangle';
@@ -456,4 +461,48 @@ export async function generateSupportPolish(
 ): Promise<string> {
   const userPrompt = `Nome do cliente: ${nomeCliente}\n\nTexto do agente para polir:\n\n${mensagem}`;
   return runWithGuard(() => userPrompt, 'support_polish', null, null, SYSTEM_SUPPORT_POLISH);
+}
+
+// ================================================================
+// NOME ARTÍSTICO (DEV-321)
+// ================================================================
+
+/**
+ * Ideias de nome artístico totalmente novo. A IA só sugere; o motor
+ * (`products/nome-artistico`) valida cada ideia pelo cálculo cabalístico.
+ * Sempre pelo LoopGuard. Se a IA falhar, quem chama usa o banco determinístico.
+ */
+export async function generateArtisticNameIdeas(
+  params: ArtisticNamesPromptParams,
+  userId: string | null,
+  analysisId: string | null
+): Promise<string[]> {
+  const bruto = await runWithGuard(
+    () => buildArtisticNamesPrompt(params),
+    'artistic_names',
+    userId,
+    analysisId,
+    SYSTEM_ARTISTIC_NAMES,
+    (content) => {
+      const nomes = extrairNomesJson(content);
+      if (nomes.length === 0) throw new OutputRejectedError('nenhuma ideia de nome no formato JSON esperado');
+      return content;
+    }
+  );
+  return extrairNomesJson(bruto);
+}
+
+/** Lê `{"nomes": [...]}` mesmo quando a IA envolve o JSON em cerca de código ou texto. */
+export function extrairNomesJson(content: string): string[] {
+  const inicio = content.indexOf('{');
+  const fim = content.lastIndexOf('}');
+  if (inicio < 0 || fim <= inicio) return [];
+  try {
+    const dados = JSON.parse(content.slice(inicio, fim + 1)) as { nomes?: unknown };
+    return Array.isArray(dados.nomes)
+      ? dados.nomes.filter((n): n is string => typeof n === 'string').slice(0, 20)
+      : [];
+  } catch {
+    return [];
+  }
 }

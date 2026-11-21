@@ -22,6 +22,11 @@ export const TASK_CONFIG: Record<AITask, TaskConfig> = {
     temperature: 0.4,
     maxTokens: 1024,
   },
+  // DEV-321: criatividade maior, resposta curta (só a lista em JSON).
+  artistic_names: {
+    temperature: 0.9,
+    maxTokens: 600,
+  },
 };
 
 export function getTaskConfig(task: AITask): TaskConfig {
