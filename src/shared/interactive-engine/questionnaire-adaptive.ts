@@ -26,28 +26,71 @@ function extrairSobrenomesLocal(nomeCompleto: string): string[] {
 }
 
 export type QuestionnaireStepId =
+  | 'motivo_harmonizacao'
   | 'nome_uso'
   | 'sobrenomes_uso'
   | 'relacao_nome'
+  | 'area_artistica'
+  | 'detalhe_artistico'
+  | 'genero_persona'
+  | 'imagem_artistica'
+  | 'tipo_nome_artistico'
   | 'onde_assina'
   | 'estilo_presenca'
   | 'area_foco'
   | 'subfoco'
   | 'abertura_mudanca'
   | 'preferencias_assinatura'
-  | 'prioridade_conflito';
+  | 'prioridade_conflito'
+  | 'outros_usos';
 
 export const QUESTIONNAIRE_STEP_ORDER: QuestionnaireStepId[] = [
+  // DEV-320: motivo e outros usos só entram com o fluxo novo ligado (`fluxoMotivoAtivo`).
+  'motivo_harmonizacao',
   'nome_uso',
   'sobrenomes_uso',
+  'relacao_nome',
+  // DEV-320: ramo artístico (só com motivo "artistico").
+  'area_artistica',
+  'detalhe_artistico',
+  'genero_persona',
+  'imagem_artistica',
+  'tipo_nome_artistico',
+  'onde_assina',
+  'estilo_presenca',
+  'area_foco',
+  'subfoco',
+  'abertura_mudanca',
+  // DEV-303: pulados quando já inferidos.
+  'preferencias_assinatura',
+  'prioridade_conflito',
+  'outros_usos',
+];
+
+/** DEV-320: passos do ramo artístico. */
+export const ARTISTIC_STEPS: readonly QuestionnaireStepId[] = [
+  'area_artistica',
+  'detalhe_artistico',
+  'genero_persona',
+  'imagem_artistica',
+  'tipo_nome_artistico',
+];
+
+/** DEV-320: todos os passos novos (fora do roteiro da DEV-303 e do mock adaptativo da DEV-274). */
+export const DEV320_STEPS: readonly QuestionnaireStepId[] = [
+  'motivo_harmonizacao',
+  ...ARTISTIC_STEPS,
+  'outros_usos',
+];
+
+/** DEV-320: passos do roteiro padrão que o ramo artístico não pergunta. */
+const STEPS_FORA_DO_RAMO_ARTISTICO: readonly QuestionnaireStepId[] = [
   'relacao_nome',
   'onde_assina',
   'estilo_presenca',
   'area_foco',
   'subfoco',
   'abertura_mudanca',
-  // DEV-303: máximo de 10 passos; os dois últimos são pulados quando já inferidos.
-  'preferencias_assinatura',
   'prioridade_conflito',
 ];
 
@@ -125,6 +168,118 @@ const PREFERENCIAS_ASSINATURA_OPTIONS: QuestionOption[] = [
 const PRIORIDADE_CONFLITO_OPTIONS: QuestionOption[] = [
   { id: 'nota_mais_alta', label: 'A nota mais alta' },
   { id: 'mudar_o_minimo', label: 'Mudar o mínimo' },
+];
+
+// ── DEV-320 · motivo, ramo artístico e outros usos ──────────────────────────
+
+export type MotivoHarmonizacao = 'dia_a_dia' | 'carreira' | 'artistico' | 'recomeco';
+
+export const MOTIVO_HARMONIZACAO_OPTIONS: QuestionOption[] = [
+  { id: 'dia_a_dia', label: 'Dia a dia e assinatura pessoal' },
+  { id: 'carreira', label: 'Carreira e negócios' },
+  { id: 'artistico', label: 'Nome artístico ou persona' },
+  { id: 'recomeco', label: 'Um novo ciclo pessoal' },
+];
+
+export type AreaArtistica =
+  | 'cantor'
+  | 'ator'
+  | 'personagem'
+  | 'criador_conteudo'
+  | 'escritor'
+  | 'dj_produtor'
+  | 'outra';
+
+export const AREA_ARTISTICA_OPTIONS: QuestionOption[] = [
+  { id: 'cantor', label: 'Cantor ou cantora' },
+  { id: 'ator', label: 'Ator ou atriz' },
+  { id: 'personagem', label: 'Personagem, drag ou humor' },
+  { id: 'criador_conteudo', label: 'Criação de conteúdo' },
+  { id: 'escritor', label: 'Escrita' },
+  { id: 'dj_produtor', label: 'DJ ou produção musical' },
+  // O id termina em `_outro`, que abre o campo de texto (até 60 caracteres).
+  { id: 'area_artistica_outro', label: 'Outra área' },
+];
+
+const DETALHE_ARTISTICO_BY_AREA: Partial<Record<AreaArtistica, QuestionOption[]>> = {
+  cantor: [
+    { id: 'pop', label: 'Pop' },
+    { id: 'funk', label: 'Funk' },
+    { id: 'sertanejo', label: 'Sertanejo' },
+    { id: 'rap_trap', label: 'Rap ou trap' },
+    { id: 'mpb_samba', label: 'MPB, samba ou pagode' },
+    { id: 'gospel', label: 'Gospel' },
+    { id: 'rock', label: 'Rock' },
+    { id: 'eletronica', label: 'Eletrônica' },
+  ],
+  ator: [
+    { id: 'drama', label: 'Drama e novela' },
+    { id: 'comedia', label: 'Comédia' },
+    { id: 'teatro_musical', label: 'Teatro e musical' },
+    { id: 'publicidade_tv', label: 'Publicidade e apresentação' },
+  ],
+  personagem: [
+    { id: 'drag', label: 'Drag' },
+    { id: 'humor', label: 'Humor e stand-up' },
+    { id: 'infantil', label: 'Personagem infantil' },
+    { id: 'persona_digital', label: 'Persona digital' },
+  ],
+};
+
+/** DEV-320: rótulos das opções do ramo artístico (para o palpite do chat). */
+export function labelAreaArtistica(id: string | null | undefined): string | null {
+  return AREA_ARTISTICA_OPTIONS.find((o) => o.id === id)?.label ?? null;
+}
+
+export function labelDetalheArtistico(area: string | null | undefined, id: string): string | null {
+  const opts = area ? DETALHE_ARTISTICO_BY_AREA[area as AreaArtistica] : undefined;
+  return opts?.find((o) => o.id === id)?.label ?? null;
+}
+
+export function labelImagemArtistica(id: string): string | null {
+  return IMAGEM_ARTISTICA_OPTIONS.find((o) => o.id === id)?.label ?? null;
+}
+
+/** Áreas que têm a pergunta de detalhe (gênero musical, tipo de papel ou estilo). */
+export function areaTemDetalheArtistico(area: string | null | undefined): boolean {
+  return Boolean(area && DETALHE_ARTISTICO_BY_AREA[area as AreaArtistica]);
+}
+
+const DETALHE_ARTISTICO_PROMPT: Partial<Record<AreaArtistica, string>> = {
+  cantor: 'Qual estilo de música você faz?',
+  ator: 'Em que tipo de trabalho você mais atua?',
+  personagem: 'Qual é o estilo da persona?',
+};
+
+export const GENERO_PERSONA_OPTIONS: QuestionOption[] = [
+  { id: 'feminino', label: 'Feminino' },
+  { id: 'masculino', label: 'Masculino' },
+  { id: 'neutro', label: 'Neutro ou ambíguo' },
+];
+
+export const IMAGEM_ARTISTICA_OPTIONS: QuestionOption[] = [
+  { id: 'marcante', label: 'Marcante' },
+  { id: 'sofisticada', label: 'Sofisticada' },
+  { id: 'divertida', label: 'Divertida' },
+  { id: 'misteriosa', label: 'Misteriosa' },
+  { id: 'popular', label: 'Popular' },
+];
+
+export type TipoNomeArtistico = 'proximo' | 'diferente' | 'ambos';
+
+export const TIPO_NOME_ARTISTICO_OPTIONS: QuestionOption[] = [
+  { id: 'proximo', label: 'Próximo do meu nome' },
+  { id: 'diferente', label: 'Totalmente diferente' },
+  { id: 'ambos', label: 'As duas coisas' },
+];
+
+export const OUTROS_USOS_OPTIONS: QuestionOption[] = [
+  { id: 'empresa_cnpj', label: 'Empresa ou CNPJ' },
+  { id: 'contratos', label: 'Contratos' },
+  { id: 'redes_sociais', label: 'Redes sociais' },
+  { id: 'registro_marca', label: 'Registro de marca' },
+  { id: 'documentos', label: 'Documentos' },
+  { id: 'nenhum_outro', label: 'Nenhum outro' },
 ];
 
 const SUBFOCO_BY_AREA: Record<AreaFocoNomeMagnetico, QuestionOption[]> = {
@@ -210,9 +365,75 @@ export function buildSobrenomesUsoOptions(sobrenomes: string[]): QuestionOption[
 
 export function getQuestionSpec(
   stepId: QuestionnaireStepId,
-  ctx: { nomeCompleto: string; sobrenomes: string[]; areaFoco: AreaFocoNomeMagnetico | null }
+  ctx: {
+    nomeCompleto: string;
+    sobrenomes: string[];
+    areaFoco: AreaFocoNomeMagnetico | null;
+    /** DEV-320 */
+    areaArtistica?: string | null;
+  }
 ): QuestionSpec {
   switch (stepId) {
+    case 'motivo_harmonizacao':
+      return {
+        id: stepId,
+        prompt: 'Qual é o motivo principal para harmonizar o seu nome?',
+        mode: 'single',
+        staticOptions: MOTIVO_HARMONIZACAO_OPTIONS,
+      };
+    case 'area_artistica':
+      return {
+        id: stepId,
+        prompt: 'Em qual área artística você vai usar o nome?',
+        mode: 'single',
+        allowOther: true,
+        otherMaxLength: 60,
+        staticOptions: AREA_ARTISTICA_OPTIONS,
+      };
+    case 'detalhe_artistico': {
+      const area = (ctx.areaArtistica ?? 'cantor') as AreaArtistica;
+      return {
+        id: stepId,
+        prompt: DETALHE_ARTISTICO_PROMPT[area] ?? 'Conte um pouco mais sobre o seu trabalho artístico.',
+        mode: 'multi',
+        maxSelect: 2,
+        captionMultiLimit: (n) => `Escolha até ${n}`,
+        staticOptions: DETALHE_ARTISTICO_BY_AREA[area] ?? DETALHE_ARTISTICO_BY_AREA.cantor,
+      };
+    }
+    case 'genero_persona':
+      return {
+        id: stepId,
+        prompt: 'Como o nome artístico deve soar?',
+        mode: 'single',
+        staticOptions: GENERO_PERSONA_OPTIONS,
+      };
+    case 'imagem_artistica':
+      return {
+        id: stepId,
+        prompt: 'Qual imagem você quer passar com esse nome?',
+        mode: 'multi',
+        maxSelect: 2,
+        captionMultiLimit: (n) => `Escolha até ${n}`,
+        staticOptions: IMAGEM_ARTISTICA_OPTIONS,
+      };
+    case 'tipo_nome_artistico':
+      return {
+        id: stepId,
+        prompt: 'Você aceita um nome próximo do seu, um nome totalmente diferente ou as duas coisas?',
+        mode: 'single',
+        staticOptions: TIPO_NOME_ARTISTICO_OPTIONS,
+      };
+    case 'outros_usos':
+      return {
+        id: stepId,
+        prompt: 'Vai usar esse nome em mais algum lugar?',
+        mode: 'multi',
+        minSelect: 1,
+        maxSelect: 5,
+        captionMulti: 'Pode escolher mais de uma',
+        staticOptions: OUTROS_USOS_OPTIONS,
+      };
     case 'nome_uso':
       return {
         id: stepId,
@@ -321,7 +542,31 @@ export function resolveNomeUsoLabel(
   return found?.label ?? otherText?.trim() ?? '';
 }
 
-export type BlockTransitionId = 'after_nome_block' | 'before_area_foco' | 'before_suggestions';
+export type BlockTransitionId =
+  | 'after_nome_block'
+  | 'before_area_foco'
+  | 'before_suggestions'
+  | 'aviso_artistico_contratos';
+
+/** DEV-320: usos que pedem o aviso informativo sobre nome artístico, contratos e documentos. */
+const USOS_COM_AVISO_ARTISTICO = ['contratos', 'documentos', 'registro_marca', 'empresa_cnpj'];
+
+export function precisaAvisoArtisticoContratos(
+  motivo: string | null | undefined,
+  outrosUsos: readonly string[] | null | undefined,
+): boolean {
+  return motivo === 'artistico' && Boolean(outrosUsos?.some((u) => USOS_COM_AVISO_ARTISTICO.includes(u)));
+}
+
+/**
+ * DEV-320: aviso só informativo (sem orientação jurídica). Base: DEV-319.
+ * Sem travessão e sem promessa de resultado.
+ */
+export const AVISO_ARTISTICO_CONTRATOS_TEXT =
+  'Uma informação importante sobre nome artístico: contratos, documentos e cadastros oficiais seguem o seu nome civil e o seu CPF. ' +
+  'O nome artístico costuma aparecer junto, como "conhecido artisticamente como". ' +
+  'Quem quer exclusividade sobre o nome pode registrá-lo como marca no INPI, e quem atua profissionalmente em artes cênicas costuma precisar do registro profissional (DRT). ' +
+  'Mudar o nome no cartório tem regras próprias. Este aviso é só informativo: para decidir, converse com um advogado de sua confiança.';
 
 function firstName(nomeCurto: string): string {
   return nomeCurto.trim().split(/\s+/)[0] || 'você';
@@ -332,8 +577,17 @@ export function resolveBlockTransition(
   completedStepId: string,
   nextStepId: string,
   nomeCurto: string,
-  alreadyShown: ReadonlySet<BlockTransitionId>
+  alreadyShown: ReadonlySet<BlockTransitionId>,
+  extras?: { avisoArtisticoContratos?: boolean }
 ): { id: BlockTransitionId; text: string } | null {
+  if (
+    !alreadyShown.has('aviso_artistico_contratos') &&
+    completedStepId === 'outros_usos' &&
+    extras?.avisoArtisticoContratos
+  ) {
+    return { id: 'aviso_artistico_contratos', text: AVISO_ARTISTICO_CONTRATOS_TEXT };
+  }
+
   if (
     !alreadyShown.has('after_nome_block') &&
     completedStepId === 'relacao_nome' &&
@@ -370,6 +624,7 @@ const TRANSITION_MARKERS: Record<BlockTransitionId, string> = {
   after_nome_block: 'Agora quero entender onde a sua assinatura aparece.',
   before_area_foco: 'Agora vamos ao que mais pede a sua atenção.',
   before_suggestions: 'separei as assinaturas que mais combinam com você.',
+  aviso_artistico_contratos: 'Uma informação importante sobre nome artístico',
 };
 
 /** Reconstrói transições já exibidas ao restaurar sessão persistida. */
@@ -472,17 +727,41 @@ export interface QuestionnaireSkipContext {
   relacaoNome?: string | null;
   aberturaMudanca?: string | null;
   ondeAssinaRaw?: readonly string[] | null;
+  /** DEV-320: fluxo com motivo e outros usos ligado (env `NM_CHAT_MOTIVO_ARTISTICO`). */
+  fluxoMotivoAtivo?: boolean;
+  motivoHarmonizacao?: string | null;
+  areaArtistica?: string | null;
+}
+
+/** DEV-320: o ramo artístico está ativo nesta conversa. */
+export function isRamoArtistico(ctx: QuestionnaireSkipContext): boolean {
+  return Boolean(ctx.fluxoMotivoAtivo) && ctx.motivoHarmonizacao === 'artistico';
 }
 
 /**
  * Perguntas que o roteiro pula porque a resposta já está implícita:
  * - "Não me representa" já indica abertura para mudar (abertura_mudanca);
  * - "Quase nada" ou uso em contratos e documentos já indicam mudar o mínimo (prioridade_conflito).
+ * DEV-320:
+ * - sem o fluxo novo ligado, motivo, ramo artístico e outros usos não aparecem (roteiro da DEV-303);
+ * - fora do motivo "artistico", o ramo artístico não aparece;
+ * - no ramo artístico, as perguntas do roteiro padrão que ele substitui não aparecem;
+ * - a pergunta de detalhe só existe para cantor, ator e personagem.
  */
 export function isQuestionnaireStepSkipped(
   stepId: QuestionnaireStepId,
   ctx: QuestionnaireSkipContext,
 ): boolean {
+  if (stepId === 'motivo_harmonizacao' || stepId === 'outros_usos') {
+    return !ctx.fluxoMotivoAtivo;
+  }
+  const artistico = isRamoArtistico(ctx);
+  if (ARTISTIC_STEPS.includes(stepId)) {
+    if (!artistico) return true;
+    if (stepId === 'detalhe_artistico') return !areaTemDetalheArtistico(ctx.areaArtistica);
+    return false;
+  }
+  if (artistico && STEPS_FORA_DO_RAMO_ARTISTICO.includes(stepId)) return true;
   if (stepId === 'abertura_mudanca') return ctx.relacaoNome === 'nao_representa';
   if (stepId === 'prioridade_conflito') {
     return (

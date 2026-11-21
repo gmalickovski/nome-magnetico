@@ -1,5 +1,5 @@
 import type { ChatCollectState } from './decide-live-bridge.js';
-import { collectStateToRankingPatch } from './decide-live-bridge.js';
+import { collectStateToPerfilChat, collectStateToRankingPatch } from './decide-live-bridge.js';
 import type { CandidateSuggestion } from './chat-types.js';
 import { chatSuggestionsToExportNames } from './chat-export-suggestions.js';
 
@@ -33,5 +33,7 @@ export function buildChatPdfAnalyzePayload(input: {
     /** Com histórico vazio: não pedir ranking do motor (lista vazia explícita). */
     ranking_somente_chat: true,
     ranking_vazio_sem_autogeracao: exportNames.length === 0,
+    // DEV-320
+    perfil_chat: collectStateToPerfilChat(input.collect),
   };
 }

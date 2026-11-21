@@ -105,7 +105,35 @@ const decideLiveSchema = z.object({
     .optional(),
   prioridade_conflito: z.enum(['nota_mais_alta', 'mudar_o_minimo']).optional(),
   area_foco_outro: z.string().max(60).optional(),
+  // DEV-320: motivo, ramo artístico e outros usos
+  motivo_harmonizacao: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco']).optional(),
+  area_artistica: z
+    .enum(['cantor', 'ator', 'personagem', 'criador_conteudo', 'escritor', 'dj_produtor', 'outra'])
+    .optional(),
+  area_artistica_outro: z.string().max(60).optional(),
+  detalhe_artistico: z.array(z.string().max(40)).max(2).optional(),
+  genero_persona: z.enum(['feminino', 'masculino', 'neutro']).optional(),
+  imagem_artistica: z
+    .array(z.enum(['marcante', 'sofisticada', 'divertida', 'misteriosa', 'popular']))
+    .max(2)
+    .optional(),
+  tipo_nome_artistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
+  outros_usos: z
+    .array(
+      z.enum(['empresa_cnpj', 'contratos', 'redes_sociais', 'registro_marca', 'documentos', 'nenhum_outro'])
+    )
+    .max(6)
+    .optional(),
 });
+
+/** DEV-320: fluxo com motivo e ramo artístico. Desligar com `NM_CHAT_MOTIVO_ARTISTICO=false`. */
+function isFluxoMotivoAtivo(): boolean {
+  const raw = (process.env.NM_CHAT_MOTIVO_ARTISTICO ?? import.meta.env?.NM_CHAT_MOTIVO_ARTISTICO ?? '')
+    .toString()
+    .trim()
+    .toLowerCase();
+  return raw !== 'false' && raw !== '0' && raw !== 'off';
+}
 
 function normalizeDateToPtBr(raw: string): string | null {
   const trimmed = raw.trim();
@@ -193,7 +221,18 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     preferencias_assinatura,
     prioridade_conflito,
     area_foco_outro,
+    motivo_harmonizacao,
+    area_artistica,
+    area_artistica_outro,
+    detalhe_artistico,
+    genero_persona,
+    imagem_artistica,
+    tipo_nome_artistico,
+    outros_usos,
   } = parsed.data;
+  const fluxoMotivoAtivo = isFluxoMotivoAtivo();
+  // Com o fluxo desligado, o motivo é ignorado (roteiro e motor da DEV-303).
+  const motivo = fluxoMotivoAtivo ? motivo_harmonizacao ?? null : null;
 
   const dataPtBr = normalizeDateToPtBr(data_nascimento);
   if (!dataPtBr) {
@@ -225,6 +264,14 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       preferenciasAssinatura: preferencias_assinatura ?? [],
       prioridadeConflito: prioridade_conflito ?? null,
       areaFocoOutro: area_foco_outro ? sanitizeOutroText(area_foco_outro) || null : null,
+      motivoHarmonizacao: motivo,
+      areaArtistica: area_artistica ?? null,
+      areaArtisticaOutro: area_artistica_outro ? sanitizeOutroText(area_artistica_outro) || null : null,
+      detalheArtistico: detalhe_artistico ?? [],
+      generoPersona: genero_persona ?? null,
+      imagemArtistica: imagem_artistica ?? [],
+      tipoNomeArtistico: tipo_nome_artistico ?? null,
+      outrosUsos: outros_usos ?? [],
     };
 
     const rankingOpcoes = profileToRankingOpcoes(questionnaireProfile, {
@@ -261,6 +308,14 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       ondeAssinaRaw: onde_assina_raw ?? [],
       preferenciasDecididas: Boolean(preferencias_assinatura?.length),
       prioridadeConflito: prioridade_conflito ?? null,
+      fluxoMotivoAtivo,
+      motivoHarmonizacao: motivo,
+      areaArtistica: area_artistica ?? null,
+      detalheArtisticoDecidido: Boolean(detalhe_artistico?.length),
+      generoPersona: genero_persona ?? null,
+      imagemArtisticaDecidida: Boolean(imagem_artistica?.length),
+      tipoNomeArtistico: tipo_nome_artistico ?? null,
+      outrosUsosDecididos: Boolean(outros_usos?.length),
       palpiteStatus: palpite_status ?? null,
       estiloPreferido: estilo_preferido ?? null,
       detalheInformado: objetivo_texto,
@@ -312,9 +367,25 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     if (routerDecision.nextStep === 'palpite') {
       reading = buildProfilePalpiteText({
         nomeCompleto: nomeLimpo,
-        areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
+        areaFoco:
+          motivo === 'artistico'
+            ? null
+            : (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
         subfocoMomento: subfoco_momento ?? decision.subfocoMomento,
         ondeAssina: onde_assina ?? [],
+        artistico:
+          motivo === 'artistico'
+            ? {
+                areaArtistica: area_artistica ?? null,
+                areaArtisticaOutro: area_artistica_outro
+                  ? sanitizeOutroText(area_artistica_outro) || null
+                  : null,
+                detalheArtistico: detalhe_artistico ?? [],
+                generoPersona: genero_persona ?? null,
+                imagemArtistica: imagem_artistica ?? [],
+                tipoNomeArtistico: tipo_nome_artistico ?? null,
+              }
+            : undefined,
         sobrenomesObrigatorios: sobrenomes_obrigatorios,
         sobrenomesExcluidos: sobrenomes_excluidos,
         relatoUsuario: [objetivo_texto, ...(contexto_leitura ?? [])].filter(Boolean).join(' '),
@@ -423,6 +494,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
         radarAxes,
         remaining: routerDecision.remainingSteps,
         next_step: routerDecision.nextStep,
+        fluxoMotivoAtivo,
         promptSugestao: routerDecision.promptSugestao,
         eyebrow: routerDecision.eyebrow,
       }),

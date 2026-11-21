@@ -5,6 +5,7 @@
 import type { PassoChatId } from './partitura';
 import type { AreaFocoNomeMagnetico } from './copy';
 import {
+  getQuestionSpec,
   QUESTIONNAIRE_STEP_ORDER,
   isQuestionnaireStepSkipped,
   type QuestionnaireStepId,
@@ -29,10 +30,33 @@ export interface RouterState {
   ondeAssinaRaw?: string[];
   preferenciasDecididas?: boolean;
   prioridadeConflito?: string | null;
+  /** DEV-320 */
+  fluxoMotivoAtivo?: boolean;
+  motivoHarmonizacao?: string | null;
+  areaArtistica?: string | null;
+  detalheArtisticoDecidido?: boolean;
+  generoPersona?: string | null;
+  imagemArtisticaDecidida?: boolean;
+  tipoNomeArtistico?: string | null;
+  outrosUsosDecididos?: boolean;
 }
 
 function isStepAnswered(step: QuestionnaireStepId, state: RouterState): boolean {
   switch (step) {
+    case 'motivo_harmonizacao':
+      return Boolean(state.motivoHarmonizacao);
+    case 'area_artistica':
+      return Boolean(state.areaArtistica);
+    case 'detalhe_artistico':
+      return Boolean(state.detalheArtisticoDecidido);
+    case 'genero_persona':
+      return Boolean(state.generoPersona);
+    case 'imagem_artistica':
+      return Boolean(state.imagemArtisticaDecidida);
+    case 'tipo_nome_artistico':
+      return Boolean(state.tipoNomeArtistico);
+    case 'outros_usos':
+      return Boolean(state.outrosUsosDecididos);
     case 'nome_uso':
       return Boolean(state.nomeUsoDefinido);
     case 'sobrenomes_uso':
@@ -69,6 +93,14 @@ function nextQuestionnaireStep(state: RouterState): QuestionnaireStepId | null {
 }
 
 const PROMPTS: Record<QuestionnaireStepId, string> = {
+  motivo_harmonizacao: 'Qual é o motivo principal para harmonizar o seu nome?',
+  area_artistica: 'Em qual área artística você vai usar o nome?',
+  detalhe_artistico: 'Conte um pouco mais sobre o seu trabalho artístico.',
+  genero_persona: 'Como o nome artístico deve soar?',
+  imagem_artistica: 'Qual imagem você quer passar com esse nome?',
+  tipo_nome_artistico:
+    'Você aceita um nome próximo do seu, um nome totalmente diferente ou as duas coisas?',
+  outros_usos: 'Vai usar esse nome em mais algum lugar?',
   nome_uso: 'Como as pessoas te chamam no dia a dia?',
   sobrenomes_uso: 'Quais sobrenomes você usa quando assina?',
   relacao_nome: 'Como você se sente com o seu nome hoje?',
@@ -118,7 +150,16 @@ export function determineNextStep(state: RouterState): NextStepDecision {
     return {
       nextStep: qStep as PassoChatId,
       remainingSteps: remaining,
-      promptSugestao: PROMPTS[qStep],
+      // DEV-320: o detalhe artístico muda de pergunta conforme a área.
+      promptSugestao:
+        qStep === 'detalhe_artistico'
+          ? getQuestionSpec(qStep, {
+              nomeCompleto: state.nomeCompleto ?? '',
+              sobrenomes: [],
+              areaFoco: null,
+              areaArtistica: state.areaArtistica ?? null,
+            }).prompt
+          : PROMPTS[qStep],
     };
   }
 

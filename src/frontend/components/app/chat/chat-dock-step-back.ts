@@ -3,6 +3,7 @@
  */
 
 import {
+  DEV320_STEPS,
   QUESTIONNAIRE_STEP_ORDER,
   isQuestionnaireStepSkipped,
   type QuestionnaireStepId,
@@ -16,7 +17,12 @@ export const POST_BIRTH_FLOW_STEPS = [
 
 export type PostBirthFlowStep = (typeof POST_BIRTH_FLOW_STEPS)[number];
 
-export function isFirstQuestionnaireStep(stepId: string): boolean {
+export function isFirstQuestionnaireStep(
+  stepId: string,
+  state?: Partial<Pick<ChatCollectState, 'fluxoMotivoAtivo'>>
+): boolean {
+  // DEV-320: sem o fluxo com motivo, o primeiro passo efetivo continua sendo `nome_uso`.
+  if (stepId === 'nome_uso') return !state?.fluxoMotivoAtivo;
   return stepId === QUESTIONNAIRE_STEP_ORDER[0];
 }
 
@@ -26,7 +32,8 @@ export function isFirstQuestionnaireStep(stepId: string): boolean {
  */
 export function getPreviousFlowStep(
   currentStepId: string,
-  state?: Pick<ChatCollectState, 'relacaoNome' | 'aberturaMudanca' | 'ondeAssinaRaw'>
+  state?: Pick<ChatCollectState, 'relacaoNome' | 'aberturaMudanca' | 'ondeAssinaRaw'> &
+    Partial<Pick<ChatCollectState, 'fluxoMotivoAtivo' | 'motivoHarmonizacao' | 'areaArtistica'>>
 ): PostBirthFlowStep | 'suggestions' | null {
   let idx: number;
   if (currentStepId === 'fim_coleta' || currentStepId === 'conclusao') {
@@ -37,16 +44,20 @@ export function getPreviousFlowStep(
     if (idx <= 0) return null;
     idx -= 1;
   }
-  while (idx > 0) {
-    const candidato = POST_BIRTH_FLOW_STEPS[idx]!;
-    const pulado =
-      Boolean(state) &&
-      candidato !== 'palpite' &&
-      isQuestionnaireStepSkipped(candidato as QuestionnaireStepId, state!);
-    if (!pulado) break;
+  const pulado = (candidato: PostBirthFlowStep): boolean => {
+    if (candidato === 'palpite') return false;
+    const step = candidato as QuestionnaireStepId;
+    // Sem estado: só os passos da DEV-320 contam como pulados (fluxo desligado).
+    if (!state) return DEV320_STEPS.includes(step);
+    return isQuestionnaireStepSkipped(step, state);
+  };
+  while (idx > 0 && pulado(POST_BIRTH_FLOW_STEPS[idx]!)) {
     idx -= 1;
   }
-  return POST_BIRTH_FLOW_STEPS[idx]!;
+  const anterior = POST_BIRTH_FLOW_STEPS[idx]!;
+  // DEV-320: o primeiro passo (motivo) pode ter sido pulado com o fluxo desligado.
+  if (idx === 0 && pulado(anterior)) return null;
+  return anterior;
 }
 
 /** Limpa respostas do passo atual e posteriores (estado antes de re-responder o passo anterior). */
@@ -106,6 +117,34 @@ function clearStepFields(state: ChatCollectState, stepId: string): void {
       break;
     case 'palpite':
       state.palpiteStatus = null;
+      break;
+    // DEV-320
+    case 'motivo_harmonizacao':
+      state.motivoHarmonizacao = null;
+      if (state.ondeAssinaRaw.length === 1 && state.ondeAssinaRaw[0] === 'arte_criativo') {
+        state.ondeAssinaRaw = [];
+        state.ondeAssina = [];
+        state.estiloPreferido = null;
+      }
+      break;
+    case 'area_artistica':
+      state.areaArtistica = null;
+      state.areaArtisticaOutro = null;
+      break;
+    case 'detalhe_artistico':
+      state.detalheArtistico = [];
+      break;
+    case 'genero_persona':
+      state.generoPersona = null;
+      break;
+    case 'imagem_artistica':
+      state.imagemArtistica = [];
+      break;
+    case 'tipo_nome_artistico':
+      state.tipoNomeArtistico = null;
+      break;
+    case 'outros_usos':
+      state.outrosUsos = [];
       break;
     default:
       break;
