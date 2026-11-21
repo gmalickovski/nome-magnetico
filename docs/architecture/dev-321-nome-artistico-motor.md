@@ -82,7 +82,7 @@ Do nome de nascimento viram nome de palco: prenome isolado, segundo prenome, sob
 ## 6. Fora desta entrega
 
 - Verificação de conflito com artistas e marcas (DEV-323).
-- Teste com a IA real: o ambiente TESTE não tem chave de IA; o caminho de reserva foi testado no navegador, a chamada à IA só por teste unitário do parser.
+- Chaves de IA para teste local: estão no cofre TESTE (`NM-TESTE-LLM` com `GROQ_API_KEY` e `OPENAI_API_KEY`; `NM-TESTE-JEV` com `TYPESAFE_API_KEY`), mas o `.env.1password` ainda não as referencia. Hoje elas precisam ser acrescentadas ao `.env` local à mão. Com elas, a chamada real a `/api/artistic-names` devolveu `providerUsed: ia` com 3 nomes novos válidos (1,6 s); sem elas, o banco determinístico responde.
 - Caminho do bebê no chat (usará `products/shared/avaliar-candidato.ts`).
 - PDF do caminho artístico (DEV-322).
 - Chat do artístico só tem 2 a 3 próximos quando o nome de nascimento é curto ou tem sobrenomes excluídos.
