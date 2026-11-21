@@ -9,6 +9,8 @@ import {
   type QuestionnaireStepId,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
 import type { ChatCollectState } from './decide-live-bridge.js';
+import type { ChatMessage } from './chat-types.js';
+import { isOnboardingStepId } from './chat-interaction-pending.js';
 
 export const POST_BIRTH_FLOW_STEPS = [
   ...QUESTIONNAIRE_STEP_ORDER,
@@ -153,4 +155,43 @@ function clearStepFields(state: ChatCollectState, stepId: string): void {
 
 export function stepForPosthog(stepId: string): string {
   return stepId;
+}
+
+export interface BackNavigationPlan {
+  /** Mensagens que ficam (termina na pergunta de destino, que volta a ser a pendente). */
+  kept: ChatMessage[];
+  /** Respostas desfeitas: somam de volta ao contador de passos restantes. */
+  removedAnswers: number;
+  /** Chaves de `answers` a apagar (o destino e tudo que veio depois). */
+  undoneStepIds: Set<string>;
+}
+
+/**
+ * DEV-324: o que cortar ao voltar para `target`. Puro, sem estado do React.
+ * Devolve `null` quando o chat não tem o cartão de pergunta do destino
+ * (nesse caso o "Voltar" não faz nada).
+ */
+export function planBackNavigation(
+  messages: readonly ChatMessage[],
+  target: PostBirthFlowStep
+): BackNavigationPlan | null {
+  let idx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]!;
+    if (m.sender === 'assistant' && m.stepId === target && (m.type === 'questionnaire' || m.type === 'guess')) {
+      idx = i;
+      break;
+    }
+  }
+  if (idx < 0) return null;
+  const removedAnswers = messages
+    .slice(idx + 1)
+    .filter((m) => m.sender === 'user' && m.stepId && !isOnboardingStepId(m.stepId)).length;
+  const targetIdx = POST_BIRTH_FLOW_STEPS.indexOf(target);
+  const undoneStepIds = new Set<string>([
+    ...POST_BIRTH_FLOW_STEPS.slice(targetIdx),
+    'fim_coleta',
+    'conclusao',
+  ]);
+  return { kept: messages.slice(0, idx + 1) as ChatMessage[], removedAnswers, undoneStepIds };
 }
