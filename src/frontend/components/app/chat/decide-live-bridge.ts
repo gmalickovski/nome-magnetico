@@ -66,6 +66,15 @@ export interface ChatCollectState {
   imagemArtistica?: string[];
   tipoNomeArtistico?: string | null;
   outrosUsos?: string[];
+  /** DEV-326 · caminho do bebê */
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeData?: string | null;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string | null;
+  bebeEstilos?: string[];
 }
 
 export function isProfileCollectionComplete(nextStep: string): boolean {
@@ -102,6 +111,14 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
   imagemArtistica: [],
   tipoNomeArtistico: null,
   outrosUsos: [],
+  bebeSituacao: null,
+  bebeDataTipo: null,
+  bebeSexo: null,
+  bebeData: null,
+  bebeSobrenomes: [],
+  bebeNomesPais: [],
+  bebeNomeRegistrado: null,
+  bebeEstilos: [],
 };
 
 type ApiPanel = {
@@ -206,6 +223,12 @@ export function mapCandidate(
     maiorNota: raw.maiorNota === true,
     principal: raw.principal === true,
     secao: raw.secao === 'proximo' || raw.secao === 'novo' ? raw.secao : undefined,
+    grupoBebe:
+      raw.grupoBebe === 'seu' || raw.grupoBebe === 'menina' || raw.grupoBebe === 'menino' || raw.grupoBebe === 'neutro'
+        ? raw.grupoBebe
+        : undefined,
+    diasBons: typeof raw.diasBons === 'number' ? raw.diasBons : undefined,
+    diasTotal: typeof raw.diasTotal === 'number' ? raw.diasTotal : undefined,
     destaque: typeof raw.explicacaoPerfil === 'string' ? raw.explicacaoPerfil : undefined,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
@@ -364,6 +387,12 @@ export function buildDecideLiveBody(
     imagem_artistica: collect.imagemArtistica?.length ? collect.imagemArtistica : undefined,
     tipo_nome_artistico: collect.tipoNomeArtistico ?? undefined,
     outros_usos: collect.outrosUsos?.length ? collect.outrosUsos : undefined,
+    // DEV-326: só o que o roteador precisa. Nomes e sobrenomes do bebê não vão para o /api/decide-live.
+    bebe_situacao: collect.bebeSituacao ?? undefined,
+    bebe_data_tipo: collect.bebeDataTipo ?? undefined,
+    bebe_sexo: collect.bebeSexo ?? undefined,
+    bebe_dados_ok: collect.bebeData ? true : undefined,
+    bebe_estilos: collect.bebeEstilos?.length ? collect.bebeEstilos : undefined,
   };
 }
 
@@ -467,6 +496,14 @@ export function applyQuestionnaireStep(
   // ── DEV-320 ──
   if (stepId === 'motivo_harmonizacao') {
     next.motivoHarmonizacao = ids[0] ?? null;
+    if (next.motivoHarmonizacao === 'bebe') {
+      // O caminho do bebê usa os dados do bebê, não o nome do usuário.
+      next.bebeSituacao = null;
+      next.bebeDataTipo = null;
+      next.bebeSexo = null;
+      next.bebeData = null;
+      next.bebeEstilos = [];
+    }
     if (next.motivoHarmonizacao === 'artistico') {
       // O ramo artístico não pergunta onde assina nem a abertura: forma curta e uso criativo.
       next.ondeAssinaRaw = ['arte_criativo'];
@@ -507,6 +544,32 @@ export function applyQuestionnaireStep(
 
   if (stepId === 'tipo_nome_artistico') {
     next.tipoNomeArtistico = ids[0] ?? null;
+    return next;
+  }
+
+  // ── DEV-326 ──
+  if (stepId === 'bebe_situacao') {
+    next.bebeSituacao = ids[0] ?? null;
+    // Mudou a situação: a data e os dados dependem dela.
+    next.bebeDataTipo = null;
+    next.bebeData = null;
+    return next;
+  }
+
+  if (stepId === 'bebe_data_tipo') {
+    next.bebeDataTipo = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'bebe_sexo') {
+    next.bebeSexo = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'bebe_estilo') {
+    // "Tanto faz" sozinho vale como resposta; junto de outra escolha, vale a escolha.
+    const escolhidos = ids.filter((id) => id !== 'tanto_faz');
+    next.bebeEstilos = escolhidos.length > 0 ? escolhidos : ['tanto_faz'];
     return next;
   }
 
@@ -728,4 +791,18 @@ export function isRegeneratePoolExhausted(
   const novos = mapRegenerateApiToCandidates(data, 50);
   if (novos.length === 0) return true;
   return novos.every((c) => shown.has(c.nome.trim().toLowerCase()));
+}
+
+/** DEV-326: resposta do formulário do bebê (data, sobrenomes, nomes dos pais ou nome registrado). */
+export function applyBebeDados(
+  prev: ChatCollectState,
+  dados: { data: string; sobrenomes: string[]; nomesPais: string[]; nomeRegistrado: string | null },
+): ChatCollectState {
+  return {
+    ...prev,
+    bebeData: dados.data,
+    bebeSobrenomes: dados.sobrenomes,
+    bebeNomesPais: dados.nomesPais,
+    bebeNomeRegistrado: dados.nomeRegistrado,
+  };
 }

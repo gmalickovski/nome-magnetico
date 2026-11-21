@@ -122,6 +122,10 @@ export interface CandidateSuggestion {
   origem?: 'manual' | 'gerado';
   /** DEV-321: seção do ramo artístico (nomes próximos do nascimento ou nomes novos). */
   secao?: 'proximo' | 'novo';
+  /** DEV-326: grupo do caminho do bebê e dias bons da janela de datas. */
+  grupoBebe?: 'seu' | 'menina' | 'menino' | 'neutro';
+  diasBons?: number;
+  diasTotal?: number;
   scoreVersion?: 'v3';
   radarAxes?: RadarAxesData;
   id: string;

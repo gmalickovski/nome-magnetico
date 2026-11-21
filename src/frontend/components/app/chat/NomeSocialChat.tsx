@@ -60,6 +60,7 @@ import { ChatStepInteraction, ChatChoicePills } from './ChatStepInteraction.js';
 import {
   INITIAL_COLLECT_STATE,
   applyAnswerToCollectState,
+  applyBebeDados,
   applyQuestionnaireStep,
   buildDecideLiveBody,
   buildRegenerateRequestBody,
@@ -80,6 +81,20 @@ import {
   type RawArtisticNamesResponse,
 } from './artistic-suggestions-client.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
+import { BabyDataForm } from './BabyDataForm.js';
+import {
+  NOTICE_CALCULANDO_NOMES_BEBE,
+  babyNamesNotice,
+  buildBabyNamesBody,
+  isRamoBebeCollect,
+  mapBabyNamesToCandidates,
+  type RawBabyNamesResponse,
+} from './baby-suggestions-client.js';
+import {
+  avisoBebePorSituacao,
+  resumoDadosBebe,
+  type DadosBebe,
+} from '../../../../shared/interactive-engine/ramos/bebe.js';
 import {
   POST_BIRTH_FLOW_STEPS,
   getPreviousFlowStep,
@@ -1233,7 +1248,9 @@ export function NomeSocialChat({
     completedStepId?: string,
     nomeCurto?: string | null,
     avisoArtisticoContratos = false,
-    ramoArtistico = false
+    ramoProprio = false,
+    ramoBebe = false,
+    avisoBebe: string | null = null
   ) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
@@ -1247,10 +1264,11 @@ export function NomeSocialChat({
     const collectionComplete =
       data.next_step === 'fim_coleta' || data.next_step === 'conclusao';
 
-    if (collectionComplete && ramoArtistico) {
-      // DEV-321: as sugestões do ramo artístico vêm de /api/artistic-names (carregadas pelo chamador).
+    if (collectionComplete && ramoProprio) {
+      // DEV-321 e DEV-326: as sugestões do ramo artístico e do bebê vêm de endpoints próprios
+      // (/api/artistic-names e /api/baby-names), carregadas pelo chamador.
       setSuggestions([]);
-      setRegenerateNotice(NOTICE_CRIANDO_NOMES_ARTISTICOS);
+      setRegenerateNotice(ramoBebe ? NOTICE_CALCULANDO_NOMES_BEBE : NOTICE_CRIANDO_NOMES_ARTISTICOS);
     } else if (collectionComplete) {
       if (data.semOpcoesElegiveis) {
         setSuggestions([]);
@@ -1275,7 +1293,7 @@ export function NomeSocialChat({
         data.next_step,
         nomeBase,
         blockTransitionsShown.current,
-        { avisoArtisticoContratos, ramoArtistico }
+        { avisoArtisticoContratos, ramoArtistico: ramoProprio && !ramoBebe, ramoBebe, avisoBebe }
       );
       if (transition) {
         blockTransitionsShown.current.add(transition.id);
@@ -1445,13 +1463,13 @@ export function NomeSocialChat({
         stepId,
         nextCollect.nomeUsoBase ?? confirmedName,
         precisaAvisoArtisticoContratos(nextCollect.motivoHarmonizacao, nextCollect.outrosUsos),
-        isRamoArtisticoCollect(nextCollect),
+        isRamoArtisticoCollect(nextCollect) || isRamoBebeCollect(nextCollect),
+        isRamoBebeCollect(nextCollect),
+        avisoBebePorSituacao(nextCollect.bebeSituacao),
       );
-      if (
-        (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') &&
-        isRamoArtisticoCollect(nextCollect)
-      ) {
-        void carregarNomesArtisticos(nextCollect, []);
+      if (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') {
+        if (isRamoBebeCollect(nextCollect)) void carregarNomesBebe(nextCollect, []);
+        else if (isRamoArtisticoCollect(nextCollect)) void carregarNomesArtisticos(nextCollect, []);
       }
     } catch (err) {
       console.error(err);
@@ -1555,6 +1573,15 @@ export function NomeSocialChat({
       setRegenerateNotice(null);
     }
     capturePostHogEvent('chat_step_back', { from: currentStepId, to: target });
+  };
+
+  /** DEV-326: resposta do formulário do bebê (data, sobrenomes, nomes dos pais). */
+  const handleBabyData = (dados: DadosBebe) => {
+    if (loading) return;
+    const nextCollect = applyBebeDados(collectState, dados);
+    const resumo = resumoDadosBebe(dados);
+    setAnswers((prev) => ({ ...prev, bebe_dados: resumo }));
+    void pushDecideLive(nextCollect, resumo, 'bebe_dados', { has_names: dados.nomesPais.length > 0 });
   };
 
   const handleUserAnswer = async (text: string, optionId?: string) => {
@@ -1749,9 +1776,52 @@ export function NomeSocialChat({
     }
   };
 
+  /** DEV-326: nomes do caminho do bebê (dos pais e sugestões) pelo endpoint próprio. */
+  const carregarNomesBebe = async (collect: ChatCollectState, excluir: string[]) => {
+    const maisUma = excluir.length > 0;
+    setIsRegenerating(true);
+    if (!maisUma) setRegenerateNotice(NOTICE_CALCULANDO_NOMES_BEBE);
+    try {
+      const res = await fetch('/api/baby-names', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBabyNamesBody(collect, excluir)),
+      });
+      const data = (await res.json()) as RawBabyNamesResponse;
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao calcular os nomes do bebê');
+      const candidatos = mapBabyNamesToCandidates(data);
+      if (candidatos.length > 0) {
+        setSuggestions((prev) => mergeChatSuggestionsCumulative(prev, candidatos));
+        setActiveSuggestionId(null);
+        if (!maisUma) setScrollSistemaToken((n) => n + 1);
+        setRegenerateNotice(babyNamesNotice(data, collect.bebeSituacao));
+      } else {
+        setRegenerateNotice(
+          maisUma
+            ? 'Não encontrei outros nomes diferentes dos que você já viu. Tente outro estilo.'
+            : babyNamesNotice(data, collect.bebeSituacao) ?? 'Não foi possível calcular os nomes agora. Tente de novo.',
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setRegenerateNotice(err instanceof Error ? err.message : 'Não foi possível calcular os nomes do bebê. Tente de novo.');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const handleRegenerate = async () => {
     if (manualLock.current || isRegenerating) return;
     if (!confirmedName.trim() || !confirmedDate.trim()) return;
+    if (isRamoBebeCollect(collectState)) {
+      // DEV-326: "Gerar outras opções" do caminho do bebê usa o motor próprio.
+      setRegenerateNotice(null);
+      await carregarNomesBebe(
+        collectState,
+        suggestions.filter((x) => x.origem !== 'manual').map((x) => x.nome),
+      );
+      return;
+    }
     if (isRamoArtisticoCollect(collectState)) {
       // DEV-321: "Gerar outras opções" do ramo artístico usa o motor próprio, sem misturar com o Nome Social.
       setRegenerateNotice(null);
@@ -1866,10 +1936,13 @@ export function NomeSocialChat({
   const starPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
   const profileCollectionComplete =
     currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
-  const showScoreCard = Boolean(basePanel);
-  const showStarDetail = birthConfirmed && Boolean(basePanel);
-  const showRadarPanel = shouldShowRadar(collectState);
-  const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel);
+  // DEV-326: no caminho do bebê o painel do nome de nascimento do usuário não se aplica; só aparece
+  // o painel do nome do bebê selecionado.
+  const ocultaPainelDoUsuario = isRamoBebeCollect(collectState) && !activeSuggestion;
+  const showScoreCard = Boolean(basePanel) && !ocultaPainelDoUsuario;
+  const showStarDetail = birthConfirmed && Boolean(basePanel) && !ocultaPainelDoUsuario;
+  const showRadarPanel = shouldShowRadar(collectState) && !ocultaPainelDoUsuario;
+  const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel) && !ocultaPainelDoUsuario;
   const activeReadingSummary = activeSuggestionId
     ? harmonizedSummaries[activeSuggestionId] ?? null
     : birthReadingSummary;
@@ -2019,7 +2092,7 @@ export function NomeSocialChat({
     toastUi: pdfToastUi,
     pdfOverlayUi,
   } = useChatPdfCta({
-    suggestionSelected,
+    suggestionSelected: suggestionSelected && !isRamoBebeCollect(collectState),
     selectedNome: activeSuggestion?.nome ?? null,
     selectedScore: activeSuggestion?.score ?? 0,
     suggestionRank: suggestionRank || 1,
@@ -2409,6 +2482,7 @@ export function NomeSocialChat({
                       onSelect={handleSuggestionSelect}
                       onRegenerate={handleRegenerate}
                       onBack={previousStepFor('fim_coleta') ? handleGoBack : undefined}
+                      backLabel={isRamoBebeCollect(collectState) ? 'Voltar à pergunta anterior' : undefined}
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
                       canRegenerate={!manualLoading && podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length)}
@@ -2498,6 +2572,15 @@ export function NomeSocialChat({
                           className="mt-3 w-full rounded-2xl bg-[#1C1C1C] border border-[#D4AF37]/30 px-4 py-2.5 text-sm text-chat-ink focus:outline-none focus:border-[#D4AF37]/60"
                         />
                       )}
+                      {msg.stepId === 'bebe_dados' ? (
+                        <BabyDataForm
+                          situacao={collectState.bebeSituacao ?? null}
+                          dataTipo={collectState.bebeDataTipo ?? null}
+                          disabled={loading}
+                          onBack={previousStepFor(msg.stepId) ? handleGoBack : undefined}
+                          onSubmit={handleBabyData}
+                        />
+                      ) : (
                       <ChatAdaptivePills
                         mode={
                           (JSON.parse(msg.hypotheticalText || '{}') as { mode?: 'single' | 'multi' })
@@ -2543,6 +2626,7 @@ export function NomeSocialChat({
                           capturePostHogEvent('chat_limit_reached', { step: msg.stepId })
                         }
                       />
+                      )}
                     </>
                   )}
 

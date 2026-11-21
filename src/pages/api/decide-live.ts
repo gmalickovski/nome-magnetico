@@ -106,7 +106,7 @@ const decideLiveSchema = z.object({
   prioridade_conflito: z.enum(['nota_mais_alta', 'mudar_o_minimo']).optional(),
   area_foco_outro: z.string().max(60).optional(),
   // DEV-320: motivo, ramo artístico e outros usos
-  motivo_harmonizacao: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco']).optional(),
+  motivo_harmonizacao: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco', 'bebe']).optional(),
   area_artistica: z
     .enum(['cantor', 'ator', 'personagem', 'criador_conteudo', 'escritor', 'dj_produtor', 'outra'])
     .optional(),
@@ -118,6 +118,15 @@ const decideLiveSchema = z.object({
     .max(2)
     .optional(),
   tipo_nome_artistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
+  // DEV-326: caminho do bebê (só o que o roteador precisa; sem nomes nem sobrenomes)
+  bebe_situacao: z.enum(['nao_nasceu', 'nasceu_sem_registro', 'nasceu_registrado']).optional(),
+  bebe_data_tipo: z.enum(['marcada', 'prevista']).optional(),
+  bebe_sexo: z.enum(['menina', 'menino', 'indefinido']).optional(),
+  bebe_dados_ok: z.boolean().optional(),
+  bebe_estilos: z
+    .array(z.enum(['classico', 'moderno', 'curto', 'biblico', 'internacional', 'tanto_faz']))
+    .max(2)
+    .optional(),
   outros_usos: z
     .array(
       z.enum(['empresa_cnpj', 'contratos', 'redes_sociais', 'registro_marca', 'documentos', 'nenhum_outro'])
@@ -229,6 +238,11 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
     imagem_artistica,
     tipo_nome_artistico,
     outros_usos,
+    bebe_situacao,
+    bebe_data_tipo,
+    bebe_sexo,
+    bebe_dados_ok,
+    bebe_estilos,
   } = parsed.data;
   const fluxoMotivoAtivo = isFluxoMotivoAtivo();
   // Com o fluxo desligado, o motivo é ignorado (roteiro e motor da DEV-303).
@@ -316,6 +330,11 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
       imagemArtisticaDecidida: Boolean(imagem_artistica?.length),
       tipoNomeArtistico: tipo_nome_artistico ?? null,
       outrosUsosDecididos: Boolean(outros_usos?.length),
+      bebeSituacao: bebe_situacao ?? null,
+      bebeDataTipo: bebe_data_tipo ?? null,
+      bebeSexo: bebe_sexo ?? null,
+      bebeDadosDecididos: Boolean(bebe_dados_ok),
+      bebeEstiloDecidido: Boolean(bebe_estilos?.length),
       palpiteStatus: palpite_status ?? null,
       estiloPreferido: estilo_preferido ?? null,
       detalheInformado: objetivo_texto,

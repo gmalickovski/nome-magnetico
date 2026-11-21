@@ -44,6 +44,8 @@ export interface EntradaNomesBebe {
   /** Nomes já mostrados (para "Gerar outras opções"). */
   excluir?: string[];
   janelaDias?: number;
+  /** Bebê já registrado: só analisa os nomes informados, sem sugerir outros. */
+  apenasAnalisar?: boolean;
 }
 
 export interface NomeBebeSugerido extends AvaliacaoCandidato {
@@ -146,6 +148,7 @@ function estatisticaJanela(nome: string, datas: readonly string[]): EstatisticaJ
 
 function textoDias(diasBons: number, diasTotal: number): string {
   if (diasTotal <= 1) return '';
+  if (diasBons === 0) return `Não fica bom em nenhum dos ${diasTotal} dias possíveis para o nascimento.`;
   if (diasBons === diasTotal) return `Bom em todos os ${diasTotal} dias possíveis para o nascimento.`;
   return `Bom em ${diasBons} dos ${diasTotal} dias possíveis para o nascimento.`;
 }
@@ -218,6 +221,10 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
     seusNomes.push(montar(nome, 'seus_nomes', 'seu', ordem, est, ''));
   }
 
+  if (entrada.apenasAnalisar) {
+    return { seusNomes, sugestoes: [], nomesPaisIgnorados: ignorados, semSugestoes: false, motivoSemSugestoes: null, janela: null };
+  }
+
   // 2) Sugestões por grupo.
   const quantidades = quantidadePorGrupo(entrada.sexo);
   const pool = poolPorSexo(entrada.sexo).filter((p) => {
@@ -276,5 +283,33 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
     motivoSemSugestoes:
       sugestoes.length > 0 ? null : testados > 0 && testadosComBloqueio === testados ? 'sobrenomes_bloqueiam' : 'regras',
     janela: janelaDatas ? { dias: janelaDatas.datas.length, centro: janelaDatas.centro } : null,
+  };
+}
+
+/**
+ * Bebê já registrado: leitura do nome completo escolhido, sem sugerir outros nomes.
+ * Devolve `null` quando o texto não é um nome válido ou a data é inválida.
+ */
+export function analisarNomeRegistradoBebe(nomeCompletoRegistrado: string, dataPt: string): NomeBebeSugerido | null {
+  const partes = String(nomeCompletoRegistrado ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' ]{2,80}$/.test(partes) || !parseDataPt(dataPt)) return null;
+  const nome = partes.split(' ').map(cap).join(' ');
+  const avaliacao = avaliarCandidatoLivre(nome, dataPt);
+  let explicacao = '';
+  if (!candidatoOfertavel(avaliacao)) {
+    explicacao = avaliacao.temBloqueio
+      ? 'Este nome forma uma sequência que pede atenção no mapa do bebê.'
+      : 'Este nome tem uma combinação que pede atenção com o mapa do bebê.';
+  }
+  return {
+    ...avaliacao,
+    secao: 'seus_nomes',
+    grupo: 'seu',
+    primeiroNome: nome.split(' ')[0]!,
+    diasBons: candidatoOfertavel(avaliacao) ? 1 : 0,
+    diasTotal: 1,
+    explicacao,
   };
 }

@@ -35,7 +35,7 @@ export function isFirstQuestionnaireStep(
 export function getPreviousFlowStep(
   currentStepId: string,
   state?: Pick<ChatCollectState, 'relacaoNome' | 'aberturaMudanca' | 'ondeAssinaRaw'> &
-    Partial<Pick<ChatCollectState, 'fluxoMotivoAtivo' | 'motivoHarmonizacao' | 'areaArtistica'>>
+    Partial<Pick<ChatCollectState, 'fluxoMotivoAtivo' | 'motivoHarmonizacao' | 'areaArtistica' | 'bebeSituacao'>>
 ): PostBirthFlowStep | 'suggestions' | null {
   let idx: number;
   if (currentStepId === 'fim_coleta' || currentStepId === 'conclusao') {
@@ -47,7 +47,8 @@ export function getPreviousFlowStep(
     idx -= 1;
   }
   const pulado = (candidato: PostBirthFlowStep): boolean => {
-    if (candidato === 'palpite') return false;
+    // DEV-326: o caminho do bebê não tem palpite.
+    if (candidato === 'palpite') return Boolean(state?.fluxoMotivoAtivo) && state?.motivoHarmonizacao === 'bebe';
     const step = candidato as QuestionnaireStepId;
     // Sem estado: só os passos da DEV-320 contam como pulados (fluxo desligado).
     if (!state) return DEV320_STEPS.includes(step);
@@ -123,6 +124,14 @@ function clearStepFields(state: ChatCollectState, stepId: string): void {
     // DEV-320
     case 'motivo_harmonizacao':
       state.motivoHarmonizacao = null;
+      state.bebeSituacao = null;
+      state.bebeDataTipo = null;
+      state.bebeSexo = null;
+      state.bebeData = null;
+      state.bebeSobrenomes = [];
+      state.bebeNomesPais = [];
+      state.bebeNomeRegistrado = null;
+      state.bebeEstilos = [];
       if (state.ondeAssinaRaw.length === 1 && state.ondeAssinaRaw[0] === 'arte_criativo') {
         state.ondeAssinaRaw = [];
         state.ondeAssina = [];
@@ -147,6 +156,25 @@ function clearStepFields(state: ChatCollectState, stepId: string): void {
       break;
     case 'outros_usos':
       state.outrosUsos = [];
+      break;
+    // DEV-326
+    case 'bebe_situacao':
+      state.bebeSituacao = null;
+      break;
+    case 'bebe_data_tipo':
+      state.bebeDataTipo = null;
+      break;
+    case 'bebe_sexo':
+      state.bebeSexo = null;
+      break;
+    case 'bebe_dados':
+      state.bebeData = null;
+      state.bebeSobrenomes = [];
+      state.bebeNomesPais = [];
+      state.bebeNomeRegistrado = null;
+      break;
+    case 'bebe_estilo':
+      state.bebeEstilos = [];
       break;
     default:
       break;

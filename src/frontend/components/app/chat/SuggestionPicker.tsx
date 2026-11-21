@@ -6,6 +6,8 @@ import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
 import { ChatBackButton } from './ChatBackButton.js';
 import { dividirPorSecao, temSecoesArtisticas } from './artistic-suggestions-client.js';
+import { ORDEM_SECOES_BEBE, dividirPorGrupoBebe, temSecoesBebe } from './baby-suggestions-client.js';
+import { TITULO_SECAO_BEBE } from '../../../../shared/interactive-engine/ramos/bebe.js';
 
 export interface SuggestionPickerProps {
   suggestions: CandidateSuggestion[];
@@ -25,6 +27,8 @@ export interface SuggestionPickerProps {
   scrollCandidato?: { id: string; n: number } | null;
   /** DEV-324: volta ao palpite. */
   onBack?: () => void;
+  /** DEV-326: no caminho do bebê não há palpite; o rótulo do botão é outro. */
+  backLabel?: string;
   className?: string;
 }
 
@@ -47,6 +51,7 @@ export function SuggestionPicker({
   scrollSistemaToken = 0,
   scrollCandidato = null,
   onBack,
+  backLabel = 'Voltar ao palpite',
   className = '',
 }: SuggestionPickerProps) {
   const sistemaRef = useRef<HTMLElement>(null);
@@ -210,7 +215,36 @@ export function SuggestionPicker({
         {cabecalho('system-names-title', 'Sugestões do sistema', sistema.length, sistemaAberto, () => setSistemaAberto((v) => !v), 'system-names-list', 'text-gold')}
         {sistemaAberto && (
           <div id="system-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
-            {temSecoesArtisticas(sistema) ? (
+            {temSecoesBebe(sistema) ? (
+              // DEV-326: caminho do bebê, seções por grupo (nomes dos pais, menina, menino, neutros).
+              (() => {
+                const g = dividirPorGrupoBebe(sistema);
+                let inicio = 0;
+                return (
+                  <>
+                    {ORDEM_SECOES_BEBE.map((grupo) => {
+                      const itens = g[grupo];
+                      if (itens.length === 0) return null;
+                      const { titulo, dica } = TITULO_SECAO_BEBE[grupo];
+                      const de = inicio;
+                      inicio += itens.length;
+                      return (
+                        <div key={grupo} className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
+                          <div>
+                            <h4 className="font-inter text-[11px] font-medium uppercase tracking-[0.1em] text-[#d7c6ff]">
+                              {titulo} <span className="text-chat-muted">({itens.length})</span>
+                            </h4>
+                            <p className="text-xs text-chat-muted mt-0.5">{dica}</p>
+                          </div>
+                          {itens.map((sug, i) => renderCard(sug, de + i))}
+                        </div>
+                      );
+                    })}
+                    <p className="text-xs text-chat-muted">O relatório em PDF do caminho do bebê ainda não está disponível.</p>
+                  </>
+                );
+              })()
+            ) : temSecoesArtisticas(sistema) ? (
               // DEV-321: ramo artístico, duas seções (próximos do nascimento e nomes novos).
               (() => {
                 const s = dividirPorSecao(sistema);
@@ -251,7 +285,7 @@ export function SuggestionPicker({
             <ChatBackButton
               onClick={onBack}
               disabled={isRegenerating}
-              label="Voltar ao palpite"
+              label={backLabel}
               className="self-start"
             />
           )}

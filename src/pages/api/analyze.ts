@@ -77,7 +77,7 @@ const schema = z.object({
   /** DEV-320: perfil do chat (motivo e ramo artístico), guardado em `frequencias_numeros.perfilChat`. */
   perfil_chat: z
     .object({
-      motivo: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco']).optional(),
+      motivo: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco', 'bebe']).optional(),
       areaArtistica: z.string().max(40).optional(),
       areaArtisticaOutro: z.string().max(60).optional(),
       detalheArtistico: z.array(z.string().max(40)).max(2).optional(),
