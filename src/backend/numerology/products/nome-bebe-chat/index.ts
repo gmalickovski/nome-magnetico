@@ -15,6 +15,8 @@
 import {
   avaliarCandidatoLivre,
   candidatoOfertavel,
+  NOTA_MINIMA_NOME_LIVRE,
+  NOTA_MINIMA_NOME_NOVO,
   type AvaliacaoCandidato,
 } from '../shared/avaliar-candidato';
 import { gerarJanelaDatas, parseDataPt, JANELA_PADRAO_DIAS } from './janela';
@@ -78,8 +80,6 @@ export interface ResultadoNomesBebe {
 export const FRACAO_MINIMA_DIAS_BONS = 0.5;
 export const MAX_NOMES_PAIS = 5;
 const MAX_SOBRENOMES_PERMUTADOS = 3;
-/** Quanto cada etiqueta de estilo atendida pesa no ordenamento (em pontos de nota). */
-const PESO_ESTILO = 12;
 
 const NOME_VALIDO = /^[A-Za-zÀ-ÖØ-öø-ÿ' ]{2,30}$/;
 
@@ -139,12 +139,16 @@ interface EstatisticaJanela {
   mediaNota: number;
 }
 
-function estatisticaJanela(nome: string, datas: readonly string[]): EstatisticaJanela {
+function estatisticaJanela(
+  nome: string,
+  datas: readonly string[],
+  notaMinima = NOTA_MINIMA_NOME_LIVRE,
+): EstatisticaJanela {
   let bons = 0;
   let soma = 0;
   for (const d of datas) {
     const a = avaliarCandidatoLivre(nome, d);
-    if (candidatoOfertavel(a)) bons++;
+    if (candidatoOfertavel(a, notaMinima)) bons++;
     soma += a.score;
   }
   return { diasBons: bons, diasTotal: datas.length, mediaNota: datas.length > 0 ? soma / datas.length : 0 };
@@ -254,26 +258,40 @@ export function gerarNomesBebe(entrada: EntradaNomesBebe): ResultadoNomesBebe {
         const ordem = melhorOrdem(p.nome, ordens, centro);
         testados++;
         if (ordem.avaliacao.temBloqueio) testadosComBloqueio++;
-        return { p, ordem, pontos: ordem.avaliacao.score + PESO_ESTILO * aderenciaEstilo(p, estilos) };
+        return { p, ordem, estilo: aderenciaEstilo(p, estilos) };
       })
-      .filter((x) => candidatoOfertavel(x.ordem.avaliacao))
-      .sort((a, b) => b.pontos - a.pontos || a.p.nome.localeCompare(b.p.nome, 'pt-BR'))
+      // Regra geral: sem bloqueio e nota 80 ou mais, do mais próximo de 100 para baixo (estilo só desempata).
+      .filter((x) => candidatoOfertavel(x.ordem.avaliacao, NOTA_MINIMA_NOME_NOVO))
+      .sort(
+        (a, b) =>
+          b.estilo - a.estilo ||
+          b.ordem.avaliacao.score - a.ordem.avaliacao.score ||
+          a.p.nome.localeCompare(b.p.nome, 'pt-BR'),
+      )
       .slice(0, Math.max(quant * 3, quant));
 
     // Fase 2: janela inteira (só para os melhores da fase 1).
     const fase2 = fase1
       .map((x) => {
-        const est = estatisticaJanela(nomeCompleto(x.p.nome, x.ordem.sobrenomes), datas);
+        const est = estatisticaJanela(nomeCompleto(x.p.nome, x.ordem.sobrenomes), datas, NOTA_MINIMA_NOME_NOVO);
         return { ...x, est };
       })
       .filter((x) => x.est.diasTotal <= 1 || x.est.diasBons / x.est.diasTotal >= FRACAO_MINIMA_DIAS_BONS)
       .sort(
         (a, b) =>
-          b.est.diasBons - a.est.diasBons ||
-          b.est.mediaNota + PESO_ESTILO * aderenciaEstilo(b.p, estilos) - (a.est.mediaNota + PESO_ESTILO * aderenciaEstilo(a.p, estilos)) ||
+          b.estilo - a.estilo ||
+          b.ordem.avaliacao.score - a.ordem.avaliacao.score ||
+          b.est.mediaNota - a.est.mediaNota ||
           a.p.nome.localeCompare(b.p.nome, 'pt-BR'),
       )
-      .slice(0, quant);
+      .slice(0, quant)
+      // O estilo escolhe quem entra; a lista sai do mais próximo de 100 para baixo.
+      .sort(
+        (a, b) =>
+          b.ordem.avaliacao.score - a.ordem.avaliacao.score ||
+          b.est.mediaNota - a.est.mediaNota ||
+          a.p.nome.localeCompare(b.p.nome, 'pt-BR'),
+      );
 
     for (const x of fase2) {
       const foraDoEstilo = estilos.length > 0 && aderenciaEstilo(x.p, estilos) === 0;

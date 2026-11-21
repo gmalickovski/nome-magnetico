@@ -76,7 +76,7 @@ describe('DEV-326 · motor completo', () => {
     for (const s of r.sugestoes) {
       assert.equal(s.temBloqueio, false, `${s.nomeCompleto} tem bloqueio`);
       assert.notEqual(s.compatibilidade, 'desfavoravel');
-      assert.ok(s.score >= 70);
+      assert.ok(s.score >= 80, `${s.nomeCompleto} abaixo de 80`);
       assert.equal(s.diasTotal, 29);
       assert.ok(s.diasBons / s.diasTotal >= FRACAO_MINIMA_DIAS_BONS, `${s.nomeCompleto} poucos dias bons`);
       assert.match(s.explicacao, /dias possíveis para o nascimento/);
@@ -84,9 +84,9 @@ describe('DEV-326 · motor completo', () => {
     }
   });
 
-  it('sugestões ordenadas por dias bons (maior primeiro) dentro do grupo', () => {
+  it('sugestões ordenadas da maior nota para a menor dentro do grupo', () => {
     const r = gerarNomesBebe(base);
-    const meninas = r.sugestoes.filter((s) => s.grupo === 'menina').map((s) => s.diasBons);
+    const meninas = r.sugestoes.filter((s) => s.grupo === 'menina').map((s) => s.score);
     assert.deepEqual(meninas, [...meninas].sort((a, b) => b - a));
   });
 
