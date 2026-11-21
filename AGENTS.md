@@ -100,6 +100,7 @@ React island → fetch /api/* → Astro API route → src/backend/* → Supabase
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Playbooks, design, IA, pagamentos, Sentry, deploy |
 | [`DESIGN.md`](DESIGN.md) | The Celestial Alchemist |
 | [`DEPLOY.md`](DEPLOY.md) | Tag semver `v*.*.*` |
+| [Skill deploy-nome-magnetico](.agents/skills/deploy-nome-magnetico/SKILL.md) | Release com comparação TESTE → produção e GitHub Actions |
 | [`.agents/workflows/`](.agents/workflows/) | Workflows criar-* , Stripe, docs |
 | [`.claude/commands/`](.claude/commands/) | Comandos Claude espelhados |
 
