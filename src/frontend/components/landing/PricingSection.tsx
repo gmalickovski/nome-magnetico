@@ -3,7 +3,8 @@ import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analy
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { checkoutFailureMessage, isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { withLinkedCoupon } from '../../../shared/checkout-coupon-link';
 import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
 import {
@@ -140,12 +141,12 @@ export function PricingSection({
       track('begin_checkout', { produto: planId, valor: priceInfo.cents / 100 });
       setCheckoutProduct(planId);
     } else {
-      const returnUrl = `${window.location.pathname}?checkout=${planId}`;
+      const returnUrl = withLinkedCoupon(`${window.location.pathname}?checkout=${planId}`, new URLSearchParams(window.location.search));
       window.location.href = `/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`;
     }
   }
 
-  async function handleTriggerCard(type: ProductType, couponCode?: string) {
+  async function handleTriggerCard(type: ProductType, couponCode: string | undefined, finalCents: number) {
     try {
       const info = resolvedPrices[type] ?? PRICE_UNAVAILABLE;
       track('checkout_redirect_start', {
@@ -165,27 +166,29 @@ export function PricingSection({
         {
           product_type: type,
           couponCode,
-          expected_final_cents: info.cents,
+          expected_final_cents: finalCents,
         },
         (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
       );
       if (!result.ok) {
-        if ('priceChanged' in result && result.priceChanged) return;
         if ('alreadyActive' in result && result.alreadyActive) {
           window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
-          return;
+          return true;
         }
         if (isCheckoutEmailNotConfirmed(result)) {
           setEmailNotConfirmed(true);
           return;
         }
-        throw new Error('Erro ao criar checkout');
+        throw new Error(checkoutFailureMessage(result));
       }
       if ('bypass' in result && result.bypass) {
         window.location.href = result.redirectUrl;
-        return;
+        return true;
       }
-      if ('url' in result) window.location.href = result.url;
+      if ('url' in result) {
+        window.location.href = result.url;
+        return true;
+      }
     } catch (err) {
       track('checkout_failed', {
         produto: type,
@@ -193,6 +196,7 @@ export function PricingSection({
         origem: 'pricing_section',
       });
       console.error('[PricingSection] Erro ao criar checkout:', err);
+      throw err;
     }
   }
 
@@ -350,7 +354,6 @@ export function PricingSection({
         <CheckoutModal
           productType={checkoutProduct}
           priceInfo={resolvedPrices[checkoutProduct] ?? PRICE_UNAVAILABLE}
-          promotion={promotion}
           onClose={() => setCheckoutProduct(null)}
           onTriggerCard={handleTriggerCard}
         />
