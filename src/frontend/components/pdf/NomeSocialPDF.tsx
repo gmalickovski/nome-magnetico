@@ -2310,29 +2310,22 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           <PDFSectionAnchor id="pdf-arcanos" bookmark={{ title: 'Os Arcanos da Sua Análise', fit: true }} />
           <Text style={styles.hugeTitle}>Os Arcanos da Sua Análise</Text>
           <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: GOLD, textAlign: 'center', letterSpacing: 1, marginBottom: 4 }}>
-            Glossário Vibracional — Todos os Arcanos Presentes no Seu Mapa
+            Consulta rápida dos arcanos presentes no seu mapa
           </Text>
         </View>
 
-        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 16 }}>
-          Os arcanos abaixo são todos os que aparecem nos seus triângulos numerológicos — regentes, de passagem e de trânsito — de ambos os nomes. Cada arcano é uma força arquetípica universal que governa uma dimensão específica da sua jornada.
+        <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65, marginBottom: 12 }}>
+          Estes são os arcanos que aparecem nos seus triângulos, de ambos os nomes. Aqui está só a lista de consulta rápida; a descrição completa de cada um fica no glossário online, em nomemagnetico.com.br/glossario.
         </Text>
 
         {sortedArcanos.map((n) => {
           const arc = getArcano(n);
           return (
-            <View key={n} style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.65 }}>
-                <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>
-                  Arcano {n} — {arc.nome} — {arc.palavraChave} —{' '}
-                </Text>
-                {arc.descricao}
+            <View key={n} wrap={false} style={{ marginBottom: 6, flexDirection: 'row' }}>
+              <Text style={{ width: 150, fontFamily: BODY_FONT_BOLD, fontSize: 9.5, color: '#7C3AED' }}>
+                Arcano {n} · {arc.nome}
               </Text>
-              {arc.desafio ? (
-                <Text style={{ fontSize: 10, color: '#6B7280', lineHeight: 1.6, fontStyle: 'italic', marginTop: 3 }}>
-                  Desafio: {arc.desafio}
-                </Text>
-              ) : null}
+              <Text style={{ flex: 1, fontSize: 9.5, color: GRAY, lineHeight: 1.5 }}>{arc.palavraChave}</Text>
             </View>
           );
         })}
