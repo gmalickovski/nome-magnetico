@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
 
+// O teste simula o Stripe; só precisa de uma chave qualquer para `stripe.ts` carregar
+// (igual à CI, que usa sk_test_dummy). Não usa credencial real.
+process.env.STRIPE_SECRET_KEY ??= 'sk_test_dummy';
+
 const notifyCalls: { event: string; payload: Record<string, unknown> }[] = [];
 let createResult = { created: true, subscription: { id: 'sub-1', payment_provider: 'test' } };
 
