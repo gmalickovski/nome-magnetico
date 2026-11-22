@@ -224,6 +224,11 @@ describe('DEV-266 · PDF integração offline', () => {
     for (const snippet of FORBIDDEN_NOME_SOCIAL_PAGO) {
       assert.equal(pagoText.includes(snippet), false, `jargão no PDF pago: "${snippet}"`);
     }
+    // DEV-332: o gratuito também sai sem jargão e sem copy de medo.
+    const gratuitoText = pdfToText(Buffer.from(gratuitoBuf)).toLowerCase();
+    for (const snippet of [...FORBIDDEN_NOME_SOCIAL_PAGO, '24h/dia', 'compulsão automática', 'sabotando']) {
+      assert.equal(gratuitoText.includes(snippet), false, `jargão no PDF gratuito: "${snippet}"`);
+    }
 
     const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-font-'));
     const pPath = join(dir, 'pago.pdf');

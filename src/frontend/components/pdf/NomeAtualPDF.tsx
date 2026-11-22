@@ -15,7 +15,7 @@
  *   N. Potencial da Assinatura / CTA (Nome Social)
  */
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
-import { THEME_NOME_ATUAL, PDF_TYPOGRAPHY } from './shared/PDFTheme';
+import { THEMES, PDF_TYPOGRAPHY } from './shared/PDFTheme';
 import { PDFCover } from './shared/PDFCover';
 import { PDFPageHeader } from './shared/PDFPageHeader';
 import { PDFFooter } from './shared/PDFFooter';
@@ -63,8 +63,24 @@ import {
 } from '../../../backend/numerology/products/nome-social-potencial-pdf';
 import { buildPotencialCtaUrl } from './shared/pdfPotencialCtaUrl';
 import { PDFPotencialMaximoCtaPage } from './shared/PDFPotencialMaximoCta';
+import {
+  PDFComoLerGratuito,
+  PDFMapaMostrouGratuito,
+  PDFParte1Gratuito,
+  PDFResumoGratuito,
+  type GratuitoLayoutProps,
+} from './layout/NomeAtualLayoutPages';
+import { LAYOUT_THEME_PADRAO } from './layout/pdfLayoutTheme';
 
-const theme = THEME_NOME_ATUAL;
+/** Tema do layout base (DEV-322/DEV-332). No futuro vem da marca do profissional. */
+const layoutTheme = LAYOUT_THEME_PADRAO;
+
+// DEV-332: capa da mesma família dos PDFs pagos (fundo escuro e dourado).
+const theme = {
+  ...THEMES.nome_social,
+  productLabel: 'Análise do nome de nascimento',
+  coverSubtitle: 'Análise vibracional gratuita',
+};
 
 const GOLD = theme.primaryColor;
 const GRAY = '#4B5563';
@@ -448,6 +464,28 @@ export function NomeAtualPDF({
 
   const tocEntries = buildGratuitoTocEntries({ hasPotencialCta: exibirBlocoPotencial });
 
+  const gratuitoProps: GratuitoLayoutProps = {
+    theme: layoutTheme,
+    nomeNascimento,
+    dataNascimento,
+    numeros: cincoNumNasc,
+    arquetipo: arquetipoNasc,
+    tVida,
+    bloqueios,
+    debitos,
+    licoes,
+    tendencias,
+    frequencias,
+    letras: letrasNomeBatismo,
+    triCellSize,
+    nota: rawScore,
+    potencialMax: potencialAssinatura.potencialMax,
+    compatibilidade:
+      cincoNumNasc.expressao != null && cincoNumNasc.destino != null
+        ? avaliarCompatibilidade(cincoNumNasc.expressao, cincoNumNasc.destino)
+        : null,
+  };
+
   return (
     <Document title={`Nome Magnetico — ${nomeParaExibir}`} author="Nome Magnetico">
 
@@ -464,416 +502,17 @@ export function NomeAtualPDF({
 
       {!pdfRender?.omitTableOfContents && (
         <PDFTableOfContents
+          layoutTheme={layoutTheme}
           entries={tocEntries}
           subtitle={`${nomeParaExibir} — Sumário`}
           pageNumbers={pdfRender?.tocPageNumbers}
         />
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-       *  SEÇÃO: A ESSÊNCIA — O Nome de Nascimento Original
-       *  (Bloco espelhado da seção "A Essência" do NomeSocialPDF)
-       * ═══════════════════════════════════════════════════════════════════════ */}
-      <Page size="A4" style={styles.page}>
-        <PDFSectionAnchor id="pdf-essencia" bookmark={{ title: 'A Essência', fit: true }} />
-        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
-
-        {/* Badge de seção */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 18 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
-          <View style={{ backgroundColor: '#991B1B', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, marginHorizontal: 10 }}>
-            <Text style={{ fontSize: 8, color: '#FFFDF0', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              A ESSÊNCIA
-            </Text>
-          </View>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#991B1B', opacity: 0.3 }} />
-        </View>
-
-        {/* 1.1 — Banner do nome de nascimento */}
-        <View style={{ backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#991B1B', borderRadius: 10, padding: 24, marginBottom: 16, alignItems: 'center' }}>
-          <Text style={{ fontSize: 8, color: '#991B1B', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10, opacity: 0.8 }}>
-            Seu Nome de Nascimento
-          </Text>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: '#991B1B', textAlign: 'center', letterSpacing: 2, marginBottom: 8 }}>
-            {nomeNascimento}
-          </Text>
-          <View style={{ height: 0.5, width: 100, backgroundColor: '#991B1B', opacity: 0.5, marginBottom: 8 }} />
-          <Text style={{ fontSize: 9, color: '#991B1B', opacity: 0.7, textAlign: 'center', letterSpacing: 0.5 }}>
-            {dataNascimento}
-          </Text>
-        </View>
-
-        {/* "O Som do Seu Nascimento" */}
-        <View style={{ marginTop: 20, marginBottom: 16 }}>
-          <Text style={styles.sectionTitle}>
-            O Som do Seu Nascimento
-          </Text>
-          <Text style={styles.bodyText}>
-            "Este é o código vibracional que o universo registrou no instante do seu primeiro fôlego. Seu nome de nascimento não é um erro; ele é a sua Semente de Essência. Nele, estão gravadas as memórias da sua árvore genealógica, os talentos brutos que você veio lapidar e a missão que sua alma aceitou cumprir. Ele é a sua base inabalável, a nota fundamental da melodia da sua vida que nunca deixará de soar."
-          </Text>
-        </View>
-
-        {/* O Papel da Frequência Original */}
-        <View style={{ backgroundColor: 'rgba(212,175,55,0.05)', borderRadius: 8, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)' }}>
-          <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#8A661C', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            O Papel da Frequência Original
-          </Text>
-          <Text style={styles.bodyText}>
-            O nome de nascimento é o motor interno da sua jornada — ele emana qualidades permanentes, inscritas antes mesmo de qualquer escolha consciente. Esses talentos brutos são genuínos e poderosos, mas por serem energia pura e não lapidada, podem atrair interferências que se manifestam como bloqueios: padrões em loop que drenam o que você planta antes de colher. É exatamente para organizar essa frequência que a Harmonização de Assinatura existe — não para apagar quem você é, mas para que a sua essência originária possa fluir sem obstáculos.
-          </Text>
-        </View>
-
-        {/* ── O Destino: A Estrada Imutável ── */}
-        <View wrap={false}>
-          <PDFSectionAnchor
-            id="pdf-essencia-destino"
-            bookmark={{ title: 'Destino', fit: true }}
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, marginTop: 4 }}>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: '#6d28d9', opacity: 0.3 }} />
-            <Text style={{ fontSize: 9, color: '#6d28d9', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
-              O Destino: A Estrada Imutável
-            </Text>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: '#6d28d9', opacity: 0.3 }} />
-          </View>
-
-          {/* Card grande de Destino centralizado */}
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ borderWidth: 2, borderColor: '#6d28d9', borderRadius: 12, padding: 20, backgroundColor: '#F5F3FF', alignItems: 'center', width: 180 }}>
-              <Text style={{ fontSize: 9, color: '#6d28d9', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Número de Destino</Text>
-              <Text style={{ fontFamily: TITLE_FONT, fontSize: 52, color: '#5b21b6', lineHeight: 1 }}>{cincoNumNasc.destino}</Text>
-              <Text style={{ fontSize: 9, color: '#7c3aed', marginTop: 6 }}>A Estrada da Sua Alma</Text>
-            </View>
-          </View>
-
-          <View style={{ borderRadius: 8, backgroundColor: '#F5F3FF', padding: 12, marginBottom: 16 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#5b21b6', marginBottom: 6 }}>O Que Não Pode Ser Mudado</Text>
-            <Text style={styles.cardBodyText}>
-              Calculado a partir da data de nascimento, o Destino representa a trilha que sua alma escolheu antes de receber um nome. Não pode ser alterado por nenhuma prática ou mudança de nome — está gravado no tecido do tempo. A Harmonização de Assinatura não altera o Destino; ela organiza o campo vibracional para que a jornada rumo a ele aconteça com menos resistência e mais fluidez.
-            </Text>
-          </View>
-        </View>
-
-        {/* ── Os 4 números do nome de nascimento ── */}
-        <View wrap={false}>
-          <PDFSectionAnchor id="pdf-essencia-expressao" bookmark={{ title: 'Expressão', fit: true }} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
-            <Text style={{ fontSize: 9, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
-              Os Números do Nome
-            </Text>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
-          </View>
-          <Text style={styles.bodyText}>
-            Derivados das letras do nome de nascimento, estes quatro números revelam as qualidades inatas, os dons, a percepção externa e a vocação que estão codificados na semente original. Diferente do Destino, eles respondem à vibração das letras — e podem ser reorganizados pela Harmonização de Assinatura.
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-            {[
-              { label: 'Expressão', anchor: 'pdf-essencia-expressao', sublabel: 'O Dom Natural', value: cincoNumNasc.expressao, color: '#9A6B00', border: '#C89000', bg: '#FFFBF0' },
-              { label: 'Motivação', anchor: 'pdf-essencia-motivacao', sublabel: 'A Alma', value: cincoNumNasc.motivacao, color: '#0369a1', border: '#0284C7', bg: '#F0F9FF' },
-              { label: 'Impressão', anchor: 'pdf-essencia-impressao', sublabel: 'A Máscara', value: cincoNumNasc.impressao, color: '#15803d', border: '#16A34A', bg: '#F0FDF4' },
-              { label: 'Missão', anchor: 'pdf-essencia-missao', sublabel: 'A Vocação', value: cincoNumNasc.missao, color: '#7C3AED', border: '#7C3AED', bg: '#F5F3FF' },
-            ].map((n, i) => (
-              <View key={i} style={{ flex: 1, borderWidth: 1.5, borderColor: n.border, borderRadius: 8, padding: 10, alignItems: 'center', backgroundColor: n.bg }}>
-                {i > 0 ? (
-                  <PDFSectionAnchor id={n.anchor} bookmark={{ title: n.label, fit: true }} />
-                ) : null}
-                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: n.color, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.3 }}>{n.label}</Text>
-                <Text style={{ fontFamily: TITLE_FONT, fontSize: 28, color: n.color, lineHeight: 1 }}>{n.value ?? '?'}</Text>
-                <Text style={{ fontSize: 7, color: n.color, textAlign: 'center', marginTop: 4 }}>{n.sublabel}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* ── Detalhamento dos 5 Números do Nome ── */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 12 }} wrap={false}>
-          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
-          <Text style={{ fontSize: 8, color: '#8A661C', fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.8, marginHorizontal: 10 }}>
-            Detalhamento dos 5 Números do Nome
-          </Text>
-          <View style={{ flex: 1, height: 0.5, backgroundColor: GOLD, opacity: 0.4 }} />
-        </View>
-
-        <View style={{ gap: 6 }}>
-          {[
-            { num: cincoNumNasc.destino, label: 'Destino — A Estrada da Alma', desc: 'Calculado a partir da data de nascimento, representa a trilha que sua alma escolheu antes de receber um nome. É imutável e serve como a grande âncora da sua vida.', richDesc: cincoNumNasc.destino ? DESTINO_DESC[cincoNumNasc.destino] : '', color: '#5b21b6', bg: '#F5F3FF' },
-            { num: cincoNumNasc.expressao, label: 'Expressão — O Dom Natural', desc: 'Resultante de todas as letras do nome de batismo, revela o potencial nato — o que você veio equipado para fazer bem, naturalmente. Os talentos que surgem sem esforço e a qualidade que as pessoas percebem em você antes mesmo de falar.', richDesc: cincoNumNasc.expressao ? EXPRESSAO_DESC[cincoNumNasc.expressao] : '', color: '#9A6B00', bg: '#FFFBF0' },
-            { num: cincoNumNasc.motivacao, label: 'Motivação — A Alma do Nome', desc: 'Calculada pelas vogais, revela o motor mais profundo por trás das escolhas — não o que você faz, mas o que te move para fazer. Quando o nome cria conflito com a Motivação, há a sensação crônica de viver para fora.', richDesc: cincoNumNasc.motivacao ? MOTIVACAO_DESC[cincoNumNasc.motivacao] : '', color: '#0369a1', bg: '#F0F9FF' },
-            { num: cincoNumNasc.impressao, label: 'Impressão — A Máscara Social', desc: 'As consoantes formam o esqueleto visível do nome — a frequência que os outros captam antes de te conhecerem. Molda reputações e primeiras impressões. Um número desfavorável pode criar resistência onde deveria haver abertura.', richDesc: cincoNumNasc.impressao ? IMPRESSAO_DESC[cincoNumNasc.impressao] : '', color: '#15803d', bg: '#F0FDF4' },
-            { num: cincoNumNasc.missao, label: 'Missão — A Vocação de Vida', desc: 'Calculada pelo primeiro nome, aponta o campo onde seus dons encontram maior ressonância com o mundo. Quando alinhada com Expressão e Destino, gera propósito inevitável. Quando bloqueada, gera dispersão.', richDesc: cincoNumNasc.missao ? MISSAO_DESC[cincoNumNasc.missao] : '', color: '#7C3AED', bg: '#F5F3FF' },
-          ].map((item, i) => (
-            <View key={i} wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, backgroundColor: item.bg, borderRadius: 6, padding: 12 }}>
-              <View style={{ width: 36, alignItems: 'center', marginRight: 12 }}>
-                <Text style={{ fontFamily: TITLE_FONT, fontSize: 24, color: item.color, lineHeight: 1 }}>{item.num ?? '?'}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.3 }}>{item.label}</Text>
-                <Text style={styles.cardBodyText}>{item.desc}</Text>
-                {item.richDesc ? (
-                  <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }}>
-                    <Text style={{ fontSize: 10, fontFamily: BODY_FONT_BOLD, color: item.color, marginBottom: 3 }}>
-                      O Significado do seu Número {item.num}:
-                    </Text>
-                    <Text style={[styles.cardBodyText, { textAlign: 'justify' }]}>
-                      {item.richDesc}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          ))}
-        </View>
-
-      <PDFArquetipoDetailBlock
-        arquetipo={arquetipoNasc}
-        expressao={cincoNumNasc.expressao ?? 1}
-        anchorId="pdf-essencia-arquetipo"
-        bookmarkTitle="Arquétipo Vibracional (Nascimento)"
-        subtitle="A Força Narrativa do Seu Nome de Nascimento"
-        eyebrowLabel="Arquétipo do Nome de Nascimento"
-        accentColor={GOLD}
-      />
-
-      {/* ── SEÇÃO A ESSÊNCIA: TRIÂNGULO DA VIDA DO NOME DE NASCIMENTO ──────── */}
-      {tVida && (
-        <View break>
-          <View style={{ marginTop: 12, marginBottom: 14 }}>
-            <Text style={styles.hugeTitle}>Triângulo da Vida: O Fluxo de Nascimento</Text>
-          </View>
-
-          <Text style={[styles.bodyText, { marginBottom: 14 }]}>
-            Calculado a partir do nome de nascimento, o Triângulo da Vida revela a geometria sagrada da sua frequência original. As células em vermelho apontam bloqueios de energia — padrões repetitivos que mostram onde o seu fluxo natural encontrou nós ao longo da jornada. Mapear esses pontos não é um veredito, mas o primeiro passo de autoconhecimento para dissolvê-los e recuperar a fluidez.
-          </Text>
-
-          {/* Arcanos info box */}
-          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED', padding: 12, marginBottom: 10 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#7C3AED', marginBottom: 6 }}>O Que São os Arcanos</Text>
-            <Text style={[styles.bodyText, { marginBottom: 6 }]}>
-              A Numerologia Cabalística é a ciência que decodifica as vibrações ocultas por trás do seu nome. Para revelar as forças que regem o seu destino, ela utiliza os <Text style={{ fontFamily: BODY_FONT_BOLD }}>Arcanos</Text> — arquétipos profundos de energia. Embora a estrutura principal da vida seja governada por 22 Arcanos Maiores (as forças primordiais), a sua jornada diária desdobra-se em ciclos menores e mais sutis, expandindo essa roda para até 99 vibrações numerológicas para mapear o dia a dia. Dentro de cada triângulo, você encontrará três tipos de Arcanos atuando em conjunto:
-            </Text>
-            <Text style={[styles.bodyText, { marginBottom: 4 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>1. Arcano Regente:</Text> É a grande força dominante. Sempre um dos 22 Arcanos Maiores, ele é o "sol" que ilumina e governa aquela dimensão da sua vida desde o nascimento. É a fundação do seu cenário.
-            </Text>
-            <Text style={[styles.bodyText, { marginBottom: 4 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>2. Sequência de Passagem:</Text> É a sua linha do tempo. Representa os capítulos cronológicos da sua estrada. Utilizando as vibrações menores (até 99), ela revela por onde a sua energia vai caminhar, ciclo após ciclo.
-            </Text>
-            <Text style={[styles.bodyText, { marginBottom: 0 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>3. Arcano de Trânsito:</Text> É o seu "aqui e agora". É o capítulo específico e a vibração exata de provação, renovação ou colheita que você está atravessando neste exato momento.
-            </Text>
-          </View>
-
-          {/* Bloqueios info box */}
-          <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', padding: 12, marginBottom: 8 }}>
-            <Text style={{ fontFamily: TITLE_FONT, fontSize: 11, color: '#DC2626', marginBottom: 6 }}>O Que São os Bloqueios Energéticos</Text>
-            <Text style={[styles.bodyText, { marginBottom: 0 }]}>
-              Na numerologia cabalística, quando um mesmo número aparece três ou mais vezes consecutivas na pirâmide, ele cria uma densidade vibracional que chamamos de Bloqueio. Não é um castigo, mas uma interrupção temporária no fluxo da energia vital. Identificar essas áreas (nas marcações em vermelho abaixo) permite que você traga consciência para as esferas da vida que exigem maior cuidado e alinhamento.
-            </Text>
-          </View>
-
-          {/* Destaque Triângulo da Vida no motor v3 */}
-          {isV3 && (
-            <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', padding: 10, marginBottom: 12 }}>
-              <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#92640F', marginBottom: 4 }}>
-                O Triângulo da Vida Define a Sua Pontuação
-              </Text>
-              <Text style={styles.cardBodyText}>
-                No motor v3, as sequências repetidas que subtraem pontos do Score Cabalístico baseiam-se estritamente no Triângulo da Vida (a vibração pura do seu nome). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e atuam como reflexos vibracionais, sem gerar descontos no score.
-              </Text>
-            </View>
-          )}
-
-          {/* ─── TRIÂNGULO DA VIDA ─── */}
-          <View>
-            <PDFSectionAnchor
-              id="pdf-essencia-triangulo-vida"
-              bookmark={{ title: 'Triângulo da Vida', fit: true }}
-            />
-            <Text style={[styles.sectionTitle, { color: '#C89000', borderBottomColor: '#C89000', fontSize: 13, marginBottom: 8, marginTop: 24 }]}>
-              O Triângulo da Vida (Nascimento)
-            </Text>
-            <Text style={[styles.bodyText, { marginBottom: 10 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#C89000' }}>[Vitalidade e Prosperidade Material]</Text> — Este triângulo representa a fundação energética mais profunda da sua existência terrena. Calculado a partir do valor puro de cada letra do seu nome de nascimento, sem qualquer interferência externa, ele revela o fluxo contínuo da sua força vital primordial. Governa sua energia de base e sua relação essencial com a abundância material e financeira. É o solo de onde brotam a sua resiliência e a sua capacidade de se sustentar com firmeza na matéria.
-            </Text>
-            <PDFTriangleDetailsBlock
-              data={tVida}
-              triangulo="vida"
-              pyramidLabel="TRIÂNGULO DA VIDA"
-              cellSize={triCellSize}
-              letras={letrasNomeBatismo}
-              bloqueiosTitle="Bloqueios do Triângulo da Vida"
-              arcanosTitle="Arcanos do Triângulo da Vida"
-              allBloqueios={bloqueios}
-              bloqueiosFootnote="* A Harmonização de Assinatura pode alterar essas sequências; compare os triângulos antes e depois no relatório completo."
-            />
-          </View>
-        </View>
-      )}
-
-        <PDFFooter bgColor="#FEF2F2" />
-      </Page>
-
-      {/* Karma — página dedicada (evita fragmento de card) */}
-      <Page size="A4" style={styles.page}>
-        <PDFPageHeader subtitle={`${nomeNascimento} — A Essência Original`} bgColor="#FEF2F2" />
-
-      {/* ── SEÇÃO A ESSÊNCIA: O PESO DO PASSADO ───────────────────── */}
-      <View>
-        <View style={{ marginTop: 24, marginBottom: 8 }}>
-          <PDFSectionAnchor id="pdf-essencia-karma" bookmark={{ title: 'O Peso do Passado', fit: true }} />
-          <Text style={styles.hugeTitle}>O Peso do Passado: Débitos e Tendências</Text>
-        </View>
-
-        <Text style={[styles.bodyText, { marginBottom: 16 }]}>
-          Além dos bloqueios detectados nos triângulos, o nome de nascimento carrega padrões kármicos mais profundos: os Débitos (contas de encarnações passadas ainda ativas), as Lições (vibrações ausentes que precisam ser desenvolvidas) e as Tendências Ocultas (excessos que criam ciclos de sabotagem).
-        </Text>
-
-        {/* Débitos Kármicos */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
-          <PDFSectionAnchor id="pdf-essencia-debitos" bookmark={{ title: 'Débitos kármicos', fit: true }} />
-          <Text style={[styles.sectionTitle, { color: '#D97706', borderBottomColor: '#D97706', fontSize: 13 }]}>
-            Débitos Kármicos
-          </Text>
-          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
-            Os Débitos Kármicos emergem como ecos de vidas anteriores — áreas onde o livre-arbítrio foi utilizado em desequilíbrio. Não são punições, mas leis de compensação que exigem reintegração. Os mesmos cenários de traição, perda ou esforço redobrado tendem a se repetir até que a lição seja integrada conscientemente.
-          </Text>
-          {isV3 && debitosFixos.length > 0 && (
-            <View wrap={false} style={{ borderRadius: 6, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: '#F59E0B', padding: 8, marginBottom: 8 }}>
-              <Text style={{ fontSize: 8, fontFamily: BODY_FONT_BOLD, color: '#D97706', marginBottom: 2 }}>
-                Marca da sua data ({debitosFixos.map(d => d.numero).join(', ')}) — Sem impacto no score do nome
-              </Text>
-              <Text style={{ fontSize: 8, color: GRAY, lineHeight: 1.4 }}>
-                Os débitos vinculados à sua data de nascimento ou Destino não descontam pontos na avaliação do seu nome no motor v3. Eles representam aprendizados imutáveis de consciência.
-              </Text>
-            </View>
-          )}
-          <DebitosBlock debitos={debitos} />
-        </View>
-
-        {/* Lições Kármicas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
-          <PDFSectionAnchor id="pdf-essencia-licoes" bookmark={{ title: 'Lições kármicas', fit: true }} />
-          <Text style={[styles.sectionTitle, { color: '#0369a1', borderBottomColor: '#0369a1', fontSize: 13 }]}>
-            Lições Kármicas
-          </Text>
-          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
-            As Lições Kármicas são os "quartos vazios" da arquitetura energética: determinam exatamente quais virtudes estão ausentes no momento da encarnação. São traços não desenvolvidos em vidas anteriores — o Destino orquestrará desafios propositais para forçar o desenvolvimento dessas ferramentas ocultas.
-          </Text>
-          <LicoesBlock licoes={licoes} />
-        </View>
-
-        {/* Tendências Ocultas */}
-        <View style={{ ...styles.section, marginTop: 0 }}>
-          <PDFSectionAnchor id="pdf-essencia-tendencias" bookmark={{ title: 'Tendências ocultas', fit: true }} />
-          <Text style={[styles.sectionTitle, { color: '#6d28d9', borderBottomColor: '#6d28d9', fontSize: 13 }]}>
-            Tendências Ocultas
-          </Text>
-          <Text style={{ ...styles.bodyText, marginBottom: 8 }}>
-            As Tendências Ocultas emergem quando um número aparece quatro ou mais vezes no nome — um talento amplificado ao ponto de se tornar compulsão. O excesso incontrolado converte a habilidade primária em desequilíbrio, sabotando resultados a longo prazo. O mapeamento preciso dessas forças é o primeiro passo para direcioná-las conscientemente.
-          </Text>
-          <TendenciasBlock tendencias={tendencias} frequencias={frequencias} />
-        </View>
-
-      </View>
-
-        <PDFFooter bgColor="#FEF2F2" />
-      </Page>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-       *  PÁGINAS FINAIS — mantidas do PDF gratuito original
-       * ═══════════════════════════════════════════════════════════════════════ */}
-
-      {/* ── PÁGINA: O QUE ESTE MAPA MOSTROU (fundo claro) ───────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFSectionAnchor id="pdf-mapa" bookmark={{ title: 'O que este mapa mostrou', fit: true }} />
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Resumo do mapa`} />
-
-        <View style={{ marginTop: 12, marginBottom: 16 }}>
-          <Text style={[styles.hugeTitle, { fontSize: 22, color: DARK }]}>O que este mapa mostrou</Text>
-        </View>
-
-        {/* Bullets */}
-        <View style={[styles.section, { gap: 14 }]}>
-
-          {/* Bloqueios */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-            <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD }}>{bloqueios.length} bloqueio{bloqueios.length !== 1 ? 's' : ''} {bloqueios.length !== 1 ? 'energéticos' : 'energético'}</Text>
-              {' '}detectado{bloqueios.length !== 1 ? 's' : ''} nos 4 triângulos do nome de nascimento — loops vibracionais ativos 24h/dia, independente de esforço ou força de vontade.
-            </Text>
-          </View>
-
-          {/* Débitos */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-            <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD }}>{debitos.length} débito{debitos.length !== 1 ? 's' : ''} kármico{debitos.length !== 1 ? 's' : ''}</Text>
-              {' '}ativo{debitos.length !== 1 ? 's' : ''} — padrões de encarnações passadas que criam ciclos de resistência em áreas específicas da vida.
-            </Text>
-          </View>
-
-          {/* Lições */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-            <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD }}>{licoes.length} lição{licoes.length !== 1 ? 'ões' : ''} kármica{licoes.length !== 1 ? 's' : ''}</Text>
-              {' '}identificada{licoes.length !== 1 ? 's' : ''} — vibrações ausentes no nome que criam pontos cegos e lacunas de talento.
-            </Text>
-          </View>
-
-          {/* Tendências */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-            <Text style={{ color: '#EF4444', fontFamily: BODY_FONT_BOLD, fontSize: 13, lineHeight: 1.4, marginTop: 1 }}>—</Text>
-            <Text style={[styles.bodyText, { flex: 1, marginBottom: 0 }]}>
-              <Text style={{ fontFamily: BODY_FONT_BOLD }}>{tendencias.length} tendência{tendencias.length !== 1 ? 's' : ''} oculta{tendencias.length !== 1 ? 's' : ''}</Text>
-              {' '}— frequências em excesso que operam como compulsão automática, sabotando exatamente onde você mais quer prosperar.
-            </Text>
-          </View>
-
-        </View>
-
-        {/* Card de conclusão — card inteiro na mesma página (Growth t271u) */}
-        <View wrap={false} style={{
-          marginTop: 20,
-          marginHorizontal: 8,
-          backgroundColor: '#F9FAFB',
-          borderRadius: 10,
-          padding: 18,
-          borderWidth: 1,
-          borderColor: '#E5E7EB',
-        }}>
-          <Text style={[styles.bodyText, { textAlign: 'center', marginBottom: 0 }]}>
-            Esses padrões são descritos pela numerologia cabalística como tensões vibracionais no nome atual — não como diagnóstico ou promessa de cura. A harmonização propõe outras formas de assinar para você comparar scores, bloqueios e triângulos lado a lado, sem garantia de eliminação ou melhora automática.
-          </Text>
-        </View>
-
-        <Text style={[styles.bodyText, { marginTop: 16, textAlign: 'justify', marginBottom: 0 }]}>
-          No Nome Social você compara outras formas de assinar; o convite e o passo a passo estão na seção final deste PDF.
-        </Text>
-
-        <Text style={{ fontSize: 9, color: '#6B7280', lineHeight: 1.65, marginTop: 12, textAlign: 'center', fontStyle: 'italic' }}>
-          Débitos variáveis, lições kármicas e tendências ocultas podem ser amenizados ou eliminados quando a frequência vibracional do nome é reorganizada pela Harmonização de Assinatura — sem alterar quem você é, apenas como a energia do nome se expressa no mundo.
-        </Text>
-
-        <PDFFooter />
-      </Page>
-
-      {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
-      <Page size="A4" style={styles.page}>
-        <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como calculamos o score', fit: true }} />
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
-
-        <View style={{ marginTop: 24, marginBottom: 14 }}>
-          <Text style={[styles.sectionTitle, { fontSize: 13, marginBottom: 8 }]}>
-            Como Calculamos o Seu Score Cabalístico (Motor v3)
-          </Text>
-        </View>
-
-        <PDFComoCalculamosScore isV3={isV3} />
-
-        <PDFFooter />
-      </Page>
+      <PDFResumoGratuito {...gratuitoProps} />
+      <PDFComoLerGratuito theme={layoutTheme} nomeNascimento={nomeNascimento} />
+      <PDFParte1Gratuito {...gratuitoProps} />
+      <PDFMapaMostrouGratuito {...gratuitoProps} />
 
       {exibirBlocoPotencial ? (
         <PDFPotencialMaximoCtaPage

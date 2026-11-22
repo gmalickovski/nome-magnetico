@@ -39,9 +39,11 @@ function buildEssenciaTocEntries(): PdfTocEntry[] {
 export function buildGratuitoTocEntries(options: { hasPotencialCta?: boolean } = {}): PdfTocEntry[] {
   const hasPotencialCta = options.hasPotencialCta !== false;
   return [
-    ...buildEssenciaTocEntries(),
+    { id: 'pdf-resumo', title: 'Seu mapa em 1 página', level: 0 },
+    { id: 'pdf-intro-leitura', title: 'Como ler este relatório', level: 0 },
+    ...buildEssenciaTocEntries().map((e) => (e.id === 'pdf-essencia' ? { ...e, title: 'Parte 1 · Você hoje' } : e)),
     { id: 'pdf-mapa', title: 'O que este mapa mostrou', level: 0 },
-    { id: 'pdf-score', title: 'Como calculamos o score', level: 1 },
+    { id: 'pdf-score', title: 'Como chegamos à sua nota', level: 1 },
     ...(hasPotencialCta ? [{ id: 'pdf-nome-social', title: 'Potencial da sua assinatura', level: 1 as const }] : []),
   ];
 }
