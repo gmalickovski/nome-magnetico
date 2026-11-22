@@ -15,6 +15,7 @@ import { getScoreTierVisual } from '../../landing/score-tier-visual.js';
 import { ChatHarmonyScoreCard } from './ChatHarmonyScoreCard.js';
 import { ChatHarmonyStarPanel } from './ChatHarmonyStarPanel.js';
 import { ChatReadingSummaryPanel } from './ChatReadingSummaryPanel.js';
+import { ChatContextChips } from '../../shared/chat-ui/ChatAnalysisPanel.js';
 
 const RADAR_AXES_EXPLANATIONS: ReadonlyArray<{
   key: keyof RadarAxesData;
@@ -155,21 +156,7 @@ export function ChatSidebarSection({
             labels={radarLabels}
             showNumericLabels={radarShowNumericLabels}
           />
-          {contextChips.length > 0 && (
-            <div className="w-full pt-2 border-t border-white/[0.06] text-left">
-              <p className="text-[10px] uppercase font-cinzel tracking-wider text-chat-muted mb-2 text-left">Seu contexto</p>
-              <div className="flex flex-wrap gap-1.5">
-                {contextChips.map((chip) => (
-                  <span
-                    key={chip}
-                    className="inline-flex items-center rounded-full bg-[#141414] border border-[#D4AF37]/35 px-2.5 py-1 text-[11px] font-medium text-[#e5e2e1]"
-                  >
-                    {chip}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <ChatContextChips chips={contextChips} />
           <div className="w-full pt-3.5 border-t border-white/[0.06] space-y-3.5 text-left">
             {(() => {
               const activeScore =

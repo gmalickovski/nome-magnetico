@@ -1,21 +1,24 @@
+import type { HarmonySuggestionCardData } from '../ProductResultFrame.js';
+import type { BabyGoodDayItem } from '../../shared/chat-ui/ChatSuggestionCard.js';
+import type { ChatOptionPillItem } from '../../shared/chat-ui/ChatOptionPills.js';
 import type { MockupTheme } from './types.js';
 
 export interface ChatScriptExchange {
   id: string;
   jevPrompt: string;
   eyebrow?: string;
-  chips: string[];
+  chips: ChatOptionPillItem[];
   selectedChipIndex: number;
   userReply: string;
 }
 
 export interface ChatResultSuggestionExample {
-  nome: string;
-  score: number;
-  expressao: number;
-  destino: number;
-  badgeText: string;
-  groupLabel?: string;
+  id: string;
+  card: HarmonySuggestionCardData;
+  principal?: boolean;
+  maiorNota?: boolean;
+  secao?: 'proximo' | 'novo';
+  destaque?: string;
 }
 
 export interface ChatScript {
@@ -30,8 +33,13 @@ export interface ChatScript {
   exchanges: [ChatScriptExchange, ChatScriptExchange, ChatScriptExchange];
   jevClosingIntro: string;
   suggestions: ChatResultSuggestionExample[];
+  babyGoodDays?: BabyGoodDayItem[];
   sidebarContextTags: string[];
   srSummary: string;
+}
+
+function toPills(idPrefix: string, labels: string[]): ChatOptionPillItem[] {
+  return labels.map((label, idx) => ({ id: `${idPrefix}-${idx}`, label }));
 }
 
 /**
@@ -53,7 +61,11 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'motivo',
         eyebrow: 'PASSO 1 DE 3',
         jevPrompt: 'O que você quer fazer hoje?',
-        chips: ['Harmonizar o meu nome', 'Criar um nome artístico', 'Nome do meu bebê'],
+        chips: toPills('social-q1', [
+          'Harmonizar o meu nome',
+          'Criar um nome artístico',
+          'Nome do meu bebê',
+        ]),
         selectedChipIndex: 0,
         userReply: 'Harmonizar o meu nome',
       },
@@ -61,7 +73,11 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'foco',
         eyebrow: 'PASSO 2 DE 3',
         jevPrompt: 'Qual área mais pede a sua atenção hoje?',
-        chips: ['Carreira e prosperidade', 'Relacionamentos', 'Equilíbrio pessoal'],
+        chips: toPills('social-q2', [
+          'Carreira e prosperidade',
+          'Relacionamentos',
+          'Equilíbrio pessoal',
+        ]),
         selectedChipIndex: 0,
         userReply: 'Carreira e prosperidade',
       },
@@ -69,7 +85,11 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'preferencia',
         eyebrow: 'PASSO 3 DE 3',
         jevPrompt: 'Tem algo que quer manter na assinatura?',
-        chips: ['Manter sobrenome', 'Pode ajustar acentos', 'Aberto a sugestões'],
+        chips: toPills('social-q3', [
+          'Manter sobrenome',
+          'Pode ajustar acentos',
+          'Aberto a sugestões',
+        ]),
         selectedChipIndex: 0,
         userReply: 'Manter sobrenome',
       },
@@ -77,25 +97,51 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
     jevClosingIntro: 'Pronto. Cruzei seu mapa e separei opções sem bloqueios:',
     suggestions: [
       {
-        nome: 'Marina Côsta',
-        score: 93,
-        expressao: 6,
-        destino: 6,
-        badgeText: '0 bloqueios',
+        id: 'social-1',
+        principal: true,
+        maiorNota: true,
+        card: {
+          nome: 'Marina Côsta',
+          score: 93,
+          compatibilidade: 'favoravel',
+          expressao: 6,
+          destino: 6,
+          motivacao: 2,
+          impressao: 4,
+          missao: 3,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
       {
-        nome: 'Márina Costa',
-        score: 89,
-        expressao: 11,
-        destino: 6,
-        badgeText: '0 bloqueios',
+        id: 'social-2',
+        card: {
+          nome: 'Márina Costa',
+          score: 89,
+          compatibilidade: 'favoravel',
+          expressao: 11,
+          destino: 6,
+          motivacao: 5,
+          impressao: 6,
+          missao: 8,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
       {
-        nome: 'Marina Costá',
-        score: 85,
-        expressao: 3,
-        destino: 6,
-        badgeText: '0 bloqueios',
+        id: 'social-3',
+        card: {
+          nome: 'Marina Costá',
+          score: 85,
+          compatibilidade: 'favoravel',
+          expressao: 3,
+          destino: 6,
+          motivacao: 9,
+          impressao: 3,
+          missao: 9,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
     ],
     sidebarContextTags: ['Carreira', 'Manter sobrenome', '4 Triângulos'],
@@ -116,7 +162,7 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'area',
         eyebrow: 'CAMINHO ARTÍSTICO',
         jevPrompt: 'Em qual área artística você vai usar o nome?',
-        chips: ['Cantor ou cantora', 'Ator ou atriz', 'Criação de conteúdo'],
+        chips: toPills('art-q1', ['Cantor ou cantora', 'Ator ou atriz', 'Criação de conteúdo']),
         selectedChipIndex: 0,
         userReply: 'Cantor ou cantora',
       },
@@ -124,7 +170,7 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'imagem',
         eyebrow: 'PRESENÇA DE PALCO',
         jevPrompt: 'Qual imagem você quer passar com esse nome?',
-        chips: ['Marcante', 'Sofisticada', 'Misteriosa'],
+        chips: toPills('art-q2', ['Marcante', 'Sofisticada', 'Misteriosa']),
         selectedChipIndex: 0,
         userReply: 'Marcante',
       },
@@ -132,7 +178,7 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'tipo',
         eyebrow: 'DIREÇÃO DO NOME',
         jevPrompt: 'Próximo do seu nome ou totalmente diferente?',
-        chips: ['Próximo do meu', 'Totalmente diferente', 'As duas coisas'],
+        chips: toPills('art-q3', ['Próximo do meu', 'Totalmente diferente', 'As duas coisas']),
         selectedChipIndex: 2,
         userReply: 'As duas coisas',
       },
@@ -140,28 +186,54 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
     jevClosingIntro: 'Separei nomes artísticos alinhados ao palco e ao seu Destino:',
     suggestions: [
       {
-        nome: 'Véra Solis',
-        score: 94,
-        expressao: 3,
-        destino: 5,
-        badgeText: '0 bloqueios',
-        groupLabel: 'Totalmente novo',
+        id: 'art-1',
+        secao: 'proximo',
+        card: {
+          nome: 'Lúna Ribeiro',
+          score: 91,
+          compatibilidade: 'favoravel',
+          expressao: 5,
+          destino: 5,
+          motivacao: 1,
+          impressao: 4,
+          missao: 1,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
       {
-        nome: 'Lúna Ribeiro',
-        score: 91,
-        expressao: 5,
-        destino: 5,
-        badgeText: '0 bloqueios',
-        groupLabel: 'Próximo do seu',
+        id: 'art-2',
+        secao: 'novo',
+        principal: true,
+        maiorNota: true,
+        card: {
+          nome: 'Véra Solis',
+          score: 94,
+          compatibilidade: 'favoravel',
+          expressao: 3,
+          destino: 5,
+          motivacao: 7,
+          impressao: 5,
+          missao: 8,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
       {
-        nome: 'Kora Luz',
-        score: 87,
-        expressao: 1,
-        destino: 5,
-        badgeText: '0 bloqueios',
-        groupLabel: 'Totalmente novo',
+        id: 'art-3',
+        secao: 'novo',
+        card: {
+          nome: 'Kora Luz',
+          score: 87,
+          compatibilidade: 'favoravel',
+          expressao: 1,
+          destino: 5,
+          motivacao: 9,
+          impressao: 1,
+          missao: 6,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
     ],
     sidebarContextTags: ['Cantora', 'Marcante', 'Afinidade Palco'],
@@ -182,7 +254,11 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'situacao',
         eyebrow: 'CAMINHO DO BEBÊ',
         jevPrompt: 'Seu bebê já nasceu?',
-        chips: ['Ainda não nasceu', 'Já nasceu, sem registro', 'Já registrado'],
+        chips: toPills('bebe-q1', [
+          'Ainda não nasceu',
+          'Já nasceu, sem registro',
+          'Já registrado',
+        ]),
         selectedChipIndex: 0,
         userReply: 'Ainda não nasceu',
       },
@@ -190,7 +266,7 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'sexo',
         eyebrow: 'PERFIL DO NOME',
         jevPrompt: 'Já sabem o sexo do bebê?',
-        chips: ['Menina', 'Menino', 'Ainda não sei'],
+        chips: toPills('bebe-q2', ['Menina', 'Menino', 'Ainda não sei']),
         selectedChipIndex: 0,
         userReply: 'Menina',
       },
@@ -198,7 +274,7 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         id: 'estilo',
         eyebrow: 'ESTILO PREFERIDO',
         jevPrompt: 'Que estilo de nome vocês preferem?',
-        chips: ['Clássico', 'Moderno', 'Curto'],
+        chips: toPills('bebe-q3', ['Clássico', 'Moderno', 'Curto']),
         selectedChipIndex: 0,
         userReply: 'Clássico',
       },
@@ -206,29 +282,47 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
     jevClosingIntro: 'Cruzei o sobrenome da família com a janela do parto:',
     suggestions: [
       {
-        nome: 'Helena Duarte',
-        score: 95,
-        expressao: 6,
-        destino: 6,
-        badgeText: '0 bloqueios',
+        id: 'bebe-1',
+        principal: true,
+        maiorNota: true,
+        card: {
+          nome: 'Helena Duarte',
+          score: 95,
+          compatibilidade: 'favoravel',
+          expressao: 6,
+          destino: 6,
+          motivacao: 3,
+          impressao: 3,
+          missao: 3,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
       {
-        nome: 'Clara Duarte',
-        score: 90,
-        expressao: 9,
-        destino: 6,
-        badgeText: '0 bloqueios',
+        id: 'bebe-2',
+        card: {
+          nome: 'Clara Duarte',
+          score: 90,
+          compatibilidade: 'favoravel',
+          expressao: 9,
+          destino: 6,
+          motivacao: 1,
+          impressao: 8,
+          missao: 6,
+          bloqueios: 0,
+          vidaBloqueiosCodigos: [],
+        },
       },
-      {
-        nome: 'Laura Duarte',
-        score: 86,
-        expressao: 1,
-        destino: 6,
-        badgeText: '0 bloqueios',
-      },
+    ],
+    babyGoodDays: [
+      { dia: '12/05', nota: 84, bom: true },
+      { dia: '13/05', nota: 71, bom: false },
+      { dia: '14/05', nota: 95, bom: true },
+      { dia: '15/05', nota: 91, bom: true },
+      { dia: '16/05', nota: 78, bom: false },
     ],
     sidebarContextTags: ['Menina', 'Clássico', 'Janela do parto'],
     srSummary:
-      'Simulação do chat para escolher o nome do bebê: confirmação de gravidez, sexo menina, estilo clássico e apresentação de três nomes sem bloqueios com notas entre 86 e 95.',
+      'Simulação do chat para escolher o nome do bebê: confirmação de gravidez, sexo menina, estilo clássico e apresentação de nomes sem bloqueios com dias favoráveis da janela do parto.',
   },
 };
