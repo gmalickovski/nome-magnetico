@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Carta aos pais</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#4A3A36}
+h1{font-family:Cinzel,serif;font-weight:400;font-size:30px;letter-spacing:.05em;margin:0}
+h2{font-family:Cinzel,serif;font-weight:400;font-size:20px;letter-spacing:.04em;color:#4A3A36;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0}
+h4{font-size:14px;font-weight:600;color:#4A3A36;margin:0}
+p{font-size:14px;line-height:1.7;margin:0;color:#5C4B46}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: {{c.fundo}}; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: {{c.texto}}">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #8C7B76">Helena · Carta aos pais</div>
+</div>
+
+<h1 style="color: {{c.texto}}">Para a Mariana e o Rafael</h1>
+<div style="background: #FFFFFF; border-radius: 24px; padding: 28px 30px; display: flex; flex-direction: column; gap: 14px">
+<p>Escolher um nome é um dos primeiros gestos de cuidado com um filho. É o som que ele vai ouvir milhares de vezes, dito com carinho por quem ama.</p>
+<p>Este manual reúne o que a Numerologia Cabalística mostra sobre o nome Helena Lima Santos: as qualidades que ele convida a florescer, como ela tende a se expressar e o que pode ajudar vocês no dia a dia.</p>
+<p>Nada aqui é destino fechado. São pistas para observar, acolher e conversar. Quem a Helena vai ser, ela mostra para vocês aos poucos.</p>
+<div style="font-family: Cinzel, serif; font-size: 16px; color: {{c.texto}}">Com carinho, Nome Magnético</div>
+</div>
+
+<h2>Como usar este manual</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{guia}}" as="g" hint-placeholder-count="4">
+<div style="background: {{c.suave}}; border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+<h3 style="color: {{c.texto}}">{{g.t}}</h3>
+<p style="font-size: 13px; line-height: 1.55">{{g.d}}</p>
+</div>
+</sc-for>
+</div>
+
+<div style="background: #FFFFFF; border-radius: 20px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+<h4>Sobre o registro</h4>
+<p style="font-size: 12.5px; line-height: 1.55">As regras de registro e de mudança de nome são do cartório. Confirme os prazos e as exigências antes de registrar.</p>
+</div>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #8C7B76">
+<div>Fala de tendências e qualidades, nunca de destino fechado.</div>
+<div>Página 2</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tom":{"editor":"enum","options":["rosa","azul","neutro"],"default":"rosa"},"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const tons = {
+rosa: { fundo: '#FFF6F4', suave: '#FCE9EC', texto: '#9E4A5B' },
+azul: { fundo: '#F5F9FD', suave: '#E3EEF9', texto: '#3F6E96' },
+neutro: { fundo: '#F6FAF7', suave: '#E2F2EA', texto: '#3F7A61' }
+};
+return {
+c: tons[this.props.tom ?? 'rosa'] ?? tons.rosa,
+guia: [
+{ t: '1 · Quem está chegando', d: 'O que a data de nascimento revela, em linguagem simples.' },
+{ t: '2 · O nome', d: 'O nome escolhido e a comparação com os que vocês pensaram.' },
+{ t: '3 · Entender a Helena', d: 'Como ela tende a se expressar, aprender e ser acolhida.' },
+{ t: '4 · Crescer juntos', d: 'Qualidades para estimular, rituais e páginas para guardar.' }
+]
+};
+}
+}
+</script>
+</body>
+</html>
