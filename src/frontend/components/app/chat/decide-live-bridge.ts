@@ -217,6 +217,15 @@ export function mapCandidate(
 ): CandidateSuggestion {
   const score = Number(raw.score ?? 0);
   const bloqueios = Array.isArray(raw.bloqueios) ? raw.bloqueios : [];
+  const bloqueiosCodigos = bloqueios
+    .map((b: { codigo?: string }) => b.codigo ?? '')
+    .filter(Boolean);
+  const explicacao =
+    typeof raw.explicacaoPerfil === 'string'
+      ? raw.explicacaoPerfil
+      : typeof raw.explicacao === 'string'
+        ? raw.explicacao
+        : undefined;
   return {
     id: raw.nomeCompleto.trim().toLowerCase().replace(/\s+/g, '-'),
     nome: raw.nomeCompleto,
@@ -225,16 +234,20 @@ export function mapCandidate(
     compatibilidade: String(raw.compatibilidade ?? 'neutro'),
     bloqueiosEliminados: 0,
     bloqueiosRestantes: bloqueios.length,
+    bloqueiosCodigos: bloqueiosCodigos.length > 0 ? bloqueiosCodigos : undefined,
     maiorNota: raw.maiorNota === true,
     principal: raw.principal === true,
     secao: raw.secao === 'proximo' || raw.secao === 'novo' ? raw.secao : undefined,
+    tecnica: typeof raw.tecnica === 'string' ? raw.tecnica : undefined,
+    afinidade: typeof raw.afinidade === 'number' ? raw.afinidade : undefined,
+    explicacao,
     grupoBebe:
       raw.grupoBebe === 'seu' || raw.grupoBebe === 'menina' || raw.grupoBebe === 'menino' || raw.grupoBebe === 'neutro'
         ? raw.grupoBebe
         : undefined,
     diasBons: typeof raw.diasBons === 'number' ? raw.diasBons : undefined,
     diasTotal: typeof raw.diasTotal === 'number' ? raw.diasTotal : undefined,
-    destaque: typeof raw.explicacaoPerfil === 'string' ? raw.explicacaoPerfil : undefined,
+    destaque: explicacao,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
     panel: raw.panel
@@ -680,7 +693,7 @@ function collectToPerfilArtistico(collect: ChatCollectState) {
   };
 }
 
-/** DEV-320: perfil do chat que vai junto da análise salva. */
+/** DEV-320/DEV-328: perfil do chat que vai junto da análise salva. */
 export function collectStateToPerfilChat(collect: ChatCollectState) {
   return profileToPerfilChat({
     nomeUsoBase: collect.nomeUsoBase,
@@ -695,6 +708,16 @@ export function collectStateToPerfilChat(collect: ChatCollectState) {
     nomeArtistico: collect.nomeArtistico,
     contextoLeituraOutros: collect.contextoLeitura,
     ...collectToPerfilArtistico(collect),
+    bebeMae: collect.bebeMae ?? null,
+    bebePai: collect.bebePai ?? null,
+    bebeSituacao: collect.bebeSituacao ?? null,
+    bebeDataTipo: collect.bebeDataTipo ?? null,
+    bebeSexo: collect.bebeSexo ?? null,
+    bebeData: collect.bebeData ?? null,
+    bebeSobrenomes: collect.bebeSobrenomes ?? [],
+    bebeNomesPais: collect.bebeNomesPais ?? [],
+    bebeNomeRegistrado: collect.bebeNomeRegistrado ?? null,
+    bebeEstilos: collect.bebeEstilos ?? [],
   });
 }
 

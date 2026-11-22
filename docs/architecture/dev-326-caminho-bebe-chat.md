@@ -79,7 +79,8 @@ Mexer no bebê não exige mexer no Nome Social nem no artístico.
 
 - Os nomes da mãe e do pai servem hoje só para **sugerir os sobrenomes** do bebê. A leitura numerológica dos pais (ou a compatibilidade deles com o bebê) não existe ainda.
 - O painel lateral do nome do usuário fica escondido enquanto o caminho não foi escolhido e durante todo o caminho do bebê (até um nome ser selecionado). O teste "Teste um nome da sua escolha" não aparece no caminho do bebê (usa o nome de nascimento do usuário).
-- Não há PDF do bebê (DEV-322) e o perfil do bebê não é salvo na análise.
+- A partir da **DEV-328**, o perfil e os nomes gerados dos caminhos `dia_a_dia`, `artistico` e `bebe` são salvos em `analyses.frequencias_numeros` (`perfilChat`, `nomesArtisticos`, `nomesBebe`), sem migration. Enquanto os PDFs dedicados da DEV-329 e DEV-330 não entram, `/api/generate-pdf` seleciona a variante via `resolvePdfVariant` (`src/shared/pdf-format.ts`) com fallback seguro em `NomeSocialPDF` e header `X-PDF-Variant`.
+- No caminho do bebê em `/api/analyze`, a gravação não altera `profiles.birth_name`/`profiles.birth_date` do usuário nem insere em `social_name_inputs`, mantendo `motivoNaoOfertavel` desligado para escolhas de `artistico`/`bebe`.
 - O Jev não escolhe o caminho: a escolha é sempre por toque.
 
 ## 6. Liga e desliga

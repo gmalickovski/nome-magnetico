@@ -83,6 +83,8 @@ function paraChat(s: NomeArtisticoSugerido) {
     bloqueios: s.bloqueios,
     explicacaoPerfil: s.explicacao || undefined,
     secao: s.secao,
+    tecnica: s.tecnica,
+    afinidade: s.afinidade,
     origem: 'gerado' as const,
   };
 }

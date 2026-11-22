@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Crescendo com o nome</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#4A3A36}
+h1{font-family:Cinzel,serif;font-weight:400;font-size:30px;letter-spacing:.05em;margin:0}
+h2{font-family:Cinzel,serif;font-weight:400;font-size:20px;letter-spacing:.04em;color:#4A3A36;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0}
+h4{font-size:14px;font-weight:600;color:#4A3A36;margin:0}
+p{font-size:14px;line-height:1.65;margin:0;color:#5C4B46}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: {{c.fundo}}; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: {{c.texto}}">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #8C7B76">Helena · Parte 4</div>
+</div>
+<div style="align-self: flex-start; background: {{c.texto}}; color: #FFFFFF; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 4 · Crescer juntos</div>
+<h1 style="color: {{c.texto}}">Crescendo com o nome</h1>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{fases}}" as="f" hint-placeholder-count="3">
+<div style="background: #FFFFFF; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+<h3 style="color: {{c.texto}}">{{f.t}}</h3>
+<p style="font-size: 12.5px; line-height: 1.55">{{f.d}}</p>
+</div>
+</sc-for>
+</div>
+
+<div style="background: {{c.suave}}; border-radius: 22px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+<h4>Qualidades para cultivar juntos</h4>
+<p style="font-size: 13px">O nome não traz os números 4 e 8. Isso não é falta: são qualidades para a família estimular com o tempo, como organização (4) e confiança para conquistar (8).</p>
+</div>
+
+<h2>Caminho holístico para a família</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{holistico}}" as="h" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border-radius: 22px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+<h4 style="color: {{c.texto}}">{{h.t}}</h4>
+<p style="font-size: 13px; line-height: 1.55">{{h.d}}</p>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; gap: 8px; align-items: center">
+<div style="font-size: 12px; color: #6B5A55">Cores que combinam com o nome:</div>
+<div style="width: 26px; height: 26px; border-radius: 999px; background: #F6C6CF"></div>
+<div style="width: 26px; height: 26px; border-radius: 999px; background: #CFE7D9"></div>
+<div style="width: 26px; height: 26px; border-radius: 999px; background: #F5E6B8"></div>
+</div>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #8C7B76">
+<div>Sugestões de autoconhecimento. Dados de exemplo.</div>
+<div>Página 7</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tom":{"editor":"enum","options":["rosa","azul","neutro"],"default":"rosa"},"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const tons = {
+rosa: { fundo: '#FFF6F4', suave: '#FCE9EC', texto: '#9E4A5B' },
+azul: { fundo: '#F5F9FD', suave: '#E3EEF9', texto: '#3F6E96' },
+neutro: { fundo: '#F6FAF7', suave: '#E2F2EA', texto: '#3F7A61' }
+};
+return {
+c: tons[this.props.tom ?? 'rosa'] ?? tons.rosa,
+fases: [
+{ t: 'Bebê', d: 'Colo, voz calma e música. A sensibilidade aparece cedo.' },
+{ t: 'Infância', d: 'Faz de conta, histórias e amigos. Incentive a se expressar.' },
+{ t: 'Adolescência', d: 'Espaço para criar e opinar, com a família por perto.' }
+],
+holistico: [
+{ t: 'Acolher o nome', d: 'Digam o nome com carinho nos primeiros dias e contem para ela por que o escolheram.' },
+{ t: 'Ambiente da casa', d: 'Um cantinho calmo, luz suave e objetos que ela possa explorar.' },
+{ t: 'Palavras da família', d: 'Escolham três palavras que vocês querem que guiem a casa: por exemplo, carinho, alegria e coragem.' },
+{ t: 'Um ritual seu', d: 'Uma canção, uma frase antes de dormir ou um gesto só de vocês.' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

@@ -295,6 +295,7 @@ export function NomeSocialChat({
   const manualLock = useRef(false);
   const manualAbort = useRef<AbortController | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
+  const [babyJanela, setBabyJanela] = useState<{ dias: number; centro: string } | null>(null);
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
@@ -455,6 +456,7 @@ export function NomeSocialChat({
     setBasePanel(hasRegisteredBirthName ? initialBirthPanel : null);
     setActiveSuggestionId(null);
     setSuggestions([]);
+    setBabyJanela(null);
     setAnalysisId(undefined);
     setFreeAnalysisId(undefined);
     setFreePdfDownloaded(false);
@@ -1505,6 +1507,7 @@ export function NomeSocialChat({
       { optionIds: [id], labels: [label] },
     );
     setCollectState(escolhido);
+    setBabyJanela(null);
     if (id === 'bebe') {
       setBirthConfirmed(true);
       chatStartedAtRef.current = Date.now();
@@ -1689,6 +1692,7 @@ export function NomeSocialChat({
     setPendingPalpiteFeedback(null);
     if (cameFromSuggestions) {
       setSuggestions([]);
+      setBabyJanela(null);
       setActiveSuggestionId(null);
       setAnalysisId(undefined);
       clearChatPdfEnsureInflight();
@@ -1913,6 +1917,7 @@ export function NomeSocialChat({
       });
       const data = (await res.json()) as RawBabyNamesResponse;
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao calcular os nomes do bebê');
+      setBabyJanela(data.janela ?? null);
       const candidatos = mapBabyNamesToCandidates(data);
       if (candidatos.length > 0) {
         setSuggestions((prev) => mergeChatSuggestionsCumulative(prev, candidatos));
@@ -2125,12 +2130,19 @@ export function NomeSocialChat({
       const suggestionsFingerprint = chatSuggestionsExportFingerprint(
         chatSuggestionsToExportNames(suggestions),
       );
+      const isBaby = isRamoBebeCollect(collectState);
+      const effectiveBirthName = isBaby
+        ? (activeSuggestion?.nome?.trim() ?? '')
+        : confirmedName.trim();
+      const effectiveBirthDate = isBaby
+        ? (collectState.bebeData?.trim() ?? '')
+        : confirmedDate.trim();
 
       if (
         !paidAccessActive ||
         !activeSuggestion?.nome?.trim() ||
-        !confirmedName.trim() ||
-        !confirmedDate.trim()
+        !effectiveBirthName ||
+        !effectiveBirthDate
       ) {
         return undefined;
       }
@@ -2145,8 +2157,8 @@ export function NomeSocialChat({
       }
 
       const key = buildChatPdfEnsureKey(
-        confirmedName,
-        confirmedDate,
+        effectiveBirthName,
+        effectiveBirthDate,
         activeSuggestion.nome,
         suggestionsFingerprint,
       );
@@ -2161,11 +2173,12 @@ export function NomeSocialChat({
             signal: innerSignal,
             body: JSON.stringify(
               buildChatPdfAnalyzePayload({
-                birthName: confirmedName,
-                birthDate: confirmedDate,
+                birthName: effectiveBirthName,
+                birthDate: effectiveBirthDate,
                 selectedSocialName: activeSuggestion.nome,
                 collect: collectState,
                 suggestions,
+                babyJanela,
               })
             ),
           });
@@ -2191,6 +2204,7 @@ export function NomeSocialChat({
       confirmedDate,
       collectState,
       suggestions,
+      babyJanela,
     ]
   );
 
@@ -2220,7 +2234,7 @@ export function NomeSocialChat({
     toastUi: pdfToastUi,
     pdfOverlayUi,
   } = useChatPdfCta({
-    suggestionSelected: suggestionSelected && !isRamoBebeCollect(collectState),
+    suggestionSelected,
     selectedNome: activeSuggestion?.nome ?? null,
     selectedScore: activeSuggestion?.score ?? 0,
     suggestionRank: suggestionRank || 1,
