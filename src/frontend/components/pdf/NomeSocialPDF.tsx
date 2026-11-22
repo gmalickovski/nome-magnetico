@@ -15,7 +15,7 @@ import { computeContextualRadarAxes } from '../../../shared/interactive-engine/m
 import { resolveRadarContext, readContextualRadarSnapshot } from '../../../shared/interactive-engine/radar-context';
 import { PDFMapaVibracional } from './shared/PDFMapaVibracional';
 import { PDFCover } from './shared/PDFCover';
-import { PDFStandardIntro } from './shared/PDFStandardIntro';
+import { PDFComoLerNomeSocial } from './shared/PDFComoLerNomeSocial';
 import { PDFPageHeader } from './shared/PDFPageHeader';
 import { PDFFooter } from './shared/PDFFooter';
 import { RenderMarkdownChunks } from './shared/PDFMarkdownRenderer';
@@ -28,7 +28,7 @@ import { normalizeBirthDateForNumerology } from './shared/pdfBirthDate';
 import { PDFTableOfContents } from './shared/PDFTableOfContents';
 import { buildPaidTocEntries } from './shared/pdfTocCatalog.ts';
 import { PDFSectionAnchor } from './shared/PDFSectionAnchor';
-import { PDFComoCalculamosScore } from './shared/PDFComoCalculamosScore';
+import { PDFComoChegamosSugestoes } from './shared/PDFComoChegamosSugestoes';
 import { analisarNomeSocial } from '../../../backend/numerology/products/nome-social';
 import { formatAnalysisText } from '../../../utils/textFormatter';
 import type { ProductPDFProps } from './shared/PDFTypes';
@@ -649,13 +649,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
       )}
 
       {/* ── PÁGINA INTRODUTÓRIA: GUIA DE LEITURA ────────────────────────── */}
-      <PDFStandardIntro
-        theme={theme}
-        productType="nome_social"
-        entityName={nomeParaExibir}
-        isScoreV3={isV3}
-        skipScoreExplainer
-      />
+      <PDFComoLerNomeSocial theme={theme} entityName={nomeParaExibir} />
 
       {/* ── PÁGINA: RANKING DOS CANDIDATOS (novo fluxo) ─────────────────────── */}
       {nomesCandidatos.length > 0 && (
@@ -699,11 +693,11 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                       )}
                       {isRecomendadoMotor && (
                         <Text style={{ fontSize: 7, color: '#6B7280', fontFamily: BODY_FONT_BOLD }}>
-                          Destaque do motor (regra N5){'  '}
+                          Opção em destaque{'  '}
                         </Text>
                       )}
                       {isIA && !isAssinaturaSelecionada && (
-                        <Text style={{ fontSize: 7, color: '#7c3aed', fontFamily: BODY_FONT_BOLD }}>(*) SUGESTÃO{'  '}</Text>
+                        <Text style={{ fontSize: 7, color: '#7c3aed', fontFamily: BODY_FONT_BOLD }}>Sugestão do Nome Magnético{'  '}</Text>
                       )}
                       <Text style={{ fontSize: 12, fontFamily: BODY_FONT_BOLD, color: DARK }}>{c.nomeCompleto}</Text>
                     </View>
@@ -1120,7 +1114,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
               <Text style={{ fontSize: 16, color: GRAY }}>»</Text>
               {scoreSocial !== scoreNasc && (
                 <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: GRAY, marginTop: 2 }}>
-                  {scoreSocial > scoreNasc ? '+' : ''}{scoreSocial - scoreNasc} pts
+                  {scoreSocial > scoreNasc ? '+' : ''}{scoreSocial - scoreNasc} pontos
                 </Text>
               )}
             </View>
@@ -2388,16 +2382,16 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
 
       {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
       <Page size="A4" style={styles.page}>
-        <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como calculamos o score', fit: true }} />
-        <PDFPageHeader subtitle={`${nomeParaExibir} — Como Calculamos o Seu Score`} />
+        <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como chegamos às sugestões', fit: true }} />
+        <PDFPageHeader subtitle={`${nomeParaExibir} — Como chegamos às sugestões`} />
 
         <View style={{ marginTop: 24, marginBottom: 14 }}>
           <Text style={[styles.sectionTitle, { fontSize: 13, marginBottom: 8 }]}>
-            Como Calculamos o Seu Score Cabalístico {isV3 ? '(Motor v3)' : ''}
+            Como chegamos às sugestões
           </Text>
         </View>
 
-        <PDFComoCalculamosScore isV3={isV3} />
+        <PDFComoChegamosSugestoes />
 
         <PDFFooter />
       </Page>

@@ -30,6 +30,9 @@ const FORBIDDEN_SNIPPETS = [
   'A harmonização neutralizou',
 ];
 
+/** DEV-322: jargão proibido no PDF pago do Nome Social. */
+const FORBIDDEN_NOME_SOCIAL_PAGO = ['Motor v3', 'regra N5', 'Regras Ocultas', ' pts'];
+
 function pdfToText(buf: Buffer): string {
   const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-txt-'));
   const path = join(dir, 't.pdf');
@@ -211,6 +214,11 @@ describe('DEV-266 · PDF integração offline', () => {
           `copy proibida encontrada: "${snippet}"`,
         );
       }
+    }
+
+    const pagoText = pdfToText(Buffer.from(pagoBuf));
+    for (const snippet of FORBIDDEN_NOME_SOCIAL_PAGO) {
+      assert.equal(pagoText.includes(snippet), false, `jargão no PDF pago: "${snippet}"`);
     }
 
     const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-font-'));

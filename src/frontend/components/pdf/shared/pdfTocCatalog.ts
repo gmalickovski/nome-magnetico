@@ -79,7 +79,7 @@ export function buildPaidTocEntries(hasRanking: boolean, options: { hasConclusio
     ...(['pessoal', 'social', 'destino'] as const).map(k => entry(`pdf-harmonizado-triangulo-${k}`, k === 'destino' ? 'Triângulo do Destino (Harmonizado)' : `Triângulo ${k === 'pessoal' ? 'Pessoal' : 'Social'} (Harmonizado)`, 3)),
     entry('pdf-arcanos', 'Os Arcanos da Sua Análise', 1),
     entry('pdf-guia', 'Guia de uso da assinatura', 1),
-    entry('pdf-score', 'Como calculamos o score', 1),
+    entry('pdf-score', 'Como chegamos às sugestões', 1),
     entry('pdf-treino', 'Folha de treino de assinatura', 1),
   ];
 }

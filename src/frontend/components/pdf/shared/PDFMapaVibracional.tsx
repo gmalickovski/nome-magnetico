@@ -261,7 +261,7 @@ export function PDFMapaVibracional({
               <Text style={{ width: 72, color: deltaTheme.color, fontFamily: BODY_FONT_BOLD }}>{b.valuePercent}</Text>
               <Text style={{ width: 65, color: deltaTheme.color, fontFamily: BODY_FONT_BOLD }}>
                 {delta > 0 ? '+' : ''}
-                {delta} pts
+                {delta} pontos
               </Text>
             </View>
           );
@@ -309,7 +309,7 @@ export function PDFMapaVibracional({
                     textAlign: 'center',
                   }}
                 >
-                  {delta > 0 ? `+${delta}` : delta} pts
+                  {delta > 0 ? `+${delta}` : delta} pontos
                 </Text>
               </View>
 
