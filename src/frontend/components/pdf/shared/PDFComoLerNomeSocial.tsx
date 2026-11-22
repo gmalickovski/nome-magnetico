@@ -1,10 +1,8 @@
 /**
- * "Como ler este relatório" do PDF do Nome Social (DEV-322, entrega A).
+ * "Como ler este relatório" do PDF do Nome Social (DEV-322 / DEV-327).
  *
- * Uma página só: mapa do documento, como ler os quadros e por onde começar.
- * Substitui o `PDFStandardIntro` (2 páginas) apenas no Nome Social pago; os outros
- * produtos continuam com o componente antigo.
- *
+ * Uma página só: mapa das 4 partes, como ler os quadros e por onde começar.
+ * Segue o tema `pdfLayoutTheme.ts` (fundo #FBF9F4, regra NO-LINE).
  * Copy: sem jargão de motor (v3, N5, pts), sem promessa de resultado.
  */
 import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
@@ -13,74 +11,102 @@ import { PDFFooter } from './PDFFooter';
 import { PDFSectionAnchor } from './PDFSectionAnchor';
 import { BODY_FONT, BODY_FONT_BOLD, TITLE_FONT } from './PDFFonts';
 import type { ProductTheme } from './PDFTheme';
+import { COR_FIXA, LAYOUT_THEME_PADRAO, type PdfLayoutTheme } from '../layout/pdfLayoutTheme';
 
-const INK = '#334155';
-const INK_STRONG = '#1E293B';
-const SOFT = '#F8FAFC';
-const LINE = '#E2E8F0';
+const tDefault = LAYOUT_THEME_PADRAO;
 
 const styles = StyleSheet.create({
-  page: { paddingTop: 45, paddingBottom: 65, paddingHorizontal: 45, backgroundColor: '#FFFFFF' },
-  title: { fontSize: 18, fontFamily: TITLE_FONT, textAlign: 'center', marginBottom: 6, letterSpacing: 0.5 },
-  lead: { fontSize: 10, fontFamily: BODY_FONT, color: INK, lineHeight: 1.55, textAlign: 'center', marginBottom: 14 },
-  h: { fontSize: 11, fontFamily: BODY_FONT_BOLD, color: INK_STRONG, marginBottom: 6, marginTop: 10 },
-  card: { backgroundColor: SOFT, borderWidth: 1, borderColor: LINE, borderRadius: 6, padding: 9, marginBottom: 6 },
-  cardTitle: { fontSize: 9.5, fontFamily: BODY_FONT_BOLD, color: INK_STRONG, marginBottom: 2 },
-  body: { fontSize: 9, fontFamily: BODY_FONT, color: INK, lineHeight: 1.5 },
+  page: { paddingTop: 48, paddingBottom: 68, paddingHorizontal: 48, backgroundColor: tDefault.paginaFundo },
+  title: { fontSize: 20, fontFamily: TITLE_FONT, marginBottom: 4, letterSpacing: 0.6 },
+  lead: { fontSize: 9.5, fontFamily: BODY_FONT, color: tDefault.tintaSuave, lineHeight: 1.5, marginBottom: 12 },
+  h: { fontSize: 12, fontFamily: TITLE_FONT, color: tDefault.tinta, marginBottom: 6, marginTop: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  gridCard: { width: '48.8%', backgroundColor: tDefault.cardFundo, borderRadius: 12, padding: 10 },
+  eyebrow: { fontSize: 7.5, fontFamily: BODY_FONT_BOLD, color: '#6B5A2E', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 },
+  quadroRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: tDefault.cardFundoAlt, borderRadius: 12, padding: 10, marginBottom: 6 },
+  cardTitle: { fontSize: 9.5, fontFamily: BODY_FONT_BOLD, color: tDefault.tinta, marginBottom: 2 },
+  body: { fontSize: 8.5, fontFamily: BODY_FONT, color: tDefault.tintaSuave, lineHeight: 1.45 },
 });
 
 interface Props {
   theme: ProductTheme;
   entityName: string;
+  layoutTheme?: PdfLayoutTheme;
 }
 
 const PARTES: Array<[string, string]> = [
-  ['Parte 1 · Você hoje', 'Os números do seu nome de nascimento, os triângulos, o arquétipo e o que o mapa mostra de pontos de atenção.'],
-  ['Parte 2 · Seu nome novo', 'O nome escolhido lado a lado com o de nascimento, o que mudou e a leitura dos números do nome novo.'],
-  ['Parte 3 · Como usar', 'O guia de uso da assinatura, a folha de treino e os anexos de consulta.'],
+  ['Parte 1 · Você hoje', 'O mapa completo do nome de nascimento: números, arquétipo, triângulo e pontos de atenção.'],
+  ['Parte 2 · O que muda', 'O veredito, a estrela e o Mapa Vibracional comparativos, e o antes e depois item por item.'],
+  ['Parte 3 · Seu nome novo', 'Só os números e arcanos que mudaram, o Triângulo da Vida do nome novo e o arquétipo.'],
+  ['Parte 4 · Como usar', 'O guia de uso da assinatura, como chegamos às sugestões, a folha de treino e os anexos.'],
 ];
 
-const QUADROS: Array<[string, string]> = [
-  ['Número em destaque', 'É o resultado do cálculo daquela leitura (por exemplo, a Expressão). O texto ao lado explica o que ele indica.'],
-  ['Selo de compatibilidade', 'Compara a Expressão do nome com o Destino da data de nascimento: Ressonância Total, Vibração Complementar, Vibração Neutra ou Tensão Vibracional.'],
-  ['Bloqueio', 'Sequência de três ou mais números iguais em um triângulo. O relatório mostra onde aparece e se o nome novo ficou sem ela.'],
-  ['Nota de 0 a 100', 'Resume o quanto o nome combina com a sua data de nascimento. Serve para comparar opções; não é uma previsão.'],
-];
-
-export function PDFComoLerNomeSocial({ theme, entityName }: Props) {
+export function PDFComoLerNomeSocial({ entityName, layoutTheme = LAYOUT_THEME_PADRAO }: Props) {
   return (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" style={[styles.page, { backgroundColor: layoutTheme.paginaFundo }]}>
       <PDFSectionAnchor id="pdf-intro-leitura" bookmark={{ title: 'Como ler este relatório', fit: true }} />
-      <PDFPageHeader subtitle={`${entityName} — Como ler este relatório`} />
+      <PDFPageHeader subtitle={`${entityName} — Como ler`} />
 
-      <Text style={[styles.title, { color: theme.accentColor }]}>Como ler este relatório</Text>
+      <Text style={[styles.title, { color: layoutTheme.destaqueTexto }]}>Como ler este relatório</Text>
       <Text style={styles.lead}>
-        Este documento parte do cálculo do seu nome pela Numerologia Cabalística. É uma ferramenta de autoconhecimento e de
-        escolha: ele organiza informações para você decidir, sem prometer resultados.
+        Ferramenta de autoconhecimento e de escolha. Organiza o cálculo do seu nome para você decidir, sem prometer resultados.
       </Text>
 
       <Text style={styles.h}>O mapa do documento</Text>
-      {PARTES.map(([t, d]) => (
-        <View key={t} style={styles.card} wrap={false}>
-          <Text style={styles.cardTitle}>{t}</Text>
-          <Text style={styles.body}>{d}</Text>
-        </View>
-      ))}
+      <View style={styles.grid}>
+        {PARTES.map(([titulo, desc]) => (
+          <View key={titulo} style={[styles.gridCard, { backgroundColor: layoutTheme.cardFundo }]} wrap={false}>
+            <Text style={styles.eyebrow}>{titulo}</Text>
+            <Text style={styles.body}>{desc}</Text>
+          </View>
+        ))}
+      </View>
 
       <Text style={styles.h}>Como ler cada quadro</Text>
-      {QUADROS.map(([t, d]) => (
-        <View key={t} style={styles.card} wrap={false}>
-          <Text style={styles.cardTitle}>{t}</Text>
-          <Text style={styles.body}>{d}</Text>
+      <View style={[styles.quadroRow, { backgroundColor: layoutTheme.cardFundoAlt }]} wrap={false}>
+        <Text style={{ fontFamily: TITLE_FONT, fontSize: 20, color: layoutTheme.destaqueTexto, minWidth: 42, textAlign: 'center' }}>6</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>Número em destaque</Text>
+          <Text style={styles.body}>O resultado do cálculo daquela leitura. O texto ao lado explica o que ele indica.</Text>
         </View>
-      ))}
+      </View>
 
-      <Text style={styles.h}>Por onde começar</Text>
-      <Text style={styles.body}>
-        Se você tem poucos minutos, leia o resumo logo após a capa e, na Parte 2, a comparação entre o nome de nascimento e o nome
-        novo. Depois vá ao guia de uso da assinatura. O sumário no início indica a página de cada seção, e os anexos servem para
-        consulta quando quiser se aprofundar.
-      </Text>
+      <View style={[styles.quadroRow, { backgroundColor: layoutTheme.cardFundoAlt }]} wrap={false}>
+        <View style={{ backgroundColor: '#D1FAE5', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3, minWidth: 42, alignItems: 'center' }}>
+          <Text style={{ fontSize: 8.5, fontFamily: BODY_FONT_BOLD, color: '#047857' }}>91</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>Cor da nota</Text>
+          <Text style={styles.body}>Verde 85 a 100, verde-limão 70 a 84, amarelo 50 a 69, laranja 30 a 49, vermelho até 29. A estrela e a teia usam as mesmas cores.</Text>
+        </View>
+      </View>
+
+      <View style={[styles.quadroRow, { backgroundColor: layoutTheme.cardFundoAlt }]} wrap={false}>
+        <View style={{ backgroundColor: COR_FIXA.arcanoFundo, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 }}>
+          <Text style={{ fontSize: 7.5, fontFamily: BODY_FONT_BOLD, color: COR_FIXA.arcanoTexto }}>Complementar</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>Selo de compatibilidade</Text>
+          <Text style={styles.body}>Compara a Expressão do nome com o Destino da data: Favorável, Vibração Neutra ou Tensão Vibracional.</Text>
+        </View>
+      </View>
+
+      <View style={[styles.quadroRow, { backgroundColor: layoutTheme.cardFundoAlt }]} wrap={false}>
+        <View style={{ backgroundColor: COR_FIXA.bloqueio, borderRadius: 5, paddingHorizontal: 8, paddingVertical: 3, minWidth: 42, alignItems: 'center' }}>
+          <Text style={{ fontSize: 8.5, fontFamily: BODY_FONT_BOLD, color: '#FFFFFF' }}>555</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>Bloqueio</Text>
+          <Text style={styles.body}>Três ou mais números iguais lado a lado em um triângulo. O relatório mostra onde aparece e se o nome novo ficou sem ela.</Text>
+        </View>
+      </View>
+
+      <View style={{ backgroundColor: layoutTheme.cardFundo, borderRadius: 12, padding: 12, marginTop: 6 }} wrap={false}>
+        <Text style={styles.cardTitle}>Por onde começar</Text>
+        <Text style={styles.body}>
+          Poucos minutos? Leia o resumo logo após a capa e a Parte 2. Já fez a análise gratuita? A Parte 1 você já conhece: vá direto para a Parte 2.
+        </Text>
+      </View>
 
       <PDFFooter />
     </Page>
