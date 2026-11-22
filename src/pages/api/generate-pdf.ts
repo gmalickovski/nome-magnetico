@@ -3,6 +3,7 @@ import { getAnalysis, getMagneticNames } from '../../backend/db/analyses';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeSocialPDF } from '../../frontend/components/pdf/NomeSocialPDF';
+import { NomeArtisticoPDF } from '../../frontend/components/pdf/NomeArtisticoPDF';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
 import {
   PDF_TOC_ANCHOR_IDS,
@@ -110,7 +111,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     requestedFormat,
     requestedMode,
     perfilChatMotivo,
-    hasArtisticTemplate: false,
+    hasArtisticTemplate: true,
     hasBabyChatTemplate: false,
   });
   const isGratuita = pdfResolution.isGratuita;
@@ -147,7 +148,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
         ? NomeEmpresaPDF
         : pdfResolution.template === 'nome-atual'
           ? NomeAtualPDF
-          : NomeSocialPDF;
+          : pdfResolution.template === 'nome-artistico'
+            ? NomeArtisticoPDF
+            : NomeSocialPDF;
 
   // Limpa cache expirado periodicamente
   const agora = Date.now();
@@ -181,13 +184,13 @@ export const GET: APIRoute = async ({ url, locals }) => {
         userName: firstName,
         upgradeOfferLabel,
       };
-      if (isGratuita) {
+      if (pdfResolution.template === 'nome-atual') {
         pdfBuffer = await renderProductPdfBuffer(
           NomeAtualPDF,
           pdfProps,
           PDF_TOC_ANCHOR_IDS.gratuito,
         );
-      } else if (productType === 'nome_social') {
+      } else if (pdfResolution.template === 'nome-social') {
         pdfBuffer = await renderProductPdfBuffer(
           NomeSocialPDF,
           pdfProps,

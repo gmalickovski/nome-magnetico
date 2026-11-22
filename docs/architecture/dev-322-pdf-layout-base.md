@@ -123,10 +123,14 @@ sem saúde: qualidades para acolher e estimular.
 
 ## 7. Como o sistema escolhe
 
-Ao gerar o PDF, `/api/analyze` lê `perfilChat.motivo` salvo em
-`analyses.frequencias_numeros.perfilChat` e escolhe a variante. O caminho do bebê ainda
-não salva o perfil na análise (pendência da DEV-326): resolver antes da variante Bebê.
+Ao gerar o PDF, `/api/generate-pdf` lê `perfilChat.motivo` salvo em
+`analyses.frequencias_numeros.perfilChat` e escolhe a variante via `resolvePdfVariant`
+(`src/shared/pdf-format.ts`). Na **DEV-328**, os dados de Social, Artístico e Bebê
+passaram a ser salvos em `frequencias_numeros` (`perfilChat`, `nomesArtisticos`, `nomesBebe`),
+sem migration.
 
 ## 8. Status da implementação
 
 - **DEV-327 (Nome Social pago)**: implementado em [`NomeSocialPDF.tsx`](../../src/frontend/components/pdf/NomeSocialPDF.tsx) e [`NomeSocialLayoutSections.tsx`](../../src/frontend/components/pdf/layout/NomeSocialLayoutSections.tsx), com catálogo atualizado em [`pdfTocCatalog.ts`](../../src/frontend/components/pdf/shared/pdfTocCatalog.ts). Na fixture de referência (`Alexandra Mendes Vale` → `Alexandra M. Vale`, `07/03/1992`), o relatório caiu de 53 para 24 páginas, com todas as partes em páginas novas, faixas de nota via `faixaNotaPapel`, ponta dos triângulos em roxo (`#6D4FC2`/`#EDE6FF`), regra NO-LINE e sem termos proibidos.
+- **DEV-328 (Persistência e roteamento)**: implementado em [`chat-analysis-persist.ts`](../../src/shared/chat-analysis-persist.ts), [`analyze.ts`](../../src/pages/api/analyze.ts), [`pdf-format.ts`](../../src/shared/pdf-format.ts) e [`generate-pdf.ts`](../../src/pages/api/generate-pdf.ts).
+- **DEV-329 (Nome Artístico pago)**: implementado em [`NomeArtisticoPDF.tsx`](../../src/frontend/components/pdf/NomeArtisticoPDF.tsx) e conectado em [`generate-pdf.ts`](../../src/pages/api/generate-pdf.ts) (`hasArtisticTemplate: true`), com 6 páginas (Capa palco, Resumo, Parte 1 Você e sua área, Parte 2 Próximos e novos, Parte 3 No palco + aviso informativo de contratos/INPI e Anexo Mapa/Triângulo da Vida).
