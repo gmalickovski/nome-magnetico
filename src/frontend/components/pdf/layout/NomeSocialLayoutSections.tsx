@@ -164,10 +164,10 @@ function buildComparisonRows(props: NomeSocialSharedLayoutProps): ComparisonRow[
     bSocial === 0 && bNasc > 0
       ? 'Nenhuma sequência repetida nos 4 triângulos.'
       : bSocial < bNasc
-        ? `Reduziu de ${bNasc} para ${bSocial} sequência(s) repetida(s).`
+        ? `Reduziu de ${bNasc} para ${bSocial} ${pl(bSocial, 'sequência repetida', 'sequências repetidas')}.`
         : bSocial === 0
           ? 'Segue sem sequências repetidas nos 4 triângulos.'
-          : `${bSocial} sequência(s) repetida(s) ainda ativa(s).`;
+          : `${bSocial} ${pl(bSocial, 'sequência repetida ainda ativa', 'sequências repetidas ainda ativas')}.`;
 
   const cRankNasc = compatRank(compatNasc);
   const cRankSocial = compatRank(compatSocial);
@@ -201,24 +201,24 @@ function buildComparisonRows(props: NomeSocialSharedLayoutProps): ComparisonRow[
   const tendSinal: SignalKind = tSocial < tNasc ? 'melhorou' : tSocial > tNasc ? 'atencao' : 'igual';
   const tendSentido =
     tSocial < tNasc
-      ? `Reduziu de ${tNasc} para ${tSocial} excesso(s) de repetição.`
+      ? `Reduziu de ${tNasc} para ${tSocial} ${pl(tSocial, 'excesso de repetição', 'excessos de repetição')}.`
       : tSocial > tNasc
-        ? `Subiu para ${tSocial} tendência(s) oculta(s).`
+        ? `Subiu para ${tSocial} ${pl(tSocial, 'tendência oculta', 'tendências ocultas')}.`
         : tSocial === 0
           ? 'Sem excessos numéricos no nome.'
-          : `Mantém ${tSocial} tendência(s) oculta(s).`;
+          : `Mantém ${tSocial} ${pl(tSocial, 'tendência oculta', 'tendências ocultas')}.`;
 
   const dNasc = debitosNasc.length;
   const dSocial = debitosSocial.length;
   const debSinal: SignalKind = dSocial < dNasc ? 'melhorou' : dSocial > dNasc ? 'atencao' : 'igual';
   const debSentido =
     dSocial < dNasc
-      ? `Aliviou de ${dNasc} para ${dSocial} débito(s) kármico(s).`
+      ? `Aliviou de ${dNasc} para ${dSocial} ${pl(dSocial, 'débito kármico', 'débitos kármicos')}.`
       : dSocial > dNasc
         ? 'Surgiu um débito kármico novo para trabalhar com consciência.'
         : dSocial === 0
           ? 'Sem débitos kármicos ativos.'
-          : `Mantém ${dSocial} débito(s) kármico(s).`;
+          : `Mantém ${dSocial} ${pl(dSocial, 'débito kármico', 'débitos kármicos')}.`;
 
   return [
     {
@@ -295,6 +295,12 @@ function buildComparisonRows(props: NomeSocialSharedLayoutProps): ComparisonRow[
   ];
 }
 
+
+/** Plural simples por quantidade (evita "(s)" no texto). */
+function pl(n: number, um: string, varios: string): string {
+  return n === 1 ? um : varios;
+}
+
 // ── 1. RESUMO DE 1 PÁGINA ────────────────────────────────────────────────────
 
 export function PDFResumoNomeSocial(props: NomeSocialSharedLayoutProps) {
@@ -360,12 +366,12 @@ export function PDFResumoNomeSocial(props: NomeSocialSharedLayoutProps) {
 
   const frase1 =
     bloqueiosVidaSocial === 0 && bloqueiosVidaNasc > 0
-      ? `1. As ${bloqueiosVidaNasc} sequência(s) repetida(s) do Triângulo da Vida não aparecem no nome novo.`
+      ? `1. ${pl(bloqueiosVidaNasc, 'A sequência repetida', `As ${bloqueiosVidaNasc} sequências repetidas`)} do Triângulo da Vida não ${pl(bloqueiosVidaNasc, 'aparece', 'aparecem')} no nome novo.`
       : bloqueiosSocial.length < bloqueiosNasc.length
         ? `1. Os bloqueios nos 4 triângulos caem de ${bloqueiosNasc.length} para ${bloqueiosSocial.length}.`
         : bloqueiosSocial.length === 0
           ? '1. Os 4 triângulos seguem livres de sequências repetidas.'
-          : `1. O nome mantém ${bloqueiosSocial.length} sequência(s) repetida(s) nos 4 triângulos.`;
+          : `1. O nome mantém ${bloqueiosSocial.length} ${pl(bloqueiosSocial.length, 'sequência repetida', 'sequências repetidas')} nos 4 triângulos.`;
 
   const frase2 =
     cincoNumNasc.expressao !== cincoNumSocial.expressao
@@ -400,17 +406,19 @@ export function PDFResumoNomeSocial(props: NomeSocialSharedLayoutProps) {
 
         <Card theme={theme} style={{ flex: 1 }}>
           <Nota theme={theme}>BLOQUEIOS</Nota>
-          <Text
-            style={{
-              fontFamily: theme.fonteTitulo,
-              fontSize: 21,
-              color: bloqueiosSocial.length > 0 ? COR_FIXA.bloqueioTexto : theme.tinta,
-              marginTop: 4,
-              marginBottom: 2,
-            }}
-          >
-            {bloqueiosNasc.length} para {bloqueiosSocial.length}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 4, marginBottom: 2 }}>
+            <Text style={{ fontFamily: theme.fonteTitulo, fontSize: 21, color: bloqueiosNasc.length > 0 ? COR_FIXA.bloqueioTexto : theme.tinta }}>{bloqueiosNasc.length}</Text>
+            <Text style={{ fontFamily: theme.fonteTexto, fontSize: 10, color: theme.apagado, marginHorizontal: 5 }}>para</Text>
+            <Text
+              style={{
+                fontFamily: theme.fonteTitulo,
+                fontSize: 21,
+                color: bloqueiosSocial.length > 0 ? COR_FIXA.bloqueioTexto : theme.tinta,
+              }}
+            >
+              {bloqueiosSocial.length}
+            </Text>
+          </View>
           <Nota theme={theme}>nos 4 triângulos</Nota>
         </Card>
 
@@ -551,7 +559,7 @@ export function PDFParte2OQueMuda(props: NomeSocialSharedLayoutProps) {
 
   const continuaItens: string[] = [
     ...(debitosFixos.length > 0
-      ? [`Débito(s) da data: ${debitosFixos.map((d) => d.numero).join(', ')} (imutável).`]
+      ? [`${pl(debitosFixos.length, 'Débito da data', 'Débitos da data')}: ${debitosFixos.map((d) => d.numero).join(', ')} (${pl(debitosFixos.length, 'imutável', 'imutáveis')}).`]
       : []),
     ...(licoesSocial.length > 0
       ? [`Lições que seguem: ${licoesSocial.map((l) => l.numero).join(', ')}.`]
@@ -657,7 +665,7 @@ export function PDFParte2OQueMuda(props: NomeSocialSharedLayoutProps) {
           <P theme={theme} size={8.5}>
             O Destino ({cincoNumNasc.destino ?? '—'})
             {debitosFixos.length > 0
-              ? ` e o(s) débito(s) kármico(s) ${debitosFixos.map((d) => d.numero).join(', ')} vêm`
+              ? ` e ${pl(debitosFixos.length, 'o débito kármico', 'os débitos kármicos')} ${debitosFixos.map((d) => d.numero).join(', ')} vêm`
               : ' vem'}{' '}
             da data de nascimento. Eles seguem iguais com qualquer nome e representam aprendizados para a vida toda.
           </P>
