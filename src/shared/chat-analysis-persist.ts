@@ -73,3 +73,17 @@ export type NomeArtisticoItemPersistido = z.infer<typeof nomeArtisticoItemPersis
 export type NomesArtisticosPersistidos = z.infer<typeof nomesArtisticosPersistSchema>;
 export type NomeBebeItemPersistido = z.infer<typeof nomeBebeItemPersistSchema>;
 export type NomesBebePersistidos = z.infer<typeof nomesBebePersistSchema>;
+
+type ListaComNomes = { nome: string }[] | undefined;
+const chaves = (l: ListaComNomes) => (l ?? []).map((x) => x.nome.trim().toLowerCase()).join('|');
+
+/**
+ * Chave estável das listas de nomes de um caminho (artístico ou bebê). Usada para só
+ * reaproveitar uma análise já salva quando as listas são as mesmas (DEV-328).
+ */
+export function chaveNomesCaminho(
+  v: { escolhido?: string; proximos?: ListaComNomes; novos?: ListaComNomes; seusNomes?: ListaComNomes; sugestoes?: ListaComNomes } | null | undefined,
+): string {
+  if (!v) return '';
+  return [v.escolhido?.trim().toLowerCase() ?? '', chaves(v.proximos), chaves(v.novos), chaves(v.seusNomes), chaves(v.sugestoes)].join('#');
+}

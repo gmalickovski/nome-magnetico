@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  chaveNomesCaminho,
   nomesArtisticosPersistSchema,
   nomesBebePersistSchema,
   perfilChatSchema,
@@ -122,5 +123,16 @@ describe('chat-analysis-persist / schemas Zod DEV-328', () => {
       escolhido: 'Helena Silva',
     });
     assert.equal(badJanela.success, false);
+  });
+});
+
+describe('DEV-328 · chaveNomesCaminho', () => {
+  it('muda quando a lista de nomes muda e ignora maiúsculas', () => {
+    const base = { escolhido: 'Luna Vale', proximos: [{ nome: 'Lari Macedo' }], novos: [{ nome: 'Luna Vale' }] };
+    const igual = { escolhido: 'luna vale', proximos: [{ nome: 'LARI MACEDO' }], novos: [{ nome: 'Luna Vale' }] };
+    const outra = { escolhido: 'Luna Vale', proximos: [{ nome: 'Lari Macedo' }], novos: [{ nome: 'Aurora Lis' }] };
+    assert.equal(chaveNomesCaminho(base), chaveNomesCaminho(igual));
+    assert.notEqual(chaveNomesCaminho(base), chaveNomesCaminho(outra));
+    assert.equal(chaveNomesCaminho(undefined), '');
   });
 });

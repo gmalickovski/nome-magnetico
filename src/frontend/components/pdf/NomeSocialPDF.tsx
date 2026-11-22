@@ -22,8 +22,7 @@ import { PDFComoLerNomeSocial } from './shared/PDFComoLerNomeSocial';
 import { PDFPageHeader } from './shared/PDFPageHeader';
 import { PDFFooter } from './shared/PDFFooter';
 import { RenderMarkdownChunks } from './shared/PDFMarkdownRenderer';
-import { DebitosBlock, LicoesBlock, TendenciasBlock } from './shared/PDFKarmicBlock';
-import { PDFArquetipoDetailBlock } from './shared/PDFArquetipoDetailBlock';
+import { ArquetipoLayout, DebitosLayout, LicoesLayout, TendenciasLayout } from './layout/KarmaLayoutBlocks';
 import { PDFTriangleDetailsBlock } from './shared/PDFTriangleDetailsBlock';
 import { type DoubleStarNumbers } from './shared/PDFDoubleStar';
 import { LOGO_FONT, TITLE_FONT, BODY_FONT, BODY_FONT_BOLD, loadLogoSrc, formatDate } from './shared/PDFFonts';
@@ -403,6 +402,7 @@ export function NomeSocialPDF({ analysis, pdfRender }: ProductPDFProps) {
       {/* 2. SUMÁRIO */}
       {!pdfRender?.omitTableOfContents && (
         <PDFTableOfContents
+          layoutTheme={layoutTheme}
           entries={paidToc}
           subtitle={`${nomeParaExibir} — Sumário`}
           pageNumbers={pdfRender?.tocPageNumbers}
@@ -486,7 +486,7 @@ export function NomeSocialPDF({ analysis, pdfRender }: ProductPDFProps) {
                       )}
                       <Text style={{ fontSize: 8, color: c.temBloqueio ? COR_FIXA.bloqueioTexto : layoutTheme.apagado }}>
                         {c.temBloqueio
-                          ? `${c.bloqueios?.length ?? 1} sequência(s) repetida(s) nos triângulos`
+                          ? `${c.bloqueios?.length ?? 1} ${(c.bloqueios?.length ?? 1) === 1 ? 'sequência repetida' : 'sequências repetidas'} nos triângulos`
                           : 'Sem bloqueio no Triângulo da Vida'}
                       </Text>
                     </View>
@@ -589,16 +589,13 @@ export function NomeSocialPDF({ analysis, pdfRender }: ProductPDFProps) {
           ))}
         </View>
 
-        <PDFArquetipoDetailBlock
+        <ArquetipoLayout
+          theme={layoutTheme}
           arquetipo={arquetipoNasc}
           expressao={cincoNumNasc.expressao ?? 1}
           anchorId="pdf-essencia-arquetipo"
           bookmarkTitle="Arquétipo Vibracional (Nascimento)"
-          subtitle="A Força Narrativa do Seu Nome de Nascimento"
-          eyebrowLabel="Arquétipo do Nome de Nascimento"
-          accentColor={layoutTheme.destaqueTexto}
-          essenceBgColor={layoutTheme.cardFundoAlt}
-          essenceLabelColor={layoutTheme.destaqueTexto}
+          titulo="O arquétipo do seu nome de nascimento"
         />
 
         {tVidaNasc && (
@@ -610,6 +607,7 @@ export function NomeSocialPDF({ analysis, pdfRender }: ProductPDFProps) {
             </P>
             <PDFTriangleDetailsBlock
               compact
+              layoutTheme={layoutTheme}
               data={tVidaNasc}
               triangulo="vida"
               pyramidLabel="TRIÂNGULO DA VIDA"
@@ -631,20 +629,20 @@ export function NomeSocialPDF({ analysis, pdfRender }: ProductPDFProps) {
 
           <View style={styles.section}>
             <PDFSectionAnchor id="pdf-essencia-debitos" bookmark={{ title: 'Débitos kármicos', fit: true }} />
-            <H3 theme={layoutTheme}>Débitos Kármicos</H3>
-            <DebitosBlock debitos={debitosNasc} />
+            <View minPresenceAhead={110}><H3 theme={layoutTheme}>Débitos Kármicos</H3></View>
+            <DebitosLayout theme={layoutTheme} debitos={debitosNasc} />
           </View>
 
           <View style={styles.section}>
             <PDFSectionAnchor id="pdf-essencia-licoes" bookmark={{ title: 'Lições kármicas', fit: true }} />
-            <H3 theme={layoutTheme}>Lições Kármicas</H3>
-            <LicoesBlock licoes={licoesNasc} />
+            <View minPresenceAhead={110}><H3 theme={layoutTheme}>Lições Kármicas</H3></View>
+            <LicoesLayout theme={layoutTheme} licoes={licoesNasc} />
           </View>
 
           <View style={styles.section}>
             <PDFSectionAnchor id="pdf-essencia-tendencias" bookmark={{ title: 'Tendências ocultas', fit: true }} />
-            <H3 theme={layoutTheme}>Tendências Ocultas</H3>
-            <TendenciasBlock tendencias={tendenciasNasc} frequencias={frequenciasNasc} />
+            <View minPresenceAhead={110}><H3 theme={layoutTheme}>Tendências Ocultas</H3></View>
+            <TendenciasLayout theme={layoutTheme} tendencias={tendenciasNasc} frequencias={frequenciasNasc} />
           </View>
         </View>
 
