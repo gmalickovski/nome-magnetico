@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Seu nome artístico</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h2{font-family:Cinzel,serif;font-weight:700;font-size:20px;letter-spacing:.05em;color:#2A2620;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+h4{font-size:14px;font-weight:600;color:#2A2620;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: #FBF9F4; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Luna Vale · Parte 2</div>
+</div>
+<div style="align-self: flex-start; background: #2A2620; color: #F3E7C4; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 2 · Seu nome artístico</div>
+<h1>Próximos e totalmente novos</h1>
+<p>Todos sem bloqueio. Os próximos partem do seu nome civil (nota mínima 70). Os novos não partem dele e só entram com nota 80 ou mais, do mais perto de 100 para baixo.</p>
+
+<sc-for list="{{secoes}}" as="s" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2>{{s.titulo}}</h2>
+<sc-for list="{{s.nomes}}" as="n" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 120px; gap: 12px; align-items: center; background: #FFFFFF; border-radius: 16px; padding: 12px 16px">
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="display: flex; gap: 8px; align-items: center">
+<h4 style="font-size: 16px">{{n.nome}}</h4>
+<sc-if value="{{n.escolhido}}" hint-placeholder-val="{{false}}"><div style="background: #2A2620; color: #F3E7C4; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px">Escolhido</div></sc-if>
+</div>
+<div style="font-size: 12.5px; color: #3D372D">{{n.porque}}</div>
+</div>
+<div><div style="display: inline-block; background: {{n.fundo}}; color: {{n.cor}}; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px">{{n.nota}} · {{n.faixa}}</div></div>
+<div style="font-size: 12px; color: #4B2E9E">Expressão {{n.exp}} · {{n.afin}}</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #6E6658">
+<div>Dados de exemplo.</div>
+<div>Página 5</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const f = (s) => s >= 85 ? { fundo: '#D1FAE5', cor: '#047857', r: 'Harmonioso' } : { fundo: '#ECFCCB', cor: '#4D7C0F', r: 'Favorável' };
+const n = (nome, nota, exp, afin, porque, escolhido) => { const x = f(nota); return { nome, nota: String(nota), faixa: x.r, fundo: x.fundo, cor: x.cor, exp, afin, porque, escolhido: !!escolhido }; };
+return {
+secoes: [
+{ titulo: 'Totalmente novos', nomes: [
+n('Luna Vale', 90, '3', 'maior afinidade', 'Curto, sonoro e fácil de lembrar. Combina com imagem marcante.', true),
+n('Aurora Lis', 87, '6', 'alta afinidade', 'Delicado e luminoso, com presença.'),
+n('Mel Ventura', 83, '5', 'alta afinidade', 'Leve e moderno, bom para o pop.')
+] },
+{ titulo: 'Próximos do seu nome', nomes: [
+n('Lari Macedo', 81, '11', 'alta afinidade', 'Mantém o apelido e o sobrenome da família.'),
+n('Larissa M.', 76, '9', 'boa afinidade', 'Primeiro nome inteiro com a inicial do sobrenome.'),
+n('Lari Machado', 72, '1', 'boa afinidade', 'Apelido com o último sobrenome.')
+] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

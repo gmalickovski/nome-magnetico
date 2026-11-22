@@ -4,6 +4,7 @@
 
 import type { PassoChatId } from './partitura';
 import type { AreaFocoNomeMagnetico } from './copy';
+import { BEBE_PROMPTS } from './ramos/bebe';
 import {
   getQuestionSpec,
   QUESTIONNAIRE_STEP_ORDER,
@@ -39,6 +40,13 @@ export interface RouterState {
   imagemArtisticaDecidida?: boolean;
   tipoNomeArtistico?: string | null;
   outrosUsosDecididos?: boolean;
+  /** DEV-326 */
+  bebePaisDecididos?: boolean;
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeDadosDecididos?: boolean;
+  bebeEstiloDecidido?: boolean;
 }
 
 function isStepAnswered(step: QuestionnaireStepId, state: RouterState): boolean {
@@ -57,6 +65,18 @@ function isStepAnswered(step: QuestionnaireStepId, state: RouterState): boolean 
       return Boolean(state.tipoNomeArtistico);
     case 'outros_usos':
       return Boolean(state.outrosUsosDecididos);
+    case 'bebe_pais':
+      return Boolean(state.bebePaisDecididos);
+    case 'bebe_situacao':
+      return Boolean(state.bebeSituacao);
+    case 'bebe_data_tipo':
+      return Boolean(state.bebeDataTipo);
+    case 'bebe_sexo':
+      return Boolean(state.bebeSexo);
+    case 'bebe_dados':
+      return Boolean(state.bebeDadosDecididos);
+    case 'bebe_estilo':
+      return Boolean(state.bebeEstiloDecidido);
     case 'nome_uso':
       return Boolean(state.nomeUsoDefinido);
     case 'sobrenomes_uso':
@@ -101,6 +121,13 @@ const PROMPTS: Record<QuestionnaireStepId, string> = {
   tipo_nome_artistico:
     'Você aceita um nome próximo do seu, um nome totalmente diferente ou as duas coisas?',
   outros_usos: 'Vai usar esse nome em mais algum lugar?',
+  // DEV-326 (textos em `ramos/bebe.ts`)
+  bebe_pais: BEBE_PROMPTS.bebe_pais!,
+  bebe_situacao: BEBE_PROMPTS.bebe_situacao!,
+  bebe_data_tipo: BEBE_PROMPTS.bebe_data_tipo!,
+  bebe_sexo: BEBE_PROMPTS.bebe_sexo!,
+  bebe_dados: BEBE_PROMPTS.bebe_dados!,
+  bebe_estilo: BEBE_PROMPTS.bebe_estilo!,
   nome_uso: 'Como as pessoas te chamam no dia a dia?',
   sobrenomes_uso: 'Quais sobrenomes você usa quando assina?',
   relacao_nome: 'Como você se sente com o seu nome hoje?',
@@ -113,6 +140,11 @@ const PROMPTS: Record<QuestionnaireStepId, string> = {
   prioridade_conflito: 'Se for preciso escolher, o que pesa mais para você?',
 };
 
+/** DEV-326: no caminho do bebê não há palpite de perfil (os dados do bebê já são o retrato). */
+function pulaPalpite(state: RouterState): boolean {
+  return Boolean(state.fluxoMotivoAtivo) && state.motivoHarmonizacao === 'bebe';
+}
+
 export function questionnaireStepsRemaining(state: RouterState): number {
   let n = 0;
   for (const step of QUESTIONNAIRE_STEP_ORDER) {
@@ -120,7 +152,7 @@ export function questionnaireStepsRemaining(state: RouterState): number {
     if (isQuestionnaireStepSkipped(step, state)) continue;
     n++;
   }
-  if (!state.palpiteStatus) n++;
+  if (!state.palpiteStatus && !pulaPalpite(state)) n++;
   return n;
 }
 
@@ -132,10 +164,12 @@ export interface NextStepDecision {
 }
 
 export function determineNextStep(state: RouterState): NextStepDecision {
+  // DEV-326: o caminho do bebê não usa a certidão do usuário (pede o nome da mãe e do pai).
   if (
-    !state.nomeCompleto ||
-    state.nomeCompleto.trim().split(/\s+/).length < 2 ||
-    !state.dataNascimento
+    !pulaPalpite(state) &&
+    (!state.nomeCompleto ||
+      state.nomeCompleto.trim().split(/\s+/).length < 2 ||
+      !state.dataNascimento)
   ) {
     return {
       nextStep: 'nome_nascimento',
@@ -163,7 +197,7 @@ export function determineNextStep(state: RouterState): NextStepDecision {
     };
   }
 
-  if (!state.palpiteStatus) {
+  if (!state.palpiteStatus && !pulaPalpite(state)) {
     return {
       nextStep: 'palpite',
       remainingSteps: 1,

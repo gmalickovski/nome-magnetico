@@ -1,5 +1,6 @@
 import { Page, View, Text, Link, StyleSheet } from '@react-pdf/renderer';
 import { PDFPageHeader } from './PDFPageHeader';
+import type { PdfLayoutTheme } from '../layout/pdfLayoutTheme';
 import { PDFFooter } from './PDFFooter';
 import { BODY_FONT, BODY_FONT_BOLD, TITLE_FONT } from './PDFFonts';
 import { PDFSectionAnchor } from './PDFSectionAnchor';
@@ -89,7 +90,10 @@ export function PDFTableOfContents({
   entries,
   subtitle,
   pageNumbers,
+  layoutTheme,
 }: {
+  /** Layout base DEV-322: sem linhas, capítulos em cartão do tema. */
+  layoutTheme?: PdfLayoutTheme;
   entries: PdfTocEntry[];
   subtitle: string;
   /** Mapa id → número de página (render final). Fallback: entry.page */
@@ -100,7 +104,7 @@ export function PDFTableOfContents({
     page: pageNumbers?.[e.id] ?? e.page,
   }));
   return (
-    <Page size="A4" style={styles.page} wrap>
+    <Page size="A4" style={[styles.page, ...(layoutTheme ? [{ backgroundColor: layoutTheme.paginaFundo }] : [])]} wrap>
       <View fixed style={{ position: 'absolute', top: 0, left: 0, height: 1, width: 1 }}
         render={({ subPageNumber = 1 }) => <PDFSectionAnchor
           id={subPageNumber === 1 ? 'pdf-sumario' : `pdf-sumario-cont-${subPageNumber}`}
@@ -109,7 +113,7 @@ export function PDFTableOfContents({
       <View fixed style={styles.header}>
         <PDFPageHeader subtitle={subtitle} />
       </View>
-      <Text fixed style={{ ...styles.title, position: 'absolute', top: 64, left: 45, right: 45, fontSize: 16 }}
+      <Text fixed style={{ ...styles.title, position: 'absolute', top: 64, left: 45, right: 45, fontSize: layoutTheme ? 20 : 16, ...(layoutTheme ? { color: layoutTheme.destaqueTexto } : {}) }}
         render={({ subPageNumber = 1 }) => subPageNumber === 1 ? 'Sumário' : 'Sumário (continuação)'} />
       <Text style={styles.intro}>
         Use os links abaixo para ir direto a cada seção deste PDF.
@@ -118,10 +122,13 @@ export function PDFTableOfContents({
         {enriched.map((entry) => {
           const level = entry.level ?? 0;
           const { pad, textStyle } = entryStyles(level);
-          const chapter = level === 0 ? CHAPTER_COLORS[entry.id] : undefined;
+          const chapter = level === 0 && !layoutTheme ? CHAPTER_COLORS[entry.id] : undefined;
+          const rowStyle = layoutTheme
+            ? [styles.row, { borderBottomWidth: 0, paddingVertical: 5 }, ...(level === 0 ? [{ backgroundColor: layoutTheme.cardFundoAlt, borderRadius: 8, paddingHorizontal: 8, marginTop: 8 }] : [])]
+            : [styles.row, ...(level === 0 ? [{ backgroundColor: chapter?.background ?? '#F3F4F6', paddingHorizontal: 6 }] : [])];
           return (
             <View key={`${entry.id}-${entry.title}`} wrap={false} minPresenceAhead={level === 0 ? 28 : 0}
-              style={[styles.row, ...(level === 0 ? [{ backgroundColor: chapter?.background ?? '#F3F4F6', paddingHorizontal: 6 }] : [])]}>
+              style={rowStyle}>
               <Link src={`#${entry.id}`} style={{ textDecoration: 'none', flex: 1, paddingLeft: pad }}>
                 <Text style={[textStyle, ...(chapter ? [{ color: chapter.text }] : [])]}>{entry.title}</Text>
               </Link>

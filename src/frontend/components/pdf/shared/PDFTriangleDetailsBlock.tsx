@@ -4,6 +4,10 @@ import { TITLE_FONT } from './PDFFonts';
 import { TrianguloPiramideInline, type TrianguloData } from './PDFMarkdownRenderer';
 import { BloqueiosBlock, type BloqueioData } from './PDFKarmicBlock';
 import { PDFArcanosBlock } from './PDFArcanosBlock';
+import type { PdfLayoutTheme } from '../layout/pdfLayoutTheme';
+import { COR_FIXA } from '../layout/pdfLayoutTheme';
+import { BloqueiosLayout } from '../layout/KarmaLayoutBlocks';
+import { Card, H3, H4, Nota, P } from '../layout/PDFLayoutBlocks';
 import { getArcano } from '../../../../backend/numerology/arcanos';
 
 const styles = StyleSheet.create({
@@ -38,6 +42,10 @@ export interface PDFTriangleDetailsBlockProps {
   arcanosTitle: string;
   allBloqueios: BloqueioData[];
   bloqueiosFootnote?: string;
+  /** Anexos (DEV-322): só o arcano regente, sem passagens e trânsito. */
+  compact?: boolean;
+  /** Layout base DEV-322: bloqueios e arcano regente no estilo novo. */
+  layoutTheme?: PdfLayoutTheme;
 }
 
 /**
@@ -54,6 +62,8 @@ export function PDFTriangleDetailsBlock({
   arcanosTitle,
   allBloqueios,
   bloqueiosFootnote,
+  compact = false,
+  layoutTheme,
 }: PDFTriangleDetailsBlockProps) {
   const filteredBloqueios = allBloqueios.filter((b: any) =>
     b.triangulos?.includes(triangulo),
@@ -70,7 +80,26 @@ export function PDFTriangleDetailsBlock({
         letras={letras}
       />
 
-      {filteredBloqueios.length > 0 && (
+      {layoutTheme ? (
+        <View style={{ marginTop: 12, gap: 6 }}>
+          {filteredBloqueios.length > 0 ? (
+            <>
+              <H3 theme={layoutTheme} color={COR_FIXA.bloqueioTexto}>{bloqueiosTitle}</H3>
+              <BloqueiosLayout theme={layoutTheme} bloqueios={filteredBloqueios} />
+            </>
+          ) : null}
+          {arc ? (
+            <Card theme={layoutTheme} fundo={COR_FIXA.arcanoFundo}>
+              <H3 theme={layoutTheme} color={COR_FIXA.arcanoTexto}>{arcanosTitle}</H3>
+              <H4 theme={layoutTheme} color="#2E1B6B">{`${data.arcanoRegente} · ${arc.nome}`}</H4>
+              <P theme={layoutTheme} size={9}>{arc.descricao}</P>
+              <Nota theme={layoutTheme}>É o número da ponta do triângulo, marcado em roxo.</Nota>
+            </Card>
+          ) : null}
+        </View>
+      ) : null}
+
+      {!layoutTheme && filteredBloqueios.length > 0 && (
         <View style={{ marginTop: 16 }}>
           <Text style={styles.bloqueiosTitle}>{bloqueiosTitle}</Text>
           <BloqueiosBlock
@@ -87,14 +116,14 @@ export function PDFTriangleDetailsBlock({
         </View>
       )}
 
-      {data.arcanoRegente != null && (
+      {!layoutTheme && data.arcanoRegente != null && (
         <PDFArcanosBlock
           title={arcanosTitle}
           titleColor="#7C3AED"
           arcanoRegente={arc}
-          arcanosDePassagem={data.arcanosDePassagem}
-          arcanoAtual={data.arcanoAtual}
-          arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+          arcanosDePassagem={compact ? undefined : data.arcanosDePassagem}
+          arcanoAtual={compact ? undefined : data.arcanoAtual}
+          arcanoAtualDescricao={!compact && arcAtual ? arcAtual.descricao : undefined}
         />
       )}
     </>

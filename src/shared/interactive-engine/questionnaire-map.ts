@@ -55,9 +55,20 @@ export interface QuestionnaireProfile {
   imagemArtistica?: string[];
   tipoNomeArtistico?: string | null;
   outrosUsos?: string[];
+  /** DEV-328 · caminho do bebê */
+  bebeMae?: string | null;
+  bebePai?: string | null;
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeData?: string | null;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string | null;
+  bebeEstilos?: string[];
 }
 
-/** DEV-320: perfil do chat guardado junto da análise (`parametros_usuario.perfilChat`). */
+/** DEV-320/DEV-328: perfil do chat guardado junto da análise (`frequencias_numeros.perfilChat`). */
 export interface PerfilChatPersistido {
   motivo?: string;
   areaArtistica?: string;
@@ -67,20 +78,44 @@ export interface PerfilChatPersistido {
   imagemArtistica?: string[];
   tipoNomeArtistico?: string;
   outrosUsos?: string[];
+  bebeMae?: string;
+  bebePai?: string;
+  bebeSituacao?: string;
+  bebeDataTipo?: string;
+  bebeSexo?: string;
+  bebeData?: string;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string;
+  bebeEstilos?: string[];
 }
 
 export function profileToPerfilChat(profile: QuestionnaireProfile): PerfilChatPersistido | undefined {
   if (!profile.motivoHarmonizacao) return undefined;
   const lista = (v?: string[]) => (v && v.length > 0 ? v : undefined);
+  const texto = (v?: string | null) => {
+    const trimmed = v?.trim();
+    return trimmed ? trimmed : undefined;
+  };
   return {
     motivo: profile.motivoHarmonizacao,
-    areaArtistica: profile.areaArtistica ?? undefined,
-    areaArtisticaOutro: profile.areaArtisticaOutro ?? undefined,
+    areaArtistica: texto(profile.areaArtistica),
+    areaArtisticaOutro: texto(profile.areaArtisticaOutro),
     detalheArtistico: lista(profile.detalheArtistico),
-    generoPersona: profile.generoPersona ?? undefined,
+    generoPersona: texto(profile.generoPersona),
     imagemArtistica: lista(profile.imagemArtistica),
-    tipoNomeArtistico: profile.tipoNomeArtistico ?? undefined,
+    tipoNomeArtistico: texto(profile.tipoNomeArtistico),
     outrosUsos: lista(profile.outrosUsos),
+    bebeMae: texto(profile.bebeMae),
+    bebePai: texto(profile.bebePai),
+    bebeSituacao: texto(profile.bebeSituacao),
+    bebeDataTipo: texto(profile.bebeDataTipo),
+    bebeSexo: texto(profile.bebeSexo),
+    bebeData: texto(profile.bebeData),
+    bebeSobrenomes: lista(profile.bebeSobrenomes),
+    bebeNomesPais: lista(profile.bebeNomesPais),
+    bebeNomeRegistrado: texto(profile.bebeNomeRegistrado),
+    bebeEstilos: lista(profile.bebeEstilos),
   };
 }
 

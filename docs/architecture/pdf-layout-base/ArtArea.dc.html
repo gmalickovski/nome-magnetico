@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Você e sua área</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h2{font-family:Cinzel,serif;font-weight:700;font-size:20px;letter-spacing:.05em;color:#2A2620;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+h4{font-size:14px;font-weight:600;color:#2A2620;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: #FBF9F4; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Luna Vale · Parte 1</div>
+</div>
+<div style="align-self: flex-start; background: #2A2620; color: #F3E7C4; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 1 · Você e sua área</div>
+<h1>Seu perfil artístico</h1>
+<p>O que você contou no chat. É a base para escolher e explicar os nomes.</p>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{perfil}}" as="p" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px">
+<h3>{{p.t}}</h3>
+<h4>{{p.v}}</h4>
+</div>
+</sc-for>
+</div>
+
+<h2>Seu nome civil, em resumo</h2>
+<div style="display: flex; gap: 10px">
+<sc-for list="{{civil}}" as="n" hint-placeholder-count="5">
+<div style="flex: 1; background: #ECE9E2; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 24px; color: #4A443A">{{n.v}}</div>
+<div style="font-size: 11px; color: #6E6658">{{n.t}}</div>
+</div>
+</sc-for>
+</div>
+<p style="font-size: 12.5px; color: #6E6658">Larissa Macedo Machado · nota 64 (Equilíbrio Parcial). O Destino 7 vem da data e é o mesmo com qualquer nome.</p>
+
+<h2>Por que o número combina com a sua área</h2>
+<div style="background: #EDE6FF; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px">
+<h4 style="color: #2E1B6B">Expressão 3 · comunicação e criatividade</h4>
+<p style="font-size: 13px">No palco, o 3 é a vibração de quem encanta pela voz e pela presença: leveza, carisma e facilidade para se expressar. Para uma cantora pop, ajuda a passar alegria e a criar conexão com o público.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 12px 14px"><h3>Maior afinidade</h3><p style="font-size: 12.5px">3 para quem canta</p></div>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 12px 14px"><h3>Alta afinidade</h3><p style="font-size: 12.5px">5, 6 e 11</p></div>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 12px 14px"><h3>Boa afinidade</h3><p style="font-size: 12.5px">1, 9 e 8</p></div>
+</div>
+<p style="font-size: 12px; color: #6E6658">A afinidade só desempata: todo nome sugerido já passou pela regra de zero bloqueio e nota mínima.</p>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #6E6658">
+<div>Dados de exemplo.</div>
+<div>Página 4</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+perfil: [
+{ t: 'Área', v: 'Cantora' },
+{ t: 'Estilo', v: 'Pop' },
+{ t: 'Persona', v: 'Feminina' },
+{ t: 'Imagem', v: 'Marcante' }
+],
+civil: [
+{ v: '7', t: 'Destino' },
+{ v: '5', t: 'Expressão' },
+{ v: '4', t: 'Motivação' },
+{ v: '1', t: 'Impressão' },
+{ v: '3', t: 'Missão' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

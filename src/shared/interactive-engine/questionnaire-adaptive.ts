@@ -15,9 +15,19 @@ import {
   areaTemDetalheArtistico,
   type AreaArtistica,
 } from './ramos/artistico';
+import {
+  BEBE_DATA_TIPO_OPTIONS,
+  BEBE_ESTILO_OPTIONS,
+  BEBE_PROMPTS,
+  BEBE_SEXO_OPTIONS,
+  BEBE_SITUACAO_OPTIONS,
+  BEBE_STEPS,
+} from './ramos/bebe';
 
 // DEV-321: o ramo artístico mora em `ramos/artistico.ts`; reexportado para manter os imports antigos.
 export * from './ramos/artistico';
+// DEV-326: o ramo do bebê mora em `ramos/bebe.ts`.
+export * from './ramos/bebe';
 
 const PARTICULAS_SOBRENOME = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
 
@@ -41,6 +51,12 @@ function extrairSobrenomesLocal(nomeCompleto: string): string[] {
 
 export type QuestionnaireStepId =
   | 'motivo_harmonizacao'
+  | 'bebe_pais'
+  | 'bebe_situacao'
+  | 'bebe_data_tipo'
+  | 'bebe_sexo'
+  | 'bebe_dados'
+  | 'bebe_estilo'
   | 'nome_uso'
   | 'sobrenomes_uso'
   | 'relacao_nome'
@@ -61,6 +77,13 @@ export type QuestionnaireStepId =
 export const QUESTIONNAIRE_STEP_ORDER: QuestionnaireStepId[] = [
   // DEV-320: motivo e outros usos só entram com o fluxo novo ligado (`fluxoMotivoAtivo`).
   'motivo_harmonizacao',
+  // DEV-326: caminho do bebê (só com motivo "bebe").
+  'bebe_pais',
+  'bebe_situacao',
+  'bebe_data_tipo',
+  'bebe_sexo',
+  'bebe_dados',
+  'bebe_estilo',
   'nome_uso',
   'sobrenomes_uso',
   'relacao_nome',
@@ -94,6 +117,8 @@ export const ARTISTIC_STEPS: readonly QuestionnaireStepId[] = [
 export const DEV320_STEPS: readonly QuestionnaireStepId[] = [
   'motivo_harmonizacao',
   ...ARTISTIC_STEPS,
+  // DEV-326: passos do caminho do bebê também ficam fora do roteiro da DEV-303.
+  ...BEBE_STEPS,
   'outros_usos',
 ];
 
@@ -186,13 +211,17 @@ const PRIORIDADE_CONFLITO_OPTIONS: QuestionOption[] = [
 
 // ── DEV-320 · motivo, ramo artístico e outros usos ──────────────────────────
 
-export type MotivoHarmonizacao = 'dia_a_dia' | 'carreira' | 'artistico' | 'recomeco';
+export type MotivoHarmonizacao = 'dia_a_dia' | 'carreira' | 'artistico' | 'recomeco' | 'bebe';
 
+/**
+ * Primeira pergunta do chat (DEV-326): o caminho. Vem antes de qualquer confirmação de nome.
+ * `dia_a_dia` é a harmonização do próprio nome (o caminho que já existia).
+ * Os ids `carreira` e `recomeco` só existem em sessões antigas; não são mais oferecidos.
+ */
 export const MOTIVO_HARMONIZACAO_OPTIONS: QuestionOption[] = [
-  { id: 'dia_a_dia', label: 'Dia a dia e assinatura pessoal' },
-  { id: 'carreira', label: 'Carreira e negócios' },
-  { id: 'artistico', label: 'Nome artístico ou persona' },
-  { id: 'recomeco', label: 'Um novo ciclo pessoal' },
+  { id: 'dia_a_dia', label: 'Harmonizar o meu nome' },
+  { id: 'artistico', label: 'Criar um nome artístico' },
+  { id: 'bebe', label: 'Escolher o nome do meu bebê' },
 ];
 
 
@@ -300,9 +329,31 @@ export function getQuestionSpec(
     case 'motivo_harmonizacao':
       return {
         id: stepId,
-        prompt: 'Qual é o motivo principal para harmonizar o seu nome?',
+        prompt: 'O que você quer fazer hoje?',
         mode: 'single',
         staticOptions: MOTIVO_HARMONIZACAO_OPTIONS,
+      };
+    case 'bebe_pais':
+      // Formulário próprio (nome da mãe e do pai): sem opções de escolha.
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_pais!, mode: 'single', staticOptions: [] };
+    case 'bebe_situacao':
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_situacao!, mode: 'single', staticOptions: BEBE_SITUACAO_OPTIONS };
+    case 'bebe_data_tipo':
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_data_tipo!, mode: 'single', staticOptions: BEBE_DATA_TIPO_OPTIONS };
+    case 'bebe_sexo':
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_sexo!, mode: 'single', staticOptions: BEBE_SEXO_OPTIONS };
+    case 'bebe_dados':
+      // Formulário próprio (data, sobrenomes e nomes dos pais): sem opções de escolha.
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_dados!, mode: 'single', staticOptions: [] };
+    case 'bebe_estilo':
+      return {
+        id: stepId,
+        prompt: BEBE_PROMPTS.bebe_estilo!,
+        mode: 'multi',
+        minSelect: 1,
+        maxSelect: 2,
+        captionMultiLimit: (n) => `Escolha até ${n}`,
+        staticOptions: BEBE_ESTILO_OPTIONS,
       };
     case 'area_artistica':
       return {
@@ -469,7 +520,8 @@ export type BlockTransitionId =
   | 'after_nome_block'
   | 'before_area_foco'
   | 'before_suggestions'
-  | 'aviso_artistico_contratos';
+  | 'aviso_artistico_contratos'
+  | 'aviso_bebe';
 
 function firstName(nomeCurto: string): string {
   return nomeCurto.trim().split(/\s+/)[0] || 'você';
@@ -481,8 +533,12 @@ export function resolveBlockTransition(
   nextStepId: string,
   nomeCurto: string,
   alreadyShown: ReadonlySet<BlockTransitionId>,
-  extras?: { avisoArtisticoContratos?: boolean; ramoArtistico?: boolean }
+  extras?: { avisoArtisticoContratos?: boolean; ramoArtistico?: boolean; ramoBebe?: boolean; avisoBebe?: string | null }
 ): { id: BlockTransitionId; text: string } | null {
+  if (!alreadyShown.has('aviso_bebe') && completedStepId === 'bebe_situacao' && extras?.avisoBebe) {
+    return { id: 'aviso_bebe', text: extras.avisoBebe };
+  }
+
   if (
     !alreadyShown.has('aviso_artistico_contratos') &&
     completedStepId === 'outros_usos' &&
@@ -517,9 +573,11 @@ export function resolveBlockTransition(
     return {
       id: 'before_suggestions',
       // DEV-321: no ramo artístico são nomes artísticos, não assinaturas.
-      text: extras?.ramoArtistico
-        ? 'Pronto. Cruzei suas respostas com o seu mapa e separei os nomes artísticos que mais combinam com você.'
-        : 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
+      text: extras?.ramoBebe
+        ? 'Pronto. Cruzei suas respostas com o mapa do bebê e separei os nomes que mais combinam com ele.'
+        : extras?.ramoArtistico
+          ? 'Pronto. Cruzei suas respostas com o seu mapa e separei os nomes artísticos que mais combinam com você.'
+          : 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
     };
   }
 
@@ -530,8 +588,9 @@ const TRANSITION_MARKERS: Record<BlockTransitionId, string> = {
   after_nome_block: 'Agora quero entender onde a sua assinatura aparece.',
   before_area_foco: 'Agora vamos ao que mais pede a sua atenção.',
   // Comum às duas versões do texto (padrão e artístico).
-  before_suggestions: 'que mais combinam com você.',
+  before_suggestions: 'que mais combinam',
   aviso_artistico_contratos: 'Uma informação importante sobre nome artístico',
+  aviso_bebe: 'Uma informação importante: ',
 };
 
 /** Reconstrói transições já exibidas ao restaurar sessão persistida. */
@@ -638,6 +697,13 @@ export interface QuestionnaireSkipContext {
   fluxoMotivoAtivo?: boolean;
   motivoHarmonizacao?: string | null;
   areaArtistica?: string | null;
+  /** DEV-326 */
+  bebeSituacao?: string | null;
+}
+
+/** DEV-326: o caminho do bebê está ativo nesta conversa. */
+export function isRamoBebe(ctx: QuestionnaireSkipContext): boolean {
+  return Boolean(ctx.fluxoMotivoAtivo) && ctx.motivoHarmonizacao === 'bebe';
 }
 
 /** DEV-320: o ramo artístico está ativo nesta conversa. */
@@ -659,6 +725,15 @@ export function isQuestionnaireStepSkipped(
   stepId: QuestionnaireStepId,
   ctx: QuestionnaireSkipContext,
 ): boolean {
+  // DEV-326: no caminho do bebê só valem o motivo e os passos do bebê (data_tipo só para quem ainda não nasceu).
+  if (isRamoBebe(ctx)) {
+    if (stepId === 'motivo_harmonizacao') return false;
+    if (!BEBE_STEPS.includes(stepId)) return true;
+    if (stepId === 'bebe_data_tipo') return Boolean(ctx.bebeSituacao) && ctx.bebeSituacao !== 'nao_nasceu';
+    if (stepId === 'bebe_sexo' || stepId === 'bebe_estilo') return ctx.bebeSituacao === 'nasceu_registrado';
+    return false;
+  }
+  if (BEBE_STEPS.includes(stepId)) return true;
   if (stepId === 'motivo_harmonizacao' || stepId === 'outros_usos') {
     return !ctx.fluxoMotivoAtivo;
   }

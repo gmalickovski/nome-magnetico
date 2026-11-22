@@ -23,6 +23,13 @@ export type PassoChatId =
   | 'imagem_artistica'
   | 'tipo_nome_artistico'
   | 'outros_usos'
+  // DEV-326
+  | 'bebe_pais'
+  | 'bebe_situacao'
+  | 'bebe_data_tipo'
+  | 'bebe_sexo'
+  | 'bebe_dados'
+  | 'bebe_estilo'
   | 'sobrenomes'
   | 'onde_vai_usar'
   | 'foco_momento'

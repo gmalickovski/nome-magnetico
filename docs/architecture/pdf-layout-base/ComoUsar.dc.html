@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Parte 4 · Como usar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h2{font-family:Cinzel,serif;font-weight:700;font-size:20px;letter-spacing:.05em;color:#2A2620;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+h4{font-size:14px;font-weight:600;color:#2A2620;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: #FBF9F4; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Aleksandra Vale · Parte 4</div>
+</div>
+<div style="align-self: flex-start; background: #2A2620; color: #F3E7C4; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 4 · Como usar</div>
+<h1>Guia de uso da assinatura</h1>
+<p>Sem cronograma fixo. Use o nome novo onde fizer sentido para você e observe como se sente.</p>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px"><h3>Onde usar</h3><p style="font-size: 13px">Redes sociais, e-mail, apresentações e cartões.</p></div>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px"><h3>A assinatura</h3><p style="font-size: 13px">Legível, levemente ascendente, sem traços cortantes.</p></div>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px"><h3>Documentos</h3><p style="font-size: 13px">Documentos oficiais seguem o nome civil.</p></div>
+</div>
+
+<h2>Como chegamos às sugestões</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{passos}}" as="s" hint-placeholder-count="5">
+<div style="display: flex; gap: 12px; align-items: flex-start; background: #F4F0E6; border-radius: 12px; padding: 10px 14px">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 16px; color: #8A6A12; min-width: 18px">{{s.n}}</div>
+<div><h4 style="font-size: 13px">{{s.t}}</h4><p style="font-size: 12.5px; line-height: 1.5">{{s.d}}</p></div>
+</div>
+</sc-for>
+</div>
+
+<h2>Folha de treino</h2>
+<div style="background: #FFFFFF; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 26px; flex: 1">
+<div style="font-family: Cinzel, serif; font-size: 22px; color: #B8902B; opacity: 0.45">Aleksandra Vale</div>
+<div style="height: 1px; background: #E2DCCD"></div>
+<div style="height: 1px; background: #E2DCCD"></div>
+<div style="height: 1px; background: #E2DCCD"></div>
+</div>
+
+<div style="display: flex; justify-content: space-between; font-size: 10px; color: #6E6658">
+<div>nomemagnetico.com.br · contato@nomemagnetico.com.br</div>
+<div>Página 20</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+passos: [
+{ n: '1', t: 'Calculamos o nome de nascimento', d: 'Cinco números, quatro triângulos e o campo kármico.' },
+{ n: '2', t: 'Procuramos bloqueios', d: 'Toda sugestão vem sem bloqueio.' },
+{ n: '3', t: 'Comparamos Expressão e Destino', d: 'Opções em Tensão Vibracional não são sugeridas.' },
+{ n: '4', t: 'Damos uma nota de 0 a 100', d: 'Quanto mais perto de 100, melhor a combinação com a data.' },
+{ n: '5', t: 'Respeitamos o seu contexto', d: 'As respostas do chat orientam a ordem das opções.' }
+]
+};
+}
+}
+</script>
+</body>
+</html>
