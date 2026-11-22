@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Parte 1 · Você hoje</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h2{font-family:Cinzel,serif;font-weight:700;font-size:20px;letter-spacing:.05em;color:#2A2620;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+h4{font-size:14px;font-weight:600;color:#2A2620;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: #FBF9F4; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Aleksandra Vale · Parte 1</div>
+</div>
+
+<div style="align-self: flex-start; background: #2A2620; color: #F3E7C4; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 1 · Você hoje</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1>A Essência</h1>
+<p>O mapa completo do seu nome de nascimento, Alexandra Mendes Vale. É a base de tudo o que vem depois: as outras partes comparam com o que está aqui.</p>
+</div>
+
+<div style="display: flex; gap: 24px; align-items: center; background: #F4F0E6; border-radius: 16px; padding: 18px 22px">
+<svg width="300" height="290" viewBox="0 0 300 290" role="img" aria-label="Estrela dos 5 números do nome de nascimento">
+<polygon points="150,30 179,118 271,118 197,172 225,260 150,206 75,260 103,172 29,118 121,118" fill="#84CC16" fill-opacity="0.14" stroke="#84CC16" stroke-width="2.2" stroke-linejoin="round"></polygon>
+<polygon points="150,96 161,129 196,129 168,150 178,183 150,163 122,183 132,150 104,129 139,129" fill="#FFFFFF" fill-opacity="0.7" stroke="#D4AF37" stroke-width="1"></polygon>
+<circle cx="150" cy="30" r="17" fill="#FFFFFF" stroke="#84CC16" stroke-width="1.5"></circle><text x="150" y="36" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="16" fill="#4D7C0F">4</text>
+<circle cx="271" cy="118" r="17" fill="#FFFFFF" stroke="#84CC16" stroke-width="1.5"></circle><text x="271" y="124" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="16" fill="#4D7C0F">6</text>
+<circle cx="225" cy="260" r="17" fill="#FFFFFF" stroke="#84CC16" stroke-width="1.5"></circle><text x="225" y="266" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="16" fill="#4D7C0F">6</text>
+<circle cx="75" cy="260" r="17" fill="#FFFFFF" stroke="#84CC16" stroke-width="1.5"></circle><text x="75" y="266" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="16" fill="#4D7C0F">1</text>
+<circle cx="29" cy="118" r="17" fill="#FFFFFF" stroke="#84CC16" stroke-width="1.5"></circle><text x="29" y="124" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="16" fill="#4D7C0F">9</text>
+<text x="150" y="155" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#6B5A2E">ALEXANDRA</text>
+</svg>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+<h3>Como ler a estrela</h3>
+<p style="font-size: 13px">Cada ponta é um dos 5 números principais. No topo, o Destino, que vem da data de nascimento. Em sentido horário: Expressão, Motivação, Missão e Impressão.</p>
+<div style="align-self: flex-start; background: #ECFCCB; color: #4D7C0F; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Nota 73 · Favorável</div>
+<p style="font-size: 12px; color: #6E6658">A cor da estrela segue a faixa da nota do nome, a mesma do site.</p>
+</div>
+</div>
+
+<h2>Os 5 números do seu nome de nascimento</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{numeros}}" as="n" hint-placeholder-count="5">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(42,38,32,0.06); display: flex; gap: 14px; align-items: flex-start">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 32px; line-height: 1; color: #8A6A12; min-width: 36px; text-align: center">{{n.valor}}</div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #6E6658">{{n.nome}} · {{n.origem}}</div>
+<h4>{{n.titulo}}</h4>
+<p style="font-size: 12.5px; line-height: 1.5">{{n.texto}}</p>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #6E6658">
+<div>A leitura completa de cada número continua nas páginas seguintes.</div>
+<div>Página 6</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+numeros: [
+{ valor: '4', nome: 'Destino', origem: 'data de nascimento', titulo: 'Trabalho e Organização', texto: 'O caminho de vida. Não muda com o nome.' },
+{ valor: '6', nome: 'Expressão', origem: 'todas as letras', titulo: 'Harmonia e Cuidado', texto: 'Como você age e se apresenta ao mundo.' },
+{ valor: '6', nome: 'Motivação', origem: 'vogais', titulo: 'Harmonia e Cuidado', texto: 'O que move você por dentro.' },
+{ valor: '9', nome: 'Impressão', origem: 'consoantes', titulo: 'Compaixão e Altruísmo', texto: 'A primeira impressão que você causa.' },
+{ valor: '1', nome: 'Missão', origem: 'Destino + Expressão', titulo: 'Independência e Liderança', texto: 'O propósito que une nome e data.' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

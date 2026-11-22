@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sumário</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: #FBF9F4; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Aleksandra Vale · Sumário</div>
+</div>
+<h1>Sumário</h1>
+<p>Cada linha leva direto à seção. As partes sempre começam em página nova.</p>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{grupos}}" as="g" hint-placeholder-count="6">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 12px 18px; box-shadow: 0 10px 30px rgba(42,38,32,0.05); display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<h3>{{g.titulo}}</h3>
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 14px; color: #8A6A12">{{g.pagina}}</div>
+</div>
+<sc-for list="{{g.itens}}" as="i" hint-placeholder-count="3">
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: #3D372D; padding-left: 12px">
+<div>{{i.t}}</div><div style="color: #6E6658">{{i.p}}</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #6E6658">
+<div>Números de página de exemplo.</div>
+<div>Página 2</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+return {
+grupos: [
+{ titulo: 'Abertura', pagina: '3', itens: [{ t: 'Seu relatório em 1 página', p: '3' }, { t: 'Como ler este relatório', p: '4' }, { t: 'Opções avaliadas no chat', p: '5' }] },
+{ titulo: 'Parte 1 · Você hoje', pagina: '6', itens: [{ t: 'Os 5 números e a estrela', p: '6' }, { t: 'Arquétipo', p: '9' }, { t: 'Triângulo da Vida e bloqueios', p: '10' }, { t: 'Lições, tendências e débitos', p: '12' }] },
+{ titulo: 'Parte 2 · O que muda para você', pagina: '14', itens: [{ t: 'O veredito, estrela e Mapa Vibracional', p: '14' }, { t: 'Antes e depois, item por item', p: '15' }] },
+{ titulo: 'Parte 3 · Seu nome novo', pagina: '17', itens: [{ t: 'Números e arcanos que mudaram', p: '17' }, { t: 'Triângulo da Vida do nome novo', p: '18' }] },
+{ titulo: 'Parte 4 · Como usar', pagina: '20', itens: [{ t: 'Guia de uso da assinatura', p: '20' }, { t: 'Como chegamos às sugestões', p: '21' }, { t: 'Folha de treino', p: '22' }] },
+{ titulo: 'Anexos', pagina: '23', itens: [{ t: 'Triângulos Pessoal, Social e do Destino (antes e depois)', p: '23' }, { t: 'Ciclos do nome: arcanos de trânsito', p: '26' }, { t: 'Consulta rápida dos arcanos', p: '27' }] }
+]
+};
+}
+}
+</script>
+</body>
+</html>

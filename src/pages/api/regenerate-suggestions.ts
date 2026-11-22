@@ -46,6 +46,19 @@ const rankingChatSchema = z.object({
   manterPrimeiroNome: z.boolean().optional(),
   acentoNaAssinatura: z.enum(['prefere_sem']).optional(),
   prioridadeConflito: z.enum(['nota', 'mudanca']).optional(),
+  // DEV-320: perfil do chat guardado em `parametros_usuario.perfilChat` (sem migration).
+  perfilChat: z
+    .object({
+      motivo: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco', 'bebe']).optional(),
+      areaArtistica: z.string().max(40).optional(),
+      areaArtisticaOutro: z.string().max(60).optional(),
+      detalheArtistico: z.array(z.string().max(40)).max(2).optional(),
+      generoPersona: z.enum(['feminino', 'masculino', 'neutro']).optional(),
+      imagemArtistica: z.array(z.string().max(40)).max(2).optional(),
+      tipoNomeArtistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
+      outrosUsos: z.array(z.string().max(40)).max(6).optional(),
+    })
+    .optional(),
 });
 
 const regenerateSchema = z
@@ -346,6 +359,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     manterPrimeiroNome: rankingChatMerged.manterPrimeiroNome,
     acentoNaAssinatura: rankingChatMerged.acentoNaAssinatura,
     prioridadeConflito: rankingChatMerged.prioridadeConflito,
+    perfilChat: rankingChat?.perfilChat ?? parametrosAnteriores.perfilChat,
   };
 
   const resumoAtualizado = buildSelectedSocialSummary({

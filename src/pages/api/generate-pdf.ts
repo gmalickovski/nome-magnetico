@@ -3,6 +3,8 @@ import { getAnalysis, getMagneticNames } from '../../backend/db/analyses';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeSocialPDF } from '../../frontend/components/pdf/NomeSocialPDF';
+import { NomeArtisticoPDF } from '../../frontend/components/pdf/NomeArtisticoPDF';
+import { NomeBebeChatPDF } from '../../frontend/components/pdf/NomeBebeChatPDF';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
 import {
   PDF_TOC_ANCHOR_IDS,
@@ -13,7 +15,7 @@ import { NomeEmpresaPDF } from '../../frontend/components/pdf/NomeEmpresaPDF';
 import { logError } from '../../backend/utils/error-logger';
 import { getEffectivePrice } from '../../backend/payments/prices';
 import { guardConfirmedEmail } from '../../backend/auth/requireConfirmedEmail';
-import { shouldUseFreeBirthPdf } from '../../shared/pdf-format';
+import { resolvePdfVariant } from '../../shared/pdf-format';
 
 // Cache em memória para evitar renderizar o mesmo PDF duas vezes seguidas (como aquecimento fetch + window.location no mobile ou re-download próximo)
 const pdfCache = new Map<string, { buffer: Buffer; expiresAt: number }>();
@@ -97,7 +99,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
     harmonizedName ??
     socialFreqData?.ranking?.melhorNome?.nomeCompleto ??
     null;
-  const isGratuita = shouldUseFreeBirthPdf({
+  const perfilChatMotivo =
+    typeof socialFreqData?.perfilChat?.motivo === 'string'
+      ? socialFreqData.perfilChat.motivo
+      : null;
+  const pdfResolution = resolvePdfVariant({
     productType,
     isFree: (analysis as any).is_free === true,
     birthName,
@@ -105,7 +111,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
     harmonizedName,
     requestedFormat,
     requestedMode,
+    perfilChatMotivo,
+    hasArtisticTemplate: true,
+    hasBabyChatTemplate: true,
   });
+  const isGratuita = pdfResolution.isGratuita;
   const selectedSocialName = selectedSocialNameCandidate ?? analysis.nome_completo;
   let filename: string;
 
@@ -120,6 +130,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
     filename = `analise-nome-empresa-${toSlug(nomeEmpresa)}-nome-magnetico.pdf`;
   } else if (isGratuita) {
     filename = `analise-gratuita-${toSlug(birthName)}-nome-magnetico.pdf`;
+  } else if (pdfResolution.variant === 'nome_artistico') {
+    filename = `analise-nome-artistico-${toSlug(selectedSocialName)}-nome-magnetico.pdf`;
+  } else if (pdfResolution.variant === 'nome_bebe_chat') {
+    filename = `analise-nome-bebe-${toSlug(selectedSocialName)}-nome-magnetico.pdf`;
   } else {
     filename = `analise-nome-social-${toSlug(selectedSocialName)}-nome-magnetico.pdf`;
   }
@@ -129,13 +143,17 @@ export const GET: APIRoute = async ({ url, locals }) => {
   }
 
   const PDFComponent =
-    productType === 'nome_bebe'
+    pdfResolution.template === 'nome-bebe'
       ? NomeBebePDF
-      : productType === 'nome_empresa'
+      : pdfResolution.template === 'nome-empresa'
         ? NomeEmpresaPDF
-        : isGratuita
+        : pdfResolution.template === 'nome-atual'
           ? NomeAtualPDF
-          : NomeSocialPDF;
+          : pdfResolution.template === 'nome-artistico'
+            ? NomeArtisticoPDF
+            : pdfResolution.template === 'nome-bebe-chat'
+              ? NomeBebeChatPDF
+              : NomeSocialPDF;
 
   // Limpa cache expirado periodicamente
   const agora = Date.now();
@@ -143,7 +161,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     if (val.expiresAt < agora) pdfCache.delete(key);
   }
 
-  const cacheVariant = isGratuita ? 'gratuita' : productType;
+  const cacheVariant = pdfResolution.variant;
   const cacheNameKey = isGratuita ? birthName : selectedSocialName;
   const cacheKey = `${analysisId}-${cacheVariant}-${cacheNameKey}-${(analysis as any).completed_at ?? ''}`;
   const cached = pdfCache.get(cacheKey);
@@ -169,13 +187,13 @@ export const GET: APIRoute = async ({ url, locals }) => {
         userName: firstName,
         upgradeOfferLabel,
       };
-      if (isGratuita) {
+      if (pdfResolution.template === 'nome-atual') {
         pdfBuffer = await renderProductPdfBuffer(
           NomeAtualPDF,
           pdfProps,
           PDF_TOC_ANCHOR_IDS.gratuito,
         );
-      } else if (productType === 'nome_social') {
+      } else if (pdfResolution.template === 'nome-social') {
         pdfBuffer = await renderProductPdfBuffer(
           NomeSocialPDF,
           pdfProps,
@@ -226,13 +244,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
       'Cache-Control': 'private, no-store, no-cache, must-revalidate, max-age=0',
       'Pragma': 'no-cache',
       'Expires': '0',
-      'X-PDF-Template': productType === 'nome_bebe'
-        ? 'nome-bebe'
-        : productType === 'nome_empresa'
-          ? 'nome-empresa'
-          : isGratuita
-            ? 'nome-atual'
-            : 'nome-social',
+      'X-PDF-Template': pdfResolution.template,
+      'X-PDF-Variant': pdfResolution.variant,
     },
   });
 };
