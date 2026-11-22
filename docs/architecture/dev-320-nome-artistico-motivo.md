@@ -8,7 +8,7 @@ O chat do Nome Social passa a perguntar **o motivo principal** logo depois do no
 
 | Passo | Quando aparece | Opções |
 | --- | --- | --- |
-| `motivo_harmonizacao` | fluxo ligado | Dia a dia e assinatura pessoal · Carreira e negócios · Nome artístico ou persona · Um novo ciclo pessoal |
+| `motivo_harmonizacao` | fluxo ligado | **Atualizado na DEV-326:** é a primeira mensagem do chat ("O que você quer fazer hoje?"), antes da certidão, com **Harmonizar o meu nome · Criar um nome artístico · Escolher o nome do meu bebê**. Os motivos "carreira" e "novo ciclo" não mudavam nada e saíram. Ver [DEV-326](dev-326-caminho-bebe-chat.md) |
 | `area_artistica` | motivo artístico | Cantor ou cantora · Ator ou atriz · Personagem, drag ou humor · Criação de conteúdo · Escrita · DJ ou produção musical · Outra área (texto até 60) |
 | `detalhe_artistico` (até 2) | artístico e área cantor, ator ou personagem | cantor: pop, funk, sertanejo, rap ou trap, MPB/samba/pagode, gospel, rock, eletrônica · ator: drama e novela, comédia, teatro e musical, publicidade e apresentação · personagem: drag, humor e stand-up, personagem infantil, persona digital |
 | `genero_persona` | motivo artístico | Feminino · Masculino · Neutro ou ambíguo (sobre a persona, nunca sobre a pessoa) |

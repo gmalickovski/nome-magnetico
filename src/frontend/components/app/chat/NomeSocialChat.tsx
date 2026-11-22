@@ -55,11 +55,14 @@ import {
 import { SuggestionPicker } from './SuggestionPicker.js';
 import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { ChatSidebarPanelChrome } from './ChatSidebarPanelChrome.js';
-import { isInteractionPending } from './chat-interaction-pending.js';
+import { isInteractionPending, isOnboardingStepId } from './chat-interaction-pending.js';
 import { ChatStepInteraction, ChatChoicePills } from './ChatStepInteraction.js';
 import {
   INITIAL_COLLECT_STATE,
   applyAnswerToCollectState,
+  applyBebeDados,
+  applyBebePais,
+  routeBabyLocally,
   applyQuestionnaireStep,
   buildDecideLiveBody,
   buildRegenerateRequestBody,
@@ -80,7 +83,33 @@ import {
   type RawArtisticNamesResponse,
 } from './artistic-suggestions-client.js';
 import { ChatAdaptivePills } from './ChatAdaptivePills.js';
+import { BabyDataForm } from './BabyDataForm.js';
+import { BabyParentsForm } from './BabyParentsForm.js';
 import {
+  NOTICE_CALCULANDO_NOMES_BEBE,
+  babyNamesNotice,
+  buildBabyNamesBody,
+  isRamoBebeCollect,
+  mapBabyNamesToCandidates,
+  type RawBabyNamesResponse,
+} from './baby-suggestions-client.js';
+import {
+  avisoBebePorSituacao,
+  resumoDadosBebe,
+  resumoDadosPais,
+  sobrenomesSugeridosBebe,
+  type DadosBebe,
+  type DadosPais,
+} from '../../../../shared/interactive-engine/ramos/bebe.js';
+import {
+  POST_BIRTH_FLOW_STEPS,
+  getPreviousFlowStep,
+  planBackNavigation,
+  rewindCollectStateToStep,
+  type PostBirthFlowStep,
+} from './chat-dock-step-back.js';
+import {
+  MOTIVO_HARMONIZACAO_OPTIONS,
   QUESTIONNAIRE_STEP_ORDER,
   detectShownBlockTransitions,
   resolveBlockTransition,
@@ -159,6 +188,8 @@ export interface NomeSocialChatProps {
   /** false = fluxo gratuito (CTA leva ao checkout existente). */
   isSubscriber?: boolean;
   emailConfirmed?: boolean;
+  /** DEV-326: pergunta inicial de caminho (meu nome, nome artístico, bebê). Vem do servidor. */
+  caminhoInicialAtivo?: boolean;
 }
 
 const GENDER_OPTIONS = [
@@ -166,6 +197,26 @@ const GENDER_OPTIONS = [
   { id: 'Masculino', label: 'Masculino' },
   { id: 'Neutro', label: 'Prefiro não informar / Outro' },
 ];
+
+/**
+ * DEV-326: primeira mensagem do chat. O caminho vem ANTES de qualquer confirmação de nome; cada
+ * caminho pede depois o que precisa (a certidão do usuário ou o nome da mãe e do pai).
+ * Só para assinantes e com o fluxo ligado; o fluxo gratuito continua começando pela certidão.
+ */
+function buildCaminhoInicialMessages(): ChatMessage[] {
+  return [
+    {
+      id: 'msg-caminho-inicial',
+      sender: 'assistant',
+      type: 'pills',
+      stepId: 'onboarding_caminho',
+      eyebrow: 'COMEÇANDO',
+      wide: true,
+      content: 'O que você quer fazer hoje?',
+      options: MOTIVO_HARMONIZACAO_OPTIONS.map((o) => ({ id: o.id, label: o.label })),
+    },
+  ];
+}
 
 function buildInitialOnboardingMessages(birthName: string, birthDate: string): ChatMessage[] {
   if (birthName.trim() && birthDate.trim()) {
@@ -203,6 +254,7 @@ export function NomeSocialChat({
   initialBirthPanel = null,
   isSubscriber = true,
   emailConfirmed = true,
+  caminhoInicialAtivo = false,
 }: NomeSocialChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [confirmedName, setConfirmedName] = useState(initialBirthName);
@@ -243,6 +295,7 @@ export function NomeSocialChat({
   const manualLock = useRef(false);
   const manualAbort = useRef<AbortController | null>(null);
   const [suggestions, setSuggestions] = useState<CandidateSuggestion[]>([]);
+  const [babyJanela, setBabyJanela] = useState<{ dias: number; centro: string } | null>(null);
   const [regenerateNotice, setRegenerateNotice] = useState<string | null>(null);
   const [pdfCircleExiting, setPdfCircleExiting] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
@@ -403,6 +456,7 @@ export function NomeSocialChat({
     setBasePanel(hasRegisteredBirthName ? initialBirthPanel : null);
     setActiveSuggestionId(null);
     setSuggestions([]);
+    setBabyJanela(null);
     setAnalysisId(undefined);
     setFreeAnalysisId(undefined);
     setFreePdfDownloaded(false);
@@ -410,7 +464,11 @@ export function NomeSocialChat({
     setChatPhase(isSubscriber ? 'subscriber' : 'onboarding');
     setPaywallStickyVisible(false);
     setOnboardingError(null);
-    setMessages(buildInitialOnboardingMessages(initialBirthName, initialBirthDate));
+    setMessages(
+      caminhoInicialAtivo && isSubscriber
+        ? buildCaminhoInicialMessages()
+        : buildInitialOnboardingMessages(initialBirthName, initialBirthDate),
+    );
     blockTransitionsShown.current = new Set();
     chatStartedAtRef.current = null;
     setPaidAccessActive(isSubscriber);
@@ -781,7 +839,7 @@ export function NomeSocialChat({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           buildDecideLiveBody(nome, dataNascimento, {
-            ...INITIAL_COLLECT_STATE,
+            ...collectState,
             sobrenomesDecididos: false,
           })
         ),
@@ -793,21 +851,33 @@ export function NomeSocialChat({
       chatStartedAtRef.current = Date.now();
       const responseData = mapDecideLiveResponse(raw, {
         nomeCompleto: nome,
-        collect: INITIAL_COLLECT_STATE,
+        collect: collectState,
         sobrenomesDetectados: raw.sobrenomesDetectados ?? [],
       });
       if (Array.isArray(raw.sobrenomesDetectados)) {
         setSobrenomesDetectados(raw.sobrenomesDetectados);
       }
       setBirthConfirmed(true);
-      const mergedCollect = mergeCollectFromApi(INITIAL_COLLECT_STATE, raw);
+      const mergedCollect = mergeCollectFromApi(collectState, raw);
       setCollectState(mergedCollect);
       if (shouldShowRadar(mergedCollect) && responseData.radarAxes) {
         setRadarAxes(responseData.radarAxes);
       }
 
       await sleepMs(computeChatRevealDelayMs(submittedAt));
-      applyDecisionResponse(responseData);
+      applyDecisionResponse(
+        responseData,
+        undefined,
+        null,
+        false,
+        isRamoArtisticoCollect(collectState),
+      );
+      if (
+        (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') &&
+        isRamoArtisticoCollect(collectState)
+      ) {
+        void carregarNomesArtisticos(collectState, []);
+      }
     } catch (err) {
       console.error(err);
       setMessages((prev) => [
@@ -1200,7 +1270,10 @@ export function NomeSocialChat({
   };
 
   const handleEditExistingProfile = () => {
-    setAnswers({});
+    setAnswers((prev): Record<string, string> => {
+      const caminho = prev.onboarding_caminho;
+      return caminho ? { onboarding_caminho: caminho } : {};
+    });
     setConfirmedName('');
     setConfirmedDate('');
     setDraftNome(initialBirthName);
@@ -1226,7 +1299,9 @@ export function NomeSocialChat({
     completedStepId?: string,
     nomeCurto?: string | null,
     avisoArtisticoContratos = false,
-    ramoArtistico = false
+    ramoProprio = false,
+    ramoBebe = false,
+    avisoBebe: string | null = null
   ) => {
     if (data.summary) setSummaryItems(data.summary);
     if (data.readingSummary) setBirthReadingSummary(data.readingSummary);
@@ -1240,10 +1315,11 @@ export function NomeSocialChat({
     const collectionComplete =
       data.next_step === 'fim_coleta' || data.next_step === 'conclusao';
 
-    if (collectionComplete && ramoArtistico) {
-      // DEV-321: as sugestões do ramo artístico vêm de /api/artistic-names (carregadas pelo chamador).
+    if (collectionComplete && ramoProprio) {
+      // DEV-321 e DEV-326: as sugestões do ramo artístico e do bebê vêm de endpoints próprios
+      // (/api/artistic-names e /api/baby-names), carregadas pelo chamador.
       setSuggestions([]);
-      setRegenerateNotice(NOTICE_CRIANDO_NOMES_ARTISTICOS);
+      setRegenerateNotice(ramoBebe ? NOTICE_CALCULANDO_NOMES_BEBE : NOTICE_CRIANDO_NOMES_ARTISTICOS);
     } else if (collectionComplete) {
       if (data.semOpcoesElegiveis) {
         setSuggestions([]);
@@ -1268,7 +1344,7 @@ export function NomeSocialChat({
         data.next_step,
         nomeBase,
         blockTransitionsShown.current,
-        { avisoArtisticoContratos, ramoArtistico }
+        { avisoArtisticoContratos, ramoArtistico: ramoProprio && !ramoBebe, ramoBebe, avisoBebe }
       );
       if (transition) {
         blockTransitionsShown.current.add(transition.id);
@@ -1391,6 +1467,74 @@ export function NomeSocialChat({
     setActiveSuggestionId(id);
   };
 
+  /** DEV-326: próxima pergunta do caminho do bebê, pelo roteador local. */
+  const routeBaby = async (nextCollect: ChatCollectState, completedStepId: string | undefined, submittedAt: number) => {
+    const raw = routeBabyLocally(nextCollect);
+    const responseData = mapDecideLiveResponse(raw, {
+      nomeCompleto: '',
+      collect: nextCollect,
+      sobrenomesDetectados: [],
+    });
+    setCollectState(mergeCollectFromApi(nextCollect, raw));
+    await sleepMs(computeChatRevealDelayMs(submittedAt));
+    applyDecisionResponse(
+      responseData,
+      completedStepId,
+      null,
+      false,
+      true,
+      true,
+      avisoBebePorSituacao(nextCollect.bebeSituacao),
+    );
+    if (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') {
+      void carregarNomesBebe(nextCollect, []);
+    }
+  };
+
+  /**
+   * DEV-326: resposta da primeira pergunta. Vem antes de qualquer confirmação de nome.
+   * - harmonizar o meu nome e nome artístico: pedem a certidão do usuário (como antes);
+   * - bebê: pede o nome de nascimento da mãe e do pai, sem usar a certidão do usuário.
+   */
+  const handleCaminhoInicial = (id: string, label: string) => {
+    if (loading) return;
+    setAnswers((prev) => ({ ...prev, onboarding_caminho: id }));
+    appendUserBubble(label, 'onboarding_caminho');
+    capturePostHogEvent('chat_caminho_escolhido', { caminho: id });
+    const escolhido = applyQuestionnaireStep(
+      { ...INITIAL_COLLECT_STATE, fluxoMotivoAtivo: true },
+      'motivo_harmonizacao',
+      { optionIds: [id], labels: [label] },
+    );
+    setCollectState(escolhido);
+    setBabyJanela(null);
+    if (id === 'bebe') {
+      setBirthConfirmed(true);
+      chatStartedAtRef.current = Date.now();
+      setLoading(true);
+      void routeBaby(escolhido, 'onboarding_caminho', Date.now())
+        .catch((err) => {
+          console.error(err);
+          setMessages((prev) => [
+            ...prev,
+            { id: `err-${Date.now()}`, sender: 'assistant', type: 'text', content: 'Houve uma instabilidade temporária. Por favor, tente novamente.' },
+          ]);
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+    setMessages((prev) => [...prev, ...buildInitialOnboardingMessages(initialBirthName, initialBirthDate)]);
+  };
+
+  /** DEV-326: nomes de nascimento da mãe e do pai (pelo menos um). */
+  const handleBabyParents = (pais: DadosPais) => {
+    if (loading) return;
+    const nextCollect = applyBebePais(collectState, pais);
+    const resumo = resumoDadosPais(pais);
+    setAnswers((prev) => ({ ...prev, bebe_pais: resumo }));
+    void pushDecideLive(nextCollect, resumo, 'bebe_pais', { mae: Boolean(pais.mae), pai: Boolean(pais.pai) });
+  };
+
   const pushDecideLive = async (
     nextCollect: ChatCollectState,
     userLabel: string,
@@ -1409,6 +1553,11 @@ export function NomeSocialChat({
     const submittedAt = Date.now();
 
     try {
+      // DEV-326: o caminho do bebê roda no navegador; nenhum dado do bebê vai ao /api/decide-live.
+      if (isRamoBebeCollect(nextCollect)) {
+        await routeBaby(nextCollect, stepId, submittedAt);
+        return;
+      }
       const res = await fetch('/api/decide-live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1438,13 +1587,13 @@ export function NomeSocialChat({
         stepId,
         nextCollect.nomeUsoBase ?? confirmedName,
         precisaAvisoArtisticoContratos(nextCollect.motivoHarmonizacao, nextCollect.outrosUsos),
-        isRamoArtisticoCollect(nextCollect),
+        isRamoArtisticoCollect(nextCollect) || isRamoBebeCollect(nextCollect),
+        isRamoBebeCollect(nextCollect),
+        avisoBebePorSituacao(nextCollect.bebeSituacao),
       );
-      if (
-        (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') &&
-        isRamoArtisticoCollect(nextCollect)
-      ) {
-        void carregarNomesArtisticos(nextCollect, []);
+      if (responseData.next_step === 'fim_coleta' || responseData.next_step === 'conclusao') {
+        if (isRamoBebeCollect(nextCollect)) void carregarNomesBebe(nextCollect, []);
+        else if (isRamoArtisticoCollect(nextCollect)) void carregarNomesArtisticos(nextCollect, []);
       }
     } catch (err) {
       console.error(err);
@@ -1503,6 +1652,64 @@ export function NomeSocialChat({
       count: ordered.length,
       has_other: Boolean(otherText?.trim()),
     });
+  };
+
+  /** DEV-324: pergunta anterior para onde o "Voltar" leva (null quando não há como voltar). */
+  const previousStepFor = (stepId: string): PostBirthFlowStep | null => {
+    if (!birthConfirmed || freePaywallActive || chatPhase === 'free_paywall') return null;
+    const prev = getPreviousFlowStep(stepId, collectState);
+    if (!prev || prev === 'suggestions') return null;
+    // Só volta se a pergunta de destino ainda existir no chat como cartão de resposta: o palpite pode
+    // ter virado campo de texto, e a pergunta de caminho (DEV-326) não é uma pergunta do questionário.
+    const existe = messages.some(
+      (m) => m.sender === 'assistant' && m.stepId === prev && (m.type === 'questionnaire' || m.type === 'guess'),
+    );
+    return existe ? prev : null;
+  };
+
+  /**
+   * DEV-324: volta uma pergunta, sem recomeçar. Corta o chat até a pergunta de destino, apaga
+   * as respostas dela e das seguintes e reapresenta as opções, sem chamar a API de novo.
+   * O "Recomeçar" da dock continua zerando tudo.
+   */
+  const handleGoBack = () => {
+    if (loading || isRegenerating || manualLock.current) return;
+    const target = previousStepFor(currentStepId);
+    if (!target) return;
+    const plan = planBackNavigation(messages, target);
+    if (!plan) return;
+    const { kept, removedAnswers, undoneStepIds: desfazidos } = plan;
+    const cameFromSuggestions = currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
+
+    setMessages(kept);
+    setCollectState(rewindCollectStateToStep(collectState, target));
+    setAnswers((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !desfazidos.has(k))));
+    setCurrentStepId(target);
+    setRemaining(remaining + removedAnswers);
+    setStepIndex(Math.max(1, totalSteps - (remaining + removedAnswers)));
+    blockTransitionsShown.current = detectShownBlockTransitions(kept);
+    setNomeArtisticoDraft('');
+    setPendingPalpiteFeedback(null);
+    if (cameFromSuggestions) {
+      setSuggestions([]);
+      setBabyJanela(null);
+      setActiveSuggestionId(null);
+      setAnalysisId(undefined);
+      clearChatPdfEnsureInflight();
+      lastAnalyzeSuggestionsFingerprintRef.current = null;
+      lastAnalyzeSelectedNameRef.current = null;
+      setRegenerateNotice(null);
+    }
+    capturePostHogEvent('chat_step_back', { from: currentStepId, to: target });
+  };
+
+  /** DEV-326: resposta do formulário do bebê (data, sobrenomes, nomes dos pais). */
+  const handleBabyData = (dados: DadosBebe) => {
+    if (loading) return;
+    const nextCollect = applyBebeDados(collectState, dados);
+    const resumo = resumoDadosBebe(dados);
+    setAnswers((prev) => ({ ...prev, bebe_dados: resumo }));
+    void pushDecideLive(nextCollect, resumo, 'bebe_dados', { has_names: dados.nomesPais.length > 0 });
   };
 
   const handleUserAnswer = async (text: string, optionId?: string) => {
@@ -1697,8 +1904,52 @@ export function NomeSocialChat({
     }
   };
 
+  /** DEV-326: nomes do caminho do bebê (dos pais e sugestões) pelo endpoint próprio. */
+  const carregarNomesBebe = async (collect: ChatCollectState, excluir: string[]) => {
+    const maisUma = excluir.length > 0;
+    setIsRegenerating(true);
+    if (!maisUma) setRegenerateNotice(NOTICE_CALCULANDO_NOMES_BEBE);
+    try {
+      const res = await fetch('/api/baby-names', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBabyNamesBody(collect, excluir)),
+      });
+      const data = (await res.json()) as RawBabyNamesResponse;
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Erro ao calcular os nomes do bebê');
+      setBabyJanela(data.janela ?? null);
+      const candidatos = mapBabyNamesToCandidates(data);
+      if (candidatos.length > 0) {
+        setSuggestions((prev) => mergeChatSuggestionsCumulative(prev, candidatos));
+        setActiveSuggestionId(null);
+        if (!maisUma) setScrollSistemaToken((n) => n + 1);
+        setRegenerateNotice(babyNamesNotice(data, collect.bebeSituacao));
+      } else {
+        setRegenerateNotice(
+          maisUma
+            ? 'Não encontrei outros nomes diferentes dos que você já viu. Tente outro estilo.'
+            : babyNamesNotice(data, collect.bebeSituacao) ?? 'Não foi possível calcular os nomes agora. Tente de novo.',
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setRegenerateNotice(err instanceof Error ? err.message : 'Não foi possível calcular os nomes do bebê. Tente de novo.');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const handleRegenerate = async () => {
     if (manualLock.current || isRegenerating) return;
+    if (isRamoBebeCollect(collectState)) {
+      // DEV-326: "Gerar outras opções" do caminho do bebê usa o motor próprio e não depende da certidão.
+      setRegenerateNotice(null);
+      await carregarNomesBebe(
+        collectState,
+        suggestions.filter((x) => x.origem !== 'manual').map((x) => x.nome),
+      );
+      return;
+    }
     if (!confirmedName.trim() || !confirmedDate.trim()) return;
     if (isRamoArtisticoCollect(collectState)) {
       // DEV-321: "Gerar outras opções" do ramo artístico usa o motor próprio, sem misturar com o Nome Social.
@@ -1814,10 +2065,17 @@ export function NomeSocialChat({
   const starPanelData = activeSuggestion ? activeSuggestion.panel : basePanel;
   const profileCollectionComplete =
     currentStepId === 'fim_coleta' || currentStepId === 'conclusao';
-  const showScoreCard = Boolean(basePanel);
-  const showStarDetail = birthConfirmed && Boolean(basePanel);
-  const showRadarPanel = shouldShowRadar(collectState);
-  const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel);
+  // DEV-326: no caminho do bebê o painel do nome de nascimento do usuário não se aplica; só aparece
+  // o painel do nome do bebê selecionado.
+  // Também fica escondido enquanto o caminho não foi escolhido: a escolha vem antes de qualquer nome.
+  const aguardandoCaminho =
+    caminhoInicialAtivo && isSubscriber && !birthConfirmed && !answers.onboarding_caminho;
+  const ocultaPainelDoUsuario =
+    aguardandoCaminho || (isRamoBebeCollect(collectState) && !activeSuggestion);
+  const showScoreCard = Boolean(basePanel) && !ocultaPainelDoUsuario;
+  const showStarDetail = birthConfirmed && Boolean(basePanel) && !ocultaPainelDoUsuario;
+  const showRadarPanel = shouldShowRadar(collectState) && !ocultaPainelDoUsuario;
+  const showReadingSummaryPanel = birthConfirmed && Boolean(basePanel) && !ocultaPainelDoUsuario;
   const activeReadingSummary = activeSuggestionId
     ? harmonizedSummaries[activeSuggestionId] ?? null
     : birthReadingSummary;
@@ -1872,12 +2130,19 @@ export function NomeSocialChat({
       const suggestionsFingerprint = chatSuggestionsExportFingerprint(
         chatSuggestionsToExportNames(suggestions),
       );
+      const isBaby = isRamoBebeCollect(collectState);
+      const effectiveBirthName = isBaby
+        ? (activeSuggestion?.nome?.trim() ?? '')
+        : confirmedName.trim();
+      const effectiveBirthDate = isBaby
+        ? (collectState.bebeData?.trim() ?? '')
+        : confirmedDate.trim();
 
       if (
         !paidAccessActive ||
         !activeSuggestion?.nome?.trim() ||
-        !confirmedName.trim() ||
-        !confirmedDate.trim()
+        !effectiveBirthName ||
+        !effectiveBirthDate
       ) {
         return undefined;
       }
@@ -1892,8 +2157,8 @@ export function NomeSocialChat({
       }
 
       const key = buildChatPdfEnsureKey(
-        confirmedName,
-        confirmedDate,
+        effectiveBirthName,
+        effectiveBirthDate,
         activeSuggestion.nome,
         suggestionsFingerprint,
       );
@@ -1908,11 +2173,12 @@ export function NomeSocialChat({
             signal: innerSignal,
             body: JSON.stringify(
               buildChatPdfAnalyzePayload({
-                birthName: confirmedName,
-                birthDate: confirmedDate,
+                birthName: effectiveBirthName,
+                birthDate: effectiveBirthDate,
                 selectedSocialName: activeSuggestion.nome,
                 collect: collectState,
                 suggestions,
+                babyJanela,
               })
             ),
           });
@@ -1938,6 +2204,7 @@ export function NomeSocialChat({
       confirmedDate,
       collectState,
       suggestions,
+      babyJanela,
     ]
   );
 
@@ -2356,6 +2623,9 @@ export function NomeSocialChat({
                       selectedId={activeSuggestionId}
                       onSelect={handleSuggestionSelect}
                       onRegenerate={handleRegenerate}
+                      onBack={previousStepFor('fim_coleta') ? handleGoBack : undefined}
+                      backLabel={isRamoBebeCollect(collectState) ? 'Voltar à pergunta anterior' : undefined}
+                      semTesteManual={isRamoBebeCollect(collectState)}
                       isRegenerating={isRegenerating}
                       regenerateNotice={regenerateNotice}
                       canRegenerate={!manualLoading && podePedirGerarMais(suggestions.filter(s => s.origem !== 'manual').length)}
@@ -2417,6 +2687,7 @@ export function NomeSocialChat({
                       onExact={handleGuessExact}
                       onPartial={() => handleGuessPartial(msg.id)}
                       onOther={() => handleGuessOther(msg.id)}
+                      onBack={previousStepFor('palpite') ? handleGoBack : undefined}
                       disabled={loading}
                     />
                   )}
@@ -2444,6 +2715,25 @@ export function NomeSocialChat({
                           className="mt-3 w-full rounded-2xl bg-[#1C1C1C] border border-[#D4AF37]/30 px-4 py-2.5 text-sm text-chat-ink focus:outline-none focus:border-[#D4AF37]/60"
                         />
                       )}
+                      {msg.stepId === 'bebe_pais' ? (
+                        <BabyParentsForm
+                          disabled={loading}
+                          onBack={previousStepFor(msg.stepId) ? handleGoBack : undefined}
+                          onSubmit={handleBabyParents}
+                        />
+                      ) : msg.stepId === 'bebe_dados' ? (
+                        <BabyDataForm
+                          situacao={collectState.bebeSituacao ?? null}
+                          dataTipo={collectState.bebeDataTipo ?? null}
+                          sobrenomesSugeridos={sobrenomesSugeridosBebe({
+                            mae: collectState.bebeMae ?? null,
+                            pai: collectState.bebePai ?? null,
+                          })}
+                          disabled={loading}
+                          onBack={previousStepFor(msg.stepId) ? handleGoBack : undefined}
+                          onSubmit={handleBabyData}
+                        />
+                      ) : (
                       <ChatAdaptivePills
                         mode={
                           (JSON.parse(msg.hypotheticalText || '{}') as { mode?: 'single' | 'multi' })
@@ -2470,6 +2760,8 @@ export function NomeSocialChat({
                           (JSON.parse(msg.hypotheticalText || '{}') as { caption?: string }).caption
                         }
                         disabled={loading}
+                        onBack={previousStepFor(msg.stepId) ? handleGoBack : undefined}
+                        otherPlaceholder={msg.stepId === 'area_artistica' ? 'Qual é a sua área?' : undefined}
                         onSubmitSingle={(id, label, other) =>
                           handleQuestionnaireSingle(msg.stepId!, id, label, other)
                         }
@@ -2487,6 +2779,7 @@ export function NomeSocialChat({
                           capturePostHogEvent('chat_limit_reached', { step: msg.stepId })
                         }
                       />
+                      )}
                     </>
                   )}
 
@@ -2496,7 +2789,9 @@ export function NomeSocialChat({
                       onSelect={(opt) =>
                         msg.stepId === 'onboarding_gender'
                           ? handleOnboardingGender(opt.label, opt.id)
-                          : handleUserAnswer(opt.label, opt.id)
+                          : msg.stepId === 'onboarding_caminho'
+                            ? handleCaminhoInicial(opt.id, opt.label)
+                            : handleUserAnswer(opt.label, opt.id)
                       }
                       disabled={loading}
                     />

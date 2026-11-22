@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Páginas de lembrança</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#4A3A36}
+h1{font-family:Cinzel,serif;font-weight:400;font-size:30px;letter-spacing:.05em;margin:0}
+h2{font-family:Cinzel,serif;font-weight:400;font-size:20px;letter-spacing:.04em;color:#4A3A36;margin:0}
+p{font-size:14px;line-height:1.65;margin:0;color:#5C4B46}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: {{c.fundo}}; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: {{c.texto}}">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #8C7B76">Helena · Para guardar</div>
+</div>
+<h1 style="color: {{c.texto}}">Para guardar</h1>
+
+<div style="display: flex; gap: 14px">
+<div style="width: 250px; height: 250px; border-radius: 28px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 2px {{c.suave}}">
+<div style="font-size: 12px; color: #8C7B76; text-align: center; line-height: 1.6">Espaço para a<br>primeira foto</div>
+</div>
+<div style="flex: 1; background: #FFFFFF; border-radius: 28px; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2>A história do seu nome</h2>
+<p style="font-size: 13px">Por que escolhemos Helena:</p>
+<div style="height: 1px; background: #EADFDC; margin-top: 18px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 18px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 18px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 18px"></div>
+</div>
+</div>
+
+<div style="flex: 1; background: #FFFFFF; border-radius: 28px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="color: {{c.texto}}">Uma carta para você ler quando crescer</h2>
+<p style="font-size: 13px">Querida Helena,</p>
+<div style="height: 1px; background: #EADFDC; margin-top: 20px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 20px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 20px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 20px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 20px"></div>
+<div style="height: 1px; background: #EADFDC; margin-top: 20px"></div>
+<div style="margin-top: auto; display: flex; justify-content: flex-end; font-family: Cinzel, serif; font-size: 15px; color: {{c.texto}}">Com amor, mamãe e papai</div>
+</div>
+
+<div style="display: flex; justify-content: space-between; font-size: 10px; color: #8C7B76">
+<div>Imprima e preencha à mão.</div>
+<div>Página 8</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tom":{"editor":"enum","options":["rosa","azul","neutro"],"default":"rosa"},"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const tons = {
+rosa: { fundo: '#FFF6F4', suave: '#FCE9EC', texto: '#9E4A5B' },
+azul: { fundo: '#F5F9FD', suave: '#E3EEF9', texto: '#3F6E96' },
+neutro: { fundo: '#F6FAF7', suave: '#E2F2EA', texto: '#3F7A61' }
+};
+return { c: tons[this.props.tom ?? 'rosa'] ?? tons.rosa };
+}
+}
+</script>
+</body>
+</html>

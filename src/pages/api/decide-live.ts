@@ -14,6 +14,7 @@ import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engin
 import { LoopGuard, logAIUsage } from '../../backend/ai/loop-guard';
 import { getClientIp, hashClientIp } from '../../backend/security/apiRateLimit';
 import { sanitizeOutroText } from '../../shared/interactive-engine/questionnaire-adaptive';
+import { isFluxoMotivoAtivo } from '../../backend/env/chat-flags';
 import { determineNextStep } from '../../shared/interactive-engine/router';
 import { buildProfilePalpiteText } from '../../shared/interactive-engine/chat-profile-copy';
 import { computeRadarAxes } from '../../shared/interactive-engine/radar-axes';
@@ -106,7 +107,7 @@ const decideLiveSchema = z.object({
   prioridade_conflito: z.enum(['nota_mais_alta', 'mudar_o_minimo']).optional(),
   area_foco_outro: z.string().max(60).optional(),
   // DEV-320: motivo, ramo artístico e outros usos
-  motivo_harmonizacao: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco']).optional(),
+  motivo_harmonizacao: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco', 'bebe']).optional(),
   area_artistica: z
     .enum(['cantor', 'ator', 'personagem', 'criador_conteudo', 'escritor', 'dj_produtor', 'outra'])
     .optional(),
@@ -125,15 +126,6 @@ const decideLiveSchema = z.object({
     .max(6)
     .optional(),
 });
-
-/** DEV-320: fluxo com motivo e ramo artístico. Desligar com `NM_CHAT_MOTIVO_ARTISTICO=false`. */
-function isFluxoMotivoAtivo(): boolean {
-  const raw = (process.env.NM_CHAT_MOTIVO_ARTISTICO ?? import.meta.env?.NM_CHAT_MOTIVO_ARTISTICO ?? '')
-    .toString()
-    .trim()
-    .toLowerCase();
-  return raw !== 'false' && raw !== '0' && raw !== 'off';
-}
 
 function normalizeDateToPtBr(raw: string): string | null {
   const trimmed = raw.trim();

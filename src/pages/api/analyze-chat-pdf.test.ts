@@ -11,9 +11,11 @@ let mockCreatedAnalysisId = 'created-free-id-1';
 let createAnalysisCalls = 0;
 let paidAccess = false;
 let updates: Record<string, any>[] = [];
+let profileUpdates: Record<string, any>[] = [];
+let socialInputsInserts: Record<string, any>[] = [];
 
 const mockUserSupabase = {
-  from: (_table: string) => {
+  from: (table: string) => {
     const builder: any = {
       select: () => builder,
       eq: () => builder,
@@ -28,8 +30,14 @@ const mockUserSupabase = {
         },
         error: null,
       }),
-      update: () => builder,
-      insert: async () => ({ data: null, error: null }),
+      update: (payload: Record<string, any>) => {
+        if (table === 'profiles') profileUpdates.push(payload);
+        return builder;
+      },
+      insert: async (payload: Record<string, any>) => {
+        if (table === 'social_name_inputs') socialInputsInserts.push(payload);
+        return { data: null, error: null };
+      },
     };
     return builder;
   },
@@ -225,4 +233,94 @@ it('DEV-299 salva manual com nota inferior, proveniência e contexto para reaber
   assert.equal(data.radarSnapshot.birth.length, 5);
   assert.equal(data.radarSnapshot.selectedName, nome);
   assert.equal(data.areaFoco, 'carreira_negocios');
+});
+
+it('DEV-328 persiste perfil_chat, nomes_artisticos e nomes_bebe sem alterar perfil no caminho do bebê', async () => {
+  paidAccess = true;
+  updates = [];
+  profileUpdates = [];
+  socialInputsInserts = [];
+
+  const resArtistico = await POST({
+    request: new Request('http://localhost/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_type: 'nome_social',
+        nome_completo: 'Maria Silva',
+        data_nascimento: '01/01/1990',
+        nome_social_principal: 'Lira Sol',
+        nome_ja_escolhido: true,
+        nomes_candidatos: ['Mari Sol', 'Lira Sol'],
+        ranking_somente_chat: true,
+        perfil_chat: {
+          motivo: 'artistico',
+          areaArtistica: 'cantor',
+          tipoNomeArtistico: 'ambos',
+        },
+        nomes_artisticos: {
+          proximos: [{ nome: 'Mari Sol', nota: 78, expressao: 3, afinidade: 2, secao: 'proximo' }],
+          novos: [{ nome: 'Lira Sol', nota: 91, expressao: 5, afinidade: 1, secao: 'novo' }],
+          escolhido: 'Lira Sol',
+        },
+      }),
+    }),
+    locals: { user: { id: 'fixture-owner', email: 'fixture@example.com' }, accessToken: 'token-fixture' },
+  } as any);
+  assert.equal(resArtistico.status, 200);
+  for (let i = 0; i < 20 && !updates.some((u) => u.status === 'complete'); i++) {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  const savedArt = updates.find((u) => u.frequencias_numeros?.nomesArtisticos);
+  assert.ok(savedArt, 'persistiu nomesArtisticos');
+  assert.equal(savedArt.frequencias_numeros.perfilChat.motivo, 'artistico');
+  assert.equal(savedArt.frequencias_numeros.nomesArtisticos.escolhido, 'Lira Sol');
+  assert.ok(savedArt.frequencias_numeros.ranking.melhorNome, 'mantém melhorNome para caminho artístico');
+
+  updates = [];
+  profileUpdates = [];
+  socialInputsInserts = [];
+
+  const resBebe = await POST({
+    request: new Request('http://localhost/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_type: 'nome_social',
+        nome_completo: 'Alice Silva',
+        data_nascimento: '15/06/2027',
+        nome_social_principal: 'Alice Silva',
+        nome_ja_escolhido: true,
+        nomes_candidatos: ['Alice Silva'],
+        ranking_somente_chat: true,
+        perfil_chat: {
+          motivo: 'bebe',
+          bebeMae: 'Maria Silva',
+          bebeSituacao: 'nao_nasceu',
+          bebeDataTipo: 'prevista',
+          bebeSexo: 'menina',
+          bebeData: '15/06/2027',
+          bebeSobrenomes: ['Silva'],
+        },
+        nomes_bebe: {
+          seusNomes: [],
+          sugestoes: [{ nome: 'Alice Silva', nota: 88, expressao: 6, bloqueios: [], diasBons: 22, diasTotal: 29, grupo: 'menina' }],
+          janela: { dias: 29, centro: '15/06/2027' },
+          escolhido: 'Alice Silva',
+        },
+      }),
+    }),
+    locals: { user: { id: 'fixture-owner', email: 'fixture@example.com' }, accessToken: 'token-fixture' },
+  } as any);
+  assert.equal(resBebe.status, 200);
+  for (let i = 0; i < 20 && !updates.some((u) => u.status === 'complete'); i++) {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  const savedBebe = updates.find((u) => u.frequencias_numeros?.nomesBebe);
+  assert.ok(savedBebe, 'persistiu nomesBebe');
+  assert.equal(savedBebe.frequencias_numeros.perfilChat.motivo, 'bebe');
+  assert.equal(savedBebe.frequencias_numeros.nomesBebe.escolhido, 'Alice Silva');
+  assert.equal(profileUpdates.length, 0, 'não sobrescreve birth_name/birth_date em profiles no caminho do bebê');
+  assert.equal(socialInputsInserts.length, 0, 'não grava social_name_inputs no caminho do bebê');
+  assert.ok(savedBebe.frequencias_numeros.ranking.melhorNome, 'mantém melhorNome para caminho bebê');
 });

@@ -4,7 +4,10 @@ import { Pill } from '../../ui/Pill.js';
 import { toggleSelection } from './selection.js';
 import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
+import { ChatBackButton } from './ChatBackButton.js';
 import { dividirPorSecao, temSecoesArtisticas } from './artistic-suggestions-client.js';
+import { ORDEM_SECOES_BEBE, dividirPorGrupoBebe, temSecoesBebe } from './baby-suggestions-client.js';
+import { TITULO_SECAO_BEBE } from '../../../../shared/interactive-engine/ramos/bebe.js';
 
 export interface SuggestionPickerProps {
   suggestions: CandidateSuggestion[];
@@ -22,6 +25,12 @@ export interface SuggestionPickerProps {
   scrollSistemaToken?: number;
   /** DEV-317: card a mostrar inteiro depois de testar um nome. */
   scrollCandidato?: { id: string; n: number } | null;
+  /** DEV-324: volta ao palpite. */
+  onBack?: () => void;
+  /** DEV-326: no caminho do bebê não há palpite; o rótulo do botão é outro. */
+  backLabel?: string;
+  /** DEV-326: o teste de nome usa o nome de nascimento do usuário; não se aplica ao bebê. */
+  semTesteManual?: boolean;
   className?: string;
 }
 
@@ -43,6 +52,9 @@ export function SuggestionPicker({
   manualSlot,
   scrollSistemaToken = 0,
   scrollCandidato = null,
+  onBack,
+  backLabel = 'Voltar ao palpite',
+  semTesteManual = false,
   className = '',
 }: SuggestionPickerProps) {
   const sistemaRef = useRef<HTMLElement>(null);
@@ -206,7 +218,36 @@ export function SuggestionPicker({
         {cabecalho('system-names-title', 'Sugestões do sistema', sistema.length, sistemaAberto, () => setSistemaAberto((v) => !v), 'system-names-list', 'text-gold')}
         {sistemaAberto && (
           <div id="system-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
-            {temSecoesArtisticas(sistema) ? (
+            {temSecoesBebe(sistema) ? (
+              // DEV-326: caminho do bebê, seções por grupo (nomes dos pais, menina, menino, neutros).
+              (() => {
+                const g = dividirPorGrupoBebe(sistema);
+                let inicio = 0;
+                return (
+                  <>
+                    {ORDEM_SECOES_BEBE.map((grupo) => {
+                      const itens = g[grupo];
+                      if (itens.length === 0) return null;
+                      const { titulo, dica } = TITULO_SECAO_BEBE[grupo];
+                      const de = inicio;
+                      inicio += itens.length;
+                      return (
+                        <div key={grupo} className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
+                          <div>
+                            <h4 className="font-inter text-[11px] font-medium uppercase tracking-[0.1em] text-[#d7c6ff]">
+                              {titulo} <span className="text-chat-muted">({itens.length})</span>
+                            </h4>
+                            <p className="text-xs text-chat-muted mt-0.5">{dica}</p>
+                          </div>
+                          {itens.map((sug, i) => renderCard(sug, de + i))}
+                        </div>
+                      );
+                    })}
+                    <p className="text-xs text-chat-muted">O relatório em PDF do caminho do bebê ainda não está disponível.</p>
+                  </>
+                );
+              })()
+            ) : temSecoesArtisticas(sistema) ? (
               // DEV-321: ramo artístico, duas seções (próximos do nascimento e nomes novos).
               (() => {
                 const s = dividirPorSecao(sistema);
@@ -243,6 +284,14 @@ export function SuggestionPicker({
         )}
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-1">
+          {onBack && (
+            <ChatBackButton
+              onClick={onBack}
+              disabled={isRegenerating}
+              label={backLabel}
+              className="self-start"
+            />
+          )}
           <Pill
             label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
             size="lg"
@@ -258,7 +307,7 @@ export function SuggestionPicker({
         {extraNoticeSlot}
       </section>
 
-      {manualSlot && (
+      {manualSlot && !semTesteManual && (
         <section aria-labelledby="manual-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
           {cabecalho('manual-names-title', 'Suas sugestões', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-gold')}
           {manualSlot}
