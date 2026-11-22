@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import {
+  DemoChatScenesShowcase,
+  DemoDeviceFrameShowcase,
+  DemoMockupsControls,
+  DemoPathChooserShowcase,
+} from '../frontend/components/landing/mockups/DemoMockupsVitrine';
+---
+
+<BaseLayout
+  title="Vitrine de Mockups · Etapa 1"
+  description="Vitrine interna de desenvolvimento para os componentes base de mockup da landing (DEV-336)."
+  noIndex={true}
+>
+  <main class="min-h-screen bg-[#131313] text-[#e5e2e1] py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-16">
+      <header class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="inline-flex items-center rounded-full bg-[#1C1C1C] px-3 py-1 text-[11px] font-inter uppercase tracking-[0.12em] text-[#f2ca50]">
+              DEV-336 · Uso interno (noindex)
+            </span>
+            <h1 class="font-cinzel text-2xl sm:text-4xl font-bold text-[#e5e2e1] mt-3">
+              Vitrine de Mockups · Etapa 1
+            </h1>
+            <p class="font-inter text-sm sm:text-base text-[#a0a0a0] mt-2 max-w-2xl leading-relaxed">
+              Validação visual de <code class="text-[#d7c6ff]">DeviceFrame</code>,{' '}
+              <code class="text-[#d7c6ff]">useMockupTimeline</code>,{' '}
+              <code class="text-[#d7c6ff]">PathChooserScene</code> e{' '}
+              <code class="text-[#d7c6ff]">ChatScene</code> nos modos{' '}
+              <code class="text-[#f2ca50]">phone</code>, <code class="text-[#f2ca50]">desktop</code> e{' '}
+              <code class="text-[#f2ca50]">both</code>.
+            </p>
+          </div>
+        </div>
+
+        <DemoMockupsControls client:visible />
+      </header>
+
+      <section id="bloco-deviceframe" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            1. DeviceFrame (phone · desktop · both)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Abaixo de 768 px, o modo <code class="text-[#f2ca50]">both</code> exibe somente o
+            celular.
+          </p>
+        </div>
+        <DemoDeviceFrameShowcase client:visible />
+      </section>
+
+      <section id="bloco-pathchooser" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            2. PathChooserScene (3 caminhos alternando a cada ciclo)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Toque falso escolhendo Harmonizar, Artístico e Bebê em loop com pausa de 1,8 s.
+          </p>
+        </div>
+        <DemoPathChooserShowcase client:visible />
+      </section>
+
+      <section id="bloco-chatscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            3. ChatScene (3 roteiros de exemplo)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Jev digitando (3 pontinhos), chips, cursor/toque falso e sugestões sem bloqueios.
+          </p>
+        </div>
+        <DemoChatScenesShowcase client:visible />
+      </section>
+
+      <footer class="rounded-2xl bg-[#181818] p-6 sm:p-8 text-center space-y-2">
+        <p class="font-cinzel text-sm font-bold text-[#e5e2e1]">
+          Fim da vitrine · verificação de pausa fora da tela
+        </p>
+        <p class="font-inter text-xs text-[#a0a0a0]">
+          Ao rolar até aqui, as cenas acima fora da viewport pausam automaticamente via
+          IntersectionObserver e retomam ao voltar.
+        </p>
+      </footer>
+    </div>
+  </main>
+</BaseLayout>
