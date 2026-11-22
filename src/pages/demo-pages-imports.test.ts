@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /** DEV-311 · todo componente usado no template de uma página demo precisa ter sido importado. */
-const PAGINAS = ['demo-chat-scores.astro', 'demo-chat.astro'];
+const PAGINAS = ['demo-chat-scores.astro', 'demo-chat.astro', 'demo-mockups.astro'];
 
 describe('DEV-311 · páginas demo sem componente não importado', () => {
   for (const arquivo of PAGINAS) {
