@@ -58,6 +58,10 @@ interface PDFDoubleStarProps {
   /** Scores v3 para cores por faixa (HTML / getScoreTierVisual) — não altera geometria */
   scoreNascimento?: number | null;
   scoreHarmonizado?: number | null;
+  /** Largura do SVG (padrão 420; ~210 para layout em 2 colunas). */
+  svgWidth?: number;
+  /** Omite o texto longo de apoio quando dentro de card compacto. */
+  compact?: boolean;
 }
 
 function getStarPoints(cx: number, cy: number, outerR: number, innerR: number): string {
@@ -81,6 +85,8 @@ export function PDFDoubleStar({
   harmonizado,
   scoreNascimento,
   scoreHarmonizado,
+  svgWidth = 420,
+  compact = false,
 }: PDFDoubleStarProps) {
   const W = 510;
   const H = 430;
@@ -104,8 +110,8 @@ export function PDFDoubleStar({
   const outerPts = getStarPoints(cx, cy, outerOuterR, outerInnerR);
 
   return (
-    <View style={styles.container} wrap={false}>
-      <Svg width={420} height={H * (420 / W)} viewBox={`0 0 ${W} ${H}`}>
+    <View style={[styles.container, compact ? { marginBottom: 0 } : {}]} wrap={false}>
+      <Svg width={svgWidth} height={H * (svgWidth / W)} viewBox={`0 0 ${W} ${H}`}>
         <Polygon
           points={outerPts}
           fill={harmVisual.stroke}
@@ -187,19 +193,25 @@ export function PDFDoubleStar({
         })}
       </Svg>
 
-      <View style={styles.legendContainer}>
+      <View style={[styles.legendContainer, compact ? { marginTop: 6, gap: 12 } : {}]}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: birthVisual.fill, borderColor: birthVisual.stroke }]} />
-          <Text style={styles.legendText}>Nome de nascimento</Text>
+          <Text style={[styles.legendText, compact ? { fontSize: 7.5 } : {}]}>
+            {compact && scoreNascimento != null ? `Nascimento · ${scoreNascimento}` : 'Nome de nascimento'}
+          </Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: harmVisual.fill, borderColor: harmVisual.stroke }]} />
-          <Text style={styles.legendText}>Assinatura selecionada</Text>
+          <Text style={[styles.legendText, compact ? { fontSize: 7.5 } : {}]}>
+            {compact && scoreHarmonizado != null ? `Nome novo · ${scoreHarmonizado}` : 'Assinatura selecionada'}
+          </Text>
         </View>
       </View>
-      <Text style={styles.supportText}>
-        Compare os valores calculados para cada nome na legenda do gráfico.
-      </Text>
+      {!compact && (
+        <Text style={styles.supportText}>
+          Compare os valores calculados para cada nome na legenda do gráfico.
+        </Text>
+      )}
     </View>
   );
 }

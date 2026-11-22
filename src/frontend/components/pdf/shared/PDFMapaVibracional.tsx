@@ -113,6 +113,7 @@ export function PDFMapaVibracional({
   hasContext,
   areaFoco,
   usos,
+  compactWebOnly = false,
 }: {
   birth: ContextualRadarAxis[];
   selected: ContextualRadarAxis[];
@@ -121,9 +122,112 @@ export function PDFMapaVibracional({
   hasContext: boolean;
   areaFoco?: string | null;
   usos: string[];
+  compactWebOnly?: boolean;
 }) {
   const birthVisual = getScoreTierVisual(birthScore);
   const selectedVisual = getScoreTierVisual(selectedScore);
+
+  const webSvg = (
+    <Svg
+      viewBox="0 -4 470 263"
+      width="100%"
+      height={compactWebOnly ? 185 : 240}
+      style={{ marginTop: compactWebOnly ? 2 : 6, marginBottom: 4 }}
+    >
+      {[0.25, 0.5, 0.75, 1].map((v) => (
+        <Polygon
+          key={v}
+          points={points(birth.map(() => v))}
+          fill="none"
+          stroke={compactWebOnly ? '#E2DCCD' : '#CBD5E1'}
+          strokeWidth={0.7}
+        />
+      ))}
+      {birth.map((_, i) => {
+        const p = point(i, 1);
+        return (
+          <Line
+            key={i}
+            x1={235}
+            y1={123}
+            x2={p.x}
+            y2={p.y}
+            stroke={compactWebOnly ? '#E2DCCD' : '#CBD5E1'}
+            strokeWidth={0.5}
+          />
+        );
+      })}
+      <Polygon
+        points={points(birth.map((a) => a.value))}
+        fill={birthVisual.stroke}
+        fillOpacity={RADAR_SERIES_FILL_OPACITY}
+        stroke={birthVisual.stroke}
+        strokeOpacity={1}
+        strokeWidth={1.2}
+        strokeDasharray="1.5 3"
+      />
+      {birth.map((a, i) => {
+        const p = point(i, a.value);
+        return (
+          <Rect
+            key={a.key}
+            x={p.x - 2.5}
+            y={p.y - 2.5}
+            width={5}
+            height={5}
+            fill={birthVisual.stroke}
+            opacity={1}
+          />
+        );
+      })}
+      {/* A assinatura é pintada por último, inclusive sobre os marcadores de nascimento. */}
+      <Polygon
+        points={points(selected.map((a) => a.value))}
+        fill={selectedVisual.stroke}
+        fillOpacity={RADAR_SERIES_FILL_OPACITY}
+        stroke={selectedVisual.stroke}
+        strokeWidth={2.4}
+      />
+      {selected.map((a, i) => {
+        const p = point(i, a.value);
+        return (
+          <Circle
+            key={a.key}
+            cx={p.x}
+            cy={p.y}
+            r={3.5}
+            fill={selectedVisual.stroke}
+          />
+        );
+      })}
+      {birth.map((a, i) => {
+        const p = point(i, 1.22);
+        return (
+          <Text
+            key={a.key}
+            x={p.x}
+            y={i === 0 ? 12 : p.y}
+            style={{ fontFamily: BODY_FONT_BOLD, fontSize: 9.5 }}
+            textAnchor={i === 0 ? 'middle' : i < 3 ? 'start' : 'end'}
+            fill="#2A2620"
+          >
+            {a.label}
+          </Text>
+        );
+      })}
+    </Svg>
+  );
+
+  if (compactWebOnly) {
+    return (
+      <View wrap={false} style={{ alignItems: 'center' }}>
+        {webSvg}
+        <Text style={{ fontFamily: BODY_FONT, fontSize: 8.5, color: '#6E6658', textAlign: 'center', lineHeight: 1.4, marginTop: 2 }}>
+          Quanto mais aberta a teia, mais equilibrado o nome nesses cinco aspectos. Não muda a nota.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View>
@@ -142,89 +246,7 @@ export function PDFMapaVibracional({
       )}
 
       <View wrap={false}>
-        <Svg viewBox="0 -4 470 263" width="100%" height={240} style={{ marginTop: 6, marginBottom: 4 }}>
-          {[0.25, 0.5, 0.75, 1].map((v) => (
-            <Polygon
-              key={v}
-              points={points(birth.map(() => v))}
-              fill="none"
-              stroke="#CBD5E1"
-              strokeWidth={0.7}
-            />
-          ))}
-          {birth.map((_, i) => {
-            const p = point(i, 1);
-            return (
-              <Line
-                key={i}
-                x1={235}
-                y1={123}
-                x2={p.x}
-                y2={p.y}
-                stroke="#CBD5E1"
-                strokeWidth={0.5}
-              />
-            );
-          })}
-          <Polygon
-            points={points(birth.map((a) => a.value))}
-            fill={birthVisual.stroke}
-            fillOpacity={RADAR_SERIES_FILL_OPACITY}
-            stroke={birthVisual.stroke}
-            strokeOpacity={1}
-            strokeWidth={1.2}
-            strokeDasharray="1.5 3"
-          />
-          {birth.map((a, i) => {
-            const p = point(i, a.value);
-            return (
-              <Rect
-                key={a.key}
-                x={p.x - 2.5}
-                y={p.y - 2.5}
-                width={5}
-                height={5}
-                fill={birthVisual.stroke}
-                opacity={1}
-              />
-            );
-          })}
-          {/* A assinatura é pintada por último, inclusive sobre os marcadores de nascimento. */}
-          <Polygon
-            points={points(selected.map((a) => a.value))}
-            fill={selectedVisual.stroke}
-            fillOpacity={RADAR_SERIES_FILL_OPACITY}
-            stroke={selectedVisual.stroke}
-            strokeWidth={2.4}
-          />
-          {selected.map((a, i) => {
-            const p = point(i, a.value);
-            return (
-              <Circle
-                key={a.key}
-                cx={p.x}
-                cy={p.y}
-                r={3.5}
-                fill={selectedVisual.stroke}
-              />
-            );
-          })}
-          {birth.map((a, i) => {
-            const p = point(i, 1.22);
-            return (
-              <Text
-                key={a.key}
-                x={p.x}
-                y={i === 0 ? 12 : p.y}
-                style={{ fontFamily: BODY_FONT_BOLD, fontSize: 9.5 }}
-                textAnchor={i === 0 ? 'middle' : i < 3 ? 'start' : 'end'}
-                fill="#1F2937"
-              >
-                {a.label}
-              </Text>
-            );
-          })}
-        </Svg>
+        {webSvg}
 
         <Text style={[styles.commentNote, { fontSize: 8.5, marginBottom: 2 }]}>
           Nascimento: linha pontilhada discreta e quadrados. Assinatura selecionada: linha contínua em destaque e círculos, sempre por cima.

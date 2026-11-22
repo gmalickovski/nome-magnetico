@@ -126,3 +126,7 @@ sem saúde: qualidades para acolher e estimular.
 Ao gerar o PDF, `/api/analyze` lê `perfilChat.motivo` salvo em
 `analyses.frequencias_numeros.perfilChat` e escolhe a variante. O caminho do bebê ainda
 não salva o perfil na análise (pendência da DEV-326): resolver antes da variante Bebê.
+
+## 8. Status da implementação
+
+- **DEV-327 (Nome Social pago)**: implementado em [`NomeSocialPDF.tsx`](../../src/frontend/components/pdf/NomeSocialPDF.tsx) e [`NomeSocialLayoutSections.tsx`](../../src/frontend/components/pdf/layout/NomeSocialLayoutSections.tsx), com catálogo atualizado em [`pdfTocCatalog.ts`](../../src/frontend/components/pdf/shared/pdfTocCatalog.ts). Na fixture de referência (`Alexandra Mendes Vale` → `Alexandra M. Vale`, `07/03/1992`), o relatório caiu de 53 para 24 páginas, com todas as partes em páginas novas, faixas de nota via `faixaNotaPapel`, ponta dos triângulos em roxo (`#6D4FC2`/`#EDE6FF`), regra NO-LINE e sem termos proibidos.
