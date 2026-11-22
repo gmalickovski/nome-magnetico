@@ -6,6 +6,7 @@ import { NomeAtualPDF } from './NomeAtualPDF.tsx';
 import { NomeSocialPDF } from './NomeSocialPDF.tsx';
 import { PDFTriangleDetailsBlock } from './shared/PDFTriangleDetailsBlock.tsx';
 import './nome-artistico-pdf.test.ts';
+import './nome-bebe-chat-pdf.test.ts';
 
 describe('PDF Render Tests (DEV-192)', () => {
   const baseAnalysis = {

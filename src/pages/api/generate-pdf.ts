@@ -4,6 +4,7 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { NomeSocialPDF } from '../../frontend/components/pdf/NomeSocialPDF';
 import { NomeArtisticoPDF } from '../../frontend/components/pdf/NomeArtisticoPDF';
+import { NomeBebeChatPDF } from '../../frontend/components/pdf/NomeBebeChatPDF';
 import { NomeAtualPDF } from '../../frontend/components/pdf/NomeAtualPDF';
 import {
   PDF_TOC_ANCHOR_IDS,
@@ -112,7 +113,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     requestedMode,
     perfilChatMotivo,
     hasArtisticTemplate: true,
-    hasBabyChatTemplate: false,
+    hasBabyChatTemplate: true,
   });
   const isGratuita = pdfResolution.isGratuita;
   const selectedSocialName = selectedSocialNameCandidate ?? analysis.nome_completo;
@@ -150,7 +151,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
           ? NomeAtualPDF
           : pdfResolution.template === 'nome-artistico'
             ? NomeArtisticoPDF
-            : NomeSocialPDF;
+            : pdfResolution.template === 'nome-bebe-chat'
+              ? NomeBebeChatPDF
+              : NomeSocialPDF;
 
   // Limpa cache expirado periodicamente
   const agora = Date.now();
