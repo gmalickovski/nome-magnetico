@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pill } from '../../ui/Pill.js';
 import { Button } from '../../ui/Button.js';
+import { ChatBackButton } from './ChatBackButton.js';
 
 export interface AdaptivePillOption {
   id: string;
@@ -20,6 +21,10 @@ export interface ChatAdaptivePillsProps {
   onSubmitMulti: (ordered: AdaptivePillOption[], otherText?: string) => void;
   onToggleTrack?: (optionId: string, selected: boolean) => void;
   onLimitReached?: () => void;
+  /** DEV-324: volta uma pergunta (círculo só com ícone, primeiro item da linha). */
+  onBack?: () => void;
+  /** Texto do campo livre ("Outro"). */
+  otherPlaceholder?: string;
 }
 
 export function ChatAdaptivePills({
@@ -35,6 +40,8 @@ export function ChatAdaptivePills({
   onSubmitMulti,
   onToggleTrack,
   onLimitReached,
+  onBack,
+  otherPlaceholder = 'Como te chamam?',
 }: ChatAdaptivePillsProps) {
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
   const [otherActive, setOtherActive] = useState(false);
@@ -93,13 +100,23 @@ export function ChatAdaptivePills({
   if (mode === 'single' && otherActive && allowOther) {
     return (
       <div className="mt-3 flex flex-col gap-3 w-full">
+        <div className="flex items-center gap-2 w-full">
+          <ChatBackButton
+            onClick={() => {
+              setOtherActive(false);
+              setOtherText('');
+            }}
+            disabled={disabled}
+            label="Voltar às opções"
+          />
+        </div>
         <input
           type="text"
           maxLength={otherMaxLength}
           value={otherText}
           disabled={disabled}
           onChange={(e) => setOtherText(e.target.value.slice(0, otherMaxLength))}
-          placeholder="Como te chamam?"
+          placeholder={otherPlaceholder}
           className="w-full rounded-2xl bg-[#1C1C1C] border border-[#D4AF37]/40 px-4 py-3 text-chat-ink text-sm focus:outline-none focus:border-[#D4AF37]"
         />
         <Button
@@ -120,7 +137,9 @@ export function ChatAdaptivePills({
     <div className="mt-3 flex flex-col gap-3 w-full">
       {caption && <p className="nm-caption text-chat-muted">{caption}</p>}
 
-      <div className="flex flex-wrap gap-2 items-center w-full" role="group">
+      <div className="flex flex-wrap gap-2 items-center w-full">
+        {onBack && <ChatBackButton onClick={onBack} disabled={disabled} />}
+        <div className="contents" role="group">
         {options.map((opt) => {
           const selected = selectedOrder.includes(opt.id);
           const dimmed = atLimit && !selected;
@@ -136,6 +155,7 @@ export function ChatAdaptivePills({
             />
           );
         })}
+        </div>
       </div>
 
       {mode === 'multi' && (

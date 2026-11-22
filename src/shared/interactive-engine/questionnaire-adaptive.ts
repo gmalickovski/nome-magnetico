@@ -4,6 +4,30 @@
  */
 
 import type { AreaFocoNomeMagnetico, SubfocoMomento } from './copy';
+import {
+  AREA_ARTISTICA_OPTIONS,
+  AVISO_ARTISTICO_CONTRATOS_TEXT,
+  DETALHE_ARTISTICO_BY_AREA,
+  DETALHE_ARTISTICO_PROMPT,
+  GENERO_PERSONA_OPTIONS,
+  IMAGEM_ARTISTICA_OPTIONS,
+  TIPO_NOME_ARTISTICO_OPTIONS,
+  areaTemDetalheArtistico,
+  type AreaArtistica,
+} from './ramos/artistico';
+import {
+  BEBE_DATA_TIPO_OPTIONS,
+  BEBE_ESTILO_OPTIONS,
+  BEBE_PROMPTS,
+  BEBE_SEXO_OPTIONS,
+  BEBE_SITUACAO_OPTIONS,
+  BEBE_STEPS,
+} from './ramos/bebe';
+
+// DEV-321: o ramo artístico mora em `ramos/artistico.ts`; reexportado para manter os imports antigos.
+export * from './ramos/artistico';
+// DEV-326: o ramo do bebê mora em `ramos/bebe.ts`.
+export * from './ramos/bebe';
 
 const PARTICULAS_SOBRENOME = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
 
@@ -27,6 +51,12 @@ function extrairSobrenomesLocal(nomeCompleto: string): string[] {
 
 export type QuestionnaireStepId =
   | 'motivo_harmonizacao'
+  | 'bebe_pais'
+  | 'bebe_situacao'
+  | 'bebe_data_tipo'
+  | 'bebe_sexo'
+  | 'bebe_dados'
+  | 'bebe_estilo'
   | 'nome_uso'
   | 'sobrenomes_uso'
   | 'relacao_nome'
@@ -47,6 +77,13 @@ export type QuestionnaireStepId =
 export const QUESTIONNAIRE_STEP_ORDER: QuestionnaireStepId[] = [
   // DEV-320: motivo e outros usos só entram com o fluxo novo ligado (`fluxoMotivoAtivo`).
   'motivo_harmonizacao',
+  // DEV-326: caminho do bebê (só com motivo "bebe").
+  'bebe_pais',
+  'bebe_situacao',
+  'bebe_data_tipo',
+  'bebe_sexo',
+  'bebe_dados',
+  'bebe_estilo',
   'nome_uso',
   'sobrenomes_uso',
   'relacao_nome',
@@ -80,6 +117,8 @@ export const ARTISTIC_STEPS: readonly QuestionnaireStepId[] = [
 export const DEV320_STEPS: readonly QuestionnaireStepId[] = [
   'motivo_harmonizacao',
   ...ARTISTIC_STEPS,
+  // DEV-326: passos do caminho do bebê também ficam fora do roteiro da DEV-303.
+  ...BEBE_STEPS,
   'outros_usos',
 ];
 
@@ -172,106 +211,19 @@ const PRIORIDADE_CONFLITO_OPTIONS: QuestionOption[] = [
 
 // ── DEV-320 · motivo, ramo artístico e outros usos ──────────────────────────
 
-export type MotivoHarmonizacao = 'dia_a_dia' | 'carreira' | 'artistico' | 'recomeco';
+export type MotivoHarmonizacao = 'dia_a_dia' | 'carreira' | 'artistico' | 'recomeco' | 'bebe';
 
+/**
+ * Primeira pergunta do chat (DEV-326): o caminho. Vem antes de qualquer confirmação de nome.
+ * `dia_a_dia` é a harmonização do próprio nome (o caminho que já existia).
+ * Os ids `carreira` e `recomeco` só existem em sessões antigas; não são mais oferecidos.
+ */
 export const MOTIVO_HARMONIZACAO_OPTIONS: QuestionOption[] = [
-  { id: 'dia_a_dia', label: 'Dia a dia e assinatura pessoal' },
-  { id: 'carreira', label: 'Carreira e negócios' },
-  { id: 'artistico', label: 'Nome artístico ou persona' },
-  { id: 'recomeco', label: 'Um novo ciclo pessoal' },
+  { id: 'dia_a_dia', label: 'Harmonizar o meu nome' },
+  { id: 'artistico', label: 'Criar um nome artístico' },
+  { id: 'bebe', label: 'Escolher o nome do meu bebê' },
 ];
 
-export type AreaArtistica =
-  | 'cantor'
-  | 'ator'
-  | 'personagem'
-  | 'criador_conteudo'
-  | 'escritor'
-  | 'dj_produtor'
-  | 'outra';
-
-export const AREA_ARTISTICA_OPTIONS: QuestionOption[] = [
-  { id: 'cantor', label: 'Cantor ou cantora' },
-  { id: 'ator', label: 'Ator ou atriz' },
-  { id: 'personagem', label: 'Personagem, drag ou humor' },
-  { id: 'criador_conteudo', label: 'Criação de conteúdo' },
-  { id: 'escritor', label: 'Escrita' },
-  { id: 'dj_produtor', label: 'DJ ou produção musical' },
-  // O id termina em `_outro`, que abre o campo de texto (até 60 caracteres).
-  { id: 'area_artistica_outro', label: 'Outra área' },
-];
-
-const DETALHE_ARTISTICO_BY_AREA: Partial<Record<AreaArtistica, QuestionOption[]>> = {
-  cantor: [
-    { id: 'pop', label: 'Pop' },
-    { id: 'funk', label: 'Funk' },
-    { id: 'sertanejo', label: 'Sertanejo' },
-    { id: 'rap_trap', label: 'Rap ou trap' },
-    { id: 'mpb_samba', label: 'MPB, samba ou pagode' },
-    { id: 'gospel', label: 'Gospel' },
-    { id: 'rock', label: 'Rock' },
-    { id: 'eletronica', label: 'Eletrônica' },
-  ],
-  ator: [
-    { id: 'drama', label: 'Drama e novela' },
-    { id: 'comedia', label: 'Comédia' },
-    { id: 'teatro_musical', label: 'Teatro e musical' },
-    { id: 'publicidade_tv', label: 'Publicidade e apresentação' },
-  ],
-  personagem: [
-    { id: 'drag', label: 'Drag' },
-    { id: 'humor', label: 'Humor e stand-up' },
-    { id: 'infantil', label: 'Personagem infantil' },
-    { id: 'persona_digital', label: 'Persona digital' },
-  ],
-};
-
-/** DEV-320: rótulos das opções do ramo artístico (para o palpite do chat). */
-export function labelAreaArtistica(id: string | null | undefined): string | null {
-  return AREA_ARTISTICA_OPTIONS.find((o) => o.id === id)?.label ?? null;
-}
-
-export function labelDetalheArtistico(area: string | null | undefined, id: string): string | null {
-  const opts = area ? DETALHE_ARTISTICO_BY_AREA[area as AreaArtistica] : undefined;
-  return opts?.find((o) => o.id === id)?.label ?? null;
-}
-
-export function labelImagemArtistica(id: string): string | null {
-  return IMAGEM_ARTISTICA_OPTIONS.find((o) => o.id === id)?.label ?? null;
-}
-
-/** Áreas que têm a pergunta de detalhe (gênero musical, tipo de papel ou estilo). */
-export function areaTemDetalheArtistico(area: string | null | undefined): boolean {
-  return Boolean(area && DETALHE_ARTISTICO_BY_AREA[area as AreaArtistica]);
-}
-
-const DETALHE_ARTISTICO_PROMPT: Partial<Record<AreaArtistica, string>> = {
-  cantor: 'Qual estilo de música você faz?',
-  ator: 'Em que tipo de trabalho você mais atua?',
-  personagem: 'Qual é o estilo da persona?',
-};
-
-export const GENERO_PERSONA_OPTIONS: QuestionOption[] = [
-  { id: 'feminino', label: 'Feminino' },
-  { id: 'masculino', label: 'Masculino' },
-  { id: 'neutro', label: 'Neutro ou ambíguo' },
-];
-
-export const IMAGEM_ARTISTICA_OPTIONS: QuestionOption[] = [
-  { id: 'marcante', label: 'Marcante' },
-  { id: 'sofisticada', label: 'Sofisticada' },
-  { id: 'divertida', label: 'Divertida' },
-  { id: 'misteriosa', label: 'Misteriosa' },
-  { id: 'popular', label: 'Popular' },
-];
-
-export type TipoNomeArtistico = 'proximo' | 'diferente' | 'ambos';
-
-export const TIPO_NOME_ARTISTICO_OPTIONS: QuestionOption[] = [
-  { id: 'proximo', label: 'Próximo do meu nome' },
-  { id: 'diferente', label: 'Totalmente diferente' },
-  { id: 'ambos', label: 'As duas coisas' },
-];
 
 export const OUTROS_USOS_OPTIONS: QuestionOption[] = [
   { id: 'empresa_cnpj', label: 'Empresa ou CNPJ' },
@@ -377,9 +329,31 @@ export function getQuestionSpec(
     case 'motivo_harmonizacao':
       return {
         id: stepId,
-        prompt: 'Qual é o motivo principal para harmonizar o seu nome?',
+        prompt: 'O que você quer fazer hoje?',
         mode: 'single',
         staticOptions: MOTIVO_HARMONIZACAO_OPTIONS,
+      };
+    case 'bebe_pais':
+      // Formulário próprio (nome da mãe e do pai): sem opções de escolha.
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_pais!, mode: 'single', staticOptions: [] };
+    case 'bebe_situacao':
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_situacao!, mode: 'single', staticOptions: BEBE_SITUACAO_OPTIONS };
+    case 'bebe_data_tipo':
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_data_tipo!, mode: 'single', staticOptions: BEBE_DATA_TIPO_OPTIONS };
+    case 'bebe_sexo':
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_sexo!, mode: 'single', staticOptions: BEBE_SEXO_OPTIONS };
+    case 'bebe_dados':
+      // Formulário próprio (data, sobrenomes e nomes dos pais): sem opções de escolha.
+      return { id: stepId, prompt: BEBE_PROMPTS.bebe_dados!, mode: 'single', staticOptions: [] };
+    case 'bebe_estilo':
+      return {
+        id: stepId,
+        prompt: BEBE_PROMPTS.bebe_estilo!,
+        mode: 'multi',
+        minSelect: 1,
+        maxSelect: 2,
+        captionMultiLimit: (n) => `Escolha até ${n}`,
+        staticOptions: BEBE_ESTILO_OPTIONS,
       };
     case 'area_artistica':
       return {
@@ -546,27 +520,8 @@ export type BlockTransitionId =
   | 'after_nome_block'
   | 'before_area_foco'
   | 'before_suggestions'
-  | 'aviso_artistico_contratos';
-
-/** DEV-320: usos que pedem o aviso informativo sobre nome artístico, contratos e documentos. */
-const USOS_COM_AVISO_ARTISTICO = ['contratos', 'documentos', 'registro_marca', 'empresa_cnpj'];
-
-export function precisaAvisoArtisticoContratos(
-  motivo: string | null | undefined,
-  outrosUsos: readonly string[] | null | undefined,
-): boolean {
-  return motivo === 'artistico' && Boolean(outrosUsos?.some((u) => USOS_COM_AVISO_ARTISTICO.includes(u)));
-}
-
-/**
- * DEV-320: aviso só informativo (sem orientação jurídica). Base: DEV-319.
- * Sem travessão e sem promessa de resultado.
- */
-export const AVISO_ARTISTICO_CONTRATOS_TEXT =
-  'Uma informação importante sobre nome artístico: contratos, documentos e cadastros oficiais seguem o seu nome civil e o seu CPF. ' +
-  'O nome artístico costuma aparecer junto, como "conhecido artisticamente como". ' +
-  'Quem quer exclusividade sobre o nome pode registrá-lo como marca no INPI, e quem atua profissionalmente em artes cênicas costuma precisar do registro profissional (DRT). ' +
-  'Mudar o nome no cartório tem regras próprias. Este aviso é só informativo: para decidir, converse com um advogado de sua confiança.';
+  | 'aviso_artistico_contratos'
+  | 'aviso_bebe';
 
 function firstName(nomeCurto: string): string {
   return nomeCurto.trim().split(/\s+/)[0] || 'você';
@@ -578,8 +533,12 @@ export function resolveBlockTransition(
   nextStepId: string,
   nomeCurto: string,
   alreadyShown: ReadonlySet<BlockTransitionId>,
-  extras?: { avisoArtisticoContratos?: boolean }
+  extras?: { avisoArtisticoContratos?: boolean; ramoArtistico?: boolean; ramoBebe?: boolean; avisoBebe?: string | null }
 ): { id: BlockTransitionId; text: string } | null {
+  if (!alreadyShown.has('aviso_bebe') && completedStepId === 'bebe_situacao' && extras?.avisoBebe) {
+    return { id: 'aviso_bebe', text: extras.avisoBebe };
+  }
+
   if (
     !alreadyShown.has('aviso_artistico_contratos') &&
     completedStepId === 'outros_usos' &&
@@ -613,7 +572,12 @@ export function resolveBlockTransition(
   ) {
     return {
       id: 'before_suggestions',
-      text: 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
+      // DEV-321: no ramo artístico são nomes artísticos, não assinaturas.
+      text: extras?.ramoBebe
+        ? 'Pronto. Cruzei suas respostas com o mapa do bebê e separei os nomes que mais combinam com ele.'
+        : extras?.ramoArtistico
+          ? 'Pronto. Cruzei suas respostas com o seu mapa e separei os nomes artísticos que mais combinam com você.'
+          : 'Pronto. Cruzei suas respostas com o seu mapa e separei as assinaturas que mais combinam com você.',
     };
   }
 
@@ -623,8 +587,10 @@ export function resolveBlockTransition(
 const TRANSITION_MARKERS: Record<BlockTransitionId, string> = {
   after_nome_block: 'Agora quero entender onde a sua assinatura aparece.',
   before_area_foco: 'Agora vamos ao que mais pede a sua atenção.',
-  before_suggestions: 'separei as assinaturas que mais combinam com você.',
+  // Comum às duas versões do texto (padrão e artístico).
+  before_suggestions: 'que mais combinam',
   aviso_artistico_contratos: 'Uma informação importante sobre nome artístico',
+  aviso_bebe: 'Uma informação importante: ',
 };
 
 /** Reconstrói transições já exibidas ao restaurar sessão persistida. */
@@ -731,6 +697,13 @@ export interface QuestionnaireSkipContext {
   fluxoMotivoAtivo?: boolean;
   motivoHarmonizacao?: string | null;
   areaArtistica?: string | null;
+  /** DEV-326 */
+  bebeSituacao?: string | null;
+}
+
+/** DEV-326: o caminho do bebê está ativo nesta conversa. */
+export function isRamoBebe(ctx: QuestionnaireSkipContext): boolean {
+  return Boolean(ctx.fluxoMotivoAtivo) && ctx.motivoHarmonizacao === 'bebe';
 }
 
 /** DEV-320: o ramo artístico está ativo nesta conversa. */
@@ -752,6 +725,15 @@ export function isQuestionnaireStepSkipped(
   stepId: QuestionnaireStepId,
   ctx: QuestionnaireSkipContext,
 ): boolean {
+  // DEV-326: no caminho do bebê só valem o motivo e os passos do bebê (data_tipo só para quem ainda não nasceu).
+  if (isRamoBebe(ctx)) {
+    if (stepId === 'motivo_harmonizacao') return false;
+    if (!BEBE_STEPS.includes(stepId)) return true;
+    if (stepId === 'bebe_data_tipo') return Boolean(ctx.bebeSituacao) && ctx.bebeSituacao !== 'nao_nasceu';
+    if (stepId === 'bebe_sexo' || stepId === 'bebe_estilo') return ctx.bebeSituacao === 'nasceu_registrado';
+    return false;
+  }
+  if (BEBE_STEPS.includes(stepId)) return true;
   if (stepId === 'motivo_harmonizacao' || stepId === 'outros_usos') {
     return !ctx.fluxoMotivoAtivo;
   }

@@ -8,6 +8,9 @@ import {
   mapSubfocoToEnum,
   type QuestionnaireStepId,
 } from './questionnaire-adaptive';
+import { profileToRankingOpcoesArtistico } from './ramos/artistico';
+
+export { profileToRankingOpcoesArtistico };
 
 /** Campos aceitos pelo ranking/filtro de nome-social (não alteram fórmula do score). */
 export interface RankingOpcoesPatch {
@@ -52,9 +55,20 @@ export interface QuestionnaireProfile {
   imagemArtistica?: string[];
   tipoNomeArtistico?: string | null;
   outrosUsos?: string[];
+  /** DEV-328 · caminho do bebê */
+  bebeMae?: string | null;
+  bebePai?: string | null;
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeData?: string | null;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string | null;
+  bebeEstilos?: string[];
 }
 
-/** DEV-320: perfil do chat guardado junto da análise (`parametros_usuario.perfilChat`). */
+/** DEV-320/DEV-328: perfil do chat guardado junto da análise (`frequencias_numeros.perfilChat`). */
 export interface PerfilChatPersistido {
   motivo?: string;
   areaArtistica?: string;
@@ -64,65 +78,44 @@ export interface PerfilChatPersistido {
   imagemArtistica?: string[];
   tipoNomeArtistico?: string;
   outrosUsos?: string[];
+  bebeMae?: string;
+  bebePai?: string;
+  bebeSituacao?: string;
+  bebeDataTipo?: string;
+  bebeSexo?: string;
+  bebeData?: string;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string;
+  bebeEstilos?: string[];
 }
 
 export function profileToPerfilChat(profile: QuestionnaireProfile): PerfilChatPersistido | undefined {
   if (!profile.motivoHarmonizacao) return undefined;
   const lista = (v?: string[]) => (v && v.length > 0 ? v : undefined);
+  const texto = (v?: string | null) => {
+    const trimmed = v?.trim();
+    return trimmed ? trimmed : undefined;
+  };
   return {
     motivo: profile.motivoHarmonizacao,
-    areaArtistica: profile.areaArtistica ?? undefined,
-    areaArtisticaOutro: profile.areaArtisticaOutro ?? undefined,
+    areaArtistica: texto(profile.areaArtistica),
+    areaArtisticaOutro: texto(profile.areaArtisticaOutro),
     detalheArtistico: lista(profile.detalheArtistico),
-    generoPersona: profile.generoPersona ?? undefined,
+    generoPersona: texto(profile.generoPersona),
     imagemArtistica: lista(profile.imagemArtistica),
-    tipoNomeArtistico: profile.tipoNomeArtistico ?? undefined,
+    tipoNomeArtistico: texto(profile.tipoNomeArtistico),
     outrosUsos: lista(profile.outrosUsos),
-  };
-}
-
-/** DEV-320: imagem artística vira a afinidade de estilo que o motor já entende (DEV-302). */
-const IMAGEM_PARA_ESTILO: Record<string, string> = {
-  marcante: 'criatividade',
-  sofisticada: 'elegancia_discreta',
-  divertida: 'leve_acolhimento',
-  misteriosa: 'elegancia_discreta',
-  popular: 'leve_acolhimento',
-};
-
-/**
- * DEV-320: ramo artístico com nome próximo do nascimento (F1).
- * Forma curta, apelido e encurtamento liberados; sem teto de nível; sem restrição legal
- * (contratos seguem o nome civil, ver aviso informativo). Zero bloqueio e nota mínima seguem valendo.
- * "Totalmente diferente" ainda usa o motor de nomes próximos até a F2 (DEV-321).
- */
-export function profileToRankingOpcoesArtistico(
-  profile: QuestionnaireProfile,
-  extras?: Partial<RankingOpcoesPatch>
-): RankingOpcoesPatch {
-  const estilo = [
-    ...new Set((profile.imagemArtistica ?? []).map((i) => IMAGEM_PARA_ESTILO[i]).filter(Boolean)),
-  ];
-  return {
-    ondeVaiUsar: ['marca_autoria', 'presenca_digital'],
-    sobrenomesObrigatorios:
-      profile.sobrenomesObrigatorios.length > 0 ? profile.sobrenomesObrigatorios : undefined,
-    sobrenomesExcluidos:
-      profile.sobrenomesExcluidos.length > 0 ? profile.sobrenomesExcluidos : undefined,
-    estiloPreferido: 'curto_direto',
-    aceitaEncurtarOuApelido: true,
-    assinaturaAtual: profile.nomeUsoBase?.trim() || undefined,
-    restricaoDocumentosLegais: undefined,
-    maxNivelGeracao: undefined,
-    afinidades: {
-      estilo: estilo.length > 0 ? estilo : undefined,
-      area: 'autoestima_expressao',
-      subfocos: ['voz_seguranca'],
-    },
-    manterPrimeiroNome: profile.preferenciasAssinatura?.includes('manter_primeiro_nome') || undefined,
-    acentoNaAssinatura: profile.preferenciasAssinatura?.includes('sem_acento') ? 'prefere_sem' : undefined,
-    prioridadeConflito: profile.tipoNomeArtistico === 'proximo' ? 'mudanca' : 'nota',
-    ...extras,
+    bebeMae: texto(profile.bebeMae),
+    bebePai: texto(profile.bebePai),
+    bebeSituacao: texto(profile.bebeSituacao),
+    bebeDataTipo: texto(profile.bebeDataTipo),
+    bebeSexo: texto(profile.bebeSexo),
+    bebeData: texto(profile.bebeData),
+    bebeSobrenomes: lista(profile.bebeSobrenomes),
+    bebeNomesPais: lista(profile.bebeNomesPais),
+    bebeNomeRegistrado: texto(profile.bebeNomeRegistrado),
+    bebeEstilos: lista(profile.bebeEstilos),
   };
 }
 

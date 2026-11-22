@@ -278,8 +278,12 @@ describe('DEV-235 · Motor Interativo JEV (@typesafe-ai/sdk) + Filtros Mobile-Fi
   it('evaluateDeterministically e runJevDecision inferem área, canal e subfoco corretamente', async () => {
     const prevTsKey = process.env.TYPESAFE_API_KEY;
     const prevOaKey = process.env.OPENAI_API_KEY;
+    const prevGroqKey = process.env.GROQ_API_KEY;
     delete process.env.TYPESAFE_API_KEY;
     delete process.env.OPENAI_API_KEY;
+    // O teste precisa ser hermético: com a chave do Groq no ambiente (ex.: `.env` local do cofre TESTE),
+    // o JEV chamaria o Groq de verdade em vez de usar o modo determinístico.
+    delete process.env.GROQ_API_KEY;
 
     try {
       const res = await runJevDecision({
@@ -312,6 +316,7 @@ describe('DEV-235 · Motor Interativo JEV (@typesafe-ai/sdk) + Filtros Mobile-Fi
     } finally {
       if (prevTsKey !== undefined) process.env.TYPESAFE_API_KEY = prevTsKey;
       if (prevOaKey !== undefined) process.env.OPENAI_API_KEY = prevOaKey;
+      if (prevGroqKey !== undefined) process.env.GROQ_API_KEY = prevGroqKey;
     }
   });
 });

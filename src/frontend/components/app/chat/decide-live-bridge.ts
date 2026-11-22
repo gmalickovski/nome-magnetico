@@ -2,6 +2,7 @@
  * Ponte entre o chat v2 (DEV-235) e POST /api/decide-live.
  */
 
+import { determineNextStep } from '../../../../shared/interactive-engine/router.js';
 import type {
   CandidateSuggestion,
   ChatReadingSummary,
@@ -66,6 +67,17 @@ export interface ChatCollectState {
   imagemArtistica?: string[];
   tipoNomeArtistico?: string | null;
   outrosUsos?: string[];
+  /** DEV-326 · caminho do bebê */
+  bebeMae?: string | null;
+  bebePai?: string | null;
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeData?: string | null;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string | null;
+  bebeEstilos?: string[];
 }
 
 export function isProfileCollectionComplete(nextStep: string): boolean {
@@ -102,6 +114,16 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
   imagemArtistica: [],
   tipoNomeArtistico: null,
   outrosUsos: [],
+  bebeMae: null,
+  bebePai: null,
+  bebeSituacao: null,
+  bebeDataTipo: null,
+  bebeSexo: null,
+  bebeData: null,
+  bebeSobrenomes: [],
+  bebeNomesPais: [],
+  bebeNomeRegistrado: null,
+  bebeEstilos: [],
 };
 
 type ApiPanel = {
@@ -195,6 +217,15 @@ export function mapCandidate(
 ): CandidateSuggestion {
   const score = Number(raw.score ?? 0);
   const bloqueios = Array.isArray(raw.bloqueios) ? raw.bloqueios : [];
+  const bloqueiosCodigos = bloqueios
+    .map((b: { codigo?: string }) => b.codigo ?? '')
+    .filter(Boolean);
+  const explicacao =
+    typeof raw.explicacaoPerfil === 'string'
+      ? raw.explicacaoPerfil
+      : typeof raw.explicacao === 'string'
+        ? raw.explicacao
+        : undefined;
   return {
     id: raw.nomeCompleto.trim().toLowerCase().replace(/\s+/g, '-'),
     nome: raw.nomeCompleto,
@@ -203,9 +234,20 @@ export function mapCandidate(
     compatibilidade: String(raw.compatibilidade ?? 'neutro'),
     bloqueiosEliminados: 0,
     bloqueiosRestantes: bloqueios.length,
+    bloqueiosCodigos: bloqueiosCodigos.length > 0 ? bloqueiosCodigos : undefined,
     maiorNota: raw.maiorNota === true,
     principal: raw.principal === true,
-    destaque: typeof raw.explicacaoPerfil === 'string' ? raw.explicacaoPerfil : undefined,
+    secao: raw.secao === 'proximo' || raw.secao === 'novo' ? raw.secao : undefined,
+    tecnica: typeof raw.tecnica === 'string' ? raw.tecnica : undefined,
+    afinidade: typeof raw.afinidade === 'number' ? raw.afinidade : undefined,
+    explicacao,
+    grupoBebe:
+      raw.grupoBebe === 'seu' || raw.grupoBebe === 'menina' || raw.grupoBebe === 'menino' || raw.grupoBebe === 'neutro'
+        ? raw.grupoBebe
+        : undefined,
+    diasBons: typeof raw.diasBons === 'number' ? raw.diasBons : undefined,
+    diasTotal: typeof raw.diasTotal === 'number' ? raw.diasTotal : undefined,
+    destaque: explicacao,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
     panel: raw.panel
@@ -466,6 +508,16 @@ export function applyQuestionnaireStep(
   // ── DEV-320 ──
   if (stepId === 'motivo_harmonizacao') {
     next.motivoHarmonizacao = ids[0] ?? null;
+    if (next.motivoHarmonizacao === 'bebe') {
+      // O caminho do bebê usa os dados do bebê, não o nome do usuário.
+      next.bebeMae = null;
+      next.bebePai = null;
+      next.bebeSituacao = null;
+      next.bebeDataTipo = null;
+      next.bebeSexo = null;
+      next.bebeData = null;
+      next.bebeEstilos = [];
+    }
     if (next.motivoHarmonizacao === 'artistico') {
       // O ramo artístico não pergunta onde assina nem a abertura: forma curta e uso criativo.
       next.ondeAssinaRaw = ['arte_criativo'];
@@ -506,6 +558,32 @@ export function applyQuestionnaireStep(
 
   if (stepId === 'tipo_nome_artistico') {
     next.tipoNomeArtistico = ids[0] ?? null;
+    return next;
+  }
+
+  // ── DEV-326 ──
+  if (stepId === 'bebe_situacao') {
+    next.bebeSituacao = ids[0] ?? null;
+    // Mudou a situação: a data e os dados dependem dela.
+    next.bebeDataTipo = null;
+    next.bebeData = null;
+    return next;
+  }
+
+  if (stepId === 'bebe_data_tipo') {
+    next.bebeDataTipo = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'bebe_sexo') {
+    next.bebeSexo = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'bebe_estilo') {
+    // "Tanto faz" sozinho vale como resposta; junto de outra escolha, vale a escolha.
+    const escolhidos = ids.filter((id) => id !== 'tanto_faz');
+    next.bebeEstilos = escolhidos.length > 0 ? escolhidos : ['tanto_faz'];
     return next;
   }
 
@@ -615,7 +693,7 @@ function collectToPerfilArtistico(collect: ChatCollectState) {
   };
 }
 
-/** DEV-320: perfil do chat que vai junto da análise salva. */
+/** DEV-320/DEV-328: perfil do chat que vai junto da análise salva. */
 export function collectStateToPerfilChat(collect: ChatCollectState) {
   return profileToPerfilChat({
     nomeUsoBase: collect.nomeUsoBase,
@@ -630,6 +708,16 @@ export function collectStateToPerfilChat(collect: ChatCollectState) {
     nomeArtistico: collect.nomeArtistico,
     contextoLeituraOutros: collect.contextoLeitura,
     ...collectToPerfilArtistico(collect),
+    bebeMae: collect.bebeMae ?? null,
+    bebePai: collect.bebePai ?? null,
+    bebeSituacao: collect.bebeSituacao ?? null,
+    bebeDataTipo: collect.bebeDataTipo ?? null,
+    bebeSexo: collect.bebeSexo ?? null,
+    bebeData: collect.bebeData ?? null,
+    bebeSobrenomes: collect.bebeSobrenomes ?? [],
+    bebeNomesPais: collect.bebeNomesPais ?? [],
+    bebeNomeRegistrado: collect.bebeNomeRegistrado ?? null,
+    bebeEstilos: collect.bebeEstilos ?? [],
   });
 }
 
@@ -727,4 +815,47 @@ export function isRegeneratePoolExhausted(
   const novos = mapRegenerateApiToCandidates(data, 50);
   if (novos.length === 0) return true;
   return novos.every((c) => shown.has(c.nome.trim().toLowerCase()));
+}
+
+/** DEV-326: resposta do formulário do bebê (data, sobrenomes, nomes dos pais ou nome registrado). */
+export function applyBebeDados(
+  prev: ChatCollectState,
+  dados: { data: string; sobrenomes: string[]; nomesPais: string[]; nomeRegistrado: string | null },
+): ChatCollectState {
+  return {
+    ...prev,
+    bebeData: dados.data,
+    bebeSobrenomes: dados.sobrenomes,
+    bebeNomesPais: dados.nomesPais,
+    bebeNomeRegistrado: dados.nomeRegistrado,
+  };
+}
+
+/** DEV-326: nomes de nascimento da mãe e do pai (pelo menos um). */
+export function applyBebePais(prev: ChatCollectState, pais: { mae: string | null; pai: string | null }): ChatCollectState {
+  return { ...prev, bebeMae: pais.mae, bebePai: pais.pai };
+}
+
+/**
+ * DEV-326: o caminho do bebê roda inteiro no navegador. O roteador é código puro compartilhado,
+ * então nenhum dado do bebê ou dos pais passa pelo /api/decide-live.
+ */
+export function routeBabyLocally(collect: ChatCollectState): RawDecideLiveResponse {
+  const decisao = determineNextStep({
+    fluxoMotivoAtivo: true,
+    motivoHarmonizacao: collect.motivoHarmonizacao ?? 'bebe',
+    bebePaisDecididos: Boolean(collect.bebeMae || collect.bebePai),
+    bebeSituacao: collect.bebeSituacao ?? null,
+    bebeDataTipo: collect.bebeDataTipo ?? null,
+    bebeSexo: collect.bebeSexo ?? null,
+    bebeDadosDecididos: Boolean(collect.bebeData),
+    bebeEstiloDecidido: Boolean(collect.bebeEstilos?.length),
+  });
+  return {
+    next_step: decisao.nextStep,
+    remaining: decisao.remainingSteps,
+    promptSugestao: decisao.promptSugestao,
+    eyebrow: decisao.eyebrow,
+    fluxoMotivoAtivo: true,
+  };
 }
