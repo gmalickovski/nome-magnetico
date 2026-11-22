@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
+import { COUPON_ACCOUNT_INELIGIBLE, type HqCouponValidation } from '../../backend/payments/promo-math';
 
 type ProfileRow = {
   role: 'user' | 'admin';
@@ -14,6 +15,7 @@ const testCheckoutCalls: unknown[] = [];
 const notifyCalls: { event: string; payload: Record<string, unknown> }[] = [];
 const stripeSessionCalls: Record<string, unknown>[] = [];
 let allowStripeSession = false;
+let couponValidation: HqCouponValidation | null = null;
 
 function profileFrom() {
   const builder = {
@@ -123,7 +125,7 @@ mock.module('../../backend/pricing/service', {
 mock.module('../../backend/payments/prices', {
   namedExports: {
     effectiveResultToPriceInfo: (effective: unknown) => effective,
-    validateAccessCoupon: async () => null,
+    validateAccessCoupon: async () => couponValidation,
   },
 });
 
@@ -192,6 +194,7 @@ describe('create-checkout · DEV-239', () => {
     hasActiveProductSubscription = false;
     ownedAnalysisId = null;
     allowStripeSession = false;
+    couponValidation = null;
     testCheckoutCalls.length = 0;
     notifyCalls.length = 0;
     stripeSessionCalls.length = 0;
@@ -206,6 +209,26 @@ describe('create-checkout · DEV-239', () => {
     assert.equal(res.status, 409);
     assert.equal(data.code, 'already_active');
     assert.equal(testCheckoutCalls.length, 0);
+  });
+
+  it('retorna o motivo da inelegibilidade e impede criar a sessão Stripe', async () => {
+    couponValidation = { valid: false, error: COUPON_ACCOUNT_INELIGIBLE };
+    allowStripeSession = true;
+
+    const res = await post({ product_type: 'nome_social', couponCode: 'CUPOM-TESTE' });
+
+    assert.equal(res.status, 400);
+    assert.equal((await res.json()).error, COUPON_ACCOUNT_INELIGIBLE);
+    assert.equal(stripeSessionCalls.length, 0);
+  });
+
+  it('impede criar checkout com cupom quando a validação fica indisponível', async () => {
+    allowStripeSession = true;
+
+    const res = await post({ product_type: 'nome_social', couponCode: 'CUPOM-TESTE' });
+
+    assert.equal(res.status, 503);
+    assert.equal(stripeSessionCalls.length, 0);
   });
 
   it('perfil is_test sem assinatura ativa usa bypass test e não chama Stripe', async () => {

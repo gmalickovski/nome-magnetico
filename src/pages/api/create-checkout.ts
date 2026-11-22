@@ -233,11 +233,11 @@ export async function createCheckoutResponse(args: {
         userId: user.id,
         userEmail: user.email,
       });
-      if (couponValidation && !couponValidation.valid) {
-        if (couponValidation.error !== 'Cupom inválido ou expirado') {
-          return json({ error: couponValidation.error ?? 'Cupom inválido ou expirado' }, 400);
-        }
-        return json({ error: 'Cupom inválido ou expirado' }, 400);
+      if (!couponValidation) {
+        return json({ error: 'Não foi possível validar o cupom. Tente novamente.' }, 503);
+      }
+      if (!couponValidation.valid) {
+        return json({ error: couponValidation.error ?? 'Cupom inválido ou expirado' }, 400);
       }
     }
 
