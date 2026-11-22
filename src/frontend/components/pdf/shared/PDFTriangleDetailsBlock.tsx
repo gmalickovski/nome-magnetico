@@ -38,6 +38,8 @@ export interface PDFTriangleDetailsBlockProps {
   arcanosTitle: string;
   allBloqueios: BloqueioData[];
   bloqueiosFootnote?: string;
+  /** Anexos (DEV-322): só o arcano regente, sem passagens e trânsito. */
+  compact?: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export function PDFTriangleDetailsBlock({
   arcanosTitle,
   allBloqueios,
   bloqueiosFootnote,
+  compact = false,
 }: PDFTriangleDetailsBlockProps) {
   const filteredBloqueios = allBloqueios.filter((b: any) =>
     b.triangulos?.includes(triangulo),
@@ -92,9 +95,9 @@ export function PDFTriangleDetailsBlock({
           title={arcanosTitle}
           titleColor="#7C3AED"
           arcanoRegente={arc}
-          arcanosDePassagem={data.arcanosDePassagem}
-          arcanoAtual={data.arcanoAtual}
-          arcanoAtualDescricao={arcAtual ? arcAtual.descricao : undefined}
+          arcanosDePassagem={compact ? undefined : data.arcanosDePassagem}
+          arcanoAtual={compact ? undefined : data.arcanoAtual}
+          arcanoAtualDescricao={!compact && arcAtual ? arcAtual.descricao : undefined}
         />
       )}
     </>

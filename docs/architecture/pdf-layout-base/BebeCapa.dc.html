@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Capa do bebê</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: {{c.fundo}}; padding: 72px 64px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; font-family: Inter, sans-serif">
+<div style="position: absolute; width: 420px; height: 420px; border-radius: 999px; background: {{c.suave}}; top: -120px; right: -140px"></div>
+<div style="position: absolute; width: 300px; height: 300px; border-radius: 999px; background: {{c.suave2}}; bottom: -90px; left: -110px"></div>
+<div style="position: relative; display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 14px; letter-spacing: 0.18em; color: {{c.texto}}">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: {{c.apagado}}">Manual para os pais</div>
+</div>
+<div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center">
+<svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true">
+<circle cx="75" cy="75" r="66" fill="#FFFFFF" fill-opacity="0.7"></circle>
+<path d="M75 108 C 40 84, 36 56, 56 48 C 66 44, 72 50, 75 56 C 78 50, 84 44, 94 48 C 114 56, 110 84, 75 108 Z" fill="{{c.acento}}" fill-opacity="0.85"></path>
+<circle cx="112" cy="40" r="5" fill="{{c.acento}}" fill-opacity="0.5"></circle>
+<circle cx="36" cy="104" r="4" fill="{{c.acento}}" fill-opacity="0.4"></circle>
+</svg>
+<div style="font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: {{c.texto}}">O nome de</div>
+<div style="font-family: Cinzel, serif; font-weight: 400; font-size: 48px; letter-spacing: 0.06em; color: #4A3A36; line-height: 1.1">Helena Lima Santos</div>
+<div style="font-size: 16px; color: #6B5A55; line-height: 1.6; max-width: 480px">Um manual de amor para receber você, feito pela Mariana e pelo Rafael.</div>
+<div style="background: #FFFFFF; border-radius: 999px; padding: 8px 18px; font-size: 13px; color: {{c.texto}}">Data prevista: [DATA] · calculado para os dias possíveis do parto</div>
+</div>
+<div style="position: relative; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px">
+<p style="margin: 0; font-size: 11px; line-height: 1.6; color: #7A6A65; max-width: 460px">Ferramenta de autoconhecimento baseada na Numerologia Cabalística. Fala de tendências e qualidades, nunca de destino fechado.</p>
+<div style="font-size: 11px; color: #7A6A65">nomemagnetico.com.br</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tom":{"editor":"enum","options":["rosa","azul","neutro"],"default":"rosa"},"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const tons = {
+rosa: { fundo: '#FFF6F4', suave: '#FCE3E7', suave2: '#F3E9FB', acento: '#D98A99', texto: '#9E4A5B', apagado: '#8C6B70' },
+azul: { fundo: '#F5F9FD', suave: '#DDEBF8', suave2: '#EAF5F0', acento: '#7FA8CE', texto: '#3F6E96', apagado: '#5F7487' },
+neutro: { fundo: '#F6FAF7', suave: '#DDF0E6', suave2: '#EFE9FB', acento: '#86BBA2', texto: '#3F7A61', apagado: '#5E7468' }
+};
+return { c: tons[this.props.tom ?? 'rosa'] ?? tons.rosa };
+}
+}
+</script>
+</body>
+</html>

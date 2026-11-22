@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Antes e depois</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h2{font-family:Cinzel,serif;font-weight:700;font-size:20px;letter-spacing:.05em;color:#2A2620;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+h4{font-size:14px;font-weight:600;color:#2A2620;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: #FBF9F4; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Aleksandra Vale · Parte 2</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h3>O que muda para você</h3>
+<h2>Antes e depois, item por item</h2>
+<p>Uma linha por item. A coluna da direita diz, em uma frase, o que a mudança significa no dia a dia.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div style="display: grid; grid-template-columns: 128px 74px 74px 104px minmax(0, 1fr); gap: 8px; padding: 0 12px; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #6E6658">
+<div>Item</div><div>Antes</div><div>Depois</div><div>Sinal</div><div>O que significa</div>
+</div>
+<sc-for list="{{linhas}}" as="l" hint-placeholder-count="9">
+<div style="display: grid; grid-template-columns: 128px 74px 74px 104px minmax(0, 1fr); gap: 8px; align-items: center; background: #FFFFFF; border-radius: 12px; padding: 9px 12px">
+<h4 style="font-size: 13px">{{l.item}}</h4>
+<div style="font-size: 13px; color: #4A443A">{{l.antes}}</div>
+<div style="font-size: 13px; font-weight: 600; color: #2A2620">{{l.depois}}</div>
+<div>
+<sc-if value="{{l.melhorou}}" hint-placeholder-val="{{true}}"><div style="display: inline-block; background: #F3E7C4; color: #6B4E00; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px">Melhorou</div></sc-if>
+<sc-if value="{{l.igual}}" hint-placeholder-val="{{false}}"><div style="display: inline-block; background: #ECE9E2; color: #4A443A; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px">Igual</div></sc-if>
+<sc-if value="{{l.atencao}}" hint-placeholder-val="{{false}}"><div style="display: inline-block; background: #FBE9E7; color: #9B1C14; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px">Pede atenção</div></sc-if>
+</div>
+<div style="font-size: 12.5px; line-height: 1.45; color: #3D372D">{{l.sentido}}</div>
+</div>
+</sc-for>
+</div>
+
+<h2 style="margin-top: 6px">Saiu, entrou e continua</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<div style="background: #F3E7C4; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6B4E00">Saiu</div>
+<p style="font-size: 12.5px; color: #4A3600">Sequências 333, 555, 888 e 999 dos 4 triângulos.</p>
+<p style="font-size: 12.5px; color: #4A3600">Tendência oculta do 5.</p>
+</div>
+<div style="background: #FBE9E7; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #9B1C14">Entrou</div>
+<p style="font-size: 12.5px">Débito kármico 14: pede moderação e constância.</p>
+</div>
+<div style="background: #ECE9E2; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #4A443A">Continua</div>
+<p style="font-size: 12.5px">Lições kármicas 7, 8 e 9.</p>
+<p style="font-size: 12.5px">Débito 13, da data de nascimento.</p>
+</div>
+</div>
+<p style="font-size: 12px; color: #6E6658">O texto completo de cada item está na Parte 1, uma vez só. Aqui fica apenas o que mudou.</p>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #6E6658">
+<div>Ferramenta de autoconhecimento. Não é diagnóstico nem previsão.</div>
+<div>Página 18</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = (t) => ({ melhorou: t === 'm', igual: t === 'i', atencao: t === 'a' });
+return {
+linhas: [
+{ item: 'Nota do nome', antes: '73', depois: '91', sentido: 'O nome novo combina mais com a sua data de nascimento.', ...s('m') },
+{ item: 'Bloqueios', antes: '4', depois: '0', sentido: 'Nenhuma sequência repetida nos 4 triângulos.', ...s('m') },
+{ item: 'Compatibilidade', antes: 'Tensão', depois: 'Complementar', sentido: 'Expressão e Destino passam a se completar.', ...s('m') },
+{ item: 'Expressão', antes: '6', depois: '11', sentido: 'Mais intuição e inspiração na forma de agir.', ...s('m') },
+{ item: 'Motivação', antes: '6', depois: '5', sentido: 'Desejo de liberdade e de experimentar.', ...s('i') },
+{ item: 'Impressão', antes: '9', depois: '6', sentido: 'As pessoas tendem a ver você como acolhedor.', ...s('i') },
+{ item: 'Arcano regente', antes: '8', depois: '8', sentido: 'A Justiça segue como força central.', ...s('i') },
+{ item: 'Tendências ocultas', antes: '2', depois: '1', sentido: 'Sai o excesso do 5 (instabilidade).', ...s('m') },
+{ item: 'Débitos kármicos', antes: '1', depois: '2', sentido: 'Entra o 14. Veja como trabalhar no guia de uso.', ...s('a') }
+]
+};
+}
+}
+</script>
+</body>
+</html>
