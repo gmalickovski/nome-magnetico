@@ -2,6 +2,7 @@ import { CONTEXTUAL_RADAR_VERSION } from '../../shared/interactive-engine/radar-
 import { normalizarChaveNome, validarNomeManual } from '../../shared/nome-social/manual-name-limits';
 import { computeContextualRadarAxes } from '../../shared/interactive-engine/motor-radar';
 import {
+  chaveNomesCaminho,
   nomesArtisticosPersistSchema,
   nomesBebePersistSchema,
   perfilChatSchema,
@@ -291,8 +292,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const existingMotivo = existingFreq?.perfilChat?.motivo ?? null;
     const exportMatches =
       existingMotivo === requestedMotivo &&
-      (!parsed.data.nomes_artisticos || Boolean(existingFreq?.nomesArtisticos)) &&
-      (!parsed.data.nomes_bebe || Boolean(existingFreq?.nomesBebe)) &&
+      (!parsed.data.nomes_artisticos ||
+        chaveNomesCaminho(existingFreq?.nomesArtisticos) === chaveNomesCaminho(parsed.data.nomes_artisticos)) &&
+      (!parsed.data.nomes_bebe ||
+        chaveNomesCaminho(existingFreq?.nomesBebe) === chaveNomesCaminho(parsed.data.nomes_bebe)) &&
       (!ranking_somente_chat || (
         JSON.stringify(existingFreq?.ranking?.nomesCandidatos?.map((c: any) => normalizarChaveNome(c.nomeCompleto))) === JSON.stringify((nomes_candidatos ?? []).map(normalizarChaveNome)) &&
         JSON.stringify(existingFreq?.ranking?.nomesCandidatos?.filter((c: any) => c.origem === 'manual').map((c: any) => normalizarChaveNome(c.nomeCompleto))) === JSON.stringify(Array.from(manualNames)) &&
