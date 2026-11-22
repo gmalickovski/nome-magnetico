@@ -705,7 +705,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                       {nivel && (
                         <View style={{ backgroundColor: `${sc}18`, borderWidth: 0.8, borderColor: sc, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 }}>
                           <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: sc }}>
-                            {nivel.codigo} · {nivel.rotulo}
+                            {nivel.rotulo}
                           </Text>
                         </View>
                       )}
@@ -951,14 +951,14 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </Text>
           </View>
 
-          {/* Destaque Triângulo da Vida no motor v3 */}
+          {/* Destaque Triângulo da Vida */}
           {isV3 && (
             <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', padding: 10, marginBottom: 12 }}>
               <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#92640F', marginBottom: 4 }}>
                 O Triângulo da Vida Define a Sua Pontuação
               </Text>
               <Text style={styles.cardBodyText}>
-                No motor v3, as sequências repetidas que subtraem pontos do Score Cabalístico baseiam-se estritamente no Triângulo da Vida (a vibração pura do seu nome). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e atuam como reflexos vibracionais, sem gerar descontos no score.
+                Para a nota do nome, contam as sequências repetidas do Triângulo da Vida (a vibração pura do seu nome). Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não mudam a nota.
               </Text>
             </View>
           )}
@@ -1016,7 +1016,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 Marca da sua data ({debitosFixos.map(d => d.numero).join(', ')}) — Sem impacto no score do nome
               </Text>
               <Text style={{ fontSize: 8, color: GRAY, lineHeight: 1.4 }}>
-                Os débitos vinculados à sua data de nascimento ou Destino não descontam pontos na avaliação do seu nome no motor v3. Eles representam aprendizados imutáveis de consciência.
+                Os débitos ligados à sua data de nascimento ou ao Destino não pesam na nota do nome. Eles representam aprendizados que o nome não muda.
               </Text>
             </View>
           )}
@@ -1086,26 +1086,21 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <View wrap={false} style={{ marginVertical: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#D4AF37', borderRadius: 8, padding: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, borderBottomWidth: 0.5, borderBottomColor: '#E5E7EB', paddingBottom: 6 }}>
             <Text style={{ fontSize: 9, fontFamily: BODY_FONT_BOLD, color: '#8A661C', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              Score Cabalístico {isV3 ? '(Motor v3)' : ''} · Antes × Depois
+              Nota do nome · Antes × Depois
             </Text>
-            {isV3 && (
-              <View style={{ backgroundColor: 'rgba(212,175,55,0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
-                <Text style={{ fontSize: 7, fontFamily: BODY_FONT_BOLD, color: '#8A661C' }}>MOTOR V3 ATIVO</Text>
-              </View>
-            )}
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
             <View style={{ flex: 1, backgroundColor: '#F9FAFB', borderRadius: 6, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' }}>
               <Text style={{ fontSize: 8, color: GRAY, fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Nome de nascimento {nivelNasc ? `(${nivelNasc.codigo})` : ''}
+                Nome de nascimento
               </Text>
               <Text style={{ fontSize: 24, fontFamily: BODY_FONT_BOLD, color: scoreColor(scoreNasc, isV3), lineHeight: 1 }}>
                 {scoreNasc}/100
               </Text>
               {nivelNasc && (
                 <Text style={{ fontSize: 7.5, color: GRAY, fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>
-                  {nivelNasc.codigo} · {nivelNasc.rotulo}
+                  {nivelNasc.rotulo}
                 </Text>
               )}
             </View>
@@ -1121,14 +1116,14 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
 
             <View style={{ flex: 1, backgroundColor: '#F9FAFB', borderRadius: 6, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' }}>
               <Text style={{ fontSize: 8, color: GRAY, fontFamily: BODY_FONT_BOLD, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Assinatura selecionada {nivelSocial ? `(${nivelSocial.codigo})` : ''}
+                Assinatura selecionada
               </Text>
               <Text style={{ fontSize: 24, fontFamily: BODY_FONT_BOLD, color: scoreColor(scoreSocial, isV3), lineHeight: 1 }}>
                 {scoreSocial}/100
               </Text>
               {nivelSocial && (
                 <Text style={{ fontSize: 7.5, color: GRAY, fontFamily: BODY_FONT_BOLD, textAlign: 'center', marginTop: 3 }}>
-                  {nivelSocial.codigo} · {nivelSocial.rotulo}
+                  {nivelSocial.rotulo}
                 </Text>
               )}
             </View>
@@ -1156,7 +1151,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             O nome de nascimento é o campo vibracional que você recebeu ao chegar nesta encarnação — sua semente de origem. Ele carrega padrões genuínos de força, mas também pode conter sequências de energia que criam resistência e ciclos difíceis de romper. Não é um defeito: é simplesmente o ponto de partida ainda sem o refinamento que apenas a intenção consciente pode trazer.
           </Text>
           <Text style={{ fontSize: 10, color: GRAY, lineHeight: 1.7 }}>
-            Quando você adota a assinatura selecionada no dia a dia, você não substitui quem você é: você escolhe qual forma de assinar usar nas situações em que prefere se apresentar com esse nome. Compare os valores calculados na estrela e no card de score acima — eles refletem o motor v3, sem promessa de resultado.
+            Quando você adota a assinatura selecionada no dia a dia, você não substitui quem você é: você escolhe qual forma de assinar usar nas situações em que prefere se apresentar com esse nome. Compare os valores na estrela e na nota acima. Eles mostram o cálculo, sem promessa de resultado.
           </Text>
         </View>
 
@@ -1973,14 +1968,14 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
             </Text>
           </View>
 
-          {/* Destaque Triângulo da Vida no motor v3 */}
+          {/* Destaque Triângulo da Vida */}
           {isV3 && (
             <View wrap={false} style={{ borderRadius: 8, backgroundColor: '#FFFDF0', borderWidth: 1, borderColor: '#D4AF37', padding: 10, marginBottom: 12 }}>
               <Text style={{ fontFamily: TITLE_FONT, fontSize: 10, color: '#92640F', marginBottom: 4 }}>
                 O Triângulo da Vida Define a Sua Pontuação
               </Text>
               <Text style={styles.cardBodyText}>
-                No motor v3, as sequências repetidas que subtraem pontos do Score Cabalístico baseiam-se estritamente no Triângulo da Vida. Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e operam sem gerar deduções na nota do seu nome.
+                Para a nota do nome, contam as sequências repetidas do Triângulo da Vida. Os triângulos Pessoal, Social e Destino são leituras complementares de autoconhecimento e não mudam a nota.
               </Text>
             </View>
           )}
@@ -2381,7 +2376,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
         <PDFFooter />
       </Page>
 
-      {/* ── PÁGINA: COMO CALCULAMOS O SEU SCORE (MOTOR V3) ───────────────── */}
+      {/* ── PÁGINA: COMO CHEGAMOS ÀS SUGESTÕES ───────────────── */}
       <Page size="A4" style={styles.page}>
         <PDFSectionAnchor id="pdf-score" bookmark={{ title: 'Como chegamos às sugestões', fit: true }} />
         <PDFPageHeader subtitle={`${nomeParaExibir} — Como chegamos às sugestões`} />

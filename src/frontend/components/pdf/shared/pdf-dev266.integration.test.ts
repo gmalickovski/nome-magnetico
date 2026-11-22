@@ -31,7 +31,7 @@ const FORBIDDEN_SNIPPETS = [
 ];
 
 /** DEV-322: jargão proibido no PDF pago do Nome Social. */
-const FORBIDDEN_NOME_SOCIAL_PAGO = ['Motor v3', 'regra N5', 'Regras Ocultas', ' pts'];
+const FORBIDDEN_NOME_SOCIAL_PAGO = ['motor v3', 'motor v4', 'regra n5', 'regras ocultas', ' pts', 'n4 ·', 'n5 ·', '(n4)', '(n5)'];
 
 function pdfToText(buf: Buffer): string {
   const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-txt-'));
@@ -216,7 +216,7 @@ describe('DEV-266 · PDF integração offline', () => {
       }
     }
 
-    const pagoText = pdfToText(Buffer.from(pagoBuf));
+    const pagoText = pdfToText(Buffer.from(pagoBuf)).toLowerCase();
     for (const snippet of FORBIDDEN_NOME_SOCIAL_PAGO) {
       assert.equal(pagoText.includes(snippet), false, `jargão no PDF pago: "${snippet}"`);
     }
