@@ -50,6 +50,7 @@ Validação mínima quando a mudança tocar TS/Astro/frontend/backend/build: `np
 - **Acesso:** checar subscription ativa, usuário teste válido ou admin antes de processar análise.
 - **IA:** toda chamada passa pelo LoopGuard; config só em `src/backend/ai/config/` e `prompts/`.
 - **Numerologia:** sempre os 4 triângulos (`calcularTodosTriangulos`); copy “Tensão Vibracional”, não “incompatível”; sem radiestesia/pêndulo.
+- **Sugestões de nomes (todos os caminhos):** nenhum nome sugerido tem bloqueio. Nomes novos, que não partem do nome de nascimento (artístico "totalmente novos" e sugestões do bebê), só com nota 80 ou mais, do mais próximo de 100 para baixo; nomes derivados do nome de nascimento seguem a regra de pontuação do motor (mínimo 70). Cada caminho tem motor próprio (Nome Social, `products/nome-artistico/`, `products/nome-bebe-chat/`); mudar um não pode alterar o outro. Nome digitado pelo usuário (nomes dos pais, nome já registrado) não é sugestão: usa só o cálculo padrão, sem IA, e mostra o bloqueio se houver, igual em todos os caminhos.
 - **Landing pública:** não alterar layout, design system nem animações — **apenas texto/copy**, salvo pedido explícito.
 - **PDF:** as seções pai Essência, Harmonização, Nome Harmonizado e Anexos sempre começam em página nova, mesmo com espaço na anterior. Preservar essa separação em `<Page>` independentes e no sumário/bookmarks.
 - **Documentação nova:** em `docs/architecture/`, `docs/sops/`, `docs/snippets/` ou `docs/devops/` — nunca `.md` solto na raiz de `docs/`.

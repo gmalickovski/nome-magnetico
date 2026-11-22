@@ -4,6 +4,7 @@ import { hasActiveSubscription } from '../../../backend/db/subscriptions';
 import { createUserClient } from '../../../backend/db/supabase';
 import NomeSocialChat from '../../../frontend/components/app/chat/NomeSocialChat';
 import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
+import { isFluxoMotivoAtivo } from '../../../backend/env/chat-flags';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
@@ -50,6 +51,7 @@ if (nomeInicial.trim() && dataInicial.trim()) {
       userId={user.id}
       isSubscriber={hasAccess}
       emailConfirmed={Boolean(user.email_confirmed_at)}
+      caminhoInicialAtivo={isFluxoMotivoAtivo()}
     />
   </div>
 </AppLayout>

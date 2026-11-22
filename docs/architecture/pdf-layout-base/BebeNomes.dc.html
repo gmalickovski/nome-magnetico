@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>O nome e os nomes que vocês pensaram</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#4A3A36}
+h1{font-family:Cinzel,serif;font-weight:400;font-size:30px;letter-spacing:.05em;margin:0}
+h2{font-family:Cinzel,serif;font-weight:400;font-size:20px;letter-spacing:.04em;color:#4A3A36;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin:0}
+h4{font-size:14px;font-weight:600;color:#4A3A36;margin:0}
+p{font-size:14px;line-height:1.65;margin:0;color:#5C4B46}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 40px; background: {{c.fundo}}; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: {{c.texto}}">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #8C7B76">Helena · Parte 2</div>
+</div>
+<div style="align-self: flex-start; background: {{c.texto}}; color: #FFFFFF; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 2 · O nome</div>
+<h1 style="color: {{c.texto}}">Helena Lima Santos</h1>
+<p>O nome escolhido, lado a lado com os nomes que vocês pensaram e com as sugestões. Os nomes que vocês digitaram aparecem como são: se tiverem bloqueio, avisamos.</p>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 110px 84px 150px; gap: 10px; padding: 0 14px; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #8C7B76">
+<div>Nome</div><div>Origem</div><div>Nota</div><div>Dias bons</div>
+</div>
+<sc-for list="{{nomes}}" as="n" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 110px 84px 150px; gap: 10px; align-items: center; background: #FFFFFF; border-radius: 16px; padding: 10px 14px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h4>{{n.nome}}</h4>
+<div style="font-size: 11.5px; color: {{n.avisoCor}}">{{n.aviso}}</div>
+</div>
+<div style="font-size: 12px; color: #6B5A55">{{n.origem}}</div>
+<div><div style="display: inline-block; background: {{n.fundo}}; color: {{n.cor}}; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px">{{n.nota}}</div></div>
+<div style="font-size: 12px; color: #5C4B46">{{n.dias}}</div>
+</div>
+</sc-for>
+</div>
+
+<h2>Os dias possíveis do parto</h2>
+<p style="font-size: 13px">Cada quadrado é um dia da janela em volta da data prevista. Verde: o nome fica bom naquele dia. Quando a Helena nascer, recalculem com a data real em um toque.</p>
+<div style="background: #FFFFFF; border-radius: 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; gap: 5px">
+<sc-for list="{{dias}}" as="d" hint-placeholder-count="29">
+<div style="width: 34px; height: 34px; border-radius: 10px; background: {{d.fundo}}; color: {{d.cor}}; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600">{{d.rotulo}}</div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 16px; font-size: 11.5px; color: #6B5A55">
+<div style="display: flex; gap: 6px; align-items: center"><div style="width: 12px; height: 12px; border-radius: 4px; background: #D1FAE5"></div>Bom nesse dia</div>
+<div style="display: flex; gap: 6px; align-items: center"><div style="width: 12px; height: 12px; border-radius: 4px; background: #F1ECEA"></div>Pede atenção nesse dia</div>
+<div style="display: flex; gap: 6px; align-items: center"><div style="width: 12px; height: 12px; border-radius: 4px; background: {{c.texto}}"></div>Data prevista</div>
+</div>
+</div>
+
+<div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: #8C7B76">
+<div>Dados de exemplo.</div>
+<div>Página 5</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tom":{"editor":"enum","options":["rosa","azul","neutro"],"default":"rosa"},"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+const tons = {
+rosa: { fundo: '#FFF6F4', suave: '#FCE9EC', texto: '#9E4A5B' },
+azul: { fundo: '#F5F9FD', suave: '#E3EEF9', texto: '#3F6E96' },
+neutro: { fundo: '#F6FAF7', suave: '#E2F2EA', texto: '#3F7A61' }
+};
+const c = tons[this.props.tom ?? 'rosa'] ?? tons.rosa;
+const faixa = (s) => s >= 85 ? { fundo: '#D1FAE5', cor: '#047857', r: 'Harmonioso' } : s >= 70 ? { fundo: '#ECFCCB', cor: '#4D7C0F', r: 'Favorável' } : s >= 50 ? { fundo: '#FEF9C3', cor: '#A16207', r: 'Equilíbrio Parcial' } : s >= 30 ? { fundo: '#FFEDD5', cor: '#C2410C', r: 'Pede Atenção' } : { fundo: '#FEE2E2', cor: '#B91C1C', r: 'Em Tensão' };
+const linha = (nome, origem, nota, dias, bloqueio) => {
+const f = faixa(nota);
+return { nome, origem, nota: String(nota), dias, fundo: f.fundo, cor: f.cor, aviso: bloqueio ? 'Tem bloqueio: ' + bloqueio : f.r + ' · sem bloqueio', avisoCor: bloqueio ? '#9B1C14' : '#6B5A55' };
+};
+const ruins = [3, 11, 24];
+return {
+c,
+nomes: [
+linha('Helena Lima Santos', 'Escolhido', 92, 'Bom em 26 de 29', null),
+linha('Alice Lima Santos', 'Vocês pensaram', 74, 'Bom em 18 de 29', null),
+linha('Laura Lima Santos', 'Vocês pensaram', 48, 'Bom em 6 de 29', '555'),
+linha('Cecília Lima Santos', 'Sugestão', 88, 'Bom em 24 de 29', null),
+linha('Aurora Lima Santos', 'Sugestão', 86, 'Bom em 22 de 29', null)
+],
+dias: Array.from({ length: 29 }, (_, i) => {
+const centro = i === 14;
+const bom = !ruins.includes(i);
+return { rotulo: String(i - 14 > 0 ? '+' + (i - 14) : i - 14), fundo: centro ? c.texto : bom ? '#D1FAE5' : '#F1ECEA', cor: centro ? '#FFFFFF' : bom ? '#047857' : '#8C7B76' };
+})
+};
+}
+}
+</script>
+</body>
+</html>

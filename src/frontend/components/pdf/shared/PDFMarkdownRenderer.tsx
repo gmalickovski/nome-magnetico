@@ -180,12 +180,13 @@ const triStyles = StyleSheet.create({
     borderColor: '#D1D5DB',
   },
   cellBloqueio: {
-    backgroundColor: '#DC2626',
-    borderColor: '#B91C1C',
+    backgroundColor: '#B3261E',
+    borderColor: '#9B1C14',
   },
   cellRegent: {
-    backgroundColor: '#3B0764',
-    borderColor: '#6D28D9',
+    backgroundColor: '#EDE6FF',
+    borderColor: '#6D4FC2',
+    borderWidth: 1.2,
   },
   arcano: {
     fontSize: 7,
@@ -296,8 +297,8 @@ export function TrianguloPiramideInline({
 
         if (!hideValues) {
           let textColor = isBloqueio ? '#FFFFFF' : '#1F2937';
-          if (isFirstRow && !isBloqueio) textColor = '#D4AF37';
-          if (isRegent && !isBloqueio) textColor = '#EDE9FE';
+          if (isFirstRow && !isBloqueio) textColor = '#8A6A12';
+          if (isRegent && !isBloqueio) textColor = '#4B2E9E';
           textEls.push(
             <SvgText
               key={`c-${li}-${ni}`}
@@ -327,10 +328,10 @@ export function TrianguloPiramideInline({
             <Path d={normalPath} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth={0.5} />
           ) : null}
           {bloqueioPath ? (
-            <Path d={bloqueioPath} fill="#DC2626" stroke="#B91C1C" strokeWidth={0.5} />
+            <Path d={bloqueioPath} fill="#B3261E" stroke="#9B1C14" strokeWidth={0.5} />
           ) : null}
           {regentPath ? (
-            <Path d={regentPath} fill="#3B0764" stroke="#6D28D9" strokeWidth={0.5} />
+            <Path d={regentPath} fill="#EDE6FF" stroke="#6D4FC2" strokeWidth={1.2} />
           ) : null}
           {textEls}
         </Svg>
@@ -389,8 +390,8 @@ export function TrianguloPiramideInline({
               ? triStyles.cellRegent
               : triStyles.cellNormal;
             let textColor = isBloqueio ? '#FFFFFF' : '#1F2937';
-            if (isFirstRow && !isBloqueio) textColor = '#D4AF37';
-            if (isRegent && !isBloqueio) textColor = '#EDE9FE';
+            if (isFirstRow && !isBloqueio) textColor = '#8A6A12';
+            if (isRegent && !isBloqueio) textColor = '#4B2E9E';
 
             return (
               <View

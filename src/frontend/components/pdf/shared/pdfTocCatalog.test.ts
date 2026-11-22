@@ -30,13 +30,19 @@ describe('pdfTocCatalog', () => {
   it('pago inclui ids raiz e subassuntos principais', () => {
     const ids = buildPaidTocEntries(true).map((e) => e.id);
     for (const id of [
+      'pdf-resumo',
+      'pdf-intro-leitura',
       'pdf-ranking',
       'pdf-essencia',
       'pdf-harmonizacao',
       'pdf-harmonizacao-comparativa',
+      'pdf-nome-harmonizado',
       'pdf-guia',
       'pdf-score',
       'pdf-treino',
+      'pdf-anexos',
+      'pdf-anexos-ciclos',
+      'pdf-arcanos',
       'pdf-essencia-expressao',
       'pdf-essencia-triangulo-vida',
       'pdf-essencia-debitos',
@@ -49,10 +55,13 @@ describe('pdfTocCatalog', () => {
   });
 });
 
-it('DEV-299 capítulos pai começam em Page independente mesmo com espaço anterior', () => {
-  const source = readFileSync(new URL('../NomeSocialPDF.tsx', import.meta.url), 'utf8');
-  for (const id of ['pdf-essencia', 'pdf-harmonizacao', 'pdf-nome-harmonizado', 'pdf-anexos']) {
-    assert.match(source, new RegExp('<Page[^>]*>\\s*<PDFSectionAnchor\\s+id="' + id + '"'), id);
+it('DEV-299 / DEV-327 capítulos pai começam em Page independente mesmo com espaço anterior', () => {
+  const source =
+    readFileSync(new URL('../NomeSocialPDF.tsx', import.meta.url), 'utf8') +
+    '\n' +
+    readFileSync(new URL('../layout/NomeSocialLayoutSections.tsx', import.meta.url), 'utf8');
+  for (const id of ['pdf-resumo', 'pdf-essencia', 'pdf-harmonizacao', 'pdf-nome-harmonizado', 'pdf-guia', 'pdf-anexos']) {
+    assert.match(source, new RegExp('<Page[^>]*>\\s*(?:\\{[^}]*&&\\s*)?<PDFSectionAnchor\\s+id="' + id + '"'), id);
   }
   const entries = buildPaidTocEntries(true, { hasConclusion: true });
   assert.equal(new Set(entries.map(e => e.id)).size, entries.length);

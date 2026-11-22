@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { capturePostHogEvent } from '../../lib/analytics';
 import {
   LandingSectionIntro,
@@ -8,8 +8,12 @@ import {
   landingSectionSpacingClass,
 } from './LandingSectionIntro';
 import { getRevealItemProps, useLandingSectionReveal } from './useLandingSectionReveal';
+import { VoteConfirmDialog } from './VoteConfirmDialog';
+import { VOTE_INTRO_COPY, submitVote, type VoteFailure } from './product-vote-flow';
 
-export type VoteOptionId = 'nome_bebe' | 'nome_empresa' | 'outro';
+import type { VoteOptionId } from './product-vote-flow';
+
+export type { VoteOptionId };
 
 interface VoteOption {
   id: VoteOptionId;
@@ -41,45 +45,69 @@ interface ProductVotingSectionProps {
 }
 
 export function ProductVotingSection({ variant = 'landing' }: ProductVotingSectionProps) {
+  /** Opção escolhida que ainda espera confirmação (caixa aberta). Cancelar não registra nada. */
+  const [pending, setPending] = useState<VoteOptionId | null>(null);
+  /** Opção já confirmada com sucesso (mostrada na mensagem final). */
   const [selected, setSelected] = useState<VoteOptionId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [voted, setVoted] = useState(false);
-  const [error, setError] = useState('');
+  const [failure, setFailure] = useState<VoteFailure | null>(null);
   const reveal = useLandingSectionReveal();
+  const inFlight = useRef(false);
+  const originRef = useRef<HTMLElement | null>(null);
 
-  async function handleVote(optionId: VoteOptionId) {
+  // Escolher só abre a confirmação: nenhuma requisição e nenhum evento até confirmar.
+  function openConfirm(optionId: VoteOptionId, origin: HTMLElement | null) {
     if (submitting || voted) return;
-    setSelected(optionId);
+    originRef.current = origin;
+    setFailure(null);
+    setPending(optionId);
+  }
+
+  const cancelConfirm = useCallback(() => {
+    if (inFlight.current) return;
+    setPending(null);
+    setFailure(null);
+  }, []);
+
+  async function confirmVote() {
+    if (!pending || inFlight.current || voted) return;
+    inFlight.current = true; // bloqueia clique duplo e concorrente antes do re-render
     setSubmitting(true);
-    setError('');
-
+    setFailure(null);
+    const option = pending;
     try {
-      // 1. Se o usuário aceitou cookies e o PostHog estiver ativo, dispara o evento de survey do PostHog
-      capturePostHogEvent('product_vote_submitted', {
-        option: optionId,
-        surface: variant,
+      const result = await submitVote(option, {
+        fetchImpl: (input, init) => fetch(input, init),
+        // O evento só sai depois do sucesso confirmado da API (e o PostHog só age com consentimento).
+        onSuccessEvent: (opt) => capturePostHogEvent('product_vote_submitted', { option: opt, surface: variant }),
       });
-
-      // 2. Fallback obrigatório sem cookies: conta apenas no servidor (contador agregado, zero PII)
-      const res = await fetch('/api/product-vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'omit', // Nunca envia nem recebe cookies
-        body: JSON.stringify({ option: optionId }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? 'Não foi possível registrar seu voto agora.');
+      if (result.ok) {
+        setSelected(option);
+        setVoted(true);
+        setPending(null);
+      } else {
+        setFailure(result.failure);
       }
-
-      setVoted(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao registrar voto.');
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   }
+
+  const pendingLabel = VOTE_OPTIONS.find((o) => o.id === pending)?.label ?? '';
+  const confirmDialog = (
+    <VoteConfirmDialog
+      open={pending !== null && !voted}
+      optionLabel={pendingLabel}
+      submitting={submitting}
+      error={failure?.message}
+      confirmLabel={failure ? 'Tentar de novo' : 'Confirmar voto'}
+      onConfirm={confirmVote}
+      onCancel={cancelConfirm}
+      returnFocusTo={originRef.current}
+    />
+  );
 
   const isCompact = variant === 'resultado' || variant === 'obrigado';
 
@@ -100,7 +128,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
             <LandingSectionIntro
               label="Você Decide"
               title="Você Decide o Próximo Lançamento"
-              description="Escolha com um clique, sem precisar de cadastro."
+              description={VOTE_INTRO_COPY}
               align="center"
               className="mb-10 md:mb-14"
               revealed={reveal.revealed}
@@ -126,7 +154,6 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch w-full">
                 {VOTE_OPTIONS.map((opt, idx) => {
-                  const isCurrent = selected === opt.id && submitting;
                   const itemReveal = getRevealItemProps(
                     reveal.revealed,
                     140 + idx * 100,
@@ -137,7 +164,8 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                       key={opt.id}
                       type="button"
                       disabled={submitting}
-                      onClick={() => handleVote(opt.id)}
+                      aria-haspopup="dialog"
+                      onClick={(e) => openConfirm(opt.id, e.currentTarget)}
                       data-vote-option={opt.id}
                       className={`group flex flex-col justify-between ${landingInteractiveCardClass} p-6 md:p-8 text-left focus:outline-none focus:ring-2 focus:ring-[#d7c6ff] disabled:opacity-60 cursor-pointer min-h-[210px] ${itemReveal.className}`}
                       style={itemReveal.style}
@@ -148,7 +176,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                             {opt.label}
                           </h3>
                           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10 text-xs text-[#D4AF37] ring-1 ring-[#D4AF37]/30 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
-                            {isCurrent ? '…' : '→'}
+                            →
                           </span>
                         </div>
                         <p className="nm-body">
@@ -157,7 +185,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                       </div>
                       <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between gap-2">
                         <span className="nm-caption font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50] transition-colors whitespace-nowrap">
-                          {isCurrent ? 'Registrando voto...' : 'Votar nesta opção'}
+                          Votar nesta opção
                         </span>
                         <span className="text-xs text-[#bea5ff]/40 group-hover:text-[#bea5ff] transition-colors">◈</span>
                       </div>
@@ -173,11 +201,6 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
               </p>
             )}
 
-            {error && (
-              <p className="mt-6 text-center text-xs text-red-400" role="alert">
-                {error}
-              </p>
-            )}
           </div>
         ) : (
           <div
@@ -192,7 +215,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
               Você Decide o Próximo Lançamento
             </h2>
             <p className="nm-body-lg max-w-xl mx-auto mb-6">
-              Escolha com um clique, sem precisar de cadastro.
+              {VOTE_INTRO_COPY}
             </p>
 
             {voted ? (
@@ -214,13 +237,13 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-left">
                 {VOTE_OPTIONS.map((opt) => {
-                  const isCurrent = selected === opt.id && submitting;
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       disabled={submitting}
-                      onClick={() => handleVote(opt.id)}
+                      aria-haspopup="dialog"
+                      onClick={(e) => openConfirm(opt.id, e.currentTarget)}
                       data-vote-option={opt.id}
                       className="group flex flex-col justify-between rounded-2xl bg-[#131313] p-4 sm:p-5 ring-1 ring-white/10 transition-all duration-300 hover:bg-[#1f1f1f] hover:ring-[#D4AF37]/50 focus:outline-none focus:ring-2 focus:ring-[#d7c6ff] disabled:opacity-60 cursor-pointer"
                     >
@@ -230,7 +253,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                             {opt.label}
                           </h3>
                           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/10 text-xs text-[#D4AF37] ring-1 ring-[#D4AF37]/30 group-hover:bg-[#D4AF37] group-hover:text-black transition-colors">
-                            {isCurrent ? '…' : '→'}
+                            →
                           </span>
                         </div>
                         <p className="nm-body">
@@ -238,7 +261,7 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
                         </p>
                       </div>
                       <span className="nm-caption mt-4 inline-block font-semibold uppercase tracking-wider text-[#D4AF37]/80 group-hover:text-[#f2ca50]">
-                        {isCurrent ? 'Registrando voto...' : 'Votar nesta opção'}
+                        Votar nesta opção
                       </span>
                     </button>
                   );
@@ -252,14 +275,10 @@ export function ProductVotingSection({ variant = 'landing' }: ProductVotingSecti
               </p>
             )}
 
-            {error && (
-              <p className="mt-4 text-xs text-red-400" role="alert">
-                {error}
-              </p>
-            )}
           </div>
         )}
       </div>
+      {confirmDialog}
     </section>
   );
 }

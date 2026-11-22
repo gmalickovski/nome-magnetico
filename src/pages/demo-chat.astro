@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import NomeSocialChat from '../frontend/components/app/chat/NomeSocialChat';
 import { buildClientBirthNamePanel } from '../backend/numerology/birth-name-panel';
+import { isFluxoMotivoAtivo } from '../backend/env/chat-flags';
 
 const birthName = 'Guilherme Malickovski Correa';
 const birthDate = '14/02/1990';
@@ -29,6 +30,7 @@ try {
       profileGender="Masculino"
       initialBirthPanel={initialBirthPanel}
       userId="demo-user-123"
+      caminhoInicialAtivo={isFluxoMotivoAtivo()}
     />
   </div>
 </body>
