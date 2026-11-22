@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import type Stripe from 'stripe';
 import { buildPaymentConfirmedPayload } from '../../backend/notifications/payment-confirmed-payload';
 import { constructWebhookEvent, createCheckoutSession, PRODUCT_NAMES } from '../../backend/payments/stripe';
+import { confirmCouponReservation, releaseCouponReservation } from '../../backend/payments/coupon-reservations';
+import { getEffectivePriceCore } from '../../backend/pricing/service';
 import {
   failedPaymentDeduplicator,
   isValidHttpsCheckoutUrl,
@@ -81,15 +83,18 @@ export const POST: APIRoute = async ({ request }) => {
   }): Promise<string | null> {
     const baseUrl = getPublicBaseUrl();
     try {
+      // O checkout anterior pode ter liberado a reserva. A recuperação usa o preço vigente.
+      const pricing = params.discountSource === 'coupon' || params.couponCode
+        ? await getEffectivePriceCore({ productType: params.productType })
+        : null;
       const session = await createCheckoutSession({
         userId: params.userId,
         userEmail: params.userEmail,
         productType: params.productType,
-        unitAmount: params.unitAmount,
-        baseCents: params.baseCents,
-        promoId: params.promoId,
-        discountSource: params.discountSource,
-        couponCode: params.couponCode,
+        unitAmount: pricing ? pricing.final_cents : params.unitAmount,
+        baseCents: pricing ? pricing.base_cents : params.baseCents,
+        promoId: pricing ? pricing.promo_id : params.promoId,
+        discountSource: pricing ? pricing.discountSource : params.discountSource,
         successUrl: `${baseUrl}/obrigado?session_id={CHECKOUT_SESSION_ID}&produto=${params.productType}`,
         cancelUrl: `${baseUrl}/comprar?checkout=cancel`,
         chosenSignature: params.chosenSignature,
@@ -115,6 +120,7 @@ export const POST: APIRoute = async ({ request }) => {
       user_id?: string;
       product_type?: string;
       coupon_code?: string;
+      coupon_reservation_id?: string;
       base_cents?: string;
       final_cents?: string;
       promo_id?: string;
@@ -273,12 +279,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     await confirmEmailAfterPayment(userId);
 
-    await recordAccessCouponUse({
-      couponCode: session.metadata?.coupon_code,
-      userId,
-      userEmail: session.customer_email,
-      productType,
-    }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom:', err));
+    if (!session.metadata?.coupon_reservation_id) {
+      await recordAccessCouponUse({
+        couponCode: session.metadata?.coupon_code,
+        userId,
+        userEmail: session.customer_email,
+        productType,
+      }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom:', err));
+    }
 
     await trackPurchaseConfirmed({
       userId,
@@ -391,6 +399,28 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
+    if (
+      event.type === 'checkout.session.completed' ||
+      event.type === 'checkout.session.async_payment_succeeded' ||
+      event.type === 'checkout.session.async_payment_failed' ||
+      event.type === 'checkout.session.expired'
+    ) {
+      const session = event.data.object as CheckoutSession;
+      const reservationId = session.metadata?.coupon_reservation_id;
+      if (reservationId) {
+        try {
+          if (event.type === 'checkout.session.expired' || event.type === 'checkout.session.async_payment_failed') {
+            await releaseCouponReservation(reservationId);
+          } else if (event.type === 'checkout.session.async_payment_succeeded' || session.payment_status !== 'unpaid') {
+            await confirmCouponReservation(reservationId, session.id);
+          }
+        } catch (err) {
+          captureFluxoException('stripe_webhook', err, { tipo_evento: event.type });
+          return new Response('Falha temporária ao atualizar reserva de cupom', { status: 503 });
+        }
+      }
+    }
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as CheckoutSession;

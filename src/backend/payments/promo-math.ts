@@ -49,6 +49,7 @@ export interface ActivePromotion {
 
 export interface HqCouponValidation {
   valid: boolean;
+  accessCodeId?: string;
   error?: string;
   code?: string;
   description?: string | null;
@@ -345,6 +346,7 @@ export function evaluateCoupon(
 
   return {
     valid: true,
+    accessCodeId: row.id,
     code: row.code,
     description: row.note ?? row.code,
     productTypes: codeProductTypes(row),
