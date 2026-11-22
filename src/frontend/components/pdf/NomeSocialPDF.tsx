@@ -2157,6 +2157,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — Esta dimensão penetra no santuário mais reservado da sua alma, ativada e moldada pelo dia exato do seu nascimento. Ela governa a sua inteligência emocional, a forma como você processa sentimentos íntimos em segredo, sua tolerância a pressões internas e a dinâmica com os seus entes mais próximos. Quando existem bloqueios nesta pirâmide de origem, a vida afetiva tende a repetir ciclos e roteiros repetitivos de frustração ou incompreensão, atuando como espelhos de conflitos internos ainda não resolvidos.
               </Text>
               <PDFTriangleDetailsBlock
+                compact
                 data={tPessoalNasc}
                 triangulo="pessoal"
                 pyramidLabel="TRIÂNGULO PESSOAL"
@@ -2180,6 +2181,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#059669' }}>[Carreira, Visibilidade Pública e Magnetismo Social]</Text> — Esta pirâmide irradia a sua assinatura vibracional para o mundo externo, moldada pela influência do mês do seu nascimento. Ela governa a forma como a sociedade te percebe, o carisma que você emana em ambientes públicos e as oportunidades profissionais que você atrai ou repele. É a frequência que determina a sua reputação, a sua capacidade de vendas, parcerias profissionais e o reconhecimento do seu talento pelo coletivo. Bloqueios aqui geram invisibilidade, sabotagem profissional ou dificuldades de comunicação com o público.
               </Text>
               <PDFTriangleDetailsBlock
+                compact
                 data={tSocialNasc}
                 triangulo="social"
                 pyramidLabel="TRIÂNGULO SOCIAL"
@@ -2206,6 +2208,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — A pirâmide mais reveladora e soberana de toda a sua jornada terrestre. Ela entrelaça de forma divina a totalidade do seu nome com as coordenadas do seu nascimento (dia + mês reduzidos). Este triângulo governa a colheita prática da sua jornada: a materialização concreta dos seus esforços, a execução do seu propósito de alma e o legado indelével que você construirá no tempo. Quando há bloqueios nesta área, você pode sentir que despende uma quantidade colossal de energia no trabalho sem nunca alcançar os frutos correspondentes na realidade material.
               </Text>
               <PDFTriangleDetailsBlock
+                compact
                 data={tDestinoNasc}
                 triangulo="destino"
                 pyramidLabel="TRIÂNGULO DO DESTINO"
@@ -2241,6 +2244,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#7C3AED' }}>[Mundo Íntimo, Emoções e Relacionamentos Próximos]</Text> — A dimensão secreta da sua vida afetiva e do seu autoconhecimento, agora recalibrada por um novo campo de frequências. Ao harmonizar este triângulo, você reorganiza a sua ressonância íntima, permitindo que você reaja a pressões com maior centralidade e cure padrões repetitivos de autossabotagem em seus relacionamentos. O Triângulo Pessoal Harmonizado purifica os canais da afetividade, promovendo conexões verdadeiras e uma convivência de respeito, amor e harmonia autêntica.
               </Text>
               <PDFTriangleDetailsBlock
+                compact
                 data={triangulosSocial.pessoal}
                 triangulo="pessoal"
                 pyramidLabel="TRIÂNGULO PESSOAL"
@@ -2264,6 +2268,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 Modificado pelo número do mês de nascimento, revela como o mundo externo responde ao nome harmonizado — o novo magnetismo que ele gera e as oportunidades que passa a atrair. Governa a visibilidade pública e o reconhecimento profissional no novo campo vibracional.
               </Text>
               <PDFTriangleDetailsBlock
+                compact
                 data={triangulosSocial.social}
                 triangulo="social"
                 pyramidLabel="TRIÂNGULO SOCIAL"
@@ -2287,6 +2292,7 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
                 <Text style={{ fontFamily: BODY_FONT_BOLD, color: '#D97706' }}>[Propósito, Realização Concreta e Legado Eterno]</Text> — Descreve o arco de realização ligado ao triângulo do Destino para a assinatura selecionada. Os números e regentes exibidos vêm do cálculo; interpretação de propósito ou resultado material fica a seu critério.
               </Text>
               <PDFTriangleDetailsBlock
+                compact
                 data={triangulosSocial.destino}
                 triangulo="destino"
                 pyramidLabel="TRIÂNGULO DO DESTINO"
@@ -2318,17 +2324,19 @@ export function NomeSocialPDF({ analysis, magneticNames, userName, pdfRender }: 
           Estes são os arcanos que aparecem nos seus triângulos, de ambos os nomes. Aqui está só a lista de consulta rápida; a descrição completa de cada um fica no glossário online, em nomemagnetico.com.br/glossario.
         </Text>
 
-        {sortedArcanos.map((n) => {
-          const arc = getArcano(n);
-          return (
-            <View key={n} wrap={false} style={{ marginBottom: 6, flexDirection: 'row' }}>
-              <Text style={{ width: 150, fontFamily: BODY_FONT_BOLD, fontSize: 9.5, color: '#7C3AED' }}>
-                Arcano {n} · {arc.nome}
-              </Text>
-              <Text style={{ flex: 1, fontSize: 9.5, color: GRAY, lineHeight: 1.5 }}>{arc.palavraChave}</Text>
-            </View>
-          );
-        })}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          {sortedArcanos.map((n) => {
+            const arc = getArcano(n);
+            return (
+              <View key={n} wrap={false} style={{ width: '50%', paddingRight: 8, marginBottom: 6 }}>
+                <Text style={{ fontFamily: BODY_FONT_BOLD, fontSize: 9, color: '#7C3AED' }}>
+                  Arcano {n} · {arc.nome}
+                </Text>
+                <Text style={{ fontSize: 8.5, color: GRAY, lineHeight: 1.4 }}>{arc.palavraChave}</Text>
+              </View>
+            );
+          })}
+        </View>
 
         <PDFFooter />
       </Page>
