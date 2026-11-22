@@ -16,16 +16,27 @@ const PASSOS: Array<[string, string, string]> = [
   ['5', 'Respeitamos o seu contexto', 'As respostas do chat (como você assina, onde usa o nome e o que quer manter) orientam quais variações aparecem primeiro.'],
 ];
 
-export function PDFComoChegamosSugestoes({ layoutTheme = LAYOUT_THEME_PADRAO }: { layoutTheme?: PdfLayoutTheme }) {
+/** Passos do PDF gratuito: só o cálculo do nome de nascimento, sem sugestões. */
+export const PASSOS_NOTA_GRATUITO: Array<[string, string, string]> = [
+  ['1', 'Calculamos o seu nome de nascimento', 'Cinco números, quatro triângulos, lições, tendências e débitos kármicos, a partir das letras e da data de nascimento.'],
+  ['2', 'Procuramos bloqueios', 'Sequências de três ou mais números iguais no Triângulo da Vida.'],
+  ['3', 'Comparamos Expressão e Destino', 'Mostra se o nome conversa bem com a data de nascimento.'],
+  ['4', 'Damos uma nota de 0 a 100', 'Resume os pontos acima. Quanto mais perto de 100, melhor a combinação do nome com a sua data.'],
+];
+
+export function PDFComoChegamosSugestoes({
+  layoutTheme = LAYOUT_THEME_PADRAO,
+  passos = PASSOS,
+  intro = 'O cálculo é matemático e sempre o mesmo para a mesma entrada: nada aqui é sorteado. Estes são os passos que levaram às opções do seu relatório.',
+}: { layoutTheme?: PdfLayoutTheme; passos?: Array<[string, string, string]>; intro?: string }) {
   return (
     <>
       <Text style={{ fontSize: 9.5, fontFamily: BODY_FONT, color: layoutTheme.tintaSuave, lineHeight: 1.55, marginBottom: 10 }}>
-        O cálculo é matemático e sempre o mesmo para a mesma entrada: nada aqui é sorteado. Estes são os passos que levaram às
-        opções do seu relatório.
+        {intro}
       </Text>
 
       <View style={{ gap: 6, marginBottom: 10 }}>
-        {PASSOS.map(([n, t, d]) => (
+        {passos.map(([n, t, d]) => (
           <View
             key={t}
             wrap={false}

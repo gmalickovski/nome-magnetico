@@ -135,3 +135,13 @@ sem migration.
 - **DEV-328 (Persistência e roteamento)**: implementado em [`chat-analysis-persist.ts`](../../src/shared/chat-analysis-persist.ts), [`analyze.ts`](../../src/pages/api/analyze.ts), [`pdf-format.ts`](../../src/shared/pdf-format.ts) e [`generate-pdf.ts`](../../src/pages/api/generate-pdf.ts).
 - **DEV-329 (Nome Artístico pago)**: implementado em [`NomeArtisticoPDF.tsx`](../../src/frontend/components/pdf/NomeArtisticoPDF.tsx) e conectado em [`generate-pdf.ts`](../../src/pages/api/generate-pdf.ts) (`hasArtisticTemplate: true`), com 6 páginas (Capa palco, Resumo, Parte 1 Você e sua área, Parte 2 Próximos e novos, Parte 3 No palco + aviso informativo de contratos/INPI e Anexo Mapa/Triângulo da Vida).
 - **DEV-330 (Nome do Bebê — manual para os pais)**: implementado em [`NomeBebeChatPDF.tsx`](../../src/frontend/components/pdf/NomeBebeChatPDF.tsx) com mapa parental dedicado em [`textos-pais.ts`](../../src/backend/numerology/products/nome-bebe-chat/textos-pais.ts) e conectado em [`generate-pdf.ts`](../../src/pages/api/generate-pdf.ts) (`hasBabyChatTemplate: true`), mantendo o `NomeBebePDF.tsx` legado isolado. São 7 páginas em paleta pastel por sexo (rosa/azul/neutro), tira de dias possíveis somente quando data prevista e sem prazos numéricos de registro.
+
+## 8. PDF gratuito no layout novo (DEV-332)
+
+O PDF gratuito (`NomeAtualPDF`) usa os mesmos blocos, títulos e tema (`layout/NomeAtualLayoutPages.tsx`):
+Capa (mesma família dos pagos) · Sumário · Seu mapa em 1 página · Como ler · Parte 1 Você hoje
+(Destino, 5 números, arquétipo, Triângulo da Vida com ponta em roxo, campo kármico) · O que este mapa
+mostrou + Como chegamos à sua nota (sem pontos) · Potencial da sua assinatura (CTA). 11 páginas na
+fixture (antes 16, com uma em branco). Sem arcano de trânsito, sem jargão e sem copy de medo (teste de
+termos proibidos também no gratuito). Blocos antigos (`PDFKarmicBlock`, `PDFArquetipoDetailBlock`)
+ficam só para os PDFs legados de bebê e empresa.

@@ -50,7 +50,7 @@ describe('generate-free-lead-pdf', () => {
     );
     assert.ok(dests['pdf-essencia-karma'] >= dests['pdf-essencia-triangulo-vida']);
     assert.ok(dests['pdf-mapa'] > dests['pdf-essencia-karma']);
-    assert.ok(dests['pdf-score'] > dests['pdf-mapa']);
+    assert.ok(dests['pdf-score'] >= dests['pdf-mapa']) // DEV-332: mesma página;
     assert.ok(dests['pdf-nome-social'] > dests['pdf-score']);
     for (const removed of [
       'pdf-essencia-triangulo-pessoal',
