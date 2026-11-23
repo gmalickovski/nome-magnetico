@@ -191,7 +191,7 @@ export function trackBeginCheckout(params: {
   } catch {}
 }
 
-export function track(event: AnalyticsEvent, data?: EventData): void {
+export function track(event: AnalyticsEvent, data?: EventData, options?: { postHog?: boolean }): void {
   if (typeof window === 'undefined') return;
   if (isAdminBrowser()) return;
 
@@ -203,7 +203,7 @@ export function track(event: AnalyticsEvent, data?: EventData): void {
   } catch {}
 
   try {
-    capturePostHog(event, data);
+    if (options?.postHog !== false) capturePostHog(event, data);
   } catch {}
 }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { track } from '../../lib/analytics';
+import { getPostHogDistinctId, identifyUser, track } from '../../lib/analytics';
 import { marketingBodyFields } from '../../lib/utm';
 import { TurnstileWidget } from './TurnstileWidget';
 
@@ -26,7 +26,7 @@ function isValidEmail(val: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 }
 
-export function PublicAnalysisForm() {
+export function PublicAnalysisForm({ analyticsUserId }: { analyticsUserId?: string }) {
   const [nome, setNome] = useState('');
   const [data, setData] = useState('');
   const [email, setEmail] = useState('');
@@ -91,6 +91,12 @@ export function PublicAnalysisForm() {
       if (TURNSTILE_SITE_KEY && turnstileToken) {
         payload['cf-turnstile-response'] = turnstileToken;
       }
+      if (analyticsUserId) identifyUser(analyticsUserId);
+      // A identidade anônima será vinculada à conta no login ou no cadastro.
+      const distinctId = getPostHogDistinctId();
+      if (distinctId && /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(distinctId)) {
+        payload.posthog_distinct_id = distinctId;
+      }
 
       const response = await fetch('/api/teste-bloqueio', {
         method: 'POST',
@@ -116,10 +122,11 @@ export function PublicAnalysisForm() {
       setSubmittedEmail(email.trim().toLowerCase());
       setShowSuccessModal(true);
       track('analise_gratis_submit', {
+        product_type: 'analise_gratuita',
         score: previewData?.score,
         potencial_max: previewData?.potencialMax ?? null,
         nivel: previewData?.nivelCodigo,
-      });
+      }, { postHog: data_result.posthogSubmitQueued !== true });
       if (previewData) {
         track('analise_gratis_preview_view', {
           score: previewData.score,
