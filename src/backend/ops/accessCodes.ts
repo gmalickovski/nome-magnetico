@@ -55,7 +55,8 @@ async function redemptionCount(row: AccessCodeDbRow): Promise<number | null> {
   const { count, error } = await supabase
     .from('access_code_uses')
     .select('id', { count: 'exact', head: true })
-    .eq('code_id', row.id);
+    .eq('code_id', row.id)
+    .neq('source', 'reserved');
   if (!error) return count ?? 0;
 
   if (!isMissingTable(error) || row.kind === 'coupon') return null;

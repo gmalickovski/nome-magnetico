@@ -3,6 +3,7 @@ import type { ActivePromotion, PriceInfo } from '../../../backend/payments/price
 import { CheckoutModal } from '../purchase/CheckoutModal';
 import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
 import {
+  checkoutFailureMessage,
   isCheckoutEmailNotConfirmed,
   postCreateCheckoutWithPriceConfirm,
 } from '../../lib/checkout-api';
@@ -35,7 +36,7 @@ export function DashboardCheckoutButton({
   const [open, setOpen] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
-  async function handleTriggerCard(type: ProductType, couponCode?: string) {
+  async function handleTriggerCard(type: ProductType, couponCode: string | undefined, finalCents: number) {
     track('checkout_redirect_start', {
       produto: type,
       preco: priceInfo.cents / 100,
@@ -53,7 +54,7 @@ export function DashboardCheckoutButton({
       {
         product_type: type,
         couponCode,
-        expected_final_cents: priceInfo.cents,
+        expected_final_cents: finalCents,
       },
       (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
     );
@@ -63,12 +64,12 @@ export function DashboardCheckoutButton({
       } else if ('url' in result) {
         window.location.href = result.url;
       }
-      return;
+      return true;
     }
 
     if ('alreadyActive' in result && result.alreadyActive) {
       window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
-      return;
+      return true;
     }
 
     if (isCheckoutEmailNotConfirmed(result)) {
@@ -76,11 +77,13 @@ export function DashboardCheckoutButton({
       return;
     }
 
+    const error = checkoutFailureMessage(result);
     track('checkout_failed', {
       produto: type,
-      erro: 'email_not_confirmed',
+      erro: error,
       origem: 'dashboard',
     });
+    throw new Error(error);
   }
 
   const defaultClass = variant === 'primary'
@@ -127,7 +130,6 @@ export function DashboardCheckoutButton({
         <CheckoutModal
           productType={product}
           priceInfo={priceInfo}
-          promotion={promotion}
           onClose={() => setOpen(false)}
           onTriggerCard={handleTriggerCard}
         />

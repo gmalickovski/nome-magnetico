@@ -48,6 +48,7 @@ export interface CreateCheckoutParams {
   promotionCodeId?: string;
   /** Código digitado para registrar uso após o pagamento. */
   couponCode?: string;
+  couponReservationId?: string;
   /** Client ID do GA4 capturado do cookie _ga para atribuição server-side. */
   gaClientId?: string;
   /** distinct_id do PostHog no browser, para o purchase server-side. */
@@ -107,6 +108,9 @@ export async function createCheckoutSession(
     ph_distinct_id: params.phDistinctId ?? '',
     purchase_kind: params.purchaseKind === 'renewal' ? 'renewal' : 'new',
   };
+  if (params.couponReservationId) {
+    metadata.coupon_reservation_id = params.couponReservationId;
+  }
   if (params.recovery === true) {
     metadata.recovery = '1';
   }
@@ -161,7 +165,7 @@ export async function createCheckoutSession(
     payment_intent_data: {
       metadata,
     },
-  });
+  }, params.couponReservationId ? { idempotencyKey: `coupon-checkout-${params.couponReservationId}` } : undefined);
 }
 
 /**
