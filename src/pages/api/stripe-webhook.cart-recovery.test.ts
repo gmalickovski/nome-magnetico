@@ -21,6 +21,7 @@ const fixtureUserId = 'abf00000-0000-4000-8000-000000000001';
 let notifyOk = true;
 let disputeSubscription: Record<string, unknown> | null = null;
 const chargebackDeliveries = new Map<string, { token: string; sent: boolean }>();
+let chargebackStoreFailure: 'claim' | 'mark' | null = null;
 
 const profile = {
   email: 'buyer@example.com',
@@ -74,6 +75,7 @@ mock.module('../../backend/db/cart-recovery-sends', {
 mock.module('../../backend/db/stripe-chargeback-deliveries', {
   namedExports: {
     claimChargebackDelivery: async (id: string, token: string) => {
+      if (chargebackStoreFailure === 'claim') throw new Error('claim unavailable');
       const delivery = chargebackDeliveries.get(id);
       if (delivery) return delivery.sent ? 'sent' : 'busy';
       chargebackDeliveries.set(id, { token, sent: false });
@@ -81,6 +83,7 @@ mock.module('../../backend/db/stripe-chargeback-deliveries', {
     },
     markChargebackDelivered: async (id: string, token: string) => {
       assert.equal(chargebackDeliveries.get(id)?.token, token);
+      if (chargebackStoreFailure === 'mark') throw new Error('mark unavailable');
       chargebackDeliveries.set(id, { token, sent: true });
     },
     releaseChargebackDelivery: async (id: string, token: string) => {
@@ -202,6 +205,7 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     notifyOk = true;
     disputeSubscription = null;
     chargebackDeliveries.clear();
+    chargebackStoreFailure = null;
     checkoutSessionUrl = 'https://checkout.stripe.com/pay/cs_recovery_new';
     hasActiveSubscription = false;
     claimResult = 'claimed';
@@ -289,6 +293,28 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     chargebackDeliveries.set('dp_fixture270', { token: 'other-process', sent: false });
     assert.equal((await dispatchWebhook()).status, 503);
     assert.deepEqual(notifyCalls, []);
+  });
+
+  it('DEV-270: não envia sem reserva e tenta de novo quando o registro volta', async () => {
+    constructedEvent = disputeEvent();
+    chargebackStoreFailure = 'claim';
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.deepEqual(notifyCalls, []);
+
+    chargebackStoreFailure = null;
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls.length, 1);
+  });
+
+  it('DEV-270: mantém a reserva quando o n8n aceita e a gravação falha', async () => {
+    constructedEvent = disputeEvent();
+    chargebackStoreFailure = 'mark';
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.equal(chargebackDeliveries.get('dp_fixture270')?.sent, false);
+
+    chargebackStoreFailure = null;
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.equal(notifyCalls.length, 1);
   });
 
   it('checkout.session.expired emite só cart.abandoned (sem payment.failed)', async () => {
