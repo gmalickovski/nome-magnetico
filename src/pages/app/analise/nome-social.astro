@@ -29,6 +29,7 @@ function dbDateToInput(dbDate: string | null): string {
 const nomeInicial = profile?.birth_name ?? '';
 const dataInicial = dbDateToInput(profile?.birth_date ?? '');
 const generoInicial = profile?.gender ?? '';
+const caminhoInicial = Astro.url.searchParams.get('caminho') ?? undefined;
 
 let initialBirthPanel = null;
 if (nomeInicial.trim() && dataInicial.trim()) {
@@ -52,6 +53,7 @@ if (nomeInicial.trim() && dataInicial.trim()) {
       isSubscriber={hasAccess}
       emailConfirmed={Boolean(user.email_confirmed_at)}
       caminhoInicialAtivo={isFluxoMotivoAtivo()}
+      initialCaminho={caminhoInicial}
     />
   </div>
 </AppLayout>

@@ -38,17 +38,17 @@ describe('DEV-338 · Nova Home: copy [TEXTO], links e linha do tempo do Hero', (
     assert.doesNotMatch(texts, /radiestes|p[eê]ndulo/i);
   });
 
-  it('direciona os 3 caminhos do Hero para o destino correto antes das páginas de nicho', () => {
+  it('direciona os 3 caminhos do Hero para as páginas de nicho e a análise gratuita', () => {
     assert.equal(HOME_PATH_URLS.social, '/nome-social');
-    assert.equal(HOME_PATH_URLS.artistico, '/app/analise/nome-social?caminho=artistico');
-    assert.equal(HOME_PATH_URLS.bebe, '/app/analise/nome-social?caminho=bebe');
+    assert.equal(HOME_PATH_URLS.artistico, '/nome-artistico');
+    assert.equal(HOME_PATH_URLS.bebe, '/nome-bebe');
     assert.equal(HOME_PATH_URLS.analiseGratuita, '#analise-gratuita');
 
     const hrefs = HOME_COPY.hero.buttons.map((b) => b.href);
     assert.deepEqual(hrefs, [
       '/nome-social',
-      '/app/analise/nome-social?caminho=artistico',
-      '/app/analise/nome-social?caminho=bebe',
+      '/nome-artistico',
+      '/nome-bebe',
     ]);
   });
 
