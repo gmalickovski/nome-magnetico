@@ -10,6 +10,7 @@ import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from './CheckoutModal';
 import type { SellableProductType } from '../../../shared/product-labels';
+import { withLinkedCoupon } from '../../../shared/checkout-coupon-link';
 
 type ProductType = SellableProductType;
 
@@ -30,6 +31,7 @@ interface Props {
   hqPrices?: Record<string, PriceInfo>;
   promotion?: ActivePromotion | null;
   autoOpenCheckout?: boolean;
+  checkoutPath: string;
   autoconhecimentoAviso?: string;
 }
 
@@ -75,9 +77,8 @@ function PriceDisplay({ priceInfo, promotion, productId }: { priceInfo: PriceInf
   return <Price {...props} size="card" showValidity />;
 }
 
-export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false, autoconhecimentoAviso }: Props) {
+export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, hqPrices, promotion, autoOpenCheckout = false, checkoutPath, autoconhecimentoAviso }: Props) {
   const [loading, setLoading]   = useState<ProductType | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   // Produto selecionado para abrir o pré-checkout modal
@@ -91,14 +92,10 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
     if (!isOwned) captureViewOffer();
   }, [isOwned]);
 
-  async function triggerCheckout(type: ProductType, couponCode?: string) {
+  async function triggerCheckout(type: ProductType, couponCode: string | undefined, finalCents: number) {
     setLoading(type);
-    setErrorMsg('');
     setEmailNotConfirmed(false);
     try {
-      const appliesToThis = promotionAppliesToProduct(promotion, type);
-      const effectiveCoupon = couponCode || (promotion && appliesToThis ? promotion.stripePromoCode : null) || undefined;
-
       const priceInfo = prices[type] ?? EMPTY_PRICE;
       if (!priceInfo.cents) throw new Error('Preço indisponível no momento. Atualize a página.');
       track('checkout_redirect_start', {
@@ -127,8 +124,8 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
       const result = await postCreateCheckoutWithPriceConfirm(
         {
           product_type: type,
-          couponCode: effectiveCoupon ?? undefined,
-          expected_final_cents: priceInfo.cents,
+          couponCode,
+          expected_final_cents: finalCents,
           ...(chosenSignatureParam ? { chosen_signature: chosenSignatureParam.slice(0, 80) } : {}),
           ...(analysisIdParam ? { analysis_id: analysisIdParam } : {}),
           ...(sourceParam ? { source: sourceParam } : {}),
@@ -138,14 +135,9 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
       );
       if (!result.ok) {
-        if ('priceChanged' in result && result.priceChanged) {
-          setErrorMsg('O valor mudou — confirme novamente na página atualizada.');
-          setLoading(null);
-          return;
-        }
         if ('alreadyActive' in result && result.alreadyActive) {
           window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
-          return;
+          return true;
         }
         if (isCheckoutEmailNotConfirmed(result)) {
           setEmailNotConfirmed(true);
@@ -156,15 +148,16 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
       }
       if ('bypass' in result && result.bypass) {
         window.location.href = result.redirectUrl;
+        return true;
       } else if ('url' in result) {
         window.location.href = result.url;
+        return true;
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : 'Erro ao criar sessão de pagamento';
       track('checkout_failed', { produto: type, erro: errMsg });
-      setErrorMsg(errMsg);
       setLoading(null);
-      setModalProduct(null);
+      throw err;
     }
   }
 
@@ -201,7 +194,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
             </>
           ) : (
             <a
-              href={`/auth/login?redirect=/comprar?produto=${productType}`}
+              href={paymentLinks[productType]}
               className="border border-[#D4AF37]/40 text-[#D4AF37] font-medium px-5 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-all text-sm"
             >
               Entrar
@@ -269,7 +262,7 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
 
         {showPayButton ? (
           <a
-            href={`/comprar?produto=${type}&checkout=1`}
+            href={checkoutPath}
             aria-disabled={isLoadingThis}
             onClick={(event) => {
               event.preventDefault();
@@ -398,14 +391,6 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                 <EmailConfirmationPrompt />
               </div>
             )}
-            {errorMsg && (
-              <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm text-center">
-                {errorMsg}
-                <button onClick={() => setErrorMsg('')} className="block mt-2 mx-auto text-[#D4AF37] text-xs hover:underline">
-                  Fechar
-                </button>
-              </div>
-            )}
             <ProductCard type={type} showPayButton={true} />
           </div>
         </div>
@@ -414,7 +399,6 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         <CheckoutModal
           productType={modalProduct}
           priceInfo={prices[modalProduct] ?? EMPTY_PRICE}
-          promotion={promotion}
           autoconhecimentoAviso={autoconhecimentoAviso}
           onClose={() => setModalProduct(null)}
           onTriggerCard={triggerCheckout}
