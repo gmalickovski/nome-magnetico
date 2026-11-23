@@ -4,11 +4,20 @@ import { FAQSection } from '../../frontend/components/landing/FAQSection';
 import type { FaqItemProps } from '../../frontend/components/landing/FAQSection';
 import { SupportForm } from '../../frontend/components/support/SupportForm';
 import { getSupabaseFaqs } from '../../backend/faqs/getSupabaseFaqs';
+import { listCustomerSupportTickets } from '../../backend/support/read-tickets';
+import { supportDate, supportStatusLabel } from '../../shared/support-tickets';
 
 const user = Astro.locals.user;
 if (!user) {
   return Astro.redirect('/auth/login');
 }
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+
+const requestedPage = Number(Astro.url.searchParams.get('historico') ?? 1);
+const historyPage = Number.isInteger(requestedPage) && requestedPage >= 1 && requestedPage <= 10000
+  ? requestedPage
+  : 1;
+const history = await listCustomerSupportTickets(user.id, historyPage).catch(() => null);
 
 let faqItems: FaqItemProps[] = [];
 try {
@@ -30,6 +39,34 @@ try {
     <div class="flex flex-col gap-6">
       {/* Container Principal do Formulário */}
       <SupportForm client:visible />
+
+      <section id="historico" aria-labelledby="historico-titulo" class="bg-white/5 border border-[#D4AF37]/20 rounded-2xl p-6">
+        <h2 id="historico-titulo" class="font-cinzel text-lg font-bold text-white">Meus chamados</h2>
+        {!history && <p class="mt-3 text-sm text-gray-300">Não foi possível carregar o histórico agora.</p>}
+        {history?.tickets.length === 0 && <p class="mt-3 text-sm text-gray-300">Nenhum chamado nesta página.</p>}
+        {history && (
+          <>
+            <ul class="mt-3 divide-y divide-white/10">
+              {history.tickets.map((ticket) => (
+                <li class="py-3">
+                  <p class="break-words text-sm font-semibold text-white">{ticket.subject}</p>
+                  <div class="mt-1 flex flex-wrap gap-x-3 text-xs text-gray-300">
+                    {ticket.ticket_number && <span>{ticket.ticket_number}</span>}
+                    <span>{supportStatusLabel(ticket.status)}</span>
+                    <time datetime={ticket.created_at}>{supportDate(ticket.created_at)}</time>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {(historyPage > 1 || history.hasNext) && (
+              <nav aria-label="Páginas do histórico" class="mt-2 flex flex-wrap gap-4 text-sm text-[#D4AF37]">
+                {historyPage > 1 && <a class="inline-flex min-h-11 items-center hover:underline" href={`?historico=${historyPage - 1}#historico`}>Anterior</a>}
+                {history.hasNext && <a class="inline-flex min-h-11 items-center hover:underline" href={`?historico=${historyPage + 1}#historico`}>Próxima</a>}
+              </nav>
+            )}
+          </>
+        )}
+      </section>
 
       <div class="bg-white/5 border border-[#D4AF37]/20 rounded-2xl p-6">
         <h3 class="font-cinzel text-lg font-bold text-white mb-2">Privacidade e exclusão de conta</h3>
