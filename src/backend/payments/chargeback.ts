@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import type Stripe from 'stripe';
-import { memoize } from '../cache/memo';
+import { claimChargebackDelivery, markChargebackDelivered, releaseChargebackDelivery } from '../db/stripe-chargeback-deliveries';
 import { getSubscriptionByPaymentIntent } from '../db/subscriptions';
 import { formatBRLFromCents } from '../money/format-brl-cents';
 import { notify } from '../notifications/notify';
@@ -7,7 +8,6 @@ import { PRODUCT_TYPES, type ProductType } from '../../shared/product-labels';
 import { stripe } from './stripe';
 
 const CLOSED_DISPUTE_STATUSES = new Set(['won', 'lost', 'warning_closed', 'prevented']);
-const DELIVERY_RETRY_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
 function productFrom(value?: string): ProductType | undefined {
   return PRODUCT_TYPES.find((product) => product === value);
@@ -47,19 +47,27 @@ export async function notifyStripeChargeback(event: Stripe.ChargeDisputeCreatedE
   const dispute = event.data.object;
   if (!event.livemode || dispute.livemode === false || CLOSED_DISPUTE_STATUSES.has(dispute.status)) return;
 
-  await memoize(`stripe-chargeback:${dispute.id}`, DELIVERY_RETRY_WINDOW_MS, async () => {
-    const context = await chargebackContext(dispute);
-    if (!context) return;
+  const context = await chargebackContext(dispute);
+  if (!context) return;
 
-    const accepted = await notify('payment.chargeback', {
-      ...context,
-      amount: dispute.amount,
-      amount_formatted: formatBRLFromCents(dispute.amount),
-      reason: dispute.reason,
-      status: dispute.status,
-      payment_provider: 'stripe',
-      livemode: true,
-    });
-    if (!accepted) throw new Error('payment.chargeback_notify_failed');
+  const leaseToken = randomUUID();
+  const delivery = await claimChargebackDelivery(dispute.id, leaseToken);
+  if (delivery === 'sent') return;
+  if (delivery === 'busy') throw new Error('payment.chargeback_delivery_busy');
+
+  const accepted = await notify('payment.chargeback', {
+    ...context,
+    amount: dispute.amount,
+    amount_formatted: formatBRLFromCents(dispute.amount),
+    reason: dispute.reason,
+    status: dispute.status,
+    payment_provider: 'stripe',
+    livemode: true,
   });
+  if (!accepted) {
+    await releaseChargebackDelivery(dispute.id, leaseToken);
+    throw new Error('payment.chargeback_notify_failed');
+  }
+  // This records n8n acceptance. Slack delivery is checked within the workflow.
+  await markChargebackDelivered(dispute.id, leaseToken);
 }

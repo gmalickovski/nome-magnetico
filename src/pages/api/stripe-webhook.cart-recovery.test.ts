@@ -20,6 +20,7 @@ const releaseCalls: Array<{ userId: string; productType: string }> = [];
 const fixtureUserId = 'abf00000-0000-4000-8000-000000000001';
 let notifyOk = true;
 let disputeSubscription: Record<string, unknown> | null = null;
+const chargebackDeliveries = new Map<string, { token: string; sent: boolean }>();
 
 const profile = {
   email: 'buyer@example.com',
@@ -66,6 +67,25 @@ mock.module('../../backend/db/cart-recovery-sends', {
     claimCartRecoverySend: async () => claimResult,
     releaseCartRecoverySend: async (userId: string, productType: string) => {
       releaseCalls.push({ userId, productType });
+    },
+  },
+});
+
+mock.module('../../backend/db/stripe-chargeback-deliveries', {
+  namedExports: {
+    claimChargebackDelivery: async (id: string, token: string) => {
+      const delivery = chargebackDeliveries.get(id);
+      if (delivery) return delivery.sent ? 'sent' : 'busy';
+      chargebackDeliveries.set(id, { token, sent: false });
+      return 'claimed';
+    },
+    markChargebackDelivered: async (id: string, token: string) => {
+      assert.equal(chargebackDeliveries.get(id)?.token, token);
+      chargebackDeliveries.set(id, { token, sent: true });
+    },
+    releaseChargebackDelivery: async (id: string, token: string) => {
+      assert.equal(chargebackDeliveries.get(id)?.token, token);
+      chargebackDeliveries.delete(id);
     },
   },
 });
@@ -181,6 +201,7 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     releaseCalls.length = 0;
     notifyOk = true;
     disputeSubscription = null;
+    chargebackDeliveries.clear();
     checkoutSessionUrl = 'https://checkout.stripe.com/pay/cs_recovery_new';
     hasActiveSubscription = false;
     claimResult = 'claimed';
@@ -205,10 +226,14 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     };
   }
 
-  it('DEV-270: abre um alerta de disputa com o contrato do n8n e sem contatos', async () => {
+  it('DEV-270: envia um alerta sem contatos e deduplica redelivery concorrente e após reinício', async () => {
     constructedEvent = disputeEvent();
     const results = await Promise.all([dispatchWebhook(), dispatchWebhook()]);
-    assert.deepEqual(results.map((response) => response.status), [200, 200]);
+    assert.equal(results[0].status, 200);
+    assert.ok([200, 503].includes(results[1].status));
+    clearCache();
+    constructedEvent = disputeEvent({ id: 'evt_redelivery270' });
+    assert.equal((await dispatchWebhook()).status, 200);
     assert.deepEqual(notifyCalls, [{
       event: 'payment.chargeback',
       payload: {
@@ -257,6 +282,13 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     assert.equal((await dispatchWebhook()).status, 200);
     assert.equal((await dispatchWebhook()).status, 200);
     assert.equal(notifyCalls.length, 2);
+  });
+
+  it('DEV-270: pede reentrega ao Stripe quando outro processo tem a reserva', async () => {
+    constructedEvent = disputeEvent();
+    chargebackDeliveries.set('dp_fixture270', { token: 'other-process', sent: false });
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.deepEqual(notifyCalls, []);
   });
 
   it('checkout.session.expired emite só cart.abandoned (sem payment.failed)', async () => {
