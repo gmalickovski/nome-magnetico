@@ -17,3 +17,8 @@ export {
 } from '../../landing/ProductResultFrame.js';
 
 export { default as TriangleVisualization } from '../../app/TriangleVisualization.js';
+export {
+  ChatLifeTriangleSvg,
+  buildLifeTriangleBloqueioPositions,
+  type ChatLifeTriangleSvgProps,
+} from './ChatLifeTriangleSvg.js';
