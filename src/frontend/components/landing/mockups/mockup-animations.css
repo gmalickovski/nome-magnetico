@@ -80,13 +80,29 @@
   animation: nmMockupTapRipple 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes nmMockupPageFlip {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.975);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.nm-mockup-page-flip {
+  animation: nmMockupPageFlip 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nm-mockup-enter,
   .nm-mockup-dot-1,
   .nm-mockup-dot-2,
   .nm-mockup-dot-3,
   .nm-mockup-tap-core,
-  .nm-mockup-tap-ripple {
+  .nm-mockup-tap-ripple,
+  .nm-mockup-page-flip {
     animation: none !important;
     transition: none !important;
   }

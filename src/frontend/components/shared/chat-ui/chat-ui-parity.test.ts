@@ -16,6 +16,7 @@ import {
   ChatOptionPills,
   ChatSuggestionCard,
   ChatSuggestionSectionHeader,
+  ChatLifeTriangleSvg,
   ReadingTopicCard as SharedReadingTopicCard,
   getScoreTierVisual,
 } from './index.js';
@@ -190,5 +191,19 @@ describe('DEV-340 · paridade DOM/classes entre chat real e peças compartilhada
     );
     assert.match(html, /Nomes totalmente novos/);
     assert.match(html, /\(2\)/);
+  });
+
+  it('ChatLifeTriangleSvg destaca bloqueios em vermelho e ponta (Arcano Regente) em roxo', () => {
+    const linhas = [
+      [1, 1, 1],
+      [2, 2],
+      [4],
+    ];
+    const html = renderToStaticMarkup(
+      React.createElement(ChatLifeTriangleSvg, { nome: 'ANA', linhas }),
+    );
+    assert.match(html, /#FF6B6B/);
+    assert.match(html, /#c084fc/);
+    assert.match(html, /#D4AF37/);
   });
 });

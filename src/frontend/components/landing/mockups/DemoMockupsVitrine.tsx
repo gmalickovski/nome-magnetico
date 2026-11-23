@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ChatScene } from './ChatScene.js';
+import { DashboardScene } from './DashboardScene.js';
 import { DeviceFrame } from './DeviceFrame.js';
 import { PathChooserScene } from './PathChooserScene.js';
+import { PdfFlipScene } from './PdfFlipScene.js';
+import { ScoreCounterScene } from './ScoreCounterScene.js';
+import { StarScene } from './StarScene.js';
+import { SuggestionCardsScene } from './SuggestionCardsScene.js';
+import { TriangleScene } from './TriangleScene.js';
 import type { MockupDevice, MockupTheme } from './types.js';
 
 const REDUCED_MOTION_EVENT = 'nm-demo-mockups-reduced-motion';
@@ -63,6 +69,42 @@ export function DemoMockupsControls() {
         className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
       >
         ChatScene (3 caminhos)
+      </a>
+      <a
+        href="#bloco-starscene"
+        className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
+      >
+        StarScene
+      </a>
+      <a
+        href="#bloco-trianglescene"
+        className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
+      >
+        TriangleScene
+      </a>
+      <a
+        href="#bloco-scorecounterscene"
+        className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
+      >
+        ScoreCounterScene
+      </a>
+      <a
+        href="#bloco-suggestioncardsscene"
+        className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
+      >
+        SuggestionCardsScene
+      </a>
+      <a
+        href="#bloco-pdfflipscene"
+        className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
+      >
+        PdfFlipScene
+      </a>
+      <a
+        href="#bloco-dashboardscene"
+        className="rounded-full bg-[#1C1C1C] px-3.5 py-2 text-xs font-inter text-[#e5e2e1]/80 hover:text-[#f2ca50] transition-colors"
+      >
+        DashboardScene
       </a>
     </div>
   );
@@ -321,6 +363,158 @@ export function DemoChatScenesShowcase() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+const RESULT_THEMES: ReadonlyArray<{ theme: MockupTheme; label: string }> = [
+  { theme: 'social', label: 'Nome Social' },
+  { theme: 'artistico', label: 'Nome Artístico' },
+  { theme: 'bebe', label: 'Nome do Bebê' },
+];
+
+export type ResultSceneKind =
+  | 'star'
+  | 'triangle'
+  | 'score'
+  | 'suggestions'
+  | 'pdf'
+  | 'dashboard';
+
+export function DemoResultSceneShowcase({ kind }: { kind: ResultSceneKind }) {
+  const forcedReducedMotion = useQaReducedMotionOverride();
+  const [selectedDevice, setSelectedDevice] = useState<MockupDevice>('both');
+  const [selectedTheme, setSelectedTheme] = useState<MockupTheme>('social');
+
+  const renderScene = (device: MockupDevice, theme: MockupTheme) => {
+    switch (kind) {
+      case 'star':
+        return (
+          <StarScene
+            device={device}
+            theme={theme}
+            forceReducedMotion={forcedReducedMotion}
+            showStatusPill
+          />
+        );
+      case 'triangle':
+        return (
+          <TriangleScene
+            device={device}
+            theme={theme}
+            forceReducedMotion={forcedReducedMotion}
+            showStatusPill
+          />
+        );
+      case 'score':
+        return (
+          <ScoreCounterScene
+            device={device}
+            theme={theme}
+            forceReducedMotion={forcedReducedMotion}
+            showStatusPill
+          />
+        );
+      case 'suggestions':
+        return (
+          <SuggestionCardsScene
+            device={device}
+            theme={theme}
+            forceReducedMotion={forcedReducedMotion}
+            showStatusPill
+          />
+        );
+      case 'pdf':
+        return (
+          <PdfFlipScene
+            device={device}
+            theme={theme}
+            forceReducedMotion={forcedReducedMotion}
+            showStatusPill
+          />
+        );
+      case 'dashboard':
+        return (
+          <DashboardScene
+            device={device}
+            theme={theme}
+            forceReducedMotion={forcedReducedMotion}
+            showStatusPill
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#181818] p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          {RESULT_THEMES.map((item) => {
+            const active = selectedTheme === item.theme;
+            return (
+              <button
+                key={item.theme}
+                type="button"
+                onClick={() => setSelectedTheme(item.theme)}
+                aria-pressed={active}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-inter transition-all duration-200 ${
+                  active
+                    ? 'bg-[#D4AF37] text-[#111111] font-semibold'
+                    : 'bg-[#131313] text-[#e5e2e1]/85 ring-1 ring-white/10 hover:ring-[#D4AF37]/45'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {CHAT_DEVICES.map((opt) => {
+            const active = selectedDevice === opt.device;
+            return (
+              <button
+                key={opt.device}
+                type="button"
+                onClick={() => setSelectedDevice(opt.device)}
+                aria-pressed={active}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-inter transition-all duration-200 ${
+                  active
+                    ? 'bg-[#bea5ff] text-[#131313] font-semibold'
+                    : 'bg-[#131313] text-[#e5e2e1]/85 ring-1 ring-white/10 hover:ring-[#bea5ff]/45'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-[#181818] p-5 sm:p-8 min-w-0">
+        {renderScene(selectedDevice, selectedTheme)}
+      </div>
+
+      {(kind === 'suggestions' || kind === 'pdf') ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="rounded-2xl bg-[#181818] p-5 sm:p-6 min-w-0">
+            <div className="text-[11px] font-inter uppercase tracking-[0.1em] text-[#bea5ff] mb-2">
+              {kind === 'suggestions'
+                ? 'Variante · Nome Artístico (Próximos × Novos)'
+                : 'Tema · Nome Artístico (Palco)'}
+            </div>
+            {renderScene('phone', 'artistico')}
+          </div>
+          <div className="rounded-2xl bg-[#181818] p-5 sm:p-6 min-w-0">
+            <div className="text-[11px] font-inter uppercase tracking-[0.1em] text-[#F5C6CE] mb-2">
+              {kind === 'suggestions'
+                ? 'Variante · Nome do Bebê (Tira dos dias)'
+                : 'Tema · Nome do Bebê (Pastel)'}
+            </div>
+            {renderScene('phone', 'bebe')}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
