@@ -26,6 +26,7 @@ type NotificationEvent =
   | 'marketing.free_analysis_completed'
   | 'payment.confirmed'
   | 'payment.failed'
+  | 'payment.chargeback'
   | 'cart.abandoned'
   | 'subscription.expiring_soon'
   | 'subscription.expired'
@@ -91,6 +92,7 @@ const FLUXO_DO_EVENTO: Partial<Record<NotificationEvent | MarketingEvent, Fluxo>
   'payment.confirmed': 'notify_transacional',
   'user.analysis_complete': 'notify_transacional',
   'payment.failed': 'notify_transacional',
+  'payment.chargeback': 'notify_transacional',
   'cart.abandoned': 'notify_transacional',
 };
 
@@ -131,6 +133,7 @@ async function sendToWebhook(
         payload: payloadToSend,
         timestamp: new Date().toISOString(),
       }),
+      ...(event === 'payment.chargeback' ? { signal: AbortSignal.timeout(10_000) } : {}),
     });
 
     if (!response.ok) {

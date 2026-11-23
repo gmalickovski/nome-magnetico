@@ -40,6 +40,7 @@ import { productAnalysisAppPath } from '../../backend/payments/checkout-access';
 import { shouldNotifyAdminSlackForProvider } from '../../backend/payments/admin-slack';
 import { supabase } from '../../backend/db/supabase';
 import { parseChatCheckoutMetadata } from '../../backend/payments/chat-checkout-metadata';
+import { notifyStripeChargeback } from '../../backend/payments/chargeback';
 
 export const POST: APIRoute = async ({ request }) => {
   const signature = request.headers.get('stripe-signature');
@@ -522,6 +523,17 @@ export const POST: APIRoute = async ({ request }) => {
           }
         }
         await captureCheckoutPostHog('checkout_abandoned', session);
+        break;
+      }
+
+      case 'charge.dispute.created': {
+        try {
+          await notifyStripeChargeback(event);
+        } catch {
+          const error = new Error('chargeback_dispatch_failed');
+          captureFluxoException('stripe_webhook', error, { tipo_evento: event.type });
+          return new Response('Falha temporária no envio do alerta', { status: 503 });
+        }
         break;
       }
 

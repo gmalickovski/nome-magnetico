@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
 import { failedPaymentDeduplicator } from '../../backend/payments/cart-recovery';
+import { clearCache } from '../../backend/cache/memo';
 
 type StripeEvent = {
   id: string;
   type: string;
+  livemode?: boolean;
   data: { object: Record<string, unknown> };
 };
 
@@ -15,6 +17,9 @@ let checkoutSessionUrl: string | null = 'https://checkout.stripe.com/pay/cs_reco
 let hasActiveSubscription = false;
 let claimResult: 'claimed' | 'duplicate' | 'error' = 'claimed';
 const releaseCalls: Array<{ userId: string; productType: string }> = [];
+const fixtureUserId = 'abf00000-0000-4000-8000-000000000001';
+let notifyOk = true;
+let disputeSubscription: Record<string, unknown> | null = null;
 
 const profile = {
   email: 'buyer@example.com',
@@ -25,6 +30,10 @@ const profile = {
 mock.module('../../backend/payments/stripe', {
   namedExports: {
     constructWebhookEvent: () => constructedEvent,
+    stripe: {
+      charges: { retrieve: async () => ({ metadata: { product_type: 'nome_bebe', user_id: fixtureUserId } }) },
+      paymentIntents: { retrieve: async () => ({ metadata: { product_type: 'nome_empresa', user_id: fixtureUserId } }) },
+    },
     createCheckoutSession: async (params: Record<string, unknown>) => {
       createCheckoutCalls.push(params);
       return { url: checkoutSessionUrl, id: 'cs_new_recovery' };
@@ -48,7 +57,7 @@ mock.module('../../backend/db/subscriptions', {
     hasActiveSubscription: async () => hasActiveSubscription,
     createSubscription: async () => ({ subscription: {}, created: true }),
     refundSubscription: async () => {},
-    getSubscriptionByPaymentIntent: async () => null,
+    getSubscriptionByPaymentIntent: async () => disputeSubscription,
   },
 });
 
@@ -76,7 +85,7 @@ mock.module('../../backend/notifications/notify', {
   namedExports: {
     notify: async (event: string, payload: Record<string, unknown>) => {
       notifyCalls.push({ event, payload });
-      return true;
+      return notifyOk;
     },
     publishAccessAttributes: async () => true,
   },
@@ -133,12 +142,6 @@ mock.module('../../backend/auth/confirmEmail', {
   },
 });
 
-mock.module('../../backend/cache/memo', {
-  namedExports: {
-    invalidateUserSubscriptionsCache: () => {},
-  },
-});
-
 mock.module('../../backend/payments/admin-slack', {
   namedExports: {
     shouldNotifyAdminSlackForProvider: () => false,
@@ -171,14 +174,89 @@ async function dispatchWebhook() {
 
 describe('stripe-webhook · cart recovery (DEV-278)', () => {
   beforeEach(() => {
+    clearCache();
     failedPaymentDeduplicator.reset();
     notifyCalls.length = 0;
     createCheckoutCalls.length = 0;
     releaseCalls.length = 0;
+    notifyOk = true;
+    disputeSubscription = null;
     checkoutSessionUrl = 'https://checkout.stripe.com/pay/cs_recovery_new';
     hasActiveSubscription = false;
     claimResult = 'claimed';
     profile.nome = null;
+  });
+
+  function disputeEvent(overrides: Partial<StripeEvent> = {}, dispute: Record<string, unknown> = {}): StripeEvent {
+    return {
+      id: 'evt_fixture270',
+      type: 'charge.dispute.created',
+      livemode: true,
+      data: { object: {
+        id: 'dp_fixture270', amount: 6590, currency: 'brl', livemode: true,
+        reason: 'fraudulent', status: 'needs_response', charge: 'ch_fixture270',
+        payment_intent: {
+          id: 'pi_fixture270',
+          metadata: { product_type: 'nome_social', user_id: fixtureUserId, email: 'fixture@example.test' },
+        },
+        ...dispute,
+      } },
+      ...overrides,
+    };
+  }
+
+  it('DEV-270: abre um alerta de disputa com o contrato do n8n e sem contatos', async () => {
+    constructedEvent = disputeEvent();
+    const results = await Promise.all([dispatchWebhook(), dispatchWebhook()]);
+    assert.deepEqual(results.map((response) => response.status), [200, 200]);
+    assert.deepEqual(notifyCalls, [{
+      event: 'payment.chargeback',
+      payload: {
+        payment_id: 'pi_fixture270', productType: 'nome_social', userId: fixtureUserId,
+        amount: 6590, amount_formatted: 'R$ 65,90',
+        reason: 'fraudulent', status: 'needs_response', payment_provider: 'stripe', livemode: true,
+      },
+    }]);
+  });
+
+  it('DEV-270: não envia alerta em sandbox nem em disputas encerradas', async () => {
+    for (const event of [
+      disputeEvent({ livemode: false }),
+      disputeEvent({ type: 'charge.dispute.closed' }),
+      disputeEvent({}, { status: 'won' }),
+      disputeEvent({}, { livemode: false }),
+    ]) {
+      constructedEvent = event;
+      assert.equal((await dispatchWebhook()).status, 200);
+    }
+    assert.deepEqual(notifyCalls, []);
+  });
+
+  it('DEV-270: identifica a compra pela assinatura e depois pelos metadados Stripe', async () => {
+    disputeSubscription = { product_type: 'nome_social', user_id: fixtureUserId, payment_provider: 'stripe' };
+    constructedEvent = disputeEvent({}, { payment_intent: 'pi_fixture270' });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls[0]?.payload.productType, 'nome_social');
+
+    disputeSubscription = null;
+    constructedEvent = disputeEvent({}, { id: 'dp_intent270', payment_intent: 'pi_intent270' });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls[1]?.payload.productType, 'nome_empresa');
+
+    constructedEvent = disputeEvent({}, { id: 'dp_charge270', payment_intent: null });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls[2]?.payload.payment_id, 'ch_fixture270');
+    assert.equal(notifyCalls[2]?.payload.productType, 'nome_bebe');
+  });
+
+  it('DEV-270: pede reentrega ao Stripe se o n8n recusar o evento', async () => {
+    constructedEvent = disputeEvent();
+    notifyOk = false;
+    assert.equal((await dispatchWebhook()).status, 503);
+    notifyOk = true;
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls.length, 2);
   });
 
   it('checkout.session.expired emite só cart.abandoned (sem payment.failed)', async () => {
