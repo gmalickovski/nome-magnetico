@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
-import { captureBeginCheckout, captureViewOffer, track, trackBeginCheckout } from '../../lib/analytics';
+import { captureViewOffer, track, trackBeginCheckout } from '../../lib/analytics';
 import {
   checkoutFailureMessage,
   isCheckoutEmailNotConfirmed,
@@ -107,8 +107,6 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
         promocao: promotion?.name ?? null,
         origem: 'comprar',
       });
-
-      captureBeginCheckout('card', priceInfo.cents / 100);
       trackBeginCheckout({
         value: Number((priceInfo.cents / 100).toFixed(2)),
         currency: 'BRL',
@@ -280,7 +278,6 @@ export function CheckoutFlow({ productType, isLoggedIn, isOwned, paymentLinks, h
                   promocao: promotion?.name ?? null,
                   origem: 'comprar',
                 });
-                track('begin_checkout', { produto: type, valor: priceInfo.cents / 100 });
                 setModalProduct(type);
               }
             }}

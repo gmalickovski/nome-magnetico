@@ -154,14 +154,18 @@ export function readPostHogDistinctIdFromCookie(
 
 export function resolveCheckoutDistinctId(input: {
   phDistinctId?: string | null;
-  userId?: string | null;
-  email?: string | null;
+  analyticsConsent?: boolean;
 }): string | undefined {
-  return (
-    sanitizeDistinctId(input.phDistinctId) ??
-    sanitizeDistinctId(input.userId) ??
-    sanitizeDistinctId(input.email)
-  );
+  if (!input.analyticsConsent) return undefined;
+  const id = sanitizeDistinctId(input.phDistinctId);
+  return id?.includes('@') ? undefined : id;
+}
+
+export function sanitizePostHogSessionId(value: unknown): string | undefined {
+  const id = typeof value === 'string' ? value.trim() : '';
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+    ? id
+    : undefined;
 }
 
 /**
@@ -173,6 +177,7 @@ export async function captureServerEvent(params: {
   event: string;
   properties?: Record<string, string | number | boolean | null>;
   uuid?: string;
+  sessionId?: string;
 }): Promise<void> {
   const distinctId = sanitizeDistinctId(params.distinctId);
   if (!distinctId) return;
@@ -188,6 +193,8 @@ export async function captureServerEvent(params: {
       ...(params.properties ?? {}),
     };
     if (eventUuid) properties.$insert_id = eventUuid;
+    const sessionId = sanitizePostHogSessionId(params.sessionId);
+    if (sessionId) properties.$session_id = sessionId;
 
     await ph.captureImmediate({
       distinctId,

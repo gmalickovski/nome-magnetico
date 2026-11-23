@@ -9,6 +9,11 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
 <script is:inline define:vars={{ posthogKey, posthogHost }}>
   var NM_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
   var NM_UTM_STORAGE_KEY = 'nm-utm-first-touch';
+  var NM_PENDING_IDENTIFY_KEY = 'nm-posthog-pending-identify';
+
+  function nmHasAnalyticsConsent() {
+    return nmStorageGet('nm-cookie-consent') === 'all';
+  }
 
   function nmStorageGet(key) {
     try {
@@ -62,6 +67,7 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
       var key = NM_UTM_KEYS[i];
       if (typeof stored[key] !== 'string' || !stored[key]) continue;
       once['initial_' + key] = stored[key];
+      once['$initial_' + key] = stored[key];
       found = true;
     }
     return found ? once : null;
@@ -76,91 +82,112 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
     return pathname;
   }
 
-  function nmSanitizePostHogEvent(event) {
-    if (!event || !event.properties) return event;
-    var props = event.properties;
+  function nmSanitizePostHogProperties(props) {
+    function isInternalReferrer(value) {
+      if (typeof value !== 'string') return false;
+      try {
+        var host = new URL(value.includes('://') ? value : 'https://' + value).hostname;
+        return host === 'nomemagnetico.com.br' || host.endsWith('.nomemagnetico.com.br');
+      } catch (e) {
+        return false;
+      }
+    }
+    ['$referrer', '$referring_domain', '$initial_referrer', '$initial_referring_domain'].forEach(function (key) {
+      if (isInternalReferrer(props[key])) delete props[key];
+    });
+    ['email', '$email', 'name', '$name', 'nome', 'first_name', 'last_name'].forEach(function (key) {
+      delete props[key];
+    });
     if (typeof props.$pathname === 'string') {
       props.$pathname = nmNormalizeResultadoPath(props.$pathname);
     }
-    if (typeof props.$current_url === 'string') {
+    ['$current_url', '$referrer', '$entry_url', '$initial_current_url', '$initial_referrer'].forEach(function (key) {
+      if (typeof props[key] !== 'string') return;
       try {
-        var url = new URL(props.$current_url);
-        var normalized = nmNormalizeResultadoPath(url.pathname);
-        if (normalized !== url.pathname) {
-          url.pathname = normalized;
-          props.$current_url = url.toString();
-        }
+        var url = new URL(props[key]);
+        url.pathname = nmNormalizeResultadoPath(url.pathname);
+        ['email', 'nome', 'name', 'chosen_signature', 'redirect', 'error_description'].forEach(function (param) {
+          url.searchParams.delete(param);
+        });
+        if (url.pathname.startsWith('/auth/')) url.hash = '';
+        props[key] = url.toString();
       } catch (e) {}
-    }
+    });
+  }
+
+  function nmSanitizePostHogEvent(event) {
+    if (!nmHasAnalyticsConsent()) return null;
+    if (!event || !event.properties) return event;
+    nmSanitizePostHogProperties(event.properties);
+    ['$set', '$set_once'].forEach(function (key) {
+      var props = event.properties[key];
+      if (props && typeof props === 'object') nmSanitizePostHogProperties(props);
+    });
     return event;
   }
 
-  function nmFlushIdentify() {
+  function nmFlushIdentify(sdk) {
+    if (!nmHasAnalyticsConsent() || nmStorageGet('nm-user-role') === 'admin') return;
     var pending = window.__nm_pending_identify;
-    if (!pending || !pending.userId) return;
-    if (!window.__nm_posthog_ready || typeof window.posthog?.identify !== 'function') return;
-    var setProps = {};
-    if (pending.email) setProps.email = pending.email;
+    var userId = pending && pending.userId;
+    try {
+      if (!userId) userId = sessionStorage.getItem(NM_PENDING_IDENTIFY_KEY);
+    } catch (e) {}
+    var ph = sdk || window.posthog;
+    if (!userId || typeof ph?.get_distinct_id !== 'function') return;
     var once = nmUtmSetOnce();
-    if (once) window.posthog.identify(pending.userId, setProps, once);
-    else window.posthog.identify(pending.userId, setProps);
+    ph.identify(userId, undefined, once || undefined);
+    window.__nm_pending_identify = undefined;
+    try { sessionStorage.removeItem(NM_PENDING_IDENTIFY_KEY); } catch (e) {}
   }
 
-  window.nmIdentifyPostHog = function (userId, email) {
+  window.nmIdentifyPostHog = function (userId) {
     if (!userId) return;
-    window.__nm_pending_identify = { userId: String(userId), email: email ? String(email) : '' };
+    window.__nm_pending_identify = { userId: String(userId) };
+    if (nmHasAnalyticsConsent()) {
+      try { sessionStorage.setItem(NM_PENDING_IDENTIFY_KEY, String(userId)); } catch (e) {}
+    }
     nmFlushIdentify();
   };
 
   function loadPostHog() {
     try {
-      if (!posthogKey) return;
-      var hasFullConsent = nmStorageGet('nm-cookie-consent') === 'all';
-
-      if (window.__nm_posthog_ready) {
-        if (hasFullConsent && window.posthog) {
-          try {
-            window.posthog.set_config?.({
-              persistence: 'localStorage+cookie',
-              disable_session_recording: false,
-            });
-            window.posthog.startSessionRecording?.();
-            nmFlushIdentify();
-          } catch (e) {}
-        }
-        return;
-      }
+      if (!posthogKey || !nmHasAnalyticsConsent()) return;
+      nmPersistUtmFirstTouch();
+      if (window.__nm_posthog_ready) return;
       window.__nm_posthog_ready = true;
 
       !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="init capture register register_once register_for_session unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group identify setPersonProperties setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags resetGroups onFeatureFlags addFeatureFlagsHandler onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep startSessionRecording stopSessionRecording set_config".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
       posthog.init(posthogKey, {
         api_host: posthogHost || 'https://us.i.posthog.com',
         defaults: '2026-05-30',
-        persistence: hasFullConsent ? 'localStorage+cookie' : 'memory',
-        disable_session_recording: !hasFullConsent,
+        persistence: 'localStorage+cookie',
+        cross_subdomain_cookie: true,
+        disable_session_recording: false,
         session_recording: {
           maskAllInputs: true,
         },
         before_send: nmSanitizePostHogEvent,
+        loaded: function (sdk) {
+          if (!nmHasAnalyticsConsent()) {
+            sdk.opt_out_capturing();
+            return;
+          }
+          nmFlushIdentify(sdk);
+          sdk.startSessionRecording();
+          window.dispatchEvent(new Event('nm-posthog-ready'));
+        },
       });
-      if (hasFullConsent && typeof posthog.startSessionRecording === 'function') {
-        posthog.startSessionRecording();
-      }
-      if (hasFullConsent) {
-        nmFlushIdentify();
-      }
-      window.dispatchEvent(new Event('nm-posthog-ready'));
     } catch (e) {
       window.__nm_posthog_ready = false;
     }
   }
 
-  nmPersistUtmFirstTouch();
   loadPostHog();
-  window.addEventListener('consentGranted', function () {
-    nmPersistUtmFirstTouch();
-    loadPostHog();
-  });
+  if (!window.__nm_posthog_consent_listener) {
+    window.__nm_posthog_consent_listener = true;
+    window.addEventListener('consentGranted', loadPostHog);
+  }
 </script>
 
 <script is:inline>
@@ -177,7 +204,7 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
     }
 
     function capture(event, properties) {
-      if (isAdmin()) return false;
+      if (isAdmin() || !nmHasAnalyticsConsent()) return false;
       if (typeof window.posthog?.capture !== 'function') return false;
       window.posthog.capture(event, properties);
       return true;

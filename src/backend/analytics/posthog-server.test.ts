@@ -1,12 +1,25 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
-import {
+import { describe, it, mock } from 'node:test';
+
+const sent: Array<{ distinctId: string; properties: Record<string, unknown> }> = [];
+mock.module('posthog-node', {
+  namedExports: {
+    PostHog: class {
+      async captureImmediate(payload: typeof sent[number]) { sent.push(payload); }
+      async flush() {}
+      async shutdown() {}
+    },
+  },
+});
+
+const {
   captureServerEvent,
   posthogEventUuid,
   readPostHogDistinctIdFromCookie,
   resolveCheckoutDistinctId,
+  shutdownPostHogServer,
   uuidV5,
-} from './posthog-server';
+} = await import('./posthog-server');
 
 const DNS_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
@@ -35,14 +48,28 @@ describe('posthog-server', () => {
     assert.equal(readPostHogDistinctIdFromCookie(null), undefined);
   });
 
-  it('prefere ph_distinct_id e cai para user id ou email', () => {
-    assert.equal(
-      resolveCheckoutDistinctId({ phDistinctId: ' anon ', userId: 'user-1', email: 'a@b.co' }),
-      'anon',
-    );
-    assert.equal(resolveCheckoutDistinctId({ phDistinctId: '  ', userId: 'user-1', email: 'a@b.co' }), 'user-1');
-    assert.equal(resolveCheckoutDistinctId({ email: 'a@b.co' }), 'a@b.co');
+  it('exige consentimento e rejeita e-mail como distinct_id do checkout', () => {
+    assert.equal(resolveCheckoutDistinctId({ phDistinctId: ' anon ', analyticsConsent: true }), 'anon');
+    assert.equal(resolveCheckoutDistinctId({ phDistinctId: 'anon' }), undefined);
+    assert.equal(resolveCheckoutDistinctId({ phDistinctId: 'a@b.co', analyticsConsent: true }), undefined);
     assert.equal(resolveCheckoutDistinctId({}), undefined);
+  });
+
+  it('associa a sessão do PostHog e omite o campo para sessão ausente ou inválida', async () => {
+    const previous = process.env.POSTHOG_API_KEY;
+    process.env.POSTHOG_API_KEY = 'dummy-test';
+    sent.length = 0;
+    const id = '019af9f2-48f0-7a88-9a68-3c0202feb366';
+    try {
+      for (const sessionId of [id, undefined, 'cs_test_stripe']) {
+        await captureServerEvent({ distinctId: 'fixture', event: 'purchase', sessionId });
+      }
+      assert.deepEqual(sent.splice(0).map((item) => item.properties), [{ $session_id: id }, {}, {}]);
+    } finally {
+      await shutdownPostHogServer();
+      if (previous === undefined) delete process.env.POSTHOG_API_KEY;
+      else process.env.POSTHOG_API_KEY = previous;
+    }
   });
 
   it('não lança quando a chave do PostHog está ausente', async () => {

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from './CheckoutModal';
-import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
+import { track, trackBeginCheckout } from '../../lib/analytics';
+import { withAuthUtm } from '../../lib/utm';
 import { isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
 import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
@@ -51,7 +52,6 @@ export function LandingCheckout({
         promocao: promotion?.name ?? null,
         origem: 'landing_auto_open',
       });
-      track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
       setModalOpen(true);
       params.delete('checkout');
       window.history.replaceState(
@@ -74,12 +74,11 @@ export function LandingCheckout({
         promocao: promotion?.name ?? null,
         origem: 'landing',
       });
-      track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
       setModalOpen(true);
     } else {
       // Redireciona para cadastro com URL de retorno codificada
       const returnUrl = `${window.location.pathname}?checkout=${product}`;
-      window.location.href = `/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`;
+      window.location.href = withAuthUtm(`/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`, window.location.href);
     }
   }
 
@@ -93,7 +92,6 @@ export function LandingCheckout({
         codigo_cupom: couponCode,
         origem: 'landing',
       });
-      captureBeginCheckout('card', priceInfo.cents / 100);
       trackBeginCheckout({
         value: Number((priceInfo.cents / 100).toFixed(2)),
         currency: 'BRL',

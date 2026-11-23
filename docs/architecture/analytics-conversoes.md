@@ -1,6 +1,6 @@
 # Analytics e Conversões de Pagamento
 
-Última atualização: 2026-10-01 — PostHog Free em paralelo ao GA4
+Última atualização: 2026-11-22 · DEV-276
 
 Este documento descreve a arquitetura de analytics do Nome Magnético para eventos de marketing, checkout, visualização do blog, testes gratuitos e conversões canônicas de pagamento confirmado.
 
@@ -50,11 +50,11 @@ Fonte de funil para Growth. O GA4 continua para Ads, Search Console e remarketin
 - **Servidor:** `src/backend/analytics/posthog-server.ts` (`posthog-node`). Chave `POSTHOG_API_KEY` ou, se vazia, `PUBLIC_POSTHOG_KEY`. Host `POSTHOG_HOST` ou `PUBLIC_POSTHOG_HOST`. Sem chave, o capture não envia e não lança.
 - **Consentimento:** o mesmo banner (`nm-cookie-consent=all`). Sem aceite, o SDK não inicializa.
 - **Projeto:** `639826` (US Cloud). `defaults: '2026-05-30'`.
-- **Pessoa:** no login, no cadastro bem-sucedido e na sessão das páginas `/app` de quem não é admin, `posthog.identify(user.id, { email })` usa o id do Supabase. Logout chama `posthog.reset()`.
-- **UTM first-touch:** `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` e `utm_term` da primeira URL ficam em `localStorage` (`nm-utm-first-touch`) só se a chave ainda não existir. No `identify`, vão como `$set_once` com prefixo `initial_` (`initial_utm_source`, etc.). O envio continua atrás do consentimento.
-- **Pathname:** `before_send` reescreve `/app/resultado/<id>` para `/app/resultado/:id` em `$pathname` (e no path de `$current_url`) para agrupar os relatórios.
+- **Pessoa:** no login, no cadastro bem-sucedido e na sessão das páginas `/app` de quem não é admin, `posthog.identify(user.id, undefined, setOnce)` usa apenas o id do Supabase como identificador. O logout limpa o identificador e qualquer identificação pendente.
+- **UTM first-touch:** `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` e `utm_term` da primeira URL ficam em `localStorage` (`nm-utm-first-touch`) só se a chave ainda não existir. No `identify`, os cinco parâmetros vão em `$set_once` com os prefixos `initial_` e `$initial_`. O envio continua atrás do consentimento.
+- **Pathname e origem:** `before_send` agrupa `/app/resultado/<id>`, remove referrers do próprio domínio e retira os parâmetros pessoais das URLs de autenticação. Referrers externos são preservados.
 - **Session replay:** `disable_session_recording` fica `false`. Depois de `nm-cookie-consent=all`, o init chama `posthog.startSessionRecording()` com `session_recording.maskAllInputs: true`. Sem consentimento o SDK não sobe.
-- **Checkout:** o browser manda `window.posthog.get_distinct_id()` no `POST /api/create-checkout` (junto com o `begin_checkout` do PostHog). Se o body não trouxer, o servidor lê o cookie `ph_*_posthog`. O id vai em `metadata.ph_distinct_id` da sessão Stripe (e no `payment_intent_data.metadata`). No webhook, o `distinct_id` do PostHog é esse valor ou, na falta dele, o user id e depois o e-mail.
+- **Checkout:** após o aceite, o browser envia `ph_distinct_id`, `ph_session_id` e `ph_analytics_consent`. O servidor grava esses dados na metadata do Stripe. O webhook usa o mesmo `distinct_id` e repassa `ph_session_id` em `$session_id` quando presente. O Stripe mantém seu próprio identificador em `stripe_session_id` e no campo legado `session_id`. Sem consentimento registrado no checkout, os eventos PostHog desse fluxo são omitidos.
 
 Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso continua sendo só a tabela):
 
@@ -62,18 +62,22 @@ Eventos canônicos (não usar `free_analyses_leads` como nome de evento — isso
 | :--- | :--- | :--- |
 | `$pageview` | SDK, no init (defaults `2026-05-30` usam `capture_pageview: history_change`) | automáticas |
 | `analise_gratis_submit` | `track()` — lead do form público `/analise-gratuita` (`PublicAnalysisForm`) e o mesmo evento já existente na análise gratuita logada (`FreeAnalysisForm`) | — |
-| `begin_checkout` | PostHog: `captureBeginCheckout` no POST `/api/create-checkout` (landing, preços, comprar e dashboard). GA4: `trackBeginCheckout` no mesmo POST | PostHog: `payment_method` (`card` \| `pix`), `value`, `currency=BRL`. GA4: `value`, `currency=BRL`, `payment_method` |
+| `begin_checkout` | PostHog: `captureBeginCheckout` no POST `/api/create-checkout` (landing, preços, comprar e dashboard). GA4: `trackBeginCheckout` no mesmo POST | PostHog: `product_type`, `payment_method`, `value`, `currency=BRL`, `$session_id` quando disponível. GA4: `value`, `currency=BRL`, `payment_method` |
 | `cta_click` | listener delegado em `posthog.astro` nos elementos com `data-cta-id` | `cta_id`, `position` (`data-cta-position`) |
 | `scroll_depth` | `posthog.astro`, só `/` e `/nome-social`, cada marco uma vez por pageview | `percent` (`25` \| `50` \| `75` \| `100`), `path` |
 | `resultado_view` | `/app/resultado/[id]` quando a análise completa é exibida | `analise_id`, `score` |
 | `view_offer` | preço no checkout (`CheckoutFlow` / `CheckoutModal`) e upsell do resultado | — |
-| `purchase` | PostHog: webhook Stripe, depois da subscription — `checkout.session.completed` com `payment_status=paid` (cartão) e `checkout.session.async_payment_succeeded` (Pix). GA4: `sendGa4Purchase` no mesmo ponto. Nenhum dos dois passa por `trackPurchaseConfirmed` | PostHog: `value` (`amount_total/100`), `currency`, `payment_method` (`card` \| `pix`), `session_id`, `product`, `plan`. GA4: `transaction_id` (session id Stripe), `value`, `currency`, `items` |
+| `purchase` | PostHog: webhook Stripe, depois da subscription — `checkout.session.completed` com `payment_status=paid` (cartão) e `checkout.session.async_payment_succeeded` (Pix). GA4: `sendGa4Purchase` no mesmo ponto. Nenhum dos dois passa por `trackPurchaseConfirmed` | PostHog: `value` (`amount_total/100`), `currency`, `payment_method` (`card` \| `pix`), `stripe_session_id`, `session_id` legado, `$session_id` quando disponível, `product`, `plan`. GA4: `transaction_id` (session id Stripe), `value`, `currency`, `items` |
 | `checkout_error` | `checkout.session.async_payment_failed` | as mesmas props, `payment_method=pix` |
 | `checkout_abandoned` | `checkout.session.expired` | `value`, `currency`, `session_id`, `product`, `plan` |
 
 Cada evento sai uma vez por destino. O uuid do PostHog é v5 de `evento + session_id` (e o mesmo valor vai em `$insert_id`). Cartão e Pix da mesma sessão, ou retry do Stripe, não geram dois `purchase`. O GA4 usa `transaction_id` = id da sessão em `sendGa4Purchase`. `trackPurchaseConfirmed` não envia PostHog nem um segundo purchase ao GA4, para não contar a receita duas vezes.
 
-O wrapper `track()` manda os eventos atuais para o GA4, exceto `begin_checkout`: esse e-commerce sai só por `trackBeginCheckout` no POST `/api/create-checkout`. Para o PostHog, `track()` replica só `analise_gratis_submit`. `begin_checkout` no PostHog sai só nesse POST, via `captureBeginCheckout`, com `payment_method`, e o mesmo request manda `ph_distinct_id` (`getPostHogDistinctId()`). O caminho atual do front inicia a sessão Stripe (cartão e PIX escolhidos no Checkout hospedado) e envia `payment_method: 'card'`. `purchase_complete` no retorno visual do app segue só no GA4; a receita oficial é um `purchase` no PostHog e um `purchase` no GA4, ambos no webhook.
+O GA4 mantém os eventos e os pontos de emissão existentes. No PostHog, `begin_checkout` sai uma vez, após a resposta bem-sucedida que cria a sessão Stripe. Se o preço mudar, a tentativa que pede confirmação não emite o evento.
+
+Durante 30 dias após a publicação, `checkout_start`, `checkout_redirect_start` e `checkout_started` mantêm a série histórica com `deprecated: true` e `replaced_by: begin_checkout`. `payment_confirmed` usa os mesmos marcadores com `replaced_by: purchase`. Growth pode migrar os relatórios para os eventos canônicos antes da remoção.
+
+A confirmação de sessão compartilhada, pessoa única e origem no painel depende da validação integrada em TESTE com eventos sintéticos. O PostHog fica desativado para o checkout antes do aceite.
 
 ### 2. Eventos Client-side Implementados
 

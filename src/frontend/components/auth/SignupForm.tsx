@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { identifyUser } from '../../lib/analytics';
+import { withAuthUtm } from '../../lib/utm';
 import { writeLocalStorage } from '../../../utils/browser-storage';
 
 interface Props {
@@ -35,10 +36,13 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
 
     setLoading(true);
 
+    const currentUrl = window.location.href;
+    const target = redirect || (produto ? '/comprar?' + new URLSearchParams({ produto }) : '/app');
+    const returnPath = withAuthUtm(target, currentUrl);
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, password, produto, redirect }),
+      body: JSON.stringify({ nome, email, password, produto, redirect: redirect ? returnPath : '' }),
     });
 
     const data = await res.json();
@@ -48,10 +52,10 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
         setError('Este email já está registrado. Use-o para fazer login.');
         setLoading(false);
         setTimeout(() => {
-          const loginUrl = produto
-            ? `/auth/login?produto=${produto}&msg=conta-existente`
-            : '/auth/login?msg=conta-existente';
-          window.location.href = loginUrl;
+          const params = new URLSearchParams({ msg: 'conta-existente' });
+          if (redirect) params.set('redirect', returnPath);
+          else if (produto) params.set('produto', produto);
+          window.location.href = withAuthUtm('/auth/login?' + params, currentUrl);
         }, 2500);
         return;
       }
@@ -66,13 +70,13 @@ export function SignupForm({ produto = '', redirect = '', prefilledEmail = '' }:
     }
 
     if (data.user?.id) {
-      identifyUser(data.user.id, data.user.email || email);
+      identifyUser(data.user.id);
     }
 
     if (data.session?.access_token && data.session?.refresh_token) {
       document.cookie = `nome-magnetico-auth-access-token=${data.session.access_token}; path=/; max-age=3600; SameSite=Lax`;
       document.cookie = `nome-magnetico-auth-refresh-token=${data.session.refresh_token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
-      window.location.href = redirect || (produto ? `/comprar?produto=${produto}` : '/app');
+      window.location.href = returnPath;
       return;
     }
 

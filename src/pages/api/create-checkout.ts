@@ -13,8 +13,8 @@ import {
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
 import {
   captureServerEvent,
-  readPostHogDistinctIdFromCookie,
-  sanitizeDistinctId,
+  resolveCheckoutDistinctId,
+  sanitizePostHogSessionId,
 } from '../../backend/analytics/posthog-server';
 import { PRODUCT_TYPES, SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { logError } from '../../backend/utils/error-logger';
@@ -35,6 +35,8 @@ const schema = z.object({
   product_type: z.enum(PRODUCT_TYPES),
   couponCode: z.string().optional(),
   ph_distinct_id: z.string().optional(),
+  ph_session_id: z.string().trim().max(200).optional(),
+  ph_analytics_consent: z.literal(true).optional(),
   renewal: z.union([z.literal(1), z.literal('1'), z.literal(true)]).optional(),
   etapa: z.string().max(32).optional(),
   /** Centavos exibidos na página — se divergir, devolve price_changed antes do Stripe */
@@ -59,7 +61,6 @@ export async function createCheckoutResponse(args: {
   renewal?: boolean;
   etapa?: string | null;
   productType?: ProductType;
-  phDistinctId?: string;
 }): Promise<Response> {
   const { request, url } = args;
   const user = args.user;
@@ -89,7 +90,6 @@ export async function createCheckoutResponse(args: {
     ...(queryEtapa && queryEtapa.trim() ? { etapa: queryEtapa } : {}),
     ...(queryRenewal ? { renewal: '1' as const } : {}),
     ...(args.productType ? { product_type: args.productType } : {}),
-    ...(args.phDistinctId ? { ph_distinct_id: args.phDistinctId } : {}),
     ...(args.renewal ? { renewal: '1' as const } : {}),
     ...(args.etapa && args.etapa.trim() ? { etapa: args.etapa } : {}),
   };
@@ -161,9 +161,11 @@ export async function createCheckoutResponse(args: {
     return json({ error: 'Cupom não se aplica à renovação.' }, 400);
   }
 
-  const phDistinctId =
-    sanitizeDistinctId(parsed.data.ph_distinct_id) ??
-    readPostHogDistinctIdFromCookie(request.headers.get('cookie'));
+  const phDistinctId = resolveCheckoutDistinctId({
+    phDistinctId: parsed.data.ph_distinct_id,
+    analyticsConsent: parsed.data.ph_analytics_consent,
+  });
+  const phSessionId = phDistinctId ? sanitizePostHogSessionId(parsed.data.ph_session_id) : undefined;
   const baseUrl = getPublicBaseUrl();
 
   const { data: profile } = await supabase
@@ -314,25 +316,6 @@ export async function createCheckoutResponse(args: {
         ? `${baseUrl}/app?checkout=success&produto=nome_social&resume=1`
         : `${baseUrl}/app?checkout=success&produto=${product_type}`;
 
-    const distinctId =
-      phDistinctId ??
-      user.id;
-
-    await captureServerEvent({
-      distinctId,
-      event: 'checkout_started',
-      properties: {
-        product_type,
-        base_cents: effective.base_cents,
-        final_cents: effective.final_cents,
-        promo_id: effective.promo_id ?? '',
-        promo_code: effective.promoCode ?? couponCode?.trim() ?? '',
-        discount_source: effective.discountSource,
-        currency: 'BRL',
-        value: Number((effective.final_cents / 100).toFixed(2)),
-      },
-    }).catch((err) => console.error('[create-checkout] PostHog checkout_started:', err));
-
     const session = await createCheckoutSession({
       userId: user.id,
       userEmail: user.email ?? '',
@@ -350,6 +333,7 @@ export async function createCheckoutResponse(args: {
       couponCode: isRenewal ? undefined : couponCode?.trim(),
       gaClientId: getGaClientIdFromRequest(request),
       phDistinctId,
+      phSessionId,
       purchaseKind: isRenewal ? 'renewal' : 'new',
       utmCampaign: resolvedUtmCampaign,
       utmSource: resolvedUtmSource,
@@ -358,6 +342,27 @@ export async function createCheckoutResponse(args: {
       analysisId: verifiedAnalysisId,
       source: chatSource,
     });
+
+    if (phDistinctId && session.url) {
+      await captureServerEvent({
+        distinctId: phDistinctId,
+        event: 'checkout_started',
+        sessionId: phSessionId,
+        properties: {
+          product_type,
+          stripe_session_id: session.id,
+          base_cents: effective.base_cents,
+          final_cents: effective.final_cents,
+          promo_id: effective.promo_id ?? '',
+          promo_code: effective.promoCode ?? couponCode?.trim() ?? '',
+          discount_source: effective.discountSource,
+          currency: 'BRL',
+          value: Number((effective.final_cents / 100).toFixed(2)),
+          deprecated: true,
+          replaced_by: 'begin_checkout',
+        },
+      }).catch((err) => console.error('[create-checkout] PostHog checkout_started:', err));
+    }
 
     return json({ url: session.url, final_cents: unitAmount, base_cents: effective.base_cents }, 200);
   } catch (err: unknown) {

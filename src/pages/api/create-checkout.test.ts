@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
+import { resolveCheckoutDistinctId, sanitizePostHogSessionId } from '../../backend/analytics/posthog-server';
 
 type ProfileRow = {
   role: 'user' | 'admin';
@@ -104,7 +105,7 @@ mock.module('../../backend/payments/stripe', {
         throw new Error('stripe should not run in these tests');
       }
       stripeSessionCalls.push(params);
-      return { url: 'https://checkout.stripe.com/pay/cs_test_123' };
+      return { url: 'https://checkout.stripe.com/pay/cs_test_123', id: 'cs_test_123' };
     },
   },
 });
@@ -142,8 +143,8 @@ mock.module('../../backend/analytics/ga4', {
 mock.module('../../backend/analytics/posthog-server', {
   namedExports: {
     captureServerEvent: async () => {},
-    readPostHogDistinctIdFromCookie: () => undefined,
-    sanitizeDistinctId: (id: string | undefined) => id,
+    resolveCheckoutDistinctId,
+    sanitizePostHogSessionId,
   },
 });
 
@@ -206,6 +207,20 @@ describe('create-checkout · DEV-239', () => {
     assert.equal(res.status, 409);
     assert.equal(data.code, 'already_active');
     assert.equal(testCheckoutCalls.length, 0);
+  });
+
+  it('DEV-276: só encaminha distinct_id e sessão ao Stripe com consentimento', async () => {
+    allowStripeSession = true;
+    const id = '019af9f2-48f0-7a88-9a68-3c0202feb366';
+    const body = { product_type: 'nome_social', ph_distinct_id: 'visitor', ph_session_id: id };
+    assert.equal((await post(body)).status, 200);
+    assert.equal(stripeSessionCalls[0].phDistinctId, undefined);
+    assert.equal(stripeSessionCalls[0].phSessionId, undefined);
+
+    assert.equal((await post({ ...body, ph_analytics_consent: true })).status, 200);
+    assert.equal(stripeSessionCalls[1].phDistinctId, 'visitor');
+    assert.equal(stripeSessionCalls[1].phSessionId, id);
+    assert.equal((await post({ ...body, ph_session_id: 'a'.repeat(201) })).status, 400);
   });
 
   it('perfil is_test sem assinatura ativa usa bypass test e não chama Stripe', async () => {

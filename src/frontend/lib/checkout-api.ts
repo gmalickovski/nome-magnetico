@@ -1,4 +1,4 @@
-import { getPostHogDistinctId } from './analytics';
+import { captureBeginCheckout, getPostHogDistinctId, getPostHogSessionId } from './analytics';
 
 export interface CreateCheckoutBody {
   product_type: string;
@@ -24,12 +24,14 @@ export type CreateCheckoutResult =
     };
 
 export async function postCreateCheckout(body: CreateCheckoutBody): Promise<CreateCheckoutResult> {
+  const distinctId = getPostHogDistinctId();
+  const sessionId = distinctId ? getPostHogSessionId() : undefined;
   const res = await fetch('/api/create-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ...body,
-      ph_distinct_id: getPostHogDistinctId(),
+      ...(distinctId ? { ph_distinct_id: distinctId, ph_session_id: sessionId, ph_analytics_consent: true } : {}),
     }),
   });
   const data = (await res.json()) as {
@@ -42,6 +44,7 @@ export async function postCreateCheckout(body: CreateCheckoutBody): Promise<Crea
     message?: string;
     pricing?: { cents: number; formatted: string; hasDiscount: boolean; discountedFormatted?: string };
     effective?: { final_cents: number };
+    final_cents?: number;
   };
 
   if (data.price_changed && data.effective?.final_cents) {
@@ -77,6 +80,9 @@ export async function postCreateCheckout(body: CreateCheckoutBody): Promise<Crea
   }
   if (!data.url) {
     return { ok: false, error: 'URL de pagamento não retornada' };
+  }
+  if (distinctId && typeof data.final_cents === 'number') {
+    captureBeginCheckout(body.product_type, 'card', data.final_cents / 100, sessionId);
   }
   return { ok: true, url: data.url };
 }
