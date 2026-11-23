@@ -92,19 +92,17 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
 
     const withCoupon = await getEffectivePriceCore({ productType: product_type, couponValidation });
 
-    if (withCoupon.discountSource === 'coupon' && withCoupon.promoCode) {
-      return json({
-        valid: true,
-        originalCents: withCoupon.base_cents,
-        discountedCents: withCoupon.final_cents,
-        originalFormatted: formatBRL(withCoupon.base_cents),
-        discountedFormatted: formatBRL(withCoupon.final_cents),
-        discountLabel: 'Desconto aplicado',
-        promotionName: withCoupon.promoCode,
-      });
-    }
-
-    return json({ valid: false, error: COUPON_INVALID });
+    const applied = withCoupon.discountSource === 'coupon';
+    return json({
+      valid: true,
+      applied,
+      originalCents: withCoupon.base_cents,
+      discountedCents: withCoupon.final_cents,
+      originalFormatted: formatBRL(withCoupon.base_cents),
+      discountedFormatted: formatBRL(withCoupon.final_cents),
+      discountLabel: applied ? 'Desconto aplicado' : 'O preço vigente já é igual ou menor que o preço com este cupom.',
+      promotionName: withCoupon.promoCode,
+    });
   } catch {
     return json({ valid: false, error: 'Erro ao validar cupom. Tente novamente.' }, 500);
   }
