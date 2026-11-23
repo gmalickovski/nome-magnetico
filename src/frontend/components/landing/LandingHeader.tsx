@@ -1,18 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+const NICHE_NAV_LINKS = [
+  { href: '/nome-social', label: 'Nome Social' },
+  { href: '/nome-artistico', label: 'Nome Artístico' },
+  { href: '/nome-bebe', label: 'Nome do Bebê' },
+] as const;
+
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [nomeMenuOpen, setNomeMenuOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
   const [compact, setCompact] = useState<boolean | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const nomeDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
   }, []);
+
+  useEffect(() => {
+    if (!nomeMenuOpen) return;
+    const handleOutside = (event: MouseEvent) => {
+      if (nomeDropdownRef.current && !nomeDropdownRef.current.contains(event.target as Node)) {
+        setNomeMenuOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNomeMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [nomeMenuOpen]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -79,6 +105,10 @@ export function LandingHeader() {
       : `${base} text-gray-400 hover:text-[#D4AF37] after:w-0 hover:after:w-full`;
   }
 
+  const isNicheRoute = NICHE_NAV_LINKS.some(
+    (item) => currentPath === item.href || currentPath.startsWith(item.href + '/'),
+  );
+
   function mobileLink(href: string): string {
     const active = currentPath === href || (href !== '/' && currentPath.startsWith(href + '/'));
     return `block py-2.5 text-sm transition-colors ${active ? 'text-[#D4AF37] font-medium' : 'text-gray-400 hover:text-[#D4AF37]'}`;
@@ -109,9 +139,56 @@ export function LandingHeader() {
             Análise Gratuita
           </a>
 
-          <a href="/nome-social" className={`${navLink('/nome-social')} whitespace-nowrap shrink-0`}>
-            Nome Social
-          </a>
+          <div ref={nomeDropdownRef} className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setNomeMenuOpen((prev) => !prev)}
+              aria-expanded={nomeMenuOpen}
+              aria-haspopup="menu"
+              className={`relative inline-flex items-center gap-1.5 transition-colors text-sm whitespace-nowrap cursor-pointer ${
+                isNicheRoute || nomeMenuOpen
+                  ? 'text-[#D4AF37]'
+                  : 'text-gray-400 hover:text-[#D4AF37]'
+              }`}
+            >
+              <span>Nome</span>
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${nomeMenuOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {nomeMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Caminhos de Nome"
+                className="absolute left-0 top-full mt-3 w-52 rounded-2xl bg-[#19191c]/95 backdrop-blur-xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 z-50"
+              >
+                {NICHE_NAV_LINKS.map((item) => {
+                  const active = currentPath === item.href || currentPath.startsWith(item.href + '/');
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      role="menuitem"
+                      onClick={() => setNomeMenuOpen(false)}
+                      className={`block rounded-xl px-3.5 py-2.5 text-sm transition-colors ${
+                        active
+                          ? 'bg-[#D4AF37]/15 text-[#f2ca50] font-medium'
+                          : 'text-[#e5e2e1] hover:bg-white/5 hover:text-[#f2ca50]'
+                      }`}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <a href="/precos" className={`${navLink('/precos')} whitespace-nowrap shrink-0`}>
             Preços
@@ -164,7 +241,21 @@ export function LandingHeader() {
         <div className={`${menuButtonClass} bg-[#111111] border-t border-[#D4AF37]/20 px-4 py-6 space-y-1`}>
           <a href="/#como-funciona" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Como Funciona</a>
           <a href="/analise-gratuita" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Análise Gratuita</a>
-          <a href="/nome-social" className={mobileLink('/nome-social')} onClick={() => setMenuOpen(false)}>Nome Social</a>
+          <div className="py-1.5">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#D4AF37]/80 pb-1">Nome</p>
+            <div className="pl-3 space-y-0.5">
+              {NICHE_NAV_LINKS.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className={mobileLink(item.href)}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
           <a href="/precos" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Preços</a>
           <a href="/blog" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Blog</a>
           <a href="/perguntas-frequentes" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Perguntas Frequentes</a>

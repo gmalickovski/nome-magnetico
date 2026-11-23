@@ -6,8 +6,8 @@
 
 export const HOME_PATH_URLS = {
   social: '/nome-social',
-  artistico: '/app/analise/nome-social?caminho=artistico',
-  bebe: '/app/analise/nome-social?caminho=bebe',
+  artistico: '/nome-artistico',
+  bebe: '/nome-bebe',
   analiseGratuita: '#analise-gratuita',
 } as const;
 

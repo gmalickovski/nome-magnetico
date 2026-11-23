@@ -1,0 +1,9 @@
+---
+import NicheLandingPage from '../components/NicheLandingPage.astro';
+import { loadNichePageSsrData } from '../backend/landing/niche-page-data';
+import { NOME_ARTISTICO_COPY } from '../frontend/components/landing/niche';
+
+const ssr = await loadNichePageSsrData(Astro, NOME_ARTISTICO_COPY);
+---
+
+<NicheLandingPage copy={NOME_ARTISTICO_COPY} ssr={ssr} />

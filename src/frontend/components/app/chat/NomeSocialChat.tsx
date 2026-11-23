@@ -57,6 +57,7 @@ import { ChatSidebarSection } from './ChatSidebarSection.js';
 import { ChatSidebarPanelChrome } from './ChatSidebarPanelChrome.js';
 import { isInteractionPending, isOnboardingStepId } from './chat-interaction-pending.js';
 import { ChatStepInteraction, ChatChoicePills } from './ChatStepInteraction.js';
+import { resolveInitialChatPath } from './initial-chat-path.js';
 import {
   INITIAL_COLLECT_STATE,
   applyAnswerToCollectState,
@@ -190,6 +191,8 @@ export interface NomeSocialChatProps {
   emailConfirmed?: boolean;
   /** DEV-326: pergunta inicial de caminho (meu nome, nome artístico, bebê). Vem do servidor. */
   caminhoInicialAtivo?: boolean;
+  /** DEV-339: caminho inicial vindo da URL (`?caminho=dia_a_dia|artistico|bebe`). */
+  initialCaminho?: string;
 }
 
 const GENDER_OPTIONS = [
@@ -255,8 +258,10 @@ export function NomeSocialChat({
   isSubscriber = true,
   emailConfirmed = true,
   caminhoInicialAtivo = false,
+  initialCaminho,
 }: NomeSocialChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const initialCaminhoAppliedRef = useRef(false);
   const [confirmedName, setConfirmedName] = useState(initialBirthName);
   const [confirmedDate, setConfirmedDate] = useState(initialBirthDate);
   const [draftNome, setDraftNome] = useState(initialBirthName);
@@ -1525,6 +1530,19 @@ export function NomeSocialChat({
     }
     setMessages((prev) => [...prev, ...buildInitialOnboardingMessages(initialBirthName, initialBirthDate)]);
   };
+
+  // DEV-339: se a URL trouxe ?caminho= e a conversa ainda está na escolha inicial, seleciona automaticamente.
+  useEffect(() => {
+    if (!sessionBootstrapped.current || initialCaminhoAppliedRef.current) return;
+    if (!caminhoInicialAtivo || !isSubscriber || !initialCaminho) return;
+    if (birthConfirmed || answers.onboarding_caminho || loading) return;
+
+    const option = resolveInitialChatPath(initialCaminho, MOTIVO_HARMONIZACAO_OPTIONS);
+    if (!option) return;
+
+    initialCaminhoAppliedRef.current = true;
+    handleCaminhoInicial(option.id, option.label);
+  }, [caminhoInicialAtivo, isSubscriber, initialCaminho, birthConfirmed, answers.onboarding_caminho, loading]);
 
   /** DEV-326: nomes de nascimento da mãe e do pai (pelo menos um). */
   const handleBabyParents = (pais: DadosPais) => {
