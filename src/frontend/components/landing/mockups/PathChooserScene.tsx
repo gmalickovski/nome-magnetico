@@ -1,6 +1,16 @@
 import { useMemo } from 'react';
+import {
+  ChatOptionPills,
+  ChatPanelHeader,
+  ChatProgressBar,
+  NmBubble,
+  ReadingTopicCard,
+  UserBubble,
+  type ChatOptionPillItem,
+} from '../../shared/chat-ui/index.js';
 import { DeviceFrame } from './DeviceFrame.js';
-import { MOCKUP_THEMES, type MockupDevice, type MockupTheme } from './types.js';
+import { ScaledMockupCanvas } from './ScaledMockupCanvas.js';
+import { MOCKUP_THEMES, type MockupDevice, type MockupTheme, type MockupThemeTokens } from './types.js';
 import { useMockupTimeline, type TimelineStep } from './useMockupTimeline.js';
 import './mockup-animations.css';
 
@@ -13,9 +23,8 @@ const PATH_CHOOSER_STEPS: ReadonlyArray<TimelineStep<PathChooserAction>> = [
   { at: 1550, action: 'selected' },
 ];
 
-interface PathChoiceItem {
-  id: MockupTheme;
-  label: string;
+interface PathChoiceItem extends ChatOptionPillItem {
+  theme: MockupTheme;
   description: string;
   previewTitle: string;
   previewBullets: string[];
@@ -23,7 +32,8 @@ interface PathChoiceItem {
 
 const PATH_CHOICES: readonly PathChoiceItem[] = [
   {
-    id: 'social',
+    id: 'dia_a_dia',
+    theme: 'social',
     label: 'Harmonizar o meu nome',
     description: 'Ajustar sua assinatura no dia a dia sem bloqueios.',
     previewTitle: 'Caminho · Nome Social',
@@ -31,6 +41,7 @@ const PATH_CHOICES: readonly PathChoiceItem[] = [
   },
   {
     id: 'artistico',
+    theme: 'artistico',
     label: 'Criar um nome artístico',
     description: 'Para palco, redes sociais e marca pessoal.',
     previewTitle: 'Caminho · Nome Artístico',
@@ -38,6 +49,7 @@ const PATH_CHOICES: readonly PathChoiceItem[] = [
   },
   {
     id: 'bebe',
+    theme: 'bebe',
     label: 'Escolher o nome do meu bebê',
     description: 'Cruza o sobrenome da família com a data prevista.',
     previewTitle: 'Caminho · Nome do Bebê',
@@ -54,9 +66,27 @@ export interface PathChooserSceneProps {
   className?: string;
 }
 
+function TapOverlay({ tokens }: { tokens: MockupThemeTokens }) {
+  return (
+    <span className="absolute left-1/2 top-1/2 pointer-events-none z-20" aria-hidden="true">
+      <span
+        className="block w-8 h-8 rounded-full nm-mockup-tap-ripple"
+        style={{ border: `2px solid ${tokens.cursorCoreHex}` }}
+      />
+      <span
+        className="block w-3.5 h-3.5 rounded-full nm-mockup-tap-core shadow-md"
+        style={{
+          backgroundColor: tokens.cursorCoreHex,
+          boxShadow: `0 0 14px ${tokens.cursorRingRgba}`,
+        }}
+      />
+    </span>
+  );
+}
+
 /**
- * Cena dos 3 botões de caminho ("O que você quer fazer hoje?").
- * A cada ciclo de animação, o toque falso alterna para o próximo caminho.
+ * Cena dos 3 botões de caminho ("O que você quer fazer hoje?") usando as peças compartilhadas
+ * reais do chat (`NmBubble`, `ChatOptionPills`, `UserBubble`, `ReadingTopicCard`).
  */
 export function PathChooserScene({
   device = 'phone',
@@ -67,7 +97,7 @@ export function PathChooserScene({
   className = '',
 }: PathChooserSceneProps) {
   const initialIndex = useMemo(() => {
-    const found = PATH_CHOICES.findIndex((item) => item.id === theme);
+    const found = PATH_CHOICES.findIndex((item) => item.theme === theme);
     return found >= 0 ? found : 0;
   }, [theme]);
 
@@ -82,180 +112,108 @@ export function PathChooserScene({
     : (initialIndex + timeline.cycle) % PATH_CHOICES.length;
 
   const activeChoice = PATH_CHOICES[activeIndex]!;
-  const activeTokens = MOCKUP_THEMES[activeChoice.id];
+  const activeTokens = MOCKUP_THEMES[activeChoice.theme];
   const action = timeline.currentAction ?? 'ready';
-  const isFocused = action === 'focus' || action === 'tap' || action === 'selected';
   const isTapping = !timeline.reducedMotion && action === 'tap';
   const isSelected = timeline.reducedMotion || action === 'selected';
+  const showHighlight = action === 'focus' || isTapping || isSelected;
 
-  const renderChoicesStack = (compact: boolean) => (
-    <div className={`flex flex-col ${compact ? 'gap-2 p-3' : 'gap-2.5 p-4'} flex-1 min-h-0 justify-center`}>
-      {/* Cabeçalho mini do Jev */}
-      <div className="flex items-center gap-2 mb-1">
-        <span
-          className="h-6 w-6 rounded-full shrink-0 transition-all duration-500"
-          style={{
-            backgroundImage: activeTokens.orbGradient,
-            boxShadow: `0 0 12px ${activeTokens.cursorRingRgba}`,
-          }}
+  const renderChatPane = (showMobilePreview: boolean, includeTopBar: boolean) => (
+    <div className="flex flex-col flex-1 min-h-0 bg-[#131313]">
+      {includeTopBar ? (
+        <ChatProgressBar
+          currentStep={isSelected ? 1 : 0}
+          totalSteps={4}
+          className="shrink-0 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
         />
-        <span className="font-cinzel text-[11px] font-bold text-[#e5e2e1]">Nome Magnético</span>
-      </div>
-
-      {/* Pergunta canônica do Jev */}
-      <div className="rounded-2xl bg-[#1C1C1C] px-3.5 py-2.5 ring-1 ring-white/[0.06] text-[#e5e2e1] font-inter">
-        <div
-          className="font-cinzel text-[9px] font-bold uppercase tracking-[0.12em] mb-1 transition-colors duration-300"
-          style={{ color: activeTokens.accentHex }}
-        >
-          ESCOLHA SEU CAMINHO
-        </div>
-        <p className={`${compact ? 'text-[11.5px]' : 'text-[13px]'} font-medium`}>
-          O que você quer fazer hoje?
-        </p>
-      </div>
-
-      {/* Os 3 botões de caminho */}
-      <div className="flex flex-col gap-1.5 mt-1">
-        {PATH_CHOICES.map((choice, idx) => {
-          const isTarget = idx === activeIndex;
-          const choiceTokens = MOCKUP_THEMES[choice.id];
-          const selectedNow = isTarget && isSelected;
-          const focusedNow = isTarget && isFocused && !selectedNow;
-
-          return (
-            <div key={choice.id} className="relative">
-              <div
-                className={`rounded-full transition-all duration-300 ${
-                  compact ? 'px-3.5 py-2' : 'px-4 py-2.5'
-                } flex items-center justify-between gap-2`}
-                style={
-                  selectedNow
-                    ? {
-                        backgroundColor: choiceTokens.selectedChipBgHex,
-                        color: choiceTokens.selectedChipTextHex,
-                        border: `1px solid ${choiceTokens.selectedChipBorderHex}`,
-                        transform: 'scale(0.99)',
-                      }
-                    : focusedNow
-                      ? {
-                          backgroundColor: '#242228',
-                          color: '#e5e2e1',
-                          border: `1px solid ${choiceTokens.accentHex}`,
-                        }
-                      : {
-                          backgroundColor: '#1C1C1C',
-                          color: '#e5e2e1',
-                          border: `1px solid ${choiceTokens.chipBorderRgba}`,
-                        }
-                }
-              >
-                <span className={`font-inter font-medium truncate ${compact ? 'text-[11px]' : 'text-[12.5px]'}`}>
-                  {choice.label}
-                </span>
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{
-                    backgroundColor: selectedNow
-                      ? choiceTokens.selectedChipTextHex
-                      : choiceTokens.accentHex,
-                  }}
-                />
-              </div>
-
-              {isTarget && isTapping ? (
-                <span
-                  className="absolute right-8 top-1/2 pointer-events-none z-20"
-                  aria-hidden="true"
-                >
-                  <span
-                    className="block w-8 h-8 rounded-full nm-mockup-tap-ripple"
-                    style={{ border: `2px solid ${choiceTokens.cursorCoreHex}` }}
-                  />
-                  <span
-                    className="block w-3.5 h-3.5 rounded-full nm-mockup-tap-core"
-                    style={{
-                      backgroundColor: choiceTokens.cursorCoreHex,
-                      boxShadow: `0 0 14px ${choiceTokens.cursorRingRgba}`,
-                    }}
-                  />
-                </span>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Confirmação compacta no celular quando selecionado */}
-      {compact ? (
-        <div
-          className={`mt-1 rounded-2xl bg-[#181818] px-3 py-2 ring-1 ring-white/[0.05] transition-all duration-500 ${
-            isSelected ? 'opacity-100 translate-y-0' : 'opacity-60 translate-y-1'
-          }`}
-        >
-          <div className="text-[10px] font-inter font-semibold" style={{ color: activeTokens.accentHex }}>
-            {activeChoice.previewTitle}
-          </div>
-          <div className="text-[10px] font-inter text-[#a0a0a0] mt-0.5 leading-snug">
-            {activeChoice.description}
-          </div>
-        </div>
       ) : null}
+
+      <div className="flex-1 min-h-0 flex flex-col justify-center gap-2 p-4">
+        <NmBubble eyebrow="PASSO 1 DE 3" wide>
+          <p className="text-chat-ink leading-relaxed">O que você quer fazer hoje?</p>
+          <ChatOptionPills
+            options={PATH_CHOICES}
+            size="lg"
+            selectedIds={showHighlight ? [activeChoice.id] : []}
+            className="mt-3"
+            renderItemOverlay={(opt) =>
+              isTapping && opt.id === activeChoice.id ? <TapOverlay tokens={activeTokens} /> : null
+            }
+          />
+        </NmBubble>
+
+        {isSelected ? <UserBubble content={activeChoice.label} /> : null}
+
+        {showMobilePreview && isSelected ? (
+          <ReadingTopicCard
+            eyebrow={activeChoice.previewTitle}
+            title={activeChoice.label}
+            subtitle={activeChoice.description}
+            className="mt-2"
+          >
+            <ul className="space-y-1.5">
+              {activeChoice.previewBullets.map((b) => (
+                <li key={b} className="text-xs font-inter text-[#e5e2e1]/85 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </ReadingTopicCard>
+        ) : null}
+      </div>
     </div>
   );
 
-  const phoneBody = renderChoicesStack(true);
+  const phoneBody = (
+    <ScaledMockupCanvas logicalWidth={375}>{renderChatPane(true, true)}</ScaledMockupCanvas>
+  );
 
   const desktopBody = (
-    <div className="flex-1 min-h-0 grid grid-cols-[1.2fr_0.9fr] gap-px bg-white/[0.03]">
-      <div className="flex flex-col min-h-0 min-w-0 bg-[#131313]">{renderChoicesStack(false)}</div>
+    <ScaledMockupCanvas logicalWidth={1024}>
+      <div className="flex flex-col flex-1 min-h-0 bg-[#131313]">
+        <ChatProgressBar
+          currentStep={isSelected ? 1 : 0}
+          totalSteps={4}
+          className="shrink-0 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
+        />
+        <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)] gap-4 px-5">
+          <div className="flex flex-col min-h-0 min-w-0">{renderChatPane(false, false)}</div>
 
-      <aside
-        className={`flex flex-col justify-center gap-3 p-4 sm:p-5 bg-[#151515]/90 min-w-0 ${
-          device === 'both' ? 'md:pr-16 lg:pr-20' : ''
-        }`}
-      >
-        <span
-          className="self-start rounded-full px-3 py-1 text-[10px] font-inter font-semibold uppercase tracking-[0.08em] transition-colors duration-300"
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            color: activeTokens.accentHex,
-          }}
-        >
-          {activeChoice.previewTitle}
-        </span>
-
-        <h4 className="font-cinzel text-base font-bold text-[#e5e2e1] leading-snug">
-          {activeChoice.label}
-        </h4>
-
-        <p className="font-inter text-xs text-[#a0a0a0] leading-relaxed">
-          {activeChoice.description}
-        </p>
-
-        <ul className="space-y-1.5 mt-1">
-          {activeChoice.previewBullets.map((bullet) => (
-            <li
-              key={bullet}
-              className="flex items-center gap-2 text-[11.5px] font-inter text-[#e5e2e1]/90"
+          <aside
+            className={`flex flex-col justify-center gap-4 py-4 px-3 min-w-0 ${
+              device === 'both' ? 'pr-24' : ''
+            }`}
+          >
+            <ChatPanelHeader hasSelection={isSelected} />
+            <ReadingTopicCard
+              eyebrow={activeChoice.previewTitle}
+              title={activeChoice.label}
+              subtitle={activeChoice.description}
             >
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: activeTokens.accentSoftHex }}
-              />
-              <span>{bullet}</span>
-            </li>
-          ))}
-        </ul>
-      </aside>
-    </div>
+              <ul className="space-y-2">
+                {activeChoice.previewBullets.map((bullet) => (
+                  <li
+                    key={bullet}
+                    className="flex items-center gap-2 text-sm font-inter text-[#e5e2e1]/90"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            </ReadingTopicCard>
+          </aside>
+        </div>
+      </div>
+    </ScaledMockupCanvas>
   );
 
   return (
     <div
       ref={timeline.containerRef}
       data-mockup-scene="path-chooser"
-      data-mockup-theme={activeChoice.id}
+      data-mockup-theme={activeChoice.theme}
       data-mockup-playing={timeline.isPlaying ? 'true' : 'false'}
       data-mockup-in-view={timeline.isInView ? 'true' : 'false'}
       data-mockup-reduced-motion={timeline.reducedMotion ? 'true' : 'false'}
@@ -275,7 +233,7 @@ export function PathChooserScene({
 
       <DeviceFrame
         variant={device}
-        theme={activeChoice.id}
+        theme={activeChoice.theme}
         phoneContent={phoneBody}
         desktopContent={desktopBody}
         srSummary={

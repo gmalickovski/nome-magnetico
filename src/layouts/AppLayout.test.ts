@@ -124,7 +124,9 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
   it('ChatProgress usa container flex centralizado e ChatRestartButton usa IconRotateCcw com tons dourados', () => {
     const progressFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatProgress.tsx');
-    const progressSrc = readFileSync(progressFile, 'utf8');
+    const sharedPanelFile = path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatAnalysisPanel.tsx');
+    const progressSrc = readFileSync(progressFile, 'utf8') + '\n' + readFileSync(sharedPanelFile, 'utf8');
+    assert.match(progressSrc, /shared\/chat-ui\/ChatAnalysisPanel/);
     assert.match(progressSrc, /flex-1 min-w-0 flex items-center justify-center/);
     assert.match(progressSrc, /max-w-2xl/);
 
@@ -181,7 +183,8 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
   it('painel lateral desktop usa título Painel de análise e bolinha dourada condicional na seleção', () => {
     const chromeFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarPanelChrome.tsx');
-    const chromeSrc = readFileSync(chromeFile, 'utf8');
+    const sharedPanelFile = path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatAnalysisPanel.tsx');
+    const chromeSrc = readFileSync(chromeFile, 'utf8') + '\n' + readFileSync(sharedPanelFile, 'utf8');
     assert.match(chromeSrc, /hasSelection\s*=\s*false/);
     assert.match(chromeSrc, /\{hasSelection\s*&&\s*\(/);
     assert.match(chromeSrc, /data-nm-selection-dot="true"/);
@@ -194,7 +197,10 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
   });
 
   it('seções do painel de análise usam textos introdutórios sem tile escuro e exibem quantidade = N nos títulos', () => {
-    const topicSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingTopicCard.tsx'), 'utf8');
+    const topicSrc =
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingTopicCard.tsx'), 'utf8') +
+      '\n' +
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ReadingTopicCard.tsx'), 'utf8');
     assert.match(topicSrc, /typeof count === 'number'/);
     assert.match(topicSrc, /=\s*\{count\}/);
 
@@ -362,10 +368,10 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
     assert.doesNotMatch(workspaceSrc, /Relatório completo/);
 
-    const harmonyScoreSrc = readFileSync(
-      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyScoreCard.tsx'),
-      'utf8',
-    );
+    const harmonyScoreSrc =
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyScoreCard.tsx'), 'utf8') +
+      '\n' +
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatAnalysisPanel.tsx'), 'utf8');
     const idxHarm = harmonyScoreSrc.indexOf('Nome harmonizado (Potencial)');
     const idxBirth = harmonyScoreSrc.indexOf('Nome de nascimento (Nota Hoje)');
     assert.ok(idxHarm !== -1 && idxBirth !== -1 && idxHarm < idxBirth);
@@ -378,10 +384,16 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(mobileSheetSrc, /Painel de análise/);
     assert.doesNotMatch(mobileSheetSrc, /Leitura deste nome/);
 
-    const pickerSrc = readFileSync(
-      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),
-      'utf8',
-    );
+    const pickerSrc =
+      readFileSync(
+        path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),
+        'utf8',
+      ) +
+      '\n' +
+      readFileSync(
+        path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatSuggestionCard.tsx'),
+        'utf8',
+      );
     assert.match(pickerSrc, /showBlockBadgeInTags/);
   });
 
