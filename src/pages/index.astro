@@ -1,15 +1,18 @@
 ---
 import LandingLayout from '../layouts/LandingLayout.astro';
+import { PromoBanner } from '../frontend/components/landing/PromoBanner';
 import { LandingHeader } from '../frontend/components/landing/LandingHeader';
-import { HeroSection } from '../frontend/components/landing/HeroSection';
-import { HowItWorksSection } from '../frontend/components/landing/HowItWorksSection';
-import { ProductsSection } from '../frontend/components/landing/ProductsSection';
+import { HomeHeroScene } from '../frontend/components/landing/home/HomeHeroScene';
+import { HomeAudiencesSection } from '../frontend/components/landing/home/HomeAudiencesSection';
+import { HomeHowItWorksSection } from '../frontend/components/landing/home/HomeHowItWorksSection';
+import { HomeAnalysisSection } from '../frontend/components/landing/home/HomeAnalysisSection';
+import { HomeQualityRuleSection } from '../frontend/components/landing/home/HomeQualityRuleSection';
+import { HomeDeliverablesSection } from '../frontend/components/landing/home/HomeDeliverablesSection';
+import { HomeFreeAnalysisSection } from '../frontend/components/landing/home/HomeFreeAnalysisSection';
+import { HOME_COPY } from '../frontend/components/landing/home/home-copy';
 import { SignatureUseCasesSection } from '../frontend/components/landing/SignatureUseCasesSection';
 import { PricingSection } from '../frontend/components/landing/PricingSection';
-import { PromoBanner } from '../frontend/components/landing/PromoBanner';
-import { ProductVotingSection } from '../frontend/components/landing/ProductVotingSection';
-import { FAQSection } from '../frontend/components/landing/FAQSection';
-import type { FaqItemProps } from '../frontend/components/landing/FAQSection';
+import { FAQSection, type FaqItemProps } from '../frontend/components/landing/FAQSection';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { getSupabaseFaqs } from '../backend/faqs/getSupabaseFaqs';
 import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
@@ -37,52 +40,113 @@ try {
 const user = Astro.locals.user;
 const nomeSocialPrice = hqPrices?.nome_social?.cents ?? 0;
 const schemaPrice = nomeSocialPrice > 0 ? (nomeSocialPrice / 100).toFixed(2) : undefined;
+const heroCopy = HOME_COPY.hero;
 ---
 
 <LandingLayout
   title="Numerologia Cabalística do Seu Nome: Veja a Nota de Hoje e o Seu Potencial"
-  description="Veja grátis a nota do seu nome pela numerologia cabalística e até onde ele pode chegar. Compare 3 opções de assinatura: mudança mínima, nome encurtado ou acento sutil."
-  keywords="numerologia cabalística, nota do nome, assinatura harmonizada, nome social, cálculo do nome, triângulo da vida"
+  description="Veja grátis a nota do seu nome pela numerologia cabalística e até onde ele pode chegar. Compare opções para Nome Social, Nome Artístico e Nome do Bebê sem bloqueios."
+  keywords="numerologia cabalística, nota do nome, assinatura harmonizada, nome social, nome artístico, nome do bebê, triângulo da vida"
   schemaOfferPrice={schemaPrice}
   schemaEstimatedCost={schemaPrice}
 >
   {promotion && <PromoBanner promotion={promotion} client:load />}
   <LandingHeader client:load />
-  <HeroSection client:load />
-  <HowItWorksSection client:load />
-  <ProductsSection client:visible />
-  <SignatureUseCasesSection client:visible />
-  {/* Teaser calculadora gratuita */}
-  <section id="teste" class="py-12 sm:py-16 md:py-20 lg:py-24 bg-[#111111] overflow-x-hidden">
-    <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
-      <div class="nm-floating-card rounded-2xl px-6 py-10 sm:px-10 md:px-16 md:py-14 text-center animate-on-scroll">
-        <div class="max-w-2xl mx-auto">
-          <p class="nm-eyebrow mb-2.5 md:mb-3">
-            Ferramenta Gratuita
-          </p>
-          <h2 class="nm-h2 mb-3.5">
-            Sua Nota, Seu Nível<br/>e Seu Potencial Grátis
-          </h2>
-          <p class="nm-body-lg max-w-[58ch] mx-auto mb-8">
-            Digite seu nome de nascimento e sua data. Você vê a nota pelo triângulo da Vida, até onde seu nome pode chegar e a Marca da sua data. Os outros 3 triângulos vêm na análise completa.
-          </p>
-          <a
-            href="/analise-gratuita"
-            data-cta-id="analise_gratis"
-            data-cta-position="home_teste"
-            class="inline-flex min-h-12 items-center justify-center bg-[#D4AF37] text-[#1A1A1A] font-semibold text-base px-10 py-3.5 rounded-full hover:bg-[#f2ca50] transition-colors duration-300 shadow-lg shadow-[#D4AF37]/20 motion-reduce:transition-none"
-          >
-            Ver Minha Nota Grátis
-          </a>
-          <p class="nm-caption mt-4">
-            Gratuito · Crie sua conta · Resultado na hora
-          </p>
+
+  <main class="bg-[#131313]">
+    {/* Seção 1 — Hero em SSR puro para LCP imediato + HomeHeroScene hidratado em idle */}
+    <section
+      id="inicio"
+      class="relative z-0 isolate min-h-[calc(100svh-1rem)] flex flex-col justify-center overflow-x-clip bg-[#131313] pt-[88px] sm:pt-28 lg:pt-28 pb-12 sm:pb-16 lg:pb-20"
+      aria-label={heroCopy.eyebrow}
+    >
+      <div class="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1b1506] via-[#131313] to-[#110f1a]" />
+        <div class="absolute top-1/4 left-1/2 lg:left-[24%] -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[520px] sm:h-[520px] lg:w-[700px] lg:h-[700px] bg-[#D4AF37]/12 rounded-full blur-[110px]" />
+        <div class="absolute bottom-0 right-0 w-[260px] h-[260px] md:w-[440px] md:h-[440px] bg-[#bea5ff]/10 rounded-full blur-[110px]" />
+      </div>
+
+      <div class="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-12 items-center w-full min-w-0">
+          <div class="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left min-w-0">
+            <p class="nm-eyebrow mb-3">{heroCopy.eyebrow}</p>
+
+            <h1 class="nm-h1 max-w-[20ch] sm:max-w-[24ch] lg:max-w-none">
+              {heroCopy.titleLead}{' '}
+              <span
+                style="background: linear-gradient(135deg, #f2ca50 0%, #d4af37 55%, #d7c6ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
+              >
+                {heroCopy.titleHighlight}
+              </span>
+            </h1>
+
+            <p class="nm-body-lg mt-4 sm:mt-5 max-w-[52ch]">{heroCopy.subtitle}</p>
+
+            <div class="mt-6 sm:mt-7 w-full max-w-md lg:max-w-none flex flex-col gap-3">
+              {heroCopy.buttons.map((btn) => (
+                <a
+                  href={btn.href}
+                  data-cta-id={btn.ctaId}
+                  data-cta-position="home_hero"
+                  class={
+                    btn.variant === 'primary'
+                      ? 'inline-flex min-h-12 w-full lg:w-auto items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-inter font-semibold text-sm sm:text-base px-7 py-3.5 transition-colors duration-300 shadow-[0_12px_32px_rgba(212,175,55,0.22)]'
+                      : btn.theme === 'bebe'
+                        ? 'inline-flex min-h-12 w-full lg:w-auto items-center justify-center rounded-full bg-[#1c1c1c] hover:bg-[#242027] text-[#e5e2e1] font-inter font-medium text-sm sm:text-base px-7 py-3 transition-colors duration-300 ring-1 ring-[#F5C6CE]/30 hover:ring-[#F5C6CE]/60'
+                        : 'inline-flex min-h-12 w-full lg:w-auto items-center justify-center rounded-full bg-[#1c1c1c] hover:bg-[#211d2a] text-[#e5e2e1] font-inter font-medium text-sm sm:text-base px-7 py-3 transition-colors duration-300 ring-1 ring-[#bea5ff]/35 hover:ring-[#bea5ff]/65'
+                  }
+                >
+                  {btn.label}
+                </a>
+              ))}
+            </div>
+
+            <a
+              href={heroCopy.freeLinkHref}
+              data-cta-id="analise_gratis"
+              data-cta-position="home_hero_link"
+              class="mt-4 inline-flex min-h-11 items-center text-sm font-inter font-medium text-[#f2ca50] hover:text-[#e5e2e1] transition-colors"
+            >
+              {heroCopy.freeLinkLabel}
+            </a>
+
+            <p class="nm-caption mt-2 max-w-[52ch]">{heroCopy.trustLine}</p>
+          </div>
+
+          <div class="lg:col-span-7 w-full min-w-0 min-h-[440px] md:min-h-[520px] flex items-center justify-center">
+            <HomeHeroScene client:idle />
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-  <PricingSection hqPrices={hqPrices} promotion={promotion} isLoggedIn={!!user} client:visible />
-  <ProductVotingSection variant="landing" client:visible />
-  <FAQSection items={faqItems} client:visible />
+    </section>
+
+    {/* Seção 2 — Para quem é */}
+    <HomeAudiencesSection client:visible />
+
+    {/* Seção 3 — Como funciona (3 passos) */}
+    <HomeHowItWorksSection client:visible />
+
+    {/* Seção 4 — O que o cálculo analisa */}
+    <HomeAnalysisSection client:visible />
+
+    {/* Seção 5 — Regra de qualidade (0 bloqueios, 80+) */}
+    <HomeQualityRuleSection client:visible />
+
+    {/* Seção 6 — O que você leva (PDF 3 versões) */}
+    <HomeDeliverablesSection client:visible />
+
+    {/* Seção 7 — Análise gratuita + contador de potencial */}
+    <HomeFreeAnalysisSection client:visible />
+
+    {/* Seção 8 — Usos do nome (inclui palco/redes) */}
+    <SignatureUseCasesSection client:visible />
+
+    {/* Seção 9 — Preços atuais */}
+    <PricingSection hqPrices={hqPrices} promotion={promotion} isLoggedIn={!!user} client:visible />
+
+    {/* Seção 10 — FAQ atual */}
+    <FAQSection items={faqItems} client:visible />
+  </main>
+
   <LandingFooter client:visible />
 </LandingLayout>

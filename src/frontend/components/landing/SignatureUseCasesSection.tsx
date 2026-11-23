@@ -10,7 +10,9 @@ import {
   SocialProfileMockup,
   ContractMockup,
   BrandingCardMockup,
+  StageSpotlightMockup,
 } from './SignatureUseCasesMockups';
+import { HOME_COPY } from './home/home-copy';
 
 interface UseCaseItem {
   id: string;
@@ -78,6 +80,15 @@ const USE_CASES: UseCaseItem[] = [
       'Capas de livros, cursos, certificados e obras autorais',
     ],
     MockupComponent: BrandingCardMockup,
+  },
+  {
+    id: HOME_COPY.useCasesStage.id,
+    stepNumber: HOME_COPY.useCasesStage.stepNumber,
+    eyebrow: HOME_COPY.useCasesStage.eyebrow,
+    title: HOME_COPY.useCasesStage.title,
+    description: HOME_COPY.useCasesStage.description,
+    bulletPoints: [...HOME_COPY.useCasesStage.bulletPoints],
+    MockupComponent: StageSpotlightMockup,
   },
 ];
 

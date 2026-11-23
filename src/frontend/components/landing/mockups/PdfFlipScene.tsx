@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ChatPanelHeader } from '../../shared/chat-ui/index.js';
 import { MockupSceneShell } from './MockupSceneShell.js';
 import { PdfMockupPageSheet } from './PdfMockupPages.js';
@@ -16,6 +17,8 @@ export interface PdfFlipSceneProps {
   theme?: MockupTheme;
   /** Quando true (ex.: bloco "O que você leva" na Home), alterna Social → Artístico → Bebê a cada ciclo. */
   autoCycleThemes?: boolean;
+  /** Notifica o tema exibido quando `autoCycleThemes` alterna entre ciclos. */
+  onActiveThemeChange?: (theme: MockupTheme) => void;
   srSummary?: string;
   forceReducedMotion?: boolean;
   showStatusPill?: boolean;
@@ -39,6 +42,7 @@ export function PdfFlipScene({
   device = 'both',
   theme = 'social',
   autoCycleThemes = false,
+  onActiveThemeChange,
   srSummary,
   forceReducedMotion = false,
   showStatusPill = false,
@@ -56,6 +60,10 @@ export function PdfFlipScene({
           (Math.max(0, THEME_ROTATION.indexOf(theme)) + timeline.cycle) % THEME_ROTATION.length
         ]!
       : theme;
+
+  useEffect(() => {
+    onActiveThemeChange?.(activeTheme);
+  }, [activeTheme, onActiveThemeChange]);
 
   const data = RESULT_SCRIPTS[activeTheme];
   const action = timeline.currentAction ?? 'page_1';

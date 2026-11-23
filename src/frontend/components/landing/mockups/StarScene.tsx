@@ -143,7 +143,7 @@ export function StarScene({
       <div className="flex flex-col flex-1 min-h-0 bg-[#131313] px-6 py-5">
         <div
           className={`flex-1 min-h-0 grid grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] gap-6 items-center ${
-            device === 'both' ? 'pr-24' : ''
+            device === 'both' ? 'pr-36' : ''
           }`}
         >
           <div className="nm-floating-card p-4 flex flex-col items-center justify-center min-h-0">
