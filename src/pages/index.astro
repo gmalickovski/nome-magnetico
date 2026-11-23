@@ -62,16 +62,16 @@ const heroCopy = HOME_COPY.hero;
     >
       <div class="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
         <div class="absolute inset-0 bg-gradient-to-br from-[#1b1506] via-[#131313] to-[#110f1a]" />
-        <div class="absolute top-1/4 left-1/2 lg:left-[24%] -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[520px] sm:h-[520px] lg:w-[700px] lg:h-[700px] bg-[#D4AF37]/12 rounded-full blur-[110px]" />
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[520px] sm:h-[520px] lg:w-[700px] lg:h-[700px] bg-[#D4AF37]/12 rounded-full blur-[110px]" />
         <div class="absolute bottom-0 right-0 w-[260px] h-[260px] md:w-[440px] md:h-[440px] bg-[#bea5ff]/10 rounded-full blur-[110px]" />
       </div>
 
       <div class="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-12 items-center w-full min-w-0">
-          <div class="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left min-w-0">
+        <div class="flex flex-col items-center gap-10 sm:gap-12 lg:gap-14 w-full min-w-0">
+          <div class="flex flex-col items-center text-center max-w-3xl min-w-0">
             <p class="nm-eyebrow mb-3">{heroCopy.eyebrow}</p>
 
-            <h1 class="nm-h1 max-w-[20ch] sm:max-w-[24ch] lg:max-w-none">
+            <h1 class="nm-h1 max-w-[22ch] sm:max-w-[26ch]">
               {heroCopy.titleLead}{' '}
               <span
                 style="background: linear-gradient(135deg, #f2ca50 0%, #d4af37 55%, #d7c6ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
@@ -82,7 +82,7 @@ const heroCopy = HOME_COPY.hero;
 
             <p class="nm-body-lg mt-4 sm:mt-5 max-w-[52ch]">{heroCopy.subtitle}</p>
 
-            <div class="mt-6 sm:mt-7 w-full max-w-md lg:max-w-none flex flex-col gap-3">
+            <div class="mt-6 sm:mt-7 w-full max-w-md sm:max-w-none flex flex-col sm:flex-row sm:flex-wrap sm:justify-center gap-3">
               {heroCopy.buttons.map((btn) => (
                 <a
                   href={btn.href}
@@ -90,10 +90,10 @@ const heroCopy = HOME_COPY.hero;
                   data-cta-position="home_hero"
                   class={
                     btn.variant === 'primary'
-                      ? 'inline-flex min-h-12 w-full lg:w-auto items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-inter font-semibold text-sm sm:text-base px-7 py-3.5 transition-colors duration-300 shadow-[0_12px_32px_rgba(212,175,55,0.22)]'
+                      ? 'inline-flex min-h-12 w-full sm:w-auto items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-inter font-semibold text-sm sm:text-base px-7 py-3.5 transition-colors duration-300 shadow-[0_12px_32px_rgba(212,175,55,0.22)]'
                       : btn.theme === 'bebe'
-                        ? 'inline-flex min-h-12 w-full lg:w-auto items-center justify-center rounded-full bg-[#1c1c1c] hover:bg-[#242027] text-[#e5e2e1] font-inter font-medium text-sm sm:text-base px-7 py-3 transition-colors duration-300 ring-1 ring-[#F5C6CE]/30 hover:ring-[#F5C6CE]/60'
-                        : 'inline-flex min-h-12 w-full lg:w-auto items-center justify-center rounded-full bg-[#1c1c1c] hover:bg-[#211d2a] text-[#e5e2e1] font-inter font-medium text-sm sm:text-base px-7 py-3 transition-colors duration-300 ring-1 ring-[#bea5ff]/35 hover:ring-[#bea5ff]/65'
+                        ? 'inline-flex min-h-12 w-full sm:w-auto items-center justify-center rounded-full bg-[#1c1c1c] hover:bg-[#242027] text-[#e5e2e1] font-inter font-medium text-sm sm:text-base px-7 py-3 transition-colors duration-300 ring-1 ring-[#F5C6CE]/30 hover:ring-[#F5C6CE]/60'
+                        : 'inline-flex min-h-12 w-full sm:w-auto items-center justify-center rounded-full bg-[#1c1c1c] hover:bg-[#211d2a] text-[#e5e2e1] font-inter font-medium text-sm sm:text-base px-7 py-3 transition-colors duration-300 ring-1 ring-[#bea5ff]/35 hover:ring-[#bea5ff]/65'
                   }
                 >
                   {btn.label}
@@ -113,7 +113,7 @@ const heroCopy = HOME_COPY.hero;
             <p class="nm-caption mt-2 max-w-[52ch]">{heroCopy.trustLine}</p>
           </div>
 
-          <div class="lg:col-span-7 w-full min-w-0 min-h-[440px] md:min-h-[520px] flex items-center justify-center">
+          <div class="w-full max-w-5xl min-w-0 min-h-[440px] md:min-h-[520px] flex items-center justify-center">
             <HomeHeroScene client:idle />
           </div>
         </div>
