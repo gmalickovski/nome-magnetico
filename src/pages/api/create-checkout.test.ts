@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
+import { COUPON_ACCOUNT_INELIGIBLE, type HqCouponValidation } from '../../backend/payments/promo-math';
 
 type ProfileRow = {
   role: 'user' | 'admin';
@@ -14,6 +15,10 @@ const testCheckoutCalls: unknown[] = [];
 const notifyCalls: { event: string; payload: Record<string, unknown> }[] = [];
 const stripeSessionCalls: Record<string, unknown>[] = [];
 let allowStripeSession = false;
+let couponValidation: HqCouponValidation | null = null;
+let discountSource: 'none' | 'coupon' | 'promotion' = 'none';
+let availableReservation: string | null = null;
+const releasedReservations: string[] = [];
 
 function profileFrom() {
   const builder = {
@@ -115,15 +120,26 @@ mock.module('../../backend/pricing/service', {
       final_cents: 9700,
       base_cents: 9700,
       min_cents: 0,
-      discountSource: 'none',
+      discountSource,
     }),
+  },
+});
+
+mock.module('../../backend/payments/coupon-reservations', {
+  namedExports: {
+    reserveCouponUse: async () => {
+      const id = availableReservation;
+      availableReservation = null;
+      return id;
+    },
+    releaseCouponReservation: async (id: string) => { releasedReservations.push(id); },
   },
 });
 
 mock.module('../../backend/payments/prices', {
   namedExports: {
     effectiveResultToPriceInfo: (effective: unknown) => effective,
-    validateAccessCoupon: async () => null,
+    validateAccessCoupon: async () => couponValidation,
   },
 });
 
@@ -192,6 +208,10 @@ describe('create-checkout · DEV-239', () => {
     hasActiveProductSubscription = false;
     ownedAnalysisId = null;
     allowStripeSession = false;
+    couponValidation = null;
+    discountSource = 'none';
+    availableReservation = null;
+    releasedReservations.length = 0;
     testCheckoutCalls.length = 0;
     notifyCalls.length = 0;
     stripeSessionCalls.length = 0;
@@ -206,6 +226,65 @@ describe('create-checkout · DEV-239', () => {
     assert.equal(res.status, 409);
     assert.equal(data.code, 'already_active');
     assert.equal(testCheckoutCalls.length, 0);
+  });
+
+  it('retorna o motivo da inelegibilidade e impede criar a sessão Stripe', async () => {
+    couponValidation = { valid: false, error: COUPON_ACCOUNT_INELIGIBLE };
+    allowStripeSession = true;
+
+    const res = await post({ product_type: 'nome_social', couponCode: 'CUPOM-TESTE' });
+
+    assert.equal(res.status, 400);
+    assert.equal((await res.json()).error, COUPON_ACCOUNT_INELIGIBLE);
+    assert.equal(stripeSessionCalls.length, 0);
+  });
+
+  it('impede criar checkout com cupom quando a validação fica indisponível', async () => {
+    allowStripeSession = true;
+
+    const res = await post({ product_type: 'nome_social', couponCode: 'CUPOM-TESTE' });
+
+    assert.equal(res.status, 503);
+    assert.equal(stripeSessionCalls.length, 0);
+  });
+
+  it('DEV-268: somente o pedido que reservou o cupom abre uma sessão Stripe', async () => {
+    couponValidation = { valid: true, accessCodeId: 'code-1', code: 'CUPOM-TESTE' };
+    discountSource = 'coupon';
+    availableReservation = 'reservation-1';
+    allowStripeSession = true;
+    const body = { product_type: 'nome_social', couponCode: 'CUPOM-TESTE' };
+
+    const orders = await Promise.all([post(body), post(body)]);
+
+    assert.deepEqual(orders.map((order) => order.status).sort(), [200, 409]);
+    assert.equal(stripeSessionCalls.length, 1);
+    assert.equal(stripeSessionCalls[0].couponReservationId, 'reservation-1');
+    assert.deepEqual(releasedReservations, []);
+  });
+
+  it('DEV-268: libera a reserva quando a abertura da sessão falha', async () => {
+    couponValidation = { valid: true, accessCodeId: 'code-1', code: 'CUPOM-TESTE' };
+    discountSource = 'coupon';
+    availableReservation = 'reservation-1';
+
+    const res = await post({ product_type: 'nome_social', couponCode: 'CUPOM-TESTE' });
+
+    assert.equal(res.status, 500);
+    assert.deepEqual(releasedReservations, ['reservation-1']);
+  });
+
+  it('DEV-268: não reserva o cupom quando a promoção vence', async () => {
+    couponValidation = { valid: true, accessCodeId: 'code-1', code: 'CUPOM-TESTE' };
+    discountSource = 'promotion';
+    availableReservation = 'reservation-1';
+    allowStripeSession = true;
+
+    const res = await post({ product_type: 'nome_social', couponCode: 'CUPOM-TESTE' });
+
+    assert.equal(res.status, 200);
+    assert.equal(availableReservation, 'reservation-1');
+    assert.equal(stripeSessionCalls[0].couponCode, undefined);
   });
 
   it('perfil is_test sem assinatura ativa usa bypass test e não chama Stripe', async () => {
