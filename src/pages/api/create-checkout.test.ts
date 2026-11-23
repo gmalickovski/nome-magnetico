@@ -342,13 +342,28 @@ describe('create-checkout · DEV-239', () => {
     assert.equal(call.chosenSignature, 'Maria Clara Luz');
     assert.equal(call.analysisId, ownedAnalysisId);
     assert.equal(call.source, 'card_pdf');
-    assert.equal(call.utmSource, 'app_chat');
-    assert.equal(call.utmCampaign, 'card_pdf');
+    assert.equal(call.utmSource, undefined);
+    assert.equal(call.utmCampaign, undefined);
     assert.equal(call.utmMedium, undefined);
     assert.equal(
       call.successUrl,
       'https://www.nomemagnetico.com.br/app?checkout=success&produto=nome_social&resume=1'
     );
+  });
+
+  it('DEV-341: mantém a campanha de entrada real em uma compra iniciada pelo chat', async () => {
+    allowStripeSession = true;
+    const res = await post({
+      product_type: 'nome_social',
+      source: 'paywall_free',
+      utm_source: 'qa_dev341',
+      utm_campaign: 'origem',
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(stripeSessionCalls[0].source, 'paywall_free');
+    assert.equal(stripeSessionCalls[0].utmSource, 'qa_dev341');
+    assert.equal(stripeSessionCalls[0].utmCampaign, 'origem');
   });
 
   it('DEV-261: descarta analysis_id que não pertence ao usuário sem falhar o checkout', async () => {
