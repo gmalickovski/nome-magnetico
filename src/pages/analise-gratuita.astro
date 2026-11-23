@@ -5,6 +5,7 @@ import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { PublicAnalysisForm } from '../frontend/components/landing/PublicAnalysisForm';
 
 const user = Astro.locals.user;
+if (user) Astro.response.headers.set('Cache-Control', 'private, no-store');
 
 const REDIRECT_URL = '/app/analise-gratuita';
 const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
