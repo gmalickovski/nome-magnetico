@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { getEffectivePrice, getPricesAndPromo, formatBRL } from '../../backend/payments/prices';
+import { formatBRL, validateAccessCoupon } from '../../backend/payments/prices';
+import { COUPON_INVALID } from '../../backend/payments/promo-math';
+import { getEffectivePriceCore } from '../../backend/pricing/service';
 import { SELLABLE_PRODUCT_TYPES } from '../../shared/product-labels';
 import { supabase } from '../../backend/db/supabase';
 import {
@@ -13,12 +15,6 @@ const schema = z.object({
   coupon_code:  z.string().min(1),
   product_type: z.enum(SELLABLE_PRODUCT_TYPES),
 });
-
-const FALLBACK_CENTS: Record<string, number> = {
-  nome_social:   9800,
-  nome_bebe:     8000,
-  nome_empresa: 12500,
-};
 
 // 10 requisições por 10 minutos por usuário; 30 por 10 minutos por IP
 const USER_COUPON_LIMIT = 10;
@@ -81,33 +77,32 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   const code = coupon_code.trim().toUpperCase();
 
   try {
-    const { prices } = await getPricesAndPromo();
-    const originalCents =
-      prices[product_type]?.baseCents ??
-      prices[product_type]?.cents ??
-      FALLBACK_CENTS[product_type] ??
-      9800;
-
-    const withCoupon = await getEffectivePrice({
+    const couponValidation = await validateAccessCoupon({
       productType: product_type,
       couponCode: code,
       userId: user.id,
       userEmail: user.email,
     });
-
-    if (withCoupon.discountSource === 'coupon' && withCoupon.promoCode) {
-      return json({
-        valid: true,
-        originalCents,
-        discountedCents: withCoupon.final_cents,
-        originalFormatted: formatBRL(originalCents),
-        discountedFormatted: formatBRL(withCoupon.final_cents),
-        discountLabel: 'Desconto aplicado',
-        promotionName: withCoupon.promoCode,
-      });
+    if (!couponValidation) {
+      return json({ valid: false, error: 'Erro ao validar cupom. Tente novamente.' }, 503);
+    }
+    if (!couponValidation.valid) {
+      return json({ valid: false, error: couponValidation.error ?? COUPON_INVALID });
     }
 
-    return json({ valid: false, error: 'Cupom inválido ou expirado' });
+    const withCoupon = await getEffectivePriceCore({ productType: product_type, couponValidation });
+
+    const applied = withCoupon.discountSource === 'coupon';
+    return json({
+      valid: true,
+      applied,
+      originalCents: withCoupon.base_cents,
+      discountedCents: withCoupon.final_cents,
+      originalFormatted: formatBRL(withCoupon.base_cents),
+      discountedFormatted: formatBRL(withCoupon.final_cents),
+      discountLabel: applied ? 'Desconto aplicado' : 'O preço vigente já é igual ou menor que o preço com este cupom.',
+      promotionName: withCoupon.promoCode,
+    });
   } catch {
     return json({ valid: false, error: 'Erro ao validar cupom. Tente novamente.' }, 500);
   }

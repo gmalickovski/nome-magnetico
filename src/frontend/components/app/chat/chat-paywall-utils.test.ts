@@ -6,13 +6,12 @@ import {
 } from './chat-paywall-utils.ts';
 
 describe('chat-paywall-utils', () => {
-  it('buildPaywallCheckoutHref usa utm paywall_free e aceita contexto opcional', () => {
+  it('buildPaywallCheckoutHref usa a origem interna paywall_free e aceita contexto opcional', () => {
     const href = buildPaywallCheckoutHref({
       chosenSignature: 'Maria Clara Luz',
       analysisId: '550e8400-e29b-41d4-a716-446655440000',
     });
-    assert.match(href, /utm_source=app_chat/);
-    assert.match(href, /utm_campaign=paywall_free/);
+    assert.doesNotMatch(href, /utm_/);
     assert.match(href, /source=paywall_free/);
     assert.match(href, /produto=nome_social/);
     assert.match(href, /chosen_signature=Maria\+Clara\+Luz/);

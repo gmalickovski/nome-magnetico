@@ -5,6 +5,8 @@ export const COUPON_INVALID = 'Cupom inválido ou expirado';
 export const COUPON_ALREADY_USED = 'Este cupom já foi utilizado';
 export const COUPON_WRONG_PRODUCT = 'Cupom não se aplica a este produto';
 export const COUPON_MAX_USES = 'Este cupom atingiu o limite de usos';
+export const COUPON_ACCOUNT_INELIGIBLE = 'Este cupom não está disponível para esta conta';
+export const COUPON_NEW_CUSTOMERS_ONLY = 'Este cupom é exclusivo para novos clientes';
 
 export const TRIAL_INVALID = 'Código de acesso inválido ou expirado';
 export const TRIAL_ALREADY_USED = 'Este código já foi utilizado';
@@ -47,6 +49,7 @@ export interface ActivePromotion {
 
 export interface HqCouponValidation {
   valid: boolean;
+  accessCodeId?: string;
   error?: string;
   code?: string;
   description?: string | null;
@@ -97,6 +100,8 @@ export interface AccessCodeRow {
   stripe_coupon_id?: string | null;
   stripe_promo_code_id?: string | null;
   note?: string | null;
+  excluded_user_ids?: string[];
+  new_customers_only?: boolean;
 }
 
 export interface CouponEvalContext {
@@ -107,6 +112,8 @@ export interface CouponEvalContext {
   usedByHolder: boolean;
   useCount: number;
   now?: Date;
+  hasNonRefundedSubscription?: boolean;
+  purpose?: 'checkout' | 'paid-use';
 }
 
 export interface TrialEvalContext {
@@ -312,6 +319,16 @@ export function evaluateCoupon(
   if (!codeAppliesToProduct(row, ctx.productType)) {
     return { valid: false, error: COUPON_WRONG_PRODUCT, code: row.code };
   }
+  // O webhook registra o desconto já concedido, depois de criar a assinatura.
+  if (ctx.purpose !== 'paid-use') {
+    const excluded = row.excluded_user_ids ?? [];
+    if (excluded.length > 0 && (!ctx.userId || excluded.includes(ctx.userId))) {
+      return { valid: false, error: COUPON_ACCOUNT_INELIGIBLE, code: row.code };
+    }
+    if (row.new_customers_only && (!ctx.userId || ctx.hasNonRefundedSubscription !== false)) {
+      return { valid: false, error: COUPON_NEW_CUSTOMERS_ONLY, code: row.code };
+    }
+  }
   if (ctx.usedByHolder) {
     return { valid: false, error: COUPON_ALREADY_USED, code: row.code };
   }
@@ -329,6 +346,7 @@ export function evaluateCoupon(
 
   return {
     valid: true,
+    accessCodeId: row.id,
     code: row.code,
     description: row.note ?? row.code,
     productTypes: codeProductTypes(row),
