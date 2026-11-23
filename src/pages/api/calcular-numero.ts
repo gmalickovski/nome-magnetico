@@ -96,7 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
         interpretacao_basica: interpretacao,
         quantidade_bloqueios: bloqueios.length,
         primeiro_bloqueio_titulo: bloqueios[0]?.titulo ?? null,
-        cta_url: `/comprar?produto=nome_social&utm_source=calculadora`,
+        cta_url: '/comprar?produto=nome_social&from=calculadora',
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

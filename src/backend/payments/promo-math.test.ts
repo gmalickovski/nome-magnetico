@@ -4,9 +4,11 @@ import {
   applyDiscountCents,
   applyPromotionDiscount,
   applyPromotionToPrices,
+  COUPON_ACCOUNT_INELIGIBLE,
   COUPON_ALREADY_USED,
   COUPON_INVALID,
   COUPON_MAX_USES,
+  COUPON_NEW_CUSTOMERS_ONLY,
   COUPON_WRONG_PRODUCT,
   evaluateCoupon,
   evaluateTrial,
@@ -233,6 +235,40 @@ describe('cupom', () => {
       now: NOW,
     });
     assert.equal(result.valid, true);
+  });
+
+  it('recusa somente a conta excluída de um cupom com lista de exclusão', () => {
+    const restricted = coupon({ excluded_user_ids: ['excluded-user'] });
+    const context = { productType: 'nome_social' as const, usedByHolder: false, useCount: 0, now: NOW };
+
+    assert.equal(evaluateCoupon(restricted, { ...context, userId: 'excluded-user' }).error, COUPON_ACCOUNT_INELIGIBLE);
+    assert.equal(evaluateCoupon(restricted, { ...context, userId: 'other-user' }).valid, true);
+    assert.equal(evaluateCoupon(restricted, context).valid, false);
+  });
+
+  it('cupom de novo cliente exige histórico verificado e sem assinatura não reembolsada', () => {
+    const restricted = coupon({ new_customers_only: true });
+    const context = { productType: 'nome_social' as const, userId: 'buyer', usedByHolder: false, useCount: 0, now: NOW };
+
+    assert.equal(evaluateCoupon(restricted, { ...context, hasNonRefundedSubscription: false }).valid, true);
+    assert.equal(evaluateCoupon(restricted, { ...context, hasNonRefundedSubscription: true }).error, COUPON_NEW_CUSTOMERS_ONLY);
+    assert.equal(evaluateCoupon(restricted, context).valid, false);
+  });
+
+  it('registra o uso já pago mesmo depois de criar a primeira assinatura', () => {
+    const restricted = coupon({ new_customers_only: true });
+    const context = {
+      productType: 'nome_social' as const,
+      purpose: 'paid-use' as const,
+      userId: 'buyer',
+      hasNonRefundedSubscription: true,
+      usedByHolder: false,
+      useCount: 0,
+      now: NOW,
+    };
+
+    assert.equal(evaluateCoupon(restricted, context).valid, true);
+    assert.equal(evaluateCoupon(restricted, { ...context, usedByHolder: true }).error, COUPON_ALREADY_USED);
   });
 });
 
