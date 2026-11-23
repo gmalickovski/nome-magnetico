@@ -272,8 +272,7 @@ export function PublicAnalysisForm() {
       {showSuccessModal && (() => {
         const temGanho = preview != null && preview.potencialMax != null && preview.potencialMax > preview.score;
         const emailExibido = submittedEmail || 'seu e-mail';
-        const upsellHref =
-          '/nome-social?utm_source=modal_resultado_gratis&utm_medium=upsell_imediato&utm_campaign=analise_gratis';
+        const upsellHref = '/nome-social?from=modal_resultado_gratis';
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm overflow-y-auto">
             <div className="w-full max-w-lg rounded-2xl border border-[#D4AF37]/30 bg-[#131313] p-6 sm:p-8 shadow-2xl shadow-black/70 relative animate-fade-in my-auto">

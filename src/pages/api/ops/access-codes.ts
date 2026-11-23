@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAccessCode, listAccessCodes } from '@/backend/ops/accessCodes';
 import { OpsRegistryError } from '@/backend/ops/registry';
 import {
+  couponEligibilitySchema,
   discountInRange,
   pageSchema,
   productTypesSchema,
@@ -34,6 +35,7 @@ const createSchema = z
     discount_value: z.number().int().positive().nullable().optional(),
     expires_at: z.string().datetime({ offset: true }).nullable().optional(),
     max_uses: z.number().int().min(1).max(100000).nullable().optional(),
+    ...couponEligibilitySchema.partial().shape,
     note: z
       .string()
       .trim()
@@ -59,6 +61,9 @@ const createSchema = z
       }
       if (body.discount_type || body.discount_value) {
         ctx.addIssue({ code: 'custom', path: ['discount_value'], message: 'Acesso liberado não tem desconto' });
+      }
+      if (body.new_customers_only || body.excluded_user_ids?.length) {
+        ctx.addIssue({ code: 'custom', path: ['kind'], message: 'Restrições de elegibilidade se aplicam apenas a cupons' });
       }
     }
     if (body.expires_at && new Date(body.expires_at).getTime() <= Date.now()) {
@@ -122,6 +127,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       expiresAt: data.expires_at ?? null,
       note: data.note ?? null,
       maxUses: data.max_uses ?? null,
+      excludedUserIds: data.excluded_user_ids ?? [],
+      newCustomersOnly: data.new_customers_only ?? false,
       actorId: gate.profile.id,
     });
     return opsJson({ access_code: accessCode }, 201);
