@@ -307,10 +307,9 @@ export async function createCheckoutResponse(args: {
 
     const campaign = isRenewal && etapa ? renewalUtmCampaign(etapa) : undefined;
     const renewalQuery = etapa ? `?etapa=${encodeURIComponent(etapa)}` : '';
-    const resolvedUtmCampaign = campaign ?? (rawUtmCampaign?.trim() || chatSource || undefined);
-    const resolvedUtmSource = campaign
-      ? 'brevo'
-      : rawUtmSource?.trim() || (chatSource ? 'app_chat' : undefined);
+    const isLegacyChatUtm = rawUtmSource === 'app_chat';
+    const resolvedUtmCampaign = campaign ?? (isLegacyChatUtm ? undefined : rawUtmCampaign || undefined);
+    const resolvedUtmSource = campaign ? 'brevo' : isLegacyChatUtm ? undefined : rawUtmSource || undefined;
     const resolvedUtmMedium = campaign ? 'email' : undefined;
     const successUrl =
       isFromAppChat && product_type === 'nome_social'

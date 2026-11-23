@@ -167,11 +167,6 @@ export function CheckoutModal({ productType, priceInfo, onClose, onTriggerCard, 
       const effectiveCoupon = coupon?.applied ? code : undefined;
       if (withoutCoupon) changeCoupon('');
       setStep('redirecting');
-      track('checkout_redirect_start', {
-        produto: productType,
-        preco: finalCents / 100,
-        codigo_cupom: effectiveCoupon,
-      });
       navigating = await onTriggerCard(productType, effectiveCoupon, finalCents) === true;
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Erro ao abrir o checkout. Tente novamente.');

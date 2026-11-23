@@ -70,7 +70,7 @@ export function ResultadoMobileDock({
         location: 'dock',
         surface: 'resultado',
       });
-      window.location.href = '/comprar?produto=nome_social&utm_source=app_dock';
+      window.location.href = '/comprar?produto=nome_social&from=app_dock';
       return;
     }
     if (action === 'download_pdf' && analysisId) {
