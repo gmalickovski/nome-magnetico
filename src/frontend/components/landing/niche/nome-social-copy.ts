@@ -11,19 +11,19 @@ export const NOME_SOCIAL_COPY: NichePageCopy = {
   seo: {
     title: 'Harmonização de Assinatura e Nome Social',
     description:
-      'Compare seu nome de nascimento com variações de nome social sem bloqueios nos 4 triângulos cabalísticos. Veja nota de 0 a 100 e baixe seu PDF completo.',
+      'Compare seu nome de nascimento com variações de nome social sem bloqueios no Triângulo da Vida cabalístico. Veja nota de 0 a 100 e baixe seu PDF completo.',
     keywords:
       'nome social numerologia, harmonização de assinatura, assinatura numerológica, nome sem bloqueios, numerologia cabalística nome, triângulo da vida',
     productName: 'Nome Social: Harmonização de Assinatura',
     productDescription:
-      'Análise de numerologia cabalística com 4 triângulos, 5 números principais, diagnóstico de bloqueios e variações de assinatura harmonizada com PDF.',
+      'Análise de numerologia cabalística com Triângulo da Vida, arquétipo, 5 números principais, diagnóstico de bloqueios e variações de assinatura harmonizada com PDF.',
   },
   hero: {
     eyebrow: 'Nome Social · Assinatura do Dia a Dia', // [TEXTO]
     titleLead: 'Harmonize sua assinatura', // [TEXTO]
     titleHighlight: 'e elimine os bloqueios do seu nome no dia a dia', // [TEXTO]
     description:
-      'Você informa sua certidão e onde mais usa o nome. Calculamos os 4 triângulos cabalísticos e entregamos variações próximas com nota de 0 a 100 e zero bloqueios para adotar sem mudar documentos.', // [TEXTO]
+      'Você informa sua certidão e onde mais usa o nome. Calculamos o Triângulo da Vida cabalístico e entregamos variações próximas com nota de 0 a 100 e zero bloqueios para adotar sem mudar documentos.', // [TEXTO]
     primaryCtaLabel: 'Iniciar Harmonização do Meu Nome', // [TEXTO]
     primaryCtaId: 'nome_social_hero_chat',
     secondaryCtaLabel: 'Ver Minha Nota Grátis', // [TEXTO]
@@ -69,7 +69,7 @@ export const NOME_SOCIAL_COPY: NichePageCopy = {
     rightBlock: {
       badge: 'Triângulo da Vida (Antes × Depois)', // [TEXTO]
       title: 'Sequências repetidas zeradas na prática', // [TEXTO]
-      description: 'Os bloqueios em vermelho são eliminados em todos os 4 triângulos mantendo o Arcano Regente na ponta.', // [TEXTO]
+      description: 'Os bloqueios em vermelho são eliminados no Triângulo da Vida mantendo o Arcano Regente na ponta.', // [TEXTO]
       srSummary: 'Animação do Triângulo da Vida mostrando linhas descendo, bloqueio destacado em vermelho e troca para nome sem bloqueios.', // [TEXTO]
     },
   },
@@ -77,7 +77,7 @@ export const NOME_SOCIAL_COPY: NichePageCopy = {
     eyebrow: 'Os Nomes Que Você Recebe', // [TEXTO]
     title: 'Três assinaturas sem bloqueios ranqueadas com nota clara', // [TEXTO]
     description:
-      'Cada sugestão mostra o score de 0 a 100, a compatibilidade Expressão × Destino (sempre objetiva) e o selo de zero bloqueios nos 4 triângulos.', // [TEXTO]
+      'Cada sugestão mostra o score de 0 a 100, a compatibilidade Expressão × Destino (sempre objetiva) e o selo de zero bloqueios.', // [TEXTO]
     srSummary: 'Cena com três cards de sugestões de nome social entrando em sequência com nota colorida e selo zero bloqueios.', // [TEXTO]
   },
   deliverables: {
@@ -86,7 +86,7 @@ export const NOME_SOCIAL_COPY: NichePageCopy = {
     description:
       'Leve a leitura detalhada do seu mapa atual, comparativo antes × depois, lições kármicas, tendências ocultas e plano simples de adoção da assinatura.', // [TEXTO]
     highlights: [
-      '4 triângulos cabalísticos analisados (Vida, Pessoal, Social e Destino)', // [TEXTO]
+      'Triângulo da Vida e arquétipo do nome, com leituras complementares', // [TEXTO]
       'Comparativo de compatibilidade Expressão × Destino', // [TEXTO]
       'Critérios objetivos para treinar e aplicar sua nova assinatura', // [TEXTO]
     ],
@@ -105,9 +105,9 @@ export const NOME_SOCIAL_COPY: NichePageCopy = {
         'Você acessa os resultados na hora dentro do ciclo de 30 dias em pagamento único e recebe rodadas de sugestões além de poder comparar variações escolhidas.', // [TEXTO]
     },
     {
-      question: 'Todos os 4 triângulos são verificados nas sugestões?', // [TEXTO]
+      question: 'As sugestões têm bloqueios?', // [TEXTO]
       answer:
-        'Sim. Toda sugestão gerada pelo sistema passa pela verificação de zero sequências repetidas (>= 3 dígitos iguais) nos triângulos da Vida, Pessoal, Social e Destino.', // [TEXTO]
+        'Sim. Toda sugestão gerada pelo sistema passa pela verificação de zero sequências repetidas (>= 3 dígitos iguais), começando pelo Triângulo da Vida.', // [TEXTO]
     },
   ],
   finalCta: {

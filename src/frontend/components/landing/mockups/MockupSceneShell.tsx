@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { DeviceFrame } from './DeviceFrame.js';
 import type { MockupDevice, MockupTheme } from './types.js';
 import type { UseMockupTimelineResult } from './useMockupTimeline.js';
@@ -8,8 +8,10 @@ export interface MockupSceneShellProps<TAction = string> {
   theme: MockupTheme;
   device: MockupDevice;
   timeline: UseMockupTimelineResult<TAction>;
-  phoneContent: ReactNode;
-  desktopContent: ReactNode;
+  phoneContent?: ReactNode;
+  desktopContent?: ReactNode;
+  /** Quando informado, a cena aparece solta, sem moldura de celular/desktop. */
+  framelessContent?: ReactNode;
   srSummary: string;
   statusLabel: string;
   reducedMotionLabel?: string;
@@ -28,15 +30,32 @@ export function MockupSceneShell<TAction = string>({
   timeline,
   phoneContent,
   desktopContent,
+  framelessContent,
   srSummary,
   statusLabel,
   reducedMotionLabel = 'Reduced motion · estado final',
   showStatusPill = false,
   className = '',
 }: MockupSceneShellProps<TAction>) {
+  // Altura estável: a coluna do mockup nunca encolhe durante a animação (só cresce até o maior estado),
+  // então o texto ao lado não muda de posição.
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [stableMin, setStableMin] = useState(0);
+  useEffect(() => {
+    const el = innerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(() => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      setStableMin((prev) => (h > prev ? h : prev));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [framelessContent]);
+
   return (
     <div
       ref={timeline.containerRef}
+      style={framelessContent && stableMin ? { minHeight: stableMin } : undefined}
       data-mockup-scene={sceneName}
       data-mockup-theme={theme}
       data-mockup-playing={timeline.isPlaying ? 'true' : 'false'}
@@ -56,13 +75,22 @@ export function MockupSceneShell<TAction = string>({
         </div>
       ) : null}
 
-      <DeviceFrame
-        variant={device}
-        theme={theme}
-        phoneContent={phoneContent}
-        desktopContent={desktopContent}
-        srSummary={srSummary}
-      />
+      {framelessContent ? (
+        <div ref={innerRef} className="w-full min-w-0 h-fit">
+          <p className="sr-only">{srSummary}</p>
+          <div aria-hidden="true" className="select-none pointer-events-none w-full min-w-0">
+            {framelessContent}
+          </div>
+        </div>
+      ) : (
+        <DeviceFrame
+          variant={device}
+          theme={theme}
+          phoneContent={phoneContent}
+          desktopContent={desktopContent}
+          srSummary={srSummary}
+        />
+      )}
     </div>
   );
 }

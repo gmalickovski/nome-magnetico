@@ -210,14 +210,78 @@ export function TriangleScene({
     </ScaledMockupCanvas>
   );
 
+  // Triângulo solto, sem moldura de aparelho.
+  // Antes e Depois ficam sobrepostos e trocam por fade lento (como a estrela); linhas, bloqueios
+  // e ponta também entram por opacidade.
+  const renderLayer = (layer: 'birth' | 'harmonized') => {
+    const d = layer === 'harmonized' ? data.harmonized : data.birth;
+    const isActive = (layer === 'harmonized') === isHarmonized;
+    const rows = isActive ? visibleRows : d.linhas.length;
+    const blocks = isActive ? highlightBlocks : true;
+    const apex = isActive ? highlightApex : true;
+    return (
+      <div
+        key={layer}
+        className={`col-start-1 row-start-1 transition-opacity duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isActive ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <ReadingTopicCard
+          eyebrow={layer === 'harmonized' ? 'Depois · Nome harmonizado' : 'Antes · Nome atual'}
+          title={d.nome}
+          subtitle={
+            apex
+              ? `Arcano Regente ${d.regente} — ${d.regenteNome}`
+              : 'Cada letra vira número e reduz aos pares até a ponta'
+          }
+          className="!p-5 !gap-3 h-full"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 min-h-[24px]">
+            <span className={`transition-opacity duration-700 ${blocks ? 'opacity-100' : 'opacity-0'}`}>
+              <LifeTriangleBlockBadge codigos={d.bloqueiosCodigos} />
+            </span>
+            <span
+              className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-purple-500/35 bg-purple-500/15 text-purple-300 transition-opacity duration-700 ${
+                apex ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              Ponta {d.regente}
+            </span>
+          </div>
+          <ChatLifeTriangleSvg
+            nome={d.nome}
+            linhas={d.linhas}
+            visibleRows={rows}
+            highlightBlocks={blocks}
+            highlightApex={apex}
+            minWidthPx={320}
+            softTransitionMs={900}
+            className="!py-1"
+          />
+          {renderLegend()}
+        </ReadingTopicCard>
+      </div>
+    );
+  };
+
+  const framelessContent = (
+    <div className="w-full max-w-[560px] mx-auto grid">
+      {renderLayer('birth')}
+      {renderLayer('harmonized')}
+    </div>
+  );
+
+  void phoneContent;
+  void desktopContent;
+  void device;
+
   return (
     <MockupSceneShell
       sceneName="triangle"
       theme={theme}
       device={device}
       timeline={timeline}
-      phoneContent={phoneContent}
-      desktopContent={desktopContent}
+      framelessContent={framelessContent}
       statusLabel={statusLabel}
       showStatusPill={showStatusPill}
       className={className}

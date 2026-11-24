@@ -46,13 +46,10 @@ export interface NmTypingBubbleProps {
 export function NmTypingBubble({ label, className = '' }: NmTypingBubbleProps) {
   return (
     <NmBubble className={className}>
-      <div className="flex items-center gap-2 text-xs text-chat-muted py-0.5">
-        <span className="inline-flex items-center gap-1" aria-hidden="true">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold nm-mockup-dot-1" />
-          <span className="w-1.5 h-1.5 rounded-full bg-gold nm-mockup-dot-2" />
-          <span className="w-1.5 h-1.5 rounded-full bg-gold nm-mockup-dot-3" />
-        </span>
-        {label ? <span>{label}</span> : null}
+      {/* Igual ao carregamento do chat real: ponto dourado pulsando + texto */}
+      <div className="flex items-center gap-2 text-xs text-chat-muted py-1">
+        <span className="w-2 h-2 rounded-full bg-gold animate-ping" aria-hidden="true" />
+        <span>{label ?? 'Sintonizando vibrações numéricas...'}</span>
       </div>
     </NmBubble>
   );

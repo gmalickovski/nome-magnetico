@@ -24,7 +24,7 @@ const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', has
 
 const NOME_SOCIAL_DELIVERABLES = [
   'sugestões de assinatura com nota, nível e o que mudou (até 9 opções)',
-  'triângulos Pessoal, Social e do Destino',
+  'Arquétipo do nome e leituras complementares',
   'lições kármicas e arquétipo',
   'compare os nomes que você quiser',
   'PDF com guia para usar a nova assinatura',

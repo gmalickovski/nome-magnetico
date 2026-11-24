@@ -35,6 +35,11 @@ export interface ChatLifeTriangleSvgProps {
   highlightApex?: boolean;
   /** Largura mínima em px dentro do container (padrão: 280). */
   minWidthPx?: number;
+  /**
+   * Só nos mockups da landing: transição suave (ms) para linhas, bloqueios e ponta.
+   * Quando informado, os destaques ficam sempre no DOM e entram/saem por opacidade.
+   */
+  softTransitionMs?: number;
   className?: string;
 }
 
@@ -49,8 +54,11 @@ export function ChatLifeTriangleSvg({
   highlightBlocks = true,
   highlightApex = true,
   minWidthPx = 280,
+  softTransitionMs,
   className = '',
 }: ChatLifeTriangleSvgProps) {
+  const soft = typeof softTransitionMs === 'number';
+  const ease = soft ? `${softTransitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)` : '';
   const nomeSemEspacos = nome.replace(/\s+/g, '').toUpperCase();
   const letras = nomeSemEspacos.split('');
   const N = linhas[0]?.length ?? 1;
@@ -62,9 +70,8 @@ export function ChatLifeTriangleSvg({
   const viewBox = `0 0 ${largura} ${altura}`;
 
   const midX = largura / 2;
-  const bloqueioPos = highlightBlocks
-    ? buildLifeTriangleBloqueioPositions(linhas)
-    : new Set<string>();
+  const allBloqueioPos = buildLifeTriangleBloqueioPositions(linhas);
+  const bloqueioPos = highlightBlocks ? allBloqueioPos : new Set<string>();
   const xBase = midX - textWidth / 2;
   const rowLimit = visibleRows !== undefined ? Math.max(0, visibleRows) : linhas.length;
 
@@ -109,6 +116,8 @@ export function ChatLifeTriangleSvg({
             const key = `${r},${c}`;
             const isBloq = bloqueioPos.has(key);
             const showApex = isLastRow && highlightApex && !isBloq;
+            const couldBloq = soft && allBloqueioPos.has(key);
+            const couldApex = soft && isLastRow && !allBloqueioPos.has(key);
 
             const fill = isBloq
               ? '#FF6B6B'
@@ -125,13 +134,14 @@ export function ChatLifeTriangleSvg({
                   visibleRows !== undefined
                     ? {
                         opacity: rowVisible ? 1 : 0,
-                        transition: 'opacity 320ms ease-out',
+                        transition: soft ? `opacity ${ease}` : 'opacity 320ms ease-out',
                       }
                     : undefined
                 }
               >
-                {isBloq && (
+                {(soft ? couldBloq : isBloq) && (
                   <rect
+                    style={soft ? { opacity: isBloq ? 1 : 0, transition: `opacity ${ease}` } : undefined}
                     x={x - 13}
                     y={yNum - 14}
                     width="26"
@@ -142,8 +152,9 @@ export function ChatLifeTriangleSvg({
                     strokeWidth="1"
                   />
                 )}
-                {showApex && (
+                {(soft ? couldApex : showApex) && (
                   <circle
+                    style={soft ? { opacity: showApex ? 1 : 0, transition: `opacity ${ease}` } : undefined}
                     cx={x}
                     cy={yNum - 5}
                     r="13"
@@ -159,6 +170,7 @@ export function ChatLifeTriangleSvg({
                   fontWeight={isBloq || showApex ? '700' : '400'}
                   textAnchor="middle"
                   fill={fill}
+                  style={soft ? { transition: `fill ${ease}` } : undefined}
                   fontFamily="'Courier New', Courier, monospace"
                 >
                   {num}

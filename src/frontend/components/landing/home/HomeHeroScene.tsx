@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   ChatContextChips,
   ChatOptionPills,
   ChatPanelHeader,
   ChatProgressBar,
   ChatScorePanelCard,
-  ChatSuggestionCard,
   NmBubble,
   NmTypingBubble,
   ProductHarmonyStar,
@@ -14,6 +13,8 @@ import {
   type ChatOptionPillItem,
 } from '../../shared/chat-ui/index.js';
 import { CHAT_SCRIPTS } from '../mockups/chat-scripts.js';
+import { AnalysisPanelSheet } from '../mockups/AnalysisPanelMock.js';
+import { ChatDesktopShell } from '../mockups/ChatDesktopShell.js';
 import { DeviceFrame } from '../mockups/DeviceFrame.js';
 import { RESULT_SCRIPTS } from '../mockups/result-scripts.js';
 import { ScaledMockupCanvas } from '../mockups/ScaledMockupCanvas.js';
@@ -74,16 +75,20 @@ export function HomeHeroScene({
   );
 
   const currentAction = timeline.currentAction ?? 'path_shown';
-  const showNames = triggered.has('names_shown');
   const showStarFinale = triggered.has('star_finale');
 
-  const pathEx = script.exchanges[0];
-  const q1Ex = script.exchanges[1];
-  const q2Ex = script.exchanges[2];
+  const convo = [
+    { key: 'path', ex: script.exchanges[0] },
+    { key: 'q1', ex: script.exchanges[1] },
+    { key: 'q2', ex: script.exchanges[2] },
+    { key: 'q3', ex: script.more[0] },
+    { key: 'q4', ex: script.more[1] },
+  ] as const;
 
-  const stepIndex =
-    showNames || showStarFinale
-      ? 4
+  const stepIndex = showStarFinale
+    ? 4
+    : triggered.has('q4_answered')
+      ? 3
       : triggered.has('q2_answered')
         ? 3
         : triggered.has('q1_answered')
@@ -113,120 +118,44 @@ export function HomeHeroScene({
     );
   };
 
-  const renderChatConversation = (compact: boolean) => {
-    const condensePath = triggered.has('q2_typing') || showNames;
-    const condenseQ1 = showNames;
+  // Começa no topo e acompanha a última mensagem quando o chat enche (celular e desktop).
+  useEffect(() => {
+    const root = timeline.containerRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>('[data-hero-chat]').forEach((el) => {
+      el.scrollTo({ top: currentAction === 'path_shown' ? 0 : el.scrollHeight });
+    });
+  }, [currentAction, timeline.containerRef]);
 
-    return (
-      <div className="flex-1 min-h-0 flex flex-col justify-end gap-2 px-4 pb-4 pt-2 overflow-hidden">
-        {!condensePath ? (
-          <>
-            {triggered.has('path_shown') ? (
-              <NmBubble eyebrow={pathEx.eyebrow} wide>
-                <p className="text-chat-ink leading-relaxed">{pathEx.jevPrompt}</p>
-                {!triggered.has('path_answered')
-                  ? renderPills(pathEx.chips, pathEx.selectedChipIndex, currentAction === 'path_tap')
-                  : null}
-              </NmBubble>
-            ) : null}
-            {triggered.has('path_answered') ? <UserBubble content={pathEx.userReply} /> : null}
-          </>
-        ) : null}
-
-        {!condenseQ1 && triggered.has('q1_typing') ? (
-          <>
-            {currentAction === 'q1_typing' ? <NmTypingBubble /> : null}
-            {triggered.has('q1_shown') ? (
-              <NmBubble eyebrow={q1Ex.eyebrow} wide>
-                <p className="text-chat-ink leading-relaxed">{q1Ex.jevPrompt}</p>
-                {!triggered.has('q1_answered')
-                  ? renderPills(q1Ex.chips, q1Ex.selectedChipIndex, currentAction === 'q1_tap')
-                  : null}
-              </NmBubble>
-            ) : null}
-            {triggered.has('q1_answered') ? <UserBubble content={q1Ex.userReply} /> : null}
-          </>
-        ) : null}
-
-        {!showNames && triggered.has('q2_typing') ? (
-          <>
-            {currentAction === 'q2_typing' ? <NmTypingBubble /> : null}
-            {triggered.has('q2_shown') ? (
-              <NmBubble eyebrow={q2Ex.eyebrow} wide>
-                <p className="text-chat-ink leading-relaxed">{q2Ex.jevPrompt}</p>
-                {!triggered.has('q2_answered')
-                  ? renderPills(q2Ex.chips, q2Ex.selectedChipIndex, currentAction === 'q2_tap')
-                  : null}
-              </NmBubble>
-            ) : null}
-            {triggered.has('q2_answered') ? <UserBubble content={q2Ex.userReply} /> : null}
-          </>
-        ) : null}
-
-        {showNames ? (
-          <div className="nm-mockup-enter">
-            <NmBubble wide>
-              <p className="text-chat-ink leading-relaxed">{script.jevClosingIntro}</p>
-              <div
-                className={`mt-3 rounded-2xl bg-[#161616] ${
-                  compact ? 'p-3 space-y-2' : 'p-4 grid grid-cols-1 gap-2.5'
-                }`}
-              >
-                {script.suggestions.map((item, idx) => (
-                  <ChatSuggestionCard
-                    key={item.id}
-                    card={item.card}
-                    selected={idx === 0}
-                    principal={item.principal}
-                    maiorNota={item.maiorNota}
-                    destaque={item.destaque}
-                    interactive={false}
-                    delayIndex={idx}
-                  />
-                ))}
-              </div>
-            </NmBubble>
-          </div>
-        ) : null}
-      </div>
-    );
-  };
-
-  const renderStarFinalePane = (compact: boolean) => (
+  const renderChatConversation = (_compact: boolean) => (
     <div
-      className={`flex-1 min-h-0 flex flex-col justify-between bg-[#131313] ${
-        compact ? 'p-4 gap-3' : 'p-5 gap-4 justify-center items-center'
-      } nm-mockup-enter`}
+      data-hero-chat
+      className="flex-1 min-h-0 flex flex-col justify-start gap-2 px-4 pb-4 pt-3 overflow-y-hidden"
     >
-      {compact ? (
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-cinzel text-xs font-bold uppercase tracking-[0.1em] text-[#e5e2e1]">
-            Antes × Potencial
-          </span>
-          <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${harmVisual.badgeClass}`}>
-            {result.harmonized.nota}/100
-          </span>
-        </div>
-      ) : null}
+      {convo.map(({ key, ex }) => {
+        const has = (suffix: string) => triggered.has(`${key}_${suffix}` as HomeHeroAction);
+        const shown = key === 'path' ? has('shown') : has('typing');
+        if (!shown) return null;
+        return (
+          <div key={key} className="contents">
+            {key !== 'path' && currentAction === (`${key}_typing` as HomeHeroAction) ? (
+              <NmTypingBubble />
+            ) : null}
+            {key === 'path' || has('shown') ? (
+              <NmBubble eyebrow={ex.eyebrow} wide>
+                <p className="text-chat-ink leading-relaxed">{ex.jevPrompt}</p>
+                {!has('answered')
+                  ? renderPills(ex.chips, ex.selectedChipIndex, currentAction === (`${key}_tap` as HomeHeroAction))
+                  : null}
+              </NmBubble>
+            ) : null}
+            {has('answered') ? <UserBubble content={ex.userReply} /> : null}
+          </div>
+        );
+      })}
 
-      <div className={compact ? 'w-full max-w-[296px] mx-auto' : 'nm-floating-card p-4 w-full max-w-[390px] mx-auto'}>
-        <ProductHarmonyStar
-          variant="dual"
-          play
-          birthName={result.birth.nome}
-          birthScore={result.birth.nota}
-          birthNums={[...result.birth.starNums]}
-          harmonizedName={result.harmonized.nome}
-          harmonizedScore={result.harmonized.nota}
-          harmonizedNums={[...result.harmonized.starNums]}
-        />
-      </div>
-
-      {compact ? (
-        <ChatScorePanelCard
-          birth={{ nome: result.birth.nome, score: result.birth.nota }}
-          harmonized={{ nome: result.harmonized.nome, score: result.harmonized.nota }}
-        />
+      {currentAction === 'wrap_typing' ? (
+        <NmTypingBubble label="Sintonizando vibrações numéricas..." />
       ) : null}
     </div>
   );
@@ -239,65 +168,18 @@ export function HomeHeroScene({
           totalSteps={4}
           className="shrink-0 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
         />
-        {showStarFinale ? renderStarFinalePane(true) : renderChatConversation(true)}
+        <div className="relative flex-1 min-h-0 flex flex-col">
+          {renderChatConversation(true)}
+          {showStarFinale ? <AnalysisPanelSheet theme="social" /> : null}
+        </div>
       </div>
     </ScaledMockupCanvas>
   );
 
-  const topSuggestion = script.suggestions[0]!;
-  const sidebarHarmonized =
-    showNames || showStarFinale
-      ? { nome: topSuggestion.card.nome, score: topSuggestion.card.score }
-      : null;
-
   const desktopContent = (
-    <ScaledMockupCanvas logicalWidth={1040}>
-      <div className="flex flex-col flex-1 min-h-0 bg-[#131313]">
-        <ChatProgressBar
-          currentStep={stepIndex}
-          totalSteps={4}
-          className="shrink-0 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
-        />
-        <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] gap-3 px-4">
-          <div className="flex flex-col min-h-0 min-w-0">
-            {showStarFinale ? renderStarFinalePane(false) : renderChatConversation(false)}
-          </div>
-
-          <aside
-            className={`flex flex-col justify-center gap-3 py-3 pl-3 pr-4 bg-[#131313]/95 min-h-0 overflow-hidden ${
-              device === 'both' ? '!pr-52' : ''
-            }`}
-          >
-            <ChatPanelHeader
-              title={showStarFinale ? 'Estrela Comparativa' : 'Painel de Análise'}
-              hasSelection={showNames || showStarFinale}
-            />
-
-            <ChatScorePanelCard
-              birth={{ nome: result.birth.nome, score: result.birth.nota }}
-              harmonized={sidebarHarmonized}
-            />
-
-            <div className="nm-floating-card p-4 space-y-2.5">
-              <p className="text-xs font-inter text-[#a0a0a0] leading-relaxed">
-                {showStarFinale
-                  ? 'Comparação dos 5 números principais sem nenhum bloqueio nos 4 triângulos.'
-                  : showNames
-                    ? '3 sugestões selecionadas com nota acima de 80 e 0 bloqueios.'
-                    : 'As opções aparecem ordenadas pela regra de qualidade ao responder.'}
-              </p>
-              <ChatContextChips
-                chips={
-                  showStarFinale
-                    ? ['0 bloqueios', 'Nota 93/100', 'Expressão 6 × Destino 6']
-                    : script.sidebarContextTags
-                }
-              />
-            </div>
-          </aside>
-        </div>
-      </div>
-    </ScaledMockupCanvas>
+    <ChatDesktopShell stepIndex={stepIndex} theme="social" dual={showStarFinale}>
+      {renderChatConversation(false)}
+    </ChatDesktopShell>
   );
 
   return (

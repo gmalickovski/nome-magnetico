@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   ChatBabyGoodDaysStrip,
   ChatContextChips,
@@ -13,6 +13,8 @@ import {
   UserBubble,
   type ChatOptionPillItem,
 } from '../../shared/chat-ui/index.js';
+import { SuggestionsSection } from './SuggestionsSection.js';
+import { ChatDesktopShell } from './ChatDesktopShell.js';
 import { DeviceFrame } from './DeviceFrame.js';
 import { ScaledMockupCanvas } from './ScaledMockupCanvas.js';
 import { CHAT_SCRIPTS, type ChatScript } from './chat-scripts.js';
@@ -33,6 +35,14 @@ export type ChatAction =
   | 'q3_shown'
   | 'q3_tap'
   | 'q3_answered'
+  | 'q4_typing'
+  | 'q4_shown'
+  | 'q4_tap'
+  | 'q4_answered'
+  | 'q5_typing'
+  | 'q5_shown'
+  | 'q5_tap'
+  | 'q5_answered'
   | 'result_typing'
   | 'result_shown';
 
@@ -49,8 +59,16 @@ const CHAT_TIMELINE_STEPS: ReadonlyArray<TimelineStep<ChatAction>> = [
   { at: 5750, action: 'q3_shown' },
   { at: 6450, action: 'q3_tap' },
   { at: 7150, action: 'q3_answered' },
-  { at: 7650, action: 'result_typing' },
-  { at: 8450, action: 'result_shown' },
+  { at: 7650, action: 'q4_typing' },
+  { at: 8300, action: 'q4_shown' },
+  { at: 9000, action: 'q4_tap' },
+  { at: 9700, action: 'q4_answered' },
+  { at: 10200, action: 'q5_typing' },
+  { at: 10850, action: 'q5_shown' },
+  { at: 11550, action: 'q5_tap' },
+  { at: 12250, action: 'q5_answered' },
+  { at: 12750, action: 'result_typing' },
+  { at: 13700, action: 'result_shown' },
 ];
 
 export interface ChatSceneProps {
@@ -94,14 +112,23 @@ function ChatConversationBody({
   currentAction: ChatAction | null;
   compact: boolean;
 }) {
-  const [ex1, ex2, ex3] = script.exchanges;
+  const convo = [
+    { key: 'q1', ex: script.exchanges[0] },
+    { key: 'q2', ex: script.exchanges[1] },
+    { key: 'q3', ex: script.exchanges[2] },
+    { key: 'q4', ex: script.more[0] },
+    { key: 'q5', ex: script.more[1] },
+  ] as const;
   const hasResult = triggered.has('result_shown');
-  const hasQ3 = triggered.has('q3_typing');
-  const hasQ2 = triggered.has('q2_typing');
 
-  const condenseQ1 = hasQ3 || hasResult;
-  const condenseQ2 = hasResult;
-  const hideQ3PromptOnResult = hasResult;
+
+  // Chat de verdade: começa no topo e, quando enche, acompanha a última mensagem.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: triggered.size === 0 || currentAction === 'q1_typing' ? 0 : el.scrollHeight });
+  }, [triggered, currentAction]);
 
   const renderStepPills = (
     chips: ChatOptionPillItem[],
@@ -129,13 +156,13 @@ function ChatConversationBody({
     const hasArtisticSections = artisticProximos.length > 0 || artisticNovos.length > 0;
 
     return (
-      <div className="mt-3 space-y-3">
+      <div className="space-y-3">
         {script.babyGoodDays && script.babyGoodDays.length > 0 ? (
           <ChatBabyGoodDaysStrip dias={script.babyGoodDays} />
         ) : null}
 
         {hasArtisticSections ? (
-          <div className="rounded-2xl bg-[#161616] p-4 space-y-3.5">
+          <SuggestionsSection count={visibleSuggestions.length}>
             {artisticProximos.length > 0 ? (
               <div className="flex flex-col gap-2.5">
                 <ChatSuggestionSectionHeader
@@ -177,9 +204,9 @@ function ChatConversationBody({
                 ))}
               </div>
             ) : null}
-          </div>
+          </SuggestionsSection>
         ) : (
-          <div className="rounded-2xl bg-[#161616] p-4 space-y-3">
+          <SuggestionsSection count={visibleSuggestions.length}>
             {visibleSuggestions.map((item, idx) => (
               <ChatSuggestionCard
                 key={item.id}
@@ -192,116 +219,53 @@ function ChatConversationBody({
                 delayIndex={idx}
               />
             ))}
-          </div>
+          </SuggestionsSection>
         )}
       </div>
     );
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col justify-end gap-2 px-4 pb-4 pt-2 overflow-hidden">
-      {!condenseQ1 ? (
-        <>
-          {currentAction === 'q1_typing' ? <NmTypingBubble /> : null}
-          {triggered.has('q1_shown') ? (
-            <NmBubble eyebrow={ex1.eyebrow} wide>
-              <p className="text-chat-ink leading-relaxed">{ex1.jevPrompt}</p>
-              {!triggered.has('q1_answered')
-                ? renderStepPills(ex1.chips, ex1.selectedChipIndex, currentAction === 'q1_tap')
-                : null}
-            </NmBubble>
-          ) : null}
-          {triggered.has('q1_answered') ? <UserBubble content={ex1.userReply} /> : null}
-        </>
-      ) : null}
-
-      {!condenseQ2 && hasQ2 ? (
-        <>
-          {currentAction === 'q2_typing' ? <NmTypingBubble /> : null}
-          {triggered.has('q2_shown') ? (
-            <NmBubble eyebrow={ex2.eyebrow} wide>
-              <p className="text-chat-ink leading-relaxed">{ex2.jevPrompt}</p>
-              {!triggered.has('q2_answered')
-                ? renderStepPills(ex2.chips, ex2.selectedChipIndex, currentAction === 'q2_tap')
-                : null}
-            </NmBubble>
-          ) : null}
-          {triggered.has('q2_answered') ? <UserBubble content={ex2.userReply} /> : null}
-        </>
-      ) : null}
-
-      {hasQ3 ? (
-        <>
-          {currentAction === 'q3_typing' ? <NmTypingBubble /> : null}
-          {triggered.has('q3_shown') && !hideQ3PromptOnResult ? (
-            <NmBubble eyebrow={ex3.eyebrow} wide>
-              <p className="text-chat-ink leading-relaxed">{ex3.jevPrompt}</p>
-              {!triggered.has('q3_answered')
-                ? renderStepPills(ex3.chips, ex3.selectedChipIndex, currentAction === 'q3_tap')
-                : null}
-            </NmBubble>
-          ) : null}
-          {triggered.has('q3_answered') ? <UserBubble content={ex3.userReply} /> : null}
-        </>
-      ) : null}
+    <div
+      ref={scrollRef}
+      className="flex-1 min-h-0 flex flex-col justify-start gap-2 px-4 pb-4 pt-3 overflow-y-hidden"
+    >
+      {/* Conversa longa como no sistema: as respostas ficam e o chat acompanha a última mensagem. */}
+      {convo.map(({ key, ex }) => {
+        if (!triggered.has(`${key}_typing` as ChatAction)) return null;
+        return (
+          <div key={key} className="contents">
+            {currentAction === (`${key}_typing` as ChatAction) ? <NmTypingBubble /> : null}
+            {triggered.has(`${key}_shown` as ChatAction) ? (
+              <NmBubble eyebrow={ex.eyebrow} wide>
+                <p className="text-chat-ink leading-relaxed">{ex.jevPrompt}</p>
+                {!triggered.has(`${key}_answered` as ChatAction)
+                  ? renderStepPills(
+                      ex.chips,
+                      ex.selectedChipIndex,
+                      currentAction === (`${key}_tap` as ChatAction),
+                    )
+                  : null}
+              </NmBubble>
+            ) : null}
+            {triggered.has(`${key}_answered` as ChatAction) ? <UserBubble content={ex.userReply} /> : null}
+          </div>
+        );
+      })}
 
       {currentAction === 'result_typing' ? (
         <NmTypingBubble label="Sintonizando vibrações numéricas..." />
       ) : null}
 
       {hasResult ? (
-        <NmBubble wide>
-          <p className="text-chat-ink leading-relaxed">{script.jevClosingIntro}</p>
+        <>
+          <NmBubble wide>
+            <p className="text-chat-ink leading-relaxed">{script.jevClosingIntro}</p>
+          </NmBubble>
           {renderResultContent()}
-        </NmBubble>
+        </>
       ) : null}
     </div>
-  );
-}
-
-function DesktopSidebar({
-  script,
-  hasResult,
-  bothMode,
-}: {
-  script: ChatScript;
-  hasResult: boolean;
-  bothMode: boolean;
-}) {
-  const topSuggestion = script.suggestions.find((s) => s.principal) ?? script.suggestions[0]!;
-
-  return (
-    <aside
-      className={`flex flex-col gap-3 py-3 px-5 bg-[#131313]/95 min-h-0 overflow-hidden ${
-        bothMode ? 'pr-24' : ''
-      }`}
-    >
-      <ChatPanelHeader hasSelection={hasResult} />
-
-      <ChatScorePanelCard
-        birth={{
-          nome: script.birthExample.nome,
-          score: script.birthExample.notaHoje,
-        }}
-        harmonized={
-          hasResult
-            ? {
-                nome: topSuggestion.card.nome,
-                score: topSuggestion.card.score,
-              }
-            : null
-        }
-      />
-
-      <div className="nm-floating-card p-4 space-y-3">
-        <p className="text-xs font-inter text-[#a0a0a0] leading-relaxed">
-          {hasResult
-            ? `${script.birthExample.bloqueiosLabel} · Comparado ao melhor nome sem bloqueios.`
-            : 'O painel de análise acompanha sua conversa em tempo real.'}
-        </p>
-        <ChatContextChips chips={script.sidebarContextTags} />
-      </div>
-    </aside>
   );
 }
 
@@ -362,31 +326,19 @@ export function ChatScene({
   );
 
   const desktopBody = (
-    <ScaledMockupCanvas logicalWidth={1180}>
-      <div className="flex flex-col flex-1 min-h-0 bg-[#131313]">
-        <ChatProgressBar
-          currentStep={stepIndex}
-          totalSteps={4}
-          className="shrink-0 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
-        />
-        <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)] gap-4 px-5">
-          <div className="flex flex-col min-h-0 min-w-0">
-            <ChatConversationBody
-              script={activeScript}
-              tokens={tokens}
-              triggered={triggered}
-              currentAction={timeline.currentAction}
-              compact={false}
-            />
-          </div>
-          <DesktopSidebar
-            script={activeScript}
-            hasResult={triggered.has('result_shown')}
-            bothMode={device === 'both'}
-          />
-        </div>
-      </div>
-    </ScaledMockupCanvas>
+    <ChatDesktopShell
+      stepIndex={stepIndex}
+      theme={activeScript.theme}
+      dual={triggered.has('result_shown')}
+    >
+      <ChatConversationBody
+        script={activeScript}
+        tokens={tokens}
+        triggered={triggered}
+        currentAction={timeline.currentAction}
+        compact={false}
+      />
+    </ChatDesktopShell>
   );
 
   return (
@@ -405,7 +357,7 @@ export function ChatScene({
             {timeline.reducedMotion
               ? 'Reduced motion · estado final'
               : timeline.isPlaying
-                ? `Em tela · passo ${timeline.stepIndex + 1}/14`
+                ? `Em tela · passo ${timeline.stepIndex + 1}/${CHAT_TIMELINE_STEPS.length}`
                 : 'Pausado fora da tela'}
           </span>
         </div>

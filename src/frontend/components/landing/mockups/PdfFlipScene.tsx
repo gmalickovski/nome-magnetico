@@ -1,8 +1,5 @@
-import { useEffect } from 'react';
-import { ChatPanelHeader } from '../../shared/chat-ui/index.js';
+import { useEffect, useState } from 'react';
 import { MockupSceneShell } from './MockupSceneShell.js';
-import { PdfMockupPageSheet } from './PdfMockupPages.js';
-import { ScaledMockupCanvas } from './ScaledMockupCanvas.js';
 import {
   PDF_FLIP_STEPS,
   RESULT_SCRIPTS,
@@ -24,6 +21,19 @@ export interface PdfFlipSceneProps {
   showStatusPill?: boolean;
   className?: string;
 }
+
+/** Páginas reais do PDF (exemplo fictício) usadas como imagem em /public/landing/pdf. */
+const REAL_PDF_NAMES: Record<MockupTheme, string> = {
+  social: 'Alexandra M. Vale · Relatório Nome Social',
+  artistico: 'Luna Vale · Relatório Nome Artístico',
+  bebe: 'Lou · Manual para os pais',
+};
+
+const REAL_PDF_PAGES: Record<MockupTheme, ReadonlyArray<{ label: string }>> = {
+  social: [{ label: 'Capa' }, { label: 'Resumo em 1 página' }, { label: 'Triângulo da Vida' }, { label: 'Seu nome novo' }],
+  artistico: [{ label: 'Capa' }, { label: 'Resumo em 1 página' }, { label: 'Parte 1 · Você e sua área' }, { label: 'Anexo · Triângulo da Vida' }],
+  bebe: [{ label: 'Capa' }, { label: 'Carta aos pais' }, { label: 'Parte 2 · O nome' }, { label: 'Parte 4 · Crescer juntos' }],
+};
 
 const THEME_ROTATION: readonly MockupTheme[] = ['social', 'artistico', 'bebe'];
 
@@ -54,10 +64,19 @@ export function PdfFlipScene({
     forceReducedMotion,
   });
 
+  // Ao trocar a aba, a troca automática recomeça a partir do tema clicado.
+  const [anchorCycle, setAnchorCycle] = useState(0);
+  useEffect(() => {
+    setAnchorCycle(timeline.cycle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]);
+
   const activeTheme: MockupTheme =
     autoCycleThemes && !timeline.reducedMotion
       ? THEME_ROTATION[
-          (Math.max(0, THEME_ROTATION.indexOf(theme)) + timeline.cycle) % THEME_ROTATION.length
+          (Math.max(0, THEME_ROTATION.indexOf(theme)) +
+            Math.max(0, timeline.cycle - anchorCycle)) %
+            THEME_ROTATION.length
         ]!
       : theme;
 
@@ -68,103 +87,42 @@ export function PdfFlipScene({
   const data = RESULT_SCRIPTS[activeTheme];
   const action = timeline.currentAction ?? 'page_1';
   const activePage = ACTION_TO_PAGE[action];
-  const pageMeta = data.pdfPages[activePage - 1]!;
+  const pages = REAL_PDF_PAGES[activeTheme];
+  const pageMeta = pages[activePage - 1]!;
 
-  const phoneContent = (
-    <ScaledMockupCanvas logicalWidth={375}>
-      <div className="flex flex-col flex-1 min-h-0 justify-between bg-[#131313] p-4 gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="nm-score-eyebrow truncate">{pageMeta.label}</div>
-            <div className="text-xs font-inter text-[#e5e2e1] font-medium truncate">
-              {data.pdfReportName}
-            </div>
-          </div>
-          <span className="rounded-full bg-[#1C1C1C] border border-[#D4AF37]/30 px-2.5 py-0.5 text-[10px] font-semibold text-[#f2ca50] tabular-nums shrink-0">
-            {activePage}/4
-          </span>
-        </div>
+  void device;
 
-        <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div
-            key={`${activeTheme}-${activePage}`}
-            className="w-full max-w-[258px] aspect-[794/1123] rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 nm-mockup-page-flip"
-          >
-            <PdfMockupPageSheet theme={activeTheme} pageNumber={activePage} />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-1.5" aria-hidden="true">
-          {data.pdfPages.map((p) => {
-            const selected = p.pageNumber === activePage;
-            return (
-              <span
-                key={p.pageNumber}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  selected ? 'w-6 bg-[#f2ca50]' : 'w-2 bg-white/20'
-                }`}
-              />
-            );
-          })}
-        </div>
+  // Folha A4 real (print do PDF gerado pelo sistema), sem moldura de aparelho.
+  const framelessContent = (
+    <div className="flex flex-col items-center gap-4">
+      <div className="grid w-full max-w-[460px]">
+        {[1, 2, 3, 4].map((n) => (
+          <img
+            key={`${activeTheme}-${n}`}
+            src={`/landing/pdf/${activeTheme}-${n}.webp`}
+            alt=""
+            width={909}
+            height={1286}
+            loading="lazy"
+            decoding="async"
+            className={`col-start-1 row-start-1 w-full aspect-[595/842] rounded-xl bg-white object-cover ring-1 ring-white/10 shadow-[var(--nm-card-shadow)] transition-opacity duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              n === activePage ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+        ))}
       </div>
-    </ScaledMockupCanvas>
-  );
 
-  const desktopContent = (
-    <ScaledMockupCanvas logicalWidth={1120}>
-      <div className="flex flex-col flex-1 min-h-0 bg-[#131313] px-6 py-4">
-        <div
-          className={`flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6 items-center ${
-            device === 'both' ? 'pr-24' : ''
-          }`}
-        >
-          <div className="flex items-center justify-center min-h-0 h-full">
-            <div
-              key={`desk-${activeTheme}-${activePage}`}
-              className="h-full max-h-[388px] aspect-[794/1123] rounded-xl overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.72)] ring-1 ring-white/10 nm-mockup-page-flip"
-            >
-              <PdfMockupPageSheet theme={activeTheme} pageNumber={activePage} />
-            </div>
-          </div>
-
-          <aside className="flex flex-col gap-3 min-w-0">
-            <ChatPanelHeader title="Páginas do PDF" hasSelection />
-            <div className="space-y-2">
-              {data.pdfPages.map((page) => {
-                const isActive = page.pageNumber === activePage;
-                return (
-                  <div
-                    key={page.pageNumber}
-                    className={`rounded-2xl px-3.5 py-2.5 transition-all duration-300 border ${
-                      isActive
-                        ? 'bg-[#1C1C1C] border-[#D4AF37]/60 shadow-[0_0_0_2px_rgba(212,175,55,0.14)]'
-                        : 'bg-[#171717] border-white/[0.05] opacity-70'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-cinzel text-xs font-bold text-[#e5e2e1] truncate">
-                        {page.pageNumber}. {page.label}
-                      </span>
-                      <span
-                        className={`text-[10px] font-inter font-medium shrink-0 ${
-                          isActive ? 'text-[#f2ca50]' : 'text-[#a0a0a0]'
-                        }`}
-                      >
-                        {page.sourceDoc.replace('.dc.html', '')}
-                      </span>
-                    </div>
-                    <p className="text-[11px] font-inter text-[#a0a0a0] mt-0.5 truncate">
-                      {page.title}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </aside>
-        </div>
+      <div className="flex items-center justify-center gap-1.5">
+        {[1, 2, 3, 4].map((n) => (
+          <span
+            key={n}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              n === activePage ? 'w-6 bg-[#f2ca50]' : 'w-2 bg-white/20'
+            }`}
+          />
+        ))}
       </div>
-    </ScaledMockupCanvas>
+    </div>
   );
 
   return (
@@ -173,15 +131,14 @@ export function PdfFlipScene({
       theme={activeTheme}
       device={device}
       timeline={timeline}
-      phoneContent={phoneContent}
-      desktopContent={desktopContent}
+      framelessContent={framelessContent}
       statusLabel={`Página ${activePage}/4 · ${pageMeta.label}`}
-      reducedMotionLabel={`Reduced motion · Página 4/4 (${data.pdfPages[3]!.label})`}
+      reducedMotionLabel={`Reduced motion · Página 4/4 (${pages[3]!.label})`}
       showStatusPill={showStatusPill}
       className={className}
       srSummary={
         srSummary ??
-        `Prévia das páginas do relatório em PDF (${data.pdfReportName}): ${data.pdfPages.map((p) => p.label).join(', ')}.`
+        `Prévia de páginas reais do relatório em PDF (${REAL_PDF_NAMES[activeTheme]}): ${pages.map((p) => p.label).join(', ')}.`
       }
     />
   );

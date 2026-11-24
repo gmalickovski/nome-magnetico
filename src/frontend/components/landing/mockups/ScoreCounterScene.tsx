@@ -90,88 +90,59 @@ export function ScoreCounterScene({
     </div>
   );
 
-  const phoneContent = (
-    <ScaledMockupCanvas logicalWidth={375}>
-      <div className="flex flex-col flex-1 min-h-0 justify-center bg-[#131313] p-4 gap-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-cinzel text-xs font-bold uppercase tracking-[0.1em] text-[#e5e2e1]">
-            Grau de Vibração
-          </span>
-          {delta > 0 ? (
-            <span className="rounded-full bg-emerald-500/15 border border-emerald-500/35 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300 tabular-nums">
-              +{delta} pts
-            </span>
-          ) : null}
-        </div>
+  // Começa no nome de nascimento (2 sobrenomes) e vai somando variações com nota maior,
+  // da menor para a maior, passando pelas faixas de 60, 70, 80 e 90.
+  const rowEyebrow = (i: number) =>
+    i === 0 ? 'Nome de nascimento (Nota hoje)' : i === 4 ? 'Melhor opção' : `Variação ${i}`;
 
-        <HarmonyScoreStack>
-          <ScoreCardRow
-            eyebrow={isFinal ? 'Nome harmonizado (Potencial)' : 'Simulando harmonização'}
-            nome={stepIdx === 0 ? data.birth.nome : data.harmonized.nome}
-            score={liveScore}
-            displayScore={liveScore}
-            emphasize
-            scoreTrailing={
-              <LifeTriangleBlockBadge
-                codigos={stepIdx === 0 ? data.birth.bloqueiosCodigos : []}
-              />
-            }
-          />
-        </HarmonyScoreStack>
-
-        {renderTierStrip()}
-
-        <ChatScorePanelCard
-          birth={{ nome: data.birth.nome, score: data.birth.nota }}
-          harmonized={isFinal ? { nome: data.harmonized.nome, score: data.harmonized.nota } : null}
+  const renderRows = (upTo: number) =>
+    data.scoreStepNames.slice(0, upTo + 1).map((nome, i) => (
+      <div key={nome} className={i === upTo && i > 0 ? 'nm-soft-enter' : ''}>
+        {i > 0 ? <div className="border-t border-white/10 mb-4" aria-hidden /> : null}
+        <ScoreCardRow
+          eyebrow={rowEyebrow(i)}
+          nome={nome}
+          score={data.scoreSteps[i]!}
+          displayScore={data.scoreSteps[i]!}
+          emphasize={i === upTo}
+          scoreTrailing={
+            <LifeTriangleBlockBadge codigos={i === 0 ? data.birth.bloqueiosCodigos : []} />
+          }
         />
       </div>
-    </ScaledMockupCanvas>
-  );
+    ));
 
-  const desktopContent = (
-    <ScaledMockupCanvas logicalWidth={1120}>
-      <div className="flex flex-col flex-1 min-h-0 bg-[#131313] px-6 py-5">
-        <div
-          className={`flex-1 min-h-0 grid grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] gap-6 items-center ${
-            device === 'both' ? 'pr-24' : ''
+  const framelessContent = (
+    <div className="w-full max-w-[460px] mx-auto flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-2 min-h-[28px]">
+        <span className="font-cinzel text-xs font-bold uppercase tracking-[0.1em] text-[#e5e2e1]">
+          Grau de Vibração
+        </span>
+        <span
+          className={`rounded-full bg-emerald-500/15 border border-emerald-500/35 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300 tabular-nums transition-opacity duration-500 ${
+            delta > 0 ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <div className="flex flex-col gap-4 min-w-0">
-            <HarmonyScoreStack>
-              <ScoreCardRow
-                eyebrow={isFinal ? 'Nome harmonizado (Potencial)' : 'Evolução da Nota Cabalística'}
-                nome={stepIdx === 0 ? data.birth.nome : data.harmonized.nome}
-                score={liveScore}
-                displayScore={liveScore}
-                emphasize
-                scoreTrailing={
-                  <LifeTriangleBlockBadge
-                    codigos={stepIdx === 0 ? data.birth.bloqueiosCodigos : []}
-                  />
-                }
-              />
-            </HarmonyScoreStack>
-            {renderTierStrip()}
-          </div>
+          +{Math.max(delta, 0)} pts
+        </span>
+      </div>
 
-          <aside className="flex flex-col gap-3.5 min-w-0">
-            <ChatPanelHeader title="Antes × Potencial" hasSelection={isFinal} />
-            <ChatScorePanelCard
-              birth={{ nome: data.birth.nome, score: data.birth.nota }}
-              harmonized={{ nome: data.harmonized.nome, score: liveScore }}
-            />
-            <div className="nm-floating-card p-3.5 flex items-center justify-between text-xs font-inter">
-              <span className="text-[#a0a0a0]">Faixa atual da barra</span>
-              <span className="font-semibold" style={{ color: liveTier.text }}>
-                {liveTier.code} · {liveTier.label}
-              </span>
-            </div>
-          </aside>
+      {renderTierStrip()}
+
+      {/* Lista cresce dentro de uma altura reservada (fantasma com as 5 linhas): o texto ao lado não se mexe. */}
+      <div className="grid">
+        <div className="col-start-1 row-start-1 invisible" aria-hidden="true">
+          <HarmonyScoreStack>{renderRows(4)}</HarmonyScoreStack>
+        </div>
+        <div className="col-start-1 row-start-1 self-start">
+          <HarmonyScoreStack>{renderRows(stepIdx)}</HarmonyScoreStack>
         </div>
       </div>
-    </ScaledMockupCanvas>
+    </div>
   );
+
+  void isFinal;
+  void device;
 
   return (
     <MockupSceneShell
@@ -179,8 +150,7 @@ export function ScoreCounterScene({
       theme={theme}
       device={device}
       timeline={timeline}
-      phoneContent={phoneContent}
-      desktopContent={desktopContent}
+      framelessContent={framelessContent}
       statusLabel={`Nota ${liveScore}/100 · ${liveTier.label}`}
       showStatusPill={showStatusPill}
       className={className}

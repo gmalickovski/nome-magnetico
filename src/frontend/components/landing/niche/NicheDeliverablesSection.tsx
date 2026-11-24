@@ -37,14 +37,14 @@ export function NicheDeliverablesSection({ copy }: NicheDeliverablesSectionProps
               revealed={reveal.revealed}
               reduceMotion={reveal.reduceMotion}
             />
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-6 space-y-3 text-center lg:text-left">
               {copy.deliverables.highlights.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-3 text-sm sm:text-base text-[#e5e2e1]/90"
+                  className="block lg:flex lg:items-start lg:gap-3 text-sm sm:text-base text-[#e5e2e1]/90"
                 >
                   <span
-                    className={`mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full ${
+                    className={`inline-block align-middle mr-2 -mt-0.5 lg:mr-0 lg:mt-1.5 h-2 w-2 shrink-0 rounded-full ${
                       copy.id === 'bebe'
                         ? 'bg-[#f9a8d4]'
                         : copy.id === 'artistico'

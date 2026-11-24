@@ -225,7 +225,7 @@ export function PdfMockupPageSheet({ theme, pageNumber }: PdfPageRenderProps) {
           </div>
         </div>
         <div className="mt-auto flex justify-between text-[7px] text-[#6E6658]">
-          <span>4 Triângulos completos</span>
+          <span>Triângulo da Vida completo</span>
           <span>Página 12</span>
         </div>
       </div>

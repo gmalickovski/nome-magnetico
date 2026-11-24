@@ -31,6 +31,8 @@ export interface ChatScript {
     bloqueiosLabel: string;
   };
   exchanges: [ChatScriptExchange, ChatScriptExchange, ChatScriptExchange];
+  /** Perguntas extras: alongam o chat até preencher o desktop (hero e "Escolha o caminho"). */
+  more: [ChatScriptExchange, ChatScriptExchange];
   jevClosingIntro: string;
   suggestions: ChatResultSuggestionExample[];
   babyGoodDays?: BabyGoodDayItem[];
@@ -94,6 +96,24 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         userReply: 'Manter sobrenome',
       },
     ],
+    more: [
+      {
+        id: 'uso',
+        eyebrow: 'ONDE VOCÊ USA O NOME',
+        jevPrompt: 'Onde você mais usa a sua assinatura?',
+        chips: toPills('social-q4', ['No trabalho', 'Nas redes sociais', 'Em documentos']),
+        selectedChipIndex: 0,
+        userReply: 'No trabalho',
+      },
+      {
+        id: 'mudanca',
+        eyebrow: 'TAMANHO DA MUDANÇA',
+        jevPrompt: 'Prefere uma mudança sutil ou um nome diferente?',
+        chips: toPills('social-q5', ['Mudança sutil', 'Nome diferente', 'Os dois']),
+        selectedChipIndex: 0,
+        userReply: 'Mudança sutil',
+      },
+    ],
     jevClosingIntro: 'Pronto. Cruzei seu mapa e separei opções sem bloqueios:',
     suggestions: [
       {
@@ -144,7 +164,7 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         },
       },
     ],
-    sidebarContextTags: ['Carreira', 'Manter sobrenome', '4 Triângulos'],
+    sidebarContextTags: ['Carreira', 'Manter sobrenome', 'Triângulo da Vida'],
     srSummary:
       'Simulação do chat para harmonizar o nome social: escolha do caminho, foco em carreira e apresentação de três assinaturas sem bloqueios com notas entre 85 e 93.',
   },
@@ -181,6 +201,24 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         chips: toPills('art-q3', ['Próximo do meu', 'Totalmente diferente', 'As duas coisas']),
         selectedChipIndex: 2,
         userReply: 'As duas coisas',
+      },
+    ],
+    more: [
+      {
+        id: 'em-uso',
+        eyebrow: 'NOME EM USO',
+        jevPrompt: 'Você já usa algum nome artístico hoje?',
+        chips: toPills('art-q4', ['Ainda não uso', 'Sim, quero ajustar']),
+        selectedChipIndex: 0,
+        userReply: 'Ainda não uso',
+      },
+      {
+        id: 'onde',
+        eyebrow: 'ONDE O NOME APARECE',
+        jevPrompt: 'Onde o nome vai aparecer mais?',
+        chips: toPills('art-q5', ['Palco e shows', 'Redes sociais', 'Capas e créditos']),
+        selectedChipIndex: 0,
+        userReply: 'Palco e shows',
       },
     ],
     jevClosingIntro: 'Separei nomes artísticos alinhados ao palco e ao seu Destino:',
@@ -277,6 +315,24 @@ export const CHAT_SCRIPTS: Record<MockupTheme, ChatScript> = {
         chips: toPills('bebe-q3', ['Clássico', 'Moderno', 'Curto']),
         selectedChipIndex: 0,
         userReply: 'Clássico',
+      },
+    ],
+    more: [
+      {
+        id: 'sobrenome',
+        eyebrow: 'SOBRENOME DA FAMÍLIA',
+        jevPrompt: 'Qual sobrenome o bebê vai levar?',
+        chips: toPills('bebe-q4', ['O do pai', 'O da mãe', 'Os dois']),
+        selectedChipIndex: 2,
+        userReply: 'Os dois',
+      },
+      {
+        id: 'ideias',
+        eyebrow: 'NOMES EM MENTE',
+        jevPrompt: 'Já tem algum nome em mente?',
+        chips: toPills('bebe-q5', ['Tenho alguns', 'Quero sugestões']),
+        selectedChipIndex: 1,
+        userReply: 'Quero sugestões',
       },
     ],
     jevClosingIntro: 'Cruzei o sobrenome da família com a janela do parto:',
