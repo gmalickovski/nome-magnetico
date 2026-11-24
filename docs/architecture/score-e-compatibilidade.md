@@ -89,7 +89,7 @@ A nota **não muda**; estas regras definem o que pode ser oferecido ao usuário:
 
 | Regra | Descrição |
 | :--- | :--- |
-| **R1** | Zero bloqueio nos 4 triângulos. |
+| **R1** | Zero bloqueio. Na copy, a regra é descrita sobre o **Triângulo da Vida** (decisão de 24/11/2026). O motor ainda confere os 4 triângulos nesta regra; alinhar é a DEV-352. |
 | **R2** | Nota mínima `max(70, nascimento + 1)`. Nascimento abaixo de 70 → sugestões a partir de 70; nascimento ≥ 70 → sempre acima, nunca igual. `NOME_SOCIAL_GANHO_MINIMO_PONTOS` só sobe o mínimo. |
 | **R3** | O Nome de Ouro equilibra nota e perfil do cliente (curto, sem um sobrenome, só o primeiro nome), mantendo a ordem de prioridade do comparador, apenas entre as válidas. |
 | **R3a** | A opção válida de maior nota sempre aparece entre as visíveis (`maiorNota`). |
