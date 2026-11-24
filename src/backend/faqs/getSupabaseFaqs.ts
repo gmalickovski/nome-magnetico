@@ -9,10 +9,11 @@ const FAQ_ERROR_TTL_MS = 30 * 1000; // 30 segundos em caso de falha/timeout (HOT
 // Configura marked para FAQ (sem sanitização extra — conteúdo nosso)
 marked.use({ gfm: true, breaks: false });
 
-// Nome de Bebê e Nome Empresarial saíram da oferta. Itens de FAQ que ainda os citam ficam
-// ocultos no site até o Marketing reescrever o texto no banco (a linha em faq_items não é alterada).
+// Nome Empresarial segue fora da oferta. Itens de FAQ que ainda o citam ficam ocultos no site até o
+// Marketing reescrever o texto no banco (a linha em faq_items não é alterada).
+// DEV-351: o Nome do Bebê voltou como um dos três caminhos do chat, então "bebê" deixou de ser filtrado.
 const RETIRED_PRODUCT_PATTERN =
-  /beb[êe]|nome\s+empresarial|nomes?\s+(d[aoe]s?\s+)?(sua\s+|uma\s+|minha\s+)?empresas?|nome_empresa/i;
+  /nome\s+empresarial|nomes?\s+(d[aoe]s?\s+)?(sua\s+|uma\s+|minha\s+)?empresas?|nome_empresa/i;
 
 interface GetFaqsOptions {
   featuredOnly?: boolean;

@@ -23,11 +23,11 @@ type ProductType = SellableProductType;
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
 
 const NOME_SOCIAL_DELIVERABLES = [
-  'sugestões de assinatura com nota, nível e o que mudou (até 9 opções)',
-  'Arquétipo do nome e leituras complementares',
-  'lições kármicas e arquétipo',
-  'compare os nomes que você quiser',
-  'PDF com guia para usar a nova assinatura',
+  'um chat com três caminhos: nome social, nome artístico e nome do bebê',
+  '3 sugestões sem bloqueios, mais 6 quando quiser, cada uma com nota de 0 a 100',
+  'teste até 5 nomes seus, calculados sem interferência do sistema',
+  'arquétipo do nome, lições kármicas e leitura complementar dos triângulos Pessoal, Social e do Destino',
+  'PDF do seu caminho, com guia para começar a usar o nome',
 ] as const;
 
 function promotionAppliesToProduct(
