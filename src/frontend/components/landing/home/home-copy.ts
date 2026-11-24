@@ -1,6 +1,6 @@
 /**
- * Textos provisórios da nova Home (`DEV-338`) centralizados por seção.
- * Todo bloco marcado com `// [TEXTO]` é marcador provisório para revisão de Marketing/Growth
+ * Textos da Home (`DEV-338`, copy revisada em `DEV-342`) centralizados por seção.
+ * Todo bloco marcado com `// [TEXTO]` pode ser ajustado por Marketing/Growth
  * sem precisar alterar layout nem animações.
  */
 
@@ -14,16 +14,16 @@ export const HOME_PATH_URLS = {
 export const HOME_COPY = {
   // [TEXTO] Seção 1 — Hero
   hero: {
-    eyebrow: 'Numerologia Cabalística · Triângulo da Vida', // [TEXTO]
-    titleLead: 'Descubra o potencial do seu nome', // [TEXTO]
-    titleHighlight: 'e elimine os bloqueios da sua assinatura', // [TEXTO]
+    eyebrow: 'Numerologia Cabalística · Um chat, três caminhos', // [TEXTO]
+    titleLead: 'Descubra a nota do seu nome', // [TEXTO]
+    titleHighlight: 'e receba versões sem bloqueios', // [TEXTO]
     subtitle:
-      'Calculamos sua nota de 0 a 100 pelo Triângulo da Vida cabalístico e entregamos opções personalizadas sem bloqueios para você usar na vida social, no palco ou na escolha do nome do bebê.', // [TEXTO]
+      'Um único chat pergunta o que você quer hoje e conduz o resto: harmonizar o nome que você já usa, criar um nome artístico ou escolher o nome do bebê. O sistema calcula o Triângulo da Vida pela Numerologia Cabalística e só sugere nomes sem bloqueios, cada um com nota de 0 a 100.', // [TEXTO]
     buttons: [
       {
         id: 'hero-social',
         theme: 'social' as const,
-        label: 'Harmonizar Nome Social', // [TEXTO]
+        label: 'Harmonizar Meu Nome', // [TEXTO]
         href: HOME_PATH_URLS.social,
         ctaId: 'home_hero_nome_social',
         variant: 'primary' as const,
@@ -39,57 +39,57 @@ export const HOME_COPY = {
       {
         id: 'hero-bebe',
         theme: 'bebe' as const,
-        label: 'Nome do Meu Bebê', // [TEXTO]
+        label: 'Escolher o Nome do Bebê', // [TEXTO]
         href: HOME_PATH_URLS.bebe,
         ctaId: 'home_hero_nome_bebe',
         variant: 'secondary' as const,
       },
     ],
-    freeLinkLabel: 'Ou veja a nota do seu nome grátis agora →', // [TEXTO]
+    freeLinkLabel: 'Ou veja grátis a nota do seu nome agora →', // [TEXTO]
     freeLinkHref: HOME_PATH_URLS.analiseGratuita,
     trustLine:
-      'Acesso imediato · Resultado na hora · Pagamento único por ciclo de 30 dias · Sem mudança em cartório', // [TEXTO]
+      'Acesso imediato · Pagamento único por 30 dias · Garantia de 7 dias · Sem mudar o nome em cartório', // [TEXTO]
     heroSceneSummary:
       'Prévia animada do atendimento escolhendo Harmonizar o meu nome, respondendo duas perguntas rápidas, revelando três assinaturas sem bloqueios e finalizando na Estrela Cabalística comparativa de 58 para 93.', // [TEXTO]
   },
 
   // [TEXTO] Seção 2 — Para quem é
   audiences: {
-    eyebrow: 'Para Quem É', // [TEXTO]
-    title: 'Um caminho para cada momento do seu nome', // [TEXTO]
+    eyebrow: 'Um Chat, Três Caminhos', // [TEXTO]
+    title: 'Qual é o momento do seu nome hoje?', // [TEXTO]
     description:
-      'Escolha como quer usar o cálculo cabalístico hoje: renovar a assinatura do dia a dia, construir um nome marcante de palco ou escolher o nome do bebê sem bloqueios.', // [TEXTO]
+      'Você não precisa entender de numerologia nem preencher formulário longo. Escolha o seu objetivo e o chat faz as perguntas certas para o seu caso, até chegar aos nomes já calculados.', // [TEXTO]
     cards: [
       {
         id: 'social' as const,
-        badge: 'Vida Pessoal & Trabalho', // [TEXTO]
+        badge: 'Assinatura, Redes & Trabalho', // [TEXTO]
         title: 'Nome Social', // [TEXTO]
         description:
-          'Compare seu nome de nascimento com variações sem bloqueios para usar em assinaturas, redes e projetos sem mudar documentos.', // [TEXTO]
-        highlights: ['Triângulo da Vida e arquétipo', 'Mudanças sutis ou novos nomes', 'Guia de assinatura de 30 dias'], // [TEXTO]
-        ctaLabel: 'Explorar Nome Social', // [TEXTO]
+          'Harmonize o nome que você já usa para assinar e se apresentar nas redes, em e-mails, propostas e projetos. Você recebe 3 sugestões, pode gerar mais 6 e ainda testar até 5 ideias suas, calculadas na hora.', // [TEXTO]
+        highlights: ['3 sugestões + 6 extras quando quiser', 'Teste até 5 nomes seus', 'Guia para adotar a nova assinatura'], // [TEXTO]
+        ctaLabel: 'Harmonizar Meu Nome', // [TEXTO]
         href: HOME_PATH_URLS.social,
         ctaId: 'home_audience_social',
       },
       {
         id: 'artistico' as const,
-        badge: 'Palco, Redes & Marca', // [TEXTO]
+        badge: 'Palco, Telas & Autoria', // [TEXTO]
         title: 'Nome Artístico', // [TEXTO]
         description:
-          'Encontre nomes próximos do seu ou totalmente novos com alta afinidade numérica para sua área de atuação e presença de público.', // [TEXTO]
-        highlights: ['Afinidade número × área', 'Nomes próximos e totalmente novos', 'Presença de palco sem bloqueios'], // [TEXTO]
-        ctaLabel: 'Criar Nome Artístico', // [TEXTO]
+          'Para quem canta, atua, cria conteúdo, escreve, faz drag, humor ou produção musical. Receba até 3 nomes próximos do seu nome de nascimento e até 3 totalmente novos, ordenados pela afinidade do número com a sua área.', // [TEXTO]
+        highlights: ['3 próximos + 3 totalmente novos', 'Afinidade número × área', 'Nomes novos só com nota 80+'], // [TEXTO]
+        ctaLabel: 'Criar Meu Nome Artístico', // [TEXTO]
         href: HOME_PATH_URLS.artistico,
         ctaId: 'home_audience_artistico',
       },
       {
         id: 'bebe' as const,
-        badge: 'Família & Nascimento', // [TEXTO]
+        badge: 'Família & Chegada', // [TEXTO]
         title: 'Nome do Bebê', // [TEXTO]
         description:
-          'Cruze o sobrenome da família com a data prevista para avaliar nomes candidatos e enxergar os dias mais harmônicos da janela.', // [TEXTO]
-        highlights: ['Cruzamento com janela do parto', 'Avaliação dos nomes em mente', 'Manual acolhedor em PDF'], // [TEXTO]
-        ctaLabel: 'Escolher Nome do Bebê', // [TEXTO]
+          'Ainda sem a data exata do parto? A Janela de Datas calcula cada nome nos 29 dias possíveis e mostra em quantos deles ele fica bom. Os nomes que vocês já estão pensando também entram na análise.', // [TEXTO]
+        highlights: ['Janela de Datas: 29 dias calculados', 'Seus nomes favoritos analisados', 'Manual em PDF para os pais'], // [TEXTO]
+        ctaLabel: 'Escolher o Nome do Bebê', // [TEXTO]
         href: HOME_PATH_URLS.bebe,
         ctaId: 'home_audience_bebe',
       },
@@ -99,25 +99,25 @@ export const HOME_COPY = {
   // [TEXTO] Seção 3 — Como funciona
   howItWorks: {
     eyebrow: 'Como Funciona', // [TEXTO]
-    title: 'Do seu objetivo às opções prontas em três passos', // [TEXTO]
+    title: 'Do seu objetivo aos nomes calculados em três passos', // [TEXTO]
     description:
-      'Você responde poucas perguntas no próprio sistema, compara variações já filtradas pela regra dos 0 bloqueios e baixa o relatório em PDF na hora.', // [TEXTO]
+      'Sem formulário longo e sem precisar saber o que perguntar. Você conversa, o sistema calcula e você compara as opções na tela antes de baixar o relatório.', // [TEXTO]
     steps: [
       {
         number: '01',
-        title: 'Escolha o caminho no sistema', // [TEXTO]
+        title: 'Diga ao chat o que você quer', // [TEXTO]
         description:
-          'Informe se quer harmonizar sua assinatura social, criar um nome artístico ou analisar opções para o seu bebê.', // [TEXTO]
+          'Harmonizar o seu nome, criar um nome artístico ou escolher o nome do bebê. A partir daí cada pergunta é feita para o seu caminho, e você pode voltar uma resposta sem perder o resto.', // [TEXTO]
       },
       {
         number: '02',
-        title: 'Receba nomes com nota e zero bloqueios', // [TEXTO]
+        title: 'Compare nomes já filtrados', // [TEXTO]
         description:
-          'Cada sugestão mostra a nota de 0 a 100, a relação Expressão × Destino e confirma que não há sequências repetidas.', // [TEXTO]
+          'Você vê primeiro as 3 sugestões mais bem pontuadas para o seu perfil, com nota de 0 a 100 e a relação entre Expressão e Destino. Quer mais opções? Gere novas ou teste os nomes que você mesmo imaginou.', // [TEXTO]
       },
       {
         number: '03',
-        title: 'Baixe o relatório completo em PDF', // [TEXTO]
+        title: 'Baixe o relatório em PDF', // [TEXTO]
         description:
           'Leve o Triângulo da Vida, o arquétipo, a leitura dos 5 números principais, a comparação antes × depois e o guia prático para usar no dia a dia.', // [TEXTO]
       },
@@ -129,21 +129,21 @@ export const HOME_COPY = {
     eyebrow: 'Método Objetivo', // [TEXTO]
     title: 'O que o cálculo analisa em cada nome', // [TEXTO]
     description:
-      'Critérios formais e reproduzíveis da numerologia cabalística: os 5 números principais, o Triângulo da Vida com seus bloqueios e a nota comparativa.', // [TEXTO]
+      'Critérios formais e reproduzíveis da Numerologia Cabalística. Cada letra tem um valor fixo, então o mesmo nome com a mesma data sempre recebe a mesma nota.', // [TEXTO]
     blocks: [
       {
         id: 'star' as const,
         badge: '01 · 5 Números Fundamentais', // [TEXTO]
         title: 'Destino, Expressão, Motivação, Impressão e Missão', // [TEXTO]
         description:
-          'Colocamos o mapa do seu nome atual e o potencial do novo nome frente a frente para você enxergar exatamente o que muda quando ajusta a assinatura.', // [TEXTO]
+          'O mapa do seu nome atual e o do novo nome lado a lado. Você enxerga, número por número, o que muda quando ajusta a forma de escrever e assinar.', // [TEXTO]
       },
       {
         id: 'triangle' as const,
         badge: '02 · Triângulo da Vida', // [TEXTO]
         title: 'Onde nascem os bloqueios e qual Arcano rege a ponta', // [TEXTO]
         description:
-          'Cada letra vira número e desce somando em pares até a ponta. Sequências repetidas (como 222 ou 444) acendem em vermelho para serem eliminadas nas sugestões.', // [TEXTO]
+          'Cada letra vira número e os pares se somam, linha a linha, até a ponta. Sequências de três números iguais, como 222 ou 444, são os bloqueios: acendem em vermelho e nenhuma sugestão do sistema sai com eles.', // [TEXTO]
       },
       {
         id: 'score' as const,
@@ -158,9 +158,9 @@ export const HOME_COPY = {
   // [TEXTO] Seção 5 — Regra de qualidade
   qualityRule: {
     eyebrow: 'Filtro Rigoroso', // [TEXTO]
-    title: 'Nossa regra de qualidade em toda sugestão entregue', // [TEXTO]
+    title: 'Nenhum nome chega até você por acaso', // [TEXTO]
     description:
-      'Nenhuma variação aparece por acaso: toda sugestão exibida no seu resultado passa primeiro por duas travas objetivas.', // [TEXTO]
+      'Antes de aparecer na sua tela, toda sugestão do sistema passa por duas travas objetivas. O que não passa, você nem chega a ver.', // [TEXTO]
     metrics: [
       {
         id: 'zero-blocks' as const,
@@ -173,8 +173,8 @@ export const HOME_COPY = {
         id: 'min-score' as const,
         valueTarget: 80,
         valueSuffix: '+',
-        label: 'Nota nos nomes novos', // [TEXTO]
-        detail: 'Sugestões ranqueadas acima do nome atual e com foco em compatibilidade favorável.', // [TEXTO]
+        label: 'Nota dos nomes novos', // [TEXTO]
+        detail: 'Nomes totalmente novos só aparecem com nota 80 ou mais. Variações do nome de nascimento partem de 70.', // [TEXTO]
       },
     ],
   },
@@ -182,9 +182,9 @@ export const HOME_COPY = {
   // [TEXTO] Seção 6 — O que você leva
   deliverables: {
     eyebrow: 'O Que Você Leva', // [TEXTO]
-    title: 'Relatório em PDF feito para o seu caminho', // [TEXTO]
+    title: 'Um relatório em PDF feito para o seu caminho', // [TEXTO]
     description:
-      'Veja ao vivo como as páginas do relatório mudam entre Nome Social, Nome Artístico e Nome do Bebê mantendo o cálculo detalhado pronto para consulta.', // [TEXTO]
+      'O Nome Social traz o antes e depois da sua assinatura, o Artístico traz a leitura para o palco e o do Bebê é um manual afetivo para os pais. Veja as páginas mudando ao vivo.', // [TEXTO]
     tabs: [
       { id: 'social' as const, label: 'Nome Social' }, // [TEXTO]
       { id: 'artistico' as const, label: 'Nome Artístico' }, // [TEXTO]
@@ -194,10 +194,11 @@ export const HOME_COPY = {
 
   // [TEXTO] Seção 7 — Análise gratuita
   freeAnalysis: {
-    eyebrow: 'Diagnóstico Gratuito', // [TEXTO]
-    title: 'Veja a nota do seu nome de hoje e até onde ele pode chegar', // [TEXTO]
+    eyebrow: 'Comece de Graça', // [TEXTO]
+    title: 'Descubra grátis a nota do seu nome e até onde ela pode chegar', // [TEXTO]
     description:
-      'Preencha seus dados para receber seu PDF gratuito com a nota atual, o potencial máximo da assinatura, bloqueios no Triângulo da Vida e lições kármicas.', // [TEXTO]
+      'Digite seu nome de nascimento e sua data. Você vê a nota na hora e recebe por e-mail um PDF gratuito com o Triângulo da Vida, os bloqueios encontrados, as suas lições kármicas e o potencial da sua assinatura. Sem cartão.', // [TEXTO]
+    sideEyebrow: 'Exemplo de evolução', // [TEXTO]
     sideEyebrow: 'O que chega no seu e-mail', // [TEXTO]
     sideTitle: 'Seu PDF gratuito, página por página', // [TEXTO]
     sideDescription:
@@ -211,10 +212,10 @@ export const HOME_COPY = {
     eyebrow: '05 · Palco, Shows e Redes', // [TEXTO]
     title: 'Nome Artístico em Capas, Créditos e Bios', // [TEXTO]
     description:
-      'Para música, vídeo, teatro ou presença pública, seu nome artístico aparece com consistência em lançamentos, materiais de imprensa e perfis sociais — mantendo seu nome civil nos contratos.', // [TEXTO]
+      'Na música, no vídeo, no teatro ou nos livros, o nome artístico aparece igual em lançamentos, materiais de imprensa e perfis sociais. O nome civil continua valendo nos contratos.', // [TEXTO]
     bulletPoints: [
       'Capas de singles, vídeos, créditos e divulgação de eventos', // [TEXTO]
-      'Padronização entre nome de palco, @ nas redes e links oficiais', // [TEXTO]
+      'O mesmo nome no palco, no @ das redes e nos links oficiais', // [TEXTO]
       'Nome civil preservado para contratos e registros formais', // [TEXTO]
     ],
   },
