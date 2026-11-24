@@ -41,7 +41,7 @@ export function StarScene({
   const data = RESULT_SCRIPTS[theme];
   const timeline = useMockupTimeline<StarSceneAction>({
     steps: STAR_SCENE_STEPS,
-    loopPauseMs: 1800,
+    loopPauseMs: 3000,
     forceReducedMotion,
   });
 
@@ -71,34 +71,31 @@ export function StarScene({
         return (
           <div
             key={label}
-            className="rounded-xl bg-[#1C1C1C] border border-white/[0.06] px-1.5 py-2 text-center"
+            className="rounded-xl bg-[#1C1C1C] border border-white/[0.06] px-1.5 py-2.5 text-center"
           >
-            <div className="text-[9px] font-inter uppercase tracking-wider text-[#a0a0a0] truncate">
+            <div className="text-[10px] font-inter uppercase tracking-wider text-[#a0a0a0] truncate">
               {label.slice(0, 4)}
             </div>
-            <div className="mt-0.5 font-cinzel text-sm font-bold tabular-nums transition-colors duration-500">
-              {showMorph ? (
-                <span style={{ color: harmVisual.text }}>{afterVal}</span>
-              ) : (
-                <span style={{ color: birthVisual.text }}>{beforeVal}</span>
-              )}
+            <div className="mt-1 font-cinzel text-xl font-bold tabular-nums leading-none transition-colors duration-700">
+              <span style={{ color: showMorph ? harmVisual.text : birthVisual.text }}>
+                {showMorph ? afterVal : beforeVal}
+              </span>
             </div>
-            {showMorph && changed ? (
-              <div className="text-[9px] font-inter text-[#a0a0a0] line-through tabular-nums">
-                {beforeVal}
-              </div>
-            ) : (
-              <div className="text-[9px] font-inter text-transparent select-none">-</div>
-            )}
+            <div
+              className={`mt-1 font-cinzel text-[13px] font-semibold tabular-nums leading-none text-[#f2ca50] transition-opacity duration-700 ${
+                showMorph && changed ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {beforeVal}
+            </div>
           </div>
         );
       })}
     </div>
   );
 
-  const phoneContent = (
-    <ScaledMockupCanvas logicalWidth={375}>
-      <div className="flex flex-col flex-1 min-h-0 justify-between bg-[#131313] p-4 gap-3">
+  const framelessContent = (
+    <div className="w-full max-w-[460px] mx-auto flex flex-col gap-4">
         <div className="flex items-center justify-between gap-2">
           <span className="font-cinzel text-xs font-bold uppercase tracking-[0.1em] text-[#e5e2e1]">
             {showDual ? 'Antes × Depois' : 'Estrela Cabalística'}
@@ -112,81 +109,64 @@ export function StarScene({
           </span>
         </div>
 
-        <div className="w-full max-w-[300px] mx-auto nm-mockup-enter" key={showDual ? 'dual' : 'single'}>
-          <ProductHarmonyStar
-            variant={showDual ? 'dual' : 'birth-only'}
-            play
-            birthName={data.birth.nome}
-            birthScore={data.birth.nota}
-            birthNums={[...data.birth.starNums]}
-            harmonizedName={data.harmonized.nome}
-            harmonizedScore={data.harmonized.nota}
-            harmonizedNums={[...data.harmonized.starNums]}
-          />
+        <div className="nm-floating-card p-4 w-full">
+          <div className="grid w-full max-w-[360px] mx-auto">
+            {(['birth-only', 'dual'] as const).map((variant) => (
+              <div
+                key={variant}
+                className={`col-start-1 row-start-1 transition-opacity duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  (variant === 'dual') === showDual ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                <ProductHarmonyStar
+                  variant={variant}
+                  play
+                  birthName={data.birth.nome}
+                  birthScore={data.birth.nota}
+                  birthNums={[...data.birth.starNums]}
+                  harmonizedName={data.harmonized.nome}
+                  harmonizedScore={data.harmonized.nota}
+                  harmonizedNums={[...data.harmonized.starNums]}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-2.5">
           {renderNumberPills(true)}
-          <ChatScorePanelCard
-            birth={{ nome: data.birth.nome, score: data.birth.nota }}
-            harmonized={
-              showDual ? { nome: data.harmonized.nome, score: data.harmonized.nota } : null
-            }
-          />
-        </div>
-      </div>
-    </ScaledMockupCanvas>
-  );
-
-  const desktopContent = (
-    <ScaledMockupCanvas logicalWidth={1120}>
-      <div className="flex flex-col flex-1 min-h-0 bg-[#131313] px-6 py-5">
-        <div
-          className={`flex-1 min-h-0 grid grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] gap-6 items-center ${
-            device === 'both' ? 'pr-36' : ''
-          }`}
-        >
-          <div className="nm-floating-card p-4 flex flex-col items-center justify-center min-h-0">
+          <div className="grid">
             <div
-              className="w-full max-w-[380px] mx-auto"
-              key={showDual ? 'desk-dual' : 'desk-single'}
+              className={`col-start-1 row-start-1 transition-opacity duration-[1100ms] ${
+                showDual ? 'opacity-0' : 'opacity-100'
+              }`}
             >
-              <ProductHarmonyStar
-                variant={showDual ? 'dual' : 'birth-only'}
-                play
-                birthName={data.birth.nome}
-                birthScore={data.birth.nota}
-                birthNums={[...data.birth.starNums]}
-                harmonizedName={data.harmonized.nome}
-                harmonizedScore={data.harmonized.nota}
-                harmonizedNums={[...data.harmonized.starNums]}
+              <ChatScorePanelCard birth={{ nome: data.birth.nome, score: data.birth.nota }} />
+            </div>
+            <div
+              className={`col-start-1 row-start-1 transition-opacity duration-[1100ms] ${
+                showDual ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <ChatScorePanelCard
+                birth={{ nome: data.birth.nome, score: data.birth.nota }}
+                harmonized={{ nome: data.harmonized.nome, score: data.harmonized.nota }}
               />
             </div>
           </div>
-
-          <aside className="flex flex-col gap-3.5 min-w-0">
-            <ChatPanelHeader title="Estrela dos 5 Números" hasSelection={showDual} />
-            <ChatScorePanelCard
-              birth={{ nome: data.birth.nome, score: data.birth.nota }}
-              harmonized={
-                showMorph ? { nome: data.harmonized.nome, score: data.harmonized.nota } : null
-              }
-            />
-            {renderNumberPills(false)}
-          </aside>
         </div>
-      </div>
-    </ScaledMockupCanvas>
+    </div>
   );
 
+
+  void device;
   return (
     <MockupSceneShell
       sceneName="star"
       theme={theme}
       device={device}
       timeline={timeline}
-      phoneContent={phoneContent}
-      desktopContent={desktopContent}
+      framelessContent={framelessContent}
       statusLabel={stepLabel}
       showStatusPill={showStatusPill}
       className={className}

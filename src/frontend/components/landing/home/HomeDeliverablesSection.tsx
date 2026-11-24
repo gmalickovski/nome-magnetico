@@ -18,12 +18,12 @@ export function HomeDeliverablesSection() {
 
   const [selectedTheme, setSelectedTheme] = useState<MockupTheme>('social');
   const [displayedTheme, setDisplayedTheme] = useState<MockupTheme>('social');
-  const [autoCycle, setAutoCycle] = useState(true);
+  // Troca automática sempre ligada; a aba clicada vira o ponto de partida da troca.
+  const autoCycle = true;
 
   const handleSelectTab = (theme: MockupTheme) => {
     setSelectedTheme(theme);
     setDisplayedTheme(theme);
-    setAutoCycle(false);
   };
 
   const handleActiveThemeChange = useCallback((theme: MockupTheme) => {
@@ -74,18 +74,6 @@ export function HomeDeliverablesSection() {
             );
           })}
 
-          <button
-            type="button"
-            aria-pressed={autoCycle}
-            onClick={() => setAutoCycle((prev) => !prev)}
-            className={`min-h-11 rounded-full px-4 py-2 text-xs font-inter transition-colors duration-300 cursor-pointer ${
-              autoCycle
-                ? 'bg-[#D4AF37]/12 text-[#f2ca50] ring-1 ring-[#D4AF37]/30'
-                : 'bg-[#181818] text-[#a0a0a0] hover:text-[#e5e2e1] ring-1 ring-white/[0.06]'
-            }`}
-          >
-            {copy.autoCycleLabel}: {autoCycle ? 'Ativa' : 'Pausada'}
-          </button>
         </div>
 
         <div

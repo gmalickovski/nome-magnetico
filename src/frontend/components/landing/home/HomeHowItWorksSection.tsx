@@ -149,7 +149,7 @@ export function HomeHowItWorksSection() {
             index={0}
             onBecomeVisible={handleVisible}
           >
-            <PathChooserScene device="phone" theme="social" />
+            <PathChooserScene device="responsive" theme="social" />
           </HowItWorksStepRow>
 
           <HowItWorksStepRow
@@ -161,7 +161,7 @@ export function HomeHowItWorksSection() {
             index={1}
             onBecomeVisible={handleVisible}
           >
-            <SuggestionCardsScene device="both" theme="social" />
+            <SuggestionCardsScene theme="social" autoCycleThemes />
           </HowItWorksStepRow>
 
           <HowItWorksStepRow

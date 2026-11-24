@@ -7,8 +7,8 @@ export type StarSceneAction = 'birth_only' | 'morph_numbers' | 'dual_star';
 
 export const STAR_SCENE_STEPS: ReadonlyArray<TimelineStep<StarSceneAction>> = [
   { at: 0, action: 'birth_only' },
-  { at: 1300, action: 'morph_numbers' },
-  { at: 2600, action: 'dual_star' },
+  { at: 2200, action: 'morph_numbers' },
+  { at: 4200, action: 'dual_star' },
 ];
 
 export type TriangleSceneAction =
@@ -36,10 +36,10 @@ export type ScoreCounterAction = 'birth' | 'step_1' | 'step_2' | 'step_3' | 'fin
 
 export const SCORE_COUNTER_STEPS: ReadonlyArray<TimelineStep<ScoreCounterAction>> = [
   { at: 0, action: 'birth' },
-  { at: 900, action: 'step_1' },
-  { at: 1550, action: 'step_2' },
-  { at: 2200, action: 'step_3' },
-  { at: 2850, action: 'final' },
+  { at: 1400, action: 'step_1' },
+  { at: 2800, action: 'step_2' },
+  { at: 4200, action: 'step_3' },
+  { at: 5600, action: 'final' },
 ];
 
 export type SuggestionCardsAction =
@@ -128,6 +128,8 @@ export interface ResultThemeScript {
   birth: TriangleExampleData;
   harmonized: TriangleExampleData;
   scoreSteps: [number, number, number, number, number];
+  /** Nome de nascimento (2 sobrenomes) e as 4 variações, da menor para a maior nota (60, 70, 80, 90). */
+  scoreStepNames: [string, string, string, string, string];
   affinityHighlight?: {
     titulo: string;
     detalhe: string;
@@ -192,12 +194,12 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
         [7],
       ],
     },
-    scoreSteps: [58, 69, 79, 88, 93],
+    scoreSteps: [58, 64, 74, 83, 93],
+    scoreStepNames: ['Marina Pereira Costa', 'Marina P. Costa', 'Marina Costa', 'Marina Pereira Côsta', 'Marina Côsta'],
     suggestionsIntro: 'Três assinaturas sem bloqueios e compatíveis com seu Destino 6:',
     suggestions: [
       {
         id: 'res-social-1',
-        principal: true,
         maiorNota: true,
         card: {
           nome: 'Marina Côsta',
@@ -214,6 +216,7 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
       },
       {
         id: 'res-social-2',
+        principal: true,
         card: {
           nome: 'Márina Costa',
           score: 89,
@@ -360,7 +363,8 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
         [1],
       ],
     },
-    scoreSteps: [54, 66, 78, 88, 94],
+    scoreSteps: [54, 63, 72, 84, 94],
+    scoreStepNames: ['Luciana Ribeiro Alves', 'Luciana R. Alves', 'Lu Ribeiro', 'Luna Ribeiro', 'Luna Vale'],
     affinityHighlight: {
       titulo: 'Afinidade número × área · Alta',
       detalhe: 'Expressão 3 (comunicação e presença) alinhada a quem canta e se apresenta.',
@@ -370,6 +374,7 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
     suggestions: [
       {
         id: 'res-art-1',
+        principal: true,
         secao: 'proximo',
         card: {
           nome: 'Lúna Ribeiro',
@@ -386,9 +391,8 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
       },
       {
         id: 'res-art-2',
-        secao: 'novo',
-        principal: true,
         maiorNota: true,
+        secao: 'novo',
         destaque: 'Alta afinidade · Expressão 3 · Comunicação e palco',
         card: {
           nome: 'Luna Vale',
@@ -534,12 +538,12 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
         [8],
       ],
     },
-    scoreSteps: [61, 72, 82, 90, 95],
+    scoreSteps: [57, 66, 75, 86, 95],
+    scoreStepNames: ['Laura Silva Costa', 'Laura Costa', 'Clara Silva Costa', 'Laura Lima', 'Sofia Lima'],
     suggestionsIntro: 'Nomes avaliados para o sobrenome da família na janela prevista do parto:',
     suggestions: [
       {
         id: 'res-bebe-1',
-        principal: true,
         maiorNota: true,
         destaque: 'Bom em 26 de 29 dias da janela prevista',
         card: {
@@ -557,6 +561,7 @@ export const RESULT_SCRIPTS: Record<MockupTheme, ResultThemeScript> = {
       },
       {
         id: 'res-bebe-2',
+        principal: true,
         destaque: 'Bom em 24 de 29 dias da janela prevista',
         card: {
           nome: 'Laura Lima',

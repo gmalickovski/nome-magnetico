@@ -130,10 +130,10 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
           {item.description}
         </p>
 
-        <div className="space-y-2.5 max-w-[50ch] sm:max-w-[56ch] lg:max-w-[54ch] mx-auto lg:mx-0 text-left">
+        <div className="space-y-2.5 max-w-[50ch] sm:max-w-[56ch] lg:max-w-[54ch] mx-auto lg:mx-0 text-center lg:text-left">
           {item.bulletPoints.map((bullet, bIdx) => (
-            <div key={bIdx} className="flex items-start gap-2.5">
-              <span className="text-[#D4AF37] text-sm shrink-0 leading-none mt-1">✦</span>
+            <div key={bIdx} className="block lg:flex lg:items-start lg:gap-2.5">
+              <span className="text-[#D4AF37] text-sm shrink-0 leading-none mr-2 lg:mr-0 lg:mt-1">✦</span>
               <span className="nm-body">{bullet}</span>
             </div>
           ))}

@@ -332,7 +332,7 @@ export function HarmonyScoreStack({
   className?: string;
 }) {
   return (
-    <div className={`${landingMockupFloatClass} bg-[#1c1c1c] border border-white/10 rounded-2xl shadow-xl shadow-black/40 p-4 sm:p-5 w-full ${className}`}>
+    <div className={`${landingMockupFloatClass} p-4 sm:p-5 w-full ${className}`}>
 
       <div className="flex flex-col gap-4 min-w-0 w-full">{children}</div>
     </div>

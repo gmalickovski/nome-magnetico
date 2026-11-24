@@ -14,11 +14,11 @@ export const HOME_PATH_URLS = {
 export const HOME_COPY = {
   // [TEXTO] Seção 1 — Hero
   hero: {
-    eyebrow: 'Numerologia Cabalística · 4 Triângulos', // [TEXTO]
+    eyebrow: 'Numerologia Cabalística · Triângulo da Vida', // [TEXTO]
     titleLead: 'Descubra o potencial do seu nome', // [TEXTO]
     titleHighlight: 'e elimine os bloqueios da sua assinatura', // [TEXTO]
     subtitle:
-      'Calculamos sua nota de 0 a 100 nos 4 triângulos cabalísticos e entregamos opções personalizadas sem bloqueios para você usar na vida social, no palco ou na escolha do nome do bebê.', // [TEXTO]
+      'Calculamos sua nota de 0 a 100 pelo Triângulo da Vida cabalístico e entregamos opções personalizadas sem bloqueios para você usar na vida social, no palco ou na escolha do nome do bebê.', // [TEXTO]
     buttons: [
       {
         id: 'hero-social',
@@ -66,7 +66,7 @@ export const HOME_COPY = {
         title: 'Nome Social', // [TEXTO]
         description:
           'Compare seu nome de nascimento com variações sem bloqueios para usar em assinaturas, redes e projetos sem mudar documentos.', // [TEXTO]
-        highlights: ['4 triângulos analisados', 'Mudanças sutis ou novos nomes', 'Guia de assinatura de 30 dias'], // [TEXTO]
+        highlights: ['Triângulo da Vida e arquétipo', 'Mudanças sutis ou novos nomes', 'Guia de assinatura de 30 dias'], // [TEXTO]
         ctaLabel: 'Explorar Nome Social', // [TEXTO]
         href: HOME_PATH_URLS.social,
         ctaId: 'home_audience_social',
@@ -119,7 +119,7 @@ export const HOME_COPY = {
         number: '03',
         title: 'Baixe o relatório completo em PDF', // [TEXTO]
         description:
-          'Leve os 4 triângulos, a leitura dos 5 números principais, a comparação antes × depois e o guia prático para usar no dia a dia.', // [TEXTO]
+          'Leve o Triângulo da Vida, o arquétipo, a leitura dos 5 números principais, a comparação antes × depois e o guia prático para usar no dia a dia.', // [TEXTO]
       },
     ],
   },
@@ -140,7 +140,7 @@ export const HOME_COPY = {
       },
       {
         id: 'triangle' as const,
-        badge: '02 · Triângulo da Vida & 4 Triângulos', // [TEXTO]
+        badge: '02 · Triângulo da Vida', // [TEXTO]
         title: 'Onde nascem os bloqueios e qual Arcano rege a ponta', // [TEXTO]
         description:
           'Cada letra vira número e desce somando em pares até a ponta. Sequências repetidas (como 222 ou 444) acendem em vermelho para serem eliminadas nas sugestões.', // [TEXTO]
@@ -148,9 +148,9 @@ export const HOME_COPY = {
       {
         id: 'score' as const,
         badge: '03 · Escala de 0 a 100', // [TEXTO]
-        title: 'Nota transparente separando data e assinatura', // [TEXTO]
+        title: 'Sua nota de hoje e até onde ela pode chegar', // [TEXTO]
         description:
-          'Mostramos a nota de hoje e até onde ela pode chegar, destacando a faixa de equilíbrio de forma visual e simples de acompanhar.', // [TEXTO]
+          'Partimos do seu nome de nascimento e testamos variações. Cada uma recebe uma nota de 0 a 100, com a cor da faixa, até chegar à melhor opção sem bloqueios.', // [TEXTO]
       },
     ],
   },
@@ -167,7 +167,7 @@ export const HOME_COPY = {
         valueTarget: 0,
         valueSuffix: '',
         label: 'Bloqueios nos nomes novos', // [TEXTO]
-        detail: 'Zero sequências repetidas (>= 3 números iguais) nos 4 triângulos sugeridos.', // [TEXTO]
+        detail: 'Zero sequências repetidas (>= 3 números iguais) no Triângulo da Vida dos nomes sugeridos.', // [TEXTO]
       },
       {
         id: 'min-score' as const,
@@ -190,7 +190,6 @@ export const HOME_COPY = {
       { id: 'artistico' as const, label: 'Nome Artístico' }, // [TEXTO]
       { id: 'bebe' as const, label: 'Nome do Bebê' }, // [TEXTO]
     ],
-    autoCycleLabel: 'Troca automática', // [TEXTO]
   },
 
   // [TEXTO] Seção 7 — Análise gratuita
@@ -199,10 +198,10 @@ export const HOME_COPY = {
     title: 'Veja a nota do seu nome de hoje e até onde ele pode chegar', // [TEXTO]
     description:
       'Preencha seus dados para receber seu PDF gratuito com a nota atual, o potencial máximo da assinatura, bloqueios no Triângulo da Vida e lições kármicas.', // [TEXTO]
-    sideEyebrow: 'Exemplo de evolução', // [TEXTO]
-    sideTitle: 'Até onde a nota pode chegar', // [TEXTO]
+    sideEyebrow: 'O que chega no seu e-mail', // [TEXTO]
+    sideTitle: 'Seu PDF gratuito, página por página', // [TEXTO]
     sideDescription:
-      'Ajustes sutis na forma de assinar costumam elevar a nota de uma faixa em atenção para a zona harmoniosa sem alterar o registro civil.', // [TEXTO]
+      'Capa, o mapa do seu nome em 1 página e a leitura de como você está hoje, no mesmo layout do relatório completo.', // [TEXTO]
   },
 
   // [TEXTO] Item extra da Seção 8 — Usos do nome (palco e redes)

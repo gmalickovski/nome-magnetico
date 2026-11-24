@@ -3,6 +3,7 @@ import LandingLayout from '../layouts/LandingLayout.astro';
 import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { PublicAnalysisForm } from '../frontend/components/landing/PublicAnalysisForm';
+import { FreePdfPreviewScene } from '../frontend/components/landing/mockups/FreePdfPreviewScene';
 
 const user = Astro.locals.user;
 
@@ -50,6 +51,24 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
 
         <div class="max-w-4xl mx-auto mt-10">
           <PublicAnalysisForm client:load />
+        </div>
+      </div>
+    </section>
+
+    {/* ── PRÉVIA DO PDF (páginas reais, exemplo fictício) ── */}
+    <section class="py-12 sm:py-16 md:py-20">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div class="min-w-0 text-center lg:text-left">
+            <p class="nm-eyebrow mb-3">O que chega no seu e-mail</p>
+            <h2 class="nm-h2">Seu PDF gratuito, página por página</h2>
+            <p class="nm-body-lg mt-4 max-w-[48ch] mx-auto lg:mx-0">
+              Capa, o mapa do seu nome em 1 página e a leitura de como você está hoje, no mesmo layout do relatório completo.
+            </p>
+          </div>
+          <div class="min-w-0 w-full max-w-[360px] mx-auto">
+            <FreePdfPreviewScene client:visible />
+          </div>
         </div>
       </div>
     </section>

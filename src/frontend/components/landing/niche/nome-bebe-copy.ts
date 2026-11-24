@@ -12,17 +12,17 @@ export const NOME_BEBE_COPY: NichePageCopy = {
   seo: {
     title: 'Nome do Bebê pela Numerologia Cabalística',
     description:
-      'Avalie nomes para o bebê com o sobrenome da família e a data prevista ou nascimento, verificando bloqueios nos 4 triângulos e dias favoráveis do parto.',
+      'Avalie nomes para o bebê com o sobrenome da família e a data prevista ou nascimento, verificando bloqueios no Triângulo da Vida e dias favoráveis do parto.',
     keywords:
       'nome de bebê numerologia, escolher nome do bebê, numerologia cabalística bebê, nome composto bebê sem bloqueios, sobrenome família numerologia',
     productName: 'Nome do Bebê: Análise e Sugestões em Família',
     productDescription:
-      'Avaliação cabalística de nomes para bebês cruzando sobrenomes dos pais, data prevista ou nascimento, bloqueios nos 4 triângulos e PDF acolhedor.',
+      'Avaliação cabalística de nomes para bebês cruzando sobrenomes dos pais, data prevista ou nascimento, bloqueios no Triângulo da Vida e PDF acolhedor.',
   },
   hero: {
     eyebrow: 'Nome do Bebê · Família & Chegada', // [TEXTO]
     titleLead: 'Escolha o nome do seu bebê', // [TEXTO]
-    titleHighlight: 'com harmonia nos 4 triângulos desde o primeiro dia', // [TEXTO]
+    titleHighlight: 'com harmonia numérica desde o primeiro dia', // [TEXTO]
     description:
       'Informe os sobrenomes da família, a data prevista ou nascimento e seus palpites favoritos. O sistema verifica bloqueios e mostra quais combinações e dias da janela trazem maior equilíbrio.', // [TEXTO]
     primaryCtaLabel: 'Analisar Nome do Meu Bebê', // [TEXTO]
@@ -70,7 +70,7 @@ export const NOME_BEBE_COPY: NichePageCopy = {
     rightBlock: {
       badge: 'Triângulo Sem Bloqueios', // [TEXTO]
       title: 'Zero sequências repetidas em toda a estrutura', // [TEXTO]
-      description: 'Filtramos combinações para evitar bloqueios em qualquer um dos 4 triângulos cabalísticos.', // [TEXTO]
+      description: 'Filtramos combinações para evitar bloqueios no Triângulo da Vida cabalístico.', // [TEXTO]
       srSummary: 'Animação do Triângulo da Vida do bebê sem marcas vermelhas de bloqueio.', // [TEXTO]
     },
   },
@@ -88,7 +88,7 @@ export const NOME_BEBE_COPY: NichePageCopy = {
       'Versão em tons pastel do relatório completo para compartilhar entre os pais e consultar sempre que quiserem.', // [TEXTO]
     highlights: [
       'Comparação direta entre seus nomes em mente e novas sugestões', // [TEXTO]
-      'Leitura clara dos 5 números e 4 triângulos sem bloqueios', // [TEXTO]
+      'Leitura clara dos 5 números e do Triângulo da Vida, sem bloqueios', // [TEXTO]
       'Tabela prática da janela de nascimento quando aplicável', // [TEXTO]
     ],
     srSummary: 'Folheto animado das páginas do PDF do bebê em tema pastel.', // [TEXTO]

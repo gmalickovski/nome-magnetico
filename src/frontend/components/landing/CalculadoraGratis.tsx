@@ -70,7 +70,7 @@ export function CalculadoraGratis() {
       <div className="animate-fade-in space-y-5">
 
         {/* Cabeçalho do resultado */}
-        <div className="bg-white/5 border border-[#D4AF37]/20 rounded-2xl p-6 shadow-xl shadow-black/40">
+        <div className="bg-white/5 border border-[#D4AF37]/20 rounded-2xl p-6 shadow-[var(--nm-card-shadow)]">
           <div className="text-center mb-6">
             <p className="text-[#D4AF37] text-xs font-medium tracking-widest uppercase mb-2">Diagnóstico Concluído</p>
             <h3 className="font-cinzel text-2xl font-bold text-white mb-1">{result.nome_primeiro}</h3>
@@ -129,7 +129,7 @@ export function CalculadoraGratis() {
               <div>
                 <p className="text-emerald-400 font-semibold text-sm mb-1">Nenhum bloqueio detectado no Triângulo da Vida</p>
                 <p className="text-emerald-600/80 text-xs leading-relaxed">
-                  Ótimo sinal. Mas os outros 3 triângulos (Pessoal, Social e Destino) ainda não foram analisados — bloqueios podem estar presentes nessas dimensões. A análise completa verifica todos os 4 triângulos.
+                  Ótimo sinal. A análise completa mostra o arquétipo do seu nome e leituras complementares que esta prévia não traz.
                 </p>
               </div>
             </div>

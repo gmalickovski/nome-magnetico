@@ -11,7 +11,7 @@ export const NOME_ARTISTICO_COPY: NichePageCopy = {
   seo: {
     title: 'Nome Artístico por Numerologia Cabalística',
     description:
-      'Crie um nome artístico marcante, sem bloqueios nos 4 triângulos e com afinidade numérica para palco, música, vídeo e redes sociais.',
+      'Crie um nome artístico marcante, sem bloqueios, com o arquétipo certo para a sua persona e afinidade numérica para palco, música, vídeo e redes sociais.',
     keywords:
       'nome artístico numerologia, criar nome artístico, nome de palco numerologia, pseudônimo cabalístico, nome para criador de conteúdo',
     productName: 'Nome Artístico: Presença de Palco e Marca',
@@ -23,7 +23,7 @@ export const NOME_ARTISTICO_COPY: NichePageCopy = {
     titleLead: 'Construa um nome artístico', // [TEXTO]
     titleHighlight: 'com magnetismo de palco e zero bloqueios', // [TEXTO]
     description:
-      'Informe sua área de atuação, o estilo de palco e a imagem que quer transmitir. Comparamos opções próximas ao seu nome e nomes totalmente novos com alta nota nos 4 triângulos.', // [TEXTO]
+      'Informe sua área de atuação, o estilo de palco e a imagem que quer transmitir. Comparamos opções próximas ao seu nome e nomes totalmente novos com alta nota e o arquétipo que o seu nome projeta no palco.', // [TEXTO]
     primaryCtaLabel: 'Criar Meu Nome Artístico Agora', // [TEXTO]
     primaryCtaId: 'nome_artistico_hero_chat',
     secondaryCtaLabel: 'Ver Minha Nota Atual Grátis', // [TEXTO]
@@ -59,7 +59,7 @@ export const NOME_ARTISTICO_COPY: NichePageCopy = {
     eyebrow: 'O Que o Cálculo Mostra', // [TEXTO]
     title: 'Estrela Cabalística e afinidade número × área artística', // [TEXTO]
     description:
-      'Além de zerar bloqueios nos 4 triângulos, avaliamos o alinhamento entre Expressão do nome artístico, seu Destino e sua área de atuação.', // [TEXTO]
+      'Além de zerar bloqueios no Triângulo da Vida, mostramos o arquétipo que o seu nome projeta e o alinhamento entre Expressão, Destino e sua área de atuação.', // [TEXTO]
     leftBlock: {
       badge: 'Estrela Comparativa', // [TEXTO]
       title: 'Da identidade civil à presença de palco', // [TEXTO]
@@ -104,7 +104,7 @@ export const NOME_ARTISTICO_COPY: NichePageCopy = {
       'Documento em PDF pronto para salvar, revisar créditos de capa e usar com consistência em plataformas e redes.', // [TEXTO]
     highlights: [
       'Ranking separado entre variações próximas e nomes inéditos', // [TEXTO]
-      'Leitura de compatibilidade Expressão × Destino e 4 triângulos', // [TEXTO]
+      'Arquétipo do nome, Triângulo da Vida e compatibilidade Expressão × Destino', // [TEXTO]
       'Guia de implementação em bios, @ oficiais e lançamentos', // [TEXTO]
     ],
     srSummary: 'Folheto animado das páginas do relatório em PDF no tema de palco do Nome Artístico.', // [TEXTO]
@@ -134,7 +134,7 @@ export const NOME_ARTISTICO_COPY: NichePageCopy = {
     {
       question: 'Qual a diferença para o caminho de Nome Social?', // [TEXTO]
       answer:
-        'Ambos usam o mesmo rigor cabalístico nos 4 triângulos, mas o caminho Artístico pergunta área, estilo e imagem de palco para gerar combinações focadas em audiência.', // [TEXTO]
+        'Ambos usam o mesmo rigor cabalístico no Triângulo da Vida, mas o caminho Artístico pergunta área, estilo e imagem de palco para gerar combinações focadas em audiência.', // [TEXTO]
     },
   ],
   finalCta: {
