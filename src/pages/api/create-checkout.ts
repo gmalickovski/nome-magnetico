@@ -13,6 +13,7 @@ import {
   renewalUtmCampaign,
 } from '../../backend/payments/renewal';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
+import { createPaidCheckoutReference, paidAttributionEnabled, readPaidCampaignProperties } from '../../backend/analytics/paid-attribution';
 import {
   captureServerEvent,
   resolveCheckoutDistinctId,
@@ -351,7 +352,8 @@ export async function createCheckoutResponse(args: {
         ? couponValidation?.code
         : !isRenewal && !couponValidation?.accessCodeId ? couponCode?.trim() : undefined,
       couponReservationId,
-      gaClientId: getGaClientIdFromRequest(request),
+      gaClientId: paidAttributionEnabled() ? undefined : getGaClientIdFromRequest(request),
+      paidAttributionRef: isRenewal ? undefined : await createPaidCheckoutReference(request),
       phDistinctId,
       phSessionId,
       purchaseKind: isRenewal ? 'renewal' : 'new',
@@ -372,6 +374,7 @@ export async function createCheckoutResponse(args: {
         event: 'checkout_started',
         sessionId: phSessionId,
         properties: {
+          ...await readPaidCampaignProperties(request),
           product_type,
           stripe_session_id: session.id,
           base_cents: effective.base_cents,

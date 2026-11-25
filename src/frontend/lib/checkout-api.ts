@@ -1,4 +1,5 @@
 import { captureBeginCheckout, getPostHogDistinctId, getPostHogSessionId } from './analytics';
+import { observePaidAttribution } from './paid-attribution';
 
 export interface CreateCheckoutBody {
   product_type: string;
@@ -24,6 +25,9 @@ export type CreateCheckoutResult =
     };
 
 export async function postCreateCheckout(body: CreateCheckoutBody): Promise<CreateCheckoutResult> {
+  if (typeof window !== 'undefined' && document.documentElement.dataset.paidAttribution === '1') {
+    await Promise.race([observePaidAttribution(), new Promise((resolve) => window.setTimeout(resolve, 400))]);
+  }
   const distinctId = getPostHogDistinctId();
   const sessionId = distinctId ? getPostHogSessionId() : undefined;
   const res = await fetch('/api/create-checkout', {

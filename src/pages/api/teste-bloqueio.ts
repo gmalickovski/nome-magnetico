@@ -1,5 +1,6 @@
 import { buildFreeAnalysisPreview } from '../../backend/public-free-analysis/preview';
 import type { APIRoute } from 'astro';
+import { readPaidCampaignProperties } from '../../backend/analytics/paid-attribution';
 import { supabase } from '../../backend/db/supabase';
 import { notify } from '../../backend/notifications/notify';
 import { persistenciaScoreFields } from '../../backend/numerology/score';
@@ -109,6 +110,16 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           utm_campaign: utm_campaign ?? null,
           source: 'server_teste_bloqueio',
         },
+      });
+    }
+
+    const paidCampaign = await readPaidCampaignProperties(request);
+    if (paidCampaign.paid_campaign_id) {
+      void captureServerEvent({
+        distinctId,
+        event: 'paid_analysis_completed',
+        uuid: posthogEventUuid('paid_analysis_completed', String(lead.id)),
+        properties: { ...paidCampaign, product_type: 'nome_social' },
       });
     }
 

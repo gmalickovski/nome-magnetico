@@ -269,6 +269,7 @@ declare global {
       ) => void;
       reset: () => void;
       startSessionRecording?: () => void;
+      stopSessionRecording?: () => void;
       set_config?: (config: Record<string, unknown>) => void;
       get_distinct_id?: () => string;
       get_session_id?: () => string;

@@ -26,13 +26,14 @@ import { notify, publishAccessAttributes } from '../../backend/notifications/not
 import { recordAccessCouponUse } from '../../backend/payments/prices';
 import type { ProductType } from '../../backend/payments/stripe';
 import { confirmEmailAfterPayment } from '../../backend/auth/confirmEmail';
-import { trackPurchaseConfirmed } from '../../backend/analytics/ga4';
 import {
   captureServerEvent,
   posthogEventUuid,
   resolveCheckoutDistinctId,
 } from '../../backend/analytics/posthog-server';
-import { resolveGaClientId, sendGa4Purchase } from '../../backend/analytics/ga4-mp';
+import { sendGa4Purchase } from '../../backend/analytics/ga4-mp';
+import { paidAttributionEnabled } from '../../backend/analytics/paid-attribution';
+import { drainPurchaseDeliveries, enqueuePurchase } from '../../backend/analytics/purchase-delivery';
 import { parsePurchaseKind } from '../../backend/payments/renewal';
 import { captureFluxoException } from '../../sentry/fluxo';
 import { invalidateUserSubscriptionsCache } from '../../backend/cache/memo';
@@ -125,6 +126,7 @@ export const POST: APIRoute = async ({ request }) => {
       final_cents?: string;
       promo_id?: string;
       ga_client_id?: string;
+      paid_attribution_ref?: string;
       ph_distinct_id?: string;
       ph_session_id?: string;
       ph_analytics_consent?: string;
@@ -294,49 +296,27 @@ export const POST: APIRoute = async ({ request }) => {
       }).catch((err) => console.error('[stripe-webhook] Falha ao registrar cupom:', err));
     }
 
-    await trackPurchaseConfirmed({
-      userId,
-      productType,
-      transactionId: session.id,
-      amountCents: session.amount_total,
-      currency: session.currency,
-      paymentProvider: 'stripe',
-      couponCode: session.metadata?.coupon_code,
-      gaClientId: session.metadata?.ga_client_id,
-    });
-
-    if (paymentMethod) {
+    if (paymentMethod && session.amount_total && session.amount_total > 0) {
       await captureCheckoutPostHog('payment_confirmed', session, paymentMethod);
-      await captureCheckoutPostHog('purchase', session, paymentMethod);
+      if (!session.metadata?.paid_attribution_ref || !paidAttributionEnabled()) {
+        await captureCheckoutPostHog('purchase', session, paymentMethod);
+        const legacyGaClientId = session.metadata?.ga_client_id;
+        if (legacyGaClientId && !paidAttributionEnabled()) {
+          const value = session.amount_total / 100;
+          await sendGa4Purchase({
+            clientId: legacyGaClientId,
+            transactionId: session.id,
+            value,
+            currency: (session.currency || 'BRL').toUpperCase(),
+            items: [{ item_id: productType, item_name: PRODUCT_NAMES[productType], price: value }],
+            paidAt: new Date(event.created * 1000),
+            paymentProvider: 'stripe',
+            productType,
+            purchaseKind,
+          });
+        }
+      }
     }
-
-    const purchaseValue =
-      !session.amount_total || session.amount_total <= 0
-        ? 0
-        : Number((session.amount_total / 100).toFixed(2));
-    const coupon = session.metadata?.coupon_code?.trim() || undefined;
-    await sendGa4Purchase({
-      clientId: resolveGaClientId(session.id, session.metadata?.ga_client_id),
-      transactionId: session.id,
-      value: purchaseValue,
-      currency: (session.currency || 'brl').toUpperCase(),
-      items: [
-        {
-          item_id: productType,
-          item_name: PRODUCT_NAMES[productType] ?? productType,
-          item_brand: 'Nome Magnetico',
-          item_category: 'Numerologia cabalistica',
-          price: purchaseValue,
-          quantity: 1,
-          coupon,
-        },
-      ],
-      userId,
-      coupon,
-      paymentProvider: 'stripe',
-      productType,
-      purchaseKind,
-    });
 
     const profile = await getProfile(userId);
     const baseUrl = getPublicBaseUrl();
@@ -404,6 +384,36 @@ export const POST: APIRoute = async ({ request }) => {
 
   }
 
+  async function recordPaidConversion(session: CheckoutSession, paymentMethod: 'card' | 'pix') {
+    const checkoutId = session.metadata?.paid_attribution_ref;
+    const product = session.metadata?.product_type as ProductType | undefined;
+    const userId = session.metadata?.user_id;
+    const amountCents = session.amount_total;
+    if (!paidAttributionEnabled() || !checkoutId || !product || !userId ||
+        session.payment_status !== 'paid' || !amountCents || amountCents <= 0) return;
+
+    const anonymousId = session.metadata?.ph_distinct_id;
+    const distinctId = anonymousId && /^[a-zA-Z0-9_-]{1,200}$/.test(anonymousId) ? anonymousId : userId;
+    const source = parseChatCheckoutMetadata(session.metadata)?.source ?? undefined;
+    // Roda também na reentrega se a primeira gravação falhou após criar o acesso.
+    await enqueuePurchase(session.id, checkoutId, new Date(event.created * 1000), {
+      distinctId,
+      paymentMethod,
+      product,
+      amountCents,
+      currency: (session.currency || 'BRL').toUpperCase(),
+      kind: parsePurchaseKind(session.metadata?.purchase_kind),
+      source,
+      baseCents: Number(session.metadata?.base_cents) || undefined,
+      finalCents: Number(session.metadata?.final_cents) || undefined,
+    });
+    try {
+      await drainPurchaseDeliveries(session.id);
+    } catch {
+      console.warn('[paid-attribution] Conversão salva para reenvio');
+    }
+  }
+
   try {
     if (
       event.type === 'checkout.session.completed' ||
@@ -442,6 +452,7 @@ export const POST: APIRoute = async ({ request }) => {
         // Outros status síncronos (ex.: no_payment_required) seguem liberando acesso,
         // mas o purchase só sai quando o pagamento está paid.
         await processPaymentSuccess(session, session.payment_status === 'paid' ? 'card' : null);
+        await recordPaidConversion(session, 'card');
         break;
       }
 
@@ -450,6 +461,7 @@ export const POST: APIRoute = async ({ request }) => {
         const session = event.data.object as CheckoutSession;
         console.log('[stripe-webhook] PIX confirmado:', session.id);
         await processPaymentSuccess(session, 'pix');
+        await recordPaidConversion(session, 'pix');
         break;
       }
 
@@ -685,6 +697,10 @@ export const POST: APIRoute = async ({ request }) => {
     console.error('[stripe-webhook] Erro ao processar evento:', event.type, err);
     // Assinatura inválida já devolveu 400 acima. Aqui é falha de Stripe/Supabase/n8n.
     captureFluxoException('stripe_webhook', err, { tipo_evento: event.type });
+    if ((event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') &&
+        event.data.object.payment_status === 'paid' && event.data.object.metadata?.paid_attribution_ref) {
+      return new Response('Falha temporária ao registrar o pagamento', { status: 503 });
+    }
     // Retornar 200 para o Stripe não reenviar — logar o erro internamente
   }
 
