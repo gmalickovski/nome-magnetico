@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
 import { failedPaymentDeduplicator } from '../../backend/payments/cart-recovery';
 import { clearCache } from '../../backend/cache/memo';
+import { resolveCheckoutDistinctId } from '../../backend/analytics/posthog-server';
 
 type StripeEvent = {
   id: string;
@@ -14,6 +15,7 @@ type StripeEvent = {
 let constructedEvent: StripeEvent;
 const notifyCalls: { event: string; payload: Record<string, unknown> }[] = [];
 const createCheckoutCalls: Record<string, unknown>[] = [];
+const posthogCalls: Array<{ event: string; distinctId: string; sessionId?: string; properties: Record<string, unknown> }> = [];
 let checkoutSessionUrl: string | null = 'https://checkout.stripe.com/pay/cs_recovery_new';
 let hasActiveSubscription = false;
 let claimResult: 'claimed' | 'duplicate' | 'error' = 'claimed';
@@ -126,10 +128,10 @@ mock.module('../../backend/notifications/notify', {
 
 mock.module('../../backend/analytics/posthog-server', {
   namedExports: {
-    captureServerEvent: async () => {},
+    captureServerEvent: async (payload: typeof posthogCalls[number]) => { posthogCalls.push(payload); },
     deliverServerEvent: async () => true,
     posthogEventUuid: () => 'uuid-test',
-    resolveCheckoutDistinctId: () => 'distinct-test',
+    resolveCheckoutDistinctId,
   },
 });
 
@@ -231,6 +233,7 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     failedPaymentDeduplicator.reset();
     notifyCalls.length = 0;
     createCheckoutCalls.length = 0;
+    posthogCalls.length = 0;
     releaseCalls.length = 0;
     notifyOk = true;
     disputeSubscription = null;
@@ -350,6 +353,28 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     chargebackStoreFailure = null;
     assert.equal((await dispatchWebhook()).status, 503);
     assert.equal(notifyCalls.length, 1);
+  });
+
+  it('DEV-276: purchase mantém a sessão do navegador e separa a sessão Stripe', async () => {
+    const browserSessionId = '019af9f2-48f0-7a88-9a68-3c0202feb366';
+    const metadata = {
+      user_id: 'fixture-user', product_type: 'nome_social',
+      ph_analytics_consent: '1', ph_distinct_id: 'visitor', ph_session_id: browserSessionId,
+    };
+    constructedEvent = {
+      id: 'evt_posthog_purchase',
+      type: 'checkout.session.completed',
+      data: { object: { id: 'cs_test_posthog', customer_email: 'fixture@example.test', payment_status: 'paid', amount_total: 9700, currency: 'brl', metadata } },
+    };
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.deepEqual(posthogCalls.map((call) => call.event), ['payment_confirmed', 'purchase']);
+    const [legacy, purchase] = posthogCalls;
+    assert.equal(purchase.distinctId, 'visitor');
+    assert.equal(purchase.sessionId, browserSessionId);
+    assert.equal(purchase.properties.session_id, 'cs_test_posthog');
+    assert.equal(purchase.properties.stripe_session_id, 'cs_test_posthog');
+    assert.equal(purchase.properties.email, undefined);
+    assert.equal(legacy.properties.replaced_by, 'purchase');
   });
 
   it('DEV-353 registra cartão e Pix confirmado e recupera fila perdida na reentrega sem repetir acesso', async () => {

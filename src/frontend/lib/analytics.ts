@@ -86,7 +86,6 @@ const POSTHOG_CLIENT_EVENTS = new Set<AnalyticsEvent>([
   'analise_gratis_preview_view',
   'upsell_modal_click',
   'pdf_downloaded',
-  'begin_checkout',
   'purchase_complete',
   'cta_hero_click',
   'cta_produto_click',
@@ -116,12 +115,13 @@ function isAdminBrowser(): boolean {
 
 function capturePostHog(event: AnalyticsEvent, data?: EventData): void {
   if (!POSTHOG_CLIENT_EVENTS.has(event)) return;
-  capturePostHogEvent(event, data);
+  const deprecated = event === 'checkout_start' || event === 'checkout_redirect_start';
+  capturePostHogEvent(event, deprecated ? { ...data, deprecated: true, replaced_by: 'begin_checkout' } : data);
 }
 
 /** Envia evento ao PostHog só se o SDK (ou o stub pós-consentimento) existir. */
 export function capturePostHogEvent(event: string, properties?: Record<string, unknown>): void {
-  if (typeof window === 'undefined' || isAdminBrowser()) return;
+  if (typeof window === 'undefined' || isAdminBrowser() || !hasAnalyticsConsent()) return;
   try {
     window.posthog?.capture?.(event, properties);
   } catch {
@@ -130,11 +130,18 @@ export function capturePostHogEvent(event: string, properties?: Record<string, u
 }
 
 /** Início real do checkout, no POST /api/create-checkout. */
-export function captureBeginCheckout(paymentMethod: CheckoutPaymentMethod, value: number): void {
+export function captureBeginCheckout(
+  productType: string,
+  paymentMethod: CheckoutPaymentMethod,
+  value: number,
+  sessionId?: string,
+): void {
   capturePostHogEvent('begin_checkout', {
+    product_type: productType,
     payment_method: paymentMethod,
     value,
     currency: 'BRL',
+    ...(sessionId ? { $session_id: sessionId } : {}),
   });
 }
 
@@ -143,7 +150,7 @@ export function captureViewOffer(): void {
   if (typeof window === 'undefined' || window.__nm_view_offer_fired || isAdminBrowser()) return;
 
   const send = () => {
-    if (window.__nm_view_offer_fired || isAdminBrowser()) return;
+    if (window.__nm_view_offer_fired || isAdminBrowser() || !hasAnalyticsConsent()) return;
     if (typeof window.posthog?.capture !== 'function') return;
     window.__nm_view_offer_fired = true;
     try {
@@ -159,7 +166,7 @@ export function captureViewOffer(): void {
   }
 }
 
-function hasGa4Consent(): boolean {
+function hasAnalyticsConsent(): boolean {
   return readLocalStorage('nm-cookie-consent') === 'all';
 }
 
@@ -171,7 +178,7 @@ export function trackBeginCheckout(params: {
 }): void {
   if (typeof window === 'undefined') return;
   if (isAdminBrowser()) return;
-  if (!hasGa4Consent()) return;
+  if (!hasAnalyticsConsent()) return;
 
   try {
     if (typeof window.gtag === 'function') {
@@ -184,7 +191,7 @@ export function trackBeginCheckout(params: {
   } catch {}
 }
 
-export function track(event: AnalyticsEvent, data?: EventData): void {
+export function track(event: AnalyticsEvent, data?: EventData, options?: { postHog?: boolean }): void {
   if (typeof window === 'undefined') return;
   if (isAdminBrowser()) return;
 
@@ -196,13 +203,13 @@ export function track(event: AnalyticsEvent, data?: EventData): void {
   } catch {}
 
   try {
-    capturePostHog(event, data);
+    if (options?.postHog !== false) capturePostHog(event, data);
   } catch {}
 }
 
 /** distinct_id atual do PostHog, enviado ao criar a sessão Stripe. */
 export function getPostHogDistinctId(): string | undefined {
-  if (typeof window === 'undefined') return undefined;
+  if (typeof window === 'undefined' || isAdminBrowser() || !hasAnalyticsConsent()) return undefined;
   try {
     const raw = window.posthog?.get_distinct_id?.();
     if (typeof raw !== 'string') return undefined;
@@ -213,15 +220,25 @@ export function getPostHogDistinctId(): string | undefined {
   }
 }
 
+export function getPostHogSessionId(): string | undefined {
+  if (typeof window === 'undefined' || isAdminBrowser() || !hasAnalyticsConsent()) return undefined;
+  try {
+    return window.posthog?.get_session_id?.();
+  } catch {
+    return undefined;
+  }
+}
+
 /** Liga o navegador anônimo ao id do Supabase. O purchase do webhook usa o distinct_id gravado no checkout. */
-export function identifyUser(userId: string, email?: string | null): void {
+export function identifyUser(userId: string): void {
   if (typeof window === 'undefined' || !userId || isAdminBrowser()) return;
   try {
     if (typeof window.nmIdentifyPostHog === 'function') {
-      window.nmIdentifyPostHog(userId, email ?? undefined);
+      window.nmIdentifyPostHog(userId);
       return;
     }
-    window.__nm_pending_identify = { userId, email: email ?? '' };
+    window.__nm_pending_identify = { userId };
+    if (hasAnalyticsConsent()) window.sessionStorage.setItem('nm-posthog-pending-identify', userId);
   } catch {}
 }
 
@@ -231,6 +248,7 @@ export function resetAnalytics(): void {
     window.__nm_pending_identify = undefined;
     window.posthog?.reset?.();
   } catch {}
+  try { window.sessionStorage.removeItem('nm-posthog-pending-identify'); } catch {}
 }
 
 declare global {
@@ -240,8 +258,8 @@ declare global {
     __nm_posthog_ready?: boolean;
     __nm_posthog_events?: boolean;
     __nm_view_offer_fired?: boolean;
-    __nm_pending_identify?: { userId: string; email?: string };
-    nmIdentifyPostHog?: (userId: string, email?: string) => void;
+    __nm_pending_identify?: { userId: string };
+    nmIdentifyPostHog?: (userId: string) => void;
     posthog?: {
       capture: (event: string, properties?: Record<string, unknown>) => void;
       identify: (
@@ -254,6 +272,7 @@ declare global {
       stopSessionRecording?: () => void;
       set_config?: (config: Record<string, unknown>) => void;
       get_distinct_id?: () => string;
+      get_session_id?: () => string;
     };
   }
 }

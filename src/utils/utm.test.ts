@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { emailCampaignName, withEmailUtm } from './utm';
+import { withAuthUtm } from '../frontend/lib/utm';
 
 describe('emailCampaignName', () => {
   it('prefixa nm sem underline', () => {
@@ -46,4 +47,14 @@ describe('withEmailUtm', () => {
   it('devolve a URL original quando ela é inválida', () => {
     assert.equal(withEmailUtm('nao-e-uma-url', 12), 'nao-e-uma-url');
   });
+});
+
+it('preserva o destino e as UTMs da navegação de autenticação no mesmo host', () => {
+  const current = 'https://www.nomemagnetico.com.br/auth/login?utm_source=campanha&utm_term=nome&email=fixture';
+  assert.equal(
+    withAuthUtm('/comprar?produto=nome_social&utm_source=destino#preco', current),
+    '/comprar?produto=nome_social&utm_source=destino&utm_term=nome#preco',
+  );
+  assert.equal(withAuthUtm('//example.test/app', current), '/app');
+  assert.equal(withAuthUtm('https://www.nomemagnetico.com.br//example.test/app', current), '/app');
 });

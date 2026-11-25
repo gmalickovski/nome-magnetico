@@ -104,7 +104,25 @@ describe('runFreeAnalysisPreflight', () => {
     assert.equal('ok' in result && result.ok, true);
     if ('ok' in result && result.ok) {
       assert.equal(result.dedupEmail, 'maria@email.com');
+      assert.equal(result.posthog_distinct_id, undefined);
     }
+  });
+
+  it('carrega apenas o identificador opaco para o funil do PostHog', async () => {
+    const id = '019af9f2-48f0-7a88-9a68-3c0202feb366';
+    const result = await runFreeAnalysisPreflight(
+      buildRequest({ ...validBody, posthog_distinct_id: id }),
+      mockSupabase(),
+    );
+    assert.ok('ok' in result);
+    assert.equal(result.posthog_distinct_id, id);
+
+    const invalid = await runFreeAnalysisPreflight(
+      buildRequest({ ...validBody, posthog_distinct_id: validBody.email }),
+      mockSupabase(),
+    );
+    assert.ok('status' in invalid);
+    assert.equal(invalid.status, 400);
   });
 
   it('honeypot retorna 200 falso', async () => {

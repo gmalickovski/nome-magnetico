@@ -99,17 +99,16 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 
 <BaseLayout title={title} description={description} noIndex={true}>
   <ClientRouter slot="head" fallback="swap" />
-  <script is:inline define:vars={{ analyticsUserId: isAdmin ? '' : user.id, analyticsEmail: isAdmin ? '' : (user.email ?? '') }}>
+  <script is:inline define:vars={{ analyticsUserId: isAdmin ? '' : user.id }}>
     function identifyNmUser() {
       if (!analyticsUserId) return;
       if (typeof window.nmIdentifyPostHog === 'function') {
-        window.nmIdentifyPostHog(analyticsUserId, analyticsEmail);
+        window.nmIdentifyPostHog(analyticsUserId);
         return;
       }
-      window.__nm_pending_identify = { userId: analyticsUserId, email: analyticsEmail || '' };
+      window.__nm_pending_identify = { userId: analyticsUserId };
     }
     identifyNmUser();
-    window.addEventListener('nm-posthog-ready', identifyNmUser);
   </script>
   <div class:list={[
     'min-h-screen bg-[#1a1a1a] nm-app-shell--with-mobile-dock',

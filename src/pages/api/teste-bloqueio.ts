@@ -20,8 +20,8 @@ import {
 } from '../../backend/marketing/free-analysis-completed';
 import {
   captureServerEvent,
+  getPostHogServer,
   posthogEventUuid,
-  readPostHogDistinctIdFromCookie,
 } from '../../backend/analytics/posthog-server';
 
 function json(body: object, status = 200) {
@@ -46,6 +46,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     utm_source,
     utm_medium,
     utm_campaign,
+    posthog_distinct_id,
   } = preflight;
 
   try {
@@ -88,29 +89,29 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       marcaDaDataPresente: avaliacaoV3.marcaDaData.length > 0,
     });
 
-    const cookieDistinctId = readPostHogDistinctIdFromCookie(
-      request.headers.get('cookie'),
-      process.env.PUBLIC_POSTHOG_KEY,
-    );
-    const distinctId = cookieDistinctId ?? posthogEventUuid('lead-distinct', dedupEmail);
-
-    void captureServerEvent({
-      distinctId,
-      event: 'analise_gratis_submit',
-      uuid: posthogEventUuid('analise_gratis_submit', String(lead.id)),
-      properties: {
-        analise_id: lead.id,
-        score_v3: avaliacaoV3.score_v3,
-        nivel: avaliacaoV3.nivel.codigo,
-        potencial_max: preview.potencialMax,
-        marca_da_data_count: avaliacaoV3.marcaDaData.length,
-        opt_in: Boolean(opt_in),
-        utm_source: utm_source ?? null,
-        utm_medium: utm_medium ?? null,
-        utm_campaign: utm_campaign ?? null,
-        source: 'server_teste_bloqueio',
-      },
-    });
+    const posthogSubmitQueued = Boolean(posthog_distinct_id && getPostHogServer());
+    if (posthog_distinct_id && posthogSubmitQueued) {
+      void captureServerEvent({
+        distinctId: posthog_distinct_id,
+        event: 'analise_gratis_submit',
+        uuid: posthogEventUuid('analise_gratis_submit', String(lead.id)),
+        properties: {
+          $process_person_profile: false,
+          product_type: 'analise_gratuita',
+          analise_id: lead.id,
+          score: preview.score,
+          score_v3: avaliacaoV3.score_v3,
+          nivel: avaliacaoV3.nivel.codigo,
+          potencial_max: preview.potencialMax,
+          marca_da_data_count: avaliacaoV3.marcaDaData.length,
+          opt_in: Boolean(opt_in),
+          utm_source: utm_source ?? null,
+          utm_medium: utm_medium ?? null,
+          utm_campaign: utm_campaign ?? null,
+          source: 'server_teste_bloqueio',
+        },
+      });
+    }
 
     const paidCampaign = await readPaidCampaignProperties(request);
     if (paidCampaign.paid_campaign_id) {
@@ -216,6 +217,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         success: true,
         leadId: lead.id,
         preview,
+        posthogSubmitQueued,
       },
       200,
     );
