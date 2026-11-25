@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { CheckoutModal } from './CheckoutModal';
 import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
-import { isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { checkoutFailureMessage, isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { withLinkedCoupon } from '../../../shared/checkout-coupon-link';
 import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -78,13 +79,13 @@ export function LandingCheckout({
       setModalOpen(true);
     } else {
       // Redireciona para cadastro com URL de retorno codificada
-      const returnUrl = `${window.location.pathname}?checkout=${product}`;
+      const returnUrl = withLinkedCoupon(`${window.location.pathname}?checkout=${product}`, new URLSearchParams(window.location.search));
       window.location.href = `/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`;
     }
   }
 
   // Chamado pelo CheckoutModal quando o usuário escolhe Cartão de Crédito
-  async function handleTriggerCard(type: ProductType, couponCode?: string) {
+  async function handleTriggerCard(type: ProductType, couponCode: string | undefined, finalCents: number) {
     try {
       track('checkout_redirect_start', {
         produto: type,
@@ -103,27 +104,29 @@ export function LandingCheckout({
         {
           product_type: type,
           couponCode,
-          expected_final_cents: priceInfo.cents,
+          expected_final_cents: finalCents,
         },
         (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
       );
       if (!result.ok) {
-        if ('priceChanged' in result && result.priceChanged) return;
         if ('alreadyActive' in result && result.alreadyActive) {
           window.location.href = result.redirectUrl ?? analysisPath;
-          return;
+          return true;
         }
         if (isCheckoutEmailNotConfirmed(result)) {
           setEmailNotConfirmed(true);
           return;
         }
-        throw new Error('Erro ao criar checkout');
+        throw new Error(checkoutFailureMessage(result));
       }
       if ('bypass' in result && result.bypass) {
         window.location.href = result.redirectUrl;
-        return;
+        return true;
       }
-      if ('url' in result) window.location.href = result.url;
+      if ('url' in result) {
+        window.location.href = result.url;
+        return true;
+      }
     } catch (err) {
       track('checkout_failed', {
         produto: type,
@@ -131,6 +134,7 @@ export function LandingCheckout({
         origem: 'landing',
       });
       console.error('[LandingCheckout] Erro ao criar checkout:', err);
+      throw err;
     }
   }
 
@@ -188,7 +192,6 @@ export function LandingCheckout({
         <CheckoutModal
           productType={product}
           priceInfo={priceInfo}
-          promotion={promotion}
           onClose={() => setModalOpen(false)}
           onTriggerCard={handleTriggerCard}
         />

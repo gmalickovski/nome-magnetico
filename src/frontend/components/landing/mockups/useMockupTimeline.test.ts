@@ -72,15 +72,15 @@ describe('DEV-336 · motor de timeline dos mockups', () => {
   });
 });
 
-describe('DEV-336 · roteiros de exemplo do ChatScene', () => {
+describe('DEV-336 / DEV-340 · roteiros de exemplo do ChatScene', () => {
   it('cobre os 3 caminhos com nomes de exemplo sem bloqueios e nota >= 80', () => {
     for (const key of ['social', 'artistico', 'bebe'] as const) {
       const script = CHAT_SCRIPTS[key];
       assert.equal(script.exchanges.length, 3);
-      assert.ok(script.suggestions.length >= 3, `${key} deve ter pelo menos 3 sugestões`);
+      assert.ok(script.suggestions.length >= 2, `${key} deve ter sugestões de exemplo`);
       for (const s of script.suggestions) {
-        assert.ok(s.score >= 80, `${key} (${s.nome}) deve ter nota >= 80`);
-        assert.match(s.badgeText, /0 bloqueios/, `${key} (${s.nome}) deve indicar 0 bloqueios`);
+        assert.ok(s.card.score >= 80, `${key} (${s.card.nome}) deve ter nota >= 80`);
+        assert.equal(s.card.bloqueios, 0, `${key} (${s.card.nome}) deve ter 0 bloqueios`);
       }
     }
   });

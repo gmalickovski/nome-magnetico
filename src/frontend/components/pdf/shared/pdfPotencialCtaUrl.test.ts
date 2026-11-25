@@ -9,6 +9,9 @@ describe('pdfPotencialCtaUrl', () => {
     assert.equal(parsed.searchParams.get('utm_source'), 'pdf');
     assert.equal(parsed.searchParams.get('utm_medium'), 'free');
     assert.equal(parsed.searchParams.get('utm_campaign'), 'nmpotencial');
-    assert.equal(parsed.searchParams.get('nome'), 'Maria Silva');
+    // DEV-343: sem dados pessoais na URL; o botão vai direto ao chat de harmonizar.
+    assert.equal(parsed.searchParams.get('nome'), null);
+    assert.equal(parsed.pathname, '/app/analise/nome-social');
+    assert.equal(parsed.searchParams.get('caminho'), 'dia_a_dia');
   });
 });

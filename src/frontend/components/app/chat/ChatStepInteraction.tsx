@@ -1,7 +1,6 @@
-import React from 'react';
 import { ChatInlineTextReply } from './ChatInlineTextReply.js';
 import type { PillOption } from './PillGroup.js';
-import { Pill } from '../../ui/Pill.js';
+import { ChatOptionPills } from '../../shared/chat-ui/ChatOptionPills.js';
 
 export interface ChatStepInteractionProps {
   showText?: boolean;
@@ -26,24 +25,14 @@ export function ChatInlineOptionPills({
   onSelect: (option: PillOption) => void;
   className?: string;
 }) {
-  if (!options.length) return null;
-
   return (
-    <div
-      className={`flex flex-wrap gap-2 items-center w-full ${className}`}
-      role="group"
-      aria-label="Opções rápidas"
-    >
-      {options.map((opt) => (
-        <Pill
-          key={opt.id}
-          label={opt.label}
-          size="lg"
-          disabled={disabled}
-          onClick={() => onSelect(opt)}
-        />
-      ))}
-    </div>
+    <ChatOptionPills
+      options={options}
+      size="lg"
+      disabled={disabled}
+      onSelect={onSelect}
+      className={className}
+    />
   );
 }
 

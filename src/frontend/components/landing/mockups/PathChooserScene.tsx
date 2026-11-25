@@ -1,21 +1,78 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import {
+  ChatOptionPills,
+  ChatPanelHeader,
+  ChatProgressBar,
+  NmBubble,
+  NmTypingBubble,
+  ReadingTopicCard,
+  UserBubble,
+  type ChatOptionPillItem,
+} from '../../shared/chat-ui/index.js';
+import { ChatDesktopShell } from './ChatDesktopShell.js';
+import { CHAT_SCRIPTS } from './chat-scripts.js';
 import { DeviceFrame } from './DeviceFrame.js';
-import { MOCKUP_THEMES, type MockupDevice, type MockupTheme } from './types.js';
+import { ScaledMockupCanvas } from './ScaledMockupCanvas.js';
+import { MOCKUP_THEMES, type MockupDevice, type MockupTheme, type MockupThemeTokens } from './types.js';
 import { useMockupTimeline, type TimelineStep } from './useMockupTimeline.js';
 import './mockup-animations.css';
 
-export type PathChooserAction = 'ready' | 'focus' | 'tap' | 'selected';
+export type PathChooserAction =
+  | 'ready'
+  | 'focus'
+  | 'tap'
+  | 'selected'
+  | 'f1_typing'
+  | 'f1_shown'
+  | 'f1_tap'
+  | 'f1_answered'
+  | 'f2_typing'
+  | 'f2_shown'
+  | 'f2_tap'
+  | 'f2_answered'
+  | 'f3_typing'
+  | 'f3_shown'
+  | 'f3_tap'
+  | 'f3_answered'
+  | 'f4_typing'
+  | 'f4_shown'
+  | 'f4_tap'
+  | 'f4_answered'
+  | 'f5_typing'
+  | 'f5_shown'
+  | 'f5_tap'
+  | 'f5_answered';
 
+/** Escolhe o caminho, segue 2 perguntas do caminho escolhido e reinicia no próximo caminho. */
 const PATH_CHOOSER_STEPS: ReadonlyArray<TimelineStep<PathChooserAction>> = [
   { at: 0, action: 'ready' },
   { at: 550, action: 'focus' },
   { at: 1050, action: 'tap' },
   { at: 1550, action: 'selected' },
+  { at: 2100, action: 'f1_typing' },
+  { at: 2700, action: 'f1_shown' },
+  { at: 3400, action: 'f1_tap' },
+  { at: 4050, action: 'f1_answered' },
+  { at: 4550, action: 'f2_typing' },
+  { at: 5150, action: 'f2_shown' },
+  { at: 5850, action: 'f2_tap' },
+  { at: 6500, action: 'f2_answered' },
+  { at: 7000, action: 'f3_typing' },
+  { at: 7600, action: 'f3_shown' },
+  { at: 8300, action: 'f3_tap' },
+  { at: 8950, action: 'f3_answered' },
+  { at: 9450, action: 'f4_typing' },
+  { at: 10050, action: 'f4_shown' },
+  { at: 10750, action: 'f4_tap' },
+  { at: 11400, action: 'f4_answered' },
+  { at: 11900, action: 'f5_typing' },
+  { at: 12500, action: 'f5_shown' },
+  { at: 13200, action: 'f5_tap' },
+  { at: 13850, action: 'f5_answered' },
 ];
 
-interface PathChoiceItem {
-  id: MockupTheme;
-  label: string;
+interface PathChoiceItem extends ChatOptionPillItem {
+  theme: MockupTheme;
   description: string;
   previewTitle: string;
   previewBullets: string[];
@@ -23,14 +80,16 @@ interface PathChoiceItem {
 
 const PATH_CHOICES: readonly PathChoiceItem[] = [
   {
-    id: 'social',
+    id: 'dia_a_dia',
+    theme: 'social',
     label: 'Harmonizar o meu nome',
     description: 'Ajustar sua assinatura no dia a dia sem bloqueios.',
     previewTitle: 'Caminho · Nome Social',
-    previewBullets: ['4 Triângulos cabalísticos', 'Nota 0 a 100 + bloqueios', 'Sugestões com nota 80+'],
+    previewBullets: ['Triângulo da Vida cabalístico', 'Nota 0 a 100 + bloqueios', 'Sugestões com nota 80+'],
   },
   {
     id: 'artistico',
+    theme: 'artistico',
     label: 'Criar um nome artístico',
     description: 'Para palco, redes sociais e marca pessoal.',
     previewTitle: 'Caminho · Nome Artístico',
@@ -38,6 +97,7 @@ const PATH_CHOICES: readonly PathChoiceItem[] = [
   },
   {
     id: 'bebe',
+    theme: 'bebe',
     label: 'Escolher o nome do meu bebê',
     description: 'Cruza o sobrenome da família com a data prevista.',
     previewTitle: 'Caminho · Nome do Bebê',
@@ -54,9 +114,27 @@ export interface PathChooserSceneProps {
   className?: string;
 }
 
+function TapOverlay({ tokens }: { tokens: MockupThemeTokens }) {
+  return (
+    <span className="absolute left-1/2 top-1/2 pointer-events-none z-20" aria-hidden="true">
+      <span
+        className="block w-8 h-8 rounded-full nm-mockup-tap-ripple"
+        style={{ border: `2px solid ${tokens.cursorCoreHex}` }}
+      />
+      <span
+        className="block w-3.5 h-3.5 rounded-full nm-mockup-tap-core shadow-md"
+        style={{
+          backgroundColor: tokens.cursorCoreHex,
+          boxShadow: `0 0 14px ${tokens.cursorRingRgba}`,
+        }}
+      />
+    </span>
+  );
+}
+
 /**
- * Cena dos 3 botões de caminho ("O que você quer fazer hoje?").
- * A cada ciclo de animação, o toque falso alterna para o próximo caminho.
+ * Cena dos 3 botões de caminho ("O que você quer fazer hoje?") usando as peças compartilhadas
+ * reais do chat (`NmBubble`, `ChatOptionPills`, `UserBubble`, `ReadingTopicCard`).
  */
 export function PathChooserScene({
   device = 'phone',
@@ -67,7 +145,7 @@ export function PathChooserScene({
   className = '',
 }: PathChooserSceneProps) {
   const initialIndex = useMemo(() => {
-    const found = PATH_CHOICES.findIndex((item) => item.id === theme);
+    const found = PATH_CHOICES.findIndex((item) => item.theme === theme);
     return found >= 0 ? found : 0;
   }, [theme]);
 
@@ -82,180 +160,127 @@ export function PathChooserScene({
     : (initialIndex + timeline.cycle) % PATH_CHOICES.length;
 
   const activeChoice = PATH_CHOICES[activeIndex]!;
-  const activeTokens = MOCKUP_THEMES[activeChoice.id];
+  const activeTokens = MOCKUP_THEMES[activeChoice.theme];
   const action = timeline.currentAction ?? 'ready';
-  const isFocused = action === 'focus' || action === 'tap' || action === 'selected';
   const isTapping = !timeline.reducedMotion && action === 'tap';
-  const isSelected = timeline.reducedMotion || action === 'selected';
+  // 'selected' já aconteceu (acumulado), não só a ação atual: a escolha não pode voltar a aparecer.
+  const isSelected = timeline.reducedMotion || timeline.triggeredActions.includes('selected');
+  const showHighlight = action === 'focus' || isTapping || isSelected;
 
-  const renderChoicesStack = (compact: boolean) => (
-    <div className={`flex flex-col ${compact ? 'gap-2 p-3' : 'gap-2.5 p-4'} flex-1 min-h-0 justify-center`}>
-      {/* Cabeçalho mini do Jev */}
-      <div className="flex items-center gap-2 mb-1">
-        <span
-          className="h-6 w-6 rounded-full shrink-0 transition-all duration-500"
-          style={{
-            backgroundImage: activeTokens.orbGradient,
-            boxShadow: `0 0 12px ${activeTokens.cursorRingRgba}`,
-          }}
+  // Perguntas do caminho escolhido (o caminho Social já usa a 1ª pergunta como escolha de caminho).
+  const activeScript = CHAT_SCRIPTS[activeChoice.theme];
+  const followUps =
+    activeChoice.theme === 'social'
+      ? [activeScript.exchanges[1], activeScript.exchanges[2], ...activeScript.more]
+      : [...activeScript.exchanges, ...activeScript.more];
+  const has = (a: PathChooserAction) => timeline.triggeredActions.includes(a);
+  const chatStep = has('f2_answered') ? 3 : has('f1_answered') ? 2 : isSelected ? 1 : 0;
+
+  // Começa no topo e acompanha a última mensagem quando o chat enche.
+  useEffect(() => {
+    const root = timeline.containerRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>('[data-path-chat]').forEach((el) => {
+      el.scrollTo({ top: action === 'ready' ? 0 : el.scrollHeight });
+    });
+  }, [action, timeline.cycle, timeline.containerRef]);
+
+  const renderFollowUp = (
+    ex: (typeof followUps)[number],
+    typingAction: PathChooserAction,
+    shownAction: PathChooserAction,
+    tapAction: PathChooserAction,
+    answeredAction: PathChooserAction,
+  ) => (
+    <>
+      {action === typingAction ? <NmTypingBubble /> : null}
+      {has(shownAction) ? (
+        <NmBubble eyebrow={ex.eyebrow} wide>
+          <p className="text-chat-ink leading-relaxed">{ex.jevPrompt}</p>
+          {!has(answeredAction) ? (
+            <ChatOptionPills
+              options={ex.chips}
+              size="lg"
+              selectedIds={action === tapAction ? [ex.chips[ex.selectedChipIndex]!.id] : []}
+              className="mt-3"
+              renderItemOverlay={(_, idx) =>
+                action === tapAction && idx === ex.selectedChipIndex ? (
+                  <TapOverlay tokens={activeTokens} />
+                ) : null
+              }
+            />
+          ) : null}
+        </NmBubble>
+      ) : null}
+      {has(answeredAction) ? <UserBubble content={ex.userReply} /> : null}
+    </>
+  );
+
+  const renderChatPane = (includeTopBar: boolean) => (
+    <div className="flex flex-col flex-1 min-h-0 bg-[#131313]">
+      {includeTopBar ? (
+        <ChatProgressBar
+          currentStep={chatStep}
+          totalSteps={4}
+          className="shrink-0 bg-dark-deeper/95 backdrop-blur-md border-b border-white/5"
         />
-        <span className="font-cinzel text-[11px] font-bold text-[#e5e2e1]">Nome Magnético</span>
-      </div>
+      ) : null}
 
-      {/* Pergunta canônica do Jev */}
-      <div className="rounded-2xl bg-[#1C1C1C] px-3.5 py-2.5 ring-1 ring-white/[0.06] text-[#e5e2e1] font-inter">
-        <div
-          className="font-cinzel text-[9px] font-bold uppercase tracking-[0.12em] mb-1 transition-colors duration-300"
-          style={{ color: activeTokens.accentHex }}
-        >
-          ESCOLHA SEU CAMINHO
-        </div>
-        <p className={`${compact ? 'text-[11.5px]' : 'text-[13px]'} font-medium`}>
-          O que você quer fazer hoje?
-        </p>
-      </div>
+      <div
+        data-path-chat
+        className="flex-1 min-h-0 flex flex-col justify-start gap-2 px-4 pb-4 pt-3 overflow-y-hidden"
+      >
+        <NmBubble eyebrow="PASSO 1 DE 3" wide>
+          <p className="text-chat-ink leading-relaxed">O que você quer fazer hoje?</p>
+          {!isSelected ? (
+            <ChatOptionPills
+              options={PATH_CHOICES}
+              size="lg"
+              selectedIds={showHighlight ? [activeChoice.id] : []}
+              className="mt-3"
+              renderItemOverlay={(opt) =>
+                isTapping && opt.id === activeChoice.id ? <TapOverlay tokens={activeTokens} /> : null
+              }
+            />
+          ) : null}
+        </NmBubble>
 
-      {/* Os 3 botões de caminho */}
-      <div className="flex flex-col gap-1.5 mt-1">
-        {PATH_CHOICES.map((choice, idx) => {
-          const isTarget = idx === activeIndex;
-          const choiceTokens = MOCKUP_THEMES[choice.id];
-          const selectedNow = isTarget && isSelected;
-          const focusedNow = isTarget && isFocused && !selectedNow;
+        {isSelected ? <UserBubble content={activeChoice.label} /> : null}
 
+        {followUps.map((ex, i) => {
+          const n = i + 1;
+          if (!timeline.triggeredActions.includes(`f${n}_typing` as PathChooserAction)) return null;
           return (
-            <div key={choice.id} className="relative">
-              <div
-                className={`rounded-full transition-all duration-300 ${
-                  compact ? 'px-3.5 py-2' : 'px-4 py-2.5'
-                } flex items-center justify-between gap-2`}
-                style={
-                  selectedNow
-                    ? {
-                        backgroundColor: choiceTokens.selectedChipBgHex,
-                        color: choiceTokens.selectedChipTextHex,
-                        border: `1px solid ${choiceTokens.selectedChipBorderHex}`,
-                        transform: 'scale(0.99)',
-                      }
-                    : focusedNow
-                      ? {
-                          backgroundColor: '#242228',
-                          color: '#e5e2e1',
-                          border: `1px solid ${choiceTokens.accentHex}`,
-                        }
-                      : {
-                          backgroundColor: '#1C1C1C',
-                          color: '#e5e2e1',
-                          border: `1px solid ${choiceTokens.chipBorderRgba}`,
-                        }
-                }
-              >
-                <span className={`font-inter font-medium truncate ${compact ? 'text-[11px]' : 'text-[12.5px]'}`}>
-                  {choice.label}
-                </span>
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{
-                    backgroundColor: selectedNow
-                      ? choiceTokens.selectedChipTextHex
-                      : choiceTokens.accentHex,
-                  }}
-                />
-              </div>
-
-              {isTarget && isTapping ? (
-                <span
-                  className="absolute right-8 top-1/2 pointer-events-none z-20"
-                  aria-hidden="true"
-                >
-                  <span
-                    className="block w-8 h-8 rounded-full nm-mockup-tap-ripple"
-                    style={{ border: `2px solid ${choiceTokens.cursorCoreHex}` }}
-                  />
-                  <span
-                    className="block w-3.5 h-3.5 rounded-full nm-mockup-tap-core"
-                    style={{
-                      backgroundColor: choiceTokens.cursorCoreHex,
-                      boxShadow: `0 0 14px ${choiceTokens.cursorRingRgba}`,
-                    }}
-                  />
-                </span>
-              ) : null}
+            <div key={`${activeChoice.theme}-f${n}`} className="contents">
+              {renderFollowUp(
+                ex,
+                `f${n}_typing` as PathChooserAction,
+                `f${n}_shown` as PathChooserAction,
+                `f${n}_tap` as PathChooserAction,
+                `f${n}_answered` as PathChooserAction,
+              )}
             </div>
           );
         })}
       </div>
-
-      {/* Confirmação compacta no celular quando selecionado */}
-      {compact ? (
-        <div
-          className={`mt-1 rounded-2xl bg-[#181818] px-3 py-2 ring-1 ring-white/[0.05] transition-all duration-500 ${
-            isSelected ? 'opacity-100 translate-y-0' : 'opacity-60 translate-y-1'
-          }`}
-        >
-          <div className="text-[10px] font-inter font-semibold" style={{ color: activeTokens.accentHex }}>
-            {activeChoice.previewTitle}
-          </div>
-          <div className="text-[10px] font-inter text-[#a0a0a0] mt-0.5 leading-snug">
-            {activeChoice.description}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 
-  const phoneBody = renderChoicesStack(true);
+  const phoneBody = (
+    <ScaledMockupCanvas logicalWidth={375}>{renderChatPane(true)}</ScaledMockupCanvas>
+  );
 
   const desktopBody = (
-    <div className="flex-1 min-h-0 grid grid-cols-[1.2fr_0.9fr] gap-px bg-white/[0.03]">
-      <div className="flex flex-col min-h-0 min-w-0 bg-[#131313]">{renderChoicesStack(false)}</div>
-
-      <aside
-        className={`flex flex-col justify-center gap-3 p-4 sm:p-5 bg-[#151515]/90 min-w-0 ${
-          device === 'both' ? 'md:pr-16 lg:pr-20' : ''
-        }`}
-      >
-        <span
-          className="self-start rounded-full px-3 py-1 text-[10px] font-inter font-semibold uppercase tracking-[0.08em] transition-colors duration-300"
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            color: activeTokens.accentHex,
-          }}
-        >
-          {activeChoice.previewTitle}
-        </span>
-
-        <h4 className="font-cinzel text-base font-bold text-[#e5e2e1] leading-snug">
-          {activeChoice.label}
-        </h4>
-
-        <p className="font-inter text-xs text-[#a0a0a0] leading-relaxed">
-          {activeChoice.description}
-        </p>
-
-        <ul className="space-y-1.5 mt-1">
-          {activeChoice.previewBullets.map((bullet) => (
-            <li
-              key={bullet}
-              className="flex items-center gap-2 text-[11.5px] font-inter text-[#e5e2e1]/90"
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: activeTokens.accentSoftHex }}
-              />
-              <span>{bullet}</span>
-            </li>
-          ))}
-        </ul>
-      </aside>
-    </div>
+    <ChatDesktopShell stepIndex={chatStep} theme={activeChoice.theme} dual={false}>
+      {renderChatPane(false)}
+    </ChatDesktopShell>
   );
 
   return (
     <div
       ref={timeline.containerRef}
       data-mockup-scene="path-chooser"
-      data-mockup-theme={activeChoice.id}
+      data-mockup-theme={activeChoice.theme}
       data-mockup-playing={timeline.isPlaying ? 'true' : 'false'}
       data-mockup-in-view={timeline.isInView ? 'true' : 'false'}
       data-mockup-reduced-motion={timeline.reducedMotion ? 'true' : 'false'}
@@ -275,7 +300,7 @@ export function PathChooserScene({
 
       <DeviceFrame
         variant={device}
-        theme={activeChoice.id}
+        theme={activeChoice.theme}
         phoneContent={phoneBody}
         desktopContent={desktopBody}
         srSummary={

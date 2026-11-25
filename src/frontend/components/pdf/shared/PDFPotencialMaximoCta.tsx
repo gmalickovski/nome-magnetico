@@ -152,6 +152,7 @@ export function PDFPotencialMaximoCtaPage({
                 <>
                   <Text style={styles.destaqueCta}>{copy.destaque}</Text>
                   <Text style={styles.apoio}>{copy.apoio}</Text>
+                  <Text style={styles.apoio}>{copy.ganho}</Text>
                   <Text style={styles.body}>{copy.texto}</Text>
                   <View style={styles.ctaRow}>
                     <View style={styles.ctaButtonWrap}>

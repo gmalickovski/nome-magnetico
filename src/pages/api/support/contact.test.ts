@@ -14,8 +14,18 @@ const captured: { fluxo: string; error: unknown }[] = [];
 let failEmail = false;
 let rateCount = 0;
 let profileNome: string | null = 'Ana Silva';
+let profileRole = 'admin';
+const actorId = '08ebe101-b62a-4783-83dd-1e195b8f5105';
+const ticketId = 'e9563cd5-ec4f-4b7d-8fc2-d8ab00d194c0';
+const savedTicket = {
+  id: ticketId, subject: 'Assunto fictício', ticket_number: 'TKT-0042',
+  status: 'open', created_at: '2026-11-22T12:00:00.000Z',
+};
+const queries: Array<{ table: string; fields?: string; filters: Record<string, unknown>; range?: number[] }> = [];
 
 function from(table: string) {
+  const query: typeof queries[number] = { table, filters: {} };
+  queries.push(query);
   let payload: unknown;
   const finish = () => {
     if (table === 'support_contact_rate_limits') {
@@ -31,11 +41,32 @@ function from(table: string) {
   };
 
   const builder = {
-    select() {
+    select(fields?: string) {
+      query.fields = fields;
       return builder;
     },
-    eq() {
+    eq(key: string, value: unknown) {
+      query.filters[key] = value;
       return builder;
+    },
+    order() {
+      return builder;
+    },
+    range(from: number, to: number) {
+      query.range = [from, to];
+      return Promise.resolve({ data: [savedTicket], error: null });
+    },
+    maybeSingle() {
+      const data = table === 'profiles'
+        ? { id: actorId, role: profileRole, nome: profileNome }
+        : query.filters.id === ticketId ? { ...savedTicket, contact_email: null } : null;
+      return Promise.resolve({ data, error: null });
+    },
+    limit() {
+      const data = ['segundo', 'primeiro'].map((content) => ({
+        id: content, content, is_admin: false, created_at: savedTicket.created_at,
+      }));
+      return Promise.resolve({ data, error: null });
     },
     gte() {
       return builder;
@@ -90,6 +121,8 @@ mock.module('../../../sentry/fluxo', {
 });
 
 const { POST } = await import('./contact.ts');
+const { GET } = await import('../ops/support.ts');
+const { listCustomerSupportTickets } = await import('../../../backend/support/read-tickets');
 
 const publicBody = {
   nome: 'Ana',
@@ -125,6 +158,55 @@ async function call(
 function inserts(table: string) {
   return dbCalls.filter((call) => call.table === table && call.op === 'insert');
 }
+
+describe('Histórico e inbox de suporte', () => {
+  beforeEach(() => {
+    profileRole = 'admin';
+    queries.length = 0;
+  });
+
+  function read(path = '', user = true, host = 'admin.localhost') {
+    const url = new URL(`https://${host}/api/ops/support${path}`);
+    return GET({
+      url,
+      request: new Request(url, { headers: { host } }),
+      locals: user ? { user: { id: actorId } } : {},
+    } as Parameters<typeof GET>[0]);
+  }
+
+  it('bloqueia host público, visitante e perfil comum antes de ler chamados', async () => {
+    assert.equal((await read('', true, 'www.nomemagnetico.com.br')).status, 403);
+    assert.equal((await read('', false)).status, 401);
+    profileRole = 'user';
+    assert.equal((await read(`?ticket=${ticketId}`)).status, 403);
+    assert.deepEqual(queries.map(({ table }) => table), ['profiles']);
+  });
+
+  it('valida a consulta e pagina os chamados com cache privado desativado', async () => {
+    assert.equal((await read('?ticket=invalid')).status, 400);
+    const response = await read('?page=2');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    assert.deepEqual(await response.json(), { tickets: [savedTicket], hasNext: false });
+    assert.deepEqual(queries.at(-1)?.range, [25, 50]);
+  });
+
+  it('lê as mensagens do chamado selecionado e retorna 404 para outro id', async () => {
+    const response = await read(`?ticket=${ticketId}`);
+    assert.equal(response.status, 200);
+    const { ticket } = await response.json();
+    assert.deepEqual(ticket.messages.map(({ content }: { content: string }) => content), ['primeiro', 'segundo']);
+    assert.equal(queries.at(-1)?.filters.ticket_id, ticketId);
+    assert.equal((await read(`?ticket=${actorId}`)).status, 404);
+    assert.equal(queries.filter(({ table }) => table === 'support_messages').length, 1);
+  });
+
+  it('filtra histórico pelo ID da sessão e omite e-mail e conteúdo', async () => {
+    assert.deepEqual(await listCustomerSupportTickets(actorId, 1), { tickets: [savedTicket], hasNext: false });
+    assert.deepEqual(queries[0].filters, { user_id: actorId });
+    assert.doesNotMatch(queries[0].fields ?? '', /email|content/);
+  });
+});
 
 describe('POST /api/support/contact', { concurrency: false }, () => {
   beforeEach(() => {

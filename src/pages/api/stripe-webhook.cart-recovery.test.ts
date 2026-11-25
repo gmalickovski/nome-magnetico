@@ -22,6 +22,8 @@ let notifyOk = true;
 let disputeSubscription: Record<string, unknown> | null = null;
 const chargebackDeliveries = new Map<string, { token: string; sent: boolean }>();
 let chargebackStoreFailure: 'claim' | 'mark' | null = null;
+const couponChanges: string[][] = [];
+let reservationDbUnavailable = false;
 
 const profile = {
   email: 'buyer@example.com',
@@ -159,6 +161,16 @@ mock.module('../../backend/payments/prices', {
   },
 });
 
+mock.module('../../backend/payments/coupon-reservations', {
+  namedExports: {
+    confirmCouponReservation: async (id: string, session: string) => {
+      if (reservationDbUnavailable) throw new Error('DB unavailable');
+      couponChanges.push(['confirm', id, session]);
+    },
+    releaseCouponReservation: async (id: string) => { couponChanges.push(['release', id]); },
+  },
+});
+
 mock.module('../../backend/auth/confirmEmail', {
   namedExports: {
     confirmEmailAfterPayment: async () => {},
@@ -206,6 +218,8 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     disputeSubscription = null;
     chargebackDeliveries.clear();
     chargebackStoreFailure = null;
+    couponChanges.length = 0;
+    reservationDbUnavailable = false;
     checkoutSessionUrl = 'https://checkout.stripe.com/pay/cs_recovery_new';
     hasActiveSubscription = false;
     claimResult = 'claimed';
@@ -315,6 +329,59 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     chargebackStoreFailure = null;
     assert.equal((await dispatchWebhook()).status, 503);
     assert.equal(notifyCalls.length, 1);
+  });
+
+  it('DEV-268: Pix pendente mantém a reserva e Pix confirmado registra o uso', async () => {
+    const session = {
+      id: 'cs_coupon',
+      payment_status: 'unpaid',
+      metadata: { user_id: 'user-1', product_type: 'nome_social', coupon_reservation_id: 'reservation-1' },
+    };
+    constructedEvent = { id: 'evt_pending', type: 'checkout.session.completed', data: { object: session } };
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.deepEqual(couponChanges, []);
+
+    constructedEvent = {
+      id: 'evt_paid',
+      type: 'checkout.session.async_payment_succeeded',
+      data: { object: { ...session, payment_status: 'paid' } },
+    };
+    reservationDbUnavailable = true;
+    assert.equal((await dispatchWebhook()).status, 503);
+    reservationDbUnavailable = false;
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.deepEqual(couponChanges, [['confirm', 'reservation-1', 'cs_coupon']]);
+  });
+
+  for (const eventType of ['checkout.session.expired', 'checkout.session.async_payment_failed']) {
+    it(`DEV-268: libera a reserva em ${eventType}`, async () => {
+      constructedEvent = {
+        id: 'evt_coupon_release',
+        type: eventType,
+        data: { object: { id: 'cs_coupon', metadata: { recovery: '1', coupon_reservation_id: 'reservation-1' } } },
+      };
+      assert.equal((await dispatchWebhook()).status, 200);
+      assert.deepEqual(couponChanges, [['release', 'reservation-1']]);
+    });
+  }
+
+  it('DEV-268: recuperação do carrinho usa o preço vigente sem repetir o cupom', async () => {
+    constructedEvent = {
+      id: 'evt_coupon_recovery',
+      type: 'checkout.session.expired',
+      data: { object: {
+        id: 'cs_coupon',
+        amount_total: 7700,
+        metadata: {
+          user_id: 'user-1', product_type: 'nome_social', final_cents: '7700',
+          discount_source: 'coupon', coupon_code: 'CUPOM-TESTE', coupon_reservation_id: 'reservation-1',
+        },
+      } },
+    };
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.deepEqual(couponChanges, [['release', 'reservation-1']]);
+    assert.equal(createCheckoutCalls[0]?.unitAmount, 9700);
+    assert.equal(createCheckoutCalls[0]?.couponCode, undefined);
   });
 
   it('checkout.session.expired emite só cart.abandoned (sem payment.failed)', async () => {

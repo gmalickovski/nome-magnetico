@@ -515,3 +515,75 @@ export function BrandingCardMockup({ className = '' }: MockupProps) {
     </div>
   );
 }
+
+/**
+ * MOCKUP 5: Palco, Shows & Redes (DEV-338)
+ * Holofote em roxo místico + dourado destacando lançamento artístico, @ nas redes e créditos formais.
+ */
+export function StageSpotlightMockup({ className = '' }: MockupProps) {
+  return (
+    <div className={`${HORIZONTAL_CARD_WIDTH} select-none ${className}`}>
+      <div className="w-full aspect-[1.66/1] nm-floating-card min-w-0 relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 lg:p-6">
+        <div
+          className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-44 rounded-full blur-3xl pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(190,165,255,0.22), rgba(242,202,80,0.08), transparent 70%)' }}
+          aria-hidden="true"
+        />
+
+        <div className="relative z-10 flex items-center justify-between gap-2 pb-2 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="inline-flex h-6 w-6 rounded-full bg-[#bea5ff]/15 border border-[#bea5ff]/40 items-center justify-center text-[10px] text-[#d7c6ff] shrink-0">
+              ✦
+            </span>
+            <div className="min-w-0">
+              <p className="font-cinzel text-[8px] sm:text-[9.5px] font-bold tracking-[0.18em] text-[#d7c6ff] uppercase truncate">
+                Palco · Lançamento & Redes
+              </p>
+              <p className="text-[7px] sm:text-[8px] text-gray-400 font-mono truncate">
+                @lunavale.oficial · Ao vivo
+              </p>
+            </div>
+          </div>
+          <span className="rounded-full bg-[#f2ca50]/12 border border-[#f2ca50]/35 px-2 py-0.5 text-[7px] sm:text-[8px] font-semibold text-[#f2ca50] whitespace-nowrap">
+            NOTA 94 · 0 BLOQUEIOS
+          </span>
+        </div>
+
+        <div className="relative z-10 my-auto py-1 grid grid-cols-12 gap-3 items-center">
+          <div className="col-span-4 aspect-square rounded-xl bg-gradient-to-br from-[#231d33] via-[#1a1820] to-[#131313] border border-[#bea5ff]/30 flex flex-col items-center justify-center p-2 text-center shadow-inner">
+            <span className="text-[7px] sm:text-[8px] uppercase tracking-[0.18em] text-[#d7c6ff]/80 font-mono">
+              SINGLE
+            </span>
+            <span className="font-cinzel text-xs sm:text-sm font-bold text-[#f2ca50] mt-0.5 leading-tight">
+              LV
+            </span>
+            <span className="text-[6.5px] sm:text-[7.5px] text-gray-400 mt-0.5">
+              Expressão 3
+            </span>
+          </div>
+
+          <div className="col-span-8 space-y-1 min-w-0">
+            <p className="text-[6.5px] sm:text-[7.5px] uppercase tracking-[0.16em] text-[#bea5ff]">
+              Nome Artístico em Cartaz
+            </p>
+            <h4 className="font-cinzel text-sm sm:text-base md:text-lg font-bold text-[#e5e2e1] tracking-wide leading-tight truncate">
+              Luna Vale
+            </h4>
+            <p className="text-[8.5px] sm:text-[10px] text-gray-400 leading-snug">
+              Capas de álbum, bios sociais, créditos de show e imprensa com assinatura unificada.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 rounded-lg bg-black/35 border border-[#bea5ff]/30 px-2.5 py-1 sm:py-1.5 shrink-0">
+          <CleanSignatureSvg name="Luna Vale" className="w-full h-6 sm:h-7 md:h-8" />
+        </div>
+
+        <div className="relative z-10 pt-1.5 flex items-center justify-between text-[6.5px] sm:text-[7.5px] text-gray-400 font-mono shrink-0">
+          <span className="truncate">Créditos & shows: Luna Vale</span>
+          <span className="text-[#d7c6ff] whitespace-nowrap">Civil preservado</span>
+        </div>
+      </div>
+    </div>
+  );
+}

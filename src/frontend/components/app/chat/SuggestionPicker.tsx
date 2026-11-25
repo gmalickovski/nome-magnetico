@@ -2,7 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { CandidateSuggestion } from './chat-types.js';
 import { Pill } from '../../ui/Pill.js';
 import { toggleSelection } from './selection.js';
-import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
+import {
+  ChatSuggestionCard,
+  ChatSuggestionSectionHeader,
+} from '../../shared/chat-ui/ChatSuggestionCard.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
 import { ChatBackButton } from './ChatBackButton.js';
 import { dividirPorSecao, temSecoesArtisticas } from './artistic-suggestions-client.js';
@@ -106,67 +109,25 @@ export function SuggestionPicker({
 
   // DEV-317: a ordem vem do motor (Principal, Maior nota e depois a ordem de tentativas). Não reordenar.
   const renderCard = (sug: CandidateSuggestion, index: number) => {
-      const isCurrentSelected = selectedId === sug.id;
-      const touchPulse = touchPulseId === sug.id;
-      const card = mapCandidateToHarmonySuggestion(sug);
-      return (
-        <div
-          key={sug.id}
-          id={`candidate-${sug.id}`}
-          role="button"
-          tabIndex={0}
-          aria-pressed={isCurrentSelected}
-          onClick={() => handleCardClick(sug.id)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleCardClick(sug.id);
-            }
-          }}
-          className={`relative min-w-0 w-full text-left cursor-pointer rounded-2xl transition-all duration-150 select-none bg-[#1C1C1C] border focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${
-            isCurrentSelected
-              ? 'border-2 border-[#D4AF37] shadow-[0_0_0_4px_rgba(212,175,55,0.15)] scale-100 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
-              : touchPulse
-                ? 'border border-[#D4AF37]/60 scale-[0.98]'
-                : 'border border-[#D4AF37]/20 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
-          }`}
-        >
-          {isCurrentSelected && (
-            <>
-              <span className="absolute inset-0 rounded-2xl bg-[#D4AF37]/[0.06] pointer-events-none" />
-            </>
-          )}
-          <div className={isCurrentSelected ? '[&_.nm-score-eyebrow]:text-[#D4AF37]' : ''}>
-            <HarmonySuggestionCard
-              c={card}
-              stagger={stagger}
-              delayIndex={index}
-              showBlockBadgeInTags
-              className={`!shadow-none !bg-transparent !border-0 ${
-                isCurrentSelected ? '[&_.nm-h3]:text-[#D4AF37]' : ''
-              }`}
-            />
-          </div>
-          {(sug.principal || sug.maiorNota) && sug.origem !== 'manual' && (
-            <p className="px-4 sm:px-5 pb-3 -mt-1 flex flex-wrap gap-1.5">
-              {sug.principal && (
-                <span className="inline-block rounded-full bg-gradient-to-r from-[#bea5ff]/25 to-[#d7c6ff]/15 text-[#d7c6ff] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
-                  ✦ Principal
-                </span>
-              )}
-              {sug.maiorNota && (
-                <span className="inline-block rounded-full bg-[#D4AF37]/15 text-[#D4AF37] text-[10px] font-semibold tracking-wide px-2.5 py-0.5">
-                  ★ Maior nota
-                </span>
-              )}
-            </p>
-          )}
-          {sug.origem === 'manual' && <p className="px-4 pb-3 text-sm text-[#d7c6ff]">Nome informado por você</p>}
-          {sug.destaque && (
-            <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>
-          )}
-        </div>
-      );
+    const isCurrentSelected = selectedId === sug.id;
+    const touchPulse = touchPulseId === sug.id;
+    const card = mapCandidateToHarmonySuggestion(sug);
+    return (
+      <ChatSuggestionCard
+        key={sug.id}
+        id={`candidate-${sug.id}`}
+        card={card}
+        selected={isCurrentSelected}
+        touchPulse={touchPulse}
+        principal={Boolean(sug.principal)}
+        maiorNota={Boolean(sug.maiorNota)}
+        origem={sug.origem === 'manual' ? 'manual' : 'gerado'}
+        destaque={sug.destaque}
+        stagger={stagger}
+        delayIndex={index}
+        onSelect={() => handleCardClick(sug.id)}
+      />
+    );
   };
 
   const cabecalho = (
@@ -233,12 +194,7 @@ export function SuggestionPicker({
                       inicio += itens.length;
                       return (
                         <div key={grupo} className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
-                          <div>
-                            <h4 className="font-inter text-[11px] font-medium uppercase tracking-[0.1em] text-[#d7c6ff]">
-                              {titulo} <span className="text-chat-muted">({itens.length})</span>
-                            </h4>
-                            <p className="text-xs text-chat-muted mt-0.5">{dica}</p>
-                          </div>
+                          <ChatSuggestionSectionHeader titulo={titulo} count={itens.length} dica={dica} />
                           {itens.map((sug, i) => renderCard(sug, de + i))}
                         </div>
                       );
@@ -254,12 +210,7 @@ export function SuggestionPicker({
                 const grupo = (titulo: string, dica: string, itens: typeof sistema, inicio: number) =>
                   itens.length > 0 && (
                     <div className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
-                      <div>
-                        <h4 className="font-inter text-[11px] font-medium uppercase tracking-[0.1em] text-[#d7c6ff]">
-                          {titulo} <span className="text-chat-muted">({itens.length})</span>
-                        </h4>
-                        <p className="text-xs text-chat-muted mt-0.5">{dica}</p>
-                      </div>
+                      <ChatSuggestionSectionHeader titulo={titulo} count={itens.length} dica={dica} />
                       {itens.map((sug, i) => renderCard(sug, inicio + i))}
                     </div>
                   );

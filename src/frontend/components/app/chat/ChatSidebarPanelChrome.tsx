@@ -1,4 +1,5 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { ChatPanelHeader } from '../../shared/chat-ui/ChatAnalysisPanel.js';
 
 export interface ChatSidebarPanelChromeProps {
   expanded: boolean;
@@ -21,22 +22,11 @@ export function ChatSidebarPanelChrome({
       <div className="shrink-0 relative w-full mb-4 sm:mb-5 px-1 min-h-[36px] flex items-center">
         {(() => {
           const titleNode = (
-            <div className="flex items-center gap-2.5 min-w-0 pr-10">
-              {hasSelection && (
-                <span
-                  data-nm-selection-dot="true"
-                  className="w-2.5 h-2.5 rounded-full bg-[#f2ca50] shadow-[0_0_10px_rgba(242,202,80,0.65)] shrink-0"
-                  aria-hidden="true"
-                />
-              )}
-              <h2
-                id="desktop-summary-title"
-                data-expanded={expanded ? 'true' : 'false'}
-                className="font-cinzel font-bold uppercase tracking-[0.1em] text-[#e5e2e1] text-left break-words whitespace-normal leading-snug min-w-0"
-              >
-                Painel de análise
-              </h2>
-            </div>
+            <ChatPanelHeader
+              titleId="desktop-summary-title"
+              expanded={expanded}
+              hasSelection={hasSelection}
+            />
           );
           return expanded ? (
             <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">{titleNode}</div>
