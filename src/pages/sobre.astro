@@ -2,166 +2,285 @@
 import LandingLayout from '../layouts/LandingLayout.astro';
 import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
+
+const SITE = 'https://www.nomemagnetico.com.br';
+const TITLE = 'Sobre Nós: Quem Criou o Nome Magnético';
+const DESCRIPTION =
+  'Conheça quem criou o Nome Magnético e por quê: uma plataforma de Numerologia Cabalística que calcula a nota do seu nome e sugere versões sem bloqueios.';
+
+// DEV-351: dados estruturados da página institucional (só o que a própria página afirma).
+const schemaAbout = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: `${TITLE} | Nome Magnético`,
+  url: `${SITE}/sobre`,
+  description: DESCRIPTION,
+  mainEntity: {
+    '@type': 'Organization',
+    name: 'Nome Magnético',
+    url: SITE,
+    parentOrganization: { '@type': 'Organization', name: 'Studio MLK' },
+    founder: [
+      { '@type': 'Person', name: 'Guilherme Malickovski Correa', jobTitle: 'Tecnologia e Operação' },
+      { '@type': 'Person', name: 'Claudia Delanni Vitoria', jobTitle: 'Numerologia e Comunicação' },
+    ],
+  },
+};
+
+const caminhos = [
+  {
+    href: '/nome-social',
+    titulo: 'Nome Social',
+    texto:
+      'Harmonize o nome que você já usa para assinar, se apresentar nas redes e trabalhar, sem mudar o nome do registro.',
+  },
+  {
+    href: '/nome-artistico',
+    titulo: 'Nome Artístico',
+    texto:
+      'Crie um nome de palco próximo do seu nome de nascimento ou totalmente novo, calculado com a sua data e a sua área.',
+  },
+  {
+    href: '/nome-bebe',
+    titulo: 'Nome do Bebê',
+    texto:
+      'Escolha o nome com os sobrenomes da família, mesmo sem a data exata do parto, com a Janela de Datas.',
+  },
+];
+
+const principios = [
+  {
+    titulo: 'Um cálculo que você pode conferir',
+    texto:
+      'Cada letra tem um valor fixo. O mesmo nome com a mesma data dá sempre a mesma nota, e o passo a passo está aberto em Como calculamos a nota.',
+  },
+  {
+    titulo: 'Só mostramos o que passou no filtro',
+    texto:
+      'Toda sugestão do sistema tem zero bloqueios no Triângulo da Vida. Nomes totalmente novos só aparecem com nota 80 ou mais.',
+  },
+  {
+    titulo: 'Leitura simbólica, sem promessa',
+    texto:
+      'A análise é uma ferramenta de autoconhecimento. Ela não é ciência e não substitui orientação médica, psicológica, jurídica ou financeira.',
+  },
+];
 ---
 
 <LandingLayout
-  title="Sobre o Nome Magnético — Quem Está Por Trás da Ferramenta"
-  description="Conheça a história e as pessoas por trás do Nome Magnético, plataforma de Numerologia Cabalística que calcula a nota do seu nome e sugere versões sem bloqueios para assinar, para o palco e para o bebê."
-  keywords="sobre nome magnético, criadores nome magnético, Guilherme Malickovski, Claudia Delanni Vitoria, numerologia cabalística ferramenta, quem criou nome magnético"
+  title={TITLE}
+  description={DESCRIPTION}
+  keywords="sobre nós nome magnético, quem criou o nome magnético, numerologia cabalística, nota do nome, Guilherme Malickovski, Claudia Delanni Vitoria, Studio MLK"
 >
+  <script type="application/ld+json" set:html={JSON.stringify(schemaAbout)} />
+
   <LandingHeader client:load />
 
-  <main class="min-h-screen pt-[72px] pb-16 md:pb-24" style="background-color: #131313;">
-    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
+  <main class="bg-[#111111]">
 
-      {/* ── HERO ── */}
-      <section class="max-w-3xl mx-auto pt-12 sm:pt-20 pb-8 sm:pb-16 flex flex-col items-center text-center">
-
-      {/* Badge de identificação */}
-      <div class="inline-flex items-center justify-center gap-2 mb-5">
-        <span class="bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">
-          ✦ Nome Magnético — A Ferramenta
-        </span>
+    {/* ── HERO ── */}
+    <section class="relative isolate overflow-hidden bg-[#111111] pt-[88px] sm:pt-28 lg:pt-32 pb-12 sm:pb-16">
+      <div class="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[560px] sm:h-[560px] lg:w-[760px] lg:h-[760px] bg-[#D4AF37]/15 rounded-full blur-[110px] sm:blur-[140px]"></div>
+        <div class="absolute bottom-0 right-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/10 rounded-full blur-[100px]"></div>
       </div>
 
-      <h1 class="font-cinzel text-3xl sm:text-4xl md:text-5xl font-bold text-[#e5e2e1] leading-tight mb-6">
-        Por Que o Nome<br class="hidden sm:block" /> Magnético Existe
-      </h1>
-
-      <p class="text-gray-400 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-        Existe uma pergunta que muda tudo quando você se permite fazê-la de verdade:<br class="hidden sm:block" />
-        <em class="text-[#D4AF37]"> "O meu nome está trabalhando a meu favor — ou contra mim?"</em>
-      </p>
-
-      {/* Divisor dourado */}
-      <div class="mt-10 h-px w-24 opacity-40 mx-auto"
-        style="background: linear-gradient(90deg, transparent, #D4AF37, transparent);">
+      <div class="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="max-w-3xl mx-auto text-center">
+          <p class="nm-eyebrow mb-3">Sobre Nós</p>
+          <h1 class="nm-h1">Por que criamos o Nome Magnético</h1>
+          <p class="nm-body-lg mt-5 mx-auto max-w-[58ch]">
+            Existe uma pergunta que muda tudo quando você se permite fazê-la de verdade: <em class="text-[#D4AF37] not-italic">"o meu nome está trabalhando a meu favor ou contra mim?"</em> Criamos um jeito de responder com cálculo, e não com palpite.
+          </p>
+          <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="/analise-gratuita"
+              data-cta-id="sobre_analise_gratuita"
+              data-cta-position="sobre_hero"
+              class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-8 py-3.5 text-base font-semibold text-[#1A1A1A] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-500"
+            >
+              Ver a nota do meu nome grátis
+            </a>
+            <a
+              href="/como-funciona-o-score"
+              data-cta-id="sobre_como_calculamos"
+              data-cta-position="sobre_hero"
+              class="inline-flex min-h-12 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 px-8 py-3.5 text-base font-medium text-[#e5e2e1] transition-colors duration-500"
+            >
+              Como calculamos a nota
+            </a>
+          </div>
+          <p class="nm-caption mt-4">Cálculo fixo · Leitura simbólica · Acesso imediato</p>
+        </div>
       </div>
     </section>
 
     {/* ── A HISTÓRIA ── */}
-    <section class="max-w-3xl mx-auto pb-16">
-      <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-3">A Origem</p>
-      <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-6">
-        A história por trás da ferramenta
-      </h2>
-      <div class="space-y-5 text-gray-400 text-sm sm:text-base leading-relaxed">
-        <p>
-          A numerologia cabalística já sinalizava, com rigor e precisão, algo que muitas pessoas
-          experimentam sem conseguir nomear: um bloqueio silencioso. Uma sensação de que por mais
-          esforço que se coloque, algo sempre parece travar — no trabalho, nas relações,
-          na sensação de estar no lugar certo.
-        </p>
-        <p>
-          A tradição cabalística revela que as letras do nome de nascimento formam padrões numéricos
-          que se repetem ao longo da vida. Quando esses padrões contêm sequências bloqueadas —
-          como o <strong class="text-[#e5e2e1]">bloqueio de 555 (Liberdade)</strong> ou o <strong class="text-[#e5e2e1]">bloqueio de 888 (Poder e Abundância)</strong>
-          — eles não são apenas curiosidades esotéricas. São registros energéticos que se manifestam
-          de forma objetiva, calculável, no Triângulo da Vida do nome.
-        </p>
-        <p>
-          O problema era que realizar essa análise exigia horas de cálculo manual, conhecimento
-          aprofundado da tabela hebraica e experiência para montar e interpretar o Triângulo da Vida
-          de cada nome. Era um diagnóstico acessível a poucos.
-        </p>
-        <p>
-          O Nome Magnético nasceu para mudar isso. A ideia era simples e ambiciosa ao mesmo tempo:
-          <strong class="text-[#e5e2e1]"> construir uma ferramenta que fizesse esse diagnóstico completo com a precisão de
-          um especialista — mas na velocidade e acessibilidade de um software</strong>. Um lugar onde
-          qualquer pessoa pudesse descobrir, com clareza e profundidade, o que o seu nome diz sobre
-          quem ela é e o que pode estar bloqueando sua trajetória.
-        </p>
+    <section class="py-12 sm:py-16 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="max-w-3xl mx-auto">
+          <p class="nm-eyebrow mb-3">A Origem</p>
+          <h2 class="nm-h2">Do bloqueio silencioso a um cálculo que qualquer pessoa pode fazer</h2>
+          <div class="mt-8 space-y-5 nm-body">
+            <p>
+              Muita gente conhece a sensação: por mais esforço que se coloque, algo parece travar, seja no trabalho, nas relações ou na sensação de estar no lugar certo. A Numerologia Cabalística oferece uma leitura simbólica desse sentimento a partir do nome.
+            </p>
+            <p>
+              Na tradição cabalística, as letras do nome de nascimento formam padrões numéricos. Quando esses padrões trazem sequências repetidas, como o <strong class="text-[#e5e2e1]">bloqueio de 555 (Liberdade)</strong> ou o <strong class="text-[#e5e2e1]">bloqueio de 888 (Poder e Abundância)</strong>, o método lê um ponto de atenção. E o melhor: ele é objetivo e calculável, no <strong class="text-[#e5e2e1]">Triângulo da Vida</strong> do nome.
+            </p>
+            <p>
+              O problema era que esse cálculo exigia horas de conta manual, domínio da tabela cabalística e experiência para montar e interpretar o triângulo de cada nome. Era um diagnóstico acessível a poucos.
+            </p>
+            <p>
+              O Nome Magnético nasceu para mudar isso: <strong class="text-[#e5e2e1]">um software que faz o cálculo com a precisão de quem domina o método, do mesmo jeito todas as vezes, e que entrega o resultado em linguagem simples.</strong> Em vez de uma conta que só especialistas sabiam fazer, qualquer pessoa vê a nota do seu nome, onde estão os bloqueios e até onde o nome pode chegar.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* ── COMO É HOJE ── */}
+    <section class="py-12 sm:py-16 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="text-center mx-auto max-w-3xl">
+          <p class="nm-eyebrow mb-3">O Nome Magnético Hoje</p>
+          <h2 class="nm-h2">Um único chat, três caminhos</h2>
+          <p class="nm-body mt-4 mx-auto max-w-[58ch]">
+            Você diz o que quer fazer e o chat faz as perguntas certas para o seu caso. Os nomes já chegam calculados, cada um com nota de 0 a 100, e você baixa um PDF do seu caminho na hora.
+          </p>
+        </div>
+        <div class="mt-10 grid md:grid-cols-3 gap-4 md:gap-5 max-w-5xl mx-auto">
+          {caminhos.map((c) => (
+            <a
+              href={c.href}
+              data-cta-id={`sobre_${c.href.slice(1).replace(/-/g, '_')}`}
+              data-cta-position="sobre_caminhos"
+              class="nm-floating-card-interactive p-6 text-left block"
+            >
+              <h3 class="nm-h4 mb-2">{c.titulo}</h3>
+              <p class="nm-body">{c.texto}</p>
+              <p class="mt-4 text-sm font-medium text-[#D4AF37]">Conhecer →</p>
+            </a>
+          ))}
+        </div>
       </div>
     </section>
 
     {/* ── MISSÃO ── */}
-    <section class="max-w-3xl mx-auto pb-16">
-      <div class="rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center"
-        style="background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(212,175,55,0.02) 100%); border: 1px solid rgba(212,175,55,0.15);">
-        <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-4">Nossa Missão</p>
-        <p class="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-[#e5e2e1] leading-relaxed max-w-xl mx-auto">
-          Tornar o diagnóstico numerológico cabalístico preciso, profundo e acessível para qualquer pessoa.
+    <section class="py-8 sm:py-12 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="nm-floating-card max-w-3xl mx-auto px-6 py-10 sm:px-10 text-center">
+          <p class="nm-eyebrow mb-4">Nossa Missão</p>
+          <p class="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-[#e5e2e1] leading-relaxed max-w-xl mx-auto">
+            Tornar o cálculo numerológico cabalístico preciso, claro e acessível: do nome que você usa hoje ao nome artístico e ao nome do seu bebê.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* ── PRINCÍPIOS ── */}
+    <section class="py-12 sm:py-16 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="text-center mx-auto max-w-3xl">
+          <p class="nm-eyebrow mb-3">Nossos Princípios</p>
+          <h2 class="nm-h2">Transparência sobre o que o método faz e o que não faz</h2>
+        </div>
+        <div class="mt-10 grid md:grid-cols-3 gap-4 md:gap-5 max-w-5xl mx-auto">
+          {principios.map((p) => (
+            <div class="nm-floating-card p-6 text-left">
+              <h3 class="nm-h4 mb-2">{p.titulo}</h3>
+              <p class="nm-body">{p.texto}</p>
+            </div>
+          ))}
+        </div>
+        <p class="nm-caption text-center mt-6">
+          Quer ver o método em detalhe? Consulte o <a href="/glossario" class="text-[#D4AF37] underline underline-offset-2">glossário</a> e as <a href="/perguntas-frequentes" class="text-[#D4AF37] underline underline-offset-2">perguntas frequentes</a>.
         </p>
       </div>
     </section>
 
-    {/* ── OS IDEALIZADORES ── */}
-    <section class="max-w-3xl mx-auto pb-16">
-      <p class="text-[#D4AF37] text-[10px] font-bold tracking-widest uppercase mb-3">Quem Está Por Trás</p>
-      <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-8">
-        Os idealizadores
-      </h2>
-
-      <div class="grid sm:grid-cols-2 gap-5">
-
-        {/* Card — Guilherme */}
-        <div class="rounded-2xl p-6 sm:p-7 flex flex-col gap-5"
-          style="background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.06);">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-cinzel font-bold text-[#131313] flex-shrink-0"
-              style="background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.06));">
-              G
-            </div>
-            <div>
-              <h3 class="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] leading-snug">
-                Guilherme Malickovski Correa
-              </h3>
-              <p class="text-gray-600 text-xs mt-0.5 tracking-wide uppercase">Tecnologia & Operação</p>
-            </div>
-          </div>
-          <p class="text-gray-500 text-sm leading-relaxed">
-            Responsável pela arquitetura do sistema, construção da plataforma e operação técnica do
-            Nome Magnético. Projetou a lógica que permite calcular o Triângulo da Vida
-            automaticamente, detectar bloqueios energéticos e gerar análises personalizadas com
-            rigor e escala.
-          </p>
+    {/* ── QUEM ESTÁ POR TRÁS ── */}
+    <section class="py-12 sm:py-16 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="text-center mx-auto max-w-3xl">
+          <p class="nm-eyebrow mb-3">Quem Está Por Trás</p>
+          <h2 class="nm-h2">Os idealizadores</h2>
         </div>
 
-        {/* Card — Claudia */}
-        <div class="rounded-2xl p-6 sm:p-7 flex flex-col gap-5"
-          style="background: linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(212,175,55,0.01) 100%); border: 1px solid rgba(212,175,55,0.10);">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-cinzel font-bold text-[#131313] flex-shrink-0"
-              style="background: linear-gradient(135deg, #f2ca50, #D4AF37);">
-              C
+        <div class="mt-10 grid sm:grid-cols-2 gap-4 md:gap-5 max-w-4xl mx-auto">
+          <div class="nm-floating-card p-6 sm:p-7 flex flex-col gap-5">
+            <div class="flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-cinzel font-bold text-[#131313] flex-shrink-0"
+                style="background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08));"
+                aria-hidden="true"
+              >G</div>
+              <div>
+                <h3 class="nm-h4">Guilherme Malickovski Correa</h3>
+                <p class="nm-caption mt-0.5 uppercase tracking-wide">Tecnologia & Operação</p>
+              </div>
             </div>
-            <div>
-              <h3 class="font-cinzel text-sm sm:text-base font-bold text-[#e5e2e1] leading-snug">
-                Claudia Delanni Vitoria
-              </h3>
-              <p class="text-[#D4AF37]/70 text-xs mt-0.5 tracking-wide uppercase">Numerologia & Comunicação</p>
-            </div>
+            <p class="nm-body">
+              Responsável pela arquitetura do sistema, pela plataforma e pela operação técnica do Nome Magnético. Projetou o motor que calcula o Triângulo da Vida, detecta os bloqueios, dá a nota de 0 a 100 a cada nome e conduz o chat de três caminhos e os PDFs.
+            </p>
           </div>
-          <p class="text-gray-500 text-sm leading-relaxed">
-            Responsável pelo conhecimento numerológico cabalístico que fundamenta todo o sistema —
-            os critérios de bloqueio, a metodologia do Triângulo da Vida, a interpretação das lições
-            kármicas e a linguagem das análises. Coordena também os textos, o marketing e toda a
-            divulgação do Nome Magnético.
-          </p>
+
+          <div class="nm-floating-card p-6 sm:p-7 flex flex-col gap-5">
+            <div class="flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-cinzel font-bold text-[#131313] flex-shrink-0"
+                style="background: linear-gradient(135deg, #f2ca50, #D4AF37);"
+                aria-hidden="true"
+              >C</div>
+              <div>
+                <h3 class="nm-h4">Claudia Delanni Vitoria</h3>
+                <p class="nm-caption mt-0.5 uppercase tracking-wide text-[#D4AF37]/80">Numerologia & Comunicação</p>
+              </div>
+            </div>
+            <p class="nm-body">
+              Responsável pelo conhecimento numerológico cabalístico que fundamenta o sistema: os critérios de bloqueio, a metodologia do Triângulo da Vida, a leitura das lições kármicas e a linguagem das análises. Coordena também os textos, o marketing e a divulgação do Nome Magnético.
+            </p>
+          </div>
         </div>
 
+        <p class="nm-caption text-center mt-6">
+          O Nome Magnético é um produto da Studio MLK.
+        </p>
       </div>
     </section>
 
-    {/* ── LINKS CALL TO ACTION ── */}
-    <section class="max-w-3xl mx-auto pb-12">
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a
-          href="/analise-gratuita"
-          class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#1A1A1A] text-sm font-bold px-6 py-3 rounded-full hover:bg-[#f2ca50] transition-colors duration-200"
-        >
-          Experimentar a análise gratuita <span>&gt;</span>
-        </a>
-        <a
-          href="/blog"
-          class="inline-flex items-center justify-center gap-2 border border-gray-700 text-gray-300 text-sm font-medium px-6 py-3 rounded-full hover:border-[#D4AF37] hover:text-[#D4AF37] transition-colors duration-200"
-        >
-          Ler os artigos do blog <span>&gt;</span>
-        </a>
+    {/* ── CTA FINAL ── */}
+    <section class="pb-16 sm:pb-24 animate-on-scroll">
+      <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="nm-floating-card max-w-3xl mx-auto px-6 py-10 sm:px-10 text-center">
+          <p class="nm-eyebrow mb-3">Comece Por Aqui</p>
+          <h2 class="nm-h3 mb-3">Descubra a nota do seu nome</h2>
+          <p class="nm-body mb-6 mx-auto max-w-[58ch]">
+            Digite o seu nome de nascimento e a sua data. Você vê a nota na hora e recebe um PDF gratuito com o Triângulo da Vida, os bloqueios e as suas lições kármicas. Sem cartão.
+          </p>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="/analise-gratuita"
+              data-cta-id="sobre_analise_gratuita"
+              data-cta-position="sobre_final"
+              class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-8 py-3.5 text-base font-semibold text-[#1A1A1A] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-500"
+            >
+              Ver a nota do meu nome grátis
+            </a>
+            <a
+              href="/blog"
+              data-cta-id="sobre_blog"
+              data-cta-position="sobre_final"
+              class="inline-flex min-h-12 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 px-8 py-3.5 text-base font-medium text-[#e5e2e1] transition-colors duration-500"
+            >
+              Ler os artigos do blog
+            </a>
+          </div>
+        </div>
       </div>
     </section>
 
-    </div>
   </main>
 
   <LandingFooter client:visible />
