@@ -165,6 +165,14 @@ export function isAllowedPublicOrigin(
   return allowed.has(candidate);
 }
 
+export function hasSamePublicRequestOrigin(request: Request, url: URL): boolean {
+  const origin = request.headers.get('origin');
+  // O adapter Node pode usar localhost em url.host. O nginx define o Host público da requisição.
+  const host = (request.headers.get('host') ?? url.host).toLowerCase();
+  return origin === `${url.protocol}//${host}` &&
+    (origin === url.origin || isAllowedPublicOrigin(request));
+}
+
 function safeOriginFromReferer(referer: string): string | null {
   try {
     return new URL(referer).origin;

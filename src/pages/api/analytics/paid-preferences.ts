@@ -2,11 +2,12 @@ import type { APIRoute } from 'astro';
 import { randomUUID } from 'node:crypto';
 import { supabase } from '../../../backend/db/supabase';
 import { paidAttributionEnabled, paidPreferencesSchema, paidVisitorFromRequest } from '../../../backend/analytics/paid-attribution';
+import { hasSamePublicRequestOrigin } from '../../../backend/public-free-analysis/guards';
 import { enforceApiRateLimits, getClientIp, hashClientIp } from '../../../backend/security/apiRateLimit';
 import { ATTRIBUTION_WINDOW_SECONDS, PAID_ATTRIBUTION_COOKIE } from '../../../shared/paid-attribution';
 
 export const POST: APIRoute = async ({ request, url, cookies, clientAddress }) => {
-  if (request.headers.get('origin') !== url.origin ||
+  if (!hasSamePublicRequestOrigin(request, url) ||
       !request.headers.get('content-type')?.startsWith('application/json')) {
     return new Response(null, { status: 403 });
   }

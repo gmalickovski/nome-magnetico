@@ -339,8 +339,10 @@ export function evaluateCoupon(
     return { valid: false, error: COUPON_INVALID, code: row.code };
   }
 
-  const originalCents = ctx.originalCents ?? 0;
-  const discountedCents = applyDiscountCents(originalCents, row.discount_type, row.discount_value);
+  const originalCents = ctx.originalCents ?? undefined;
+  const discountedCents = originalCents === undefined
+    ? undefined
+    : applyDiscountCents(originalCents, row.discount_type, row.discount_value);
   const discountPercent = row.discount_type === 'percent' ? row.discount_value : null;
   const discountAmountBrl = row.discount_type === 'fixed' ? row.discount_value / 100 : null;
 
