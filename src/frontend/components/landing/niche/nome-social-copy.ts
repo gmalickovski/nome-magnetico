@@ -102,7 +102,7 @@ export const NOME_SOCIAL_COPY: NichePageCopy = {
     {
       question: 'Posso usar a nova assinatura em contratos e documentos?', // [TEXTO]
       answer:
-        'Pode, desde que ela seja a mesma do seu documento oficial. Para contratos e documentos com validade legal, atualize a assinatura em um documento de identificação válido no Brasil, como RG (CIN) ou CNH, na próxima emissão. O nome continua igual, muda só a forma de assinar.', // [TEXTO]
+        'Na maioria dos contratos a lei não exige uma forma especial de assinatura. Mas, quando houver reconhecimento de firma ou cadastro com assinatura registrada, ela precisa ser parecida com a arquivada. Para a nova assinatura valer nesses casos, atualize-a na Carteira de Identidade Nacional (a troca costuma ser feita em uma 2ª via, com regras que variam por estado), na ficha de firma do cartório e onde você tiver cadastro. O nome continua igual, muda só a forma de assinar. Informação geral, não é orientação jurídica.', // [TEXTO]
     },
     {
       question: 'Quantos nomes posso avaliar?', // [TEXTO]

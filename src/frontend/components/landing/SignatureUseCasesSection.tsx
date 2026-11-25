@@ -31,11 +31,11 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '01 · Identidade e Registro',
     title: 'Sua Assinatura Muda, Seu Nome Civil Continua',
     description:
-      'A assinatura é a forma como você traça o seu nome. O nome civil continua o de nascimento, e você adota a nova grafia no dia a dia. Para contratos e documentos com validade legal, basta atualizar a assinatura num documento oficial, como RG (CIN) ou CNH, na próxima emissão.',
+      'A assinatura é a forma como você traça o seu nome. O nome civil continua o de nascimento, e você adota a nova grafia no dia a dia. Para contratos com firma reconhecida e cadastros com assinatura registrada, atualize-a na CIN, no cartório e onde tiver cadastro.',
     bulletPoints: [
       'Grafie a assinatura escolhida com legibilidade e conforto',
       'Seu nome de certidão permanece como está hoje',
-      'Para documentos, atualize a assinatura no RG (CIN) ou na CNH',
+      'Para documentos, atualize a assinatura na CIN e no cartório',
     ],
     MockupComponent: DocumentCinMockup,
   },

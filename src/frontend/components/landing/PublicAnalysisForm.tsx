@@ -2,6 +2,13 @@ import React, { useCallback, useState } from 'react';
 import { track } from '../../lib/analytics';
 import { marketingBodyFields } from '../../lib/utm';
 import { TurnstileWidget } from './TurnstileWidget';
+import {
+  buildChatCtaHref,
+  ehNotaAlta,
+  ganhoEmPontos,
+  notaBucket,
+  textoPontos,
+} from '../../../shared/free-analysis-bridge';
 
 const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const HONEYPOT_FIELD = 'website_url';
@@ -272,7 +279,12 @@ export function PublicAnalysisForm() {
       {showSuccessModal && (() => {
         const temGanho = preview != null && preview.potencialMax != null && preview.potencialMax > preview.score;
         const emailExibido = submittedEmail || 'seu e-mail';
-        const upsellHref = '/nome-social?from=modal_resultado_gratis';
+        const upsellHref = buildChatCtaHref('modal_resultado_gratis');
+        const ganho = preview ? ganhoEmPontos(preview.score, preview.potencialMax) : 0;
+        const notaAlta = preview != null && ehNotaAlta(preview.score);
+        const ctaProps = preview
+          ? { score: preview.score, potencial_max: preview.potencialMax, nivel: preview.nivelCodigo, nota_bucket: notaBucket(preview.score), ganho_pontos: ganho }
+          : {};
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm overflow-y-auto">
             <div className="w-full max-w-lg rounded-2xl border border-[#D4AF37]/30 bg-[#131313] p-6 sm:p-8 shadow-2xl shadow-black/70 relative animate-fade-in my-auto">
@@ -318,24 +330,33 @@ export function PublicAnalysisForm() {
 
                   <p className="mt-5 text-sm text-gray-300 text-center leading-relaxed">
                     {temGanho
-                      ? `Ajustes sutis na forma de assinar podem levar o seu nome até ${preview.potencialMax}, sem mudar os seus documentos.`
+                      ? notaAlta
+                        ? `Seu nome já está bem. Um ajuste fino na forma de assinar pode levá-lo até ${preview.potencialMax}, ${textoPontos(ganho)} a mais, sem mudar os seus documentos.`
+                        : `Ajustes sutis na forma de assinar podem levar o seu nome até ${preview.potencialMax}: ${textoPontos(ganho)} a mais, sem mudar os seus documentos.`
                       : 'O PDF completo mostra os detalhes da sua análise e como cada número aparece no seu nome.'}
                   </p>
+                  {temGanho && notaAlta && (
+                    <p className="mt-3 text-xs text-gray-400 text-center leading-relaxed">
+                      Também dá para{' '}
+                      <a href="/nome-artistico" className="text-[#D4AF37] underline" onClick={() => track('upsell_modal_click', { ...ctaProps, destino: 'nome_artistico' })}>
+                        criar um nome artístico
+                      </a>{' '}
+                      ou{' '}
+                      <a href="/nome-bebe" className="text-[#D4AF37] underline" onClick={() => track('upsell_modal_click', { ...ctaProps, destino: 'nome_bebe' })}>
+                        escolher o nome do bebê
+                      </a>
+                      .
+                    </p>
+                  )}
 
                   <div className="mt-6 space-y-3">
                     {temGanho && (
                       <a
                         href={upsellHref}
-                        onClick={() =>
-                          track('upsell_modal_click', {
-                            score: preview.score,
-                            potencial_max: preview.potencialMax,
-                            nivel: preview.nivelCodigo,
-                          })
-                        }
+                        onClick={() => track('upsell_modal_click', ctaProps)}
                         className="flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-5 py-4 text-center text-xs sm:text-sm font-bold uppercase tracking-wide text-[#131313] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-700"
                       >
-                        <span>Ver minhas opções de assinatura</span>
+                        <span>{notaAlta ? 'Ver o ajuste fino do meu nome' : `Ver como chegar a ${preview.potencialMax}`}</span>
                         <span aria-hidden="true">→</span>
                       </a>
                     )}

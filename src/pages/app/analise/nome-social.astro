@@ -1,7 +1,8 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
-import { createUserClient } from '../../../backend/db/supabase';
+import { createUserClient, getSupabaseAdmin } from '../../../backend/db/supabase';
+import { findLeadPrefill } from '../../../backend/public-free-analysis/lead-prefill';
 import NomeSocialChat from '../../../frontend/components/app/chat/NomeSocialChat';
 import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
 import { isFluxoMotivoAtivo } from '../../../backend/env/chat-flags';
@@ -26,8 +27,22 @@ function dbDateToInput(dbDate: string | null): string {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-const nomeInicial = profile?.birth_name ?? '';
-const dataInicial = dbDateToInput(profile?.birth_date ?? '');
+let nomeInicial = profile?.birth_name ?? '';
+let dataInicial = dbDateToInput(profile?.birth_date ?? '');
+
+// DEV-343: conta nova que já fez a análise grátis volta com nome e data preenchidos (só leitura,
+// e-mail confirmado, nada na URL). O chat mostra os valores para a pessoa confirmar.
+if (!nomeInicial.trim() || !dataInicial.trim()) {
+  try {
+    const lead = await findLeadPrefill(getSupabaseAdmin(), user.email, Boolean(user.email_confirmed_at));
+    if (lead) {
+      nomeInicial = lead.nome;
+      dataInicial = lead.data;
+    }
+  } catch (e) {
+    console.warn('[nome-social] pré-preenchimento pelo lead:', e);
+  }
+}
 const generoInicial = profile?.gender ?? '';
 const caminhoInicial = Astro.url.searchParams.get('caminho') ?? undefined;
 
