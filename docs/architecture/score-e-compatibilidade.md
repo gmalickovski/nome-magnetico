@@ -101,3 +101,9 @@ Nomes do usuário que não passam em R1/R2 ficam em `comparacao` e não viram su
 ### 7.1 Perfil da entrevista (DEV-302)
 
 Respostas de estilo ("como você quer ser percebido"), foco e subfoco viram números preferidos de Expressão, Motivação e Impressão (`src/backend/numerology/profile-affinity.ts`). A aderência só **desempata** entre sugestões que já passaram em R1/R2, dentro da mesma faixa de 5 pontos de nota (faixas alinhadas em 70, 85, 90...), depois das preferências explícitas de estilo e sobrenome. Não altera a nota, não cria candidatos e não esconde a sugestão de maior nota (R3a). O texto "por que este nome para você" cita só afinidades realmente atendidas.
+
+## 8. Fonte da tabela de letras e acentos
+
+A tabela de conversão de `src/backend/numerology/core.ts` (letras 1 a 8, X e Ç = 6, agudo +2, til +3, circunflexo +7, anel +7, grave x2, trema x2, apóstrofo +2 na letra anterior) coincide com a "Tabela de Números Cabalísticos" do Curso de Numerologia Cabalística (cursodenumerologiacabalistica.com). Conferido em 25/11/2026 contra `tabela-de-numeros-cabalisticos.pdf` (projeto vibraweb, `Docs Numerologia/`). Os PDFs do curso em `docs/PDF/` (fora do git) tratam de triângulos, arcanos, débitos, lições e tendências; não trazem a tabela de letras.
+
+A página pública `/como-funciona-o-score` não nomeia o curso; decisão de citar fica com o responsável pelo conteúdo.
