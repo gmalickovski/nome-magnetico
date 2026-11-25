@@ -371,7 +371,7 @@ export function PublicAnalysisForm() {
                       onClick={() => track('upsell_modal_click')}
                       className="block w-full text-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] font-bold py-3.5 transition-colors duration-700 tracking-wide uppercase text-xs"
                     >
-                      Conhecer o Nome Social →
+                      Ver meu nome sem bloqueios →
                     </a>
                     <button
                       type="button"

@@ -12,9 +12,9 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
 ---
 
 <LandingLayout
-  title="Análise Gratuita do Seu Nome de Nascimento | Nome Magnético"
-  description="Veja grátis a nota do seu nome de nascimento e até onde ela pode chegar. PDF com Triângulo da Vida, bloqueios, lições kármicas e arquétipo, enviado por e-mail."
-  keywords="análise gratuita nome, nota do nome, numerologia gratuita, triângulo da vida, lições kármicas, numerologia cabalística"
+  title="Análise Gratuita do Nome: Veja a Sua Nota"
+  description="Descubra grátis a nota do seu nome pela Numerologia Cabalística, de 0 a 100, e receba um PDF com Triângulo da Vida, bloqueios e lições kármicas. Sem cartão."
+  keywords="análise gratuita do nome, nota do nome, numerologia grátis, numerologia cabalística grátis, triângulo da vida, bloqueios no nome, lições kármicas"
 >
   <LandingHeader client:load />
 
@@ -31,14 +31,14 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
       <div class="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
         <div class="max-w-2xl mx-auto text-center">
           <p class="nm-eyebrow mb-3">Análise gratuita</p>
-          <h1 class="nm-h1">Conheça a nota do seu nome</h1>
+          <h1 class="nm-h1">Descubra grátis a nota do seu nome</h1>
           <p class="nm-body-lg mt-5 mx-auto max-w-[56ch]">
-            Digite seu nome de nascimento e sua data. Você vê a nota de hoje, até onde ela pode chegar e recebe um PDF com a leitura do Triângulo da Vida, bloqueios, lições kármicas e um arquétipo simbólico.
+            Digite o seu nome completo de nascimento e a sua data. Na hora, você vê a nota do seu nome de 0 a 100 e até onde ela pode chegar. Depois, recebe por e-mail um PDF gratuito com o Triângulo da Vida, os bloqueios encontrados, as suas lições kármicas e um arquétipo simbólico.
           </p>
           <ul class="mt-6 flex flex-col sm:flex-row sm:flex-wrap items-center sm:justify-center gap-x-6 gap-y-2">
             {[
               'Resultado na hora, sem cartão',
-              'PDF enviado para o seu e-mail',
+              'PDF gratuito no seu e-mail',
               'Uma análise gratuita por pessoa',
             ].map(item => (
               <li class="flex items-center gap-2 nm-caption">
@@ -78,15 +78,15 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
       <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
         <div class="text-center mx-auto max-w-3xl">
           <p class="nm-eyebrow mb-3">No seu PDF</p>
-          <h2 class="nm-h2">O que a análise gratuita mostra</h2>
+          <h2 class="nm-h2">O que a sua análise gratuita mostra</h2>
         </div>
         <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-5xl mx-auto">
           {[
-            { icon: '◇', title: 'Nota de 0 a 100', desc: 'A nota do seu nome de nascimento hoje, com o nível em que ela se encontra e até onde ela pode chegar.' },
-            { icon: '△', title: 'Triângulo da Vida', desc: 'A leitura principal: cada letra vira um número e mostra onde o seu nome flui e onde aparecem sequências repetidas.' },
-            { icon: '⚠', title: 'Bloqueios', desc: 'Sequências de três ou mais números iguais, lidas pelo método como padrões simbólicos, com o tema de cada código.' },
+            { icon: '◇', title: 'Nota de 0 a 100', desc: 'A nota do seu nome de nascimento hoje, a faixa em que ela está e até onde ela pode chegar com uma assinatura harmonizada.' },
+            { icon: '△', title: 'Triângulo da Vida', desc: 'A leitura principal da Numerologia Cabalística: cada letra vira um número e mostra onde o seu nome flui e onde aparecem sequências repetidas.' },
+            { icon: '⚠', title: 'Bloqueios', desc: 'Sequências de três ou mais números iguais, lidas pelo método como padrões simbólicos, com o tema de cada código explicado em linguagem simples.' },
             { icon: '☯', title: 'Lições kármicas', desc: 'Números ausentes no nome, lidos como qualidades a desenvolver, e tendências ocultas, quando um número se repete em excesso.' },
-            { icon: '⬠', title: '5 números principais', desc: 'Expressão, Destino, Motivação, Impressão e Missão.' },
+            { icon: '⬠', title: '5 números principais', desc: 'Expressão, Destino, Motivação, Impressão e Missão: o retrato numerológico do seu nome e da sua data.' },
             { icon: '✦', title: 'Arquétipo simbólico', desc: 'Uma leitura para explorar qualidades e pontos de atenção associados à sua análise.' },
           ].map(item => (
             <div class="nm-floating-card-interactive p-6 text-left">
@@ -104,9 +104,9 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
       <div class="max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
         <div class="nm-floating-card max-w-3xl mx-auto px-6 py-10 sm:px-10 text-center">
           <p class="nm-eyebrow mb-3">E depois da nota?</p>
-          <h2 class="nm-h3 mb-3">Explore novas formas de assinatura</h2>
+          <h2 class="nm-h3 mb-3">Veja o seu nome sem bloqueios, com a nota lá em cima</h2>
           <p class="nm-body mb-6 mx-auto max-w-[58ch]">
-            A análise completa compara o seu nome com variações de assinatura sem bloqueios, cada uma com nota de 0 a 100, e traz as leituras complementares dos triângulos Pessoal, Social e Destino.
+            A análise completa abre um chat que conduz você até as versões do seu nome sem bloqueios: as 3 mais bem pontuadas para o seu perfil, mais 6 quando quiser e espaço para testar até 5 ideias suas. Inclui os triângulos Pessoal, Social e Destino e o PDF completo. Acesso imediato, pagamento único por 30 dias e garantia de 7 dias.
           </p>
           <a
             href="/nome-social"
@@ -114,7 +114,7 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
             data-cta-position="analise_gratuita_final"
             class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-8 py-3.5 text-base font-semibold text-[#1A1A1A] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-500"
           >
-            Conhecer o Nome Social
+            Ver Meu Nome Sem Bloqueios
           </a>
         </div>
       </div>
