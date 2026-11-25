@@ -13,6 +13,7 @@ import {
   renewalUtmCampaign,
 } from '../../backend/payments/renewal';
 import { getGaClientIdFromRequest } from '../../backend/analytics/ga4';
+import { createPaidCheckoutReference, paidAttributionEnabled, readPaidCampaignProperties } from '../../backend/analytics/paid-attribution';
 import {
   captureServerEvent,
   readPostHogDistinctIdFromCookie,
@@ -324,6 +325,7 @@ export async function createCheckoutResponse(args: {
       distinctId,
       event: 'checkout_started',
       properties: {
+        ...await readPaidCampaignProperties(request),
         product_type,
         base_cents: effective.base_cents,
         final_cents: effective.final_cents,
@@ -368,7 +370,8 @@ export async function createCheckoutResponse(args: {
         ? couponValidation?.code
         : !isRenewal && !couponValidation?.accessCodeId ? couponCode?.trim() : undefined,
       couponReservationId,
-      gaClientId: getGaClientIdFromRequest(request),
+      gaClientId: paidAttributionEnabled() ? undefined : getGaClientIdFromRequest(request),
+      paidAttributionRef: isRenewal ? undefined : await createPaidCheckoutReference(request),
       phDistinctId,
       purchaseKind: isRenewal ? 'renewal' : 'new',
       utmCampaign: resolvedUtmCampaign,
