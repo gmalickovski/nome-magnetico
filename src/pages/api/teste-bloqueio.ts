@@ -114,9 +114,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     }
 
     const paidCampaign = await readPaidCampaignProperties(request);
-    if (paidCampaign.paid_campaign_id) {
+    if (paidCampaign.paid_campaign_id && posthog_distinct_id) {
       void captureServerEvent({
-        distinctId,
+        distinctId: posthog_distinct_id,
         event: 'paid_analysis_completed',
         uuid: posthogEventUuid('paid_analysis_completed', String(lead.id)),
         properties: { ...paidCampaign, product_type: 'nome_social' },
