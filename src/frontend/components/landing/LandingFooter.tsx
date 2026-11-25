@@ -31,6 +31,7 @@ export function LandingFooter() {
             <p className="font-inter text-sm font-semibold text-[#E5E2E1] mb-4">Ferramentas</p>
             <ul className="space-y-2">
               <li><a href="/analise-gratuita" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Análise Gratuita</a></li>
+              <li><a href="/como-funciona-o-score" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Como calculamos a nota</a></li>
               <li><a href="/perguntas-frequentes" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Perguntas Frequentes</a></li>
               <li><a href="/blog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Blog</a></li>
               <li><a href="/glossario" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Glossário</a></li>
@@ -41,9 +42,9 @@ export function LandingFooter() {
 
           {/* Legal */}
           <div>
-            <p className="font-inter text-sm font-semibold text-[#E5E2E1] mb-4">Legal</p>
+            <p className="font-inter text-sm font-semibold text-[#E5E2E1] mb-4">Institucional</p>
             <ul className="space-y-2">
-              <li><a href="/como-funciona-o-score" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Como calculamos a nota</a></li>
+              <li><a href="/sobre" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Sobre Nós</a></li>
               <li><a href="/privacidade" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Política de Privacidade</a></li>
               <li><a href="/termos" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Termos de Uso</a></li>
               <li><a href="/reembolso" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Política de Reembolso</a></li>
