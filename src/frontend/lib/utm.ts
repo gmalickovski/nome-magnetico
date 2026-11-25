@@ -7,6 +7,23 @@ import { readLocalStorage, writeLocalStorage } from '../../utils/browser-storage
 
 export const UTM_FIRST_TOUCH_KEY = 'nm-utm-first-touch';
 
+/** Mantém a query do destino e transporta UTMs nas navegações de autenticação. */
+export function withAuthUtm(target: string, currentUrl: string): string {
+  try {
+    const current = new URL(currentUrl);
+    const next = new URL(target, current.origin);
+    if (next.origin !== current.origin || next.pathname.startsWith('//')) return '/app';
+
+    for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
+      const value = sanitizeUtm(current.searchParams.get(key));
+      if (value && !next.searchParams.has(key)) next.searchParams.set(key, value);
+    }
+    return next.pathname + next.search + next.hash;
+  } catch {
+    return '/app';
+  }
+}
+
 export interface FirstTouchUtm {
   utm_source: string | null;
   utm_medium: string | null;

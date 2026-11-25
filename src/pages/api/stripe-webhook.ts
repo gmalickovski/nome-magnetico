@@ -128,6 +128,8 @@ export const POST: APIRoute = async ({ request }) => {
       ga_client_id?: string;
       paid_attribution_ref?: string;
       ph_distinct_id?: string;
+      ph_session_id?: string;
+      ph_analytics_consent?: string;
       purchase_kind?: string;
       chosen_signature?: string;
       analysis_id?: string;
@@ -156,11 +158,10 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       const distinctId = resolveCheckoutDistinctId({
         phDistinctId: session.metadata?.ph_distinct_id,
-        userId: session.metadata?.user_id,
+        analyticsConsent: session.metadata?.ph_analytics_consent === '1',
       });
 
       if (!distinctId) {
-        console.warn('[stripe-webhook] PostHog sem distinct_id:', eventName, session.id);
         return;
       }
 
@@ -170,10 +171,11 @@ export const POST: APIRoute = async ({ request }) => {
       const cents = typeof session.amount_total === 'number' ? session.amount_total : 0;
       const metaBase = session.metadata?.base_cents ? Number(session.metadata.base_cents) : null;
       const metaFinal = session.metadata?.final_cents ? Number(session.metadata.final_cents) : null;
-      const properties: Record<string, string | number> = {
+      const properties: Record<string, string | number | boolean> = {
         value: Number((cents / 100).toFixed(2)),
         currency: (session.currency || 'brl').toUpperCase(),
         session_id: session.id,
+        stripe_session_id: session.id,
         base_cents: metaBase ?? cents,
         final_cents: metaFinal ?? cents,
         promo_id: session.metadata?.promo_id ?? '',
@@ -185,6 +187,10 @@ export const POST: APIRoute = async ({ request }) => {
         properties.product_type = product;
       }
       if (plan) properties.plan = plan;
+      if (eventName === 'payment_confirmed') {
+        properties.deprecated = true;
+        properties.replaced_by = 'purchase';
+      }
       if (eventName === 'purchase') {
         properties.purchase_kind = parsePurchaseKind(session.metadata?.purchase_kind);
         const parsedChatMeta = parseChatCheckoutMetadata(session.metadata);
@@ -197,6 +203,7 @@ export const POST: APIRoute = async ({ request }) => {
         distinctId,
         event: eventName,
         properties,
+        sessionId: session.metadata?.ph_session_id,
         uuid: posthogEventUuid(eventName, session.id),
       });
     } catch (err) {

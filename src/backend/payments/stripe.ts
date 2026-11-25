@@ -54,6 +54,7 @@ export interface CreateCheckoutParams {
   paidAttributionRef?: string;
   /** distinct_id do PostHog no browser, para o purchase server-side. */
   phDistinctId?: string;
+  phSessionId?: string;
   /** 'renewal' estende o acesso; omissão grava 'new'. product_type não muda. */
   purchaseKind?: 'new' | 'renewal';
   /** Campanha Brevo da etapa (nmrenovd7, nmrenovdp7, ...) ou origem do chat. */
@@ -109,6 +110,10 @@ export async function createCheckoutSession(
     ph_distinct_id: params.phDistinctId ?? '',
     purchase_kind: params.purchaseKind === 'renewal' ? 'renewal' : 'new',
   };
+  if (params.phDistinctId) {
+    metadata.ph_analytics_consent = '1';
+    if (params.phSessionId) metadata.ph_session_id = params.phSessionId;
+  }
   if (params.couponReservationId) {
     metadata.coupon_reservation_id = params.couponReservationId;
   }

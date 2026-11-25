@@ -4,6 +4,7 @@ import { Input } from '../ui/Input';
 import { supabaseBrowser } from '../../lib/supabase-browser';
 import { readLocalStorage, removeLocalStorage } from '../../../utils/browser-storage';
 import { identifyUser } from '../../lib/analytics';
+import { withAuthUtm } from '../../lib/utm';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -14,9 +15,11 @@ export function LoginForm() {
   const [infoMsg, setInfoMsg] = useState('');
   const [redirectParam, setRedirectParam] = useState('');
   const [produtoParam, setProdutoParam] = useState('');
+  const [authPageUrl, setAuthPageUrl] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    setAuthPageUrl(window.location.href);
     const emailParam = params.get('email');
     if (emailParam) setEmail(emailParam);
     setRedirectParam(params.get('redirect') ?? '');
@@ -95,7 +98,7 @@ export function LoginForm() {
       }
 
       if (signInData.user?.id) {
-        identifyUser(signInData.user.id, signInData.user.email ?? email);
+        identifyUser(signInData.user.id);
       }
 
       // Setar cookies para que o middleware SSR encontre o token
@@ -115,9 +118,10 @@ export function LoginForm() {
 
       if (produto) {
         removeLocalStorage('nome_magnetico_pending_product');
-        window.location.href = `/comprar?produto=${produto}`;
+        const target = '/comprar?' + new URLSearchParams({ produto }).toString();
+        window.location.href = withAuthUtm(target, window.location.href);
       } else {
-        window.location.href = searchParams.get('redirect') ?? '/app';
+        window.location.href = withAuthUtm(searchParams.get('redirect') || '/app', window.location.href);
       }
     } catch (unexpectedErr) {
       console.error('[LoginForm] erro inesperado no handleSubmit:', unexpectedErr);
@@ -130,7 +134,8 @@ export function LoginForm() {
   if (email) signupParams.set('email', email);
   if (redirectParam) signupParams.set('redirect', redirectParam);
   if (produtoParam) signupParams.set('produto', produtoParam);
-  const signupUrl = `/auth/cadastro${signupParams.toString() ? `?${signupParams.toString()}` : ''}`;
+  const signupPath = `/auth/cadastro${signupParams.toString() ? `?${signupParams.toString()}` : ''}`;
+  const signupUrl = authPageUrl ? withAuthUtm(signupPath, authPageUrl) : signupPath;
 
   return (
     <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#111111]/85 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.48)] backdrop-blur-xl">

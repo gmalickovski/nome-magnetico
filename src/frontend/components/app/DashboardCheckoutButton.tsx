@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ActivePromotion, PriceInfo } from '../../../backend/payments/prices';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
+import { track, trackBeginCheckout } from '../../lib/analytics';
 import {
   checkoutFailureMessage,
   isCheckoutEmailNotConfirmed,
@@ -44,7 +44,6 @@ export function DashboardCheckoutButton({
       codigo_cupom: couponCode,
       origem: 'dashboard',
     });
-    captureBeginCheckout('card', priceInfo.cents / 100);
     trackBeginCheckout({
       value: Number((priceInfo.cents / 100).toFixed(2)),
       currency: 'BRL',
@@ -97,7 +96,6 @@ export function DashboardCheckoutButton({
         data-cta-id={ctaId}
         data-cta-position={ctaPosition}
         onClick={() => {
-          track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
           track('checkout_start', {
             produto: product,
             preco: priceInfo.cents / 100,

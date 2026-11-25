@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analytics';
+import { track, trackBeginCheckout } from '../../lib/analytics';
+import { withAuthUtm } from '../../lib/utm';
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from '../purchase/CheckoutModal';
@@ -99,7 +100,6 @@ export function PricingSection({
         promocao: promotion?.name ?? null,
         origem: 'pricing_section_auto_open',
       });
-      track('begin_checkout', { produto: product, valor: priceInfo.cents / 100 });
       setCheckoutProduct(product);
       params.delete('checkout');
       window.history.replaceState(
@@ -138,11 +138,10 @@ export function PricingSection({
       authenticated: isLoggedIn,
     });
     if (isLoggedIn) {
-      track('begin_checkout', { produto: planId, valor: priceInfo.cents / 100 });
       setCheckoutProduct(planId);
     } else {
       const returnUrl = withLinkedCoupon(`${window.location.pathname}?checkout=${planId}`, new URLSearchParams(window.location.search));
-      window.location.href = `/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`;
+      window.location.href = withAuthUtm(`/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`, window.location.href);
     }
   }
 
@@ -156,7 +155,6 @@ export function PricingSection({
         codigo_cupom: couponCode,
         origem: 'pricing_section',
       });
-      captureBeginCheckout('card', (resolvedPrices[type] ?? PRICE_UNAVAILABLE).cents / 100);
       trackBeginCheckout({
         value: Number((info.cents / 100).toFixed(2)),
         currency: 'BRL',
