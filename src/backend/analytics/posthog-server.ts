@@ -172,22 +172,25 @@ export function sanitizePostHogSessionId(value: unknown): string | undefined {
  * Envia um evento e espera a fila esvaziar. Em função curta, faz shutdown.
  * Nunca lança: falha de analytics não pode derrubar o webhook.
  */
-export async function captureServerEvent(params: {
+type ServerEvent = {
   distinctId: string;
   event: string;
   properties?: Record<string, string | number | boolean | null>;
   uuid?: string;
   sessionId?: string;
-}): Promise<void> {
+  timestamp?: Date;
+};
+
+export async function deliverServerEvent(params: ServerEvent): Promise<boolean> {
   const distinctId = sanitizeDistinctId(params.distinctId);
-  if (!distinctId) return;
+  if (!distinctId) return false;
 
   const eventUuid = params.uuid && /^[0-9a-f-]{36}$/i.test(params.uuid) ? params.uuid : undefined;
-  if (eventUuid && deliveredEventIds.has(eventUuid)) return;
+  if (eventUuid && deliveredEventIds.has(eventUuid)) return true;
 
   try {
     const ph = getPostHogServer();
-    if (!ph) return;
+    if (!ph) return false;
 
     const properties: Record<string, string | number | boolean | null> = {
       ...(params.properties ?? {}),
@@ -201,6 +204,7 @@ export async function captureServerEvent(params: {
       event: params.event,
       properties,
       uuid: eventUuid,
+      ...(params.timestamp ? { timestamp: params.timestamp } : {}),
     });
 
     if (isShortLivedRuntime()) {
@@ -210,8 +214,14 @@ export async function captureServerEvent(params: {
     }
 
     if (eventUuid) rememberDelivered(eventUuid);
-  } catch (err) {
-    console.error('[posthog-server] Falha ao capturar:', params.event, err);
+    return true;
+  } catch {
+    console.error('[posthog-server] Falha ao capturar:', params.event);
     await shutdownPostHogServer();
+    return false;
   }
+}
+
+export async function captureServerEvent(params: ServerEvent): Promise<void> {
+  await deliverServerEvent(params);
 }
