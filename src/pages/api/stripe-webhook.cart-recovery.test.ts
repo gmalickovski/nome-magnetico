@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
 import { failedPaymentDeduplicator } from '../../backend/payments/cart-recovery';
+import { clearCache } from '../../backend/cache/memo';
 import { resolveCheckoutDistinctId } from '../../backend/analytics/posthog-server';
 
 type StripeEvent = {
   id: string;
   type: string;
+  livemode?: boolean;
   created?: number;
   data: { object: Record<string, unknown> };
 };
@@ -18,6 +20,11 @@ let checkoutSessionUrl: string | null = 'https://checkout.stripe.com/pay/cs_reco
 let hasActiveSubscription = false;
 let claimResult: 'claimed' | 'duplicate' | 'error' = 'claimed';
 const releaseCalls: Array<{ userId: string; productType: string }> = [];
+const fixtureUserId = 'abf00000-0000-4000-8000-000000000001';
+let notifyOk = true;
+let disputeSubscription: Record<string, unknown> | null = null;
+const chargebackDeliveries = new Map<string, { token: string; sent: boolean }>();
+let chargebackStoreFailure: 'claim' | 'mark' | null = null;
 const couponChanges: string[][] = [];
 let reservationDbUnavailable = false;
 let conversionDbUnavailable = false;
@@ -33,6 +40,10 @@ const profile = {
 mock.module('../../backend/payments/stripe', {
   namedExports: {
     constructWebhookEvent: () => constructedEvent,
+    stripe: {
+      charges: { retrieve: async () => ({ metadata: { product_type: 'nome_bebe', user_id: fixtureUserId } }) },
+      paymentIntents: { retrieve: async () => ({ metadata: { product_type: 'nome_empresa', user_id: fixtureUserId } }) },
+    },
     createCheckoutSession: async (params: Record<string, unknown>) => {
       createCheckoutCalls.push(params);
       return { url: checkoutSessionUrl, id: 'cs_new_recovery' };
@@ -60,7 +71,7 @@ mock.module('../../backend/db/subscriptions', {
       return { subscription: {}, created };
     },
     refundSubscription: async () => {},
-    getSubscriptionByPaymentIntent: async () => null,
+    getSubscriptionByPaymentIntent: async () => disputeSubscription,
   },
 });
 
@@ -69,6 +80,27 @@ mock.module('../../backend/db/cart-recovery-sends', {
     claimCartRecoverySend: async () => claimResult,
     releaseCartRecoverySend: async (userId: string, productType: string) => {
       releaseCalls.push({ userId, productType });
+    },
+  },
+});
+
+mock.module('../../backend/db/stripe-chargeback-deliveries', {
+  namedExports: {
+    claimChargebackDelivery: async (id: string, token: string) => {
+      if (chargebackStoreFailure === 'claim') throw new Error('claim unavailable');
+      const delivery = chargebackDeliveries.get(id);
+      if (delivery) return delivery.sent ? 'sent' : 'busy';
+      chargebackDeliveries.set(id, { token, sent: false });
+      return 'claimed';
+    },
+    markChargebackDelivered: async (id: string, token: string) => {
+      assert.equal(chargebackDeliveries.get(id)?.token, token);
+      if (chargebackStoreFailure === 'mark') throw new Error('mark unavailable');
+      chargebackDeliveries.set(id, { token, sent: true });
+    },
+    releaseChargebackDelivery: async (id: string, token: string) => {
+      assert.equal(chargebackDeliveries.get(id)?.token, token);
+      chargebackDeliveries.delete(id);
     },
   },
 });
@@ -88,7 +120,7 @@ mock.module('../../backend/notifications/notify', {
   namedExports: {
     notify: async (event: string, payload: Record<string, unknown>) => {
       notifyCalls.push({ event, payload });
-      return true;
+      return notifyOk;
     },
     publishAccessAttributes: async () => true,
   },
@@ -165,12 +197,6 @@ mock.module('../../backend/auth/confirmEmail', {
   },
 });
 
-mock.module('../../backend/cache/memo', {
-  namedExports: {
-    invalidateUserSubscriptionsCache: () => {},
-  },
-});
-
 mock.module('../../backend/payments/admin-slack', {
   namedExports: {
     shouldNotifyAdminSlackForProvider: () => false,
@@ -203,11 +229,16 @@ async function dispatchWebhook() {
 
 describe('stripe-webhook · cart recovery (DEV-278)', () => {
   beforeEach(() => {
+    clearCache();
     failedPaymentDeduplicator.reset();
     notifyCalls.length = 0;
     createCheckoutCalls.length = 0;
     posthogCalls.length = 0;
     releaseCalls.length = 0;
+    notifyOk = true;
+    disputeSubscription = null;
+    chargebackDeliveries.clear();
+    chargebackStoreFailure = null;
     couponChanges.length = 0;
     reservationDbUnavailable = false;
     conversionDbUnavailable = false;
@@ -217,6 +248,111 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     hasActiveSubscription = false;
     claimResult = 'claimed';
     profile.nome = null;
+  });
+
+  function disputeEvent(overrides: Partial<StripeEvent> = {}, dispute: Record<string, unknown> = {}): StripeEvent {
+    return {
+      id: 'evt_fixture270',
+      type: 'charge.dispute.created',
+      livemode: true,
+      data: { object: {
+        id: 'dp_fixture270', amount: 6590, currency: 'brl', livemode: true,
+        reason: 'fraudulent', status: 'needs_response', charge: 'ch_fixture270',
+        payment_intent: {
+          id: 'pi_fixture270',
+          metadata: { product_type: 'nome_social', user_id: fixtureUserId, email: 'fixture@example.test' },
+        },
+        ...dispute,
+      } },
+      ...overrides,
+    };
+  }
+
+  it('DEV-270: envia um alerta sem contatos e deduplica redelivery concorrente e após reinício', async () => {
+    constructedEvent = disputeEvent();
+    const results = await Promise.all([dispatchWebhook(), dispatchWebhook()]);
+    assert.equal(results[0].status, 200);
+    assert.ok([200, 503].includes(results[1].status));
+    clearCache();
+    constructedEvent = disputeEvent({ id: 'evt_redelivery270' });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.deepEqual(notifyCalls, [{
+      event: 'payment.chargeback',
+      payload: {
+        payment_id: 'pi_fixture270', productType: 'nome_social', userId: fixtureUserId,
+        amount: 6590, amount_formatted: 'R$ 65,90',
+        reason: 'fraudulent', status: 'needs_response', payment_provider: 'stripe', livemode: true,
+      },
+    }]);
+  });
+
+  it('DEV-270: não envia alerta em sandbox nem em disputas encerradas', async () => {
+    for (const event of [
+      disputeEvent({ livemode: false }),
+      disputeEvent({ type: 'charge.dispute.closed' }),
+      disputeEvent({}, { status: 'won' }),
+      disputeEvent({}, { livemode: false }),
+    ]) {
+      constructedEvent = event;
+      assert.equal((await dispatchWebhook()).status, 200);
+    }
+    assert.deepEqual(notifyCalls, []);
+  });
+
+  it('DEV-270: identifica a compra pela assinatura e depois pelos metadados Stripe', async () => {
+    disputeSubscription = { product_type: 'nome_social', user_id: fixtureUserId, payment_provider: 'stripe' };
+    constructedEvent = disputeEvent({}, { payment_intent: 'pi_fixture270' });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls[0]?.payload.productType, 'nome_social');
+
+    disputeSubscription = null;
+    constructedEvent = disputeEvent({}, { id: 'dp_intent270', payment_intent: 'pi_intent270' });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls[1]?.payload.productType, 'nome_empresa');
+
+    constructedEvent = disputeEvent({}, { id: 'dp_charge270', payment_intent: null });
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls[2]?.payload.payment_id, 'ch_fixture270');
+    assert.equal(notifyCalls[2]?.payload.productType, 'nome_bebe');
+  });
+
+  it('DEV-270: pede reentrega ao Stripe se o n8n recusar o evento', async () => {
+    constructedEvent = disputeEvent();
+    notifyOk = false;
+    assert.equal((await dispatchWebhook()).status, 503);
+    notifyOk = true;
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls.length, 2);
+  });
+
+  it('DEV-270: pede reentrega ao Stripe quando outro processo tem a reserva', async () => {
+    constructedEvent = disputeEvent();
+    chargebackDeliveries.set('dp_fixture270', { token: 'other-process', sent: false });
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.deepEqual(notifyCalls, []);
+  });
+
+  it('DEV-270: não envia sem reserva e tenta de novo quando o registro volta', async () => {
+    constructedEvent = disputeEvent();
+    chargebackStoreFailure = 'claim';
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.deepEqual(notifyCalls, []);
+
+    chargebackStoreFailure = null;
+    assert.equal((await dispatchWebhook()).status, 200);
+    assert.equal(notifyCalls.length, 1);
+  });
+
+  it('DEV-270: mantém a reserva quando o n8n aceita e a gravação falha', async () => {
+    constructedEvent = disputeEvent();
+    chargebackStoreFailure = 'mark';
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.equal(chargebackDeliveries.get('dp_fixture270')?.sent, false);
+
+    chargebackStoreFailure = null;
+    assert.equal((await dispatchWebhook()).status, 503);
+    assert.equal(notifyCalls.length, 1);
   });
 
   it('DEV-276: purchase mantém a sessão do navegador e separa a sessão Stripe', async () => {
