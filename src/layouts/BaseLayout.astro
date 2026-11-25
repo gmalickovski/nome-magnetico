@@ -3,6 +3,7 @@ import { CookieBanner } from '../frontend/components/ui/CookieBanner';
 import PostHog from '../components/posthog.astro';
 import { getSentryRuntimeConfig } from '../sentry/env';
 import { paidAttributionEnabled } from '../backend/analytics/paid-attribution';
+import { readServerEnv } from '../backend/env/runtime';
 
 export interface Props {
   title: string;
@@ -39,6 +40,9 @@ const robotsContent = noIndex || opsShell
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
 const paidAttribution = !opsShell && paidAttributionEnabled();
+const metaPixelId = paidAttribution && Astro.url.pathname.replace(/\/$/, '') === '/analise-gratuita'
+  ? readServerEnv('PUBLIC_META_PIXEL_ID')
+  : undefined;
 const sentry = getSentryRuntimeConfig();
 ---
 
@@ -165,6 +169,7 @@ const sentry = getSentryRuntimeConfig();
     </noscript>
     {!opsShell && (
     <>
+    {metaPixelId && <meta name="nm-meta-pixel-id" content={metaPixelId} />}
     <!-- Google Analytics 4: carregado somente apos consentimento explicito. -->
     <script is:inline define:vars={{ ga4MeasurementId }}>
       function nmLocalGet(key) {
@@ -265,9 +270,12 @@ const sentry = getSentryRuntimeConfig();
     <script>
       import { captureFirstTouchUtm } from '../frontend/lib/utm';
       import { initializePaidAttribution } from '../frontend/lib/paid-attribution';
+      import { initializeMetaPixel } from '../frontend/lib/meta-pixel';
       captureFirstTouchUtm();
       const { paidAttribution, ga4Id } = document.documentElement.dataset;
       initializePaidAttribution(ga4Id ?? '', paidAttribution === '1');
+      const metaPixelId = document.querySelector<HTMLMetaElement>('meta[name="nm-meta-pixel-id"]')?.content;
+      if (metaPixelId) initializeMetaPixel(metaPixelId);
     </script>
   </head>
   <body class:list={['bg-[#1a1a1a] text-gray-200 font-inter antialiased', opsShell ? 'overflow-hidden' : 'min-h-screen']}>

@@ -21,8 +21,9 @@ No PostHog TESTE, abrir **Project settings** para copiar a chave de projeto para
 ## Meta Events Manager
 
 1. Em **Configurações do negócio → Contas → Contas de anúncios**, abrir `1566113224992478`. Conceder ao perfil ou integração controle sobre a conta e a Página dedicada ou aprovada para o piloto. Conferir faturamento e o domínio antes de veicular.
-2. Em **Gerenciador de Eventos → Conectar dados → Web**, criar um conjunto de dados dedicado ao Nome Magnético e associá-lo à conta de anúncios do piloto. Abrir **Configurar Meta Pixel → Instalar código manualmente** para obter o ID e a tag base. Para a aplicação, registrar o **ID público do dataset**, com o token separado no cofre de teste em **Configurações → API de Conversões**. A integração de site e webhook será configurada após esses ativos serem acessíveis.
-3. Em **Testar eventos**, validar o Pixel consentido na landing e o evento `Purchase` do servidor após pagamento. Usar ID estável por compra e os parâmetros permitidos pela Meta. [Meta Pixel e Conversions API](https://developers.facebook.com/docs/marketing-api/conversions-api/) · [Gerenciador de Eventos](https://business.facebook.com/events_manager2/)
+2. O conjunto **Nome Magnético** (`1457871855877551`) está disponível para a conta dedicada e a correspondência avançada automática está desativada. Na última tela de configuração manual do Pixel, manter essa opção desligada e clicar em **Concluir**.
+3. Em TESTE, fornecer o ID público em `PUBLIC_META_PIXEL_ID` com `PAID_ATTRIBUTION_ENABLED=1`. O Pixel carrega após o consentimento de anúncios em `/analise-gratuita` e dispara um único `PageView` por carregamento com URL elegível. Em **Testar eventos**, verificar ausência de tráfego após recusa, um `PageView` após aceite e revogação na mesma página. A configuração do `Purchase` via servidor depende do token da API de Conversões no cofre TESTE. [Meta Pixel e Conversions API](https://developers.facebook.com/docs/marketing-api/conversions-api/) · [Gerenciador de Eventos](https://business.facebook.com/events_manager2/)
+4. Nos links da Meta, usar `utm_source=meta&utm_medium=paid_social&utm_id={{campaign.id}}&ad_id={{ad.id}}`. O Pixel aceita apenas UTMs de origem e meio conhecidos, IDs de campanha e anúncio e `fbclid`. Qualquer outro parâmetro na URL impede o carregamento do Pixel, inclusive UTMs de texto livre.
 
 ## n8n e Notion
 
