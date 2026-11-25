@@ -1,6 +1,5 @@
-import { createHash } from 'node:crypto';
-
 const GA4_COLLECT_URL = 'https://www.google-analytics.com/mp/collect';
+const HOUR_MS = 60 * 60 * 1000;
 
 export type Ga4PurchaseItem = {
   item_id: string;
@@ -23,25 +22,20 @@ export type SendGa4PurchaseParams = {
   paymentProvider?: string;
   productType?: string;
   purchaseKind?: 'new' | 'renewal';
+  sessionId?: number;
+  paidAt?: Date;
+  adsConsent?: boolean;
 };
 
-/** client_id estável quando a sessão Stripe não traz metadata.ga_client_id. */
-export function resolveGaClientId(sessionId: string, metadataClientId?: string | null): string {
-  const fromMeta = metadataClientId?.trim();
-  if (fromMeta) return fromMeta;
-
-  const hex = createHash('sha256').update(sessionId).digest('hex');
-  const left = Number.parseInt(hex.slice(0, 8), 16);
-  const right = Number.parseInt(hex.slice(8, 16), 16);
-  return `${left}.${right}`;
+export function gaSessionForPurchase(sessionId: number | undefined, paidAt: number, sentAt: number) {
+  if (!sessionId) return undefined;
+  const start = sessionId * 1000;
+  // Janela conservadora do piloto para evitar atribuir Pix tardio a uma sessão encerrada.
+  if (paidAt < start || paidAt > start + HOUR_MS / 2 || sentAt > start + 24 * HOUR_MS) return undefined;
+  return sessionId;
 }
 
-/**
- * Purchase via GA4 Measurement Protocol.
- * Sem GA4_MEASUREMENT_ID ou GA4_API_SECRET, não envia. Nunca lança.
- * transactionId é o id da Checkout Session do Stripe.
- */
-export async function sendGa4Purchase(params: SendGa4PurchaseParams): Promise<void> {
+export async function sendGa4Purchase(params: SendGa4PurchaseParams): Promise<'sent' | 'skipped' | 'retry'> {
   try {
     const measurementId = process.env.GA4_MEASUREMENT_ID?.trim();
     const apiSecret = process.env.GA4_API_SECRET?.trim();
@@ -50,17 +44,22 @@ export async function sendGa4Purchase(params: SendGa4PurchaseParams): Promise<vo
       if (process.env.APP_ENV !== 'production') {
         console.warn('[ga4-mp] GA4_MEASUREMENT_ID ou GA4_API_SECRET ausente; purchase não enviado.');
       }
-      return;
+      return 'skipped';
     }
 
-    const clientId = params.clientId.trim() || resolveGaClientId(params.transactionId, null);
+    const clientId = params.clientId.trim();
+    if (!/^\d{1,20}\.\d{1,20}$/.test(clientId)) return 'skipped';
+    const sentAt = Date.now();
+    const paidAt = params.paidAt?.getTime() ?? sentAt;
+    if (!Number.isFinite(paidAt) || paidAt > sentAt || sentAt - paidAt > 72 * HOUR_MS) return 'skipped';
+    const sessionId = gaSessionForPurchase(params.sessionId, paidAt, sentAt);
     const currency = (params.currency || 'BRL').toUpperCase();
     const coupon = params.coupon?.trim() || undefined;
 
     const body = {
       client_id: clientId,
-      ...(params.userId ? { user_id: params.userId } : {}),
-      non_personalized_ads: false,
+      timestamp_micros: paidAt * 1000,
+      consent: { ad_user_data: params.adsConsent ? 'GRANTED' : 'DENIED', ad_personalization: 'DENIED' },
       events: [
         {
           name: 'purchase',
@@ -69,6 +68,7 @@ export async function sendGa4Purchase(params: SendGa4PurchaseParams): Promise<vo
             affiliation: 'Nome Magnetico',
             value: params.value,
             currency,
+            ...(sessionId ? { session_id: sessionId, engagement_time_msec: 1 } : {}),
             ...(coupon ? { coupon } : {}),
             ...(params.paymentProvider ? { payment_provider: params.paymentProvider } : {}),
             ...(params.productType ? { product_type: params.productType } : {}),
@@ -95,12 +95,16 @@ export async function sendGa4Purchase(params: SendGa4PurchaseParams): Promise<vo
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(4500),
     });
 
     if (!res.ok) {
-      console.error('[ga4-mp] Falha ao enviar purchase:', res.status, await res.text());
+      console.error('[ga4-mp] Falha ao enviar purchase:', res.status);
+      return 'retry';
     }
-  } catch (err) {
-    console.error('[ga4-mp] Erro ao enviar purchase:', err);
+    return 'sent';
+  } catch {
+    console.error('[ga4-mp] Erro ao enviar purchase');
+    return 'retry';
   }
 }

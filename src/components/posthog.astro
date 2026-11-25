@@ -86,12 +86,17 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
       try {
         var url = new URL(props.$current_url);
         var normalized = nmNormalizeResultadoPath(url.pathname);
-        if (normalized !== url.pathname) {
-          url.pathname = normalized;
-          props.$current_url = url.toString();
-        }
+        url.pathname = normalized;
+        url.search = '';
+        url.hash = '';
+        props.$current_url = url.toString();
       } catch (e) {}
     }
+    for (var key of ['$referrer', '$initial_referrer', '$initial_current_url']) {
+      if (typeof props[key] !== 'string' || !props[key].startsWith('http')) continue;
+      try { props[key] = new URL(props[key]).origin; } catch (e) { delete props[key]; }
+    }
+    for (var key of ['gclid', 'fbclid', 'gbraid', 'wbraid', 'msclkid', '$gclid', '$fbclid']) delete props[key];
     return event;
   }
 
@@ -160,6 +165,18 @@ const posthogHost = (process.env.PUBLIC_POSTHOG_HOST ?? '').trim() || 'https://u
   window.addEventListener('consentGranted', function () {
     nmPersistUtmFirstTouch();
     loadPostHog();
+  });
+  function nmStopPostHogPersistence() {
+    if (nmStorageGet('nm-cookie-consent') === 'all') return;
+    window.posthog?.stopSessionRecording?.();
+    window.posthog?.set_config?.({ persistence: 'memory', disable_session_recording: true });
+  }
+  window.addEventListener('nm-cookie-preferences-changed', nmStopPostHogPersistence);
+  window.addEventListener('storage', function (event) {
+    if (event.key === 'nm-cookie-consent') {
+      nmStopPostHogPersistence();
+      loadPostHog();
+    }
   });
 </script>
 
