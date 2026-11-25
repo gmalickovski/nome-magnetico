@@ -7,6 +7,7 @@ type StripeEvent = {
   id: string;
   type: string;
   livemode?: boolean;
+  created?: number;
   data: { object: Record<string, unknown> };
 };
 
@@ -24,6 +25,9 @@ const chargebackDeliveries = new Map<string, { token: string; sent: boolean }>()
 let chargebackStoreFailure: 'claim' | 'mark' | null = null;
 const couponChanges: string[][] = [];
 let reservationDbUnavailable = false;
+let conversionDbUnavailable = false;
+const paidOrders = new Set<string>();
+const recordedOrders = new Map<string, Record<string, unknown>>();
 
 const profile = {
   email: 'buyer@example.com',
@@ -59,7 +63,11 @@ mock.module('../../backend/db/users', {
 mock.module('../../backend/db/subscriptions', {
   namedExports: {
     hasActiveSubscription: async () => hasActiveSubscription,
-    createSubscription: async () => ({ subscription: {}, created: true }),
+    createSubscription: async ({ stripeSessionId }: { stripeSessionId: string }) => {
+      const created = !paidOrders.has(stripeSessionId);
+      paidOrders.add(stripeSessionId);
+      return { subscription: {}, created };
+    },
     refundSubscription: async () => {},
     getSubscriptionByPaymentIntent: async () => disputeSubscription,
   },
@@ -119,6 +127,7 @@ mock.module('../../backend/notifications/notify', {
 mock.module('../../backend/analytics/posthog-server', {
   namedExports: {
     captureServerEvent: async () => {},
+    deliverServerEvent: async () => true,
     posthogEventUuid: () => 'uuid-test',
     resolveCheckoutDistinctId: () => 'distinct-test',
   },
@@ -126,7 +135,6 @@ mock.module('../../backend/analytics/posthog-server', {
 
 mock.module('../../backend/analytics/ga4-mp', {
   namedExports: {
-    resolveGaClientId: () => 'ga-test',
     sendGa4Purchase: async () => {},
   },
 });
@@ -145,7 +153,17 @@ mock.module('../../sentry/fluxo', {
 
 mock.module('../../backend/db/supabase', {
   namedExports: {
-    supabase: { from: () => ({ upsert: async () => ({ error: null }) }) },
+    supabase: {
+      from: () => ({ upsert: async () => ({ error: null }) }),
+      async rpc(name: string, args: Record<string, unknown>) {
+        if (name === 'nm_enqueue_purchase') {
+          if (conversionDbUnavailable) return { error: true };
+          const id = String(args.p_order_id);
+          if (!recordedOrders.has(id)) recordedOrders.set(id, args.p_payload as Record<string, unknown>);
+        }
+        return { data: [], error: null };
+      },
+    },
   },
 });
 
@@ -220,6 +238,9 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     chargebackStoreFailure = null;
     couponChanges.length = 0;
     reservationDbUnavailable = false;
+    conversionDbUnavailable = false;
+    paidOrders.clear();
+    recordedOrders.clear();
     checkoutSessionUrl = 'https://checkout.stripe.com/pay/cs_recovery_new';
     hasActiveSubscription = false;
     claimResult = 'claimed';
@@ -329,6 +350,41 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
     chargebackStoreFailure = null;
     assert.equal((await dispatchWebhook()).status, 503);
     assert.equal(notifyCalls.length, 1);
+  });
+
+  it('DEV-353 registra cartão e Pix confirmado e recupera fila perdida na reentrega sem repetir acesso', async () => {
+    const previous = process.env.PAID_ATTRIBUTION_ENABLED;
+    process.env.PAID_ATTRIBUTION_ENABLED = '1';
+    const card = {
+      id: 'cs_test_fixture_card', payment_status: 'paid', amount_total: 9700, currency: 'brl',
+      metadata: { user_id: 'user-1', product_type: 'nome_social', paid_attribution_ref: 'fixture' },
+    };
+    const created = Math.floor(Date.now() / 1000);
+    try {
+      constructedEvent = { id: 'evt_card', type: 'checkout.session.completed', created, data: { object: card } };
+      assert.equal((await dispatchWebhook()).status, 200);
+      const pix = { ...card, id: 'cs_test_fixture_pix', payment_status: 'unpaid' };
+      constructedEvent = { id: 'evt_pix_pending', type: 'checkout.session.completed', created, data: { object: pix } };
+      assert.equal((await dispatchWebhook()).status, 200);
+      assert.equal(recordedOrders.size, 1);
+      assert.equal(recordedOrders.get(card.id)?.paymentMethod, 'card');
+
+      constructedEvent = {
+        id: 'evt_pix_paid', type: 'checkout.session.async_payment_succeeded', created: created + 3600,
+        data: { object: { ...pix, payment_status: 'paid' } },
+      };
+      conversionDbUnavailable = true;
+      assert.equal((await dispatchWebhook()).status, 503);
+      assert.equal(paidOrders.size, 2);
+      conversionDbUnavailable = false;
+      assert.equal((await dispatchWebhook()).status, 200);
+      assert.equal((await dispatchWebhook()).status, 200);
+      assert.equal(recordedOrders.size, 2);
+      assert.equal(recordedOrders.get(pix.id)?.paymentMethod, 'pix');
+    } finally {
+      if (previous === undefined) delete process.env.PAID_ATTRIBUTION_ENABLED;
+      else process.env.PAID_ATTRIBUTION_ENABLED = previous;
+    }
   });
 
   it('DEV-268: Pix pendente mantém a reserva e Pix confirmado registra o uso', async () => {
