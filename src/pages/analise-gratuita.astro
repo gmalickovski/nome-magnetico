@@ -6,6 +6,7 @@ import { PublicAnalysisForm } from '../frontend/components/landing/PublicAnalysi
 import { FreePdfPreviewScene } from '../frontend/components/landing/mockups/FreePdfPreviewScene';
 
 const user = Astro.locals.user;
+if (user) Astro.response.headers.set('Cache-Control', 'private, no-store');
 
 const REDIRECT_URL = '/app/analise-gratuita';
 const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
@@ -50,7 +51,7 @@ const LOGIN_URL = `/auth/login?redirect=${encodeURIComponent(REDIRECT_URL)}`;
         </div>
 
         <div class="max-w-4xl mx-auto mt-10">
-          <PublicAnalysisForm client:load />
+          <PublicAnalysisForm client:load analyticsUserId={user?.id} />
         </div>
       </div>
     </section>

@@ -61,7 +61,7 @@ export default function FreeAnalysisForm() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Erro ao iniciar análise.');
 
-      track('analise_gratis_submit');
+      track('analise_gratis_submit', { product_type: 'analise_gratuita' });
       window.location.href = '/app?gen_free_pdf=1';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro inesperado. Tente novamente.');
