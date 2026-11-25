@@ -24,6 +24,17 @@ const TABELA_LETRAS = [
   { valor: '8', letras: 'F · P' },
 ];
 
+// Acentos e apóstrofo (backend/numerology/core.ts, calcularValor). Convenção do método.
+const ACENTOS = [
+  { sinal: '´', nome: 'Agudo', regra: '+2', exemplo: 'E = 5, É = 7' },
+  { sinal: '~', nome: 'Til', regra: '+3', exemplo: 'A = 1, Ã = 4' },
+  { sinal: '^', nome: 'Circunflexo', regra: '+7', exemplo: 'O = 7, Ô = 14' },
+  { sinal: '`', nome: 'Grave', regra: '×2', exemplo: 'A = 1, À = 2' },
+  { sinal: '¨', nome: 'Trema', regra: '×2', exemplo: 'U = 6, Ü = 12' },
+  { sinal: '°', nome: 'Anel', regra: '+7', exemplo: 'A = 1, Å = 8' },
+  { sinal: "'", nome: 'Apóstrofo', regra: '+2 na letra anterior', exemplo: "D'Angelo = 30" },
+];
+
 const PASSOS = [
   { n: '1', titulo: 'Cada letra vale um número', texto: 'Pela tabela cabalística, que é fixa. Acentos mudam o valor da letra (o agudo soma 2, o til soma 3, o circunflexo soma 7), por isso um acento ou uma letra a mais muda o resultado.' },
   { n: '2', titulo: 'A data dá o Destino', texto: 'Somamos os dígitos da data de nascimento. O Destino não muda nunca: é a referência com a qual o nome precisa conversar.' },
@@ -170,9 +181,25 @@ const CAMINHOS = [
                 </div>
               ))}
             </div>
-            <p class="nm-caption text-center mt-3">Crases e tremas dobram o valor da letra; o apóstrofo soma 2 à letra anterior.</p>
+            <h4 class="nm-h4 text-center mt-6 mb-3">E os acentos?</h4>
+            <p class="nm-caption text-center mb-3 max-w-[62ch] mx-auto">Cada acento muda o valor da letra. O Ç vale 6 e não recebe acento.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {ACENTOS.map((a) => (
+                <div class={a.nome === 'Apóstrofo' ? 'rounded-xl bg-white/[0.03] px-3 py-3 text-center col-span-2 sm:col-span-1' : 'rounded-xl bg-white/[0.03] px-3 py-3 text-center'}>
+                  <span class="font-cinzel text-xl font-bold text-[#bea5ff] block" aria-hidden="true">{a.sinal}</span>
+                  <span class="text-xs text-gray-200 font-medium block">{a.nome}</span>
+                  <span class="text-sm font-semibold text-[#f2ca50] block mt-0.5">{a.regra}</span>
+                  <span class="text-[11px] text-gray-400 block mt-1">{a.exemplo}</span>
+                </div>
+              ))}
+            </div>
+            <p class="nm-caption text-center mt-4 max-w-[62ch] mx-auto">
+              Os valores dos acentos são uma convenção do método: não vêm de uma tabela clássica única e também aparecem, com pequenas variações, em outros materiais e aplicativos de numerologia cabalística em português. Por isso deixamos cada valor aberto para você conferir.
+            </p>
           </div>
-          <LetterNumberExample client:visible />
+          <div>
+            <LetterNumberExample client:visible />
+          </div>
         </section>
 
         {/* 1. Visão Geral */}
