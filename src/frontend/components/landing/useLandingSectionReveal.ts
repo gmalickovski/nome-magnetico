@@ -32,15 +32,33 @@ export interface LandingSectionRevealOptions {
 export function useLandingSectionReveal(options: LandingSectionRevealOptions = {}) {
   const { startRevealed = true, threshold = 0.08, rootMargin = '0px 0px -40px 0px' } = options;
   const ref = useRef<HTMLElement & HTMLDivElement>(null);
-  const [reduceMotion] = useState(prefersReducedMotion);
+  // Inicializa false no SSR/1ª hidratação e sincroniza em useEffect para evitar mismatch (#418/#425).
+  const [reduceMotion, setReduceMotion] = useState(false);
   // Padrão: true no SSR/hidratação para evitar flash vazio. Com startRevealed=false, inicia oculto.
   const [revealed, setRevealed] = useState(startRevealed);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    const mq = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+
+    const isReduced = mq ? mq.matches : prefersReducedMotion();
+    if (isReduced) {
+      setReduceMotion(true);
+      setRevealed(true);
+      return;
+    }
+
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setReduceMotion(true);
+        setRevealed(true);
+      }
+    };
+    mq?.addEventListener?.('change', onChange);
 
     const el = ref.current;
-    if (!el) return;
+    if (!el) return () => mq?.removeEventListener?.('change', onChange);
 
     if (startRevealed) {
       const rect = el.getBoundingClientRect();
@@ -49,7 +67,7 @@ export function useLandingSectionReveal(options: LandingSectionRevealOptions = {
       // Se o elemento já está visível na viewport (ex: Hero no topo), mantém revelado imediatamente
       if (rect.top < vh && rect.bottom > 0) {
         setRevealed(true);
-        return;
+        return () => mq?.removeEventListener?.('change', onChange);
       }
 
       // Se estiver fora da viewport, inicializa como false para animar na rolagem
@@ -70,9 +88,10 @@ export function useLandingSectionReveal(options: LandingSectionRevealOptions = {
     observer.observe(el);
 
     return () => {
+      mq?.removeEventListener?.('change', onChange);
       observer.disconnect();
     };
-  }, [reduceMotion, startRevealed, threshold, rootMargin]);
+  }, [startRevealed, threshold, rootMargin]);
 
   if (reduceMotion) {
     return {

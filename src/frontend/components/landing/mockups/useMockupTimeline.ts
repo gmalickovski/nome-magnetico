@@ -33,11 +33,6 @@ export interface UseMockupTimelineResult<TAction = string, TEl extends HTMLEleme
   reducedMotion: boolean;
 }
 
-function readReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 function readTabVisible(): boolean {
   if (typeof document === 'undefined') return true;
   return document.visibilityState !== 'hidden';
@@ -65,9 +60,10 @@ export function useMockupTimeline<TAction = string, TEl extends HTMLElement = HT
     [normalizedSteps, durationMs, loopPauseMs],
   );
 
-  const [systemReducedMotion, setSystemReducedMotion] = useState<boolean>(() => readReducedMotion());
+  // Inicializa de forma determinística no SSR e sincroniza em useEffect para evitar mismatch (#418/#425).
+  const [systemReducedMotion, setSystemReducedMotion] = useState<boolean>(false);
   const [isInView, setIsInView] = useState<boolean>(false);
-  const [isTabVisible, setIsTabVisible] = useState<boolean>(() => readTabVisible());
+  const [isTabVisible, setIsTabVisible] = useState<boolean>(true);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [cycle, setCycle] = useState<number>(0);
 

@@ -3,7 +3,8 @@ import { captureBeginCheckout, track, trackBeginCheckout } from '../../lib/analy
 import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
 import { Price, priceInfoToPriceProps } from '../ui/Price';
 import { CheckoutModal } from '../purchase/CheckoutModal';
-import { isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { checkoutFailureMessage, isCheckoutEmailNotConfirmed, postCreateCheckoutWithPriceConfirm } from '../../lib/checkout-api';
+import { withLinkedCoupon } from '../../../shared/checkout-coupon-link';
 import { EmailConfirmationPrompt } from '../app/EmailConfirmationPrompt';
 import type { SellableProductType } from '../../../shared/product-labels';
 import {
@@ -22,11 +23,11 @@ type ProductType = SellableProductType;
 const PRICE_UNAVAILABLE: PriceInfo = { cents: 0, formatted: 'Indisponível', hasDiscount: false };
 
 const NOME_SOCIAL_DELIVERABLES = [
-  'sugestões de assinatura com nota, nível e o que mudou (até 9 opções)',
-  'triângulos Pessoal, Social e do Destino',
-  'lições kármicas e arquétipo',
-  'compare os nomes que você quiser',
-  'PDF com guia para usar a nova assinatura',
+  'um chat com três caminhos: nome social, nome artístico e nome do bebê',
+  '3 sugestões sem bloqueios, mais 6 quando quiser, cada uma com nota de 0 a 100',
+  'teste até 5 nomes seus, calculados sem interferência do sistema',
+  'arquétipo do nome, lições kármicas e leitura complementar dos triângulos Pessoal, Social e do Destino',
+  'PDF do seu caminho, com guia para começar a usar o nome',
 ] as const;
 
 function promotionAppliesToProduct(
@@ -140,12 +141,12 @@ export function PricingSection({
       track('begin_checkout', { produto: planId, valor: priceInfo.cents / 100 });
       setCheckoutProduct(planId);
     } else {
-      const returnUrl = `${window.location.pathname}?checkout=${planId}`;
+      const returnUrl = withLinkedCoupon(`${window.location.pathname}?checkout=${planId}`, new URLSearchParams(window.location.search));
       window.location.href = `/auth/cadastro?redirect=${encodeURIComponent(returnUrl)}`;
     }
   }
 
-  async function handleTriggerCard(type: ProductType, couponCode?: string) {
+  async function handleTriggerCard(type: ProductType, couponCode: string | undefined, finalCents: number) {
     try {
       const info = resolvedPrices[type] ?? PRICE_UNAVAILABLE;
       track('checkout_redirect_start', {
@@ -165,27 +166,29 @@ export function PricingSection({
         {
           product_type: type,
           couponCode,
-          expected_final_cents: info.cents,
+          expected_final_cents: finalCents,
         },
         (cents) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`,
       );
       if (!result.ok) {
-        if ('priceChanged' in result && result.priceChanged) return;
         if ('alreadyActive' in result && result.alreadyActive) {
           window.location.href = result.redirectUrl ?? '/app/analise/nome-social';
-          return;
+          return true;
         }
         if (isCheckoutEmailNotConfirmed(result)) {
           setEmailNotConfirmed(true);
           return;
         }
-        throw new Error('Erro ao criar checkout');
+        throw new Error(checkoutFailureMessage(result));
       }
       if ('bypass' in result && result.bypass) {
         window.location.href = result.redirectUrl;
-        return;
+        return true;
       }
-      if ('url' in result) window.location.href = result.url;
+      if ('url' in result) {
+        window.location.href = result.url;
+        return true;
+      }
     } catch (err) {
       track('checkout_failed', {
         produto: type,
@@ -193,6 +196,7 @@ export function PricingSection({
         origem: 'pricing_section',
       });
       console.error('[PricingSection] Erro ao criar checkout:', err);
+      throw err;
     }
   }
 
@@ -350,7 +354,6 @@ export function PricingSection({
         <CheckoutModal
           productType={checkoutProduct}
           priceInfo={resolvedPrices[checkoutProduct] ?? PRICE_UNAVAILABLE}
-          promotion={promotion}
           onClose={() => setCheckoutProduct(null)}
           onTriggerCard={handleTriggerCard}
         />

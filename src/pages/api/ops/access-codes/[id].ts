@@ -1,11 +1,13 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { setAccessCodeActive } from '@/backend/ops/accessCodes';
+import { setAccessCodeActive, setCouponEligibility } from '@/backend/ops/accessCodes';
 import { OpsRegistryError } from '@/backend/ops/registry';
-import { toggleSchema } from '@/backend/ops/registrySchemas';
+import { couponEligibilitySchema, toggleSchema } from '@/backend/ops/registrySchemas';
 import { opsGate, opsJson } from '@/backend/security/opsGate';
 
 const idSchema = z.string().uuid();
+const eligibilitySchema = couponEligibilitySchema.strict();
+const patchSchema = z.union([toggleSchema, eligibilitySchema]);
 
 export const PATCH: APIRoute = async ({ request, params, locals }) => {
   const gate = await opsGate(request, locals, 'access-codes');
@@ -21,11 +23,20 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
     return opsJson({ error: 'Corpo inválido' }, 400);
   }
 
-  const parsed = toggleSchema.safeParse(body);
-  if (!parsed.success) return opsJson({ error: 'Parâmetros inválidos' }, 400);
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    const eligibility = eligibilitySchema.safeParse(body);
+    const uuidError = eligibility.error?.issues.find((issue) =>
+      issue.path[0] === 'excluded_user_ids' && issue.path.length > 1,
+    );
+    return opsJson({ error: uuidError?.message ?? 'Parâmetros inválidos' }, 400);
+  }
 
   try {
-    const accessCode = await setAccessCodeActive(id.data, parsed.data.is_active, gate.profile.id);
+    const update = parsed.data;
+    const accessCode = 'is_active' in update
+      ? await setAccessCodeActive(id.data, update.is_active, gate.profile.id)
+      : await setCouponEligibility(id.data, update, gate.profile.id);
     return opsJson({ access_code: accessCode });
   } catch (error) {
     if (error instanceof OpsRegistryError) return opsJson({ error: error.message }, error.status);

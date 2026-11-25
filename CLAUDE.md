@@ -155,8 +155,12 @@ F P       = 8
 4. **Impressão**: apenas consoantes do nome completo, SEMPRE 1–9 (sem 11/22)
 5. **Missão**: Destino + Expressão (mantém 11/22)
 
-### Os 4 Triângulos Numerológicos
-Cada análise calcula TODOS os 4 triângulos (não apenas o Triângulo da Vida):
+### Triângulo da Vida (cálculo principal) e leituras complementares
+**Regra de copy e marketing (decisão de 24/11/2026):** o texto público fala só do **Triângulo da Vida**. Nunca escrever "4 triângulos" em landing, anúncios, e-mails, FAQ, glossário ou blog. Os triângulos Pessoal, Social e Destino aparecem apenas como **leitura complementar, informação extra no PDF**. Detalhe em `docs/sops/copy-triangulos.md`.
+
+> **Estado do código (24/11/2026):** `calcularTodosTriangulos` ainda calcula os 4 e `detectarBloqueios(todos)` ainda barra sugestões com bloqueio em qualquer um deles; a nota v3 desconta sequências só do Triângulo da Vida. Alinhar o motor à regra é a DEV-352.
+
+Os 4 triângulos (referência técnica):
 
 | Triângulo | Modificador da linha base | Dimensão revelada |
 |-----------|--------------------------|-------------------|
@@ -165,7 +169,7 @@ Cada análise calcula TODOS os 4 triângulos (não apenas o Triângulo da Vida):
 | **Social** | letra + mês de nascimento (reduzido) | Influências externas, percepção do mundo |
 | **Destino** | letra + (dia+mês reduzidos) | Resultados, missão, previsões |
 
-Bloqueios são detectados em **todos os 4 triângulos** e consolidados. Cada bloqueio inclui `aspectoSaude`.
+Para copy e para a nota, valem os bloqueios do **Triângulo da Vida**. Hoje o motor ainda consolida os 4 (ver DEV-352). Cada bloqueio inclui `aspectoSaude`.
 
 ### Bloqueios (sequências repetidas ≥3 em qualquer triângulo)
 111=Iniciação, 222=Associação, 333=Expressão, 444=Estruturação,
@@ -220,14 +224,14 @@ type ProductType = 'nome_social' | 'nome_bebe' | 'nome_empresa'
 
 ### `nome_social` — Nome Social (produto principal)
 - Analisa nome de nascimento + data de nascimento
-- Calcula 5 números + 4 triângulos + bloqueios + lições kármics + tendências ocultas
+- Calcula 5 números + Triângulo da Vida (+ leituras complementares no PDF) + bloqueios + lições kármics + tendências ocultas
 - Sugere variações do nome sem bloqueios e compatíveis com Expressão × Destino
 - Gera guia de implementação da nova assinatura
 - Módulo: `src/backend/ai/brain.ts` (funções: `generateAnalysis`, `generateSuggestions`, `generateGuide`)
 
 ### `nome_bebe` — Nome para Bebê
 - Input: sobrenome da família + data de nascimento do bebê + lista de nomes candidatos
-- Para cada candidato: calcula 4 triângulos + detecta bloqueios + verifica compatibilidade Expressão × Destino do bebê + lições kármics
+- Para cada candidato: calcula o Triângulo da Vida (+ complementares) + detecta bloqueios + verifica compatibilidade Expressão × Destino do bebê + lições kármics
 - Rankeia por score 0–100 e aponta o melhor nome
 - Módulo: `src/backend/numerology/products/nome-bebe.ts`
 - Prompt IA: `src/backend/ai/prompts/baby-prompt.ts`
@@ -362,7 +366,7 @@ O n8n recebe o evento via webhook e processa o envio. Webhooks configurados:
 
 ## Componentes App Disponíveis (src/frontend/components/app/)
 
-- `TriangleVisualization` — visualiza os 4 triângulos com abas e bloqueios expandíveis
+- `TriangleVisualization` — visualiza os triângulos com abas e bloqueios expandíveis (resumo web: só o Triângulo da Vida)
 - `KarmicLessons` — exibe lições kármics com cards expansíveis por número
 - `HiddenTendencies` — exibe tendências ocultas + barra de frequências 1–8
 - `SignatureEvaluation` — critérios objetivos da assinatura (sem radiestesia)
@@ -413,7 +417,7 @@ Guia: `docs/devops/sentry.md`.
 9. Ao criar página nova → consultar Paper MCP para layout antes de codar
 10. Ao criar componente novo → verificar se existe em `src/frontend/components/ui/` ou `src/frontend/components/app/`
 11. **NUNCA** mencionar radiestesia, pêndulo ou técnicas radiestésicas — o projeto usa APENAS critérios formais objetivos
-12. Análise SEMPRE usa os 4 triângulos (não só o Triângulo da Vida) — importar `calcularTodosTriangulos` de `triangle.ts`
+12. Copy e marketing falam só do Triângulo da Vida; Pessoal, Social e Destino são leitura complementar no PDF (24/11/2026, `docs/sops/copy-triangulos.md`). O motor ainda usa `calcularTodosTriangulos` de `triangle.ts` (alinhamento na DEV-352)
 13. **DOCUMENTAÇÃO OBRIGATÓRIA**: Todo novo processo, componente reutilizável ou decisão de arquitetura deve ser documentada na pasta `docs/` seguindo a estrutura exata: `architecture/`, `sops/`, `snippets/` ou `devops/`. Nunca crie arquivos `.md` soltos na raiz do `docs/`.
 14. **Bot Suporte = FAQ + status mínimo de cliente.** A role `support_bot` só faz `SELECT` em `support_faq.support_faq_v` e `EXECUTE` em `support_faq.support_lookup_contact(text)`. Sem `GRANT` em perfis, assinaturas, leads, análises, auth ou HQ. Não expor ids de pagamento, valores, PDF ou texto de análise. Não criar senha na migration.
 

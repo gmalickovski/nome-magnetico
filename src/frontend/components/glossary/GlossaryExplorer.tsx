@@ -68,7 +68,7 @@ export function GlossaryExplorer({
     <div className="space-y-10">
       {/* Destaque personalizado dentro da área logada */}
       {personalizedMatches.length > 0 && (
-        <section className="nm-floating-card rounded-2xl p-5 sm:p-6 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
+        <section className="nm-floating-card rounded-2xl p-5 sm:p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#f2ca50]">

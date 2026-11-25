@@ -1,6 +1,10 @@
 # Triângulos Numerológicos e Bloqueios — Referência para Agentes
 
-## Os 4 Triângulos
+> **Decisão de produto e marketing (24/11/2026):** o cálculo principal é o **Triângulo da Vida**. Landing, anúncios, e-mails, FAQ, glossário e blog falam só dele e **nunca** em "4 triângulos". Os triângulos Pessoal, Social e Destino aparecem apenas como **leitura complementar, informação extra no PDF**. Regra de vocabulário: `docs/sops/copy-triangulos.md`.
+>
+> **Estado do código na mesma data:** `calcularTodosTriangulos` ainda calcula os 4 triângulos e `detectarBloqueios(todos)` ainda barra sugestões (Nome Social, Artístico e Bebê) com bloqueio em qualquer um deles. A nota v3 já desconta sequências só do Triângulo da Vida (`descontosSequenciasVida`). Alinhar o filtro e o PDF à decisão é a DEV-352. Até lá, a descrição técnica abaixo vale para o código; a copy segue a decisão.
+
+## Os 4 Triângulos (referência técnica)
 
 Cada análise calcula **4 triângulos independentes** a partir do nome completo e data de nascimento.
 Eles revelam dimensões diferentes da mesma frequência vibracional.

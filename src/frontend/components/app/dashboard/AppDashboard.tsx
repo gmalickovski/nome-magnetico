@@ -527,7 +527,7 @@ export function AppDashboard(props: AppDashboardProps) {
           )}
 
           <div
-            className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-5 sm:p-8 lg:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+            className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-5 sm:p-8 lg:p-9"
             onPointerDown={(event) => {
               swipeRef.current.consumeClick();
               if (event.pointerType !== 'touch' || !hasMultipleSlides) return;

@@ -192,6 +192,19 @@ export function DeviceFrame({
           </div>
         ) : null}
 
+        {variant === 'responsive' ? (
+          <>
+            <div className="md:hidden w-full max-w-[290px] mx-auto">
+              <PhoneChassis theme={theme}>{resolvedPhone}</PhoneChassis>
+            </div>
+            <div className="hidden md:block w-full max-w-[880px] mx-auto">
+              <DesktopBrowser theme={theme} url={url}>
+                {resolvedDesktop}
+              </DesktopBrowser>
+            </div>
+          </>
+        ) : null}
+
         {variant === 'both' ? (
           <>
             {/* Abaixo de 768 px: somente celular */}

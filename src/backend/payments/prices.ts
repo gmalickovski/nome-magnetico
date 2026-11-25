@@ -58,7 +58,7 @@ export interface StripePrices {
 }
 
 const ACCESS_COLUMNS =
-  'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, is_active, max_uses, stripe_coupon_id, stripe_promo_code_id, note';
+  'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, is_active, max_uses, stripe_coupon_id, stripe_promo_code_id, note, excluded_user_ids, new_customers_only';
 
 /** Preços + promoção ativa (fonte: product_prices + promotions). */
 export async function getPricesAndPromo(): Promise<HqPricesResponse> {
@@ -186,6 +186,17 @@ async function loadCouponContext(row: AccessCodeRow, userId?: string | null, use
   return { useCount, usedByHolder };
 }
 
+async function hasNonRefundedSubscription(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .is('refunded_at', null)
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
 export async function validateAccessCoupon(params: {
   couponCode: string;
   productType: ProductType;
@@ -200,7 +211,12 @@ export async function validateAccessCoupon(params: {
   try {
     const row = await findAccessCode(couponCode);
     if (!row) return { valid: false, error: 'Cupom inválido ou expirado' };
-    const { useCount, usedByHolder } = await loadCouponContext(row, params.userId, params.userEmail);
+    const [{ useCount, usedByHolder }, hasSubscription] = await Promise.all([
+      loadCouponContext(row, params.userId, params.userEmail),
+      row.kind === 'coupon' && row.new_customers_only && params.userId
+        ? hasNonRefundedSubscription(params.userId)
+        : undefined,
+    ]);
     return evaluateCoupon(row, {
       productType: params.productType,
       userId: params.userId,
@@ -208,6 +224,7 @@ export async function validateAccessCoupon(params: {
       originalCents: params.originalCents,
       usedByHolder,
       useCount,
+      hasNonRefundedSubscription: hasSubscription,
     });
   } catch (err) {
     console.warn('[prices] Falha ao validar cupom no banco:', err);
@@ -258,6 +275,7 @@ export async function recordAccessCouponUse(params: {
       userEmail: params.userEmail,
       usedByHolder,
       useCount,
+      purpose: 'paid-use',
     });
 
     if (!validation.valid && validation.error !== 'Este cupom já foi utilizado') {
