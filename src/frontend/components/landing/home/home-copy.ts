@@ -198,7 +198,6 @@ export const HOME_COPY = {
     title: 'Descubra grátis a nota do seu nome e até onde ela pode chegar', // [TEXTO]
     description:
       'Digite seu nome de nascimento e sua data. Você vê a nota na hora e recebe por e-mail um PDF gratuito com o Triângulo da Vida, os bloqueios encontrados, as suas lições kármicas e o potencial da sua assinatura. Sem cartão.', // [TEXTO]
-    sideEyebrow: 'Exemplo de evolução', // [TEXTO]
     sideEyebrow: 'O que chega no seu e-mail', // [TEXTO]
     sideTitle: 'Seu PDF gratuito, página por página', // [TEXTO]
     sideDescription:
