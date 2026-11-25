@@ -51,6 +51,7 @@ export interface CreateCheckoutParams {
   couponReservationId?: string;
   /** Client ID do GA4 capturado do cookie _ga para atribuição server-side. */
   gaClientId?: string;
+  paidAttributionRef?: string;
   /** distinct_id do PostHog no browser, para o purchase server-side. */
   phDistinctId?: string;
   /** 'renewal' estende o acesso; omissão grava 'new'. product_type não muda. */
@@ -114,6 +115,7 @@ export async function createCheckoutSession(
   if (params.recovery === true) {
     metadata.recovery = '1';
   }
+  if (params.paidAttributionRef) metadata.paid_attribution_ref = params.paidAttributionRef;
   if (params.utmCampaign) {
     metadata.utm_campaign = params.utmCampaign;
     metadata.utm_source = params.utmSource || 'brevo';

@@ -78,6 +78,13 @@ import LegalLayout from '../layouts/LegalLayout.astro';
     <li><strong class="text-gray-300">Publicidade de Terceiros e AdSense:</strong> Fornecedores de terceiros, incluindo o Google, usam cookies para veicular anúncios com base em visitas anteriores do usuário ao nosso site e a outros sites da Internet. O uso de cookies de publicidade permite que o Google e seus parceiros veiculem anúncios aos usuários com base nesses acessos. Você pode desativar a publicidade personalizada acessando as <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer" class="text-[#D4AF37] hover:underline">Configurações de Anúncios do Google</a>.</li>
   </ul>
 
+  <button type="button" id="nm-cookie-settings" class="text-[#D4AF37] underline text-sm">Alterar preferências de cookies</button>
+  <script>
+    document.getElementById('nm-cookie-settings')?.addEventListener('click', () => {
+      window.dispatchEvent(new Event('nm-open-cookie-settings'));
+    });
+  </script>
+
   <h2 class="text-xl font-semibold text-white mt-10 mb-3">8. Segurança</h2>
   <p class="text-gray-400 text-sm leading-relaxed mb-4">
     Adotamos medidas técnicas adequadas para proteger seus dados, incluindo criptografia em trânsito (TLS/HTTPS), criptografia em repouso no banco de dados e autenticação gerenciada pelo Supabase Auth. Em caso de incidente de segurança que afete seus dados, comunicaremos conforme previsto na LGPD.

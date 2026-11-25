@@ -2,6 +2,7 @@
 import { CookieBanner } from '../frontend/components/ui/CookieBanner';
 import PostHog from '../components/posthog.astro';
 import { getSentryRuntimeConfig } from '../sentry/env';
+import { paidAttributionEnabled } from '../backend/analytics/paid-attribution';
 
 export interface Props {
   title: string;
@@ -37,11 +38,12 @@ const robotsContent = noIndex || opsShell
   : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 // process.env lê em runtime da VPS — import.meta.env seria substituído em build-time pelo CI
 const ga4MeasurementId = process.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
+const paidAttribution = !opsShell && paidAttributionEnabled();
 const sentry = getSentryRuntimeConfig();
 ---
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-paid-attribution={paidAttribution ? '1' : '0'} data-ga4-id={ga4MeasurementId}>
   <head>
     <meta charset="UTF-8" />
     {sentry && <meta name="nm-sentry-dsn" content={sentry.dsn} />}
@@ -189,24 +191,83 @@ const sentry = getSentryRuntimeConfig();
           document.head.appendChild(script);
 
           window.gtag('js', new Date());
-          window.gtag('config', ga4MeasurementId, { 'anonymize_ip': true });
+          updateGaConsent();
+          const page = new URL(window.location.href);
+          const safeParams = new URLSearchParams();
+          if (nmLocalGet('nm-ad-measurement') === 'granted') {
+            for (const key of ['gclid', 'gbraid', 'wbraid', 'utm_id', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) {
+              const value = page.searchParams.get(key);
+              if (value && /^[a-zA-Z0-9_-]{1,256}$/.test(value)) safeParams.set(key, value);
+            }
+          }
+          page.pathname = page.pathname.replace(/^\/app\/resultado\/[^/]+(?:\/.*)?$/, '/app/resultado');
+          page.search = safeParams.toString();
+          page.hash = '';
+          window.gtag('config', ga4MeasurementId, {
+            anonymize_ip: true,
+            allow_google_signals: false,
+            allow_ad_personalization_signals: false,
+            page_location: page.toString(),
+            page_referrer: document.referrer ? new URL(document.referrer).origin : '',
+          });
         } catch {
           // Falha de storage nao deve quebrar a pagina.
         }
       }
 
+      function updateGaConsent() {
+        const analytics = nmLocalGet('nm-cookie-consent') === 'all';
+        const ads = analytics && nmLocalGet('nm-ad-measurement') === 'granted';
+        if (ga4MeasurementId) window['ga-disable-' + ga4MeasurementId] = !analytics;
+        window.gtag?.('consent', 'update', {
+          analytics_storage: analytics ? 'granted' : 'denied',
+          ad_storage: ads ? 'granted' : 'denied',
+          ad_user_data: ads ? 'granted' : 'denied',
+          ad_personalization: 'denied',
+        });
+      }
+
       loadGA4();
       window.addEventListener('consentGranted', loadGA4);
+      window.addEventListener('nm-cookie-preferences-changed', updateGaConsent);
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'nm-cookie-consent' || event.key === 'nm-ad-measurement') {
+          loadGA4();
+          updateGaConsent();
+        }
+      });
     </script>
     <PostHog />
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2915950435320918" crossorigin="anonymous"></script>
+    <!-- AdSense é independente da conversão Google Ads e exige permissão de anúncios. -->
+    <script is:inline>
+      function loadConsentedAdSense() {
+        try {
+          if (localStorage.getItem('nm-ad-measurement') !== 'granted' ||
+              document.getElementById('nm-adsense-script') ||
+              !['/', '/analise-gratuita', '/blog'].includes(location.pathname) ||
+              location.search || location.hash) return;
+          window.adsbygoogle = window.adsbygoogle || [];
+          window.adsbygoogle.requestNonPersonalizedAds = 1;
+          const script = document.createElement('script');
+          script.id = 'nm-adsense-script';
+          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2915950435320918';
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+        } catch {}
+      }
+      loadConsentedAdSense();
+      window.addEventListener('nm-cookie-preferences-changed', loadConsentedAdSense);
+    </script>
     </>
     )}
     <slot name="head" />
     <script>
       import { captureFirstTouchUtm } from '../frontend/lib/utm';
+      import { initializePaidAttribution } from '../frontend/lib/paid-attribution';
       captureFirstTouchUtm();
+      const { paidAttribution, ga4Id } = document.documentElement.dataset;
+      initializePaidAttribution(ga4Id ?? '', paidAttribution === '1');
     </script>
   </head>
   <body class:list={['bg-[#1a1a1a] text-gray-200 font-inter antialiased', opsShell ? 'overflow-hidden' : 'min-h-screen']}>
