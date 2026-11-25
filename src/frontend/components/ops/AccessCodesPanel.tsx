@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { opsFetch } from '../../ops/opsFetch';
 import {
   formatDateTime,
@@ -27,6 +27,8 @@ type AccessCode = {
   note: string | null;
   is_active: boolean;
   max_uses: number | null;
+  excluded_user_ids: string[];
+  new_customers_only: boolean;
   state: RegistryState;
   redemptions: number | null;
 };
@@ -36,6 +38,10 @@ type ListResponse = { access_codes: AccessCode[]; total: number; page: number; p
 type Filters = { q: string; kind: string; state: string };
 
 const EMPTY_FILTERS: Filters = { q: '', kind: '', state: '' };
+
+type EligibilityForm = { excludedUserIds: string; newCustomersOnly: boolean };
+
+const EMPTY_ELIGIBILITY: EligibilityForm = { excludedUserIds: '', newCustomersOnly: false };
 
 const EMPTY_FORM = {
   code: '',
@@ -47,7 +53,46 @@ const EMPTY_FORM = {
   expiresAt: '',
   note: '',
   maxUses: '',
+  eligibility: EMPTY_ELIGIBILITY,
 };
+
+function eligibilityBody(form: EligibilityForm) {
+  return {
+    excluded_user_ids: form.excludedUserIds.split(/[\s,]+/).filter(Boolean),
+    new_customers_only: form.newCustomersOnly,
+  };
+}
+
+function CouponEligibilityFields({ value, onChange }: {
+  value: EligibilityForm;
+  onChange: (value: EligibilityForm) => void;
+}) {
+  return (
+    <fieldset className="grid gap-3 md:col-span-2">
+      <legend className="mb-2 text-sm font-medium text-[#e5e2e1]">Elegibilidade do cupom</legend>
+      <label className="block text-sm text-[#e5e2e1]">
+        IDs de usuários excluídos (opcional)
+        <textarea
+          value={value.excludedUserIds}
+          onChange={(event) => onChange({ ...value, excludedUserIds: event.target.value })}
+          rows={2}
+          spellCheck={false}
+          placeholder="UUIDs separados por vírgula ou quebra de linha"
+          className={`${fieldClass} mt-2 w-full font-mono`}
+        />
+      </label>
+      <label className="flex min-h-11 items-center gap-2 text-sm text-[#e5e2e1]">
+        <input
+          type="checkbox"
+          checked={value.newCustomersOnly}
+          onChange={(event) => onChange({ ...value, newCustomersOnly: event.target.checked })}
+        />
+        Somente novos clientes
+      </label>
+      <p className="text-sm text-[#a0a0a0]">Uma assinatura anterior sem reembolso impede o uso, mesmo após expirar.</p>
+    </fieldset>
+  );
+}
 
 function usesLabel(row: AccessCode): string {
   const used = row.redemptions ?? 0;
@@ -70,6 +115,9 @@ export function AccessCodesPanel() {
   const [notice, setNotice] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [editing, setEditing] = useState<{ id: string; code: string; eligibility: EligibilityForm } | null>(null);
+  const editHeading = useRef<HTMLHeadingElement>(null);
+  const editingId = editing?.id;
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState('');
@@ -94,6 +142,10 @@ export function AccessCodesPanel() {
   useEffect(() => {
     void load(1, EMPTY_FILTERS);
   }, [load]);
+
+  useEffect(() => {
+    if (editingId) editHeading.current?.focus();
+  }, [editingId]);
 
   function onFilter(event: React.FormEvent) {
     event.preventDefault();
@@ -122,6 +174,7 @@ export function AccessCodesPanel() {
       }
       body.discount_type = form.discountType;
       body.discount_value = value;
+      Object.assign(body, eligibilityBody(form.eligibility));
     } else {
       const days = parseInt(form.trialDays, 10);
       if (!days || days < 1 || days > 365) {
@@ -164,6 +217,39 @@ export function AccessCodesPanel() {
     setFormOpen(false);
     setNotice(`Código ${response.data.access_code.code} criado.`);
     void load(1, applied);
+  }
+
+  function editEligibility(row: AccessCode) {
+    setFormOpen(false);
+    setFormError('');
+    setNotice('');
+    setEditing({
+      id: row.id,
+      code: row.code,
+      eligibility: {
+        excludedUserIds: row.excluded_user_ids.join('\n'),
+        newCustomersOnly: row.new_customers_only,
+      },
+    });
+  }
+
+  async function saveEligibility(event: React.FormEvent) {
+    event.preventDefault();
+    if (!editing) return;
+    setFormError('');
+    setSaving(true);
+    const response = await opsFetch<{ access_code: AccessCode }>(`/api/ops/access-codes/${editing.id}`, {
+      method: 'PATCH',
+      body: eligibilityBody(editing.eligibility),
+    });
+    setSaving(false);
+    if (!response.ok) {
+      setFormError(response.error);
+      return;
+    }
+    setEditing(null);
+    setNotice(`Elegibilidade do cupom ${editing.code} atualizada.`);
+    void load(page, applied);
   }
 
   async function toggle(row: AccessCode) {
@@ -229,7 +315,16 @@ export function AccessCodesPanel() {
           </label>
           <button type="submit" className={ghostButtonClass + ' py-2.5'}>Filtrar</button>
         </form>
-        <button type="button" onClick={() => setFormOpen((open) => !open)} className={primaryButtonClass}>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => {
+            setEditing(null);
+            setFormError('');
+            setFormOpen((open) => !open);
+          }}
+          className={primaryButtonClass}
+        >
           {formOpen ? 'Fechar' : 'Novo código'}
         </button>
       </div>
@@ -339,6 +434,13 @@ export function AccessCodesPanel() {
             />
           </label>
 
+          {form.kind === 'coupon' && (
+            <CouponEligibilityFields
+              value={form.eligibility}
+              onChange={(eligibility) => setForm({ ...form, eligibility })}
+            />
+          )}
+
           {formError && (
             <p className="rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300 md:col-span-2" role="alert">
               {formError}
@@ -348,6 +450,25 @@ export function AccessCodesPanel() {
           <div className="md:col-span-2">
             <button type="submit" disabled={saving} className={primaryButtonClass}>
               {saving ? 'Criando…' : 'Criar código'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {editing && (
+        <form onSubmit={saveEligibility} className="grid gap-5 rounded-2xl bg-[#1c1b1a] p-6">
+          <h3 ref={editHeading} tabIndex={-1} className="text-base text-[#e5e2e1]">Editar cupom {editing.code}</h3>
+          <CouponEligibilityFields
+            value={editing.eligibility}
+            onChange={(eligibility) => setEditing({ ...editing, eligibility })}
+          />
+          {formError && <p className="text-sm text-red-300" role="alert">{formError}</p>}
+          <div className="flex flex-wrap gap-3">
+            <button type="submit" disabled={saving} className={primaryButtonClass}>
+              {saving ? 'Salvando…' : 'Salvar elegibilidade'}
+            </button>
+            <button type="button" disabled={saving} onClick={() => setEditing(null)} className={ghostButtonClass}>
+              Cancelar
             </button>
           </div>
         </form>
@@ -385,13 +506,21 @@ export function AccessCodesPanel() {
                   {row.note && <p className="mt-1 max-w-[260px] truncate text-xs text-[#76746a]" title={row.note}>{row.note}</p>}
                 </td>
                 <td className="px-5 py-4 text-[#e5e2e1]">{KIND_LABELS[row.kind] ?? row.kind}</td>
-                <td className="px-5 py-4 text-[#e5e2e1]">{benefit(row)}</td>
+                <td className="px-5 py-4 text-[#e5e2e1]">
+                  {benefit(row)}
+                  {row.new_customers_only && <p className="mt-1 text-xs text-[#a0a0a0]">Somente novos clientes</p>}
+                </td>
                 <td className="px-5 py-4 text-[#76746a]">{row.expires_at ? formatDateTime(row.expires_at) : 'Sem validade'}</td>
                 <td className="px-5 py-4 text-[#76746a]">{usesLabel(row)}</td>
                 <td className="px-5 py-4">
                   <span className={`rounded-full px-3 py-1 text-xs ${STATE_CLASSES[row.state]}`}>{STATE_LABELS[row.state]}</span>
                 </td>
                 <td className="px-5 py-4 text-right">
+                  {row.kind === 'coupon' && (
+                    <button type="button" disabled={saving} onClick={() => editEligibility(row)} className={`${ghostButtonClass} mr-2`}>
+                      Editar elegibilidade
+                    </button>
+                  )}
                   <button type="button" disabled={busyId === row.id} onClick={() => void toggle(row)} className={ghostButtonClass}>
                     {row.is_active ? 'Desativar' : 'Reativar'}
                   </button>

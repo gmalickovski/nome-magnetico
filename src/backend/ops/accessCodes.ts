@@ -10,7 +10,7 @@ import {
 } from './registry';
 
 const COLUMNS =
-  'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, note, is_active, deactivated_at, created_at, max_uses, stripe_coupon_id, stripe_promo_code_id';
+  'id, code, kind, product_types, trial_days, discount_type, discount_value, expires_at, note, is_active, deactivated_at, created_at, max_uses, stripe_coupon_id, stripe_promo_code_id, excluded_user_ids, new_customers_only';
 
 export type AccessCodeKind = 'trial' | 'gift' | 'coupon';
 
@@ -30,6 +30,8 @@ export interface OpsAccessCodeRow {
   max_uses: number | null;
   stripe_coupon_id: string | null;
   stripe_promo_code_id: string | null;
+  excluded_user_ids: string[];
+  new_customers_only: boolean;
   state: RegistryState;
   /** Usos reais em `access_code_uses` (cupom, trial e presente). */
   redemptions: number | null;
@@ -53,7 +55,8 @@ async function redemptionCount(row: AccessCodeDbRow): Promise<number | null> {
   const { count, error } = await supabase
     .from('access_code_uses')
     .select('id', { count: 'exact', head: true })
-    .eq('code_id', row.id);
+    .eq('code_id', row.id)
+    .neq('source', 'reserved');
   if (!error) return count ?? 0;
 
   if (!isMissingTable(error) || row.kind === 'coupon') return null;
@@ -132,6 +135,8 @@ export interface CreateAccessCodeInput {
   expiresAt: string | null;
   note: string | null;
   maxUses: number | null;
+  excludedUserIds: string[];
+  newCustomersOnly: boolean;
   actorId: string;
 }
 
@@ -148,6 +153,8 @@ export async function createAccessCode(input: CreateAccessCodeInput): Promise<Op
       expires_at: input.expiresAt,
       note: input.note,
       max_uses: input.maxUses,
+      excluded_user_ids: input.excludedUserIds,
+      new_customers_only: input.newCustomersOnly,
       created_by: input.actorId,
     })
     .select(COLUMNS)
@@ -182,6 +189,28 @@ export async function setAccessCodeActive(
   if (!data) throw new OpsRegistryError(404, 'Código não encontrado');
 
   console.info('[ops/access-codes] set-active', { actorId, accessCodeId: id, isActive });
+  const row = data as AccessCodeDbRow;
+  return toRow(row, await redemptionCount(row));
+}
+
+export async function setCouponEligibility(
+  id: string,
+  eligibility: Pick<OpsAccessCodeRow, 'excluded_user_ids' | 'new_customers_only'>,
+  actorId: string,
+): Promise<OpsAccessCodeRow> {
+  const { data, error } = await supabase
+    .from('access_codes')
+    .update({ ...eligibility, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('kind', 'coupon')
+    .select(COLUMNS)
+    .maybeSingle();
+
+  assertRegistryReady(error);
+  if (error) throw error;
+  if (!data) throw new OpsRegistryError(404, 'Cupom não encontrado');
+
+  console.info('[ops/access-codes] set-eligibility', { actorId, accessCodeId: id });
   const row = data as AccessCodeDbRow;
   return toRow(row, await redemptionCount(row));
 }

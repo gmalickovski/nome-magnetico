@@ -35,7 +35,7 @@ const steps = [
   {
     stepNumber: '04',
     title: 'Baixe o Seu PDF',
-    body: 'Receba o PDF com os 5 números, o triângulo da Vida e a leitura dos outros 3 triângulos.',
+    body: 'Receba o PDF com os 5 números, o Triângulo da Vida e o arquétipo do nome.',
     Figure: DownloadFigure,
   },
 ] as const;

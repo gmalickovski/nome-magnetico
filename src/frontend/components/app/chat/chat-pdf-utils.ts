@@ -22,12 +22,9 @@ export interface BuildNomeSocialCheckoutHrefOptions {
 }
 
 export function buildNomeSocialCheckoutHref(options?: BuildNomeSocialCheckoutHrefOptions): string {
-  const campaign: ChatCheckoutSource = options?.campaign ?? 'card_pdf';
   const params = new URLSearchParams({
     produto: 'nome_social',
-    utm_source: 'app_chat',
-    utm_campaign: campaign,
-    source: campaign,
+    source: options?.campaign ?? 'card_pdf',
   });
   const chosen = options?.chosenSignature?.trim();
   if (chosen) {

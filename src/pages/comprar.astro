@@ -6,6 +6,7 @@ import { createUserClient } from '../backend/db/supabase';
 import type { PriceInfo, ActivePromotion } from '../backend/payments/prices';
 import { applyPricingPageCache, loadPagePricing } from '../backend/pricing/astro-pricing';
 import { AVISO_AUTOCONHECIMENTO } from '../shared/legal';
+import { readLinkedCoupon, withLinkedCoupon } from '../shared/checkout-coupon-link';
 
 applyPricingPageCache(Astro);
 
@@ -24,9 +25,17 @@ if (user) {
 const produto = Astro.url.searchParams.get('produto') ?? '';
 const autoOpenCheckout = Astro.url.searchParams.get('checkout') === '1';
 const productType = 'nome_social' as const;
+const checkoutPath = withLinkedCoupon(`/comprar?produto=${productType}&checkout=1`, Astro.url.searchParams);
+const linkedCoupon = readLinkedCoupon(Astro.url.searchParams);
+if (linkedCoupon) Astro.response.headers.set('Cache-Control', 'private, no-store');
 
 // Não-logados com produto explícito → enviar para cadastro/login
 if (!user && produto === productType) {
+  if (linkedCoupon) {
+    const redirect = Astro.redirect(`/auth/cadastro?redirect=${encodeURIComponent(checkoutPath)}`);
+    redirect.headers.set('Cache-Control', 'private, no-store');
+    return redirect;
+  }
   return Astro.redirect(`/auth/cadastro?produto=${productType}`);
 }
 
@@ -47,7 +56,9 @@ try {
 }
 
 const paymentLinks = {
-  nome_social: '/auth/login?redirect=/comprar?produto=nome_social',
+  nome_social: linkedCoupon
+    ? `/auth/login?redirect=${encodeURIComponent(checkoutPath)}`
+    : '/auth/login?redirect=/comprar?produto=nome_social',
 };
 // BreadcrumbList para /comprar — melhora navegação no Google e AI Overviews
 const schemaBreadcrumb = {
@@ -71,8 +82,8 @@ const schemaBreadcrumb = {
 ---
 
 <BaseLayout
-  title="Planos de Análise Numerológica — Nome Magnético"
-  description="Harmonize sua assinatura a partir do nome de nascimento com o Nome Social. Pagamento único, acesso imediato por 30 dias, PDF para download e garantia de 7 dias."
+  title="Comprar o Nome Magnético: Acesso Imediato"
+  description="Um pagamento único libera 30 dias de acesso ao chat com três caminhos: harmonizar seu nome, criar um nome artístico ou escolher o nome do bebê. Garantia de 7 dias."
   keywords="comprar numerologia cabalística, planos numerologia, preço mapa numerológico, análise nome cabalística preço, numerologia nome completo comprar, mapa numerológico online, análise bloqueios energéticos nome"
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaBreadcrumb)} />
@@ -85,6 +96,7 @@ const schemaBreadcrumb = {
     hqPrices={hqPrices}
     promotion={promotion}
     autoOpenCheckout={autoOpenCheckout}
+    checkoutPath={checkoutPath}
     autoconhecimentoAviso={AVISO_AUTOCONHECIMENTO}
   />
 </BaseLayout>
