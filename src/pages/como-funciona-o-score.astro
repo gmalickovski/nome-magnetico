@@ -4,6 +4,7 @@ import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { SCORE_CONFIG_V3 } from '../backend/numerology/score-config';
 import { AVISO_AUTOCONHECIMENTO } from '../shared/legal';
+import { LetterNumberExample } from '../frontend/components/landing/LetterNumberExample';
 
 const cfg = SCORE_CONFIG_V3;
 
@@ -171,6 +172,7 @@ const CAMINHOS = [
             </div>
             <p class="nm-caption text-center mt-3">Crases e tremas dobram o valor da letra; o apóstrofo soma 2 à letra anterior.</p>
           </div>
+          <LetterNumberExample client:visible />
         </section>
 
         {/* 1. Visão Geral */}
@@ -194,7 +196,7 @@ const CAMINHOS = [
             <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Triângulo da Vida e Leituras Complementares</h2>
           </div>
           <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
-            O cálculo principal é o <strong>Triângulo da Vida</strong>, a pirâmide formada pelas letras do nome. É ele que entra na nota e na regra das sugestões, e é ele que você vê na tela do seu resumo. Os triângulos <strong>Pessoal</strong>, <strong>Social</strong> e do <strong>Destino</strong> aparecem no seu PDF como leitura complementar, uma informação extra.
+            O cálculo principal é o <strong>Triângulo da Vida</strong>, a pirâmide formada pelas letras do nome. É ele que entra na nota e na regra das sugestões, e é ele que você vê na tela do seu resumo. Os triângulos <strong>Pessoal</strong>, <strong>Social</strong> e do <strong>Destino</strong> aparecem no seu PDF como leitura complementar, uma informação extra. Eles também alimentam duas pontas do Mapa de Alinhamento (o Social, o Magnetismo Social; o Pessoal, o Equilíbrio da Alma), que não muda a nota.
           </p>
           <ul class="space-y-3 text-sm text-gray-300 leading-relaxed pl-3 sm:pl-4 border-l border-[#f2ca50]/20">
             <li>
