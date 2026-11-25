@@ -3,7 +3,13 @@
  * Ponto central de entrada para análises de IA.
  */
 
-import { LoopGuard, logAIUsage } from './loop-guard';
+import { LoopGuard, getUserTokensToday, logAIUsage } from './loop-guard';
+import {
+  encontrarCopyProibida,
+  filtrarCandidatasOfertaveis,
+  removerFrasesProibidas,
+  validarNomesSugeridos,
+} from './output-guard';
 import { callAI, streamAI, getActiveProvider } from './router';
 import { SYSTEM_KABBALISTIC } from './prompts/system-kabbalistic';
 import { buildAnalysisPrompt, type AnalysisPromptParams } from './prompts/analysis-prompt';
@@ -12,6 +18,11 @@ import { buildGuidePrompt, type GuidePromptParams } from './prompts/guide-prompt
 import { buildBabyAnalysisPrompt, type BabyPromptParams } from './prompts/baby-prompt';
 import { buildCompanyAnalysisPrompt, type CompanyPromptParams } from './prompts/company-prompt';
 import { buildSocialAnalysisPrompt, type SocialPromptParams } from './prompts/social-prompt';
+import {
+  SYSTEM_ARTISTIC_NAMES,
+  buildArtisticNamesPrompt,
+  type ArtisticNamesPromptParams,
+} from './prompts/artistic-prompt';
 import { getModel, type AITask } from './config/models';
 import { getArquetipo } from '../numerology/archetypes';
 import { calcularTodosTriangulos, detectarBloqueios } from '../numerology/triangle';
@@ -23,13 +34,78 @@ import { logError } from '../utils/error-logger';
 // HELPER INTERNO
 // ================================================================
 
+/** A saída da IA foi recusada pelas regras do produto: a tentativa é refeita. */
+export class OutputRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OutputRejectedError';
+  }
+}
+
+/** Teto de tokens por usuário em 24h (soma de `ai_usage`). `0` desliga. */
+const DEFAULT_MAX_TOKENS_PER_USER_DAY = 500_000;
+
+function readMaxTokensPerUserDay(): number {
+  const raw = process.env.AI_MAX_TOKENS_PER_USER_DAY?.trim();
+  if (!raw) return DEFAULT_MAX_TOKENS_PER_USER_DAY;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : DEFAULT_MAX_TOKENS_PER_USER_DAY;
+}
+
+/**
+ * DEV-304: o LoopGuard limita tentativas e tokens de UMA chamada. O teto diário por usuário
+ * (`getUserTokensToday`) existia e nunca era usado. Falha aberta se o banco não responder.
+ */
+async function assertUserWithinTokenCap(
+  userId: string | null,
+  task: AITask,
+  analysisId: string | null
+): Promise<void> {
+  if (!userId) return;
+  const cap = readMaxTokensPerUserDay();
+  if (cap <= 0) return;
+  const usados = await getUserTokensToday(userId);
+  if (usados < cap) return;
+  await logError({
+    type: 'ai_loop',
+    severity: 'warning',
+    userId,
+    analysisId,
+    message: `${task}: limite diário de tokens de IA do usuário atingido`,
+    details: { task, tokensUsados24h: usados, teto: cap },
+  });
+  throw new Error('USER_TOKEN_LIMIT');
+}
+
+/**
+ * Vocabulário proibido (radiestesia, "incompatível", prazo de entrega, preço): refaz a tentativa.
+ * Na última, remove só as frases problemáticas em vez de perder a análise inteira.
+ */
+function validarCopyDaIA(content: string, attempt: number): string {
+  const achadas = encontrarCopyProibida(content);
+  if (achadas.length === 0) return content;
+  if (attempt >= 3) {
+    console.warn(`[Brain] Copy proibida (${achadas.join(', ')}) removida na última tentativa`);
+    return removerFrasesProibidas(content);
+  }
+  throw new OutputRejectedError(`copy proibida: ${achadas.join(', ')}`);
+}
+
+type OutputValidator = (content: string, attempt: number) => string;
+
 async function runWithGuard(
   buildPrompt: () => string,
   task: AITask,
   userId: string | null,
   analysisId: string | null,
-  systemPromptOverride?: string
+  systemPromptOverride?: string,
+  validateOutput?: OutputValidator
 ): Promise<string> {
+  // Textos para o cliente passam pela guarda de vocabulário; o polimento de suporte é texto do agente.
+  const validate: OutputValidator | undefined =
+    validateOutput ?? (task === 'support_polish' ? undefined : validarCopyDaIA);
+  await assertUserWithinTokenCap(userId, task, analysisId);
+
   const guard = new LoopGuard();
   const provider = await getActiveProvider(task);
   const model = getModel(provider, task);
@@ -56,7 +132,7 @@ async function runWithGuard(
         similarToPrevious: false,
       });
 
-      return response.content;
+      return validate ? validate(response.content, attempt) : response.content;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const status = (err as { status?: number; response?: { status?: number } } | null)?.status
@@ -100,8 +176,13 @@ async function runWithGuard(
             attemptNumber: attempt,
             similarToPrevious: false,
           });
-          return fallback.content;
+          return validate ? validate(fallback.content, attempt) : fallback.content;
         } catch (fallbackErr) {
+          // Saída recusada pelas regras do produto: refaz a tentativa em vez de falhar o provider.
+          if (fallbackErr instanceof OutputRejectedError) {
+            console.warn(`[Brain] Tentativa ${attempt} recusada: ${fallbackErr.message}`);
+            continue;
+          }
           const fallbackMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
           console.error(`[Brain] Fallback OpenAI também falhou: ${fallbackMsg.slice(0, 200)}`);
           // Mantém QUOTA_EXCEEDED para rate-limit; demais casos preservam contexto.
@@ -203,9 +284,38 @@ export async function* streamAnalysis(
 export async function generateSuggestions(
   params: SuggestionsPromptParams,
   userId: string | null,
-  analysisId: string | null
+  analysisId: string | null,
+  opcoes?: { scoreNascimento?: number }
 ): Promise<string> {
-  return runWithGuard(() => buildSuggestionsPrompt(params), 'suggestions', userId, analysisId);
+  // DEV-304: a IA só vê candidatas que o motor poderia oferecer (zero bloqueio e nota mínima)...
+  const candidatas =
+    opcoes?.scoreNascimento === undefined
+      ? params.variacoesCandidatas.filter((c) => !c.temBloqueio)
+      : filtrarCandidatasOfertaveis(params.variacoesCandidatas, opcoes.scoreNascimento);
+  if (candidatas.length === 0) throw new Error('NO_OFFERABLE_CANDIDATES');
+
+  const paramsOfertaveis = { ...params, variacoesCandidatas: candidatas };
+  // ...e só pode apresentar os nomes que recebeu (o prompt usa as 8 primeiras).
+  const permitidos = candidatas.slice(0, 8).map((c) => c.nome);
+
+  return runWithGuard(
+    () => buildSuggestionsPrompt(paramsOfertaveis),
+    'suggestions',
+    userId,
+    analysisId,
+    undefined,
+    (content, attempt) => {
+      const nomes = validarNomesSugeridos(content, permitidos);
+      if (!nomes.ok || nomes.apresentados === 0) {
+        throw new OutputRejectedError(
+          nomes.apresentados === 0
+            ? 'nenhum nome apresentado no formato esperado'
+            : `nomes fora da lista oferecida: ${nomes.invalidos.join(', ')}`
+        );
+      }
+      return validarCopyDaIA(content, attempt);
+    }
+  );
 }
 
 /**
@@ -351,4 +461,48 @@ export async function generateSupportPolish(
 ): Promise<string> {
   const userPrompt = `Nome do cliente: ${nomeCliente}\n\nTexto do agente para polir:\n\n${mensagem}`;
   return runWithGuard(() => userPrompt, 'support_polish', null, null, SYSTEM_SUPPORT_POLISH);
+}
+
+// ================================================================
+// NOME ARTÍSTICO (DEV-321)
+// ================================================================
+
+/**
+ * Ideias de nome artístico totalmente novo. A IA só sugere; o motor
+ * (`products/nome-artistico`) valida cada ideia pelo cálculo cabalístico.
+ * Sempre pelo LoopGuard. Se a IA falhar, quem chama usa o banco determinístico.
+ */
+export async function generateArtisticNameIdeas(
+  params: ArtisticNamesPromptParams,
+  userId: string | null,
+  analysisId: string | null
+): Promise<string[]> {
+  const bruto = await runWithGuard(
+    () => buildArtisticNamesPrompt(params),
+    'artistic_names',
+    userId,
+    analysisId,
+    SYSTEM_ARTISTIC_NAMES,
+    (content) => {
+      const nomes = extrairNomesJson(content);
+      if (nomes.length === 0) throw new OutputRejectedError('nenhuma ideia de nome no formato JSON esperado');
+      return content;
+    }
+  );
+  return extrairNomesJson(bruto);
+}
+
+/** Lê `{"nomes": [...]}` mesmo quando a IA envolve o JSON em cerca de código ou texto. */
+export function extrairNomesJson(content: string): string[] {
+  const inicio = content.indexOf('{');
+  const fim = content.lastIndexOf('}');
+  if (inicio < 0 || fim <= inicio) return [];
+  try {
+    const dados = JSON.parse(content.slice(inicio, fim + 1)) as { nomes?: unknown };
+    return Array.isArray(dados.nomes)
+      ? dados.nomes.filter((n): n is string => typeof n === 'string').slice(0, 20)
+      : [];
+  } catch {
+    return [];
+  }
 }

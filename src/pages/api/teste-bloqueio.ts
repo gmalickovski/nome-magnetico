@@ -1,3 +1,4 @@
+import { buildFreeAnalysisPreview } from '../../backend/public-free-analysis/preview';
 import type { APIRoute } from 'astro';
 import { supabase } from '../../backend/db/supabase';
 import { notify } from '../../backend/notifications/notify';
@@ -75,6 +76,16 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       createdAt: new Date().toISOString(),
     });
     const { record: analysisObj, scoreLegado, score, avaliacaoV3 } = built;
+    // DEV-314: a nota máxima do pop-up vem da mesma função do CTA do PDF (nunca um número inventado).
+    const preview = buildFreeAnalysisPreview({
+      firstName: nome_completo.trim().split(/\s+/)[0] || nome_completo.trim(),
+      nomeCompleto: nome_completo,
+      dataNascimentoPt: data_nascimento,
+      score: avaliacaoV3.score_v3,
+      nivelCodigo: avaliacaoV3.nivel.codigo,
+      nivelRotulo: avaliacaoV3.nivel.rotulo,
+      marcaDaDataPresente: avaliacaoV3.marcaDaData.length > 0,
+    });
 
     const cookieDistinctId = readPostHogDistinctIdFromCookie(
       request.headers.get('cookie'),
@@ -90,7 +101,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         analise_id: lead.id,
         score_v3: avaliacaoV3.score_v3,
         nivel: avaliacaoV3.nivel.codigo,
-        potencial: avaliacaoV3.potencial,
+        potencial_max: preview.potencialMax,
         marca_da_data_count: avaliacaoV3.marcaDaData.length,
         opt_in: Boolean(opt_in),
         utm_source: utm_source ?? null,
@@ -159,7 +170,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             concluidaEm: completedAt,
             analiseId: lead.id,
             score,
-            potencial: avaliacaoV3.potencial,
+            potencial: preview.potencialMax,
             optIn: marketingConsent.optIn,
             optInEm: marketingConsent.optInEm,
             utmSource: utm_source,
@@ -189,19 +200,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       }
     })();
 
-    const firstName = nome_completo.trim().split(/\s+/)[0] || nome_completo.trim();
     return json(
       {
         success: true,
         leadId: lead.id,
-        preview: {
-          firstName,
-          score: avaliacaoV3.score_v3,
-          nivelCodigo: avaliacaoV3.nivel.codigo,
-          nivelRotulo: avaliacaoV3.nivel.rotulo,
-          potencial: avaliacaoV3.potencial ?? 92,
-          marcaDaDataPresente: avaliacaoV3.marcaDaData.length > 0,
-        },
+        preview,
       },
       200,
     );

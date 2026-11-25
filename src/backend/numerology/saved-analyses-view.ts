@@ -176,7 +176,29 @@ function buildCandidatesList(ranking: any, isEmpresa: boolean): SavedAnalysisCan
   }));
 }
 
+/** DEV-317: tag do card. Nome de nascimento, sugestão do sistema ou nome testado pela pessoa. */
+export function resolverOrigemNome(
+  isFreeRow: boolean,
+  productType: string,
+  nomeExibido: string,
+  birthName: string | null,
+  rankingSocial: any,
+): 'nascimento' | 'sistema' | 'teste' | undefined {
+  if (isFreeRow) return 'nascimento';
+  if (productType !== 'nome_social') return undefined;
+  const chave = (t: string) => t.trim().toLowerCase();
+  if (birthName && chave(birthName) === chave(nomeExibido)) return 'nascimento';
+  const candidatos: any[] = Array.isArray(rankingSocial?.nomesCandidatos) ? rankingSocial.nomesCandidatos : [];
+  const achado = candidatos.find((c) => typeof c?.nomeCompleto === 'string' && chave(c.nomeCompleto) === chave(nomeExibido));
+  // Só o campo de testar nome ("Suas sugestões") grava origem 'manual'. Os nomes escolhidos entre as sugestões chegam ao
+  // analyze como lista do usuário (origemSugerida 'usuario'), mas foram gerados pelo sistema.
+  if (achado?.origem === 'manual') return 'teste';
+  return 'sistema';
+}
+
 export interface BuildSavedAnalysesOptions {
+  /** Resolve a birth card linked from the dashboard using an owned source row. */
+  preferredBirthSourceAnalysisId?: string | null;
   isAdmin: boolean;
   profileBirthName?: string | null;
   profileBirthDate?: string | null;
@@ -264,6 +286,7 @@ function buildSynthesizedBirthAnalysisItem(params: {
     canFavorite: false,
     canDelete: false,
     isAnalystGenerated: false,
+    origemNome: 'nascimento',
     recalculatedFromVersion: null,
     parentAnalysisId: null,
     errorMessage: null,
@@ -293,10 +316,16 @@ export function buildSavedAnalysesItems(
   analyses: Analysis[],
   options: BuildSavedAnalysesOptions,
 ): SavedAnalysisItem[] {
+  // DEV-317: o card de nascimento segue o nome salvo no perfil. Se a pessoa corrigiu o nome,
+  // a análise grátis feita com o nome antigo sai da lista (continua no banco) e o card é refeito.
+  const nomePerfil = options.profileBirthName?.trim().toLowerCase() || null;
   const visibleAnalyses = analyses
     .filter((a) => {
       const isFreeRow = a.product_type === 'analise_gratuita' || a.is_free;
-      if (isFreeRow) return a.status === 'complete';
+      if (isFreeRow) {
+        if (a.status !== 'complete') return false;
+        return !nomePerfil || (a.nome_completo ?? '').trim().toLowerCase() === nomePerfil;
+      }
       return true;
     })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -579,8 +608,10 @@ export function buildSavedAnalysesItems(
       isFavorite,
       canFavorite:
         a.status === 'complete' && productType !== 'analise_gratuita' && !a.is_free,
-      canDelete: !a.is_free || options.isAdmin,
+      // DEV-317: o nome de nascimento não se exclui (é a base das notas); só se edita nos dados da conta.
+      canDelete: !isFreeRow,
       isAnalystGenerated: Boolean(a.is_analyst_generated),
+      origemNome: resolverOrigemNome(isFreeRow, productType, nomeExibido, birthName, rankingSocial),
       recalculatedFromVersion: a.recalculated_from_version ?? null,
       parentAnalysisId: a.parent_analysis_id ?? null,
       errorMessage: a.error_message ?? null,
@@ -596,6 +627,7 @@ export function buildSavedAnalysesItems(
 
   if (!hasCompletedFreeBirthRow) {
     const sourceSocial =
+      items.find(item => item.id === options.preferredBirthSourceAnalysisId && item.productType === 'nome_social' && item.status === 'complete' && Boolean(item.birthName?.trim())) ??
       items.find(
         (item) =>
           item.productType === 'nome_social' &&

@@ -1,4 +1,7 @@
 ---
-import OpsStub from '../../layouts/OpsStub.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { SupportInbox } from '../../frontend/components/ops/SupportInbox';
 ---
-<OpsStub title="Suporte" />
+<AdminLayout title="Suporte">
+  <SupportInbox client:load />
+</AdminLayout>

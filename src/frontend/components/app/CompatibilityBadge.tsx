@@ -33,7 +33,7 @@ const CONFIG: Record<Compat, CompatConfig> = {
     className: 'bg-red-500/15 text-red-400 border border-red-500/30',
     title: 'Tensão Vibracional',
     description:
-      'A relação vibracional entre Expressão e Destino é conflitante, gerando resistência ou bloqueios na manifestação dos seus talentos. Gera um desconto de 15 pontos no score.',
+      'A relação vibracional entre Expressão e Destino é conflitante, gerando resistência ou bloqueios na manifestação dos seus talentos. Gera um desconto de 18 pontos na nota.',
   },
 };
 

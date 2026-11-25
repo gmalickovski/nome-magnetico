@@ -30,7 +30,8 @@ describe('ChatPdfCta / useChatPdfCta', () => {
     assert.match(ctaSrc, /ChatPdfConcludeModal/);
     assert.match(ctaSrc, /onStickyClick[\s\S]*?openConcludeModal\(\)/);
     assert.match(ctaSrc, /onDockClick[\s\S]*?openConcludeModal\(\)/);
-    assert.match(ctaSrc, /runPaidPdf[\s\S]*?input\.onPdfSuccess\?\.\([\s\S]*?redirectToDashboard\(analysisId,\s*300\)/);
+    assert.doesNotMatch(ctaSrc, /redirectToDashboard\(analysisId,\s*300\)/);
+    assert.match(ctaSrc, /readyDownload=/);
     assert.match(ctaSrc, /runSaveOnly[\s\S]*?waitAnalysisCompleteForPdf[\s\S]*?redirectToDashboard\(analysisId\)/);
     assert.match(ctaSrc, /window\.location\.href\s*=\s*'\/app'/);
 
@@ -41,7 +42,7 @@ describe('ChatPdfCta / useChatPdfCta', () => {
     assert.match(modalSrc, /closeLabel="Cancelar"/);
     assert.match(modalSrc, /closeDisabled=\{isBusy\}/);
     assert.match(modalSrc, /variant="primary"[\s\S]*?Salvar e baixar PDF/);
-    assert.match(modalSrc, /Guarda em Minhas análises, inicia o download e volta ao início\./);
+    assert.match(modalSrc, /Guarda em Minhas análises e prepara o download\./);
     assert.match(modalSrc, /variant="secondary-gold"[\s\S]*?Salvar/);
     assert.match(modalSrc, /Guarda em Minhas análises e volta ao início\./);
     assert.match(modalSrc, /Você também poderá baixar o PDF depois em Minhas análises\./);

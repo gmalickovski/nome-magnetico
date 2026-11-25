@@ -1,4 +1,5 @@
-import React, { type ReactNode } from 'react';
+import React, { useEffect, type ReactNode } from 'react';
+import { CHAT_SESSION_CHANGED_EVENT, syncAnaliseCtaLabels } from './chat/chat-session-storage.js';
 import AvatarMenu from './AvatarMenu.js';
 import { useDesktopHeaderSnapshot } from '../../lib/desktop-header-store.js';
 import { getScoreTierVisual } from '../landing/ProductResultFrame.js';
@@ -11,6 +12,16 @@ export interface AppDesktopHeaderProps {
 }
 
 export function AppDesktopHeader({ nome, isAdmin, logoAlignLeft = false, children }: AppDesktopHeaderProps) {
+  useEffect(() => {
+    const sync = () => syncAnaliseCtaLabels();
+    sync();
+    window.addEventListener(CHAT_SESSION_CHANGED_EVENT, sync);
+    document.addEventListener('astro:page-load', sync);
+    return () => {
+      window.removeEventListener(CHAT_SESSION_CHANGED_EVENT, sync);
+      document.removeEventListener('astro:page-load', sync);
+    };
+  }, []);
   const snapshot = useDesktopHeaderSnapshot();
   const hasProgress = Boolean(snapshot.progress);
   const isLogoLeft = Boolean(logoAlignLeft || hasProgress);

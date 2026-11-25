@@ -11,6 +11,10 @@ import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { buildBirthNamePanel } from '../../backend/numerology/birth-name-panel';
 import { buildChatReadingSummary } from '../../backend/numerology/chat-reading-summary';
 import { InteractiveDecisionEngine } from '../../shared/interactive-engine/engine';
+import { LoopGuard, logAIUsage } from '../../backend/ai/loop-guard';
+import { getClientIp, hashClientIp } from '../../backend/security/apiRateLimit';
+import { sanitizeOutroText } from '../../shared/interactive-engine/questionnaire-adaptive';
+import { isFluxoMotivoAtivo } from '../../backend/env/chat-flags';
 import { determineNextStep } from '../../shared/interactive-engine/router';
 import { buildProfilePalpiteText } from '../../shared/interactive-engine/chat-profile-copy';
 import { computeRadarAxes } from '../../shared/interactive-engine/radar-axes';
@@ -95,6 +99,32 @@ const decideLiveSchema = z.object({
   abertura_mudanca: z.string().max(40).optional(),
   nome_artistico: z.string().max(80).optional(),
   contexto_leitura: z.array(z.string().max(120)).max(20).optional(),
+  // DEV-303: perguntas novas do questionário
+  preferencias_assinatura: z
+    .array(z.enum(['manter_primeiro_nome', 'sem_acento', 'tanto_faz']))
+    .max(3)
+    .optional(),
+  prioridade_conflito: z.enum(['nota_mais_alta', 'mudar_o_minimo']).optional(),
+  area_foco_outro: z.string().max(60).optional(),
+  // DEV-320: motivo, ramo artístico e outros usos
+  motivo_harmonizacao: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco', 'bebe']).optional(),
+  area_artistica: z
+    .enum(['cantor', 'ator', 'personagem', 'criador_conteudo', 'escritor', 'dj_produtor', 'outra'])
+    .optional(),
+  area_artistica_outro: z.string().max(60).optional(),
+  detalhe_artistico: z.array(z.string().max(40)).max(2).optional(),
+  genero_persona: z.enum(['feminino', 'masculino', 'neutro']).optional(),
+  imagem_artistica: z
+    .array(z.enum(['marcante', 'sofisticada', 'divertida', 'misteriosa', 'popular']))
+    .max(2)
+    .optional(),
+  tipo_nome_artistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
+  outros_usos: z
+    .array(
+      z.enum(['empresa_cnpj', 'contratos', 'redes_sociais', 'registro_marca', 'documentos', 'nenhum_outro'])
+    )
+    .max(6)
+    .optional(),
 });
 
 function normalizeDateToPtBr(raw: string): string | null {
@@ -141,7 +171,7 @@ function buildPanelData(nome: string, dataPtBr: string, baseDestino: number): Re
   };
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   let rawBody: unknown;
   try {
     rawBody = await request.json();
@@ -180,7 +210,21 @@ export const POST: APIRoute = async ({ request }) => {
     abertura_mudanca,
     nome_artistico,
     contexto_leitura,
+    preferencias_assinatura,
+    prioridade_conflito,
+    area_foco_outro,
+    motivo_harmonizacao,
+    area_artistica,
+    area_artistica_outro,
+    detalhe_artistico,
+    genero_persona,
+    imagem_artistica,
+    tipo_nome_artistico,
+    outros_usos,
   } = parsed.data;
+  const fluxoMotivoAtivo = isFluxoMotivoAtivo();
+  // Com o fluxo desligado, o motivo é ignorado (roteiro e motor da DEV-303).
+  const motivo = fluxoMotivoAtivo ? motivo_harmonizacao ?? null : null;
 
   const dataPtBr = normalizeDateToPtBr(data_nascimento);
   if (!dataPtBr) {
@@ -209,6 +253,17 @@ export const POST: APIRoute = async ({ request }) => {
       aberturaMudanca: abertura_mudanca ?? null,
       nomeArtistico: nome_artistico ?? null,
       contextoLeituraOutros: contexto_leitura ?? [],
+      preferenciasAssinatura: preferencias_assinatura ?? [],
+      prioridadeConflito: prioridade_conflito ?? null,
+      areaFocoOutro: area_foco_outro ? sanitizeOutroText(area_foco_outro) || null : null,
+      motivoHarmonizacao: motivo,
+      areaArtistica: area_artistica ?? null,
+      areaArtisticaOutro: area_artistica_outro ? sanitizeOutroText(area_artistica_outro) || null : null,
+      detalheArtistico: detalhe_artistico ?? [],
+      generoPersona: genero_persona ?? null,
+      imagemArtistica: imagem_artistica ?? [],
+      tipoNomeArtistico: tipo_nome_artistico ?? null,
+      outrosUsos: outros_usos ?? [],
     };
 
     const rankingOpcoes = profileToRankingOpcoes(questionnaireProfile, {
@@ -242,14 +297,33 @@ export const POST: APIRoute = async ({ request }) => {
       areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? null,
       subfocoDecidido: Boolean(subfocos_ordenados?.length),
       aberturaMudanca: abertura_mudanca ?? null,
+      ondeAssinaRaw: onde_assina_raw ?? [],
+      preferenciasDecididas: Boolean(preferencias_assinatura?.length),
+      prioridadeConflito: prioridade_conflito ?? null,
+      fluxoMotivoAtivo,
+      motivoHarmonizacao: motivo,
+      areaArtistica: area_artistica ?? null,
+      detalheArtisticoDecidido: Boolean(detalhe_artistico?.length),
+      generoPersona: genero_persona ?? null,
+      imagemArtisticaDecidida: Boolean(imagem_artistica?.length),
+      tipoNomeArtistico: tipo_nome_artistico ?? null,
+      outrosUsosDecididos: Boolean(outros_usos?.length),
       palpiteStatus: palpite_status ?? null,
       estiloPreferido: estilo_preferido ?? null,
       detalheInformado: objetivo_texto,
     });
 
+    // DEV-303: teto de custo por visitante/usuário, guarda de tentativas e registro de uso.
+    // Chave sem IP puro: `u:<usuário>` ou `ip:<hash>`.
+    const userId = locals.user?.id;
+    const budgetKey = userId
+      ? `u:${userId}`
+      : `ip:${hashClientIp(getClientIp(request, clientAddress))}`;
+
     // Motor JEV
     const engine = new InteractiveDecisionEngine('nome-magnetico');
-    const decision = await engine.evaluate({
+    const decision = await engine.evaluate(
+      {
       nome_completo: nomeLimpo,
       numero_destino: destino,
       nota_hoje: notaHoje,
@@ -260,16 +334,50 @@ export const POST: APIRoute = async ({ request }) => {
       onde_assina_chips: onde_assina,
       estilo_preferido_chip: estilo_preferido,
       subfoco_momento_chip: subfoco_momento,
-    });
+      },
+      {
+        budgetKey,
+        guard: new LoopGuard(),
+        onUsage: (usage) => {
+          void logAIUsage({
+            userId: userId ?? null,
+            analysisId: null,
+            provider: usage.provider,
+            model: usage.model,
+            task: 'jev-decision',
+            tokensInput: usage.tokensInput,
+            tokensOutput: usage.tokensOutput,
+            attemptNumber: usage.attemptNumber,
+            similarToPrevious: false,
+          });
+        },
+      },
+    );
 
     // Palpite de perfil: só no passo palpite, sem números (copy a partir das respostas)
     let reading = '';
     if (routerDecision.nextStep === 'palpite') {
       reading = buildProfilePalpiteText({
         nomeCompleto: nomeLimpo,
-        areaFoco: (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
+        areaFoco:
+          motivo === 'artistico'
+            ? null
+            : (area_foco_chip as AreaFocoNomeMagnetico) ?? decision.areaFoco,
         subfocoMomento: subfoco_momento ?? decision.subfocoMomento,
         ondeAssina: onde_assina ?? [],
+        artistico:
+          motivo === 'artistico'
+            ? {
+                areaArtistica: area_artistica ?? null,
+                areaArtisticaOutro: area_artistica_outro
+                  ? sanitizeOutroText(area_artistica_outro) || null
+                  : null,
+                detalheArtistico: detalhe_artistico ?? [],
+                generoPersona: genero_persona ?? null,
+                imagemArtistica: imagem_artistica ?? [],
+                tipoNomeArtistico: tipo_nome_artistico ?? null,
+              }
+            : undefined,
         sobrenomesObrigatorios: sobrenomes_obrigatorios,
         sobrenomesExcluidos: sobrenomes_excluidos,
         relatoUsuario: [objetivo_texto, ...(contexto_leitura ?? [])].filter(Boolean).join(' '),
@@ -296,10 +404,17 @@ export const POST: APIRoute = async ({ request }) => {
         if (vistosPreview.has(k)) return false;
         vistosPreview.add(k);
         return true;
-      })
-      .slice(0, 3);
+      });
+    // DEV-301 (R3a): a sugestão de maior nota sempre entra nas 3 do preview.
+    const previewVisiveis = previewTop3Raw.slice(0, 3);
+    // DEV-317: os 2 selos (Principal e Maior nota) sempre entram nas 3 do preview.
+    for (const destaque of [previewTop3Raw.find((c) => c.principal === true), previewTop3Raw.find((c) => c.maiorNota === true)]) {
+      if (!destaque || previewVisiveis.includes(destaque) || previewVisiveis.length === 0) continue;
+      const idx = [...previewVisiveis].reverse().findIndex((c) => c.maiorNota !== true && c.principal !== true);
+      if (idx >= 0) previewVisiveis[previewVisiveis.length - 1 - idx] = destaque;
+    }
 
-    const previewTop3 = previewTop3Raw.map(c => {
+    const previewTop3 = previewVisiveis.map(c => {
       const candPanel = buildPanelData(c.nomeCompleto, dataPtBr, destino);
       return {
         ...c,
@@ -325,7 +440,18 @@ export const POST: APIRoute = async ({ request }) => {
       palpiteStatus: palpite_status,
     });
 
-    console.info('[api/decide-live] providerUsed', decision.providerUsed);
+    // Telemetria sanitizada (sem nome, sem relato, sem chaves): provider, motivo do fallback, tokens e latência.
+    const jevTelemetry = decision.telemetry
+      ? {
+          providerPath: decision.providerPath ?? [],
+          fallbackReason: decision.telemetry.fallbackReason ?? null,
+          budgetDenial: decision.telemetry.budgetDenial ?? null,
+          attempts: decision.telemetry.attempts,
+          tokens: decision.telemetry.tokens,
+          latencyMs: decision.telemetry.latencyMs,
+        }
+      : null;
+    console.info('[api/decide-live] jev', JSON.stringify({ providerUsed: decision.providerUsed, ...jevTelemetry }));
 
     return new Response(
       JSON.stringify({
@@ -340,8 +466,10 @@ export const POST: APIRoute = async ({ request }) => {
         previewTop3,
         semOpcoesElegiveis: resultadoSocial.semOpcoesElegiveis ?? false,
         scoreNascimento: resultadoSocial.scoreNascimento ?? notaHoje,
+        scoreMinimoSugestao: resultadoSocial.scoreMinimoSugestao,
         avisoSobrenomeExigido: resultadoSocial.avisoSobrenomeExigido ?? null,
         providerUsed: decision.providerUsed,
+        jevTelemetry,
         escopoPronto: decision.escopoPronto,
         areaFoco: decision.areaFoco,
         ondeAssina: decision.ondeAssina,
@@ -358,6 +486,7 @@ export const POST: APIRoute = async ({ request }) => {
         radarAxes,
         remaining: routerDecision.remainingSteps,
         next_step: routerDecision.nextStep,
+        fluxoMotivoAtivo,
         promptSugestao: routerDecision.promptSugestao,
         eyebrow: routerDecision.eyebrow,
       }),

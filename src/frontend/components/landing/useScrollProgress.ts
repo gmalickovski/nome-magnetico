@@ -9,10 +9,14 @@ export function useScrollProgress<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [progress, setProgress] = useState(0);
   const [approach, setApproach] = useState(0);
-  const [reduceMotion] = useState(prefersReducedMotion);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    const isReduced = prefersReducedMotion();
+    if (isReduced) {
+      setReduceMotion(true);
+      return;
+    }
 
     let rafId = 0;
 
@@ -82,7 +86,7 @@ export function useScrollProgress<T extends HTMLElement>() {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [reduceMotion]);
+  }, []);
 
   return { ref, progress, approach, reduceMotion };
 }

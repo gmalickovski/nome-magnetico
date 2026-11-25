@@ -120,6 +120,16 @@ export interface ChatDebitoCarmico {
 
 export interface CandidateSuggestion {
   origem?: 'manual' | 'gerado';
+  /** DEV-321: seção do ramo artístico (nomes próximos do nascimento ou nomes novos). */
+  secao?: 'proximo' | 'novo';
+  tecnica?: string;
+  afinidade?: number;
+  explicacao?: string;
+  /** DEV-326: grupo do caminho do bebê e dias bons da janela de datas. */
+  grupoBebe?: 'seu' | 'menina' | 'menino' | 'neutro';
+  diasBons?: number;
+  diasTotal?: number;
+  bloqueiosCodigos?: string[];
   scoreVersion?: 'v3';
   radarAxes?: RadarAxesData;
   id: string;
@@ -136,6 +146,10 @@ export interface CandidateSuggestion {
     espiritual: number;
   };
   destaque?: string;
+  /** DEV-301: sugestão de maior nota entre as oferecidas. */
+  maiorNota?: boolean;
+  /** DEV-317: maior nota entre as que atendem à entrevista. */
+  principal?: boolean;
   panel: ResultPanelData;
 }
 
@@ -198,6 +212,8 @@ export interface DecideLiveResponse {
   previewTop3: CandidateSuggestion[];
   semOpcoesElegiveis?: boolean;
   scoreNascimento?: number;
+  /** DEV-301: nota mínima de qualquer sugestão (piso 70 / acima do nascimento). */
+  scoreMinimoSugestao?: number;
   analysisId?: string;
   next_question?: NextQuestionSpec;
   providerUsed?: string;

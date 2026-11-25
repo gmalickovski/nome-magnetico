@@ -99,6 +99,17 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
     }
   }
 
+  // DEV-317: "Editar" no card do nome de nascimento abre os dados da conta. Só o menu visível responde
+  // (o cabeçalho de desktop e o de celular têm cada um o seu).
+  useEffect(() => {
+    const abrir = () => {
+      if (!buttonRef.current || buttonRef.current.offsetParent === null) return;
+      void openSettings();
+    };
+    window.addEventListener('nm-open-settings', abrir);
+    return () => window.removeEventListener('nm-open-settings', abrir);
+  });
+
   async function openSettings() {
     setIsOpen(false);
     setSettingsOpen(true);
@@ -154,6 +165,7 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Erro ao salvar dados de analise.');
       setMessage('Dados de analise atualizados.');
+      window.dispatchEvent(new Event('nm-birth-data-updated'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar dados de analise.');
     } finally {
@@ -267,15 +279,15 @@ export default function AvatarMenu({ nome, isAdmin }: AvatarMenuProps) {
         type="button"
         onClick={toggleMenu}
         title={isAdmin ? 'Conta Administrador' : undefined}
-        className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#D4AF37]/50 bg-[#111111] font-cinzel text-lg font-bold text-[#D4AF37] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] focus:outline-none ${
-          isAdmin ? 'ring-1 ring-[#f2ca50]/35' : ''
-        }`}
+        className="flex h-11 w-11 items-center justify-center rounded-full lg:h-8 lg:w-8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#bea5ff]"
         aria-label="Abrir menu da conta"
       >
-        {notificationUnreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-[#111111]" />
-        )}
-        {initial}
+        <span className={`relative flex h-8 w-8 items-center justify-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 font-cinzel text-sm font-bold text-[#D4AF37] transition-colors hover:bg-[#D4AF37]/20 ${isAdmin ? 'ring-1 ring-[#f2ca50]/35' : ''}`}>
+          {notificationUnreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#111111]" />
+          )}
+          {initial}
+        </span>
       </button>
       {accountMenu}
       {settingsModal}

@@ -1,4 +1,6 @@
 import { ArquetipoResumoCard } from '../ArquetipoResumoCard';
+import { createDashboardSwipe } from './dashboard-swipe';
+import { buildSavedAnalysisPanelHref } from '../../../lib/analysis-panel-navigation';
 import type { ArchetypeSummary } from '../../../../shared/archetype-summary';
 import { GlossaryInlineTerm } from '../../glossary/GlossaryInlineTerm';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -26,6 +28,9 @@ import {
   FAVORITE_ANALYSIS_CHANGE_EVENT,
   getStoredFavoriteAnalysisId,
   persistFavoriteAnalysis,
+  pickAutoFavoriteId,
+  wasAutoFavoriteApplied,
+  markAutoFavoriteApplied,
 } from '../../../lib/favorite-analysis';
 
 /** CTA dourado do painel: primário da marca (#D4AF37), hover #f2ca50; texto #111111 */
@@ -230,10 +235,10 @@ function StarIcon({ filled, className = 'h-3.5 w-3.5' }: { filled: boolean; clas
   );
 }
 
-function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
+function ChevronIcon({ direction, small = false }: { direction: 'left' | 'right'; small?: boolean }) {
   return (
     <svg
-      className="h-7 w-7"
+      className={small ? 'h-5 w-5' : 'h-7 w-7'}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -330,7 +335,23 @@ export function AppDashboard(props: AppDashboardProps) {
     };
   }, [props.userId, serverFavoriteId]);
 
+  // DEV-305: primeira análise paga vira favorita sozinha e aparece como card principal.
+  useEffect(() => {
+    const id = pickAutoFavoriteId({
+      favoriteId: serverFavoriteId ?? getStoredFavoriteAnalysisId(props.userId),
+      alreadyApplied: wasAutoFavoriteApplied(props.userId),
+      slides: baseSlides,
+    });
+    if (!id) return;
+    markAutoFavoriteApplied(props.userId);
+    setFavoriteId(id);
+    const idx = baseSlides.findIndex((x) => x.id === id);
+    if (idx >= 0) setActiveIndex(idx);
+    void persistFavoriteAnalysis(props.userId, id);
+  }, [props.userId, baseSlides, serverFavoriteId]);
+
   const [slidePhase, setSlidePhase] = useState<'idle' | 'entering-next' | 'entering-prev'>('idle');
+  const swipeRef = useRef(createDashboardSwipe());
 
   const safeIndex = Math.min(activeIndex, Math.max(0, orderedSlides.length - 1));
   const activeSlide = orderedSlides[safeIndex] ?? orderedSlides[0];
@@ -447,7 +468,7 @@ export function AppDashboard(props: AppDashboardProps) {
     return false;
   }, [offerDismissed, props]);
 
-  const resultadoHref = activeSlide.resultadoHrefOverride ?? `/app/resultado/${activeSlide.id}`;
+  const resultadoHref = buildSavedAnalysisPanelHref(activeSlide.id);
   const pdfAnalysisId = activeSlide.pdfAnalysisId ?? activeSlide.id;
   const isCurrentFavorite = !activeSlide.isFree && favoriteId === activeSlide.id;
   const gainPts = activeSlide.score - activeSlide.birthScore;
@@ -485,7 +506,7 @@ export function AppDashboard(props: AppDashboardProps) {
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
       {/* Card Hero principal + carrossel quando houver múltiplas análises */}
-      <section className="relative" aria-label="Resumo da análise principal">
+      <section className="relative flex flex-col" aria-label="Resumo da análise principal">
         <div className="flex items-center gap-2 lg:gap-3">
           {hasMultipleSlides && (
             <button
@@ -506,8 +527,32 @@ export function AppDashboard(props: AppDashboardProps) {
           )}
 
           <div
-            className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-5 sm:p-8 lg:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.55)]"
+            className="nm-floating-card mx-auto w-full min-w-0 flex-1 overflow-hidden rounded-2xl p-5 sm:p-8 lg:p-9"
+            onPointerDown={(event) => {
+              swipeRef.current.consumeClick();
+              if (event.pointerType !== 'touch' || !hasMultipleSlides) return;
+              const target = event.target as Element;
+              const eligible = !target.closest('button,input,textarea,select,[contenteditable="true"],[role="slider"]');
+              swipeRef.current.start(event.pointerId, event.clientX, event.clientY, eligible);
+            }}
+            onPointerMove={(event) => {
+              if (event.pointerType !== 'touch') return;
+              if (swipeRef.current.move(event.pointerId, event.clientX, event.clientY)) {
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }
+            }}
+            onPointerUp={(event) => {
+              if (event.pointerType !== 'touch') return;
+              const direction = swipeRef.current.end(event.pointerId, event.clientX, event.clientY);
+              if (direction === 'next') goNextSlide();
+              if (direction === 'prev') goPrevSlide();
+            }}
+            onPointerCancel={(event) => swipeRef.current.cancel(event.pointerId)}
+            onClickCapture={(event) => {
+              if (swipeRef.current.consumeClick()) { event.preventDefault(); event.stopPropagation(); }
+            }}
             style={{
+              touchAction: 'pan-y pinch-zoom',
               borderColor: `${activeVisual.stroke}59`,
               transition: 'border-color 0.7s ease',
             }}
@@ -748,7 +793,7 @@ export function AppDashboard(props: AppDashboardProps) {
 
         {/* Navegação do carrossel no mobile + indicadores */}
         {hasMultipleSlides && (
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="order-first -mt-3 mb-2.5 flex items-center justify-center gap-3 sm:order-none sm:mb-0 sm:mt-4 sm:gap-4">
             <button
               type="button"
               onClick={goPrevSlide}
@@ -762,7 +807,7 @@ export function AppDashboard(props: AppDashboardProps) {
                   : 'pointer-events-none opacity-0'
               }`}
             >
-              <ChevronIcon direction="left" />
+              <ChevronIcon direction="left" small />
             </button>
 
             <div className="flex items-center gap-2" role="tablist" aria-label="Selecionar análise">
@@ -802,7 +847,7 @@ export function AppDashboard(props: AppDashboardProps) {
                   : 'pointer-events-none opacity-0'
               }`}
             >
-              <ChevronIcon direction="right" />
+              <ChevronIcon direction="right" small />
             </button>
           </div>
         )}

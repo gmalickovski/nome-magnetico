@@ -10,12 +10,16 @@ import type {
   ReadingSummaryItem,
   ResultPanelData,
 } from './chat-types.js';
-import type { ChatCollectState } from './decide-live-bridge.js';
+import { INITIAL_COLLECT_STATE, type ChatCollectState } from './decide-live-bridge.js';
 
 /** Bump quando copy/fluxo do palpite mudar (invalida sessões antigas com leitura duplicada). */
-export const CHAT_SESSION_STORAGE_VERSION = 7 as const;
+export const CHAT_SESSION_STORAGE_VERSION = 8 as const;
 
 const STORAGE_VERSION = CHAT_SESSION_STORAGE_VERSION;
+export const CHAT_SESSION_CHANGED_EVENT = 'nm-chat-session-change';
+function notifyChatSessionChanged(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHAT_SESSION_CHANGED_EVENT));
+}
 
 export interface PersistedChatSession {
   version: typeof STORAGE_VERSION;
@@ -70,6 +74,8 @@ export function loadChatSession(userId: string): PersistedChatSession | null {
     return {
       ...parsed,
       version: STORAGE_VERSION,
+      // DEV-303: sessões salvas antes dos passos novos ganham os campos com valor inicial.
+      collectState: { ...INITIAL_COLLECT_STATE, ...(parsed.collectState ?? {}) },
       birthReadingSummary: parsed.birthReadingSummary ?? null,
       harmonizedSummaries: parsed.harmonizedSummaries ?? {},
     };
@@ -94,6 +100,7 @@ export function saveChatSession(userId: string, session: PersistedChatSession): 
   if (!userId || typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(storageKey(userId), JSON.stringify(session));
+    notifyChatSessionChanged();
   } catch {
     // quota / private mode — falha silenciosa
   }
@@ -103,6 +110,7 @@ export function clearChatSession(userId: string): void {
   if (!userId || typeof localStorage === 'undefined') return;
   try {
     localStorage.removeItem(storageKey(userId));
+    notifyChatSessionChanged();
   } catch {
     // ignore
   }

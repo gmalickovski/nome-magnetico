@@ -4,8 +4,11 @@
 
 import type { PassoChatId } from './partitura';
 import type { AreaFocoNomeMagnetico } from './copy';
+import { BEBE_PROMPTS } from './ramos/bebe';
 import {
+  getQuestionSpec,
   QUESTIONNAIRE_STEP_ORDER,
+  isQuestionnaireStepSkipped,
   type QuestionnaireStepId,
 } from './questionnaire-adaptive';
 
@@ -24,21 +27,107 @@ export interface RouterState {
   /** Legado — preenchido pelo mapeamento da abertura_mudanca */
   estiloPreferido?: string | null;
   detalheInformado?: string | null;
+  /** DEV-303 */
+  ondeAssinaRaw?: string[];
+  preferenciasDecididas?: boolean;
+  prioridadeConflito?: string | null;
+  /** DEV-320 */
+  fluxoMotivoAtivo?: boolean;
+  motivoHarmonizacao?: string | null;
+  areaArtistica?: string | null;
+  detalheArtisticoDecidido?: boolean;
+  generoPersona?: string | null;
+  imagemArtisticaDecidida?: boolean;
+  tipoNomeArtistico?: string | null;
+  outrosUsosDecididos?: boolean;
+  /** DEV-326 */
+  bebePaisDecididos?: boolean;
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeDadosDecididos?: boolean;
+  bebeEstiloDecidido?: boolean;
 }
 
+function isStepAnswered(step: QuestionnaireStepId, state: RouterState): boolean {
+  switch (step) {
+    case 'motivo_harmonizacao':
+      return Boolean(state.motivoHarmonizacao);
+    case 'area_artistica':
+      return Boolean(state.areaArtistica);
+    case 'detalhe_artistico':
+      return Boolean(state.detalheArtisticoDecidido);
+    case 'genero_persona':
+      return Boolean(state.generoPersona);
+    case 'imagem_artistica':
+      return Boolean(state.imagemArtisticaDecidida);
+    case 'tipo_nome_artistico':
+      return Boolean(state.tipoNomeArtistico);
+    case 'outros_usos':
+      return Boolean(state.outrosUsosDecididos);
+    case 'bebe_pais':
+      return Boolean(state.bebePaisDecididos);
+    case 'bebe_situacao':
+      return Boolean(state.bebeSituacao);
+    case 'bebe_data_tipo':
+      return Boolean(state.bebeDataTipo);
+    case 'bebe_sexo':
+      return Boolean(state.bebeSexo);
+    case 'bebe_dados':
+      return Boolean(state.bebeDadosDecididos);
+    case 'bebe_estilo':
+      return Boolean(state.bebeEstiloDecidido);
+    case 'nome_uso':
+      return Boolean(state.nomeUsoDefinido);
+    case 'sobrenomes_uso':
+      return Boolean(state.sobrenomesDecididos);
+    case 'relacao_nome':
+      return Boolean(state.relacaoNome);
+    case 'onde_assina':
+      return Boolean(state.ondeAssinaDecidido);
+    case 'estilo_presenca':
+      return Boolean(state.estiloPresencaDecidido);
+    case 'area_foco':
+      return Boolean(state.areaFoco);
+    case 'subfoco':
+      return Boolean(state.subfocoDecidido);
+    case 'abertura_mudanca':
+      return Boolean(state.aberturaMudanca);
+    case 'preferencias_assinatura':
+      return Boolean(state.preferenciasDecididas);
+    case 'prioridade_conflito':
+      return Boolean(state.prioridadeConflito);
+    default:
+      return true;
+  }
+}
+
+/** DEV-303: pula o que já está inferido (ex.: "Não me representa" dispensa a abertura para mudar). */
 function nextQuestionnaireStep(state: RouterState): QuestionnaireStepId | null {
-  if (!state.nomeUsoDefinido) return 'nome_uso';
-  if (!state.sobrenomesDecididos) return 'sobrenomes_uso';
-  if (!state.relacaoNome) return 'relacao_nome';
-  if (!state.ondeAssinaDecidido) return 'onde_assina';
-  if (!state.estiloPresencaDecidido) return 'estilo_presenca';
-  if (!state.areaFoco) return 'area_foco';
-  if (!state.subfocoDecidido) return 'subfoco';
-  if (!state.aberturaMudanca) return 'abertura_mudanca';
+  for (const step of QUESTIONNAIRE_STEP_ORDER) {
+    if (isStepAnswered(step, state)) continue;
+    if (isQuestionnaireStepSkipped(step, state)) continue;
+    return step;
+  }
   return null;
 }
 
 const PROMPTS: Record<QuestionnaireStepId, string> = {
+  motivo_harmonizacao: 'Qual é o motivo principal para harmonizar o seu nome?',
+  area_artistica: 'Em qual área artística você vai usar o nome?',
+  detalhe_artistico: 'Conte um pouco mais sobre o seu trabalho artístico.',
+  genero_persona: 'Como o nome artístico deve soar?',
+  imagem_artistica: 'Qual imagem você quer passar com esse nome?',
+  tipo_nome_artistico:
+    'Você aceita um nome próximo do seu, um nome totalmente diferente ou as duas coisas?',
+  outros_usos: 'Vai usar esse nome em mais algum lugar?',
+  // DEV-326 (textos em `ramos/bebe.ts`)
+  bebe_pais: BEBE_PROMPTS.bebe_pais!,
+  bebe_situacao: BEBE_PROMPTS.bebe_situacao!,
+  bebe_data_tipo: BEBE_PROMPTS.bebe_data_tipo!,
+  bebe_sexo: BEBE_PROMPTS.bebe_sexo!,
+  bebe_dados: BEBE_PROMPTS.bebe_dados!,
+  bebe_estilo: BEBE_PROMPTS.bebe_estilo!,
   nome_uso: 'Como as pessoas te chamam no dia a dia?',
   sobrenomes_uso: 'Quais sobrenomes você usa quando assina?',
   relacao_nome: 'Como você se sente com o seu nome hoje?',
@@ -47,19 +136,23 @@ const PROMPTS: Record<QuestionnaireStepId, string> = {
   area_foco: 'O que mais pede a sua atenção agora?',
   subfoco: 'O que mais combina com esse foco agora?',
   abertura_mudanca: 'Quanto você topa mudar na assinatura?',
+  preferencias_assinatura: 'Tem algo que você quer manter ou evitar na assinatura?',
+  prioridade_conflito: 'Se for preciso escolher, o que pesa mais para você?',
 };
+
+/** DEV-326: no caminho do bebê não há palpite de perfil (os dados do bebê já são o retrato). */
+function pulaPalpite(state: RouterState): boolean {
+  return Boolean(state.fluxoMotivoAtivo) && state.motivoHarmonizacao === 'bebe';
+}
 
 export function questionnaireStepsRemaining(state: RouterState): number {
   let n = 0;
-  if (!state.nomeUsoDefinido) n++;
-  if (!state.sobrenomesDecididos) n++;
-  if (!state.relacaoNome) n++;
-  if (!state.ondeAssinaDecidido) n++;
-  if (!state.estiloPresencaDecidido) n++;
-  if (!state.areaFoco) n++;
-  if (!state.subfocoDecidido) n++;
-  if (!state.aberturaMudanca) n++;
-  if (!state.palpiteStatus) n++;
+  for (const step of QUESTIONNAIRE_STEP_ORDER) {
+    if (isStepAnswered(step, state)) continue;
+    if (isQuestionnaireStepSkipped(step, state)) continue;
+    n++;
+  }
+  if (!state.palpiteStatus && !pulaPalpite(state)) n++;
   return n;
 }
 
@@ -71,10 +164,12 @@ export interface NextStepDecision {
 }
 
 export function determineNextStep(state: RouterState): NextStepDecision {
+  // DEV-326: o caminho do bebê não usa a certidão do usuário (pede o nome da mãe e do pai).
   if (
-    !state.nomeCompleto ||
-    state.nomeCompleto.trim().split(/\s+/).length < 2 ||
-    !state.dataNascimento
+    !pulaPalpite(state) &&
+    (!state.nomeCompleto ||
+      state.nomeCompleto.trim().split(/\s+/).length < 2 ||
+      !state.dataNascimento)
   ) {
     return {
       nextStep: 'nome_nascimento',
@@ -89,11 +184,20 @@ export function determineNextStep(state: RouterState): NextStepDecision {
     return {
       nextStep: qStep as PassoChatId,
       remainingSteps: remaining,
-      promptSugestao: PROMPTS[qStep],
+      // DEV-320: o detalhe artístico muda de pergunta conforme a área.
+      promptSugestao:
+        qStep === 'detalhe_artistico'
+          ? getQuestionSpec(qStep, {
+              nomeCompleto: state.nomeCompleto ?? '',
+              sobrenomes: [],
+              areaFoco: null,
+              areaArtistica: state.areaArtistica ?? null,
+            }).prompt
+          : PROMPTS[qStep],
     };
   }
 
-  if (!state.palpiteStatus) {
+  if (!state.palpiteStatus && !pulaPalpite(state)) {
     return {
       nextStep: 'palpite',
       remainingSteps: 1,

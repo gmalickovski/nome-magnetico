@@ -27,7 +27,7 @@ import { avaliarNome } from '../../../backend/numerology/score';
 import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 
 const user = Astro.locals.user;
-if (!user) return Astro.redirect('/auth/login');
+if (!user) return Astro.redirect('/auth/login?redirect=' + encodeURIComponent(Astro.url.pathname));
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/app');
@@ -42,6 +42,15 @@ if (!analysis || analysis.user_id !== user.id) {
 }
 
 analysis = await reconcileStaleAnalysis(analysis);
+
+// DEV-317: análise pronta do Nome Social (ou nome de nascimento) abre no painel atual de Minhas análises.
+// Esta página fica só para acompanhar processamento/erro e para produtos antigos.
+if (
+  analysis.status === 'complete' &&
+  (analysis.product_type === 'nome_social' || analysis.product_type === 'analise_gratuita' || !analysis.product_type)
+) {
+  return Astro.redirect(`/app/analises?id=${encodeURIComponent(id)}&painel=1`);
+}
 
 // ── Status ──────────────────────────────────────────────────────────
 const isProcessing = analysis.status === 'processing' || analysis.status === 'pending';

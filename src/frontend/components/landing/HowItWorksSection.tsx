@@ -28,14 +28,14 @@ const steps = [
   },
   {
     stepNumber: '03',
-    title: 'Escolha Entre 3 Opções',
-    body: 'Mudança mínima, nome encurtado ou acento sutil: cada opção mostra nota, nível e o que mudou.',
+    title: 'Escolha a Sua Assinatura',
+    body: 'No Nome Social, você recebe sugestões acima da nota do seu nome de nascimento. A de maior nota aparece sempre entre as três primeiras. Você pode pedir mais opções até 2 vezes, e o total é de no máximo 9.',
     Figure: ChooseFigure,
   },
   {
     stepNumber: '04',
     title: 'Baixe o Seu PDF',
-    body: 'Receba o PDF com os 5 números, o triângulo da Vida e a leitura dos outros 3 triângulos.',
+    body: 'Receba o PDF com os 5 números, o Triângulo da Vida e o arquétipo do nome.',
     Figure: DownloadFigure,
   },
 ] as const;
@@ -350,8 +350,8 @@ export function HowItWorksSection() {
                     title="Quatro Passos Até a Sua Nova Assinatura"
                     description={
                       reduceMotion
-                        ? 'Do seu nome de hoje às 3 opções, por regras fixas.'
-                        : 'Do seu nome de hoje às 3 opções, com cálculo por regras fixas da numerologia cabalística.'
+                        ? 'Da nota do seu nome às opções de assinatura, por regras fixas.'
+                        : 'Da nota do seu nome às opções de assinatura, com cálculo por regras fixas da numerologia cabalística.'
                     }
                     className="text-center"
                     revealed={true}
@@ -460,8 +460,8 @@ export function HowItWorksSection() {
               title="Quatro Passos Até a Sua Nova Assinatura"
               description={
                 reduceMotion
-                  ? 'Do seu nome de hoje às 3 opções, por regras fixas.'
-                  : 'Do seu nome de hoje às 3 opções, com cálculo por regras fixas da numerologia cabalística.'
+                  ? 'Da nota do seu nome às opções de assinatura, por regras fixas.'
+                  : 'Da nota do seu nome às opções de assinatura, com cálculo por regras fixas da numerologia cabalística.'
               }
               className="text-center"
               revealed={true}

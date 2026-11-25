@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SavedAnalysisItem } from './types.js';
 import { ScoreCardRow } from '../../landing/ScoreCardRow.js';
 import { LifeTriangleBlockBadge } from '../../landing/LifeTriangleBlockBadge.js';
@@ -29,6 +29,7 @@ export interface MyAnalysesWorkspaceProps {
   hasAnyPaidAccess: boolean;
   isLocked: boolean;
   initialSelectedId?: string | null;
+  initialPanelOpen?: boolean;
 }
 
 const PRODUCT_LABEL: Record<string, string> = {
@@ -38,7 +39,90 @@ const PRODUCT_LABEL: Record<string, string> = {
   nome_empresa: 'Nome Empresarial',
 };
 
+type OrigemNome = NonNullable<SavedAnalysisItem['origemNome']>;
+
+/** DEV-317: tags de origem do nome (só em Minhas análises). */
+const ORIGEM_TAG: Record<OrigemNome, { rotulo: string; classe: string }> = {
+  nascimento: { rotulo: 'Nome de Nascimento', classe: 'bg-white/[0.06] text-[#e5e2e1]' },
+  sistema: { rotulo: 'Sugestões do Sistema', classe: 'bg-[#D4AF37]/15 text-[#D4AF37]' },
+  teste: { rotulo: 'Minhas Sugestões', classe: 'bg-[#bea5ff]/15 text-[#d7c6ff]' },
+};
+
+/**
+ * DEV-317: filtros de Minhas análises, nesta ordem. "Nome Social" junta todas as harmonizações
+ * (sistema + suas sugestões). Opções somáveis: o card aparece se bater com qualquer uma marcada.
+ */
+const FILTROS_ORIGEM: { id: string; rotulo: string; origens: OrigemNome[] }[] = [
+  { id: 'nascimento', rotulo: 'Nome de Nascimento', origens: ['nascimento'] },
+  { id: 'social', rotulo: 'Nome Social', origens: ['sistema', 'teste'] },
+  { id: 'teste', rotulo: 'Minhas Sugestões', origens: ['teste'] },
+  { id: 'sistema', rotulo: 'Sugestões do Sistema', origens: ['sistema'] },
+];
+
 const MOBILE_STACK_QUERY = '(max-width: 767px)';
+
+interface OpcaoFiltro {
+  id: string;
+  grupo: 'origem';
+  rotulo: string;
+  total: number;
+}
+
+const CHIP_BASE =
+  'flex-shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors duration-300 cursor-pointer';
+const CHIP_ATIVO = 'border border-[#D4AF37] bg-[#D4AF37] text-[#131313]';
+const CHIP_INATIVO = 'border border-[#D4AF37]/70 bg-[#131313] text-[#e5e2e1]';
+
+/** DEV-317: faixa de chips com rolagem por toque, sem barra; setas sutis aparecem só quando há mais para um lado. */
+function ChipScroller({ children, label }: { children: React.ReactNode; label: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [lados, setLados] = useState({ esq: false, dir: false });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const medir = () =>
+      setLados({ esq: el.scrollLeft > 4, dir: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+    medir();
+    // Mede de novo depois do layout e das fontes (o tamanho do conteúdo muda sem mudar o contêiner).
+    const raf = requestAnimationFrame(medir);
+    const t = window.setTimeout(medir, 250);
+    el.addEventListener('scroll', medir, { passive: true });
+    window.addEventListener('resize', medir);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(medir) : null;
+    ro?.observe(el);
+    for (const filho of Array.from(el.children)) ro?.observe(filho);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+      el.removeEventListener('scroll', medir);
+      window.removeEventListener('resize', medir);
+      ro?.disconnect();
+    };
+  }, [children]);
+  const rolar = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * 160, behavior: 'smooth' });
+  const seta = (dir: 1 | -1, visivel: boolean) => (
+    <button
+      type="button"
+      aria-label={dir === 1 ? 'Ver mais filtros à direita' : 'Ver mais filtros à esquerda'}
+      onClick={() => rolar(dir)}
+      tabIndex={visivel ? 0 : -1}
+      className={`absolute top-1/2 z-10 -translate-y-1/2 px-0.5 text-xl leading-none text-[#A0A0A0] transition-opacity duration-300 ${
+        dir === 1 ? 'right-0' : 'left-0'
+      } ${visivel ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+    >
+      <span aria-hidden="true">{dir === 1 ? '›' : '‹'}</span>
+    </button>
+  );
+  return (
+    <div className="relative px-3" role="group" aria-label={label}>
+      {seta(-1, lados.esq)}
+      <div ref={ref} className="flex items-center gap-2 overflow-x-auto scrollbar-hide [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
+      </div>
+      {seta(1, lados.dir)}
+    </div>
+  );
+}
 
 function isMobileStackedViewport(): boolean {
   if (typeof window === 'undefined') return false;
@@ -209,9 +293,33 @@ export default function MyAnalysesWorkspace({
   hasAnyPaidAccess,
   isLocked,
   initialSelectedId = null,
+  initialPanelOpen = false,
 }: MyAnalysesWorkspaceProps) {
   const [items, setItems] = useState<SavedAnalysisItem[]>(initialItems);
-  const [activeFilter, setActiveFilter] = useState<string>('all');
+  // DEV-317: filtros somáveis (produto e origem). Dentro do mesmo grupo vale "ou"; entre grupos, "e".
+  const [filtros, setFiltros] = useState<Set<string>>(() => new Set());
+  const [filtroAberto, setFiltroAberto] = useState(false);
+  // DEV-317: depois de editar o nome de nascimento nas configurações, recarrega para recalcular os cards.
+  useEffect(() => {
+    const recarregar = () => window.location.reload();
+    window.addEventListener('nm-birth-data-updated', recarregar);
+    return () => window.removeEventListener('nm-birth-data-updated', recarregar);
+  }, []);
+  const alternarFiltro = (id: string) =>
+    setFiltros((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  useEffect(() => {
+    if (!filtroAberto) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFiltroAberto(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [filtroAberto]);
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     if (initialSelectedId && initialItems.some((item) => item.id === initialSelectedId)) {
       return initialSelectedId;
@@ -219,7 +327,9 @@ export default function MyAnalysesWorkspace({
     return initialItems[0]?.id ?? null;
   });
   const [panelExpanded, setPanelExpanded] = useState(false);
-  const [mobileSheetSnap, setMobileSheetSnap] = useState<ReadingSheetSnap>('closed');
+  const [mobileSheetSnap, setMobileSheetSnap] = useState<ReadingSheetSnap>(
+    initialPanelOpen && initialItems.some(item => item.id === initialSelectedId) ? 'full' : 'closed',
+  );
   const [favoriteId, setFavoriteId] = useState<string | null>(() => {
     const fromServer = initialItems.find((item) => item.isFavorite)?.id ?? null;
     if (fromServer) return fromServer;
@@ -259,16 +369,25 @@ export default function MyAnalysesWorkspace({
     }
   }, [userId, items]);
 
-  const uniqueProducts = useMemo(
-    () => [...new Set(items.map((item) => item.productType || 'nome_social'))],
+  // Só o Nome Social está à venda: o filtro é só pela origem do nome (sem filtro de produto).
+  const filteredItems = useMemo(() => {
+    const aceitas = new Set(
+      FILTROS_ORIGEM.filter((f) => filtros.has(f.id)).flatMap((f) => f.origens),
+    );
+    return items.filter(
+      (item) => aceitas.size === 0 || (item.origemNome != null && aceitas.has(item.origemNome)),
+    );
+  }, [items, filtros]);
+  const opcoesFiltro: OpcaoFiltro[] = useMemo(
+    () =>
+      FILTROS_ORIGEM.map((f) => ({
+        id: f.id,
+        grupo: 'origem' as const,
+        rotulo: f.rotulo,
+        total: items.filter((i) => i.origemNome != null && f.origens.includes(i.origemNome)).length,
+      })).filter((o) => o.total > 0),
     [items],
   );
-  const hasMultipleProducts = uniqueProducts.length > 1;
-
-  const filteredItems = useMemo(() => {
-    if (activeFilter === 'all') return items;
-    return items.filter((item) => item.productType === activeFilter);
-  }, [items, activeFilter]);
 
   useEffect(() => {
     if (filteredItems.length === 0) {
@@ -479,55 +598,120 @@ export default function MyAnalysesWorkspace({
         >
           <div className="flex-1 min-h-0 chat-scroll-pane space-y-3 pb-4 pt-1 pl-0.5 max-lg:pb-[var(--nm-mobile-dock-clearance)] lg:pb-6 pr-0.5 sm:pr-1">
             {/* Cabeçalho da coluna esquerda */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-0.5">
-              <h1 className="font-cinzel text-2xl sm:text-[1.65rem] font-bold text-[#e5e2e1] tracking-wide leading-tight">
-                Minhas Análises
-              </h1>
-              {hasAnyPaidAccess && (
-                <a
-                  href="/app/analise/nome-social"
-                  data-nm-header-cta="analise"
-                  data-user-id={userId}
-                  data-default-label="+ Nova Análise"
-                  data-resume-label="Retomar Análise"
-                  className="lg:hidden inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.3)] hover:bg-[#f2ca50] transition-all w-full sm:w-auto"
+            <h1 className="px-0.5 font-cinzel text-2xl sm:text-[1.65rem] font-bold text-[#e5e2e1] tracking-wide leading-tight">
+              Minhas Análises
+            </h1>
+            {/* Desktop: botão Filtrar na linha de baixo, sozinho */}
+            <div className="relative hidden md:flex items-center px-0.5">
+              {opcoesFiltro.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFiltroAberto((v) => !v)}
+                  aria-expanded={filtroAberto}
+                  aria-controls="analises-filtro"
+                  className={`hidden md:inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors duration-300 ${
+                    filtros.size > 0 ? 'bg-[#D4AF37] text-[#131313]' : 'bg-[#1C1C1C] text-[#e5e2e1] hover:bg-white/[0.06]'
+                  }`}
                 >
-                  + Nova Análise
-                </a>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />
+                  </svg>
+                  Filtrar{filtros.size > 0 ? ` · ${filtros.size}` : ''}
+                </button>
+              )}
+              {filtroAberto && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Fechar filtro"
+                    onClick={() => setFiltroAberto(false)}
+                    className="hidden md:block fixed inset-0 z-[84] cursor-default"
+                  />
+                  <div
+                    id="analises-filtro"
+                    role="dialog"
+                    aria-label="Filtrar análises"
+                    className="hidden md:block absolute left-0 top-full z-[85] mt-2 w-72 rounded-2xl bg-[#1c1c1c] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+                  >
+                    {(['origem'] as const).map((grupo) => {
+                      const ops = opcoesFiltro.filter((o) => o.grupo === grupo);
+                      if (ops.length === 0) return null;
+                      return (
+                        <div key={grupo} className="pb-2">
+                          <p className="nm-eyebrow px-2 pb-1.5 pt-1">Mostrar</p>
+                          <div className="flex flex-col gap-1">
+                            {ops.map((op) => {
+                              const ativo = filtros.has(op.id);
+                              return (
+                                <button
+                                  key={op.id}
+                                  type="button"
+                                  onClick={() => alternarFiltro(op.id)}
+                                  aria-pressed={ativo}
+                                  className={`flex min-h-10 items-center justify-between gap-3 rounded-2xl px-3 text-sm transition-colors duration-300 ${
+                                    ativo ? 'bg-[#D4AF37]/12 text-[#f2ca50]' : 'text-[#e5e2e1]/85 hover:bg-white/[0.04]'
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <span
+                                      aria-hidden="true"
+                                      className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                                        ativo ? 'bg-[#D4AF37] text-[#131313]' : 'bg-white/[0.08]'
+                                      }`}
+                                    >
+                                      {ativo ? '✓' : ''}
+                                    </span>
+                                    {op.rotulo}
+                                  </span>
+                                  <span className="text-xs text-[#A0A0A0]">{op.total}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {filtros.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setFiltros(new Set())}
+                        className="mt-1 w-full rounded-full px-3 py-2 text-xs text-[#A0A0A0] transition-colors duration-300 hover:bg-white/[0.04] hover:text-[#e5e2e1]"
+                      >
+                        Limpar filtros
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Filtros por produto */}
-            {hasMultipleProducts && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide px-0.5">
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('all')}
-                  className={`flex-shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                    activeFilter === 'all'
-                      ? 'bg-[#D4AF37] text-[#131313] shadow-[0_2px_10px_rgba(212,175,55,0.28)]'
-                      : 'bg-[#1C1C1C] border border-[#D4AF37]/20 text-[#A0A0A0] hover:text-[#e5e2e1] hover:border-[#D4AF37]/45'
-                  }`}
-                >
-                  Todos
-                </button>
-                {uniqueProducts.map((pt) => {
-                  const isActive = activeFilter === pt;
-                  return (
-                    <button
-                      key={pt}
-                      type="button"
-                      onClick={() => setActiveFilter((prev) => (prev === pt ? 'all' : pt))}
-                      className={`flex-shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#D4AF37] text-[#131313] shadow-[0_2px_10px_rgba(212,175,55,0.28)]'
-                          : 'bg-[#1C1C1C] border border-[#D4AF37]/20 text-[#A0A0A0] hover:text-[#e5e2e1] hover:border-[#D4AF37]/45'
-                      }`}
-                    >
-                      {PRODUCT_LABEL[pt] ?? pt}
-                    </button>
-                  );
-                })}
+            {/* Mobile: só os chips somáveis, com rolagem por toque e setas sutis */}
+            {opcoesFiltro.length > 0 && (
+              <div className="md:hidden -mx-0.5">
+                <ChipScroller label="Filtrar análises">
+                  <button
+                    type="button"
+                    onClick={() => setFiltros(new Set())}
+                    aria-pressed={filtros.size === 0}
+                    className={`${CHIP_BASE} ${filtros.size === 0 ? CHIP_ATIVO : CHIP_INATIVO}`}
+                  >
+                    Todos
+                  </button>
+                  {opcoesFiltro.map((op) => {
+                    const ativo = filtros.has(op.id);
+                    return (
+                      <button
+                        key={op.id}
+                        type="button"
+                        onClick={() => alternarFiltro(op.id)}
+                        aria-pressed={ativo}
+                        className={`${CHIP_BASE} ${ativo ? CHIP_ATIVO : CHIP_INATIVO}`}
+                      >
+                        {op.rotulo}
+                      </button>
+                    );
+                  })}
+                </ChipScroller>
               </div>
             )}
 
@@ -577,9 +761,16 @@ export default function MyAnalysesWorkspace({
                     >
                       {/* Cabeçalho do card: apenas data + favoritar/excluir */}
                       <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 pt-3.5 pb-1">
-                        <span className="text-[10px] text-[#A0A0A0] px-2.5 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
-                          {item.dateFormatted}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] text-[#A0A0A0] px-2.5 py-0.5 rounded-full bg-black/25 border border-white/5 whitespace-nowrap">
+                            {item.dateFormatted}
+                          </span>
+                          {item.origemNome && (
+                            <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${ORIGEM_TAG[item.origemNome].classe}`}>
+                              {ORIGEM_TAG[item.origemNome].rotulo}
+                            </span>
+                          )}
+                        </div>
 
                         <div
                           className="flex items-center gap-1.5 shrink-0"
@@ -620,6 +811,24 @@ export default function MyAnalysesWorkspace({
                               <span className="fav-label">
                                 {isFav ? 'Principal' : 'Favoritar'}
                               </span>
+                            </button>
+                          )}
+
+                          {item.origemNome === 'nascimento' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.dispatchEvent(new Event('nm-open-settings'));
+                              }}
+                              title="Editar nome e data de nascimento"
+                              aria-label="Editar nome e data de nascimento"
+                              className="p-1.5 rounded-full text-gray-500 hover:text-[#f2ca50] hover:bg-white/[0.06] transition-colors cursor-pointer"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487 18.55 2.8a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                              </svg>
                             </button>
                           )}
 

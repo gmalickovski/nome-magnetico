@@ -4,40 +4,203 @@ import { LandingHeader } from '../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../frontend/components/landing/LandingFooter';
 import { SCORE_CONFIG_V3 } from '../backend/numerology/score-config';
 import { AVISO_AUTOCONHECIMENTO } from '../shared/legal';
+import { LetterNumberExample } from '../frontend/components/landing/LetterNumberExample';
 
 const cfg = SCORE_CONFIG_V3;
+
+const TITLE = 'Como Calculamos a Nota do Seu Nome';
+const DESCRIPTION =
+  'Veja como calculamos a nota do seu nome, de 0 a 100, pela Numerologia Cabalística e como o sistema escolhe os nomes do Nome Social, do Nome Artístico e do bebê.';
+
+// Tabela cabalística das letras (docs/architecture/logica-analises.md).
+const TABELA_LETRAS = [
+  { valor: '1', letras: 'A · I · Q · J · Y' },
+  { valor: '2', letras: 'B · K · R' },
+  { valor: '3', letras: 'C · G · L · S' },
+  { valor: '4', letras: 'D · M · T' },
+  { valor: '5', letras: 'E · H · N' },
+  { valor: '6', letras: 'U · V · W · X · Ç' },
+  { valor: '7', letras: 'O · Z' },
+  { valor: '8', letras: 'F · P' },
+];
+
+// Acentos e apóstrofo (backend/numerology/core.ts, calcularValor). Convenção do método.
+const ACENTOS = [
+  { sinal: '´', nome: 'Agudo', regra: '+2', exemplo: 'E = 5, É = 7' },
+  { sinal: '~', nome: 'Til', regra: '+3', exemplo: 'A = 1, Ã = 4' },
+  { sinal: '^', nome: 'Circunflexo', regra: '+7', exemplo: 'O = 7, Ô = 14' },
+  { sinal: '`', nome: 'Grave', regra: '×2', exemplo: 'A = 1, À = 2' },
+  { sinal: '¨', nome: 'Trema', regra: '×2', exemplo: 'U = 6, Ü = 12' },
+  { sinal: '°', nome: 'Anel', regra: '+7', exemplo: 'A = 1, Å = 8' },
+  { sinal: "'", nome: 'Apóstrofo', regra: '+2 na letra anterior', exemplo: "D'Angelo = 30" },
+];
+
+const PASSOS = [
+  { n: '1', titulo: 'Cada letra vale um número', texto: 'Pela tabela cabalística, que é fixa. Acentos mudam o valor da letra (o agudo soma 2, o til soma 3, o circunflexo soma 7), por isso um acento ou uma letra a mais muda o resultado.' },
+  { n: '2', titulo: 'A data dá o Destino', texto: 'Somamos os dígitos da data de nascimento. O Destino não muda nunca: é a referência com a qual o nome precisa conversar.' },
+  { n: '3', titulo: 'O nome dá os 5 números', texto: 'Expressão (todas as letras), Motivação (vogais), Impressão (consoantes), Missão (Expressão mais Destino) e o próprio Destino. Os números mestres 11 e 22 são mantidos, menos na Impressão.' },
+  { n: '4', titulo: 'O Triângulo da Vida mostra os bloqueios', texto: 'Os valores das letras ficam em linha e são somados de dois em dois, linha a linha, até a ponta. Três números iguais em sequência (111, 222… 999) formam um bloqueio.' },
+  { n: '5', titulo: 'A nota resume tudo de 0 a 100', texto: 'Parte de 100 e perde pontos por bloqueios, tensão entre Expressão e Destino, dívidas kármicas, tendências ocultas e lições kármicas. Mesmo nome e mesma data dão sempre a mesma nota.' },
+];
+
+// Como o sistema escolhe os nomes de cada caminho (fonte: backend/numerology/products e docs/architecture).
+const CAMINHOS = [
+  {
+    n: '9',
+    id: 'regra-de-qualidade',
+    titulo: 'Como escolhemos os nomes que você vê',
+    intro: 'Antes de aparecer na sua tela, toda sugestão do sistema passa por duas travas objetivas:',
+    itens: [
+      '**Zero bloqueios** no Triângulo da Vida.',
+      '**Nota mínima:** 80 para nomes totalmente novos (artístico e bebê) e 70 para variações do seu nome de nascimento. A lista sai do mais próximo de 100 para baixo.',
+    ],
+    fecho: 'Os nomes que **você** digita não são sugestões: eles passam só pelo cálculo e aparecem com a nota e com os bloqueios, se houver. O que não passa nas travas, você nem chega a ver.',
+  },
+  {
+    n: '10',
+    id: 'nome-social',
+    titulo: 'Nome Social: as suas respostas ordenam as opções',
+    intro: 'O sistema gera variações do seu nome (acentos, letras, ordem e retirada de sobrenomes), calcula cada uma com a sua data e descarta as que têm bloqueio.',
+    itens: [
+      'As suas respostas no chat (onde usa o nome, o que quer transmitir, quanto aceita mudar, se quer manter o primeiro nome) decidem a ordem entre as que passaram.',
+      'Você vê **3 sugestões**, pode pedir até 2 novas rodadas (máximo de 9) e testar **até 5 nomes seus**.',
+    ],
+    fecho: 'O nome do seu registro não muda: a harmonização é a forma de assinar e de se apresentar.',
+  },
+  {
+    n: '11',
+    id: 'nome-artistico',
+    titulo: 'Nome Artístico: a sua data, a sua área',
+    intro: 'Todo nome artístico é calculado com a **sua** data de nascimento, porque quem sobe ao palco é você.',
+    itens: [
+      '**Nomes próximos** saem do seu nome de nascimento pelas técnicas que muitos artistas usam: só o primeiro nome, só o sobrenome, apelido, primeiro nome com sobrenome, grafia artística (letra dobrada, y, k, th, w) e, por último, um acento.',
+      '**Nomes totalmente novos** nascem de ideias a partir do seu perfil (persona e imagem: marcante, sofisticada, divertida, misteriosa, popular) e de um banco de nomes de palco. A IA pode sugerir ideias, mas quem calcula e decide a nota é sempre o motor de cálculo.',
+      '**Afinidade número × área:** cada número de Expressão favorece qualidades diferentes (por exemplo, o 3 traz comunicação e carisma; o 5, versatilidade; o 7, profundidade e autoria). É uma referência do método, simbólica, que só **ordena** nomes que já passaram nas travas e não entra no cálculo da nota.',
+    ],
+    fecho: 'Você recebe até 3 nomes próximos e até 3 totalmente novos, cada um com uma frase explicando por que o número combina com a sua área.',
+  },
+  {
+    n: '12',
+    id: 'nome-do-bebe',
+    titulo: 'Nome do Bebê: a família e a data',
+    intro: 'O nome é calculado **completo**, com o primeiro nome e os sobrenomes da família.',
+    itens: [
+      '**Sobrenomes:** vêm do nome da mãe e do pai (basta um) e você pode ajustá-los. Como a ordem muda o cálculo, o sistema testa as ordens possíveis e usa a que forma menos bloqueios.',
+      '**Janela de Datas:** sem a data exata do parto, cada nome é calculado em todos os dias de 14 antes até 14 depois da data prevista (29 dias). Só é sugerido se ficar bom (nota 80 ou mais, sem bloqueio) em pelo menos metade desses dias, e o cartão mostra, por exemplo, "bom em 26 de 29 dias".',
+      '**Perfil do filho:** sexo (ou "ainda não sei", que mostra menina, menino e neutros) e estilo (clássico, moderno, curto, bíblico, internacional). O estilo é preferência: escolhe quem entra primeiro, mas não elimina um nome bom do mapa.',
+      '**Os nomes que vocês já pensaram** (até 5) são analisados do mesmo jeito e aparecem com o bloqueio, se houver.',
+    ],
+    fecho: 'A Janela de Datas é uma referência simbólica: a data do parto segue sempre a orientação médica e o tempo natural do bebê.',
+  },
+  {
+    n: '13',
+    id: 'arquetipo',
+    titulo: 'Arquétipo: a leitura narrativa do número de Expressão',
+    intro: 'O arquétipo é uma **camada narrativa** que o relatório coloca sobre o número de Expressão do nome. Ele ajuda a entender a imagem que o nome projeta e **não altera o cálculo nem a nota**.',
+    itens: [
+      '**Como é definido:** cada número de Expressão tem um arquétipo: 1 O Herói, 2 O Cuidador, 3 O Criador, 4 O Construtor, 5 O Explorador, 6 O Amante, 7 O Sábio, 8 O Governante, 9 O Humanista, 11 O Mensageiro e 22 O Arquiteto.',
+      '**No Nome Artístico:** o PDF mostra o arquétipo do nome artístico (a Expressão do nome novo), com a essência dele. É uma referência de imagem para o palco, e por isso costuma ser a parte que mais conversa com quem cria um personagem.',
+      '**O que ele não faz:** não entra na nota e não decide quais nomes são sugeridos. A ordem das sugestões usa a nota e a afinidade do número com a sua área.',
+    ],
+    fecho: 'É uma leitura simbólica, para inspirar a escolha. Para ver o arquétipo do seu nome atual, faça a análise gratuita.',
+  },
+];
 ---
 
 <LandingLayout
-  title="Como Calculamos o Seu Score | Nome Magnético"
-  description="Entenda os critérios matemáticos e as regras da numerologia cabalística utilizadas para calcular o score e os níveis vibracionais do seu nome."
-  keywords="como funciona score numerologia, cálculo score nome magnetico, regras numerologia cabalistica, triangulo da vida, niveis vibracionais"
+  title={TITLE}
+  description={DESCRIPTION}
+  keywords="como calculamos a nota do nome, como funciona a nota numerologia, tabela cabalística das letras, triângulo da vida, nota de 0 a 100, janela de datas, nome artístico numerologia, nome do bebê numerologia"
 >
   <LandingHeader client:load />
 
-  <main class="min-h-screen bg-[#111111] pt-16 sm:pt-24 pb-24">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 md:px-10">
+  <main class="bg-[#111111] pb-24">
 
-      {/* Header */}
-      <div class="text-center mb-10 sm:mb-14">
-        <div class="inline-flex items-center gap-2 bg-[#d7c6ff]/10 border border-[#d7c6ff]/30 rounded-full px-5 py-2 mb-6">
-          <span class="text-[#d7c6ff] text-xs">✦</span>
-          <span class="text-[#d7c6ff] text-sm font-medium tracking-wide">Transparência Metodológica</span>
-          <span class="text-[#d7c6ff] text-xs">✦</span>
-        </div>
-        <h1 class="font-cinzel text-[1.75rem] sm:text-5xl font-bold text-[#e5e2e1] mb-5 leading-tight">
-          Como Calculamos o<br />
-          <span class="bg-gradient-to-r from-[#f2ca50] to-[#d4af37] bg-clip-text text-transparent">
-            Score do Seu Nome
-          </span>
-        </h1>
-        <p class="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-          Nosso método une as regras clássicas da numerologia cabalística a uma pontuação objetiva. Cada número tem regra, peso e limite claros, e você vê de onde vem cada ponto.
-        </p>
+    {/* ── HERO ── */}
+    <section class="relative isolate overflow-hidden bg-[#111111] pt-[88px] sm:pt-28 lg:pt-32 pb-12 sm:pb-16">
+      <div class="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a1400] via-[#111111] to-[#0d0d1a]"></div>
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[560px] sm:h-[560px] lg:w-[760px] lg:h-[760px] bg-[#D4AF37]/15 rounded-full blur-[110px] sm:blur-[140px]"></div>
+        <div class="absolute bottom-0 right-0 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/10 rounded-full blur-[100px]"></div>
       </div>
+      <div class="relative z-10 max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12 w-full min-w-0">
+        <div class="max-w-3xl mx-auto text-center">
+          <p class="nm-eyebrow mb-3">Transparência Metodológica</p>
+          <h1 class="nm-h1">Como calculamos a nota do seu nome</h1>
+          <p class="nm-body-lg mt-5 mx-auto max-w-[58ch]">
+            Cada letra tem um valor fixo e cada ponto tem uma regra. Veja de onde vem a sua nota de 0 a 100 e como o sistema escolhe os nomes do Nome Social, do Nome Artístico e do Nome do Bebê.
+          </p>
+          <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href="/analise-gratuita"
+              data-cta-id="como_calculamos_analise_gratuita"
+              data-cta-position="como_calculamos_hero"
+              class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#D4AF37] hover:bg-[#f2ca50] px-8 py-3.5 text-base font-semibold text-[#1A1A1A] shadow-lg shadow-[#D4AF37]/20 transition-colors duration-500"
+            >
+              Ver a nota do meu nome grátis
+            </a>
+            <a
+              href="/glossario"
+              data-cta-id="como_calculamos_glossario"
+              data-cta-position="como_calculamos_hero"
+              class="inline-flex min-h-12 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 px-8 py-3.5 text-base font-medium text-[#e5e2e1] transition-colors duration-500"
+            >
+              Consultar o glossário
+            </a>
+          </div>
+          <p class="nm-caption mt-4">Mesmo nome e mesma data dão sempre a mesma nota</p>
+        </div>
+      </div>
+    </section>
 
-      {/* Content Sections */}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 md:px-10">
       <div class="space-y-6 sm:space-y-10 text-[#e5e2e1]">
+
+        {/* 0. O método em 5 passos */}
+        <section class="space-y-6">
+          <div class="text-center">
+            <p class="nm-eyebrow mb-3">O Método</p>
+            <h2 class="nm-h2">Do nome à nota em 5 passos</h2>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            {PASSOS.map((p) => (
+              <div class={p.n === '5' ? 'nm-floating-card p-5 sm:p-6 sm:col-span-2' : 'nm-floating-card p-5 sm:p-6'}>
+                <p class="text-[#f2ca50] font-cinzel font-bold text-sm mb-1">Passo {p.n}</p>
+                <h3 class="nm-h4 mb-2">{p.titulo}</h3>
+                <p class="nm-body">{p.texto}</p>
+              </div>
+            ))}
+          </div>
+          <div class="nm-floating-card p-5 sm:p-6">
+            <h3 class="nm-h4 mb-3 text-center">A tabela cabalística das letras</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {TABELA_LETRAS.map((t) => (
+                <div class="rounded-xl bg-white/[0.03] px-3 py-3 text-center">
+                  <span class="font-cinzel text-xl font-bold text-[#f2ca50] block">{t.valor}</span>
+                  <span class="text-xs text-gray-300 tracking-wide">{t.letras}</span>
+                </div>
+              ))}
+            </div>
+            <h4 class="nm-h4 text-center mt-6 mb-3">E os acentos?</h4>
+            <p class="nm-caption text-center mb-3 max-w-[62ch] mx-auto">Cada acento muda o valor da letra. O Ç vale 6 e não recebe acento.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {ACENTOS.map((a) => (
+                <div class={a.nome === 'Apóstrofo' ? 'rounded-xl bg-white/[0.03] px-3 py-3 text-center col-span-2 sm:col-span-1' : 'rounded-xl bg-white/[0.03] px-3 py-3 text-center'}>
+                  <span class="font-cinzel text-xl font-bold text-[#bea5ff] block" aria-hidden="true">{a.sinal}</span>
+                  <span class="text-xs text-gray-200 font-medium block">{a.nome}</span>
+                  <span class="text-sm font-semibold text-[#f2ca50] block mt-0.5">{a.regra}</span>
+                  <span class="text-[11px] text-gray-400 block mt-1">{a.exemplo}</span>
+                </div>
+              ))}
+            </div>
+            <p class="nm-caption text-center mt-4 max-w-[62ch] mx-auto">
+              O acento agudo (+2) também aparece em outros materiais de numerologia cabalística em português. Os demais valores (til, circunflexo, grave, trema, anel e apóstrofo) são a convenção do método: não existe uma tabela clássica única para eles. Por isso deixamos cada valor aberto para você conferir.
+            </p>
+          </div>
+          <div>
+            <LetterNumberExample client:visible />
+          </div>
+        </section>
 
         {/* 1. Visão Geral */}
         <section class="nm-floating-card p-5 sm:p-8 space-y-4">
@@ -57,10 +220,10 @@ const cfg = SCORE_CONFIG_V3;
         <section class="nm-floating-card p-5 sm:p-8 space-y-4">
           <div class="flex items-start sm:items-center gap-3">
             <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 border border-[#f2ca50]/30 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">2</span>
-            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Triângulo da Vida vs. Demais Triângulos</h2>
+            <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">Triângulo da Vida e Leituras Complementares</h2>
           </div>
           <p class="text-gray-300 leading-relaxed text-sm sm:text-base text-left sm:text-justify [text-align-last:left]">
-            A numerologia cabalística constrói quatro pirâmides numéricas para cada pessoa: <strong>Vida</strong>, <strong>Pessoal</strong>, <strong>Social</strong> e <strong>Destino</strong>. O score do nome avalia o impacto direto das letras. Por isso, na tela do seu resumo você vê o Triângulo da Vida, que é o que entra na nota. Os quatro triângulos completos estão no seu PDF.
+            O cálculo principal é o <strong>Triângulo da Vida</strong>, a pirâmide formada pelas letras do nome. É ele que entra na nota e na regra das sugestões, e é ele que você vê na tela do seu resumo. Os triângulos <strong>Pessoal</strong>, <strong>Social</strong> e do <strong>Destino</strong> aparecem no seu PDF como leitura complementar, uma informação extra. Eles também alimentam duas pontas do Mapa de Alinhamento (o Social, o Magnetismo Social; o Pessoal, o Equilíbrio da Alma), que não muda a nota.
           </p>
           <ul class="space-y-3 text-sm text-gray-300 leading-relaxed pl-3 sm:pl-4 border-l border-[#f2ca50]/20">
             <li>
@@ -244,6 +407,26 @@ const cfg = SCORE_CONFIG_V3;
           </p>
         </section>
 
+        {/* 9 a 12. Como escolhemos os nomes em cada caminho */}
+        {CAMINHOS.map((c) => (
+          <section id={c.id} class="nm-floating-card p-5 sm:p-8 space-y-4">
+            <div class="flex items-start sm:items-center gap-3">
+              <span class="w-8 h-8 shrink-0 rounded-full bg-[#f2ca50]/10 flex items-center justify-center text-[#f2ca50] font-cinzel font-bold text-sm">{c.n}</span>
+              <h2 class="font-cinzel text-lg sm:text-2xl font-bold text-[#f2ca50] leading-snug">{c.titulo}</h2>
+            </div>
+            <p class="text-gray-300 leading-relaxed text-sm sm:text-base" set:html={c.intro.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')} />
+            <ul class="space-y-3 text-sm text-gray-300 leading-relaxed">
+              {c.itens.map((i) => (
+                <li class="flex gap-2.5">
+                  <span class="text-[#D4AF37] shrink-0" aria-hidden="true">✦</span>
+                  <span set:html={i.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')} />
+                </li>
+              ))}
+            </ul>
+            <p class="text-gray-400 text-sm leading-relaxed" set:html={c.fecho.replace(/\*\*(.+?)\*\*/g, '<strong class="text-gray-200">$1</strong>')} />
+          </section>
+        ))}
+
         {/* Aviso Legal */}
         <section class="p-6 rounded-2xl bg-[#1c1a17] border border-[#f2ca50]/20 text-center space-y-3">
           <span class="text-[#f2ca50] text-lg">✦</span>
@@ -260,7 +443,7 @@ const cfg = SCORE_CONFIG_V3;
             class="inline-flex items-center gap-2 bg-gradient-to-r from-[#f2ca50] to-[#d4af37] text-black font-bold px-8 py-3.5 rounded-full text-sm hover:opacity-95 transition-all shadow-lg shadow-[#f2ca50]/20"
           >
             <span>✦</span>
-            <span>Calcular o Score do Meu Nome</span>
+            <span>Ver a nota do meu nome grátis</span>
           </a>
         </div>
 

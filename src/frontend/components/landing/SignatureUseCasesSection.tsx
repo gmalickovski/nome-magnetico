@@ -10,7 +10,9 @@ import {
   SocialProfileMockup,
   ContractMockup,
   BrandingCardMockup,
+  StageSpotlightMockup,
 } from './SignatureUseCasesMockups';
+import { HOME_COPY } from './home/home-copy';
 
 interface UseCaseItem {
   id: string;
@@ -29,11 +31,11 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '01 · Identidade e Registro',
     title: 'Sua Assinatura Muda, Seu Nome Civil Continua',
     description:
-      'A assinatura é a forma como você traça seu nome. Seu nome civil nos registros pode permanecer o de nascimento, enquanto você adota uma grafia clara nas situações do cotidiano.',
+      'A assinatura é a forma como você traça o seu nome. O nome civil continua o de nascimento, e você adota a nova grafia no dia a dia. Para contratos com firma reconhecida e cadastros com assinatura registrada, atualize-a na CIN, no cartório e onde tiver cadastro.',
     bulletPoints: [
       'Grafie a assinatura escolhida com legibilidade e conforto',
       'Seu nome de certidão permanece como está hoje',
-      'Traço reconhecível no seu ritmo, sem cronograma imposto',
+      'Para documentos, atualize a assinatura na CIN e no cartório',
     ],
     MockupComponent: DocumentCinMockup,
   },
@@ -43,7 +45,7 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '02 · Presença Digital',
     title: 'Perfis, Redes Sociais e Nome Artístico',
     description:
-      'Use a versão que você escolheu no nome de exibição, no @ e na bio do Instagram, LinkedIn, YouTube e TikTok. É a forma mais simples de apresentar o seu novo nome para quem acompanha o seu conteúdo e o seu trabalho.',
+      'Use a versão que você escolheu no nome de exibição, no @ e na bio do Instagram, LinkedIn, YouTube e TikTok. É a forma mais simples de apresentar o seu novo nome para quem acompanha o seu trabalho, sem mexer em nenhum documento.',
     bulletPoints: [
       'Nome de exibição, @ e bio no Instagram, LinkedIn e TikTok',
       'Canais de vídeo, podcasts, newsletters e páginas pessoais',
@@ -57,7 +59,7 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '03 · Rotina de Trabalho',
     title: 'Propostas, Acordos e Rotina Digital',
     description:
-      'Em orçamentos, propostas comerciais, recibos e plataformas digitais do dia a dia, você adota um padrão visual único. Sua assinatura deixa de variar a cada folha e ganha firmeza em todas as suas entregas.',
+      'Em orçamentos, propostas, recibos e plataformas digitais, você adota um padrão único de assinatura. Ela deixa de variar a cada folha e ganha firmeza em tudo o que você envia. Em contratos com firma reconhecida, atualize-a antes no cartório.',
     bulletPoints: [
       'Propostas comerciais, orçamentos e termos de serviço',
       'Plataformas de assinatura eletrônica e documentos em PDF',
@@ -78,6 +80,15 @@ const USE_CASES: UseCaseItem[] = [
       'Capas de livros, cursos, certificados e obras autorais',
     ],
     MockupComponent: BrandingCardMockup,
+  },
+  {
+    id: HOME_COPY.useCasesStage.id,
+    stepNumber: HOME_COPY.useCasesStage.stepNumber,
+    eyebrow: HOME_COPY.useCasesStage.eyebrow,
+    title: HOME_COPY.useCasesStage.title,
+    description: HOME_COPY.useCasesStage.description,
+    bulletPoints: [...HOME_COPY.useCasesStage.bulletPoints],
+    MockupComponent: StageSpotlightMockup,
   },
 ];
 
@@ -119,10 +130,10 @@ function UseCaseRow({ item, mockupFirst }: UseCaseRowProps) {
           {item.description}
         </p>
 
-        <div className="space-y-2.5 max-w-[50ch] sm:max-w-[56ch] lg:max-w-[54ch] mx-auto lg:mx-0 text-left">
+        <div className="space-y-2.5 max-w-[50ch] sm:max-w-[56ch] lg:max-w-[54ch] mx-auto lg:mx-0 text-center lg:text-left">
           {item.bulletPoints.map((bullet, bIdx) => (
-            <div key={bIdx} className="flex items-start gap-2.5">
-              <span className="text-[#D4AF37] text-sm shrink-0 leading-none mt-1">✦</span>
+            <div key={bIdx} className="block lg:flex lg:items-start lg:gap-2.5">
+              <span className="text-[#D4AF37] text-sm shrink-0 leading-none mr-2 lg:mr-0 lg:mt-1">✦</span>
               <span className="nm-body">{bullet}</span>
             </div>
           ))}

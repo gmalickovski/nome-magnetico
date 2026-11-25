@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { ClientRouter } from 'astro:transitions';
 import { createUserClient } from '../backend/db/supabase';
 import { memoize } from '../backend/cache/memo';
 import AppDesktopHeader from '../frontend/components/app/AppDesktopHeader';
@@ -25,6 +26,7 @@ export interface Props {
   mobileFullViewport?: boolean;
   /** Oculta o header desktop padrão quando a página usa header integrado próprio (ex.: chat). */
   hideDesktopHeader?: boolean;
+  showMobileAnalysisCta?: boolean;
 }
 
 const {
@@ -33,11 +35,13 @@ const {
   noPadding = false,
   mobileFullViewport = false,
   hideDesktopHeader = false,
+  showMobileAnalysisCta = false,
 } = Astro.props;
 
 const user = Astro.locals.user;
 if (!user) {
-  return Astro.redirect('/auth/login?redirect=' + encodeURIComponent(Astro.url.pathname));
+  // DEV-317: mantém a query (?id=…&painel=1) para o link do e-mail abrir a análise certa depois do login.
+  return Astro.redirect('/auth/login?redirect=' + encodeURIComponent(Astro.url.pathname + Astro.url.search));
 }
 
 let isAdmin = false;
@@ -94,6 +98,7 @@ const mobileDockContext = resolveMobileDockContext(pathname);
 ---
 
 <BaseLayout title={title} description={description} noIndex={true}>
+  <ClientRouter slot="head" fallback="swap" />
   <script is:inline define:vars={{ analyticsUserId: isAdmin ? '' : user.id, analyticsEmail: isAdmin ? '' : (user.email ?? '') }}>
     function identifyNmUser() {
       if (!analyticsUserId) return;
@@ -167,10 +172,12 @@ const mobileDockContext = resolveMobileDockContext(pathname);
       </div>
     </aside>
 
-    <AppMobileHeader client:load nome={userNome} isAdmin={isAdmin} />
+    <AppMobileHeader client:load nome={userNome} isAdmin={isAdmin} userId={user.id} showAnalysisCta={showMobileAnalysisCta} />
 
     <AppMobileDock
       client:load
+      transition:persist="nm-app-mobile-dock"
+      transition:animate="none"
       pathname={pathname}
       isAdmin={isAdmin}
       showAnalisesNav={showAnalisesNav}
@@ -213,6 +220,7 @@ const mobileDockContext = resolveMobileDockContext(pathname);
   import { recordAppNavigationPath } from '../frontend/lib/app-nav-back.ts';
 
   recordAppNavigationPath();
+  document.addEventListener('astro:page-load', () => recordAppNavigationPath());
 </script>
 
 

@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import type { PriceInfo, ActivePromotion } from '../../../backend/payments/prices';
+import type { PriceInfo } from '../../../backend/payments/prices';
+import { readLinkedCoupon } from '../../../shared/checkout-coupon-link';
 import { captureViewOffer, track } from '../../lib/analytics';
 import type { SellableProductType } from '../../../shared/product-labels';
 
@@ -9,13 +10,13 @@ type Step = 'review' | 'redirecting';
 
 interface CouponResult {
   valid: true;
+  applied: boolean;
   originalCents: number;
   discountedCents: number;
   originalFormatted: string;
   discountedFormatted: string;
   discountLabel: string;
-  promotionName: string;
-  stripePromoCodeId?: string;
+  promotionName: string | null;
 }
 
 const PRODUCT_META: Record<ProductType, { name: string; eyebrow: string; icon: string; summary: string; highlights: string[] }> = {
@@ -28,7 +29,7 @@ const PRODUCT_META: Record<ProductType, { name: string; eyebrow: string; icon: s
       'Compare nome de nascimento e variações de nome social.',
       'Ranking dos candidatos com score 0-100.',
       'Nome recomendado e sugestões harmonizadas.',
-      '4 triângulos cabalísticos: Vida, Pessoal, Social e Destino.',
+      'Triângulo da Vida como leitura principal, com Pessoal, Social e Destino como complementares.',
       'Bloqueios, débitos, lições kármicas e tendências ocultas.',
       'Relatório PDF premium para baixar e consultar.',
     ],
@@ -42,22 +43,12 @@ function splitPrice(formatted: string) {
   return { currency: match[1], amount: match[2], cents: `,${match[3] ?? '00'}` };
 }
 
-function promotionAppliesToProduct(promotion: ActivePromotion | null | undefined, productType: ProductType): boolean {
-  const products = String(promotion?.productType ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  return products.length === 0 || products.includes(productType);
-}
-
 interface Props {
   productType: ProductType;
   priceInfo: PriceInfo;
-  promotion?: ActivePromotion | null;
   onClose: () => void;
   /** Redireciona para o Stripe Checkout hospedado (cartão + PIX). */
-  onTriggerCard: (type: ProductType, couponCode?: string) => void;
+  onTriggerCard: (type: ProductType, couponCode: string | undefined, finalCents: number) => Promise<boolean | void>;
   autoconhecimentoAviso?: string;
 }
 
@@ -65,13 +56,15 @@ interface Props {
  * Modal de pré-checkout: resumo do produto + cupom.
  * A escolha cartão/PIX acontece no Stripe Checkout padrão.
  */
-export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTriggerCard, autoconhecimentoAviso }: Props) {
+export function CheckoutModal({ productType, priceInfo, onClose, onTriggerCard, autoconhecimentoAviso }: Props) {
   const [step, setStep] = useState<Step>('review');
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult, setCouponResult] = useState<CouponResult | null>(null);
   const [couponError, setCouponError] = useState('');
+  const [checkoutError, setCheckoutError] = useState('');
   const couponValidationRef = useRef(0);
+  const redirectingRef = useRef(false);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -103,16 +96,9 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
     };
   }, []);
 
-  useEffect(() => {
-    if (!promotion) return;
-    if (promotionAppliesToProduct(promotion, productType) && promotion.stripePromoCode) {
-      setCouponCode(promotion.stripePromoCode);
-    }
-  }, [promotion, productType]);
-
-  async function validateCoupon(codeOverride?: string): Promise<{ valid: boolean; data: CouponResult | null }> {
-    const code = (codeOverride ?? couponCode).trim();
-    if (!code) return { valid: true, data: null };
+  const validateCoupon = useCallback(async (input: string, signal?: AbortSignal): Promise<CouponResult | null> => {
+    const code = input.trim();
+    if (!code) return null;
     const validationId = ++couponValidationRef.current;
     setCouponLoading(true);
     setCouponError('');
@@ -122,43 +108,74 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ coupon_code: code, product_type: productType }),
+        signal,
       });
       const data = await res.json() as CouponResult | { valid: false; error: string };
-      if (validationId !== couponValidationRef.current) return { valid: false, data: null };
+      if (validationId !== couponValidationRef.current) return null;
       if (data.valid) {
         const result = data as CouponResult;
         setCouponResult(result);
-        track('coupon_applied', {
+        if (result.applied) track('coupon_applied', {
           produto: productType,
           codigo_cupom: code,
           desconto: (result.originalCents - result.discountedCents) / 100,
         });
-        return { valid: true, data: result };
+        return result;
       }
-      setCouponError((data as { valid: false; error: string }).error);
-      return { valid: false, data: null };
+      setCouponError(data.error || 'Não foi possível validar o cupom.');
+      return null;
     } catch {
-      if (validationId !== couponValidationRef.current) return { valid: false, data: null };
+      if (signal?.aborted || validationId !== couponValidationRef.current) return null;
       setCouponError('Erro ao validar cupom. Tente novamente.');
-      return { valid: false, data: null };
+      return null;
     } finally {
       if (validationId === couponValidationRef.current) setCouponLoading(false);
     }
+  }, [productType]);
+
+  useEffect(() => {
+    const code = readLinkedCoupon(new URLSearchParams(window.location.search));
+    if (!code) return;
+    const validation = new AbortController();
+    setCouponCode(code);
+    void validateCoupon(code, validation.signal);
+    return () => {
+      couponValidationRef.current += 1;
+      validation.abort();
+    };
+  }, [validateCoupon]);
+
+  function changeCoupon(code: string) {
+    couponValidationRef.current += 1;
+    setCouponCode(code);
+    setCouponLoading(false);
+    setCouponResult(null);
+    setCouponError('');
+    setCheckoutError('');
   }
 
-  async function handlePay() {
-    if (couponCode.trim() && !couponResult) {
-      const { valid } = await validateCoupon();
-      if (!valid) return;
+  async function handlePay(withoutCoupon = false) {
+    if (redirectingRef.current || (couponLoading && !withoutCoupon)) return;
+    redirectingRef.current = true;
+    setCheckoutError('');
+    let navigating = false;
+    try {
+      const code = withoutCoupon ? '' : couponCode.trim();
+      const coupon = code ? couponResult ?? await validateCoupon(code) : null;
+      if (code && !coupon) return;
+      const finalCents = coupon?.discountedCents ?? priceInfo.cents;
+      const effectiveCoupon = coupon?.applied ? code : undefined;
+      if (withoutCoupon) changeCoupon('');
+      setStep('redirecting');
+      navigating = await onTriggerCard(productType, effectiveCoupon, finalCents) === true;
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Erro ao abrir o checkout. Tente novamente.');
+    } finally {
+      if (!navigating) {
+        redirectingRef.current = false;
+        setStep('review');
+      }
     }
-    setStep('redirecting');
-    const effectiveCoupon = couponCode.trim() || undefined;
-    track('checkout_redirect_start', {
-      produto: productType,
-      preco: priceInfo.cents / 100,
-      codigo_cupom: effectiveCoupon,
-    });
-    onTriggerCard(productType, effectiveCoupon);
   }
 
   const canClose = step !== 'redirecting';
@@ -166,8 +183,8 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
 
   if (!mounted) return null;
 
-  const displayPrice = couponResult ? couponResult.discountedFormatted : priceInfo.formatted;
-  const originalPrice = couponResult ? couponResult.originalFormatted : null;
+  const displayPrice = couponResult?.discountedFormatted ?? priceInfo.discountedFormatted ?? priceInfo.formatted;
+  const originalPrice = couponResult?.originalFormatted ?? (priceInfo.discountedFormatted ? priceInfo.formatted : null);
   const priceParts = splitPrice(displayPrice);
 
   return createPortal(
@@ -220,7 +237,7 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
           </div>
           <div className="flex items-start gap-3 lg:w-full lg:flex-col lg:gap-6">
             <div className="text-right pt-0.5 lg:text-left">
-              {originalPrice && (
+              {originalPrice && originalPrice !== displayPrice && (
                 <p className="text-xs text-gray-600 line-through mb-0.5 lg:text-sm">{originalPrice}</p>
               )}
               <div className="flex items-start justify-end gap-1 text-[#D4AF37] lg:justify-start">
@@ -273,7 +290,7 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#D4AF37]/85">Cupom promocional</p>
                     <p className="mt-1 text-[11px] leading-snug text-gray-500">Opcional — aplique antes de continuar.</p>
                   </div>
-                  {couponResult && (
+                  {couponResult?.applied && (
                     <span className="shrink-0 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
                       aplicado
                     </span>
@@ -283,31 +300,28 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
                   <input
                     type="text"
                     value={couponCode}
-                    onChange={e => {
-                      couponValidationRef.current += 1;
-                      setCouponCode(e.target.value.trimStart().toUpperCase());
-                      setCouponResult(null);
-                      setCouponError('');
-                    }}
+                    onChange={e => changeCoupon(e.target.value.trimStart().toUpperCase())}
                     onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        void validateCoupon();
+                        if (!couponLoading) void validateCoupon(couponCode);
                       }
                     }}
                     placeholder="CUPOM"
+                    aria-label="Cupom promocional"
+                    aria-invalid={Boolean(couponError)}
                     className="min-w-0 flex-1 rounded-xl bg-[#0c0c0c] px-4 py-3 text-sm font-mono font-semibold uppercase tracking-wider text-[#e5e2e1] placeholder-gray-700 outline-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)] transition-all focus:shadow-[inset_0_0_0_1px_rgba(212,175,55,0.55)]"
                   />
                   <button
                     type="button"
-                    onClick={() => void validateCoupon()}
+                    onClick={() => void validateCoupon(couponCode)}
                     disabled={couponLoading || !couponCode.trim()}
                     className="shrink-0 rounded-xl bg-[#D4AF37] px-4 py-3 text-xs font-bold text-[#131313] transition-all hover:bg-[#f2ca50] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {couponLoading ? 'Validando' : 'Aplicar'}
                   </button>
                 </div>
-                {couponResult && (
+                {couponResult?.applied && (
                   <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-500/10 px-3 py-2">
                     <svg className="h-3.5 w-3.5 shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -316,19 +330,23 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
                     <span className="text-xs text-gray-400">— {couponResult.promotionName}</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setCouponCode('');
-                        setCouponResult(null);
-                        setCouponError('');
-                      }}
+                      onClick={() => changeCoupon('')}
                       className="ml-auto text-[10px] font-bold uppercase tracking-wider text-green-300/70 hover:text-green-200"
                     >
                       Remover
                     </button>
                   </div>
                 )}
-                {couponError && (
-                  <p className="mt-2 text-center text-xs text-red-400">{couponError}</p>
+                {couponResult && !couponResult.applied && (
+                  <p className="mt-2 text-xs text-gray-300" role="status">{couponResult.discountLabel}</p>
+                )}
+                {(couponError || checkoutError) && (
+                  <p className="mt-2 text-xs text-red-400" role="alert">{couponError || checkoutError}</p>
+                )}
+                {couponCode.trim() && (couponError || checkoutError) && (
+                  <button type="button" onClick={() => void handlePay(true)} className="mt-2 min-h-11 px-2 text-sm text-[#D4AF37] underline">
+                    Continuar sem cupom
+                  </button>
                 )}
               </div>
 
@@ -338,6 +356,7 @@ export function CheckoutModal({ productType, priceInfo, promotion, onClose, onTr
 
               <button
                 onClick={() => void handlePay()}
+                disabled={couponLoading}
                 className="w-full group flex items-center gap-4 bg-[#D4AF37] hover:bg-[#f2ca50] text-[#131313] rounded-2xl px-4 py-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-yellow-500/20 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
               >
                 <div className="w-11 h-11 rounded-2xl bg-black/15 flex items-center justify-center flex-shrink-0 sm:h-12 sm:w-12">

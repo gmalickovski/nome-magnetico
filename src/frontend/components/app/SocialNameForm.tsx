@@ -547,7 +547,7 @@ export default function SocialNameForm({ nomeInicial = '', dataInicial = '', onS
           )}
         </button>
         <p className="mt-3 text-center text-xs leading-relaxed text-gray-500">
-          O resultado abre na hora, comparando sua nota hoje com o potencial máximo (N5), top 3 assinaturas explicadas e PDF completo.
+          O resultado abre na hora, comparando a nota do seu nome hoje com a nota máxima que ele pode alcançar, com sugestões de assinatura explicadas e PDF completo.
         </p>
       </div>
     </form>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sistema de blocos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,sans-serif;color:#2A2620}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:30px;letter-spacing:.06em;color:#8A6A12;margin:0}
+h2{font-family:Cinzel,serif;font-weight:700;font-size:20px;letter-spacing:.05em;color:#2A2620;margin:0}
+h3{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6B5A2E;margin:0}
+h4{font-size:14px;font-weight:600;color:#2A2620;margin:0}
+p{font-size:14px;line-height:1.6;margin:0;color:#3D372D}
+</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 48px; background: #FBF9F4; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; color: #8A6A12">NOME MAGNÉTICO</div>
+<div style="font-size: 11px; color: #6E6658">Guia de blocos do PDF · não vai no relatório</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 11px; color: #6E6658">Selo de parte (abre cada Parte, sempre em página nova)</div>
+<div style="align-self: flex-start; background: #2A2620; color: #F3E7C4; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 14px; border-radius: 999px">Parte 1 · Você hoje</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px; background: #F4F0E6; border-radius: 16px; padding: 22px 24px">
+<div style="display: flex; gap: 16px; align-items: baseline"><div style="width: 54px; font-size: 11px; color: #6E6658">H1</div><h1>Título da Parte</h1></div>
+<div style="display: flex; gap: 16px; align-items: baseline"><div style="width: 54px; font-size: 11px; color: #6E6658">H2</div><h2>Seção dentro da parte</h2></div>
+<div style="display: flex; gap: 16px; align-items: baseline"><div style="width: 54px; font-size: 11px; color: #6E6658">H3</div><h3>Subtítulo de bloco</h3></div>
+<div style="display: flex; gap: 16px; align-items: baseline"><div style="width: 54px; font-size: 11px; color: #6E6658">H4</div><h4>Título de card</h4></div>
+<div style="display: flex; gap: 16px; align-items: baseline"><div style="width: 54px; font-size: 11px; color: #6E6658">P</div><p style="flex: 1">Parágrafo de leitura. Frases curtas, uma ideia por parágrafo, sem jargão técnico do cálculo.</p></div>
+<div style="display: flex; gap: 16px; align-items: baseline"><div style="width: 54px; font-size: 11px; color: #6E6658">Nota</div><div style="font-size: 11px; color: #6E6658">Legenda, fonte ou observação curta.</div></div>
+</div>
+
+<h3>Cards (sem linhas: só fundo e espaço)</h3>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="background: #FFFFFF; border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(42,38,32,0.08); display: flex; flex-direction: column; gap: 6px">
+<h4>Card de leitura</h4>
+<p style="font-size: 13px">Texto explicativo de um número ou item.</p>
+</div>
+<div style="background: #F4F0E6; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+<h4>Card de destaque</h4>
+<p style="font-size: 13px">Informação que a pessoa precisa notar.</p>
+</div>
+<div style="background: #FBE9E7; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+<h4 style="color: #9B1C14">Card de bloqueio</h4>
+<p style="font-size: 13px">Vermelho só para bloqueio real.</p>
+</div>
+</div>
+
+<h3>Número em destaque</h3>
+<div style="display: flex; gap: 12px">
+<div style="flex: 1; background: #ECE9E2; border-radius: 16px; padding: 14px 16px; display: flex; gap: 14px; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 34px; color: #4A443A">6</div>
+<div><div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #6E6658">Nascimento</div><h4>Harmonia e Cuidado</h4></div>
+</div>
+<div style="flex: 1; background: #F3E7C4; border-radius: 16px; padding: 14px 16px; display: flex; gap: 14px; align-items: center">
+<div style="font-family: Cinzel, serif; font-weight: 700; font-size: 34px; color: #6B4E00">11</div>
+<div><div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #6B4E00">Nome novo</div><h4>Intuição e Inspiração</h4></div>
+</div>
+</div>
+
+<h3>Selos</h3>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<div style="background: #F3E7C4; color: #6B4E00; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Melhorou</div>
+<div style="background: #ECE9E2; color: #4A443A; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Igual</div>
+<div style="background: #FBE9E7; color: #9B1C14; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Pede atenção</div>
+<div style="background: #EDE6FF; color: #4B2E9E; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Ressonância Total</div>
+<div style="background: #EDE6FF; color: #4B2E9E; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Vibração Complementar</div>
+<div style="background: #ECE9E2; color: #4A443A; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Vibração Neutra</div>
+<div style="background: #FBE9E7; color: #9B1C14; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px">Tensão Vibracional</div>
+</div>
+
+<h3>Cores</h3>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 40px; border-radius: 10px; background: #FBF9F4; box-shadow: inset 0 0 0 1px rgba(42,38,32,0.15)"></div><div style="font-size: 11px; color: #6E6658">Página #FBF9F4</div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 40px; border-radius: 10px; background: #2A2620"></div><div style="font-size: 11px; color: #6E6658">Tinta #2A2620</div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 40px; border-radius: 10px; background: #D4AF37"></div><div style="font-size: 11px; color: #6E6658">Ouro #D4AF37</div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 40px; border-radius: 10px; background: #8A6A12"></div><div style="font-size: 11px; color: #6E6658">Ouro texto #8A6A12</div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 40px; border-radius: 10px; background: #6D4FC2"></div><div style="font-size: 11px; color: #6E6658">Roxo #6D4FC2</div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="height: 40px; border-radius: 10px; background: #B3261E"></div><div style="font-size: 11px; color: #6E6658">Bloqueio #B3261E</div></div>
+</div>
+
+<h3>Faixas da nota (estrela, teia e tudo que mostra a nota)</h3>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+<div style="background: #D1FAE5; border-radius: 12px; padding: 8px 10px; box-shadow: inset 0 0 0 1.5px #10B981"><div style="font-size: 12px; font-weight: 600; color: #047857">85–100</div><div style="font-size: 11px; color: #047857">Harmonioso</div></div>
+<div style="background: #ECFCCB; border-radius: 12px; padding: 8px 10px; box-shadow: inset 0 0 0 1.5px #84CC16"><div style="font-size: 12px; font-weight: 600; color: #4D7C0F">70–84</div><div style="font-size: 11px; color: #4D7C0F">Favorável</div></div>
+<div style="background: #FEF9C3; border-radius: 12px; padding: 8px 10px; box-shadow: inset 0 0 0 1.5px #EAB308"><div style="font-size: 12px; font-weight: 600; color: #A16207">50–69</div><div style="font-size: 11px; color: #A16207">Equilíbrio Parcial</div></div>
+<div style="background: #FFEDD5; border-radius: 12px; padding: 8px 10px; box-shadow: inset 0 0 0 1.5px #F97316"><div style="font-size: 12px; font-weight: 600; color: #C2410C">30–49</div><div style="font-size: 11px; color: #C2410C">Pede Atenção</div></div>
+<div style="background: #FEE2E2; border-radius: 12px; padding: 8px 10px; box-shadow: inset 0 0 0 1.5px #EF4444"><div style="font-size: 12px; font-weight: 600; color: #B91C1C">0–29</div><div style="font-size: 11px; color: #B91C1C">Em Tensão</div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

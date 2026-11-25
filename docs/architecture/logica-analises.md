@@ -146,11 +146,45 @@ PROCESSAMENTO
   9. generateSuggestions() -> IA ranqueia sugestoes
   10. saveMagneticNames() -> salva no banco
 
-SUGESTOES DE NOMES
-  Criterios: sem bloqueios (ou menos que o original), compatibilidade
-  total/complementar Expressao x Destino, criterios grafoscopicos formais
-  (legibilidade, inclinacao ascendente, sem tracos cortantes).
-  Modulo: src/backend/numerology/suggestions.ts
+SUGESTOES DE NOMES (motor v4 · DEV-301)
+  Toda sugestao oferecida (Nome de Ouro, top 3, lista do chat, gerar mais, export,
+  potencial do PDF gratuito) obedece:
+    R1  zero bloqueio nos 4 triangulos (temBloqueio = false)
+    R2  nota >= max(70, nota do nascimento + 1): piso 70 e nunca igual ao nascimento.
+        NOME_SOCIAL_GANHO_MINIMO_PONTOS so sobe o minimo, nunca baixa o piso.
+    R3  Nome de Ouro = equilibrio nota x perfil: ordem de prioridade do comparador
+        (etapas, estilo, sobrenomes, curto x formal, ortografia) so entre as validas.
+    R3a a opcao valida de maior nota sempre aparece entre as visiveis (maiorNota = true)
+    R3b gerar mais traz as proximas validas, sem repetir
+    R4  regra dura nunca relaxa para encher lista; sem opcao valida = estado vazio
+  A ENTREVISTA MANDA, e sem estilo definido vale a naturalidade (DEV-304): a maioria das pessoas
+  quer uma assinatura que mude pouco. Entre as sugestoes com nota ate 15 pontos da melhor,
+  vence a que menos distorce o nome: primeiro nome + 1 sobrenome, depois tirar 1 sobrenome,
+  depois acento leve, depois so o primeiro nome, e por ultimo duplicacao, corte, apelido e
+  grafia artificial. Estilo explicito (um acento ou letra, tirar sobrenome, curto, sem acento),
+  sobrenomes que a pessoa disse usar e 'nota mais alta' passam na frente. A de maior nota
+  continua sempre visivel. Funcao: distorcaoDoNome (nome-social.ts); janela em score-config.ts.
+  Preferencias do questionario relaxam em cascata, sempre dentro do conjunto valido:
+  teto de nivel > sem acento > primeiro nome intacto > sobrenomes excluidos > etapa 3 >
+  grafia artificial (ultimo recurso, sempre atras das naturais). Restricao legal
+  (contratos/documentos) nao relaxa sozinha.
+  Nomes do usuario (uso diario, assinatura atual, digitados) sao avaliados e, se nao
+  passarem em R1/R2, ficam em `comparacao` (nunca viram sugestao).
+  Grafia: anel, acento duplo novo, acento na inicial do sobrenome e til na inicial sao
+  proibidos; til fora de a final/ao/ae e oe e 'artificial' e so entra sem alternativa.
+  Perfil da entrevista (DEV-302): estilo_presenca, area_foco e subfoco apontam numeros
+  preferidos de Expressao, Motivacao e Impressao (profile-affinity.ts). A aderencia
+  (0 a 1; Expressao 50%, Motivacao 30%, Impressao 20%; area 40%, estilo 40%, subfoco 20%)
+  so DESEMPATA entre sugestoes validas, dentro da mesma faixa de 5 pontos de nota, depois
+  das preferencias explicitas de estilo/sobrenome. Nao muda nota, nao cria candidato e nao
+  esconde a sugestao de maior nota. O texto 'por que este nome para voce' (explicacaoPerfil)
+  cita no maximo 2 afinidades realmente atendidas. Sem afinidades, nada muda.
+  Mapa: prosperidade 8,4 | carreira 1,8,22 | relacionamentos 2,6 | autoestima 3,5,1 |
+  firme_confiavel 4,8 | leve_acolhimento 2,6 | criatividade 3,5 | elegancia_discreta 7,6.
+  Rollback: NOME_SOCIAL_MOTOR_V4=false (tambem desliga as afinidades).
+  Modulos: products/nome-social.ts (gerarSugestoesAutoSocialV4, analisarNomesSocial),
+  suggestion-birth-invariant.ts (validador), score-config.ts (SUGESTAO_CONFIG_V4).
+  Legado (deprecated): src/backend/numerology/suggestions.ts
 
 ESTRUTURA NO BANCO (tabela analyses)
   numero_expressao   : number

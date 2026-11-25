@@ -124,7 +124,9 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
 
   it('ChatProgress usa container flex centralizado e ChatRestartButton usa IconRotateCcw com tons dourados', () => {
     const progressFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatProgress.tsx');
-    const progressSrc = readFileSync(progressFile, 'utf8');
+    const sharedPanelFile = path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatAnalysisPanel.tsx');
+    const progressSrc = readFileSync(progressFile, 'utf8') + '\n' + readFileSync(sharedPanelFile, 'utf8');
+    assert.match(progressSrc, /shared\/chat-ui\/ChatAnalysisPanel/);
     assert.match(progressSrc, /flex-1 min-w-0 flex items-center justify-center/);
     assert.match(progressSrc, /max-w-2xl/);
 
@@ -143,15 +145,17 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const novaAnaliseAnchors = anchors.filter((a) => a.includes('+ Nova Análise'));
     const comecarAnchors = anchors.filter((a) => a.includes('Começar Agora'));
 
-    assert.equal(novaAnaliseAnchors.length, 2, 'deve ter botão + Nova Análise no header e no mobile');
+    assert.equal(novaAnaliseAnchors.length, 1, 'o CTA desktop permanece; o mobile usa o header compartilhado');
     for (const a of novaAnaliseAnchors) {
       assert.match(a, /href="\/app\/analise\/nome-social"/);
       assert.doesNotMatch(a, /href="\/app"/);
     }
-    assert.ok(
-      novaAnaliseAnchors.some((a) => a.includes('lg:hidden')),
-      'botão mobile + Nova Análise deve usar lg:hidden para cobrir <1024px'
-    );
+    const mobileHeader = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'AppMobileHeader.tsx'), 'utf8');
+    assert.match(mobileHeader, /lg:hidden/);
+    assert.match(mobileHeader, /href="\/app\/analise\/nome-social"/);
+    // DEV-317: no celular o botão é só ícone, com o nome no aria-label.
+    assert.match(mobileHeader, /aria-label=\{hasUnfinishedSession \? 'Retomar análise' : 'Nova análise'\}/);
+    assert.match(readFileSync(analisesFile, 'utf8'), /showMobileAnalysisCta=\{!isLocked && hasAnyPaidAccess\}/);
 
     assert.equal(comecarAnchors.length, 1);
     assert.match(comecarAnchors[0], /href="\/app\/analise\/nome-social"/);
@@ -172,12 +176,15 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     const chatSrc = readFileSync(chatFile, 'utf8');
     assert.doesNotMatch(chatSrc, /buildPostSuggestionChoiceBlock/);
     assert.match(chatSrc, /if \(msg\.id\.startsWith\('sug-choice-'\)\) return null;/);
-    assert.match(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"\s+className="!max-w-full"/);
+    // DEV-317: sem balão pai; os containers de sugestões ficam soltos na largura total.
+    assert.doesNotMatch(chatSrc, /eyebrow="OPÇÕES HARMONIZADAS"/);
+    assert.match(chatSrc, /<div key=\{msg\.id\} className="w-full my-2 animate-fade-in">\s*<SuggestionPicker/);
   });
 
   it('painel lateral desktop usa título Painel de análise e bolinha dourada condicional na seleção', () => {
     const chromeFile = path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatSidebarPanelChrome.tsx');
-    const chromeSrc = readFileSync(chromeFile, 'utf8');
+    const sharedPanelFile = path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatAnalysisPanel.tsx');
+    const chromeSrc = readFileSync(chromeFile, 'utf8') + '\n' + readFileSync(sharedPanelFile, 'utf8');
     assert.match(chromeSrc, /hasSelection\s*=\s*false/);
     assert.match(chromeSrc, /\{hasSelection\s*&&\s*\(/);
     assert.match(chromeSrc, /data-nm-selection-dot="true"/);
@@ -190,7 +197,10 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
   });
 
   it('seções do painel de análise usam textos introdutórios sem tile escuro e exibem quantidade = N nos títulos', () => {
-    const topicSrc = readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingTopicCard.tsx'), 'utf8');
+    const topicSrc =
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ReadingTopicCard.tsx'), 'utf8') +
+      '\n' +
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ReadingTopicCard.tsx'), 'utf8');
     assert.match(topicSrc, /typeof count === 'number'/);
     assert.match(topicSrc, /=\s*\{count\}/);
 
@@ -358,10 +368,10 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(workspaceSrc, /onToggleExpand=\{\(\) => setPanelExpanded/);
     assert.doesNotMatch(workspaceSrc, /Relatório completo/);
 
-    const harmonyScoreSrc = readFileSync(
-      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyScoreCard.tsx'),
-      'utf8',
-    );
+    const harmonyScoreSrc =
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'ChatHarmonyScoreCard.tsx'), 'utf8') +
+      '\n' +
+      readFileSync(path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatAnalysisPanel.tsx'), 'utf8');
     const idxHarm = harmonyScoreSrc.indexOf('Nome harmonizado (Potencial)');
     const idxBirth = harmonyScoreSrc.indexOf('Nome de nascimento (Nota Hoje)');
     assert.ok(idxHarm !== -1 && idxBirth !== -1 && idxHarm < idxBirth);
@@ -374,10 +384,16 @@ describe('AppLayout.astro e unificação DEV-263 / DEV-282', () => {
     assert.match(mobileSheetSrc, /Painel de análise/);
     assert.doesNotMatch(mobileSheetSrc, /Leitura deste nome/);
 
-    const pickerSrc = readFileSync(
-      path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),
-      'utf8',
-    );
+    const pickerSrc =
+      readFileSync(
+        path.join(srcRoot, 'frontend', 'components', 'app', 'chat', 'SuggestionPicker.tsx'),
+        'utf8',
+      ) +
+      '\n' +
+      readFileSync(
+        path.join(srcRoot, 'frontend', 'components', 'shared', 'chat-ui', 'ChatSuggestionCard.tsx'),
+        'utf8',
+      );
     assert.match(pickerSrc, /showBlockBadgeInTags/);
   });
 

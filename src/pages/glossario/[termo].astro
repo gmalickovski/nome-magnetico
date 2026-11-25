@@ -1,4 +1,5 @@
 ---
+import { resolveGlossaryRedirect } from '../../shared/glossary/canonical-terms';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { LandingHeader } from '../../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../../frontend/components/landing/LandingFooter';
@@ -14,6 +15,11 @@ import { marked } from 'marked';
 const { termo } = Astro.params;
 if (!termo) {
   return Astro.redirect('/glossario', 301);
+}
+
+const redirectSlug = resolveGlossaryRedirect(termo);
+if (redirectSlug) {
+  return Astro.redirect(`/glossario/${redirectSlug}`, 301);
 }
 
 const resolved = await getGlossaryTermBySlug(termo);
@@ -130,7 +136,7 @@ const schemaBreadcrumb = {
               Descubra como isso aparece no seu nome
             </h2>
             <p class="mt-1.5 text-sm text-[#A0A0A0]">
-              Veja seus 4 Triângulos, score atual e bloqueios em segundos.
+              Veja o seu Triângulo da Vida, a nota atual e os bloqueios em segundos.
             </p>
           </div>
           <a

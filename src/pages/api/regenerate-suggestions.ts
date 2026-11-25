@@ -16,7 +16,11 @@ import {
   analisarNomesSocial,
   scoreNascimentoNomeSocial,
 } from '../../backend/numerology/products/nome-social';
-import { passaGanhoMinimo, getGanhoMinimoPontos } from '../../backend/numerology/suggestion-birth-invariant';
+import {
+  mensagemNaoOfertavel,
+  motivoNaoOfertavel,
+  scoreMinimoSugestao,
+} from '../../backend/numerology/suggestion-birth-invariant';
 import {
   NOME_SOCIAL_MAX_SUGESTOES_TOTAL,
   validarPedidoGerarMais,
@@ -31,6 +35,30 @@ const rankingChatSchema = z.object({
   assinaturaAtual: z.string().max(150).optional(),
   restricaoDocumentosLegais: z.boolean().optional(),
   maxNivelGeracao: z.number().finite().optional(),
+  afinidades: z
+    .object({
+      estilo: z.array(z.string().max(60)).max(4).optional(),
+      area: z.string().max(60).nullable().optional(),
+      subfocos: z.array(z.string().max(60)).max(4).optional(),
+    })
+    .optional(),
+  // DEV-303
+  manterPrimeiroNome: z.boolean().optional(),
+  acentoNaAssinatura: z.enum(['prefere_sem']).optional(),
+  prioridadeConflito: z.enum(['nota', 'mudanca']).optional(),
+  // DEV-320: perfil do chat guardado em `parametros_usuario.perfilChat` (sem migration).
+  perfilChat: z
+    .object({
+      motivo: z.enum(['dia_a_dia', 'carreira', 'artistico', 'recomeco', 'bebe']).optional(),
+      areaArtistica: z.string().max(40).optional(),
+      areaArtisticaOutro: z.string().max(60).optional(),
+      detalheArtistico: z.array(z.string().max(40)).max(2).optional(),
+      generoPersona: z.enum(['feminino', 'masculino', 'neutro']).optional(),
+      imagemArtistica: z.array(z.string().max(40)).max(2).optional(),
+      tipoNomeArtistico: z.enum(['proximo', 'diferente', 'ambos']).optional(),
+      outrosUsos: z.array(z.string().max(40)).max(6).optional(),
+    })
+    .optional(),
 });
 
 const regenerateSchema = z
@@ -234,6 +262,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       Boolean(parametrosAnteriores.restricaoDocumentosLegais),
     maxNivelGeracao:
       rankingChat?.maxNivelGeracao ?? parametrosAnteriores.maxNivelGeracao,
+    afinidades: rankingChat?.afinidades ?? parametrosAnteriores.afinidades,
+    manterPrimeiroNome:
+      rankingChat?.manterPrimeiroNome ?? Boolean(parametrosAnteriores.manterPrimeiroNome),
+    acentoNaAssinatura:
+      rankingChat?.acentoNaAssinatura ?? parametrosAnteriores.acentoNaAssinatura,
+    prioridadeConflito:
+      rankingChat?.prioridadeConflito ?? parametrosAnteriores.prioridadeConflito,
   };
 
   const resultado = analisarNomesSocial([], nomeNascimento, dataNascimento, {
@@ -251,6 +286,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     variacaoPropria,
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais || undefined,
     maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
+    afinidades: rankingChatMerged.afinidades,
+    manterPrimeiroNome: rankingChatMerged.manterPrimeiroNome || undefined,
+    acentoNaAssinatura: rankingChatMerged.acentoNaAssinatura,
+    prioridadeConflito: rankingChatMerged.prioridadeConflito,
   });
 
   if (selecionarComoPrincipal && selecionarComoPrincipal.trim().length >= 2) {
@@ -261,11 +300,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         c => c.nomeCompleto.trim().toLowerCase() === alvoNorm
       ) ?? analisarNomeSocial(selecionarComoPrincipal.trim(), dataNascimento, 'ia');
 
-    if (!passaGanhoMinimo(escolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+    const motivoInelegivel = motivoNaoOfertavel(escolhido, scoreNasc);
+    if (motivoInelegivel !== null) {
       return new Response(
         JSON.stringify({
-          error:
-            'Esta assinatura não tem nota acima da do seu nome de nascimento. Escolha outra opção ou ajuste suas preferências.',
+          error: mensagemNaoOfertavel(motivoInelegivel, scoreMinimoSugestao(scoreNasc)),
           codigo: 'SUGESTAO_INELEGIVEL',
         }),
         { status: 422, headers: { 'Content-Type': 'application/json' } },
@@ -316,6 +355,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     assinaturaAtual: rankingChatMerged.assinaturaAtual,
     restricaoDocumentosLegais: rankingChatMerged.restricaoDocumentosLegais,
     maxNivelGeracao: rankingChatMerged.maxNivelGeracao,
+    afinidades: rankingChatMerged.afinidades,
+    manterPrimeiroNome: rankingChatMerged.manterPrimeiroNome,
+    acentoNaAssinatura: rankingChatMerged.acentoNaAssinatura,
+    prioridadeConflito: rankingChatMerged.prioridadeConflito,
+    perfilChat: rankingChat?.perfilChat ?? parametrosAnteriores.perfilChat,
   };
 
   const resumoAtualizado = buildSelectedSocialSummary({
@@ -365,6 +409,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         poolEsgotado,
         semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
         scoreNascimento: resultado.scoreNascimento,
+        scoreMinimoSugestao: resultado.scoreMinimoSugestao,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
@@ -446,6 +491,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       poolEsgotado,
       semOpcoesElegiveis: resultado.semOpcoesElegiveis ?? false,
       scoreNascimento: resultado.scoreNascimento,
+      scoreMinimoSugestao: resultado.scoreMinimoSugestao,
     }),
     {
       status: 200,

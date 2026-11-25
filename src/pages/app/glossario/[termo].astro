@@ -1,4 +1,5 @@
 ---
+import { resolveGlossaryRedirect } from '../../../shared/glossary/canonical-terms';
 import AppLayout from '../../../layouts/AppLayout.astro';
 import {
   getGlossaryTermBySlug,
@@ -19,6 +20,11 @@ if (!user) {
 const { termo } = Astro.params;
 if (!termo) {
   return Astro.redirect('/app/glossario');
+}
+
+const redirectSlug = resolveGlossaryRedirect(termo);
+if (redirectSlug) {
+  return Astro.redirect(`/app/glossario/${redirectSlug}`, 301);
 }
 
 const resolved = await getGlossaryTermBySlug(termo);

@@ -12,6 +12,20 @@
 
 import { Image, TypeSafeClient } from '@typesafe-ai/sdk';
 import { isJevMockOnlyMode } from '../adaptive/config';
+import { inferAreaFocoFromText } from '../questionnaire-adaptive';
+import {
+  classifyJevFailure,
+  createJevCallGuard,
+  isJevRemoteDisabled,
+  jevBudget,
+  parseStructuredDecision,
+  parseTypesafeAnswers,
+  readStructuredTimeoutMs,
+  type JevAttempt,
+  type JevCallGuard,
+  type JevTelemetry,
+  type StructuredDecision,
+} from './jev-safety';
 import {
   buildNomeMagneticoJevQuestions,
   buildSignatureBoxQuestions,
@@ -49,6 +63,33 @@ export interface JevDecisionResult {
   estiloPresenca: Exclude<EstiloAssinaturaPreferido, 'qualquer'>;
   subfocoMomento: SubfocoMomento;
   alertaComplianceLegal: boolean;
+  /** DEV-303: tentativas remotas, motivo do fallback, tokens e latência (sem PII). */
+  telemetry?: JevTelemetry;
+}
+
+/** DEV-303: contexto de custo e proteção de cada chamada. */
+export interface JevUsageEvent {
+  provider: JevAttempt['provider'];
+  model: string;
+  tokensInput: number;
+  tokensOutput: number;
+  attemptNumber: number;
+}
+
+export interface JevCallOptions {
+  /** `u:<userId>` ou `ip:<hash>`. Sem chave, valem só os tetos globais. */
+  budgetKey?: string;
+  /** Guarda de chamada (LoopGuard do backend ou o espelho padrão). */
+  guard?: JevCallGuard;
+  /** Chamado a cada resposta remota válida, para registrar uso. */
+  onUsage?: (event: JevUsageEvent) => void;
+}
+
+interface RemoteDecision {
+  result: JevDecisionResult;
+  tokensInput: number;
+  tokensOutput: number;
+  model: string;
 }
 
 const CLINICAL_KEYWORDS_REGEX =
@@ -70,7 +111,7 @@ function getEnvKey(name: string): string | undefined {
 async function evaluateWithTypeSafeJev(
   state: JevDecisionInputState,
   apiKey: string
-): Promise<JevDecisionResult> {
+): Promise<RemoteDecision> {
   const client = new TypeSafeClient({
     apiKey,
     defaultModel: 'jev-latest',
@@ -94,25 +135,33 @@ async function evaluateWithTypeSafeJev(
     questions,
   });
 
+  // DEV-303: saída fora do domínio (enum, faixa de noul/score) vira erro e cai no próximo nível.
+  const answers = parseTypesafeAnswers(response?.answers);
+
   const det = evaluateDeterministically(state);
-  const noulEscopo = response.answers.escopo_pronto.noul;
-  const noulLegal = response.answers.alerta_compliance_legal.noul;
-  const clarezaScore = response.answers.clareza_relato.score;
+  const noulEscopo = answers.escopo_pronto.noul;
+  const noulLegal = answers.alerta_compliance_legal.noul;
+  const clarezaScore = answers.clareza_relato.score;
 
   return {
-    providerUsed: 'typesafe-jev',
-    // Companion Noul best practice (TypeSafe skill): >= 0.7 yes, <= 0.3 no
-    escopoPronto: noulEscopo >= 0.7 || Boolean(state.area_foco_chip),
-    escopoConfidence: noulEscopo,
-    clarezaRelatoScore: typeof clarezaScore === 'number' ? clarezaScore : det.clarezaRelatoScore,
-    areaFoco: state.area_foco_chip ?? (response.answers.area_foco.choice as AreaFocoNomeMagnetico),
-    ondeAssina: state.onde_assina_chips?.[0] ?? (response.answers.onde_assina.choice as OndeAssinaCanal),
-    estiloPresenca:
-      state.estilo_preferido_chip && state.estilo_preferido_chip !== 'qualquer'
-        ? state.estilo_preferido_chip
-        : (response.answers.estilo_presenca.choice as Exclude<EstiloAssinaturaPreferido, 'qualquer'>),
-    subfocoMomento: state.subfoco_momento_chip ?? (response.answers.subfoco_momento.choice as SubfocoMomento),
-    alertaComplianceLegal: det.alertaComplianceLegal || noulLegal >= 0.5,
+    model: 'jev-latest',
+    tokensInput: 0,
+    tokensOutput: 0,
+    result: {
+      providerUsed: 'typesafe-jev',
+      // Companion Noul best practice (TypeSafe skill): >= 0.7 yes, <= 0.3 no
+      escopoPronto: noulEscopo >= 0.7 || Boolean(state.area_foco_chip),
+      escopoConfidence: noulEscopo,
+      clarezaRelatoScore: typeof clarezaScore === 'number' ? clarezaScore : det.clarezaRelatoScore,
+      areaFoco: state.area_foco_chip ?? answers.area_foco.choice,
+      ondeAssina: state.onde_assina_chips?.[0] ?? answers.onde_assina.choice,
+      estiloPresenca:
+        state.estilo_preferido_chip && state.estilo_preferido_chip !== 'qualquer'
+          ? state.estilo_preferido_chip
+          : answers.estilo_presenca.choice,
+      subfocoMomento: state.subfoco_momento_chip ?? answers.subfoco_momento.choice,
+      alertaComplianceLegal: det.alertaComplianceLegal || noulLegal >= 0.5,
+    },
   };
 }
 
@@ -121,6 +170,10 @@ async function evaluateWithTypeSafeJev(
  * Avalia exatamente o mesmo state e as mesmas questions quando TYPESAFE_API_KEY não estiver definida
  * ou quando a conta TypeSafe estiver sem créditos (HTTP 401/402/403/429/5xx).
  */
+// O modo strict não aceita minimum/maximum, e o OpenAI chegou a devolver `clareza_relato_score: 8`
+// para uma escala de 0 a 2: por isso o score é inteiro com enum [0, 1, 2]. A nota `noul` (0 a 1)
+// fica número livre porque o Groq recusa (HTTP 400) um enum que mistura inteiros e decimais;
+// quem garante a faixa é a validação Zod de `jev-safety.ts`.
 const SYSTEM_ONE_DECISIONS_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -139,7 +192,8 @@ const SYSTEM_ONE_DECISIONS_SCHEMA = {
       description: 'Probabilidade de 0 a 1 de o relato já ter contexto suficiente.',
     },
     clareza_relato_score: {
-      type: 'number',
+      type: 'integer',
+      enum: [0, 1, 2],
       description: 'Nível de detalhamento do relato de 0 (vazio) a 2 (detalhado).',
     },
     area_foco: {
@@ -211,7 +265,7 @@ function buildStructuredDecisionMessages(state: JevDecisionInputState) {
 
 function mapStructuredDecisionJson(
   state: JevDecisionInputState,
-  parsed: Record<string, unknown>,
+  parsed: StructuredDecision,
   providerUsed: 'groq-structured' | 'openai-structured'
 ): JevDecisionResult {
   const det = evaluateDeterministically(state);
@@ -219,29 +273,19 @@ function mapStructuredDecisionJson(
   return {
     providerUsed,
     escopoPronto:
-      Number(parsed.escopo_pronto_noul) >= 0.7 ||
+      parsed.escopo_pronto_noul >= 0.7 ||
       Boolean(state.area_foco_chip) ||
       state.relato_consulente.trim().length >= 12,
-    escopoConfidence: Number(parsed.escopo_pronto_noul) || det.escopoConfidence,
-    clarezaRelatoScore:
-      typeof parsed.clareza_relato_score === 'number'
-        ? parsed.clareza_relato_score
-        : det.clarezaRelatoScore,
-    areaFoco: state.area_foco_chip ?? (parsed.area_foco as JevDecisionResult['areaFoco']) ?? det.areaFoco,
-    ondeAssina:
-      state.onde_assina_chips?.[0] ??
-      (parsed.onde_assina as JevDecisionResult['ondeAssina']) ??
-      det.ondeAssina,
+    escopoConfidence: parsed.escopo_pronto_noul || det.escopoConfidence,
+    clarezaRelatoScore: parsed.clareza_relato_score,
+    areaFoco: state.area_foco_chip ?? parsed.area_foco,
+    ondeAssina: state.onde_assina_chips?.[0] ?? parsed.onde_assina,
     estiloPresenca:
       state.estilo_preferido_chip && state.estilo_preferido_chip !== 'qualquer'
         ? state.estilo_preferido_chip
-        : (parsed.estilo_presenca as JevDecisionResult['estiloPresenca']) ?? det.estiloPresenca,
-    subfocoMomento:
-      state.subfoco_momento_chip ??
-      (parsed.subfoco_momento as JevDecisionResult['subfocoMomento']) ??
-      det.subfocoMomento,
-    alertaComplianceLegal:
-      det.alertaComplianceLegal || Number(parsed.alerta_compliance_legal_noul) >= 0.5,
+        : parsed.estilo_presenca,
+    subfocoMomento: state.subfoco_momento_chip ?? parsed.subfoco_momento,
+    alertaComplianceLegal: det.alertaComplianceLegal || parsed.alerta_compliance_legal_noul >= 0.5,
   };
 }
 
@@ -251,9 +295,9 @@ async function callOpenAiCompatibleStructuredDecision(
   endpoint: string,
   model: string,
   providerUsed: 'groq-structured' | 'openai-structured'
-): Promise<JevDecisionResult> {
+): Promise<RemoteDecision> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 1800);
+  const timer = setTimeout(() => controller.abort(), readStructuredTimeoutMs(providerUsed));
 
   try {
     const res = await fetch(endpoint, {
@@ -266,7 +310,9 @@ async function callOpenAiCompatibleStructuredDecision(
       body: JSON.stringify({
         model,
         temperature: 0,
-        max_tokens: 200,
+        // Modelos gpt-oss gastam parte do limite raciocinando: 200 ficava no limite (182 a 199 usados).
+        max_tokens: 600,
+        ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
         messages: buildStructuredDecisionMessages(state),
         response_format: {
           type: 'json_schema',
@@ -284,8 +330,14 @@ async function callOpenAiCompatibleStructuredDecision(
     }
 
     const data = await res.json();
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}') as Record<string, unknown>;
-    return mapStructuredDecisionJson(state, parsed, providerUsed);
+    // DEV-303: JSON ilegível ou fora do domínio vira `invalid-output` (sem repassar o conteúdo).
+    const parsed = parseStructuredDecision(JSON.parse(data.choices?.[0]?.message?.content || '{}'));
+    return {
+      model,
+      tokensInput: Number(data.usage?.prompt_tokens) || 0,
+      tokensOutput: Number(data.usage?.completion_tokens) || 0,
+      result: mapStructuredDecisionJson(state, parsed, providerUsed),
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -294,8 +346,8 @@ async function callOpenAiCompatibleStructuredDecision(
 async function evaluateWithGroqStructuredOutputs(
   state: JevDecisionInputState,
   groqKey: string
-): Promise<JevDecisionResult> {
-  const model = getEnvKey('GROQ_DECIDE_MODEL') || 'llama-3.3-70b-versatile';
+): Promise<RemoteDecision> {
+  const model = getEnvKey('GROQ_DECIDE_MODEL') || 'openai/gpt-oss-20b';
   return callOpenAiCompatibleStructuredDecision(
     state,
     groqKey,
@@ -308,7 +360,7 @@ async function evaluateWithGroqStructuredOutputs(
 async function evaluateWithOpenAIStructuredOutputs(
   state: JevDecisionInputState,
   openAiKey: string
-): Promise<JevDecisionResult> {
+): Promise<RemoteDecision> {
   const model = getEnvKey('OPENAI_DECIDE_MODEL') || 'gpt-4o-mini';
   return callOpenAiCompatibleStructuredDecision(
     state,
@@ -359,18 +411,8 @@ export function evaluateDeterministically(state: JevDecisionInputState): JevDeci
   const text = (state.relato_consulente || '').toLowerCase();
   const alertaComplianceLegal = CLINICAL_KEYWORDS_REGEX.test(text);
 
-  let areaFoco: AreaFocoNomeMagnetico = state.area_foco_chip ?? 'carreira_negocios';
-  if (!state.area_foco_chip) {
-    if (/(dinheiro|financ|renda|d[ií]vida|pagar|conta|prosper|lucro|reserva|ganho)/.test(text)) {
-      areaFoco = 'prosperidade_financeira';
-    } else if (/(amor|casamento|relacionamento|fam[ií]lia|parceir|afeto|casa|filh)/.test(text)) {
-      areaFoco = 'relacionamentos_harmonia';
-    } else if (/(confian[cç]a|autoestima|timidez|inseguran[cç]a|falar|express|clareza|prop[oó]sito)/.test(text)) {
-      areaFoco = 'autoestima_expressao';
-    } else if (/(trabalh|carreira|neg[oó]cio|client|contrato|venda|empresa|cargo|promo[cç][aã]o)/.test(text)) {
-      areaFoco = 'carreira_negocios';
-    }
-  }
+  const areaFoco: AreaFocoNomeMagnetico =
+    state.area_foco_chip ?? inferAreaFocoFromText(text) ?? 'carreira_negocios';
 
   const ondeAssina: OndeAssinaCanal =
     state.onde_assina_chips?.[0] ??
@@ -413,58 +455,111 @@ export function evaluateDeterministically(state: JevDecisionInputState): JevDeci
  * 2º cai automaticamente para OpenAI Structured Outputs (se OPENAI_API_KEY existir e houver texto livre para analisar)
  * 3º cai para avaliação determinística em 0 ms
  */
-export async function runJevDecision(state: JevDecisionInputState): Promise<JevDecisionResult> {
-  if (isJevMockOnlyMode()) {
+export async function runJevDecision(
+  state: JevDecisionInputState,
+  options: JevCallOptions = {}
+): Promise<JevDecisionResult> {
+  const started = Date.now();
+  const telemetry: JevTelemetry = { attempts: [], tokens: 0, latencyMs: 0 };
+
+  const finishDeterministic = (
+    reason: NonNullable<JevTelemetry['fallbackReason']>,
+    path: string[]
+  ): JevDecisionResult => {
     const fallback = evaluateDeterministically(state);
-    fallback.providerPath = ['jev-mock-only', 'deterministic-local'];
+    telemetry.fallbackReason = reason;
+    telemetry.latencyMs = Date.now() - started;
+    fallback.providerPath = [...path, 'deterministic-local'];
+    fallback.telemetry = telemetry;
     logInteractiveProvider(fallback.providerUsed, fallback.providerPath);
     return fallback;
-  }
+  };
+
+  if (isJevMockOnlyMode()) return finishDeterministic('mock-only', ['jev-mock-only']);
+  // DEV-303: kill switch explícito, sem tentar nenhum provider externo.
+  if (isJevRemoteDisabled()) return finishDeterministic('remote-disabled', ['jev-remote-disabled']);
 
   const typesafeKey = getEnvKey('TYPESAFE_API_KEY');
-  if (typesafeKey) {
-    try {
-      const result = await evaluateWithTypeSafeJev(state, typesafeKey);
-      logInteractiveProvider(result.providerUsed, ['typesafe-jev']);
-      return result;
-    } catch {
-      // Se a conta TypeSafe retornar 401/402/403 (sem créditos) ou timeout, segue para Groq/OpenAI
-    }
-  }
-
+  const groqKey = getEnvKey('GROQ_API_KEY');
+  const openAiKey = getEnvKey('OPENAI_API_KEY');
   const hasRelato = state.relato_consulente.trim().length >= 6;
 
-  const groqKey = getEnvKey('GROQ_API_KEY');
+  const chain: Array<{ provider: JevAttempt['provider']; run: () => Promise<RemoteDecision> }> = [];
+  if (typesafeKey) {
+    chain.push({ provider: 'typesafe-jev', run: () => evaluateWithTypeSafeJev(state, typesafeKey) });
+  }
   if (groqKey && hasRelato) {
-    try {
-      const result = await evaluateWithGroqStructuredOutputs(state, groqKey);
-      logInteractiveProvider(result.providerUsed, ['typesafe-failed', 'groq-structured']);
-      return result;
-    } catch {
-      // Groq indisponível: tenta OpenAI ou determinístico
-    }
+    chain.push({ provider: 'groq-structured', run: () => evaluateWithGroqStructuredOutputs(state, groqKey) });
   }
-
-  const openAiKey = getEnvKey('OPENAI_API_KEY');
   if (openAiKey && hasRelato) {
+    chain.push({ provider: 'openai-structured', run: () => evaluateWithOpenAIStructuredOutputs(state, openAiKey) });
+  }
+
+  if (chain.length === 0) {
+    return finishDeterministic(
+      typesafeKey || groqKey || openAiKey ? 'short-report' : 'no-keys',
+      ['no-remote-provider']
+    );
+  }
+
+  // DEV-303: teto de custo por visitante/usuário, por hora e de tokens. Acima dele, só o determinístico.
+  const reservation = jevBudget.tryReserve(options.budgetKey);
+  if (!reservation.ok) {
+    telemetry.budgetDenial = reservation.reason;
+    return finishDeterministic('budget-exceeded', [`budget-exceeded:${reservation.reason}`]);
+  }
+
+  const guard = options.guard ?? createJevCallGuard();
+  const path: string[] = [];
+
+  for (let i = 0; i < chain.length; i++) {
+    const { provider, run } = chain[i]!;
     try {
-      const result = await evaluateWithOpenAIStructuredOutputs(state, openAiKey);
-      logInteractiveProvider(result.providerUsed, ['typesafe-failed', 'groq-failed', 'openai-structured']);
-      return result;
+      guard.canAttempt(i + 1);
     } catch {
-      // Se a rede oscilar, cai para o determinístico em 0 ms
+      telemetry.attempts.push({ provider, outcome: 'guard-blocked', latencyMs: 0 });
+      path.push(`${provider}:guard-blocked`);
+      break;
+    }
+
+    const attemptStart = Date.now();
+    try {
+      const out = await run();
+      const tokens = out.tokensInput + out.tokensOutput;
+      try {
+        guard.recordResponse(JSON.stringify(out.result), tokens);
+      } catch {
+        // Similaridade entre respostas não se aplica: cada provider responde uma vez.
+      }
+      jevBudget.recordTokens(tokens);
+      telemetry.tokens += tokens;
+      telemetry.attempts.push({
+        provider,
+        outcome: 'ok',
+        latencyMs: Date.now() - attemptStart,
+        tokens,
+      });
+      options.onUsage?.({
+        provider,
+        model: out.model,
+        tokensInput: out.tokensInput,
+        tokensOutput: out.tokensOutput,
+        attemptNumber: i + 1,
+      });
+      path.push(provider);
+      telemetry.latencyMs = Date.now() - started;
+      out.result.providerPath = path;
+      out.result.telemetry = telemetry;
+      logInteractiveProvider(out.result.providerUsed, path);
+      return out.result;
+    } catch (error) {
+      const outcome = classifyJevFailure(error);
+      telemetry.attempts.push({ provider, outcome, latencyMs: Date.now() - attemptStart });
+      path.push(`${provider}:${outcome}`);
     }
   }
 
-  const fallback = evaluateDeterministically(state);
-  fallback.providerPath = [
-    typesafeKey ? 'typesafe-failed' : 'no-typesafe-key',
-    groqKey && hasRelato ? 'groq-failed' : 'groq-skipped',
-    openAiKey && hasRelato ? 'openai-failed' : 'openai-skipped',
-    'deterministic-local',
-  ];
-  logInteractiveProvider(fallback.providerUsed, fallback.providerPath);
-  return fallback;
+  return finishDeterministic('all-failed', path);
 }
 
 /**

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useFocusTrap } from './useFocusTrap.js';
 import { createPortal } from 'react-dom';
 import { EmailConfirmationPrompt } from '../EmailConfirmationPrompt.js';
 import type { PdfOverlayPhase } from '../../../lib/pdf-download.js';
@@ -10,6 +11,8 @@ export interface ChatPdfPreparingOverlayProps {
   phase: ChatPdfOverlayPhase;
   onRetry?: () => void;
   onDismissError?: () => void;
+  readyDownload?: { href: string; filename: string; onDownload: () => void; onContinue: () => void } | null;
+  errorMessage?: string | null;
 }
 
 function prefersReducedMotion(): boolean {
@@ -25,21 +28,26 @@ export function ChatPdfPreparingOverlay({
   phase,
   onRetry,
   onDismissError,
+  readyDownload,
+  errorMessage,
 }: ChatPdfPreparingOverlayProps) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [mounted, setMounted] = useState(false);
   const reduced = prefersReducedMotion();
   const isError = phase === 'error';
   const isEmailNotConfirmed = phase === 'email_not_confirmed';
+  const isReady = phase === 'ready' && Boolean(readyDownload);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(isReady || isError || isEmailNotConfirmed, dialogRef);
   const visible =
-    phase === 'preparing' || phase === 'generating' || isError || isEmailNotConfirmed;
+    phase === 'preparing' || phase === 'generating' || isError || isEmailNotConfirmed || isReady;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!visible || isError || isEmailNotConfirmed) {
+    if (!visible || isError || isEmailNotConfirmed || isReady) {
       setElapsedMs(0);
       return;
     }
@@ -49,7 +57,7 @@ export function ChatPdfPreparingOverlay({
       setElapsedMs(Date.now() - start);
     }, 1000);
     return () => window.clearInterval(tick);
-  }, [visible, phase, isError, isEmailNotConfirmed]);
+  }, [visible, phase, isError, isEmailNotConfirmed, isReady]);
 
   useEffect(() => {
     if (!visible || typeof document === 'undefined') return;
@@ -87,15 +95,32 @@ export function ChatPdfPreparingOverlay({
         className="pointer-events-none absolute inset-0 bg-[#131313]/72 backdrop-blur-[20px]"
         aria-hidden
       />
-      <div className="relative w-full max-w-md rounded-2xl border border-[rgba(212,175,55,0.22)] bg-[rgba(19,19,19,0.88)] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
-        {isError ? (
+      <div ref={dialogRef} className="relative w-full max-w-md rounded-2xl border border-[rgba(212,175,55,0.22)] bg-[rgba(19,19,19,0.88)] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+        {isReady && readyDownload ? (
+          <>
+            <h2 id="chat-pdf-prep-title" className="font-cinzel text-lg text-[#e5e2e1]">Seu PDF está pronto</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#e5e2e1]">
+              Sua análise foi salva. O download foi solicitado ao navegador. Se ele não iniciar, toque em Baixar PDF.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a href={readyDownload.href} download={readyDownload.filename} onClick={readyDownload.onDownload}
+                className="inline-flex min-h-11 items-center rounded-full bg-[#D4AF37] px-5 py-2.5 text-sm font-semibold text-[#131313] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]">
+                Baixar PDF
+              </a>
+              <button type="button" onClick={readyDownload.onContinue}
+                className="min-h-11 rounded-full px-5 py-2.5 text-sm font-medium text-[#e5e2e1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]">
+                Voltar ao início
+              </button>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-[#A0A0A0]">Você também pode baixar depois em Minhas análises.</p>
+          </>
+        ) : isError ? (
           <>
             <h2 id="chat-pdf-prep-title" className="font-cinzel text-lg text-[#e5e2e1]">
               Não foi possível gerar o PDF
             </h2>
             <p className="mt-2 text-sm text-[#76746a]">
-              Verifique sua conexão e tente novamente. Se persistir, aguarde alguns segundos e
-              toque de novo em Baixar PDF.
+              {errorMessage ?? 'Verifique sua conexão e tente novamente. Se persistir, aguarde alguns segundos e toque de novo em Baixar PDF.'}
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {onRetry && (

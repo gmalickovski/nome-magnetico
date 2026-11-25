@@ -1,10 +1,12 @@
 import { supabase } from '../db/supabase';
-import { memoize } from '../cache/memo';
+import { invalidate, memoize } from '../cache/memo';
 import {
   CANONICAL_GLOSSARY_TERMS,
   extractSummaryFromMarkdown,
   getCanonicalGlossaryBySlug,
   inferGlossaryCategory,
+  GLOSSARY_CATEGORY_ORDER,
+  resolveGlossaryRedirect,
   type GlossaryTermEntry,
 } from '../../shared/glossary/canonical-terms';
 
@@ -19,6 +21,71 @@ export interface RawGlossaryDbRow {
   tags?: string[] | null;
   meta_title?: string | null;
   meta_description?: string | null;
+  /** DEV-307: campos editoriais no banco. */
+  summary?: string | null;
+  synonyms?: string[] | null;
+  exact_case_aliases?: string[] | null;
+  category?: string | null;
+  related_slugs?: string[] | null;
+  sort_order?: number | null;
+}
+
+const GLOSSARY_CACHE_KEY = 'glossary:published:merged';
+const CATEGORIAS_VALIDAS = new Set<string>(GLOSSARY_CATEGORY_ORDER);
+
+/** DEV-307: invalida o cache do glossário (chamado ao salvar pelo admin). */
+export function invalidateGlossaryCache(): void {
+  invalidate(GLOSSARY_CACHE_KEY);
+}
+
+function listaLimpa(a: string[] | null | undefined): string[] {
+  return Array.isArray(a) ? a.map((x) => String(x ?? '').trim()).filter(Boolean) : [];
+}
+
+/**
+ * DEV-307: o banco é a fonte única. Com o banco respondendo, só as linhas publicadas
+ * aparecem (despublicar esconde o termo). Campos vazios no banco usam o metadado do
+ * catálogo do código para o mesmo slug, quando existir.
+ */
+export function glossaryTermsFromDb(dbRows: RawGlossaryDbRow[]): GlossaryTermEntry[] {
+  const termos: Array<GlossaryTermEntry & { ordem: number }> = [];
+  const vistos = new Set<string>();
+  for (const row of dbRows) {
+    const slug = String(row.slug || '').trim();
+    if (!slug || vistos.has(slug) || resolveGlossaryRedirect(slug)) continue;
+    vistos.add(slug);
+    const canonical = getCanonicalGlossaryBySlug(slug);
+    const termTitle = (row.term || canonical?.term || slug).trim();
+    const markdown = (row.definition_markdown ?? '').trim() || canonical?.definitionMarkdown || '';
+    const categoria =
+      row.category && CATEGORIAS_VALIDAS.has(row.category)
+        ? (row.category as GlossaryTermEntry['category'])
+        : canonical?.category ?? inferGlossaryCategory(slug, termTitle, row.tags);
+    const sinonimos = listaLimpa(row.synonyms);
+    const exatos = listaLimpa(row.exact_case_aliases);
+    const relacionados = listaLimpa(row.related_slugs);
+    const tags = listaLimpa(row.tags);
+    termos.push({
+      slug,
+      term: termTitle,
+      category: categoria,
+      aliases: sinonimos.length > 0 ? sinonimos : canonical?.aliases ?? buildDynamicAliases(termTitle),
+      exactCaseAliases: exatos.length > 0 ? exatos : canonical?.exactCaseAliases,
+      shortSummary:
+        row.summary?.trim() || canonical?.shortSummary || extractSummaryFromMarkdown(markdown),
+      definitionMarkdown: markdown,
+      relatedNumber: row.related_number ?? canonical?.relatedNumber ?? null,
+      tags: tags.length > 0 ? tags : canonical?.tags ?? [],
+      metaTitle: row.meta_title ?? canonical?.metaTitle,
+      metaDescription: row.meta_description ?? canonical?.metaDescription,
+      relatedSlugs: relacionados.length > 0 ? relacionados : canonical?.relatedSlugs,
+      isCanonicalFallback: false,
+      ordem: row.sort_order ?? Number.MAX_SAFE_INTEGER,
+    });
+  }
+  return termos
+    .sort((a, b) => a.ordem - b.ordem || a.term.localeCompare(b.term, 'pt-BR'))
+    .map(({ ordem: _ordem, ...t }) => t);
 }
 
 export interface GlossaryAnalysisSnapshot {
@@ -66,6 +133,8 @@ export function mergeGlossaryTerms(dbRows: RawGlossaryDbRow[]): GlossaryTermEntr
   for (const row of dbRows) {
     const slug = String(row.slug || '').trim();
     if (!slug) continue;
+    // DEV-306: duplicata de verbete canônico; o link antigo redireciona.
+    if (resolveGlossaryRedirect(slug)) continue;
 
     const canonical = getCanonicalGlossaryBySlug(slug);
     const dbMarkdown = typeof row.definition_markdown === 'string' ? row.definition_markdown.trim() : '';
@@ -115,17 +184,19 @@ export function mergeGlossaryTerms(dbRows: RawGlossaryDbRow[]): GlossaryTermEntr
 }
 
 /**
- * Lista todos os termos publicados do glossário (banco + fallback canônico).
+ * Lista os termos publicados do glossário. Fonte: banco; catálogo do código só como reserva.
  */
 export async function listPublishedGlossaryTerms(): Promise<GlossaryTermEntry[]> {
   return memoize(
-    'glossary:published:merged',
+    GLOSSARY_CACHE_KEY,
     (terms) => (!terms || terms.length === 0 ? GLOSSARY_ERROR_TTL_MS : GLOSSARY_TTL_MS),
     async () => {
       try {
         const { data, error } = await supabase
           .from('glossary_terms')
-          .select('slug, term, definition_markdown, related_number, tags, meta_title, meta_description')
+          .select(
+            'slug, term, definition_markdown, summary, synonyms, exact_case_aliases, category, related_slugs, sort_order, related_number, tags, meta_title, meta_description',
+          )
           .eq('is_published', true)
           .order('term', { ascending: true })
           .abortSignal(AbortSignal.timeout(2000));
@@ -134,7 +205,13 @@ export async function listPublishedGlossaryTerms(): Promise<GlossaryTermEntry[]>
           console.warn('[glossary] fallback para catálogo canônico:', error.message ?? error.code);
           return mergeGlossaryTerms([]);
         }
-        return mergeGlossaryTerms((data ?? []) as RawGlossaryDbRow[]);
+        const linhas = (data ?? []) as RawGlossaryDbRow[];
+        // DEV-307: banco é a fonte única; o catálogo do código só entra se o banco vier vazio.
+        if (linhas.length === 0) {
+          console.warn('[glossary] banco sem termos publicados — usando catálogo canônico');
+          return mergeGlossaryTerms([]);
+        }
+        return glossaryTermsFromDb(linhas);
       } catch (err) {
         console.warn('[glossary] erro ao ler Supabase — usando catálogo canônico:', err);
         return mergeGlossaryTerms([]);
@@ -263,7 +340,11 @@ export function matchUserGlossaryTerms(
   if (typeof analysis.numero_destino === 'number') {
     pushMatch('numero-de-destino', `Seu Destino ${analysis.numero_destino}`);
   }
+  if (typeof analysis.numero_personalidade === 'number') {
+    pushMatch('numero-de-personalidade', `Sua Impressão ${analysis.numero_personalidade}`);
+  }
   pushMatch('triangulo-da-vida', 'Base do seu score');
+  pushMatch('nota-do-nome', 'Como sua nota é calculada');
 
   return matched;
 }

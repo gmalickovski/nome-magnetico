@@ -51,6 +51,15 @@ function makeBaseAnalysis(overrides: Partial<Analysis>): Analysis {
 }
 
 describe('buildSavedAnalysesItems', () => {
+  it('abre o nascimento sintetizado a partir da análise clicada, sem trocar pela mais recente', () => {
+    const newer = makeBaseAnalysis({ id: 'newer', nome_harmonizado: 'Ana Vale', frequencias_numeros: { selectedNomeSocial: 'Ana Vale' } });
+    const older = makeBaseAnalysis({ id: 'older', nome_harmonizado: 'Ana Vále', created_at: '2026-10-01T00:00:00Z', frequencias_numeros: { selectedNomeSocial: 'Ana Vále' } });
+    const items = buildSavedAnalysesItems([newer, older], { preferredBirthSourceAnalysisId: 'older' });
+    assert.ok(items.some(item => item.id === 'older__birth'));
+    assert.ok(!items.some(item => item.id === 'newer__birth'));
+    const fallback = buildSavedAnalysesItems([newer, older], { preferredBirthSourceAnalysisId: 'foreign-id' });
+    assert.ok(fallback.some(item => item.id === 'newer__birth'), 'ID inexistente não cria uma análise nem acessa dados de outro usuário');
+  });
   it('inclui análise gratuita concluída do nome de nascimento, ordena por mais recente primeiro e preenche vidaBloqueiosCodigos', () => {
     const older = makeBaseAnalysis({
       id: 'older',

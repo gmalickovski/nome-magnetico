@@ -1132,12 +1132,17 @@
    com difusão suave e sem halos marcados no topo/esquerda.
    ============================================= */
 
+:root {
+  /* Sombra única dos cards: diagonal (baixo e direita), leve e sutil. Não somar outras sombras. */
+  --nm-card-shadow: 6px 10px 18px -8px rgba(0, 0, 0, 0.5);
+}
+
 .nm-floating-card {
   position: relative;
   border-radius: 1rem;
   background-color: #1c1c1c;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--nm-card-shadow);
 }
 
 .nm-floating-card-interactive {
@@ -1145,7 +1150,7 @@
   border-radius: 1rem;
   background-color: #1c1c1c;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--nm-card-shadow);
   transition:
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1160,12 +1165,44 @@
   box-shadow: 12px 18px 24px -10px rgba(0, 0, 0, 0.65);
 }
 
+/* DEV-306 · Card do glossário: hover sutil e lento (ritmo meditativo do design system). */
+.nm-glossary-card {
+  position: relative;
+  border-radius: 1rem;
+  background-color: #181818;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.1), 0 10px 24px -8px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nm-glossary-card:hover,
+.nm-glossary-card:focus-visible {
+  transform: translateY(-1px);
+  background-color: #1d1d1d;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.22), 0 20px 50px -18px rgba(0, 0, 0, 0.6);
+}
+
+.nm-glossary-card:focus-visible {
+  outline: 2px solid #bea5ff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nm-glossary-card,
+  .nm-glossary-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
 .nm-floating-tile {
   position: relative;
   border-radius: 0.875rem;
   background-color: #141414;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 6px 10px 16px -8px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--nm-card-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {

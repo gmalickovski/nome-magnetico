@@ -18,7 +18,7 @@ const { title } = Astro.props;
     </div>
 
     <!-- Container do Layout Flexível (duas colunas com proporções equivalentes) -->
-    <main class="relative z-10 mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-center gap-10 px-5 py-6 sm:px-8 lg:grid-cols-2 lg:gap-8 lg:px-10 lg:py-8 xl:px-0">
+    <main class="relative z-10 mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-start lg:items-center gap-10 px-5 pt-6 pb-8 sm:px-8 lg:grid-cols-2 lg:gap-8 lg:px-10 lg:py-8 xl:px-0">
 
       <!-- ── Painel esquerdo — hero (oculto no mobile) ── -->
       <section class="hidden lg:flex w-full flex-col items-start justify-center">
@@ -37,7 +37,7 @@ const { title } = Astro.props;
         </h1>
 
         <p class="text-gray-500 text-[15px] leading-relaxed max-w-sm mb-8">
-          Numerologia cabalística aplicada ao seu nome de nascimento — revela bloqueios energéticos e aponta o caminho para a sua expressão máxima.
+          Cada letra do seu nome vira um número. Os números desenham o Triângulo da Vida e mostram onde a sua expressão flui e onde ela trava.
         </p>
 
         <!-- Separador dourado -->
@@ -48,22 +48,22 @@ const { title } = Astro.props;
           <li class="flex items-start gap-3">
             <span class="text-[#D4AF37] mt-0.5 flex-shrink-0">✦</span>
             <div>
-              <span class="text-[#e5e2e1] font-medium">4 triângulos numerológicos</span>
-              <p class="text-gray-600 text-xs mt-0.5">Vida, Pessoal, Social e Destino analisados em profundidade</p>
+              <span class="text-[#e5e2e1] font-medium">O Triângulo da Vida do seu nome</span>
+              <p class="text-gray-600 text-xs mt-0.5">A base da sua nota de 0 a 100, calculada letra a letra</p>
             </div>
           </li>
           <li class="flex items-start gap-3">
             <span class="text-[#D4AF37] mt-0.5 flex-shrink-0">✦</span>
             <div>
-              <span class="text-[#e5e2e1] font-medium">Detecção de bloqueios energéticos</span>
-              <p class="text-gray-600 text-xs mt-0.5">Sequências repetidas que travam sua expressão e relacionamentos</p>
+              <span class="text-[#e5e2e1] font-medium">Os bloqueios que travam a sua expressão</span>
+              <p class="text-gray-600 text-xs mt-0.5">Sequências repetidas no triângulo, mostradas com clareza</p>
             </div>
           </li>
           <li class="flex items-start gap-3">
             <span class="text-[#D4AF37] mt-0.5 flex-shrink-0">✦</span>
             <div>
-              <span class="text-[#e5e2e1] font-medium">Sugestões de nomes harmoniosos</span>
-              <p class="text-gray-600 text-xs mt-0.5">Variações sem bloqueios, compatíveis com sua Expressão e Destino</p>
+              <span class="text-[#e5e2e1] font-medium">Assinaturas sem bloqueios para escolher</span>
+              <p class="text-gray-600 text-xs mt-0.5">Variações do seu nome com nota acima da de nascimento e acesso imediato</p>
             </div>
           </li>
         </ul>
@@ -81,15 +81,18 @@ const { title } = Astro.props;
     <!-- ── Painel direito — formulário ── -->
     <section class="flex w-full flex-col items-center justify-center">
       <!-- Logo (mobile only) -->
-      <div class="lg:hidden mb-6 flex justify-center">
+      <div class="lg:hidden mb-4 flex justify-center">
         <a href="/" class="inline-flex items-center hover:opacity-85 transition-opacity duration-300" aria-label="Nome Magnético">
-          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-8 w-auto" />
+          <img src="/logo-nm-header.svg" alt="Nome Magnético" class="h-11 w-auto" />
         </a>
       </div>
 
       <div class="lg:hidden mb-6 max-w-sm text-center">
         <p class="font-cinzel text-xl font-bold leading-tight text-[#e5e2e1]">
           Seu nome carrega uma frequência.
+        </p>
+        <p class="mt-2 text-[13px] leading-relaxed text-gray-500">
+          Descubra o Triângulo da Vida do seu nome.
         </p>
       </div>
 

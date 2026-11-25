@@ -5,6 +5,9 @@
 
 import type { AreaFocoNomeMagnetico, SubfocoMomento } from './primitives';
 import { SUBFOCO_QUESTIONS_BY_AREA } from './copy';
+import { buildArtisticoPalpiteLines, type PerfilArtisticoPalpite } from './ramos/artistico';
+
+export { buildArtisticoPalpiteLines };
 
 const AREA_LABEL: Record<AreaFocoNomeMagnetico, string> = {
   prosperidade_financeira: 'finanças e prosperidade',
@@ -43,6 +46,8 @@ export interface ProfilePalpiteInput {
   /** Texto após "O que faltou?" (Em parte / Não). */
   textoCorrecao?: string;
   alertaComplianceLegal?: boolean;
+  /** DEV-320: no ramo artístico o retrato fala do perfil artístico, não de foco de carreira. */
+  artistico?: PerfilArtisticoPalpite;
 }
 
 /**
@@ -65,16 +70,19 @@ export function buildProfilePalpiteText(input: ProfilePalpiteInput): string {
     parts.push(`${nome}, pelo que você contou até aqui:`);
   }
 
-  if (input.areaFoco) {
+  if (input.artistico) {
+    parts.push(...buildArtisticoPalpiteLines(input.artistico));
+  } else if (input.areaFoco) {
     let areaLine = `seu foco agora é ${AREA_LABEL[input.areaFoco]}`;
     const sub = subfocoLabel(input.areaFoco, input.subfocoMomento ?? null);
     if (sub) areaLine += `, com prioridade em ${sub.toLowerCase()}`;
     parts.push(areaLine.charAt(0).toUpperCase() + areaLine.slice(1) + '.');
   }
 
-  const onde = (input.ondeAssina ?? [])
-    .map((id) => ONDE_LABEL[id])
-    .filter(Boolean);
+  // No ramo artístico, "onde assina" é inferido; o retrato já descreve o uso artístico.
+  const onde = input.artistico
+    ? []
+    : (input.ondeAssina ?? []).map((id) => ONDE_LABEL[id]).filter(Boolean);
   if (onde.length > 0) {
     const lista =
       onde.length === 1

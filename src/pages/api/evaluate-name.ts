@@ -20,6 +20,18 @@ const contextSchema = z.object({
   sugestoesExistentes: z.array(z.string().min(2).max(150)).max(14),
 });
 const schema = z.discriminatedUnion('action', [contextSchema, z.object({ action: z.literal('evaluate'), sessionId: z.string().uuid(), nome: z.string().max(150), sugestoesExistentes: z.array(z.string().min(2).max(150)).max(14).optional() })]);
+export function origemPermitida(origin: string, request: Request): boolean {
+  let host: string;
+  try {
+    host = new URL(origin).host.toLowerCase();
+  } catch {
+    return false;
+  }
+  const candidatos = [request.headers.get('host'), request.headers.get('x-forwarded-host'), new URL(request.url).host]
+    .filter((h): h is string => Boolean(h))
+    .map((h) => h.split(',')[0]!.trim().toLowerCase());
+  return candidatos.includes(host);
+}
 const json = (body: object, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -29,8 +41,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (bearer) { const { data, error } = await supabase.auth.getUser(bearer); if (!error) user = data.user ?? undefined; }
   }
   if (!user) return json({ error: 'Autenticação necessária.' }, 401);
+  // DEV-317: atrás do Nginx, request.url é o endereço interno (localhost). Compara com o Host público.
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin) return json({ error: 'Origem inválida.' }, 403);
+  if (origin && !origemPermitida(origin, request)) return json({ error: 'Origem inválida.' }, 403);
   if (!request.headers.get('content-type')?.includes('application/json')) return json({ error: 'Envie os dados em JSON.' }, 415);
   if (Number(request.headers.get('content-length') ?? 0) > 8192) return json({ error: 'Dados muito extensos.' }, 413);
   try {

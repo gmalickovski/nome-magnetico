@@ -30,9 +30,9 @@ export const CHECKLIST_ITEMS: ReadonlyArray<ChecklistItemDef> = [
   {
     key: 'registro_identidade',
     step: 3,
-    label: 'Atualizar a assinatura na CIN (novo RG), CNH e Cartório',
+    label: 'Atualizar a assinatura na CIN (novo RG) e no Cartório',
     description:
-      'No Brasil, a Carteira de Identidade Nacional (CIN) oficializa a nova rubrica no Registro Civil; depois atualize gradualmente na CNH (Detran) e na ficha de firma em Cartório de Notas.',
+      'Para a nova assinatura valer em contratos com firma reconhecida, atualize-a na Carteira de Identidade Nacional (a troca costuma ser feita em uma 2ª via, com regras que variam por estado) e na ficha de firma do Cartório de Notas, pessoalmente. Peça também a atualização onde você já tem cadastro. Informação geral, não é orientação jurídica.',
   },
   {
     key: 'redes_email',
