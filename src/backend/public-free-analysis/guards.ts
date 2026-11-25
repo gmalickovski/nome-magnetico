@@ -30,6 +30,7 @@ export const FreeAnalysisRequestSchema = z
     utm_source: utmField,
     utm_medium: utmField,
     utm_campaign: utmField,
+    posthog_distinct_id: z.string().uuid().optional(),
     [HONEYPOT_FIELD]: z.string().optional(),
     'cf-turnstile-response': z.string().optional(),
   })
