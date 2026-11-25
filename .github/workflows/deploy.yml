@@ -65,3 +65,15 @@ jobs:
             export SENTRY_RELEASE="${{ github.ref_name }}"
             pm2 restart ecosystem.config.cjs --update-env 2>/dev/null || pm2 start ecosystem.config.cjs
             pm2 save
+
+      - name: Exportar referência visual do commit implantado
+        continue-on-error: true
+        run: node scripts/export-brand-tokens.mjs "$GITHUB_REF_NAME" "$GITHUB_SHA" brand-tokens.json
+
+      - name: Disponibilizar referência visual para sincronização manual
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: brand-tokens-${{ github.sha }}
+          path: brand-tokens.json
+          if-no-files-found: error
