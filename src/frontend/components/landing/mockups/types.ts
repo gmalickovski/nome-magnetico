@@ -1,4 +1,5 @@
-export type MockupDevice = 'phone' | 'desktop' | 'both';
+/** `responsive`: celular abaixo de 768 px e só o desktop a partir daí (sem celular por cima). */
+export type MockupDevice = 'phone' | 'desktop' | 'both' | 'responsive';
 
 export type MockupTheme = 'social' | 'artistico' | 'bebe';
 

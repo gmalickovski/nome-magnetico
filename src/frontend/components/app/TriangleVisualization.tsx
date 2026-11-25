@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { obterInterpretacaoEspecifica } from '../../../utils/blockageInterpretations';
+import { ChatLifeTriangleSvg } from '../shared/chat-ui/ChatLifeTriangleSvg.js';
 
 interface Bloqueio {
   codigo: string;
@@ -156,140 +157,11 @@ function getArcanoTransitoResumo(
   );
 }
 
-const BLOQUEIO_SEQUENCIAS = ['111','222','333','444','555','666','777','888','999'];
-
-/**
- * Constrói um Set de posições "linha,coluna" que pertencem a alguma sequência negativa.
- * Segue a lógica de formula.js: verifica cada tripla consecutiva em cada linha.
- */
-function buildBloqueioPositions(linhas: number[][]): Set<string> {
-  const positions = new Set<string>();
-  for (let r = 0; r < linhas.length; r++) {
-    const linha = linhas[r]!;
-    for (let i = 0; i <= linha.length - 3; i++) {
-      const tripla = `${linha[i]}${linha[i + 1]}${linha[i + 2]}`;
-      if (BLOQUEIO_SEQUENCIAS.includes(tripla)) {
-        // Destacar apenas as 3 primeiras células do bloqueio (ex.: "3333" → só 3 células)
-        for (let k = i; k < i + 3; k++) positions.add(`${r},${k}`);
-        // Avançar além dos dígitos extras sem marcá-los
-        const digit = String(linha[i]);
-        let skip = i + 3;
-        while (skip < linha.length && String(linha[skip]) === digit) skip++;
-        i = skip - 1;
-      }
-    }
-  }
-  return positions;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// SVG do triângulo (lógica portada de formula.js)
+// SVG do triângulo (peça compartilhada com mockups em shared/chat-ui)
 // ─────────────────────────────────────────────────────────────────────────────
 function TrianguloSVG({ triangulo, nome }: { triangulo: TrianguloData; nome: string }) {
-  const { linhas } = triangulo;
-  const nomeSemEspacos = nome.replace(/\s+/g, '').toUpperCase();
-  const letras = nomeSemEspacos.split('');
-  const N = linhas[0]?.length ?? 1;
-
-  const ELEM = 50;         // px entre elementos (igual ao formula.js)
-  const textWidth = (N - 1) * ELEM;
-  const largura = textWidth + 120; // 60px padding on each side
-  const altura = 80 + linhas.length * 30;
-  const viewBox = `0 0 ${largura} ${altura}`;
-  
-  const midX = largura / 2;
-
-  const bloqueioPos = buildBloqueioPositions(linhas);
-
-  // Centro horizontal da primeira linha
-  const xBase = midX - textWidth / 2;
-
-  return (
-    <div className="overflow-x-auto py-2 flex justify-center w-full touch-scroll-container">
-      <svg
-        viewBox={viewBox}
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ width: '100%', height: 'auto', maxWidth: `${largura}px`, minWidth: `${Math.min(largura, 280)}px` }}
-        preserveAspectRatio="xMidYMid meet"
-      >
-        {/* ── Linha das letras ── */}
-        {letras.map((letra, idx) => (
-          <text
-            key={`letter-${idx}`}
-            x={xBase + idx * ELEM}
-            y={28}
-            fontSize="15"
-            fontWeight="700"
-            textAnchor="middle"
-            fill="#D4AF37"
-            fontFamily="Cinzel, Georgia, 'Times New Roman', serif"
-          >
-            {letra}
-          </text>
-        ))}
-
-        {/* ── Linhas numéricas ── */}
-        {linhas.map((linha, r) => {
-          const yNum = 55 + r * 30;
-          const xRowStart = midX - ((linha.length - 1) * ELEM) / 2;
-          const isLastRow = r === linhas.length - 1;
-
-          return linha.map((num, c) => {
-            const x = xRowStart + c * ELEM;
-            const key = `${r},${c}`;
-            const isBloq = bloqueioPos.has(key);
-
-            // Cores por camada
-            const fill = isBloq
-              ? '#FF6B6B'
-              : isLastRow
-                ? '#c084fc'
-                : r === 0
-                  ? '#fbbf24'   // amber-400 (base: valores das letras)
-                  : '#9ca3af';  // gray-400 (camadas intermediárias)
-
-            return (
-              <g key={key}>
-                {isBloq && (
-                  <rect
-                    x={x - 13}
-                    y={yNum - 14}
-                    width="26"
-                    height="20"
-                    rx="4"
-                    fill="rgba(239,68,68,0.20)"
-                    stroke="rgba(239,68,68,0.55)"
-                    strokeWidth="1"
-                  />
-                )}
-                {isLastRow && !isBloq && (
-                  <circle
-                    cx={x}
-                    cy={yNum - 5}
-                    r="13"
-                    fill="rgba(192,132,252,0.15)"
-                    stroke="rgba(192,132,252,0.40)"
-                    strokeWidth="1"
-                  />
-                )}
-                <text
-                  x={x}
-                  y={yNum}
-                  fontSize={isLastRow ? '17' : '14'}
-                  fontWeight={isBloq || isLastRow ? '700' : '400'}
-                  textAnchor="middle"
-                  fill={fill}
-                  fontFamily="'Courier New', Courier, monospace"
-                >
-                  {num}
-                </text>
-              </g>
-            );
-          });
-        })}
-      </svg>
-    </div>
-  );
+  return <ChatLifeTriangleSvg nome={nome} linhas={triangulo.linhas} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

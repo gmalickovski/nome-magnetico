@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createCheckoutSession, stripe, type ProductType } from '../../backend/payments/stripe';
+import { randomUUID } from 'node:crypto';
+import { releaseCouponReservation, reserveCouponUse } from '../../backend/payments/coupon-reservations';
 import { supabase } from '../../backend/db/supabase';
 import { effectiveResultToPriceInfo, validateAccessCoupon } from '../../backend/payments/prices';
 import { getEffectivePriceCore } from '../../backend/pricing/service';
@@ -226,6 +228,7 @@ export async function createCheckoutResponse(args: {
     return json({ bypass: true, redirectUrl: bypassRedirect }, 200);
   }
 
+  let couponReservationId: string | undefined;
   try {
     let couponValidation = null;
     if (couponCode?.trim() && !isRenewal) {
@@ -235,11 +238,11 @@ export async function createCheckoutResponse(args: {
         userId: user.id,
         userEmail: user.email,
       });
-      if (couponValidation && !couponValidation.valid) {
-        if (couponValidation.error !== 'Cupom inválido ou expirado') {
-          return json({ error: couponValidation.error ?? 'Cupom inválido ou expirado' }, 400);
-        }
-        return json({ error: 'Cupom inválido ou expirado' }, 400);
+      if (!couponValidation) {
+        return json({ error: 'Não foi possível validar o cupom. Tente novamente.' }, 503);
+      }
+      if (!couponValidation.valid) {
+        return json({ error: couponValidation.error ?? 'Cupom inválido ou expirado' }, 400);
       }
     }
 
@@ -283,7 +286,7 @@ export async function createCheckoutResponse(args: {
       return json({ error: 'Cupom inválido ou expirado' }, 400);
     }
 
-    if (!isRenewal && !couponHandled && couponCode) {
+    if (!isRenewal && !couponHandled && couponCode && !couponValidation?.accessCodeId) {
       try {
         const promos = await stripe.promotionCodes.list({ code: couponCode, active: true, limit: 1 });
         if (promos.data.length > 0) {
@@ -306,15 +309,29 @@ export async function createCheckoutResponse(args: {
 
     const campaign = isRenewal && etapa ? renewalUtmCampaign(etapa) : undefined;
     const renewalQuery = etapa ? `?etapa=${encodeURIComponent(etapa)}` : '';
-    const resolvedUtmCampaign = campaign ?? (rawUtmCampaign?.trim() || chatSource || undefined);
-    const resolvedUtmSource = campaign
-      ? 'brevo'
-      : rawUtmSource?.trim() || (chatSource ? 'app_chat' : undefined);
+    const isLegacyChatUtm = rawUtmSource === 'app_chat';
+    const resolvedUtmCampaign = campaign ?? (isLegacyChatUtm ? undefined : rawUtmCampaign || undefined);
+    const resolvedUtmSource = campaign ? 'brevo' : isLegacyChatUtm ? undefined : rawUtmSource || undefined;
     const resolvedUtmMedium = campaign ? 'email' : undefined;
     const successUrl =
       isFromAppChat && product_type === 'nome_social'
         ? `${baseUrl}/app?checkout=success&produto=nome_social&resume=1`
         : `${baseUrl}/app?checkout=success&produto=${product_type}`;
+
+    if (effective.discountSource === 'coupon' && couponValidation?.accessCodeId) {
+      couponReservationId = randomUUID();
+      const reservation = await reserveCouponUse({
+        reservationId: couponReservationId,
+        accessCodeId: couponValidation.accessCodeId,
+        userId: user.id,
+        userEmail: user.email,
+        productType: product_type,
+      });
+      if (!reservation) {
+        return json({ error: 'Este cupom está em uso ou não está mais disponível para esta compra.' }, 409);
+      }
+      couponReservationId = reservation;
+    }
 
     const session = await createCheckoutSession({
       userId: user.id,
@@ -330,7 +347,10 @@ export async function createCheckoutResponse(args: {
         : `${baseUrl}/comprar?checkout=cancel`,
       couponId,
       promotionCodeId,
-      couponCode: isRenewal ? undefined : couponCode?.trim(),
+      couponCode: couponReservationId
+        ? couponValidation?.code
+        : !isRenewal && !couponValidation?.accessCodeId ? couponCode?.trim() : undefined,
+      couponReservationId,
       gaClientId: getGaClientIdFromRequest(request),
       phDistinctId,
       phSessionId,
@@ -343,6 +363,9 @@ export async function createCheckoutResponse(args: {
       source: chatSource,
     });
 
+    if (couponReservationId && !session.url) {
+      throw new Error('Stripe não devolveu uma URL de checkout para a reserva');
+    }
     if (phDistinctId && session.url) {
       await captureServerEvent({
         distinctId: phDistinctId,
@@ -366,6 +389,12 @@ export async function createCheckoutResponse(args: {
 
     return json({ url: session.url, final_cents: unitAmount, base_cents: effective.base_cents }, 200);
   } catch (err: unknown) {
+    // Sem resposta de sucesso, o cliente ainda não recebeu a URL do Stripe.
+    if (couponReservationId) {
+      await releaseCouponReservation(couponReservationId).catch((releaseError) => {
+        captureFluxoException('checkout', releaseError);
+      });
+    }
     const stripeErr = err as { statusCode?: number; code?: string; type?: string; message?: string; param?: string };
     console.error('[create-checkout] Erro:', {
       statusCode: stripeErr.statusCode,

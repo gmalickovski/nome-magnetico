@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+export const couponEligibilitySchema = z.object({
+  excluded_user_ids: z.array(z.string().uuid('Informe IDs de usuário válidos (UUID).'))
+    .transform((ids) => [...new Set(ids.map((id) => id.toLowerCase()))]),
+  new_customers_only: z.boolean(),
+});
+
 export const PRODUCT_ENUM = z.enum(['nome_social', 'nome_bebe', 'nome_empresa']);
 
 /** Vazio = vale para todos os produtos. */
