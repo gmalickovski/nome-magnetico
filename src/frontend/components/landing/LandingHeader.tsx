@@ -132,9 +132,6 @@ export function LandingHeader() {
 
         {/* Coluna Central: Textos do menu centralizados no header */}
         <nav ref={navRef} className={desktopNavClass} aria-hidden={compact === true}>
-          <a href="/#como-funciona" className={`${navLink('/#como-funciona')} whitespace-nowrap shrink-0`}>
-            Como Funciona
-          </a>
           <a href="/analise-gratuita" className={`${navLink('/analise-gratuita')} whitespace-nowrap shrink-0`}>
             Análise Gratuita
           </a>
@@ -196,12 +193,6 @@ export function LandingHeader() {
           <a href="/blog" className={`${navLink('/blog')} whitespace-nowrap shrink-0`}>
             Blog
           </a>
-          <a href="/perguntas-frequentes" className={`${navLink('/perguntas-frequentes')} whitespace-nowrap shrink-0`}>
-            FAQ
-          </a>
-          <a href="/sobre" className={`${navLink('/sobre')} whitespace-nowrap shrink-0`}>
-            Sobre
-          </a>
         </nav>
 
         {/* Coluna Direita: Botões de ação e toggle mobile permanecem no mesmo lugar */}
@@ -239,7 +230,6 @@ export function LandingHeader() {
       {/* Menu mobile aberto */}
       {menuOpen && (
         <div className={`${menuButtonClass} bg-[#111111] border-t border-[#D4AF37]/20 px-4 py-6 space-y-1`}>
-          <a href="/#como-funciona" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Como Funciona</a>
           <a href="/analise-gratuita" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Análise Gratuita</a>
           <div className="py-1.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#D4AF37]/80 pb-1">Nome</p>
@@ -258,8 +248,6 @@ export function LandingHeader() {
           </div>
           <a href="/precos" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Preços</a>
           <a href="/blog" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Blog</a>
-          <a href="/perguntas-frequentes" className="block text-gray-400 hover:text-[#D4AF37] py-2.5 text-sm" onClick={() => setMenuOpen(false)}>Perguntas Frequentes</a>
-          <a href="/sobre" className={mobileLink('/sobre')} onClick={() => setMenuOpen(false)}>Sobre</a>
 
           <div className="pt-3 space-y-3">
             <a href="/auth/login" className="block bg-[#111111] border border-[#D4AF37] text-[#D4AF37] font-medium text-center py-2.5 rounded-full hover:bg-[#D4AF37]/10 transition-all duration-300" onClick={() => setMenuOpen(false)}>Entrar</a>

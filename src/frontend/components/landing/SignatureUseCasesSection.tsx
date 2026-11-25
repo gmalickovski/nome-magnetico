@@ -45,7 +45,7 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '02 · Presença Digital',
     title: 'Perfis, Redes Sociais e Nome Artístico',
     description:
-      'Use a versão que você escolheu no nome de exibição, no @ e na bio do Instagram, LinkedIn, YouTube e TikTok. É a forma mais simples de apresentar o seu novo nome para quem acompanha o seu conteúdo e o seu trabalho.',
+      'Use a versão que você escolheu no nome de exibição, no @ e na bio do Instagram, LinkedIn, YouTube e TikTok. É a forma mais simples de apresentar o seu novo nome para quem acompanha o seu trabalho, sem mexer em nenhum documento.',
     bulletPoints: [
       'Nome de exibição, @ e bio no Instagram, LinkedIn e TikTok',
       'Canais de vídeo, podcasts, newsletters e páginas pessoais',
@@ -59,7 +59,7 @@ const USE_CASES: UseCaseItem[] = [
     eyebrow: '03 · Rotina de Trabalho',
     title: 'Propostas, Acordos e Rotina Digital',
     description:
-      'Em orçamentos, propostas comerciais, recibos e plataformas digitais do dia a dia, você adota um padrão visual único. Sua assinatura deixa de variar a cada folha e ganha firmeza em todas as suas entregas.',
+      'Em orçamentos, propostas, recibos e plataformas digitais, você adota um padrão único de assinatura. Ela deixa de variar a cada folha e ganha firmeza em tudo o que você envia. Em contratos com firma reconhecida, atualize-a antes no cartório.',
     bulletPoints: [
       'Propostas comerciais, orçamentos e termos de serviço',
       'Plataformas de assinatura eletrônica e documentos em PDF',

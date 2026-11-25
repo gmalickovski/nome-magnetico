@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createClient } from '@supabase/supabase-js';
+import { listPublishedGlossaryTerms } from '../backend/glossary/glossary-service';
 
 export const GET: APIRoute = async () => {
   const baseUrl = 'https://www.nomemagnetico.com.br';
@@ -46,7 +47,21 @@ export const GET: APIRoute = async () => {
     lastmod: (post.updated_at || post.published_at || currentDate).split('T')[0]
   }));
 
-  const allPages = [...staticPages, ...dynamicPages];
+  // DEV-351: cada verbete publicado do glossário também entra no mapa do site.
+  let glossaryPages: typeof staticPages = [];
+  try {
+    const termos = await listPublishedGlossaryTerms();
+    glossaryPages = termos.map((t) => ({
+      url: `/glossario/${t.slug}`,
+      changefreq: 'monthly',
+      priority: '0.4',
+      lastmod: currentDate,
+    }));
+  } catch (err) {
+    console.warn('[sitemap] glossário indisponível, mapa segue sem os verbetes:', err);
+  }
+
+  const allPages = [...staticPages, ...glossaryPages, ...dynamicPages];
 
   // Monta o arquivo XML que o bot do Google Search lê
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

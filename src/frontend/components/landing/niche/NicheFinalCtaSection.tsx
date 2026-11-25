@@ -33,6 +33,16 @@ export function NicheFinalCtaSection({ copy }: NicheFinalCtaSectionProps) {
             </a>
           </div>
           <p className="mt-5 text-xs sm:text-sm text-[#9e9b95]">{copy.finalCta.footnote}</p>
+          <p className="mt-3 text-xs sm:text-sm">
+            <a
+              href="/como-funciona-o-score"
+              data-cta-id="como_calculamos"
+              data-cta-position="cta_final"
+              className="text-[#D4AF37] underline underline-offset-2 hover:text-[#f2ca50] transition-colors duration-500"
+            >
+              Como calculamos a nota
+            </a>
+          </p>
         </div>
       </div>
     </section>
