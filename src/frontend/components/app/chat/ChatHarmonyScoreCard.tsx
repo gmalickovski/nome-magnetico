@@ -1,10 +1,5 @@
-import React from 'react';
 import type { ResultPanelData } from './chat-types.js';
-import {
-  HarmonyScoreDivider,
-  HarmonyScoreRow,
-  HarmonyScoreStack,
-} from '../../landing/ProductResultFrame.js';
+import { ChatScorePanelCard } from '../../shared/chat-ui/ChatAnalysisPanel.js';
 
 export interface ChatHarmonyScoreCardProps {
   birthPanel: ResultPanelData;
@@ -13,34 +8,23 @@ export interface ChatHarmonyScoreCardProps {
 }
 
 /**
- * Painel lateral de scores — mesmo stack da landing (HarmonyScoreStack).
+ * Painel lateral de scores — delega para o componente compartilhado `ChatScorePanelCard`.
  */
 export function ChatHarmonyScoreCard({
   birthPanel,
-  harmonizedPanel,
+  harmonizedPanel = null,
   className = '',
 }: ChatHarmonyScoreCardProps) {
-  const dual = Boolean(harmonizedPanel);
-
   return (
-    <HarmonyScoreStack className={className}>
-      <HarmonyScoreRow
-        eyebrow="Nome de nascimento (Nota Hoje)"
-        nome={birthPanel.nome}
-        score={birthPanel.score}
-      />
-      {dual && harmonizedPanel && (
-        <>
-          <HarmonyScoreDivider />
-          <HarmonyScoreRow
-            eyebrow="Nome harmonizado (Potencial)"
-            nome={harmonizedPanel.nome}
-            score={harmonizedPanel.score}
-            eyebrowTone="harmonized"
-          />
-        </>
-      )}
-    </HarmonyScoreStack>
+    <ChatScorePanelCard
+      birth={{ nome: birthPanel.nome, score: birthPanel.score }}
+      harmonized={
+        harmonizedPanel
+          ? { nome: harmonizedPanel.nome, score: harmonizedPanel.score }
+          : null
+      }
+      className={className}
+    />
   );
 }
 

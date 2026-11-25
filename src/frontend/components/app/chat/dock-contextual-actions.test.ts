@@ -42,7 +42,7 @@ describe('dock-contextual-actions', () => {
     assert.ok(!scrollable.some((a) => isPinnedPdfAction(a)));
   });
 
-  it('chat: other_options rola; PDF fixo', () => {
+  it('chat: ações secundárias ficam na faixa contextual sem PDF na dock', () => {
     const layout = buildChatDockLayout('chat_suggestions', {
       birthConfirmed: true,
       canShowSummary: true,
@@ -58,10 +58,15 @@ describe('dock-contextual-actions', () => {
       label: 'Gerar outras opções',
       icon: 'sparkles',
     });
-    const { scrollable, fixed } = partitionAtWidths(layout);
-    assert.ok(fixed.some((a) => a.kind === 'pdf'));
+    const { scrollable, fixed } = partitionDockContextualActions(
+      collectDockContextualActions(layout, {
+        reading: { visible: true, badge: true },
+        pdfModel: null,
+      })
+    );
+    assert.equal(fixed.length, 0);
     assert.ok(scrollable.some((a) => a.secondaryId === 'other_options'));
-    assert.ok(scrollable.some((a) => a.secondaryId === 'reading'));
+    assert.ok(scrollable.some((a) => a.secondaryId === 'reading' && a.badge === true));
   });
 
   it('paywall: Desbloquear fixo', () => {

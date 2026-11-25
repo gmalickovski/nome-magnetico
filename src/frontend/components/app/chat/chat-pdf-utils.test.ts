@@ -21,15 +21,13 @@ describe('chat-pdf-utils', () => {
     assert.equal(scoreBucket(10), '0_19');
   });
 
-  it('buildNomeSocialCheckoutHref inclui UTMs do chat', () => {
-    const href = buildNomeSocialCheckoutHref();
-    assert.match(href, /utm_source=app_chat/);
-    assert.match(href, /utm_campaign=card_pdf/);
-    assert.match(href, /produto=nome_social/);
+  it('buildNomeSocialCheckoutHref identifica o card sem alterar a campanha de entrada', () => {
+    const { searchParams } = new URL(buildNomeSocialCheckoutHref(), 'https://example.test');
+    assert.deepEqual(Object.fromEntries(searchParams), { produto: 'nome_social', source: 'card_pdf' });
   });
 
-  it('CHAT_PDF_PREP_TIME_LABEL comunica teto pós-fix', () => {
-    assert.equal(CHAT_PDF_PREP_TIME_LABEL, 'até 1 minuto');
-    assert.ok(CHAT_PDF_TYPICAL_TOTAL_MS <= 60_000);
+  it('CHAT_PDF_PREP_TIME_LABEL comunica prazo realista para PDF completo', () => {
+    assert.equal(CHAT_PDF_PREP_TIME_LABEL, 'de 1 a 3 minutos');
+    assert.ok(CHAT_PDF_TYPICAL_TOTAL_MS <= 180_000);
   });
 });

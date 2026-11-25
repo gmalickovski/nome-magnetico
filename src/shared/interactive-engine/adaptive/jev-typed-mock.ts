@@ -5,7 +5,7 @@
 import { CHOICE_MIN, NOUL_NO, NOUL_YES } from '../thresholds';
 import type { AreaFocoNomeMagnetico } from '../copy';
 import type { QuestionnaireStepId } from '../questionnaire-adaptive';
-import { QUESTIONNAIRE_STEP_ORDER } from '../questionnaire-adaptive';
+import { DEV303_NEW_STEPS, DEV320_STEPS, QUESTIONNAIRE_STEP_ORDER } from '../questionnaire-adaptive';
 import { STEP_TO_INTERVIEW_LINE } from './interview-lines';
 import type { AdaptiveAnswer, AdaptiveInterviewRequest, InterviewLine } from './schemas';
 
@@ -69,6 +69,7 @@ function detectContradiction(
 
 function nextMissingStep(answers: AdaptiveAnswer[]): QuestionnaireStepId | null {
   for (const stepId of QUESTIONNAIRE_STEP_ORDER) {
+    if (DEV303_NEW_STEPS.includes(stepId) || DEV320_STEPS.includes(stepId)) continue;
     if (!answerForStep(answers, stepId)) return stepId;
   }
   return null;

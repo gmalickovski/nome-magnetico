@@ -1,3 +1,5 @@
+import { RADAR_SERIES_FILL_OPACITY } from '../../../../shared/interactive-engine/radar-visual';
+import { getCanonicalGlossaryBySlug, GLOSSARY_CATEGORY_LABELS } from '../../../../shared/glossary/canonical-terms';
 import React, { useId } from 'react';
 import type { RadarAxesData } from './chat-types.js';
 import { getScoreTierVisual } from '../../landing/score-tier-visual.js';
@@ -13,6 +15,8 @@ export interface ReadingRadarProps {
   labels?: Record<string, string>;
   /** Exibe deltas numéricos (+30, etc.) nas pontas quando há sobreposição */
   showNumericLabels?: boolean;
+  /** Variante de escala: 'panel' (padrão lateral/drawer) ou 'dashboard' (pentágono ampliado no card) */
+  variant?: 'panel' | 'dashboard';
   className?: string;
 }
 
@@ -22,14 +26,19 @@ export interface ReadingRadarProps {
  * Rótulo + valor ficam empilhados FORA do pentágono; o valor fica sempre
  * do lado mais próximo do vértice, então nunca cruza linha nem texto.
  */
-const VB_W = 800;
-const VB_H = 640;
+const VB_X = -44;
+const VB_Y = 10;
+const VB_W = 888;
+const VB_H = 580;
 const CX = 400;
-const CY = 320;
-const RADIUS = 190;
-const LINE_GAP = 32;
+const CY = 305;
+const RADIUS = 168;
+const LINE_GAP = 42;
+const LABEL_LINE_HEIGHT = 36;
 
 type Placement = 'top' | 'side' | 'bottom';
+
+const AXIS_SLUGS: Record<string, string> = { expressao: 'foco-do-momento', motivacao: 'equilibrio-da-alma', destino: 'sintonia-de-destino', harmonia_triangulo: 'magnetismo-social', sequencias: 'fluidez' };
 
 const AXIS_CONFIG: ReadonlyArray<{
   key: string;
@@ -40,20 +49,40 @@ const AXIS_CONFIG: ReadonlyArray<{
   offset: number;
   dx: number;
 }> = [
-  { key: 'expressao', label: 'Foco do Momento', angle: -Math.PI / 2, anchor: 'middle', placement: 'top', offset: 36, dx: 0 },
-  { key: 'motivacao', label: 'Equilíbrio da Alma', angle: -Math.PI / 2 + (2 * Math.PI) / 5, anchor: 'start', placement: 'side', offset: 26, dx: 10 },
-  { key: 'destino', label: 'Sintonia de Destino', angle: -Math.PI / 2 + (4 * Math.PI) / 5, anchor: 'start', placement: 'bottom', offset: 34, dx: 4 },
-  { key: 'harmonia_triangulo', label: 'Magnetismo Social', angle: -Math.PI / 2 + (6 * Math.PI) / 5, anchor: 'end', placement: 'bottom', offset: 34, dx: -4 },
-  { key: 'sequencias', label: 'Fluidez', angle: -Math.PI / 2 + (8 * Math.PI) / 5, anchor: 'end', placement: 'side', offset: 26, dx: -10 },
+  { key: 'expressao', label: 'Foco do Momento', angle: -Math.PI / 2, anchor: 'middle', placement: 'top', offset: 30, dx: 0 },
+  { key: 'motivacao', label: 'Equilíbrio da Alma', angle: -Math.PI / 2 + (2 * Math.PI) / 5, anchor: 'start', placement: 'side', offset: 22, dx: 6 },
+  { key: 'destino', label: 'Sintonia de Destino', angle: -Math.PI / 2 + (4 * Math.PI) / 5, anchor: 'start', placement: 'bottom', offset: 28, dx: 4 },
+  { key: 'harmonia_triangulo', label: 'Magnetismo Social', angle: -Math.PI / 2 + (6 * Math.PI) / 5, anchor: 'end', placement: 'bottom', offset: 28, dx: -4 },
+  { key: 'sequencias', label: 'Fluidez', angle: -Math.PI / 2 + (8 * Math.PI) / 5, anchor: 'end', placement: 'side', offset: 22, dx: -6 },
 ];
+
+function splitRadarLabelLines(label: string, placement: Placement): string[] {
+  if (placement === 'top' || label.length <= 12 || !label.includes(' ')) {
+    return [label];
+  }
+  const mid = label.length / 2;
+  let bestIdx = -1;
+  let bestDist = Infinity;
+  for (let i = 0; i < label.length; i++) {
+    if (label[i] === ' ') {
+      const dist = Math.abs(i - mid);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+  }
+  if (bestIdx <= 0 || bestIdx >= label.length - 1) return [label];
+  return [label.slice(0, bestIdx), label.slice(bestIdx + 1)];
+}
 
 function getVal(axes: RadarAxesData, key: string): number {
   return axes[key as keyof RadarAxesData] ?? 0.35;
 }
 
-function getCoords(val: number, angle: number) {
+function getCoords(val: number, angle: number, radius = RADIUS) {
   const safeVal = Math.max(0.08, Math.min(1.0, val));
-  const r = RADIUS * safeVal;
+  const r = radius * safeVal;
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
 }
 
@@ -64,10 +93,20 @@ export function ReadingRadar({
   overlayScore = null,
   labels,
   showNumericLabels = false,
+  variant = 'panel',
   className = '',
 }: ReadingRadarProps) {
   const glowId = `radar-glow-${useId().replace(/:/g, '')}`;
   const rings = [0.25, 0.5, 0.75, 1.0];
+
+  const isDashboard = variant === 'dashboard';
+  const vbX = isDashboard ? -24 : VB_X;
+  const vbY = isDashboard ? -4 : VB_Y;
+  const vbW = isDashboard ? 848 : VB_W;
+  const vbH = isDashboard ? 596 : VB_H;
+  const activeRadius = isDashboard ? 212 : RADIUS;
+  const lineGap = isDashboard ? 36 : LINE_GAP;
+  const labelLineHeight = isDashboard ? 30 : LABEL_LINE_HEIGHT;
 
   const birthVisual = getScoreTierVisual(birthScore);
   const overlayVisual = overlayAxes && overlayScore != null ? getScoreTierVisual(overlayScore) : null;
@@ -75,7 +114,7 @@ export function ReadingRadar({
 
   const polygonPoints = (data: RadarAxesData) =>
     AXIS_CONFIG.map((axis) => {
-      const { x, y } = getCoords(getVal(data, axis.key), axis.angle);
+      const { x, y } = getCoords(getVal(data, axis.key), axis.angle, activeRadius);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(' ');
 
@@ -85,9 +124,11 @@ export function ReadingRadar({
   return (
     <div className={`w-full min-w-0 flex flex-col items-center select-none ${className}`}>
       <svg
-        viewBox={`0 0 ${VB_W} ${VB_H}`}
-        className="w-full max-w-[580px] h-auto overflow-visible"
-        role="img"
+        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+        className={`nm-radar-svg ${
+          isDashboard ? 'nm-radar-svg--dashboard w-full max-w-[620px]' : 'w-full max-w-[560px]'
+        } h-auto block`}
+        role="group"
         aria-label="Mapa de alinhamento vibracional cabalístico"
       >
         <defs>
@@ -101,7 +142,7 @@ export function ReadingRadar({
           <polygon
             key={`ring-${ringVal}`}
             points={AXIS_CONFIG.map((axis) => {
-              const { x, y } = getCoords(ringVal, axis.angle);
+              const { x, y } = getCoords(ringVal, axis.angle, activeRadius);
               return `${x.toFixed(1)},${y.toFixed(1)}`;
             }).join(' ')}
             fill="none"
@@ -111,7 +152,7 @@ export function ReadingRadar({
         ))}
 
         {AXIS_CONFIG.map((axis) => {
-          const { x, y } = getCoords(1.0, axis.angle);
+          const { x, y } = getCoords(1.0, axis.angle, activeRadius);
           return (
             <line key={`axis-${axis.key}`} x1={CX} y1={CY} x2={x} y2={y} stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1.6" />
           );
@@ -119,19 +160,37 @@ export function ReadingRadar({
 
         <polygon
           points={basePoints}
-          className="transition-all duration-300 ease-out"
-          fill={birthVisual.fill}
+          className="transition-all duration-700 ease-out"
+          fill={birthVisual.stroke}
+          fillOpacity={RADAR_SERIES_FILL_OPACITY}
           stroke={birthVisual.stroke}
-          strokeWidth="2.4"
+          strokeWidth="1.8"
+          strokeDasharray="2 5"
           strokeLinejoin="round"
-          strokeOpacity="0.85"
+          strokeOpacity="1"
         />
+
+        {AXIS_CONFIG.map((axis) => {
+          const { x, y } = getCoords(getVal(axes, axis.key), axis.angle, activeRadius);
+          return (
+            <circle
+              key={`dot-b-${axis.key}`}
+              cx={x}
+              cy={y}
+              r="5"
+              fill={birthVisual.stroke}
+              opacity="1"
+              className="transition-all duration-700 ease-out"
+            />
+          );
+        })}
 
         {overlayPoints && overlayVisual && (
           <polygon
             points={overlayPoints}
-            className="transition-all duration-300 ease-out"
-            fill={overlayVisual.fill}
+            className="transition-all duration-700 ease-out"
+            fill={overlayVisual.stroke}
+            fillOpacity={RADAR_SERIES_FILL_OPACITY}
             stroke={overlayVisual.stroke}
             strokeWidth="3.4"
             strokeLinejoin="round"
@@ -139,23 +198,29 @@ export function ReadingRadar({
           />
         )}
 
-        {AXIS_CONFIG.map((axis) => {
-          const { x, y } = getCoords(getVal(axes, axis.key), axis.angle);
-          return <circle key={`dot-b-${axis.key}`} cx={x} cy={y} r="5" fill={birthVisual.stroke} />;
-        })}
-
         {overlayAxes && overlayVisual &&
           AXIS_CONFIG.map((axis) => {
-            const { x, y } = getCoords(getVal(overlayAxes, axis.key), axis.angle);
-            return <circle key={`dot-o-${axis.key}`} cx={x} cy={y} r="7" fill={overlayVisual.stroke} />;
+            const { x, y } = getCoords(getVal(overlayAxes, axis.key), axis.angle, activeRadius);
+            return (
+              <circle
+                key={`dot-o-${axis.key}`}
+                cx={x}
+                cy={y}
+                r="7"
+                fill={overlayVisual.stroke}
+                className="transition-all duration-700 ease-out"
+              />
+            );
           })}
 
         {/* Rótulo + valor empilhados fora do pentágono (valor sempre visível nas 5 pontas) */}
         {AXIS_CONFIG.map((axis) => {
-          const r = RADIUS + axis.offset;
+          const axisOffset = isDashboard ? (axis.placement === 'side' ? 22 : 24) : axis.offset;
+          const r = activeRadius + axisOffset;
           const gx = CX + r * Math.cos(axis.angle) + axis.dx;
           const gy = CY + r * Math.sin(axis.angle);
           const labelText = labels?.[axis.key] ?? axis.label;
+          const term = getCanonicalGlossaryBySlug(AXIS_SLUGS[axis.key])!;
 
           const base = Math.round(getVal(axes, axis.key) * 100);
           let valueText: string;
@@ -163,34 +228,38 @@ export function ReadingRadar({
           if (showDelta && overlayAxes && overlayVisual) {
             const delta = Math.round(getVal(overlayAxes, axis.key) * 100) - base;
             if (delta > 0) {
-              valueText = `+${delta}%`;
+              valueText = `+${delta} pts`;
               valueColor = overlayVisual.text;
             } else if (delta < 0) {
-              valueText = `${delta}%`;
+              valueText = `${delta} pts`;
               valueColor = '#ef4444'; // Vermelho para variação negativa
             } else {
-              valueText = '0%';
+              valueText = '0 pts';
               valueColor = '#f2ca50'; // Dourado quando não mudar (0%)
             }
           } else {
-            valueText = `${base}%`;
+            valueText = `${base}`;
             valueColor = '#f2ca50'; // Dourado para valores base
           }
 
-          // Valor do lado do vértice; rótulo do lado de fora.
+          // Valor do lado do vértice; rótulo quebrado com folga para nunca encostar na borda.
+          const lines = splitRadarLabelLines(labelText, axis.placement);
           let valueY = gy;
           let labelY = gy;
           if (axis.placement === 'top') {
-            labelY = gy - LINE_GAP - 2;
+            valueY = gy;
+            labelY = gy - lineGap - (lines.length - 1) * labelLineHeight;
           } else if (axis.placement === 'bottom') {
-            labelY = gy + LINE_GAP;
+            valueY = gy;
+            labelY = gy + lineGap;
           } else {
-            labelY = gy - LINE_GAP / 2;
-            valueY = gy + LINE_GAP / 2 + 2;
+            labelY = gy - (lines.length > 1 ? Math.round(lineGap * 0.9) : Math.round(lineGap * 0.52));
+            valueY = labelY + (lines.length - 1) * labelLineHeight + lineGap;
           }
 
           return (
             <g key={`lbl-${axis.key}`}>
+              <a href={`/app/glossario/${term.slug}`} data-glossary-slug={term.slug} data-glossary-term={term.term} data-glossary-summary={term.shortSummary} data-glossary-category={GLOSSARY_CATEGORY_LABELS[term.category]} aria-label={`Significado de ${labelText}`} className="nm-glossary-link focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#bea5ff]">
               <text
                 x={gx}
                 y={labelY}
@@ -198,11 +267,16 @@ export function ReadingRadar({
                 dominantBaseline="central"
                 fill="#d0d5de"
                 fontFamily="Inter, sans-serif"
-                className="nm-radar-label"
+                className="nm-radar-label underline decoration-dotted underline-offset-4"
                 fontWeight={700}
               >
-                {labelText}
+                {lines.map((line, idx) => (
+                  <tspan key={idx} x={gx} y={labelY + idx * labelLineHeight}>
+                    {line}
+                  </tspan>
+                ))}
               </text>
+              </a>
               <text
                 x={gx}
                 y={valueY}

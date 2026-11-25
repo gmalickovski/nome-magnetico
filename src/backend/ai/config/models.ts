@@ -1,6 +1,6 @@
 import type { AIProvider } from './providers';
 
-export type AITask = 'analysis' | 'suggestions' | 'guide' | 'support_polish';
+export type AITask = 'analysis' | 'suggestions' | 'guide' | 'support_polish' | 'artistic_names';
 
 export const MODELS: Record<AIProvider, Record<AITask, string>> = {
   // Groq retirou llama-3.3-70b-versatile e llama-3.1-8b-instant em 16/08/2026
@@ -10,18 +10,22 @@ export const MODELS: Record<AIProvider, Record<AITask, string>> = {
     suggestions: 'openai/gpt-oss-120b',
     guide: 'openai/gpt-oss-120b',
     support_polish: 'openai/gpt-oss-20b',
+    // DEV-321: ideias de nome artístico (lista curta em JSON).
+    artistic_names: 'openai/gpt-oss-120b',
   },
   claude: {
     analysis: 'claude-sonnet-4-6',
     suggestions: 'claude-sonnet-4-6',
     guide: 'claude-haiku-4-5-20251001',
     support_polish: 'claude-haiku-4-5-20251001',
+    artistic_names: 'claude-haiku-4-5-20251001',
   },
   openai: {
     analysis: 'gpt-4o',
     suggestions: 'gpt-4o-mini',
     guide: 'gpt-4o-mini',
     support_polish: 'gpt-4o-mini',
+    artistic_names: 'gpt-4o-mini',
   },
 };
 

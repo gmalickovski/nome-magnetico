@@ -41,11 +41,12 @@ function activeBtnClass(item: AppNavDockItem): string {
   return `${base} text-[#D4AF37] focus-visible:outline-[#D4AF37]`;
 }
 
-function navigateFromDock(item: AppNavDockItem) {
+async function navigateFromDock(item: AppNavDockItem) {
   if (item.disabled) return;
   if (item.href === window.location.pathname) return;
   showAppNavRouteLoadingBar();
-  window.location.href = item.href;
+  const { navigate } = await import('astro:transitions/client');
+  await navigate(item.href);
 }
 
 function assertSingleMobileDockRoot(): void {
@@ -72,9 +73,13 @@ export default function AppMobileDock(props: AppMobileDockProps) {
   useMobileDockScrollFade(dockRootRef, !keyboardOpen);
   const reduced = prefersReducedMotion();
   const navMeasureKey = items.map((i) => `${i.id}${i.active ? 'a' : ''}${i.disabled ? 'd' : ''}`).join('|');
+  const contextLayout = action?.state.layout ?? null;
+  const showReadingAction = Boolean(action?.state.showReadingAction);
   const measureKey =
     navMeasureKey +
-    JSON.stringify(action?.state.layout ?? null) +
+    JSON.stringify(contextLayout) +
+    (showReadingAction ? '|read' : '') +
+    (action?.state.summaryBadge ? '|badge' : '') +
     (action?.state.pdfModel?.visible ? '|pdf' : '') +
     (action?.state.pdfExiting ? '|pdf-exit' : '');
   const { innerRef, widthPx } = useDockBarWidth(measureKey);
@@ -84,8 +89,6 @@ export default function AppMobileDock(props: AppMobileDockProps) {
     assertSingleMobileDockRoot();
   });
 
-  const contextLayout = action?.state.layout ?? null;
-  const showReadingAction = Boolean(action?.state.showReadingAction);
   const showContextActions =
     contextLayout &&
     dockLayoutHasVisibleActions(contextLayout, {
@@ -105,15 +108,13 @@ export default function AppMobileDock(props: AppMobileDockProps) {
           className="mobile-chat-dock-shell max-w-[calc(100vw-24px)] rounded-[28px]"
           style={dockShellWidthStyle(widthPx, reduced)}
         >
-          <div ref={innerRef} className={`${barClassName} w-full max-w-full items-center`}>
+          <div ref={innerRef} className={`${barClassName} items-center`}>
             <div
-              className={`inline-flex shrink-0 items-center gap-1 ${
-                reduced ? 'mobile-chat-dock-actions--reduced' : 'mobile-chat-dock-actions'
-              }`}
+              className="inline-flex shrink-0 items-center gap-1"
               role="group"
               aria-label="Páginas da área do usuário"
             >
-              {items.map((item, index) => {
+              {items.map((item) => {
                 const Icon = iconForNavItem(item.id);
                 const tooltip = item.disabled ? 'Disponível após adquirir um produto' : item.label;
                 return (
@@ -123,7 +124,6 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                     aria-label={item.label}
                     aria-current={item.active ? 'page' : undefined}
                     disabled={item.disabled}
-                    style={reduced ? undefined : { animationDelay: `${index * 30}ms` }}
                     onClick={() => navigateFromDock(item)}
                     className={activeBtnClass(item)}
                   >
@@ -146,7 +146,7 @@ export default function AppMobileDock(props: AppMobileDockProps) {
                   aria-hidden="true"
                 />
                 <div
-                  className="nm-mobile-dock-context min-w-0 max-w-full flex-1 overflow-hidden"
+                  className="nm-mobile-dock-context min-w-0 shrink overflow-hidden"
                   role="toolbar"
                   aria-label="Ações desta página"
                 >

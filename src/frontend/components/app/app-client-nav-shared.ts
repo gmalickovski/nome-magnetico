@@ -10,7 +10,7 @@ export const APP_CLIENT_NAV_LABELS = {
 export const APP_CLIENT_NAV_HREFS = {
   inicio: '/app',
   analises: '/app/analises',
-  glossario: '/glossario',
+  glossario: '/app/glossario',
   suporte: '/app/suporte',
 } as const;
 

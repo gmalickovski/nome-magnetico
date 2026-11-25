@@ -1,0 +1,162 @@
+---
+import { resolveGlossaryRedirect } from '../../../shared/glossary/canonical-terms';
+import AppLayout from '../../../layouts/AppLayout.astro';
+import {
+  getGlossaryTermBySlug,
+  listPublishedGlossaryTerms,
+  matchUserGlossaryTerms,
+  type GlossaryAnalysisSnapshot,
+} from '../../../backend/glossary/glossary-service';
+import { GLOSSARY_CATEGORY_LABELS } from '../../../shared/glossary/canonical-terms';
+import { linkGlossaryTermsInHtml } from '../../../shared/glossary/term-linker';
+import { supabase } from '../../../backend/db/supabase';
+import { marked } from 'marked';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/auth/login');
+}
+
+const { termo } = Astro.params;
+if (!termo) {
+  return Astro.redirect('/app/glossario');
+}
+
+const redirectSlug = resolveGlossaryRedirect(termo);
+if (redirectSlug) {
+  return Astro.redirect(`/app/glossario/${redirectSlug}`, 301);
+}
+
+const resolved = await getGlossaryTermBySlug(termo);
+if (!resolved) {
+  return Astro.redirect('/app/glossario');
+}
+
+const { term: termData, relatedTerms } = resolved;
+const allTerms = await listPublishedGlossaryTerms();
+
+let latestAnalysis: GlossaryAnalysisSnapshot | null = null;
+try {
+  const { data } = await supabase
+    .from('analyses')
+    .select('id, nome_completo, numero_expressao, numero_destino, numero_motivacao, numero_missao, numero_personalidade, bloqueios, licoes_carmicas, tendencias_ocultas, debitos_karmicos')
+    .eq('user_id', user.id)
+    .eq('status', 'complete')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  latestAnalysis = data as GlossaryAnalysisSnapshot | null;
+} catch (err) {
+  console.warn('[app/glossario/[termo]] Falha ao carregar análise:', err);
+}
+
+const userMatch = matchUserGlossaryTerms(allTerms, latestAnalysis).find(
+  (m) => m.term.slug === termData.slug,
+);
+
+marked.use({ gfm: true, breaks: false });
+const rawContentHtml = await marked.parse(termData.definitionMarkdown || '');
+const contentHtml = linkGlossaryTermsInHtml(
+  rawContentHtml,
+  allTerms.filter((item) => item.slug !== termData.slug),
+  { baseHref: '/app/glossario' },
+);
+---
+
+<AppLayout title={termData.term}>
+  <div class="mx-auto max-w-3xl space-y-8 pt-2 pb-16">
+    {/* Breadcrumb interno */}
+    <nav aria-label="Navegação do glossário" class="flex flex-wrap items-center gap-2 text-xs text-[#A0A0A0]">
+      <a href="/app" class="hover:text-[#f2ca50] transition-colors">Início</a>
+      <span>/</span>
+      <a href="/app/glossario" class="hover:text-[#f2ca50] transition-colors">Glossário</a>
+      <span>/</span>
+      <span class="font-medium text-[#e5e2e1]">{termData.term}</span>
+    </nav>
+
+    {/* Banner contextual se o termo aparece no mapa do usuário */}
+    {userMatch && latestAnalysis?.id && (
+      <div class="nm-floating-card flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between ring-1 ring-[#D4AF37]/30">
+        <div>
+          <span class="inline-flex items-center rounded-full bg-[#D4AF37]/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f2ca50]">
+            {userMatch.reasonBadge}
+          </span>
+          <p class="mt-1.5 text-sm text-[#e5e2e1]">
+            Este conceito faz parte da leitura da sua análise mais recente
+            {latestAnalysis.nome_completo ? ` (${latestAnalysis.nome_completo})` : ''}.
+          </p>
+        </div>
+        <a
+          href={`/app/resultado/${latestAnalysis.id}`}
+          class="inline-flex shrink-0 items-center justify-center rounded-full bg-[#D4AF37] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#131313] hover:bg-[#f2ca50]"
+        >
+          Ver no meu mapa →
+        </a>
+      </div>
+    )}
+
+    {/* Cabeçalho do termo */}
+    <header class="nm-floating-card rounded-2xl p-6 sm:p-8">
+      <div class="mb-3 flex flex-wrap items-center gap-2.5">
+        <span class="rounded-full bg-[#bea5ff]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#d7c6ff]">
+          {GLOSSARY_CATEGORY_LABELS[termData.category]}
+        </span>
+        {termData.relatedNumber != null && (
+          <span class="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-bold tabular-nums text-[#f2ca50]">
+            Número {termData.relatedNumber}
+          </span>
+        )}
+      </div>
+
+      <h1 class="font-cinzel text-2xl font-bold leading-tight text-[#e5e2e1] sm:text-3xl">
+        {termData.term}
+      </h1>
+
+      <p class="mt-3 text-base leading-relaxed text-[#e5e2e1]/85">
+        {termData.shortSummary}
+      </p>
+
+      {termData.tags.length > 0 && (
+        <div class="mt-4 flex flex-wrap gap-2">
+          {termData.tags.map((tag) => (
+            <span class="rounded-full bg-white/[0.05] px-3 py-1 text-xs text-[#A0A0A0]">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </header>
+
+    {/* Conteúdo completo com auto-link interno */}
+    <article class="prose prose-invert max-w-none prose-headings:font-cinzel prose-headings:text-[#f2ca50] prose-h3:text-xl prose-p:text-[#e5e2e1]/90 prose-p:leading-relaxed prose-strong:text-[#e5e2e1] prose-li:text-[#e5e2e1]/90">
+      <Fragment set:html={contentHtml} />
+    </article>
+
+    {/* Termos Relacionados */}
+    {relatedTerms.length > 0 && (
+      <section class="pt-4">
+        <h2 class="mb-4 font-cinzel text-xl font-bold text-[#e5e2e1]">
+          Conceitos Relacionados
+        </h2>
+        <div class="grid gap-3.5 sm:grid-cols-2">
+          {relatedTerms.map((rel) => (
+            <a
+              href={`/app/glossario/${rel.slug}`}
+              class="nm-floating-card block rounded-2xl p-4 transition hover:bg-[#202020] hover:ring-1 hover:ring-[#D4AF37]/40"
+            >
+              <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-[#bea5ff]">
+                {GLOSSARY_CATEGORY_LABELS[rel.category]}
+              </p>
+              <h3 class="mt-1.5 font-cinzel text-base font-bold text-[#e5e2e1]">
+                {rel.term}
+              </h3>
+              <p class="mt-1 text-xs leading-relaxed text-[#A0A0A0] line-clamp-2">
+                {rel.shortSummary}
+              </p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</AppLayout>

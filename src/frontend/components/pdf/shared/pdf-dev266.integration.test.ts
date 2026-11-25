@@ -1,3 +1,4 @@
+import { buildPaidTocEntries } from './pdfTocCatalog.ts';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
@@ -28,6 +29,9 @@ const FORBIDDEN_SNIPPETS = [
   'eliminando os padrões compulsivos',
   'A harmonização neutralizou',
 ];
+
+/** DEV-322: jargão proibido no PDF pago do Nome Social. */
+const FORBIDDEN_NOME_SOCIAL_PAGO = ['motor v3', 'motor v4', 'regra n5', 'regras ocultas', ' pts', 'n4 ·', 'n5 ·', '(n4)', '(n5)'];
 
 function pdfToText(buf: Buffer): string {
   const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-txt-'));
@@ -123,27 +127,56 @@ describe('DEV-266 · PDF integração offline', () => {
       PDF_TOC_ANCHOR_IDS.nome_social,
     );
 
+    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     const compactText = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, '').toLowerCase();
     const paidTextPages = pdfToText(Buffer.from(pagoBuf)).split('\f');
     // Letter spacing pode aparecer como espaços entre letras na extração Poppler.
-    const numbersHeaderPage = paidTextPages.find((page) => compactText(page).includes('os5numerosfundamentais'));
-    assert.ok(numbersHeaderPage, 'cabeçalho do comparativo numérico presente');
-    assert.ok(compactText(numbersHeaderPage).includes('datadenascimento'), 'cabeçalho permanece na página da primeira linha');
+    assert.ok(!('error' in pDest));
+    const numbersHeaderPage = paidTextPages[pDest['pdf-harmonizacao-corpo'] - 1];
+    assert.ok(numbersHeaderPage, 'cabeçalho do comparativo item por item presente');
+    assert.ok(compactText(numbersHeaderPage).includes('antesedepois,itemporitem'), 'tabela comparativa na página esperada');
 
     const gDest = await inspectNamedDestinations(Buffer.from(gratuitoBuf));
-    const pDest = await inspectNamedDestinations(Buffer.from(pagoBuf));
     assert.ok(!('error' in gDest), `gratuito destinos: ${'error' in gDest ? gDest.error : ''}`);
     assert.ok(!('error' in pDest), `pago destinos: ${'error' in pDest ? pDest.error : ''}`);
 
     assert.ok(gDest['pdf-essencia'] >= 1, 'pdf-essencia gratuito');
     assert.ok(gDest['pdf-sumario'] >= 1, 'pdf-sumario gratuito');
+    assert.ok(
+      gDest['pdf-essencia-arquetipo'] >= gDest['pdf-essencia'] &&
+        gDest['pdf-essencia-arquetipo'] < gDest['pdf-essencia-triangulo-vida'],
+      'gratuito: arquétipo na Essência antes do Triângulo da Vida',
+    );
+    assert.ok(
+      gDest['pdf-essencia-karma'] >= gDest['pdf-essencia-triangulo-vida'],
+      'gratuito: O Peso do Passado após Triângulo da Vida',
+    );
+    assert.ok(pDest['pdf-resumo'] > pDest['pdf-sumario'], 'resumo logo após sumário');
+    assert.ok(pDest['pdf-intro-leitura'] > pDest['pdf-resumo'], 'como ler após resumo');
     assert.ok(pDest['pdf-essencia'] >= 1, 'pdf-essencia pago');
     assert.ok(pDest['pdf-harmonizacao'] >= 1, 'pdf-harmonizacao pago');
     assert.ok(pDest['pdf-harmonizacao-comparativa'] >= 1, 'pdf-harmonizacao-comparativa pago');
+    assert.ok(pDest['pdf-harmonizacao-mapa'] >= pDest['pdf-harmonizacao']);
+    assert.ok(pDest['pdf-essencia-arquetipo'] >= pDest['pdf-essencia'] && pDest['pdf-essencia-arquetipo'] < pDest['pdf-essencia-triangulo-vida'], 'arquétipo de nascimento na Essência antes do Triângulo da Vida');
+    assert.ok(pDest['pdf-harmonizado-arquetipo'] >= pDest['pdf-nome-harmonizado'] && pDest['pdf-harmonizado-arquetipo'] <= pDest['pdf-harmonizado-triangulo-vida'], 'arquétipo harmonizado na Parte 3 antes/junto do Triângulo da Vida');
+    assert.ok(pDest['pdf-harmonizado-arquetipo'] < pDest['pdf-anexos'], 'arquétipo fora dos anexos');
+    assert.ok(pDest['pdf-guia'] > pDest['pdf-nome-harmonizado'], 'Parte 4 após Parte 3');
+    assert.ok(pDest['pdf-anexos'] > pDest['pdf-treino'], 'Anexos após folha de treino');
+    const annexFirstPage = paidTextPages[pDest['pdf-anexos'] - 1];
+    assert.ok(compactText(annexFirstPage).includes('triangulopessoal'), 'Anexo 1 abre com Triângulo Pessoal lado a lado');
+    assert.equal(pDest['pdf-anexos-triangulos'], pDest['pdf-anexos'], 'triângulos pertencem à abertura de Anexos');
+    for (const prefix of ['pdf-essencia-triangulo-', 'pdf-harmonizado-triangulo-']) {
+      for (const suffix of ['pessoal', 'social', 'destino']) assert.ok(pDest[prefix + suffix] >= pDest['pdf-anexos-triangulos']);
+    }
+    assert.ok(pDest['pdf-essencia-triangulo-vida'] < pDest['pdf-anexos-triangulos']);
+    assert.ok(pDest['pdf-harmonizado-triangulo-vida'] < pDest['pdf-anexos-triangulos']);
+    assert.ok(pDest['pdf-anexos-ciclos'] > pDest['pdf-essencia-triangulo-destino'], 'Ciclos do nome após os 3 anexos de dimensão');
+    assert.ok(paidTextPages.length <= 36, `PDF pago enxuto esperado (<=36 págs); got ${paidTextPages.length}`);
+
 
     for (const [label, dests, ids] of [
       ['gratuito', gDest, PDF_TOC_ANCHOR_IDS.gratuito],
-      ['pago', pDest, PDF_TOC_ANCHOR_IDS.nome_social],
+      ['pago', pDest, buildPaidTocEntries(true).map(e => e.id)],
     ] as const) {
       const sumarioPage = dests['pdf-sumario'];
       for (const id of ids) {
@@ -165,6 +198,17 @@ describe('DEV-266 · PDF integração offline', () => {
       `Harmonização não deve cair no fim do bloco longo (got p${pDest['pdf-harmonizacao']})`,
     );
 
+    const gratuitoCompact = compactText(pdfToText(Buffer.from(gratuitoBuf)));
+    assert.ok(gratuitoCompact.includes('arquetipovibracional'), 'gratuito contém Arquétipo Vibracional');
+    assert.ok(gratuitoCompact.includes('otriangulodavida(nascimento)'), 'gratuito contém Triângulo da Vida');
+    for (const removedTitle of [
+      'otriangulopessoal(nascimento)',
+      'otriangulosocial(nascimento)',
+      'otriangulododestino(nascimento)',
+    ]) {
+      assert.equal(gratuitoCompact.includes(removedTitle), false, `gratuito não deve conter ${removedTitle}`);
+    }
+
     for (const buf of [gratuitoBuf, pagoBuf]) {
       const text = pdfToText(Buffer.from(buf));
       for (const snippet of FORBIDDEN_SNIPPETS) {
@@ -174,6 +218,16 @@ describe('DEV-266 · PDF integração offline', () => {
           `copy proibida encontrada: "${snippet}"`,
         );
       }
+    }
+
+    const pagoText = pdfToText(Buffer.from(pagoBuf)).toLowerCase();
+    for (const snippet of FORBIDDEN_NOME_SOCIAL_PAGO) {
+      assert.equal(pagoText.includes(snippet), false, `jargão no PDF pago: "${snippet}"`);
+    }
+    // DEV-332: o gratuito também sai sem jargão e sem copy de medo.
+    const gratuitoText = pdfToText(Buffer.from(gratuitoBuf)).toLowerCase();
+    for (const snippet of [...FORBIDDEN_NOME_SOCIAL_PAGO, '24h/dia', 'compulsão automática', 'sabotando']) {
+      assert.equal(gratuitoText.includes(snippet), false, `jargão no PDF gratuito: "${snippet}"`);
     }
 
     const dir = mkdtempSync(join(tmpdir(), 'nm-pdf-font-'));

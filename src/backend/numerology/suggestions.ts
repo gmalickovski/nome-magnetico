@@ -1,5 +1,9 @@
 /**
  * Geração e scoring de variações do nome sem bloqueios.
+ *
+ * @deprecated DEV-301: legado (score v1, só Triângulo da Vida, fallbacks com
+ * bloqueio). O motor oficial do Nome Social é `analisarNomesSocial` em
+ * `products/nome-social.ts`. Mantido só pelo tipo `VariacaoNome` e pelo teste do curso.
  */
 
 import { calcularTrianguloDaVida } from './triangle';

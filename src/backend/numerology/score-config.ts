@@ -57,3 +57,22 @@ export const SCORE_CONFIG_V3 = Object.freeze({
 });
 
 export type ScoreConfigV3 = typeof SCORE_CONFIG_V3;
+
+/**
+ * Regras de oferta de sugestões do Nome Social (DEV-301 · motor v4).
+ * Não altera a fórmula do score; só define o que pode ser oferecido ao usuário.
+ */
+export const SUGESTAO_CONFIG_V4 = Object.freeze({
+  /** Nota mínima absoluta de qualquer sugestão oferecida. */
+  pisoAbsoluto: 70,
+  /** Ganho preferencial sobre o nascimento (ordenação, não é filtro duro). */
+  ganhoPreferencial: 5,
+  /** Quantidade mínima de sugestões válidas antes de relaxar preferências moles. */
+  minimoVisiveis: 3,
+  /**
+   * Naturalidade padrão: quando a entrevista não define o estilo, entre as sugestões com nota até
+   * esta distância da melhor, vence a que menos distorce o nome (primeiro nome + um sobrenome,
+   * depois os acentos, depois o que foge do nome real).
+   */
+  janelaNaturalidade: 15,
+});

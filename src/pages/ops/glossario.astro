@@ -1,0 +1,8 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { GlossaryManager } from '../../frontend/components/ops/GlossaryManager';
+---
+
+<AdminLayout title="Glossário" description="Textos do glossário do Nome Magnético.">
+  <GlossaryManager client:load />
+</AdminLayout>

@@ -75,3 +75,11 @@ describe('chatSuggestionsExportFingerprint', () => {
     assert.notEqual(a, b);
   });
 });
+
+it('DEV-299 mantém grafia e proveniência manual se a API repetir o mesmo nome', () => {
+  const original = { ...sug('Aná Vale', 'manual'), origem: 'manual' as const };
+  const merged = mergeChatSuggestionsCumulative([original], [sug('ANÁ VALE', 'generated')]);
+  assert.equal(merged[0].nome, 'Aná Vale');
+  assert.equal(merged[0].origem, 'manual');
+  assert.deepEqual(chatSuggestionsToExportNames(merged), ['Aná Vale']);
+});

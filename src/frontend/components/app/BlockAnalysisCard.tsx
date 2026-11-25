@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GlossaryLinkedText } from '../glossary/GlossaryLinkedText';
 
 interface Bloqueio {
   codigo: string;
@@ -22,7 +23,7 @@ const TRIANGULO_LABELS: Record<string, string> = {
 
 export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: BlockAnalysisCardProps) {
   return (
-    <div className="rounded-2xl bg-red-500/5 overflow-hidden">
+    <div className="nm-floating-tile border-red-500/20 bg-red-500/[0.06] overflow-hidden text-left">
       <div className="w-full flex items-center justify-between p-5 text-left border-b border-red-500/10">
         <div className="flex items-center gap-3">
           <span className="text-red-400 text-xl leading-none">⚠</span>
@@ -35,7 +36,7 @@ export default function BlockAnalysisCard({ bloqueio, defaultOpen = false }: Blo
       </div>
 
       <div className="px-5 py-5 space-y-4">
-          <p className="nm-card-text">{bloqueio.descricao}</p>
+          <p className="nm-card-text"><GlossaryLinkedText text={bloqueio.descricao} /></p>
 
           {bloqueio.triangulos && bloqueio.triangulos.length > 0 && (
             <div className="space-y-1.5">

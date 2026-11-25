@@ -140,14 +140,14 @@ export function ProductsSection() {
                   className={`nm-h2 mb-3 ${s2Title.className}`}
                   style={s2Title.style}
                 >
-                  Opções de Assinatura Rankeadas Para Você Escolher a Sua
+                  Opções de Assinatura Para Você Escolher a Sua
                 </h2>
 
                 <p
                   className={`nm-body-lg mt-4 sm:mt-5 max-w-[54ch] mx-auto lg:mx-0 ${s2Desc.className}`}
                   style={s2Desc.style}
                 >
-                  Você não recebe um nome imposto. O sistema testa primeiro a mudança mais leve: encurtar o nome, usar só o primeiro nome ou incluir um acento sutil. Um acento sutil, só na assinatura, muda o cálculo sem mudar o seu nome. Cada card mostra a nota, o nível, a combinação com o seu Destino e os 5 números para você escolher.
+                  Você não recebe um nome imposto. As sugestões têm nota acima da do seu nome de nascimento, e a de maior nota aparece sempre entre as três primeiras. O sistema testa primeiro a mudança mais leve, como encurtar o nome, usar só o primeiro nome ou incluir um acento sutil. Um acento sutil, só na assinatura, muda o cálculo sem mudar o seu nome. Se quiser ver mais, peça novas opções até 2 vezes, para no máximo 9. Cada opção mostra a nota, o nível, a combinação com o seu Destino e os 5 números.
                 </p>
               </div>
             </aside>

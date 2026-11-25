@@ -23,10 +23,12 @@ import {
   landingMockupTileClass,
 } from './LandingSectionIntro';
 import { ScoreCardRow } from './ScoreCardRow.js';
+import { LifeTriangleBlockBadge } from './LifeTriangleBlockBadge.js';
 import { getScoreTierVisual } from './score-tier-visual.js';
 
 export { getScoreTierVisual, type ScoreTierVisual } from './score-tier-visual.js';
 export { ScoreCardRow, type ScoreCardRowProps } from './ScoreCardRow.js';
+export { LifeTriangleBlockBadge, type LifeTriangleBlockBadgeProps } from './LifeTriangleBlockBadge.js';
 
 const GOLD = '#D4AF37';
 
@@ -65,6 +67,8 @@ export interface HarmonySuggestionCardData {
   impressao: number;
   missao: number;
   bloqueios: number;
+  /** Sequências negativas exclusivamente do Triângulo da Vida. */
+  vidaBloqueiosCodigos?: string[];
 }
 
 type DemoSuggestion = HarmonySuggestionCardData;
@@ -130,11 +134,14 @@ export function HarmonySuggestionCard({
   stagger,
   delayIndex,
   className = '',
+  showBlockBadgeInTags = false,
 }: {
   c: HarmonySuggestionCardData;
   stagger: boolean;
   delayIndex: number;
   className?: string;
+  /** Quando true (cards do chat/entrevista), move bloqueio do rodapé para tag ao lado do nível/compatibilidade. */
+  showBlockBadgeInTags?: boolean;
 }) {
   return (
     <div
@@ -146,7 +153,19 @@ export function HarmonySuggestionCard({
       <ScoreCardRow
         nome={c.nome}
         score={c.score}
-        scoreTrailing={<CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />}
+        scoreTrailing={
+          showBlockBadgeInTags ? (
+            <>
+              <LifeTriangleBlockBadge
+                codigos={c.vidaBloqueiosCodigos}
+                fallbackCount={c.bloqueios}
+              />
+              <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
+            </>
+          ) : (
+            <CompatibilityBadge compatibilidade={c.compatibilidade} size="sm" />
+          )
+        }
       />
 
       <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
@@ -168,15 +187,16 @@ export function HarmonySuggestionCard({
           </span>
         </div>
 
-        {c.bloqueios > 0 ? (
-          <span className="text-[10.5px] sm:text-xs font-medium text-red-400 whitespace-nowrap">
-            ⚠ {c.bloqueios} bloqueio(s)
-          </span>
-        ) : (
-          <span className="text-[10.5px] sm:text-xs font-medium text-emerald-400 whitespace-nowrap">
-            ✓ Sem bloqueios
-          </span>
-        )}
+        {!showBlockBadgeInTags &&
+          (c.bloqueios > 0 ? (
+            <span className="text-[10.5px] sm:text-xs font-medium text-red-400 whitespace-nowrap">
+              ⚠ {c.bloqueios} bloqueio(s)
+            </span>
+          ) : (
+            <span className="text-[10.5px] sm:text-xs font-medium text-emerald-400 whitespace-nowrap">
+              ✓ Sem bloqueios
+            </span>
+          ))}
       </div>
     </div>
   );
@@ -295,6 +315,7 @@ export interface HarmonyScoreRowProps {
   eyebrowTone?: 'birth' | 'harmonized';
   className?: string;
   displayScore?: number;
+  emphasize?: boolean;
 }
 
 /** Alias estável — implementação em {@link ScoreCardRow}. */
@@ -311,7 +332,7 @@ export function HarmonyScoreStack({
   className?: string;
 }) {
   return (
-    <div className={`${landingMockupFloatClass} bg-[#1c1c1c] border border-white/10 rounded-2xl shadow-xl shadow-black/40 p-4 sm:p-5 w-full ${className}`}>
+    <div className={`${landingMockupFloatClass} p-4 sm:p-5 w-full ${className}`}>
 
       <div className="flex flex-col gap-4 min-w-0 w-full">{children}</div>
     </div>
@@ -490,6 +511,11 @@ export function ProductHarmonyStar({
 
   const outerStrokeVisual = isBirthOnly ? birthVisual : harmVisual;
   const outerNums = isBirthOnly ? birthNums : harmonizedNums;
+  const starViewBox = isDemo
+    ? `0 0 ${LANDING_STAR_VIEWBOX.width} ${LANDING_STAR_VIEWBOX.height}`
+    : '-44 5 888 585';
+  const starLabelRadius = isDemo ? LANDING_STAR_LABEL_RADIUS : LANDING_STAR_OUTER_R + 62;
+  const starLabelDy = isDemo ? LANDING_STAR_LABEL_DY : ([-8, -2, 10, 10, -2] as const);
 
   useEffect(() => {
     if (!isDemo) {
@@ -533,7 +559,7 @@ export function ProductHarmonyStar({
       <div className="harmony-star-wrap w-full">
         <svg
           className="harmony-star-svg w-full overflow-visible"
-          viewBox={`0 0 ${LANDING_STAR_VIEWBOX.width} ${LANDING_STAR_VIEWBOX.height}`}
+          viewBox={starViewBox}
           role="img"
           aria-label="Estrela comparativa entre nome de nascimento e nome harmonizado"
         >
@@ -601,7 +627,7 @@ export function ProductHarmonyStar({
             const labelPos = harmonyStarTipXY(
               LANDING_STAR_CX,
               LANDING_STAR_CY,
-              LANDING_STAR_LABEL_RADIUS,
+              starLabelRadius,
               i,
             );
             const outerNumPos = harmonyStarTipXY(
@@ -630,7 +656,7 @@ export function ProductHarmonyStar({
                 <text
                   className="harmony-star-label"
                   x={labelPos.x + LANDING_STAR_LABEL_DX[i]}
-                  y={labelPos.y + LANDING_STAR_LABEL_DY[i]}
+                  y={labelPos.y + starLabelDy[i]}
                   fill="#d0d5de"
                   fontFamily="Inter, sans-serif"
                   fontSize={25}
@@ -680,7 +706,9 @@ export function ProductHarmonyStar({
         style={{
           transitionDelay: shouldPlay && !instant ? '1700ms' : '0ms',
         }}
-        className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 mt-8 sm:mt-10 px-2 transition-all duration-700 ease-out ${
+        className={`w-full min-w-0 flex flex-wrap justify-center items-center gap-x-6 gap-y-2.5 text-[13px] sm:text-sm text-gray-400 ${
+          isDemo ? 'mt-8 sm:mt-10' : 'mt-5 sm:mt-6'
+        } px-2 transition-all duration-700 ease-out ${
           shouldPlay ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >

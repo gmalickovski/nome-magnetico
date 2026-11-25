@@ -1,0 +1,164 @@
+---
+/**
+ * DEV-318 · Aviso de atualização do cálculo em pop-up (fundo desfocado).
+ * Aparece uma vez por aviso: depois de fechado (X, "Agora não", Esc ou clique fora), só volta
+ * quando mudar o avisoId (novo aviso). A marca fica no navegador (localStorage).
+ */
+export interface Props {
+  avisoId: string;
+  legacyCount: number;
+  analysisIds: string[];
+  nomeUnico?: string | null;
+}
+const { avisoId, legacyCount, analysisIds, nomeUnico = null } = Astro.props;
+---
+
+<div
+    id="recalc-v3-modal"
+    data-aviso-id={avisoId}
+    class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-md"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="recalc-v3-title"
+  >
+    <div class="relative w-full max-w-lg rounded-2xl bg-[#1c1c1c] p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+      <button
+        id="recalc-v3-close"
+        type="button"
+        aria-label="Fechar aviso"
+        class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors duration-300 hover:bg-white/5 hover:text-[#e5e2e1]"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" /></svg>
+      </button>
+      <p class="nm-eyebrow mb-3">Atualização do cálculo</p>
+      <h3 id="recalc-v3-title" class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1] mb-3 pr-8">
+        Melhoramos o cálculo da nota do seu nome
+      </h3>
+      <p class="text-gray-300 text-sm leading-relaxed">
+        {legacyCount === 1 ? (
+          <>
+            Sua análise de <strong class="text-white">{nomeUnico}</strong> foi feita com a versão anterior do cálculo. A versão nova traz critérios mais precisos para bloqueios e débitos kármicos. Você pode gerar a nova versão sem custo, e a original fica guardada.
+          </>
+        ) : (
+          <>
+            Você tem <strong class="text-white">{legacyCount} análises</strong> feitas com a versão anterior do cálculo. A versão nova traz critérios mais precisos para bloqueios e débitos kármicos. Você pode recalcular todas sem custo, e as originais ficam guardadas.
+          </>
+        )}
+      </p>
+      <p id="recalc-v3-error" class="mt-3 hidden text-sm text-red-300" role="alert"></p>
+      <div class="mt-6 flex flex-col gap-3">
+        <button
+          id="btn-recalc-v3"
+          type="button"
+          data-analysis-ids={JSON.stringify(analysisIds)}
+          data-is-multiple={legacyCount > 1 ? 'true' : 'false'}
+          class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3.5 text-sm font-semibold text-[#1A1A1A] transition-all duration-300 hover:scale-[1.02] hover:bg-[#f2ca50] active:scale-[0.98] disabled:opacity-60 disabled:hover:scale-100"
+        >
+          <span id="btn-recalc-spinner" class="hidden h-4 w-4 animate-spin rounded-full border-2 border-black/40 border-t-black"></span>
+          <span id="btn-recalc-text">
+            {legacyCount === 1 ? 'Recalcular minha análise' : `Recalcular minhas ${legacyCount} análises`}
+          </span>
+        </button>
+        <div class="flex items-center justify-between gap-3">
+          <a
+            href="/como-funciona-o-score"
+            class="text-xs text-gray-400 underline decoration-dotted underline-offset-4 transition-colors hover:text-[#D4AF37]"
+          >
+            Entenda as mudanças
+          </a>
+          <button
+            id="recalc-v3-later"
+            type="button"
+            class="rounded-full px-4 py-2 text-xs text-gray-400 transition-colors duration-300 hover:bg-white/5 hover:text-[#e5e2e1]"
+          >
+            Agora não
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const modal = document.getElementById('recalc-v3-modal');
+      const btn = document.getElementById('btn-recalc-v3') as HTMLButtonElement | null;
+      const spinner = document.getElementById('btn-recalc-spinner');
+      const text = document.getElementById('btn-recalc-text');
+      const erro = document.getElementById('recalc-v3-error');
+      if (!modal || !btn) return;
+
+      const chave = `nm-aviso-fechado:${modal.dataset.avisoId ?? ''}`;
+      function jaFechado(): boolean {
+        try {
+          return localStorage.getItem(chave) === '1';
+        } catch {
+          return false;
+        }
+      }
+      function fechar() {
+        try {
+          localStorage.setItem(chave, '1');
+        } catch {
+          /* sem storage: fecha só nesta visita */
+        }
+        modal!.classList.add('hidden');
+        modal!.classList.remove('flex');
+        document.removeEventListener('keydown', onKey);
+      }
+      function onKey(e: KeyboardEvent) {
+        if (e.key === 'Escape') fechar();
+      }
+      if (jaFechado()) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.addEventListener('keydown', onKey);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) fechar();
+      });
+      document.getElementById('recalc-v3-close')?.addEventListener('click', fechar);
+      document.getElementById('recalc-v3-later')?.addEventListener('click', fechar);
+
+      const rawIds = btn.dataset.analysisIds;
+      let analysisIds: string[] = [];
+      try {
+        analysisIds = rawIds ? JSON.parse(rawIds) : [];
+      } catch {
+        analysisIds = [];
+      }
+      const isMultiple = btn.dataset.isMultiple === 'true';
+      const textoOriginal = text?.textContent ?? '';
+
+      btn.addEventListener('click', async () => {
+        if (!analysisIds.length) return;
+        btn.disabled = true;
+        erro?.classList.add('hidden');
+        spinner?.classList.remove('hidden');
+        if (text) text.textContent = isMultiple ? 'Recalculando análises...' : 'Recalculando análise...';
+        try {
+          const res = await fetch('/api/recalculate-v3', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(isMultiple ? { analysisIds } : { analysisId: analysisIds[0] }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Erro ao recalcular');
+          try {
+            localStorage.setItem(chave, '1');
+          } catch {
+            /* ignora */
+          }
+          if (text) text.textContent = 'Pronto! Atualizando...';
+          if (!isMultiple && data.analysisId) window.location.href = `/app/resultado/${data.analysisId}`;
+          else window.location.reload();
+        } catch (err) {
+          if (erro) {
+            erro.textContent = err instanceof Error ? err.message : 'Não foi possível recalcular agora. Tente de novo.';
+            erro.classList.remove('hidden');
+          }
+          btn.disabled = false;
+          spinner?.classList.add('hidden');
+          if (text) text.textContent = textoOriginal;
+        }
+      });
+    })();
+  </script>

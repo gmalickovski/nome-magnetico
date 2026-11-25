@@ -7,18 +7,18 @@ import { getArcano } from '../../../backend/numerology/arcanos';
 import { getArquetipo } from '../../../backend/numerology/archetypes';
 import ScoreDisplay from '../../../frontend/components/app/ScoreDisplay';
 import { formatAnalysisText } from '../../../utils/textFormatter';
+import { listPublishedGlossaryTerms } from '../../../backend/glossary/glossary-service';
+import { linkGlossaryTermsInHtml } from '../../../shared/glossary/term-linker';
 import { marked } from 'marked';
 import { ChatSidebarSection } from '../../../frontend/components/app/chat/ChatSidebarSection';
 import { buildClientBirthNamePanel } from '../../../backend/numerology/birth-name-panel';
 import { buildChatReadingSummary } from '../../../backend/numerology/chat-reading-summary';
 import {
   computeContextualRadarAxes,
-  computeMotorRadarAxes,
   getRadarAxisLabels,
   motorRadarToRecord,
 } from '../../../shared/interactive-engine/motor-radar';
 import type { AreaFocoNomeMagnetico } from '../../../shared/interactive-engine/copy';
-import NomeAtualResultado from '../../../frontend/components/app/resultado/NomeAtualResultado.astro';
 import NomeBebResultado from '../../../frontend/components/app/resultado/NomeBebResultado.astro';
 import NomeEmpresaResultado from '../../../frontend/components/app/resultado/NomeEmpresaResultado.astro';
 import { hasActiveSubscription } from '../../../backend/db/subscriptions';
@@ -27,7 +27,7 @@ import { avaliarNome } from '../../../backend/numerology/score';
 import { AVISO_AUTOCONHECIMENTO } from '../../../shared/legal';
 
 const user = Astro.locals.user;
-if (!user) return Astro.redirect('/auth/login');
+if (!user) return Astro.redirect('/auth/login?redirect=' + encodeURIComponent(Astro.url.pathname));
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/app');
@@ -42,6 +42,15 @@ if (!analysis || analysis.user_id !== user.id) {
 }
 
 analysis = await reconcileStaleAnalysis(analysis);
+
+// DEV-317: análise pronta do Nome Social (ou nome de nascimento) abre no painel atual de Minhas análises.
+// Esta página fica só para acompanhar processamento/erro e para produtos antigos.
+if (
+  analysis.status === 'complete' &&
+  (analysis.product_type === 'nome_social' || analysis.product_type === 'analise_gratuita' || !analysis.product_type)
+) {
+  return Astro.redirect(`/app/analises?id=${encodeURIComponent(id)}&painel=1`);
+}
 
 // ── Status ──────────────────────────────────────────────────────────
 const isProcessing = analysis.status === 'processing' || analysis.status === 'pending';
@@ -103,10 +112,6 @@ const { data: profile } = await supabase
 const isAdmin = profile?.role === 'admin';
 const canGenerateSocialCandidateReports = isAdmin || await hasActiveSubscription(user.id, 'nome_social');
 
-if (isFree) {
-  return Astro.redirect('/app?gen_free_pdf=1');
-}
-
 // ── Arcano regente ───────────────────────────────────────────────────
 const arcanoRawNum = (analysis as any).arcano_regente as number | null;
 const arcanoData = arcanoRawNum ? getArcano(arcanoRawNum) : null;
@@ -119,24 +124,27 @@ const expressaoParaArquetipo =
   : analysis.numero_expressao;
 const arquetipoData = expressaoParaArquetipo ? getArquetipo(expressaoParaArquetipo) : null;
 
-// ── Texto da IA ──────────────────────────────────────────────────────
-const analiseHtmlRaw = analysis.analise_texto
-  ? String(await marked(formatAnalysisText(analysis.analise_texto))).replace(/\*\*/g, '')
+// ── Texto da IA (usado apenas nos relatórios de Bebê e Empresa) ──────
+const analiseHtmlRaw =
+  (isNomeBebe || isNomeEmpresa) && analysis.analise_texto
+    ? String(await marked(formatAnalysisText(analysis.analise_texto))).replace(/\*\*/g, '')
+    : null;
+const glossaryTermsForReport = analiseHtmlRaw ? await listPublishedGlossaryTerms() : [];
+const analiseHtml = analiseHtmlRaw
+  ? linkGlossaryTermsInHtml(analiseHtmlRaw, glossaryTermsForReport, {
+      baseHref: '/app/glossario',
+    })
   : null;
-const analiseHtml = analiseHtmlRaw && isFree
-  ? analiseHtmlRaw
-      .replace(/^<h1>[^<]*<\/h1>\s*/i, '')
-      .replace(/<h[1-6][^>]*>[^<]*Manual de Assinatura[^<]*<\/h[1-6]>[\s\S]*?(?=<h[1-6]|$)/i, '')
-  : analiseHtmlRaw;
 
 // ── Score geral ──────────────────────────────────────────────────────
 const scoreGeral = (analysis as any).score as number | null;
 
 // ── Nome exibido ─────────────────────────────────────────────────────
-const selectedNomeSocial = freqData?.selectedNomeSocial;
+const selectedNomeSocial =
+  freqData?.selectedNomeSocial ?? (analysis as any).nome_harmonizado ?? null;
 const nomeExibido: string =
   (isNomeBebe    && rankingBebe?.melhorNome?.nomeCompleto)    ? rankingBebe.melhorNome.nomeCompleto
-  : isNomeSocial  ? (selectedNomeSocial ?? rankingSocial?.melhorNome?.nomeCompleto ?? analysis.nome_completo)
+  : (isNomeSocial && !isFree) ? (selectedNomeSocial ?? rankingSocial?.melhorNome?.nomeCompleto ?? analysis.nome_completo)
   : (isNomeEmpresa && rankingEmpresa?.melhorNome?.nomeEmpresa) ? rankingEmpresa.melhorNome.nomeEmpresa
   : analysis.nome_completo;
 
@@ -163,18 +171,22 @@ function toScoreDate(value?: string | null): string {
   return value;
 }
 
-// Certificado Nome Social: nome de nascimento + score, depois nome harmonizado + score
+// Certificado Nome Social / Nome de Nascimento:
+// Quando há nome harmonizado diferente do nascimento -> modo comparativo (dual).
+// Caso contrário -> painel apenas com o nome de nascimento inicial (sem harmonização).
 const nomeNascimentoCertificado =
-  (rankingSocial?.nomeNascimento as string | undefined)?.trim()
-  || (profile?.birth_name as string | undefined)?.trim()
+  (!isFree && (rankingSocial?.nomeNascimento as string | undefined)?.trim())
   || (analysis.nome_completo as string | undefined)?.trim()
+  || (profile?.birth_name as string | undefined)?.trim()
   || '';
 const dataScoreSocial =
   toScoreDate((rankingSocial?.dataNascimento as string | undefined) ?? null)
   || toScoreDate(analysis.data_nascimento ?? null)
   || toScoreDate((profile?.birth_date as string | undefined) ?? null);
+const forceBirthMode = Astro.url.searchParams.get('modo') === 'nascimento';
 const showDualCertificate =
-  isNomeSocial
+  !forceBirthMode
+  && isNomeSocial
   && !isFree
   && !!nomeNascimentoCertificado
   && nomeNascimentoCertificado.trim().toLowerCase() !== nomeExibido.trim().toLowerCase();
@@ -220,56 +232,77 @@ const cinco_numeros_empresa = isNomeEmpresa && rankingEmpresa?.melhorNome ? [
 
 const isAnalystGenerated = (analysis as any).is_analyst_generated === true;
 
-const isSocialSummaryView = isNomeSocial && !isFree;
-const socialBirthPanel =
-  isSocialSummaryView && nomeNascimentoCertificado && dataScoreSocial
-    ? buildClientBirthNamePanel(nomeNascimentoCertificado, dataScoreSocial)
-    : null;
-const socialHarmonizedPanel =
-  isSocialSummaryView && showDualCertificate && nomeExibido && dataScoreSocial
-    ? buildClientBirthNamePanel(nomeExibido, dataScoreSocial)
-    : null;
-const socialReadingSummary =
-  isSocialSummaryView && nomeExibido && dataScoreSocial
-    ? buildChatReadingSummary(nomeExibido, dataScoreSocial)
-    : null;
+const isSocialSummaryView = isNomeSocial || isAnaliseGratuita || isFree;
+let socialBirthPanel: ReturnType<typeof buildClientBirthNamePanel> | null = null;
+let socialHarmonizedPanel: ReturnType<typeof buildClientBirthNamePanel> | null = null;
+let socialReadingSummary: ReturnType<typeof buildChatReadingSummary> | null = null;
+let socialRadarAxes: Record<string, number> | null = null;
+let socialRadarOverlayAxes: Record<string, number> | null = null;
+
 const socialAreaFoco = (
   typeof rankingSocial?.areaFoco === 'string'
     ? rankingSocial.areaFoco
     : typeof rankingSocial?.area_foco === 'string'
       ? rankingSocial.area_foco
-      : null
+      : typeof freqData?.areaFoco === 'string'
+        ? freqData.areaFoco
+        : typeof freqData?.area_foco === 'string'
+          ? freqData.area_foco
+          : typeof freqData?.parametros_usuario?.areaFoco === 'string'
+            ? freqData.parametros_usuario.areaFoco
+            : null
 ) as AreaFocoNomeMagnetico | null;
+
+const socialOndeAssina = Array.isArray(freqData?.ondeVaiUsar)
+  ? freqData.ondeVaiUsar
+  : Array.isArray(freqData?.onde_vai_usar)
+    ? freqData.onde_vai_usar
+    : Array.isArray(rankingSocial?.ondeVaiUsar)
+      ? rankingSocial.ondeVaiUsar
+      : Array.isArray(rankingSocial?.onde_vai_usar)
+        ? rankingSocial.onde_vai_usar
+        : [];
 
 const socialRadarContext = {
   areaFoco: socialAreaFoco,
-  ondeAssinaRaw: Array.isArray(rankingSocial?.ondeVaiUsar)
-    ? rankingSocial.ondeVaiUsar
-    : Array.isArray(rankingSocial?.onde_vai_usar)
-      ? rankingSocial.onde_vai_usar
-      : [],
+  ondeAssinaRaw: socialOndeAssina,
 };
-
-const socialRadarAxes =
-  isSocialSummaryView && nomeNascimentoCertificado && dataScoreSocial
-    ? motorRadarToRecord(computeContextualRadarAxes(nomeNascimentoCertificado, dataScoreSocial, socialRadarContext))
-    : null;
-const socialRadarOverlayAxes =
-  isSocialSummaryView && showDualCertificate && nomeExibido && dataScoreSocial
-    ? motorRadarToRecord(computeContextualRadarAxes(nomeExibido, dataScoreSocial, socialRadarContext))
-    : null;
 const socialRadarLabels = getRadarAxisLabels(socialAreaFoco);
 const socialContextChips: string[] = [
-  ...(typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
-    ? [rankingSocial.assinaturaAtual.trim()]
-    : []),
-  ...(Array.isArray(rankingSocial?.ondeVaiUsar)
-    ? rankingSocial.ondeVaiUsar.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0)
-    : []),
+  ...(typeof freqData?.assinaturaAtual === 'string' && freqData.assinaturaAtual.trim()
+    ? [freqData.assinaturaAtual.trim()]
+    : typeof rankingSocial?.assinaturaAtual === 'string' && rankingSocial.assinaturaAtual.trim()
+      ? [rankingSocial.assinaturaAtual.trim()]
+      : []),
+  ...socialOndeAssina.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0),
 ];
+
+if (isSocialSummaryView && dataScoreSocial) {
+  const birthTarget = nomeNascimentoCertificado || nomeExibido;
+  const readingTarget = showDualCertificate ? nomeExibido : birthTarget;
+  try {
+    if (birthTarget) {
+      socialBirthPanel = buildClientBirthNamePanel(birthTarget, dataScoreSocial);
+      socialRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(birthTarget, dataScoreSocial, socialRadarContext),
+      );
+    }
+    if (showDualCertificate && nomeExibido) {
+      socialHarmonizedPanel = buildClientBirthNamePanel(nomeExibido, dataScoreSocial);
+      socialRadarOverlayAxes = motorRadarToRecord(
+        computeContextualRadarAxes(nomeExibido, dataScoreSocial, socialRadarContext),
+      );
+    }
+    if (readingTarget) {
+      socialReadingSummary = buildChatReadingSummary(readingTarget, dataScoreSocial);
+    }
+  } catch (err) {
+    console.warn('[resultado/[id]] Erro ao montar painel unificado:', err);
+  }
+}
 ---
 
-<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
+<ResultadoLayout title="Resultado da Análise" analysisId={analysis.id} productType={analysis.product_type ?? 'nome_social'} isFree={isFree} forceFreePdf={isFree || forceBirthMode || (isNomeSocial && !showDualCertificate)} showActions={analysis.status === 'complete'} isAnalyst={isAnalystGenerated}>
   <div>
 
     {/* ── PROCESSANDO ─────────────────────────────────────────────── */}
@@ -608,32 +641,7 @@ const socialContextChips: string[] = [
         )}
 
         {/* ══════════════════════════════════════════════════
-            NOME ATUAL (análise gratuita) — ESTRUTURA SEPARADA
-        ══════════════════════════════════════════════════ */}
-        {(isAnaliseGratuita || (isNomeSocial && isFree)) && (
-          <NomeAtualResultado
-            analysis={analysis}
-            nomeExibido={nomeExibido}
-            cincoNumeros={cinco_numeros}
-            expressao={analysis.numero_expressao}
-            arquetipoData={arquetipoData}
-            tVida={tVida}
-            tPessoal={tPessoal}
-            tSocial={tSocial}
-            tDestino={tDestino}
-            hasTriangulos={hasTriangulos}
-            bloqueios={bloqueios}
-            arcanoData={arcanoData}
-            licoesRaw={licoesRaw}
-            debitosRaw={debitosRaw}
-            tendenciasRaw={tendenciasRaw}
-            frequenciasRaw={frequenciasRaw}
-            analiseHtml={analiseHtml}
-          />
-        )}
-
-        {/* ══════════════════════════════════════════════════
-            NOME SOCIAL — RESUMO PÓS-ESCOLHA UNIFICADO (mobile + desktop, sem sugestões)
+            PAINEL DE ANÁLISE UNIFICADO (Nome de nascimento sem harmonização ou Comparativo Harmonizado)
         ══════════════════════════════════════════════════ */}
         {isSocialSummaryView && socialBirthPanel && (
           <ChatSidebarSection
@@ -644,8 +652,8 @@ const socialContextChips: string[] = [
             showStarDetail={true}
             starPanelData={socialHarmonizedPanel ?? socialBirthPanel}
             isSuggestion={Boolean(socialHarmonizedPanel)}
-            radarAxes={socialRadarAxes}
-            radarOverlayAxes={socialRadarOverlayAxes}
+            radarAxes={socialRadarAxes as any}
+            radarOverlayAxes={socialRadarOverlayAxes as any}
             radarLabels={socialRadarLabels}
             radarShowNumericLabels={Boolean(socialHarmonizedPanel)}
             contextChips={socialContextChips}
@@ -654,6 +662,10 @@ const socialContextChips: string[] = [
             showReadingSummary={Boolean(socialReadingSummary)}
           />
         )}
+        {isNomeSocial && rankingSocial?.nomesCandidatos?.some((c: any) => c.origem === 'manual' && c.nomeCompleto?.trim().toLowerCase() === nomeExibido.trim().toLowerCase()) && (
+          <p class="mt-4 text-sm text-[#d7c6ff]">Nome informado por você</p>
+        )}
+        {isSocialSummaryView && <span id="guia-assinatura" class="sr-only scroll-mt-24"></span>}
 
         {/* ══════════════════════════════════════════════════
             NOME DO BEBÊ — ESTRUTURA ESPECÍFICA

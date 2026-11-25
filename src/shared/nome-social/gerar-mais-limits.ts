@@ -1,5 +1,5 @@
 /**
- * DEV-275 — Teto de "Gerar mais" (9 opções, 2 pedidos extras de 3).
+ * DEV-275/DEV-305 — Teto de "Gerar mais": 3 opções de início e mais 3 por pedido, até 9 (2 pedidos extras).
  */
 
 export const NOME_SOCIAL_SUGESTOES_INICIAIS = 3;
@@ -30,8 +30,10 @@ export function validarPedidoGerarMais(totalJaExibidos: number): ValidacaoGerarM
     };
   }
 
-  const rodadasExtras =
-    Math.floor(totalJaExibidos / NOME_SOCIAL_SUGESTOES_POR_RODADA) - 1;
+  const rodadasExtras = Math.max(
+    0,
+    Math.floor((totalJaExibidos - NOME_SOCIAL_SUGESTOES_INICIAIS) / NOME_SOCIAL_SUGESTOES_POR_RODADA) + 1,
+  ) - 1;
   if (rodadasExtras >= NOME_SOCIAL_MAX_PEDIDOS_GERAR_MAIS) {
     return {
       ok: false,

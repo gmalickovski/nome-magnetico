@@ -41,4 +41,14 @@ describe('app-mobile-nav', () => {
     assert.equal(analises?.disabled, true);
     assert.equal(analises?.active, false);
   });
+
+  it('glossário interno ativa /app/glossario e subrotas sem ativar início', () => {
+    const gIndex = resolveAppNavActive('/app/glossario');
+    assert.equal(gIndex.glossario, true);
+    assert.equal(gIndex.inicio, false);
+
+    const gTerm = resolveAppNavActive('/app/glossario/bloqueio-444');
+    assert.equal(gTerm.glossario, true);
+    assert.equal(gTerm.inicio, false);
+  });
 });

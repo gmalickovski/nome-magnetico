@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   clearChatSession,
+  hasUnfinishedChatSession,
   loadChatSession,
   saveChatSession,
   CHAT_SESSION_STORAGE_VERSION,
@@ -129,5 +130,42 @@ describe('chat-session-storage', () => {
     saveChatSession(USER, minimalSession());
     clearChatSession(USER);
     assert.equal(loadChatSession(USER), null);
+    assert.equal(hasUnfinishedChatSession(USER), false);
+  });
+
+  it('detecta corretamente sessão iniciada em andamento vs sessão vazia ou concluída', () => {
+    assert.equal(hasUnfinishedChatSession(USER), false);
+
+    // Sessão recém-aberta sem progresso ainda não conta como retomada
+    saveChatSession(USER, {
+      ...minimalSession(),
+      birthConfirmed: false,
+      answers: {},
+      messages: [{ id: 'm0', role: 'assistant', text: 'Boas-vindas' }],
+      stepIndex: 0,
+    });
+    assert.equal(hasUnfinishedChatSession(USER), false);
+
+    // Com progresso na entrevista e sem analysisId/conclusao -> deve sugerir Retomar Análise
+    saveChatSession(USER, {
+      ...minimalSession(),
+      birthConfirmed: true,
+      answers: { foco: 'carreira' },
+      stepIndex: 2,
+      currentStepId: 'pergunta_2',
+      analysisId: null,
+    });
+    assert.equal(hasUnfinishedChatSession(USER), true);
+
+    // Ao concluir com analysisId e currentStepId=conclusao -> volta para + Nova Análise
+    saveChatSession(USER, {
+      ...minimalSession(),
+      birthConfirmed: true,
+      answers: { foco: 'carreira' },
+      stepIndex: 4,
+      currentStepId: 'conclusao',
+      analysisId: 'analise-final-1',
+    });
+    assert.equal(hasUnfinishedChatSession(USER), false);
   });
 });

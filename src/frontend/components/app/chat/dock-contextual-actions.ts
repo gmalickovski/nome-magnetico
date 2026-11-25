@@ -37,7 +37,7 @@ export function collectDockContextualActions(
     items.push({
       key: 'reading',
       kind: 'reading',
-      label: 'Abrir leitura',
+      label: 'Abrir painel de análise',
       icon: 'scroll-text',
       secondaryId: 'reading',
       badge: options.reading.badge,

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
 import { fetchWithAuth } from '../../../lib/auth-fetch.js';
+import { resolveDownloadFilename } from '../../../lib/pdf-download.js';
+import { clearPendingPdf, hasPendingPdf, markPendingPdf, preparePdfDownload, waitForPdfPageVisible, type PreparedPdfDownload } from '../../../lib/pdf-download-lifecycle.js';
 import { useToast, ToastContainer } from '../../ui/Toast.js';
 import { IconFileDown, IconLockOpen } from './MobileChatDockIcons.js';
 import { DockTooltipButton } from './DockTooltipButton.js';
@@ -15,6 +17,10 @@ import {
   ChatPdfPreparingOverlay,
   type ChatPdfOverlayPhase,
 } from './ChatPdfPreparingOverlay.js';
+import {
+  ChatPdfConcludeModal,
+  type ConcludeBusyAction,
+} from './ChatPdfConcludeModal.js';
 
 export type ChatPdfPhase = 'idle' | 'loading' | 'ready' | 'error' | 'email_gate';
 
@@ -32,7 +38,8 @@ export interface ChatPdfCtaModel {
   screen: string;
 }
 
-const PDF_STATUS_POLL_DELAYS_MS = [1500, 2500, 4000, 5000] as const;
+const PDF_STATUS_POLL_DELAYS_MS = [5000, 10000, 20000, 40000, 60000] as const;
+const SAVE_STATUS_POLL_DELAYS_MS = PDF_STATUS_POLL_DELAYS_MS;
 
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -40,15 +47,9 @@ function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
       resolve();
       return;
     }
-    const timer = window.setTimeout(resolve, ms);
-    signal?.addEventListener(
-      'abort',
-      () => {
-        window.clearTimeout(timer);
-        resolve();
-      },
-      { once: true }
-    );
+    const finish = () => { window.clearTimeout(timer); signal?.removeEventListener('abort', finish); resolve(); };
+    const timer = window.setTimeout(finish, ms);
+    signal?.addEventListener('abort', finish, { once: true });
   });
 }
 
@@ -57,8 +58,9 @@ export async function waitAnalysisCompleteForPdf(
   signal: AbortSignal,
   delaysMs: readonly number[] = PDF_STATUS_POLL_DELAYS_MS
 ): Promise<boolean> {
+  const deadline = Date.now() + 180_000;
   for (const delay of delaysMs) {
-    if (signal.aborted) return false;
+    if (!(await waitForPdfPageVisible(signal)) || Date.now() >= deadline) return false;
     const statusRes = await fetchWithAuth(
       `/api/analysis-status?id=${encodeURIComponent(analysisId)}`,
       { signal }
@@ -109,8 +111,12 @@ export function useChatPdfCta(input: {
   analysisId?: string;
   /** Cria/persiste análise paga quando o chat ainda não tem analysisId. */
   ensureAnalysisId?: (signal: AbortSignal) => Promise<string | undefined>;
+  /** Callback acionado após salvar a análise em "Salvar". */
+  onSaveSuccess?: (analysisId: string) => void;
+  /** Navegação customizada para o dashboard após concluir (opcional para testes). */
+  onNavigateToDashboard?: (analysisId: string) => void;
   /** Callback acionado após a geração e download bem-sucedidos da análise/PDF. */
-  onPdfSuccess?: () => void;
+  onPdfSuccess?: (analysisId?: string) => void;
   isFree: boolean;
   emailConfirmed: boolean;
   screen: string;
@@ -126,22 +132,43 @@ export function useChatPdfCta(input: {
 } {
   const [phase, setPhase] = useState<ChatPdfPhase>('idle');
   const [overlayPhase, setOverlayPhase] = useState<ChatPdfOverlayPhase>('idle');
+  const [concludeModalOpen, setConcludeModalOpen] = useState(false);
+  const [concludeBusyAction, setConcludeBusyAction] = useState<ConcludeBusyAction>(null);
+  const [concludeError, setConcludeError] = useState<string | null>(null);
   const [priceLabel, setPriceLabel] = useState('');
   const [resending, setResending] = useState(false);
   const shownRef = useRef(false);
   const pdfRunLockRef = useRef(false);
   const pdfAbortRef = useRef<AbortController | null>(null);
+  const preparedDownloadRef = useRef<PreparedPdfDownload | null>(null);
+  const savedPdfRef = useRef<{ id: string; name: string } | null>(null);
+  const [readyDownload, setReadyDownload] = useState<PreparedPdfDownload | null>(null);
   const prevDisplayNameRef = useRef('');
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     return () => {
       pdfAbortRef.current?.abort();
+      preparedDownloadRef.current?.dispose();
     };
   }, []);
 
+  const redirectToDashboard = useCallback(
+    (analysisId: string) => {
+      if (input.onNavigateToDashboard) {
+        input.onNavigateToDashboard(analysisId);
+        return;
+      }
+      if (typeof window === 'undefined') return;
+      window.location.href = '/app';
+    },
+    [input.onNavigateToDashboard]
+  );
+
   const visible = input.suggestionSelected && Boolean(input.selectedNome?.trim());
   const displayName = input.selectedNome?.trim() ?? '';
+
+
 
   useEffect(() => {
     if (input.isFree) {
@@ -155,16 +182,35 @@ export function useChatPdfCta(input: {
     if (!visible) {
       shownRef.current = false;
       setPhase('idle');
+      setConcludeModalOpen(false);
+      setConcludeError(null);
       return;
     }
     if (!input.emailConfirmed) {
       setPhase('email_gate');
+      setConcludeModalOpen(false);
     } else if (nameChanged) {
+      preparedDownloadRef.current?.dispose();
+      preparedDownloadRef.current = null;
+      setReadyDownload(null);
+      setOverlayPhase('idle');
       setPhase('idle');
+      setConcludeModalOpen(false);
+      setConcludeError(null);
     } else {
       setPhase((p) => (p === 'loading' || p === 'ready' || p === 'error' ? p : 'idle'));
     }
   }, [visible, input.emailConfirmed, displayName]);
+
+  useEffect(() => {
+    if (!visible || !input.analysisId || pdfRunLockRef.current) return;
+    if (hasPendingPdf(input.analysisId)) {
+      savedPdfRef.current = { id: input.analysisId, name: displayName };
+      setConcludeError('Sua análise está salva. O download ficou pendente; toque em Tentar de novo para continuar.');
+      setOverlayPhase('error');
+      setPhase('error');
+    }
+  }, [input.analysisId, visible, displayName]);
 
   useEffect(() => {
     if (!visible || shownRef.current) return;
@@ -205,11 +251,16 @@ export function useChatPdfCta(input: {
     pdfAbortRef.current = controller;
     const { signal } = controller;
 
+    setConcludeError(null);
+    preparedDownloadRef.current?.dispose();
+    preparedDownloadRef.current = null;
+    setReadyDownload(null);
+    setConcludeBusyAction('pdf');
     setPhase('loading');
     setOverlayPhase('preparing');
     const started = performance.now();
     try {
-      let analysisId = input.analysisId;
+      let analysisId = input.analysisId ?? (savedPdfRef.current?.name === displayName ? savedPdfRef.current.id : undefined);
       if (!analysisId && input.ensureAnalysisId) {
         analysisId = await input.ensureAnalysisId(signal);
       }
@@ -220,6 +271,8 @@ export function useChatPdfCta(input: {
         addToast('Salve ou conclua a análise antes de gerar o PDF.', 'warning');
         return false;
       }
+      savedPdfRef.current = { id: analysisId, name: displayName };
+      markPendingPdf(analysisId);
       setOverlayPhase('generating');
       const buildPdfUrl = () =>
         `/api/generate-pdf?id=${encodeURIComponent(analysisId!)}&t=${Date.now()}`;
@@ -235,23 +288,22 @@ export function useChatPdfCta(input: {
       if (res.status === 202) throw new Error('pdf_not_ready');
       if (!res.ok) throw new Error('pdf_error');
       const blob = await res.blob();
-      const cd = res.headers.get('content-disposition') ?? '';
-      const match = cd.match(/filename="?([^";]+)"?/i);
-      const filename = match?.[1] ?? 'analise-nome-social.pdf';
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(objectUrl);
+      if (await blob.slice(0, 5).text() !== '%PDF-') throw new Error('pdf_error');
+      if (!(await waitForPdfPageVisible(signal))) return false;
+      const download = preparePdfDownload(blob, resolveDownloadFilename(res.headers.get('content-disposition') ?? ''));
+      preparedDownloadRef.current = download;
+      setReadyDownload(download);
+      download.start();
       setPhase('ready');
-      setOverlayPhase('idle');
+      setOverlayPhase('ready');
+      setConcludeModalOpen(false);
       capturePostHogEvent('nm_pdf_generated', {
         duration_ms: Math.round(performance.now() - started),
         suggestion_rank: input.suggestionRank,
         ...(opts?.auto ? { auto: true } : {}),
       });
-      input.onPdfSuccess?.();
+      // A click is not proof of a completed browser download. Keep the page and
+      // Blob alive until the user chooses to leave; the visible link can retry.
       return true;
     } catch (err) {
       if (signal.aborted) {
@@ -261,23 +313,117 @@ export function useChatPdfCta(input: {
       }
       setPhase('error');
       setOverlayPhase('error');
+      setConcludeError(savedPdfRef.current
+        ? 'Sua análise está salva. Não foi possível iniciar o download; tente novamente ou baixe depois em Minhas análises.'
+        : 'Não foi possível preparar a análise. Verifique sua conexão e tente novamente.');
       capturePostHogEvent('nm_pdf_failed', {
         error: err instanceof Error ? err.message : 'unknown',
       });
       return false;
     } finally {
       pdfRunLockRef.current = false;
+      setConcludeBusyAction(null);
     }
-  }, [input.analysisId, input.ensureAnalysisId, input.onPdfSuccess, input.suggestionRank, addToast]);
+  }, [
+    input.analysisId,
+    input.ensureAnalysisId,
+    displayName,
+    input.suggestionRank,
+    addToast,
+  ]);
+
+  const runSaveOnly = useCallback(async (): Promise<boolean> => {
+    if (pdfRunLockRef.current) return false;
+    pdfRunLockRef.current = true;
+    pdfAbortRef.current?.abort();
+    const controller = new AbortController();
+    pdfAbortRef.current = controller;
+    const { signal } = controller;
+
+    setConcludeError(null);
+    setConcludeBusyAction('save');
+    setPhase('loading');
+    let navigated = false;
+
+    try {
+      let analysisId = input.analysisId;
+      if (!analysisId && input.ensureAnalysisId) {
+        analysisId = await input.ensureAnalysisId(signal);
+      }
+      if (signal.aborted) return false;
+      if (!analysisId) {
+        setPhase('error');
+        setConcludeError('Não foi possível salvar a análise agora. Tente novamente.');
+        return false;
+      }
+      const ready = await waitAnalysisCompleteForPdf(
+        analysisId,
+        signal,
+        SAVE_STATUS_POLL_DELAYS_MS
+      );
+      if (signal.aborted) return false;
+      if (!ready) {
+        setPhase('error');
+        setConcludeError('A análise ainda está sendo finalizada. Tente novamente em instantes.');
+        return false;
+      }
+      capturePostHogEvent('nm_analysis_saved', {
+        screen: input.screen,
+        suggestion_rank: input.suggestionRank,
+      });
+      setConcludeModalOpen(false);
+      input.onSaveSuccess?.(analysisId);
+      navigated = true;
+      redirectToDashboard(analysisId);
+      return true;
+    } catch (err) {
+      if (signal.aborted) {
+        setPhase('idle');
+        return false;
+      }
+      setPhase('error');
+      setConcludeError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Não foi possível salvar a análise agora. Tente novamente.'
+      );
+      return false;
+    } finally {
+      if (!navigated) {
+        pdfRunLockRef.current = false;
+        setConcludeBusyAction(null);
+      }
+    }
+  }, [
+    input.analysisId,
+    input.ensureAnalysisId,
+    input.onSaveSuccess,
+    redirectToDashboard,
+    input.screen,
+    input.suggestionRank,
+  ]);
 
   const triggerAutoPdf = useCallback(async (): Promise<boolean> => {
     if (input.isFree || !input.emailConfirmed) return false;
     return runPaidPdf({ auto: true });
   }, [input.isFree, input.emailConfirmed, runPaidPdf]);
 
+  const openConcludeModal = useCallback(() => {
+    if (pdfRunLockRef.current || concludeBusyAction !== null || phase === 'loading') return;
+    setConcludeError(null);
+    setConcludeModalOpen(true);
+  }, [concludeBusyAction, phase]);
+
+  const closeConcludeModal = useCallback(() => {
+    if (pdfRunLockRef.current || concludeBusyAction !== null) return;
+    setConcludeError(null);
+    setConcludeModalOpen(false);
+  }, [concludeBusyAction]);
+
   const onStickyClick = useCallback(() => {
     if (!visible) return;
     if (phase === 'email_gate' || !input.emailConfirmed) return;
+    if (pdfRunLockRef.current || concludeBusyAction !== null || phase === 'loading') return;
 
     if (input.isFree) {
       trackClick('sticky');
@@ -294,22 +440,24 @@ export function useChatPdfCta(input: {
     }
 
     trackClick('sticky');
-    void runPaidPdf();
+    openConcludeModal();
   }, [
     visible,
     phase,
+    concludeBusyAction,
     input.emailConfirmed,
     input.isFree,
     input.suggestionRank,
     input.analysisId,
     displayName,
     trackClick,
-    runPaidPdf,
+    openConcludeModal,
   ]);
 
   const onDockClick = useCallback(() => {
     if (!visible) return;
     if (phase === 'email_gate' || !input.emailConfirmed) return;
+    if (pdfRunLockRef.current || concludeBusyAction !== null || phase === 'loading') return;
 
     if (input.isFree) {
       trackClick('dock');
@@ -326,17 +474,18 @@ export function useChatPdfCta(input: {
     }
 
     trackClick('dock');
-    void runPaidPdf();
+    openConcludeModal();
   }, [
     visible,
     phase,
+    concludeBusyAction,
     input.emailConfirmed,
     input.isFree,
     input.suggestionRank,
     input.analysisId,
     displayName,
     trackClick,
-    runPaidPdf,
+    openConcludeModal,
   ]);
 
   const resendEmail = useCallback(async () => {
@@ -372,17 +521,47 @@ export function useChatPdfCta(input: {
   };
 
   const pdfOverlayUi = (
-    <ChatPdfPreparingOverlay
-      phase={overlayPhase}
-      onRetry={() => {
-        setOverlayPhase('idle');
-        void runPaidPdf();
-      }}
-      onDismissError={() => {
-        setOverlayPhase('idle');
-        setPhase((p) => (p === 'error' ? 'idle' : p));
-      }}
-    />
+    <>
+      <ChatPdfConcludeModal
+        open={concludeModalOpen}
+        displayName={displayName}
+        busyAction={concludeBusyAction}
+        errorMessage={concludeError}
+        onClose={closeConcludeModal}
+        onSaveOnly={() => {
+          void runSaveOnly();
+        }}
+        onSaveAndDownloadPdf={() => {
+          setConcludeError(null);
+          setConcludeModalOpen(false);
+          void runPaidPdf();
+        }}
+      />
+      <ChatPdfPreparingOverlay
+        phase={overlayPhase}
+        errorMessage={concludeError}
+        readyDownload={readyDownload ? {
+          href: readyDownload.href,
+          filename: readyDownload.filename,
+          onDownload: () => { if (savedPdfRef.current) clearPendingPdf(savedPdfRef.current.id); },
+          onContinue: () => {
+            const id = savedPdfRef.current?.id;
+            if (!id) return;
+            clearPendingPdf(id);
+            input.onPdfSuccess?.(id);
+            redirectToDashboard(id);
+          },
+        } : null}
+        onRetry={() => {
+          setOverlayPhase('idle');
+          void runPaidPdf();
+        }}
+        onDismissError={() => {
+          setOverlayPhase('idle');
+          setPhase((p) => (p === 'error' ? 'idle' : p));
+        }}
+      />
+    </>
   );
 
   return {
@@ -453,7 +632,7 @@ export function ChatPdfStickyDesktop({
       aria-label={isLoading ? "Preparando o seu PDF" : title}
       aria-busy={isLoading}
       title={nomeTrunc ? `${title} — ${nomeTrunc}` : title}
-      className={`hidden md:inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] h-11 min-w-11 ${model.isFree ? 'px-3' : 'w-11 p-0'} text-xs font-bold uppercase tracking-wider text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[2px] disabled:opacity-85 ${
+      className={`hidden md:inline-flex items-center justify-center gap-1.5 rounded-full bg-[#D4AF37] min-h-[36px] px-3.5 py-1.5 text-xs sm:text-sm font-semibold font-inter whitespace-nowrap text-[#131313] shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] focus-visible:outline-offset-[2px] disabled:opacity-85 ${
         isError ? 'ring-2 ring-[#FF6B6B]' : ''
       } ${reduced ? 'transition-opacity duration-[120ms]' : ''}`}
     >
@@ -475,7 +654,7 @@ export function ChatPdfStickyDesktop({
       ) : (
         <Icon className="h-3.5 w-3.5 shrink-0 text-[#131313]" />
       )}
-      {model.isFree && <span>{title}</span>}
+      <span>{title}</span>
     </button>
   );
 }

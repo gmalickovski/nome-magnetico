@@ -11,7 +11,7 @@ export const TASK_CONFIG: Record<AITask, TaskConfig> = {
     maxTokens: 6000,
   },
   suggestions: {
-    temperature: 0.8,
+    temperature: 0.4,
     maxTokens: 2048,
   },
   guide: {
@@ -21,6 +21,11 @@ export const TASK_CONFIG: Record<AITask, TaskConfig> = {
   support_polish: {
     temperature: 0.4,
     maxTokens: 1024,
+  },
+  // DEV-321: criatividade maior, resposta curta (só a lista em JSON).
+  artistic_names: {
+    temperature: 0.9,
+    maxTokens: 600,
   },
 };
 

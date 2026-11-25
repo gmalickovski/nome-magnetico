@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/backend/db/supabase';
 import { readServerEnv } from '@/backend/env/runtime';
+import { listPublishedGlossaryTerms } from '@/backend/glossary/glossary-service';
 
 function slugify(text: string): string {
   return text
@@ -36,28 +37,46 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401 });
   }
 
-  const supabase = getSupabaseAdmin();
   const url = new URL(request.url);
   const includeUnpublished = url.searchParams.get('all') === 'true';
 
-  let query = supabase
-    .from('glossary_terms')
-    .select('id, slug, term, related_number, tags, is_published, created_at')
-    .order('term', { ascending: true });
+  if (includeUnpublished) {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('glossary_terms')
+      .select('id, slug, term, related_number, tags, is_published, created_at')
+      .order('term', { ascending: true });
 
-  if (!includeUnpublished) {
-    query = query.eq('is_published', true);
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
+
+    return new Response(JSON.stringify({ terms: data, total: data?.length ?? 0 }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  const { data, error } = await query;
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-
-  return new Response(JSON.stringify({ terms: data, total: data?.length ?? 0 }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const merged = await listPublishedGlossaryTerms();
+  return new Response(
+    JSON.stringify({
+      terms: merged.map((item) => ({
+        slug: item.slug,
+        term: item.term,
+        category: item.category,
+        short_summary: item.shortSummary,
+        related_number: item.relatedNumber,
+        tags: item.tags,
+        is_published: true,
+        source: item.isCanonicalFallback ? 'canonical' : 'database',
+      })),
+      total: merged.length,
+    }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    },
+  );
 };
 
 export const POST: APIRoute = async ({ request }) => {

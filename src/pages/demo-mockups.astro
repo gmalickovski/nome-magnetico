@@ -1,0 +1,162 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import {
+  DemoChatScenesShowcase,
+  DemoDeviceFrameShowcase,
+  DemoMockupsControls,
+  DemoPathChooserShowcase,
+  DemoResultSceneShowcase,
+} from '../frontend/components/landing/mockups/DemoMockupsVitrine';
+---
+
+<BaseLayout
+  title="Vitrine de Mockups · Etapas 1 e 2"
+  description="Vitrine interna de desenvolvimento para os componentes base e cenas de resultado da landing (DEV-336 / DEV-337)."
+  noIndex={true}
+>
+  <main class="min-h-screen bg-[#131313] text-[#e5e2e1] py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-16">
+      <header class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="inline-flex items-center rounded-full bg-[#1C1C1C] px-3 py-1 text-[11px] font-inter uppercase tracking-[0.12em] text-[#f2ca50]">
+              DEV-336 · Uso interno (noindex)
+            </span>
+            <h1 class="font-cinzel text-2xl sm:text-4xl font-bold text-[#e5e2e1] mt-3">
+              Vitrine de Mockups · Etapa 1
+            </h1>
+            <p class="font-inter text-sm sm:text-base text-[#a0a0a0] mt-2 max-w-2xl leading-relaxed">
+              Validação visual de <code class="text-[#d7c6ff]">DeviceFrame</code>,{' '}
+              <code class="text-[#d7c6ff]">useMockupTimeline</code>,{' '}
+              <code class="text-[#d7c6ff]">PathChooserScene</code> e{' '}
+              <code class="text-[#d7c6ff]">ChatScene</code> nos modos{' '}
+              <code class="text-[#f2ca50]">phone</code>, <code class="text-[#f2ca50]">desktop</code> e{' '}
+              <code class="text-[#f2ca50]">both</code>.
+            </p>
+          </div>
+        </div>
+
+        <DemoMockupsControls client:visible />
+      </header>
+
+      <section id="bloco-deviceframe" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            1. DeviceFrame (phone · desktop · both)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Abaixo de 768 px, o modo <code class="text-[#f2ca50]">both</code> exibe somente o
+            celular.
+          </p>
+        </div>
+        <DemoDeviceFrameShowcase client:visible />
+      </section>
+
+      <section id="bloco-pathchooser" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            2. PathChooserScene (3 caminhos alternando a cada ciclo)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Toque falso escolhendo Harmonizar, Artístico e Bebê em loop com pausa de 1,8 s.
+          </p>
+        </div>
+        <DemoPathChooserShowcase client:visible />
+      </section>
+
+      <section id="bloco-chatscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            3. ChatScene (3 roteiros de exemplo)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Jev digitando (3 pontinhos), chips, cursor/toque falso e sugestões sem bloqueios.
+          </p>
+        </div>
+        <DemoChatScenesShowcase client:visible />
+      </section>
+
+      <section id="bloco-starscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            4. StarScene (Estrela Cabalística)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Reutiliza <code class="text-[#d7c6ff]">ProductHarmonyStar</code> com evolução da estrela de nascimento até a estrela harmonizada.
+          </p>
+        </div>
+        <DemoResultSceneShowcase kind="star" client:visible />
+      </section>
+
+      <section id="bloco-trianglescene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            5. TriangleScene (Triângulo da Vida)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Linhas reduzindo até a ponta em roxo, bloqueios acesos em vermelho e troca para o nome harmonizado sem bloqueios.
+          </p>
+        </div>
+        <DemoResultSceneShowcase kind="triangle" client:visible />
+      </section>
+
+      <section id="bloco-scorecounterscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            6. ScoreCounterScene (Contador de Nota)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Evolução pelas faixas oficiais de <code class="text-[#d7c6ff]">getScoreTierVisual</code> dentro do componente <code class="text-[#d7c6ff]">ScoreCardRow</code>.
+          </p>
+        </div>
+        <DemoResultSceneShowcase kind="score" client:visible />
+      </section>
+
+      <section id="bloco-suggestioncardsscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            7. SuggestionCardsScene (Cards + Artístico + Bebê)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Três cards entrando com <code class="text-[#d7c6ff]">ChatSuggestionCard</code>, seções Próximos × Novos no Artístico e tira de dias bons no Bebê.
+          </p>
+        </div>
+        <DemoResultSceneShowcase kind="suggestions" client:visible />
+      </section>
+
+      <section id="bloco-pdfflipscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            8. PdfFlipScene (Páginas do PDF por Tema)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Folheio das 4 páginas baseadas em <code class="text-[#d7c6ff]">docs/architecture/pdf-layout-base/</code> para Social, Artístico e Bebê.
+          </p>
+        </div>
+        <DemoResultSceneShowcase kind="pdf" client:visible />
+      </section>
+
+      <section id="bloco-dashboardscene" class="space-y-5">
+        <div>
+          <h2 class="font-cinzel text-xl sm:text-2xl font-bold text-[#e5e2e1]">
+            9. DashboardScene (Lista de Análises + Baixar PDF)
+          </h2>
+          <p class="font-inter text-xs sm:text-sm text-[#a0a0a0] mt-1">
+            Espelha <code class="text-[#d7c6ff]">MyAnalysesWorkspace</code> com card de nascimento, sugestão favoritada e botão <code class="text-[#f2ca50]">Baixar PDF</code>.
+          </p>
+        </div>
+        <DemoResultSceneShowcase kind="dashboard" client:visible />
+      </section>
+
+      <footer class="rounded-2xl bg-[#181818] p-6 sm:p-8 text-center space-y-2">
+        <p class="font-cinzel text-sm font-bold text-[#e5e2e1]">
+          Fim da vitrine · verificação de pausa fora da tela
+        </p>
+        <p class="font-inter text-xs text-[#a0a0a0]">
+          Ao rolar até aqui, as cenas acima fora da viewport pausam automaticamente via
+          IntersectionObserver e retomam ao voltar.
+        </p>
+      </footer>
+    </div>
+  </main>
+</BaseLayout>

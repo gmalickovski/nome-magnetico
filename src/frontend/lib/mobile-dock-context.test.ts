@@ -10,14 +10,14 @@ describe('mobile-dock-context',()=>{
   assert.equal(shouldRenderGlobalMobileNavDock('/blog'),false);
   assert.equal(shouldRenderGlobalMobileNavDock('/application'),false);
  });
- it('adiciona ações apenas nas rotas do chat e resultado',()=>{
-  for(const route of ['/app/analise/nome-social','/app/resultado/x']){
-   assert.equal(resolveMobileDockContext(route),'action');
-   assert.equal(shouldRenderActionMobileDock(route),true);
-  }
-  for(const route of ['/app','/app/analises','/app/suporte','/app/admin-analise']){
-   assert.equal(resolveMobileDockContext(route),'app_nav');
-   assert.equal(shouldRenderActionMobileDock(route),false);
-  }
- });
+  it('adiciona ações apenas nas rotas do chat, minhas análises e resultado', () => {
+    for (const route of ['/app/analise/nome-social', '/app/analises', '/app/resultado/x']) {
+      assert.equal(resolveMobileDockContext(route), 'action');
+      assert.equal(shouldRenderActionMobileDock(route), true);
+    }
+    for (const route of ['/app', '/app/suporte', '/app/admin-analise']) {
+      assert.equal(resolveMobileDockContext(route), 'app_nav');
+      assert.equal(shouldRenderActionMobileDock(route), false);
+    }
+  });
 });

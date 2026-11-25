@@ -1,7 +1,10 @@
 ---
+import { resolveRadarContext, readContextualRadarSnapshot } from '../../shared/interactive-engine/radar-context';
+import { getArquetipo } from '../../backend/numerology/archetypes';
 import AppLayout from '../../layouts/AppLayout.astro';
 import { getActiveSubscription, hasActiveSubscription, hasAnySubscription, getRefundableSubscriptions } from '../../backend/db/subscriptions';
 import { createUserClient, supabase } from '../../backend/db/supabase';
+import MotorUpdateModal from '../../frontend/components/app/MotorUpdateModal.astro';
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/auth/login');
 
@@ -14,7 +17,8 @@ import FreeUsedModal from '../../frontend/components/app/FreeUsedModal';
 import { FreePDFAutoGenerator } from '../../frontend/components/app/FreePDFAutoGenerator';
 import { MailWarning } from '../../frontend/components/app/MailWarning';
 import { getPricesAndPromo, type PriceInfo } from '../../backend/payments/prices';
-import AppDashboard from '../../frontend/components/app/dashboard/AppDashboard';
+import AppDashboard, { type DashboardHeroSlide } from '../../frontend/components/app/dashboard/AppDashboard';
+import type { ChecklistKey } from '../../frontend/lib/app-dashboard-checklist';
 import type { RadarAxesData } from '../../frontend/components/app/chat/chat-types';
 import {
   computeContextualRadarAxes,
@@ -25,6 +29,7 @@ import {
 // Funções de numerologia locais para cálculo instantâneo da análise gratuita do lead
 import { calcularTodosTriangulos, detectarBloqueios } from '../../backend/numerology/triangle';
 import {
+  calcularCincoNumeros,
   calcularExpressao,
   calcularDestino,
   calcularMotivacao,
@@ -83,7 +88,7 @@ import { obterNivelV3 } from '../../shared/score-v3';
 try {
   const { data: foundFreeAnalysis } = await _client
     .from('analyses')
-    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, product_type, is_free, licoes_carmicas, frequencias_numeros, numero_expressao, numero_destino, numero_motivacao, numero_missao, numero_impressao, created_at')
     .or('is_free.eq.true,product_type.eq.analise_gratuita')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -217,40 +222,51 @@ const [hasNomeSocial, hasLegacyAccess] = isAdmin
 
 const hasAnyAccess = hasNomeSocial || hasLegacyAccess;
 
-try {
-  const { data: foundBestSocial } = await _client
-    .from('analyses')
-    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, status, frequencias_numeros, created_at')
-    .eq('user_id', user.id)
-    .eq('product_type', 'nome_social')
-    .eq('status', 'complete')
-    .order('score', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  bestSocialAnalysis = foundBestSocial;
-} catch {}
-
-// Detectar análises legadas que qualificam para o recálculo grátis v3
+let allCompletedAnalyses: any[] = [];
 let legacyAnalysesToRecalculate: any[] = [];
 try {
   const { data: userAnalyses } = await _client
     .from('analyses')
-    .select('id, nome_completo, score, score_version, product_type, is_free, parent_analysis_id, recalculated_from_version, created_at')
+    .select('id, nome_completo, data_nascimento, score, score_v3, score_version, bloqueios, product_type, is_free, frequencias_numeros, nome_harmonizado, numero_expressao, numero_destino, numero_motivacao, numero_missao, numero_impressao, licoes_carmicas, parent_analysis_id, recalculated_from_version, created_at, status')
     .eq('user_id', user.id)
     .eq('status', 'complete')
     .order('created_at', { ascending: false });
 
-  if (userAnalyses && userAnalyses.length > 0) {
+  allCompletedAnalyses = userAnalyses ?? [];
+
+  const paidSocialCandidates = allCompletedAnalyses.filter(
+    (a) => a.product_type === 'nome_social' && !a.is_free,
+  );
+  const favoritedSocial = paidSocialCandidates.find(
+    (a) => Boolean((a.frequencias_numeros as Record<string, any> | null)?.is_favorite),
+  );
+  const favoritedAnyPaid = allCompletedAnalyses.find(
+    (a) =>
+      !a.is_free &&
+      a.product_type !== 'analise_gratuita' &&
+      Boolean((a.frequencias_numeros as Record<string, any> | null)?.is_favorite),
+  );
+
+  if (favoritedSocial) {
+    bestSocialAnalysis = favoritedSocial;
+  } else if (paidSocialCandidates.length > 0) {
+    bestSocialAnalysis = [...paidSocialCandidates].sort(
+      (a, b) => (b.score_v3 ?? b.score ?? 0) - (a.score_v3 ?? a.score ?? 0),
+    )[0];
+  } else if (favoritedAnyPaid) {
+    bestSocialAnalysis = favoritedAnyPaid;
+  }
+
+  if (allCompletedAnalyses.length > 0) {
     const recalculatedParentIds = new Set(
-      userAnalyses
+      allCompletedAnalyses
         .filter(a => a.parent_analysis_id && a.score_version === 'v3')
         .map(a => a.parent_analysis_id)
     );
     // Qualificam apenas análises salvas do motor antigo (v1) que o usuário realizou
     // (produtos nome_social, nome_bebe, nome_empresa) — diagnósticos gratuitos de nascimento
     // não devem exibir banner de atualização de motor antigo.
-    legacyAnalysesToRecalculate = userAnalyses.filter(
+    legacyAnalysesToRecalculate = allCompletedAnalyses.filter(
       a => a.product_type !== 'analise_gratuita' &&
            !a.is_free &&
            (!a.score_version || a.score_version === 'v1') &&
@@ -260,7 +276,7 @@ try {
     );
   }
 } catch (e) {
-  console.warn('[index.astro] Erro ao buscar análises legadas para recálculo:', e);
+  console.warn('[index.astro] Erro ao buscar análises concluídas:', e);
 }
 
 const legacyCount = legacyAnalysesToRecalculate.length;
@@ -461,8 +477,14 @@ const nomeHojeDashboard =
   ?? featuredAnalysis?.nome_completo
   ?? '';
 
-const nomeHarmonizadoDashboard =
-  featuredAnalysis?.frequencias_numeros?.ranking?.melhorNome?.nomeCompleto
+const rankingFeatured = (featuredAnalysis?.frequencias_numeros as Record<string, any> | null)?.ranking as
+  | { selectedNomeSocial?: string; melhorNome?: { nomeCompleto?: string; score?: number } }
+  | undefined;
+
+const nomeHarmonizadoDashboard: string | null =
+  rankingFeatured?.selectedNomeSocial
+  ?? (featuredAnalysis as any)?.nome_harmonizado
+  ?? rankingFeatured?.melhorNome?.nomeCompleto
   ?? null;
 
 const bloqueioTitulosDashboard: string[] = (featuredAnalysis?.bloqueios ?? [])
@@ -471,6 +493,71 @@ const bloqueioTitulosDashboard: string[] = (featuredAnalysis?.bloqueios ?? [])
 
 const dashboardScore = Math.max(0, Math.min(100, featuredScoreRaw ?? 0));
 
+const rawBirthRadar =
+  freeAnalysis?.data_nascimento
+  ?? featuredAnalysis?.data_nascimento
+  ?? profileData?.birth_date;
+const birthPartsRadar = rawBirthRadar ? String(rawBirthRadar).split('-') : [];
+const dataPtRadar = birthPartsRadar.length === 3
+  ? `${birthPartsRadar[2]}/${birthPartsRadar[1]}/${birthPartsRadar[0]}`
+  : (rawBirthRadar ? String(rawBirthRadar) : '');
+
+let birthScoreDashboard = Math.max(
+  0,
+  Math.min(100, freeAnalysis?.score_v3 ?? freeAnalysis?.score ?? dashboardScore),
+);
+let scorePotencialDashboard: number | null = rankingFeatured?.melhorNome?.score != null
+  ? Math.max(0, Math.min(100, Math.round(rankingFeatured.melhorNome.score)))
+  : null;
+
+if (getScoreVersion() === 'v3' && nomeHojeDashboard && dataPtRadar) {
+  try {
+    const birthEval = avaliarNome(nomeHojeDashboard, dataPtRadar, { calcularPotencial: true });
+    birthScoreDashboard = birthEval.score_v3;
+    if (!nomeHarmonizadoDashboard && typeof birthEval.potencial === 'number') {
+      scorePotencialDashboard = Math.max(birthScoreDashboard, Math.min(100, Math.round(birthEval.potencial)));
+    }
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular score do nome de nascimento no painel:', e);
+  }
+}
+
+if (nomeHarmonizadoDashboard && dataPtRadar) {
+  try {
+    scorePotencialDashboard = avaliarNome(nomeHarmonizadoDashboard, dataPtRadar).score_v3;
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular score do nome harmonizado no painel:', e);
+  }
+}
+
+const featuredFreqData = (featuredAnalysis?.frequencias_numeros as Record<string, any> | null) ?? null;
+const featuredRanking = (featuredFreqData?.ranking as Record<string, any> | undefined) ?? undefined;
+const featuredAreaFoco: string | null =
+  typeof featuredRanking?.areaFoco === 'string'
+    ? featuredRanking.areaFoco
+    : typeof featuredRanking?.area_foco === 'string'
+      ? featuredRanking.area_foco
+      : typeof featuredFreqData?.areaFoco === 'string'
+        ? featuredFreqData.areaFoco
+        : typeof featuredFreqData?.area_foco === 'string'
+          ? featuredFreqData.area_foco
+          : typeof featuredFreqData?.parametros_usuario?.areaFoco === 'string'
+            ? featuredFreqData.parametros_usuario.areaFoco
+            : null;
+const featuredOndeAssina: string[] = Array.isArray(featuredFreqData?.ondeVaiUsar)
+  ? featuredFreqData.ondeVaiUsar
+  : Array.isArray(featuredFreqData?.onde_vai_usar)
+    ? featuredFreqData.onde_vai_usar
+    : Array.isArray(featuredRanking?.ondeVaiUsar)
+      ? featuredRanking.ondeVaiUsar
+      : Array.isArray(featuredRanking?.onde_vai_usar)
+        ? featuredRanking.onde_vai_usar
+        : [];
+const featuredRadarContext =
+  featuredAreaFoco || featuredOndeAssina.length > 0
+    ? { areaFoco: featuredAreaFoco, ondeAssinaRaw: featuredOndeAssina }
+    : null;
+
 let dashboardRadarAxes: RadarAxesData = {
   expressao: 0.5,
   motivacao: 0.5,
@@ -478,89 +565,404 @@ let dashboardRadarAxes: RadarAxesData = {
   harmonia_triangulo: 0.5,
   sequencias: 0.5,
 };
-let dashboardRadarLabels = getRadarAxisLabels(null);
+let harmonizedRadarAxesDashboard: RadarAxesData | null = null;
+let dashboardRadarLabels = getRadarAxisLabels(featuredAreaFoco);
 
 const birthForRadar = nomeHojeDashboard;
-const rawBirthRadar =
-  freeAnalysis?.data_nascimento
-  ?? featuredAnalysis?.data_nascimento
-  ?? profileData?.birth_date;
-if (birthForRadar && rawBirthRadar) {
-  const birthParts = String(rawBirthRadar).split('-');
-  const dataPtRadar = birthParts.length === 3
-    ? `${birthParts[2]}/${birthParts[1]}/${birthParts[0]}`
-    : String(rawBirthRadar);
+if (birthForRadar && dataPtRadar) {
   try {
-    const axes = computeContextualRadarAxes(birthForRadar, dataPtRadar, null);
+    const axes = computeContextualRadarAxes(birthForRadar, dataPtRadar, featuredRadarContext);
     dashboardRadarAxes = motorRadarToRecord(axes) as RadarAxesData;
-    dashboardRadarLabels = getRadarAxisLabels(null);
+    dashboardRadarLabels = getRadarAxisLabels(featuredAreaFoco);
   } catch (e) {
     console.warn('[index.astro] Erro ao calcular teia do painel:', e);
   }
 }
+
+if (nomeHarmonizadoDashboard && dataPtRadar) {
+  try {
+    const harmAxes = computeContextualRadarAxes(nomeHarmonizadoDashboard, dataPtRadar, featuredRadarContext);
+    harmonizedRadarAxesDashboard = motorRadarToRecord(harmAxes) as RadarAxesData;
+  } catch (e) {
+    console.warn('[index.astro] Erro ao calcular teia harmonizada do painel:', e);
+  }
+}
+
+const featuredProductType =
+  (featuredAnalysis as any)?.product_type
+  ?? (bestSocialAnalysis ? 'nome_social' : 'analise_gratuita');
+const featuredIsFree = Boolean(
+  (featuredAnalysis as any)?.is_free === true
+  || featuredProductType === 'analise_gratuita'
+  || !bestSocialAnalysis,
+);
+const signatureChosenDashboard = Boolean(
+  rankingFeatured?.selectedNomeSocial || (featuredAnalysis as any)?.nome_harmonizado || nomeHarmonizadoDashboard,
+);
+const pdfReadyDashboard = Boolean(featuredAnalysis?.status === 'complete');
 
 type DashboardHistoryRow = {
   id: string;
   nome: string;
   dateLabel: string;
   score: number | null;
+  productType: string;
+  isFree: boolean;
+  isFavorite: boolean;
 };
 
-let dashboardHistory: DashboardHistoryRow[] = [];
-try {
-  const { data: historyRows } = await _client
-    .from('analyses')
-    .select('id, nome_completo, created_at, score, score_v3, score_version, product_type, status, frequencias_numeros, data_nascimento, is_free')
-    .eq('user_id', user.id)
-    .eq('status', 'complete')
-    .order('created_at', { ascending: false })
-    .limit(5);
+function toPtBrBirthDate(raw?: string | null): string {
+  if (!raw) return '';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  const iso = String(raw).slice(0, 10);
+  const parts = iso.split('-');
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(raw);
+}
 
-  dashboardHistory = (historyRows ?? []).map((row) => {
-    const freqData = row.frequencias_numeros as Record<string, unknown> | null;
-    const ranking = freqData?.ranking as { melhorNome?: { nomeCompleto?: string } } | undefined;
-    const nomeExibido =
-      (row.product_type === 'nome_social' && ranking?.melhorNome?.nomeCompleto)
-        ? ranking.melhorNome.nomeCompleto
-        : row.nome_completo;
+type CompatType = 'favoravel' | 'neutro' | 'desfavoravel';
 
-    let score: number | null = null;
-    const isV3Row = row.score_version === 'v3';
-    if (isV3Row && row.score_v3 != null) {
-      score = row.score_v3;
-    } else if (getScoreVersion() === 'v3' && row.nome_completo && row.data_nascimento) {
-      const parts = String(row.data_nascimento).split('-');
-      const dataPt = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : row.data_nascimento;
-      try {
-        score = avaliarNome(nomeExibido, dataPt).score_v3;
-      } catch {
-        score = row.score;
+function extractSlideChecklist(
+  freqData: Record<string, any> | null | undefined,
+  slideKey: string,
+): Partial<Record<ChecklistKey, boolean>> | undefined {
+  const map = freqData?.checklist_by_slide;
+  if (!map || typeof map !== 'object') return undefined;
+  const entry = (map as Record<string, unknown>)[slideKey];
+  if (!entry || typeof entry !== 'object') return undefined;
+  return entry as Partial<Record<ChecklistKey, boolean>>;
+}
+
+function buildHeroSlideFromRow(row: any, defaultBirthScore: number): DashboardHeroSlide {
+  const freqData = row.frequencias_numeros as Record<string, any> | null;
+  const ranking = freqData?.ranking as
+    | {
+        selectedNomeSocial?: string;
+        nomeNascimento?: string;
+        dataNascimento?: string;
+        areaFoco?: string | null;
+        area_foco?: string | null;
+        ondeVaiUsar?: string[];
+        onde_vai_usar?: string[];
+        melhorNome?: { nomeCompleto?: string; nomeEmpresa?: string; expressao?: number; motivacao?: number; missao?: number; impressao?: number; score?: number };
       }
-    } else {
+    | undefined;
+  const isFreeRow = row.is_free === true || row.product_type === 'analise_gratuita';
+  const nomeExibido = isFreeRow
+    ? row.nome_completo
+    : row.product_type === 'nome_social'
+      ? (freqData?.selectedNomeSocial ?? row.nome_harmonizado ?? ranking?.melhorNome?.nomeCompleto ?? row.nome_completo)
+      : row.product_type === 'nome_bebe'
+        ? (ranking?.melhorNome?.nomeCompleto ?? row.nome_completo)
+        : row.product_type === 'nome_empresa'
+          ? (freqData?.melhorNome?.nomeEmpresa ?? row.nome_completo)
+          : row.nome_completo;
+
+  const birthNameForRow =
+    (ranking?.nomeNascimento as string | undefined)?.trim()
+    || nomeHojeDashboard
+    || row.nome_completo;
+  const dataPt = toPtBrBirthDate(ranking?.dataNascimento || row.data_nascimento || rawBirthRadar);
+
+  const rowContext = resolveRadarContext(freqData, ranking);
+  const radarLabels = getRadarAxisLabels(rowContext.areaFoco);
+
+  let slideScore = Math.max(0, Math.min(100, Math.round(row.score_v3 ?? row.score ?? 0)));
+  if (getScoreVersion() === 'v3' && nomeExibido && dataPt) {
+    try {
+      slideScore = avaliarNome(nomeExibido, dataPt).score_v3;
+    } catch {
+      /* mantém score salvo */
+    }
+  }
+
+  let rowBirthScore = defaultBirthScore;
+  if (getScoreVersion() === 'v3' && birthNameForRow && dataPt) {
+    try {
+      rowBirthScore = avaliarNome(birthNameForRow, dataPt).score_v3;
+    } catch {
+      rowBirthScore = defaultBirthScore;
+    }
+  }
+
+  let starNumbers = {
+    destino: Number(row.numero_destino ?? 0),
+    expressao: Number(row.numero_expressao ?? 0),
+    motivacao: Number(row.numero_motivacao ?? 0),
+    missao: Number(row.numero_missao ?? 0),
+    impressao: Number(row.numero_impressao ?? 0),
+  };
+  let bloqueiosTitulos: string[] = Array.isArray(row.bloqueios)
+    ? row.bloqueios
+        .map((b: { titulo?: string }) => b?.titulo?.trim())
+        .filter((t: string | undefined): t is string => Boolean(t))
+    : [];
+  let compatibilidade: CompatType | null = null;
+
+  if (nomeExibido && dataPt) {
+    try {
+      const cinco = calcularCincoNumeros(nomeExibido, dataPt);
+      starNumbers = {
+        destino: cinco.destino ?? starNumbers.destino,
+        expressao: cinco.expressao,
+        motivacao: cinco.motivacao,
+        missao: cinco.missao,
+        impressao: cinco.impressao,
+      };
+      const tris = calcularTodosTriangulos(nomeExibido, dataPt);
+      const blocs = detectarBloqueios(tris);
+      bloqueiosTitulos = blocs.map((b) => b.titulo);
+    } catch {
+      /* mantém números salvos no banco */
+    }
+  } else if (row.product_type === 'nome_empresa' && freqData?.melhorNome) {
+    const emp = freqData.melhorNome as Record<string, any>;
+    starNumbers = {
+      destino: Number(freqData.destinoSocio ?? starNumbers.destino),
+      expressao: Number(emp.expressao ?? starNumbers.expressao),
+      motivacao: Number(emp.motivacao ?? starNumbers.motivacao),
+      missao: Number(emp.missao ?? starNumbers.missao),
+      impressao: Number(emp.impressao ?? starNumbers.impressao),
+    };
+  }
+
+  if (starNumbers.expressao > 0 && starNumbers.destino > 0) {
+    compatibilidade = avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino);
+  }
+
+  let birthRadarAxes: RadarAxesData = dashboardRadarAxes;
+  let harmonizedRadarAxes: RadarAxesData | null = null;
+  if (birthNameForRow && dataPt) {
+    try {
+      birthRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(birthNameForRow, dataPt, rowContext),
+      ) as RadarAxesData;
+    } catch {
+      birthRadarAxes = dashboardRadarAxes;
+    }
+  }
+  const hasDistinctHarmonized =
+    row.product_type !== 'nome_social' ||
+    nomeExibido.trim().toLowerCase() !== birthNameForRow.trim().toLowerCase();
+  if (!isFreeRow && hasDistinctHarmonized && nomeExibido && dataPt) {
+    try {
+      harmonizedRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(nomeExibido, dataPt, rowContext),
+      ) as RadarAxesData;
+    } catch {
+      harmonizedRadarAxes = null;
+    }
+  }
+
+  const savedRadar = readContextualRadarSnapshot(freqData, birthNameForRow, nomeExibido);
+  if (savedRadar) {
+    birthRadarAxes = motorRadarToRecord(savedRadar.birth);
+    harmonizedRadarAxes = isFreeRow ? null : motorRadarToRecord(savedRadar.selected);
+  }
+  return {
+    id: row.id,
+    nome: nomeExibido,
+    birthName: birthNameForRow,
+    score: slideScore,
+    birthScore: rowBirthScore,
+    bloqueiosCount: bloqueiosTitulos.length,
+    bloqueiosTitulos,
+    compatibilidade,
+    starNumbers,
+    arquetipo: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
+    arquetipoNascimento: birthNameForRow && dataPt ? getArquetipo(calcularCincoNumeros(birthNameForRow, dataPt).expressao) : null,
+    origem: freqData?.ranking?.nomesCandidatos?.find((c: any) => c.nomeCompleto?.trim().toLowerCase() === nomeExibido.trim().toLowerCase())?.origem,
+    productType: row.product_type ?? 'nome_social',
+    isFree: isFreeRow,
+    isFavorite: !isFreeRow && Boolean(freqData?.is_favorite),
+    dateLabel: new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date(row.created_at)),
+    checklistAnalysisId: row.id,
+    birthRadarAxes,
+    harmonizedRadarAxes,
+    radarLabels,
+    initialChecklist: extractSlideChecklist(freqData, row.id),
+  };
+}
+
+function buildSynthesizedBirthSlide(
+  targetAnalysisId: string | null,
+  targetAnalysisFreqData: Record<string, any> | null | undefined,
+  birthName: string,
+  dataPt: string,
+  fallbackScore: number,
+): DashboardHeroSlide | null {
+  if (!targetAnalysisId || !birthName.trim()) return null;
+
+  let slideScore = Math.max(0, Math.min(100, Math.round(fallbackScore)));
+  let starNumbers = { destino: 0, expressao: 0, motivacao: 0, missao: 0, impressao: 0 };
+  let bloqueiosTitulos: string[] = [];
+  let birthRadarAxes: RadarAxesData = dashboardRadarAxes;
+
+  if (dataPt) {
+    try {
+      slideScore = avaliarNome(birthName, dataPt).score_v3;
+      const cinco = calcularCincoNumeros(birthName, dataPt);
+      starNumbers = {
+        destino: cinco.destino,
+        expressao: cinco.expressao,
+        motivacao: cinco.motivacao,
+        missao: cinco.missao,
+        impressao: cinco.impressao,
+      };
+      const tris = calcularTodosTriangulos(birthName, dataPt);
+      bloqueiosTitulos = detectarBloqueios(tris).map((b) => b.titulo);
+      birthRadarAxes = motorRadarToRecord(
+        computeContextualRadarAxes(birthName, dataPt, featuredRadarContext),
+      ) as RadarAxesData;
+    } catch {
+      /* mantém fallback */
+    }
+  }
+
+  const compatibilidade: CompatType | null =
+    starNumbers.expressao > 0 && starNumbers.destino > 0
+      ? avaliarCompatibilidade(starNumbers.expressao, starNumbers.destino)
+      : null;
+
+  const slideKey = `${targetAnalysisId}__birth`;
+
+  return {
+    id: slideKey,
+    nome: birthName,
+    birthName,
+    score: slideScore,
+    birthScore: slideScore,
+    bloqueiosCount: bloqueiosTitulos.length,
+    bloqueiosTitulos,
+    compatibilidade,
+    starNumbers,
+    arquetipo: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
+    arquetipoNascimento: starNumbers.expressao > 0 ? getArquetipo(starNumbers.expressao) : null,
+    productType: 'analise_gratuita',
+    isFree: true,
+    isFavorite: false,
+    dateLabel: '',
+    pdfAnalysisId: targetAnalysisId,
+    checklistAnalysisId: targetAnalysisId,
+    resultadoHrefOverride: `/app/resultado/${targetAnalysisId}?modo=nascimento`,
+    birthRadarAxes,
+    harmonizedRadarAxes: null,
+    radarLabels: dashboardRadarLabels,
+    initialChecklist: extractSlideChecklist(targetAnalysisFreqData, slideKey),
+  };
+}
+
+const paidCompletedRows = allCompletedAnalyses.filter(
+  (row) => row.is_free !== true && row.product_type !== 'analise_gratuita',
+);
+
+// Ordem cronológica crescente (mais antiga -> mais recente), empilhadas à direita do nome inicial
+const paidSlides: DashboardHeroSlide[] = [...paidCompletedRows]
+  .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  .map((row) => buildHeroSlideFromRow(row, birthScoreDashboard));
+
+const birthSlideFromFreeRow = freeAnalysis
+  ? buildHeroSlideFromRow(freeAnalysis, birthScoreDashboard)
+  : null;
+
+const hasDifferentBirthNameInPaid =
+  Boolean(nomeHojeDashboard) &&
+  paidSlides.some((s) => s.nome.trim().toLowerCase() !== nomeHojeDashboard.trim().toLowerCase());
+
+const birthSlide: DashboardHeroSlide | null =
+  birthSlideFromFreeRow ??
+  (paidSlides.length === 0 || hasDifferentBirthNameInPaid
+    ? buildSynthesizedBirthSlide(
+        featuredAnalysisId,
+        (featuredAnalysis?.frequencias_numeros as Record<string, any> | null) ?? null,
+        nomeHojeDashboard,
+        dataPtRadar,
+        birthScoreDashboard,
+      )
+    : null);
+
+const heroSlides: DashboardHeroSlide[] = birthSlide
+  ? [birthSlide, ...paidSlides]
+  : paidSlides;
+
+const historySourceRows = allCompletedAnalyses.slice(0, 6);
+const dashboardHistory: DashboardHistoryRow[] = historySourceRows.map((row) => {
+  const freqData = row.frequencias_numeros as Record<string, any> | null;
+  const ranking = freqData?.ranking as { melhorNome?: { nomeCompleto?: string } } | undefined;
+  const isFreeRow = row.is_free === true || row.product_type === 'analise_gratuita';
+  const nomeExibido = isFreeRow
+    ? row.nome_completo
+    : (row.product_type === 'nome_social' && (freqData?.selectedNomeSocial || row.nome_harmonizado || ranking?.melhorNome?.nomeCompleto))
+      ? (freqData?.selectedNomeSocial ?? row.nome_harmonizado ?? ranking?.melhorNome?.nomeCompleto)
+      : (row.product_type === 'nome_bebe' && ranking?.melhorNome?.nomeCompleto)
+        ? ranking.melhorNome.nomeCompleto
+        : (row.product_type === 'nome_empresa' && freqData?.melhorNome?.nomeEmpresa)
+          ? freqData.melhorNome.nomeEmpresa
+          : row.nome_completo;
+
+  let score: number | null = null;
+  const isV3Row = row.score_version === 'v3';
+  if (isV3Row && row.score_v3 != null) {
+    score = row.score_v3;
+  } else if (getScoreVersion() === 'v3' && nomeExibido && row.data_nascimento) {
+    const dataPt = toPtBrBirthDate(row.data_nascimento);
+    try {
+      score = avaliarNome(nomeExibido, dataPt).score_v3;
+    } catch {
       score = row.score;
     }
+  } else {
+    score = row.score;
+  }
 
-    return {
-      id: row.id,
-      nome: nomeExibido,
-      dateLabel: new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'America/Sao_Paulo',
-      }).format(new Date(row.created_at)),
-      score,
-    };
-  });
-} catch (e) {
-  console.warn('[index.astro] Erro ao carregar histórico do painel:', e);
-}
+  return {
+    id: row.id,
+    nome: nomeExibido,
+    dateLabel: new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date(row.created_at)),
+    score,
+    productType: row.product_type ?? 'nome_social',
+    isFree: isFreeRow,
+    isFavorite: !isFreeRow && Boolean(freqData?.is_favorite),
+  };
+});
 
 const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
 
 ---
 
-<AppLayout title="Dashboard">
+<AppLayout title="Dashboard" showMobileAnalysisCta={hasNomeSocial}>
+  {hasNomeSocial && (
+    <a
+      slot="header-actions"
+      href="/app/analise/nome-social"
+      data-nm-header-cta="analise"
+      data-user-id={user.id}
+      data-default-label="+ Nova Análise"
+      data-resume-label="Retomar Análise"
+      class="inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-[#131313] text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full shadow-[0_2px_16px_rgba(212,175,55,0.35)] hover:bg-[#f2ca50] hover:shadow-[0_4px_24px_rgba(212,175,55,0.5)] active:scale-95 transition-all duration-300"
+    >
+      + Nova Análise
+    </a>
+  )}
+
+  <script>
+    import { syncAnaliseCtaLabels } from '../../frontend/components/app/chat/chat-session-storage';
+
+    const sync = () => syncAnaliseCtaLabels();
+    sync();
+    window.addEventListener('pageshow', sync);
+    window.addEventListener('focus', sync);
+    window.addEventListener('storage', sync);
+  </script>
   {needsEmailConfirmation && user.email && (
     <MailWarning client:load email={user.email} />
   )}
@@ -624,117 +1026,14 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
       </script>
     )}
 
-    <!-- Banner: Melhoria do Motor v3 e Recálculo Gratuito -->
+    <!-- DEV-318: aviso de atualização do cálculo em pop-up (uma vez por aviso). -->
     {legacyCount > 0 && (
-      <div
-        id="recalc-v3-banner"
-        class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#D4AF37]/15 via-purple-500/10 to-[#D4AF37]/10 border border-[#D4AF37]/30 p-5 md:p-6 shadow-2xl shadow-black/40"
-      >
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 tracking-wider uppercase">
-                ✦ Novo Motor v3
-              </span>
-              <span class="text-xs text-gray-400">Atualização Disponível</span>
-            </div>
-            <h3 class="font-cinzel text-lg md:text-xl font-bold text-[#e5e2e1]">
-              Melhoramos o cálculo do seu score numerológico
-            </h3>
-            <p class="text-gray-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
-              {legacyCount === 1 ? (
-                <>
-                  Sua análise de <strong class="text-white">{singleLegacyAnalysis.nome_completo}</strong> foi calculada com o motor anterior. O motor v3 traz critérios mais precisos para bloqueios e débitos kármicos. Você pode gerar a nova versão gratuitamente preservando a original.
-                </>
-              ) : (
-                <>
-                  Você possui <strong class="text-white">{legacyCount} análises</strong> calculadas com a versão anterior do motor. O motor v3 traz critérios aprimorados para bloqueios e débitos kármicos. Você pode recalcular todas gratuitamente preservando os históricos originais.
-                </>
-              )}
-            </p>
-          </div>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
-            <a
-              href="/como-funciona-o-score"
-              class="text-xs text-center text-gray-400 hover:text-[#D4AF37] underline decoration-dotted underline-offset-4 py-2 px-3 transition-colors"
-            >
-              Entenda as mudanças
-            </a>
-            <button
-              id="btn-recalc-v3"
-              type="button"
-              data-analysis-ids={JSON.stringify(legacyAnalysesToRecalculate.map(a => a.id))}
-              data-is-multiple={legacyCount > 1 ? 'true' : 'false'}
-              class="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-xs sm:text-sm font-bold text-[#131313] transition hover:bg-[#f2ca50] hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-lg shadow-yellow-500/15"
-            >
-              <span id="btn-recalc-spinner" class="hidden w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin"></span>
-              <span id="btn-recalc-text">
-                {legacyCount === 1
-                  ? 'Recalcular análise com motor v3 (grátis)'
-                  : `Recalcular ${legacyCount} análises com motor v3 (grátis)`}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {legacyCount > 0 && (
-      <script>
-        (function () {
-          const btn = document.getElementById('btn-recalc-v3') as HTMLButtonElement | null;
-          const spinner = document.getElementById('btn-recalc-spinner');
-          const text = document.getElementById('btn-recalc-text');
-          const banner = document.getElementById('recalc-v3-banner');
-
-          if (!btn) return;
-
-          const rawIds = btn.dataset.analysisIds;
-          let analysisIds: string[] = [];
-          try {
-            analysisIds = rawIds ? JSON.parse(rawIds) : [];
-          } catch {
-            analysisIds = [];
-          }
-          const isMultiple = btn.dataset.isMultiple === 'true';
-
-          btn.addEventListener('click', async () => {
-            if (!analysisIds.length) return;
-
-            btn.disabled = true;
-            if (spinner) spinner.classList.remove('hidden');
-            if (text) text.textContent = isMultiple ? 'Recalculando análises...' : 'Recalculando análise...';
-
-            try {
-              const res = await fetch('/api/recalculate-v3', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(isMultiple ? { analysisIds } : { analysisId: analysisIds[0] }),
-              });
-              const data = await res.json();
-              if (res.ok) {
-                if (text) text.textContent = 'Sucesso! Atualizando...';
-                if (!isMultiple && data.analysisId) {
-                  window.location.href = `/app/resultado/${data.analysisId}`;
-                } else {
-                  window.location.reload();
-                }
-              } else {
-                throw new Error(data.error || 'Erro ao recalcular');
-              }
-            } catch (err) {
-              alert(err instanceof Error ? err.message : 'Falha ao recalcular análise.');
-              btn.disabled = false;
-              if (spinner) spinner.classList.add('hidden');
-              if (text) {
-                text.textContent = isMultiple
-                  ? `Recalcular ${analysisIds.length} análises com motor v3 (grátis)`
-                  : 'Recalcular análise com motor v3 (grátis)';
-              }
-            }
-          });
-        })();
-      </script>
+      <MotorUpdateModal
+        avisoId={`motor-v3:${user.id}`}
+        legacyCount={legacyCount}
+        analysisIds={legacyAnalysesToRecalculate.map(a => a.id)}
+        nomeUnico={singleLegacyAnalysis?.nome_completo ?? null}
+      />
     )}
 
     <!-- Banner: Expirado -->
@@ -824,13 +1123,21 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
         nomeHoje={nomeHojeDashboard}
         nomeHarmonizado={nomeHarmonizadoDashboard}
         score={dashboardScore}
+        birthScore={birthScoreDashboard}
+        scorePotencial={scorePotencialDashboard}
         scoreLabel={featuredTheme.label}
         scoreColor={featuredTheme.color}
         bloqueios={bloqueioTitulosDashboard}
         analysisId={featuredAnalysisId!}
+        featuredProductType={featuredProductType}
+        featuredIsFree={featuredIsFree}
+        signatureChosen={signatureChosenDashboard}
+        pdfReady={pdfReadyDashboard}
         radarAxes={dashboardRadarAxes}
+        harmonizedRadarAxes={harmonizedRadarAxesDashboard}
         radarLabels={dashboardRadarLabels}
         history={dashboardHistory}
+        heroSlides={heroSlides}
         hasNomeSocial={hasNomeSocial}
         isAdmin={isAdmin}
         isExpired={isExpired}
@@ -843,20 +1150,41 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
     )}
 
     {!showDashboardPanel && freeAnalysisStatus !== 'pending' && freeAnalysisStatus !== 'processing' && (
-      <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
-        <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
-          Comece pela sua análise gratuita
-        </h2>
-        <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
-          Descubra o score do seu nome de nascimento e os bloqueios que afetam sua assinatura.
-        </p>
-        <a
-          href="/app/analise-gratuita"
-          class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
-        >
-          Iniciar análise gratuita
-        </a>
-      </section>
+      hasNomeSocial ? (
+        <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
+          <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
+            Inicie sua harmonização no chat
+          </h2>
+          <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
+            Analise seu nome, elimine bloqueios e compare variações harmonizadas em tempo real.
+          </p>
+          <a
+            href="/app/analise/nome-social"
+            data-nm-header-cta="analise"
+            data-user-id={user.id}
+            data-default-label="Abrir chat de análise"
+            data-resume-label="Retomar Análise"
+            class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
+          >
+            Abrir chat de análise
+          </a>
+        </section>
+      ) : (
+        <section class="rounded-2xl bg-[#1C1C1C] px-6 py-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)] sm:px-10 sm:py-14">
+          <h2 class="font-cinzel text-2xl font-bold text-[#e5e2e1] sm:text-3xl">
+            Comece pela sua análise gratuita
+          </h2>
+          <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#A0A0A0]">
+            Descubra o score do seu nome de nascimento e os bloqueios que afetam sua assinatura.
+          </p>
+          <a
+            href="/app/analise-gratuita"
+            class="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-sm font-bold text-[#111111] transition hover:bg-[#f2ca50]"
+          >
+            Iniciar análise gratuita
+          </a>
+        </section>
+      )
     )}
 
     {!freeAnalysisId && leadNome && leadData && (
@@ -878,18 +1206,6 @@ const onlyFreeAnalysisDashboard = !!freeAnalysis && !bestSocialAnalysis;
           Solicitar reembolso
         </a>
       </div>
-    )}
-
-    {isAdmin && (
-      <a
-        href="/app/admin-analise"
-        class="block rounded-3xl bg-[#bea5ff]/[0.06] p-6 transition hover:bg-[#bea5ff]/10"
-        style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 55px rgba(0,0,0,0.28);"
-      >
-        <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#d7c6ff]">Exclusivo admin</p>
-        <h2 class="font-cinzel text-xl font-bold text-[#e5e2e1]">Área do Analista</h2>
-        <p class="mt-2 text-sm text-gray-400">Crie análises personalizadas em tempo real e emita PDFs na hora.</p>
-      </a>
     )}
 
   </div>

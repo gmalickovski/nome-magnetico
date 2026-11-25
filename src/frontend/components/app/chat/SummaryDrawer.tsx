@@ -113,7 +113,7 @@ export function SummaryDrawer({
         bottom: 0,
       }}
     >
-      {/* Header bar mobile alinhado com o design system (PAINEL DE LEITURA + botão de fechar) */}
+      {/* Header bar mobile alinhado com o design system (PAINEL DE ANÁLISE + botão de fechar) */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3 bg-[#131313]/95 backdrop-blur-sm">
         <div className="flex items-center gap-2.5 min-w-0">
           <span
@@ -124,15 +124,15 @@ export function SummaryDrawer({
             id="mobile-summary-title"
             className="font-cinzel text-base sm:text-lg font-bold uppercase tracking-[0.14em] text-[#e5e2e1] truncate"
           >
-            Painel de leitura
+            Painel de análise
           </h2>
         </div>
         <button
           ref={closeBtnRef}
           type="button"
           onClick={() => onClose('x')}
-          aria-label="Fechar painel de leitura e voltar ao chat"
-          title="Fechar painel de leitura"
+          aria-label="Fechar painel de análise e voltar ao chat"
+          title="Fechar painel de análise"
           className="w-11 h-11 rounded-full border border-white/10 bg-[#1c1c1c] text-[#e5e2e1] hover:text-[#f2ca50] hover:border-[#f2ca50]/50 hover:bg-[#252525] active:scale-95 transition-colors duration-150 flex items-center justify-center shadow-md shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2ca50]/70 shrink-0"
         >
           <IconX className="h-4 w-4" />

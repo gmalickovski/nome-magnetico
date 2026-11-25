@@ -3,6 +3,8 @@
  * Tendência oculta = número que aparece ≥4 vezes no nome.
  */
 
+import { GlossaryLinkedText } from '../glossary/GlossaryLinkedText';
+
 interface TendenciaOculta {
   numero: number;
   frequencia: number;
@@ -65,7 +67,7 @@ function TendenciaCard({ tendencia, showSolution }: { tendencia: TendenciaOculta
       </div>
 
       <div className="px-4 pb-4 space-y-4 border-t border-blue-500/10">
-        <p className="nm-card-text pt-4">{tendencia.descricao}</p>
+        <p className="nm-card-text pt-4"><GlossaryLinkedText text={tendencia.descricao} /></p>
         {showSolution && (
           <div className="rounded-lg p-3 bg-blue-500/10 border border-blue-500/20">
             <p className="text-xs text-blue-400 uppercase tracking-wider mb-2">Como Equilibrar</p>
@@ -83,12 +85,16 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
   const maxFreq = Math.max(...numeros.map(n => frequencias[n] ?? 0), 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 text-left">
+      <p className="nm-card-text">
+        <GlossaryLinkedText text="Tendências Ocultas surgem quando um mesmo número de 1 a 9 aparece 4 ou mais vezes nas letras do nome completo, revelando uma concentração excessiva dessa energia. Quando bem direcionado, esse excesso vira talento; sem equilíbrio, gera repetições e exageros no comportamento." />
+      </p>
+
       {/* Mapa de frequências */}
-      <div className="glass rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
+      <div className="nm-floating-tile p-4 sm:p-5 text-left">
+        <h4 className="font-inter text-xs font-semibold text-[#e5e2e1]/80 uppercase tracking-wider mb-4 text-left">
           Frequência dos Números no Nome
-        </h3>
+        </h4>
         <div className="space-y-2.5">
           {numeros.map(n => (
             <FrequencyBar
@@ -120,14 +126,7 @@ export default function HiddenTendencies({ tendencias, frequencias, nomeCompleto
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="glass rounded-xl p-4">
-            <p className="nm-card-text">
-              <strong className="text-blue-300">{tendencias.length} tendência(s) oculta(s)</strong> — números
-              que aparecem 4 ou mais vezes indicam um excesso daquela qualidade. Quando bem canalizada,
-              pode ser um superpoder. Quando não, torna-se um padrão limitante.
-            </p>
-          </div>
+        <div className="space-y-3 text-left">
           {tendencias.map((t, i) => <TendenciaCard key={i} tendencia={t} showSolution={showSolution} />)}
 
           {!showSolution && (

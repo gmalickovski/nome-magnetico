@@ -6,6 +6,9 @@ import { ArticleReactions } from '../../frontend/components/blog/ArticleReaction
 import { MobileTOC } from '../../frontend/components/blog/MobileTOC';
 import { TOCSidebar } from '../../frontend/components/blog/TOCSidebar';
 import { LandingFooter } from '../../frontend/components/landing/LandingFooter';
+import { GlossaryTermOverlay } from '../../frontend/components/glossary/GlossaryTermOverlay';
+import { listPublishedGlossaryTerms } from '../../backend/glossary/glossary-service';
+import { linkGlossaryTermsInHtml } from '../../shared/glossary/term-linker';
 import { createClient } from '@supabase/supabase-js';
 import { marked } from 'marked';
 
@@ -57,6 +60,11 @@ let m: RegExpExecArray | null;
 while ((m = tocRegex.exec(contentHtml)) !== null) {
   toc.push({ id: m[1], text: m[2].replace(/<[^>]+>/g, '').trim() });
 }
+
+const blogGlossaryTerms = await listPublishedGlossaryTerms();
+contentHtml = linkGlossaryTermsInHtml(contentHtml, blogGlossaryTerms, {
+  baseHref: '/glossario',
+});
 
 // Artigos relacionados (mesma categoria ou mesmo produto, excluindo o atual)
 const { data: related } = await supabase
@@ -264,7 +272,7 @@ const wasUpdated = Boolean(
               <p class="text-[#D4AF37] text-[10px] font-semibold tracking-widest uppercase mb-2">Curadoria editorial</p>
               <p class="text-gray-400 text-xs sm:text-sm leading-relaxed">
                 Conteúdo escrito por <strong class="text-[#e5e2e1]">{displayAuthor}</strong>, com revisão pela metodologia Nome Magnético:
-                cálculo dos 4 triângulos cabalísticos, identificação de bloqueios e leitura simbólica aplicada ao nome.
+                cálculo do Triângulo da Vida, identificação de bloqueios e leitura simbólica aplicada ao nome.
               </p>
               <a href="/blog/sobre" class="inline-flex mt-3 text-xs text-[#D4AF37] hover:text-[#f2ca50] transition-colors">
                 Conheça a autora e a metodologia
@@ -342,7 +350,7 @@ const wasUpdated = Boolean(
                   Descubra os Bloqueios do Seu Nome
                 </h3>
                 <p class="blog-cta-desc text-gray-400 text-xs sm:text-sm mb-5 sm:mb-6 max-w-md mx-auto leading-relaxed">
-                  A análise completa vai além deste artigo — veja os 4 triângulos cabalísticos, bloqueios energéticos, lições kármicas e sugestões de nome harmonizado.
+                  A análise completa vai além deste artigo — veja o Triângulo da Vida, bloqueios energéticos, lições kármicas e sugestões de nome harmonizado.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
@@ -421,6 +429,7 @@ const wasUpdated = Boolean(
     </div>
   </main>
 
+  <GlossaryTermOverlay client:load baseHref="/glossario" />
   <LandingFooter client:visible />
 </BlogLayout>
 

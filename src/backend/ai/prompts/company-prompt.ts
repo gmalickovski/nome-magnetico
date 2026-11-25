@@ -84,7 +84,7 @@ ${candidatosTexto}
 
 ## Sua Tarefa
 
-Você é um numerólogo cabalístico especializado em nomes empresariais, branding energético e identidade visual. Com base nos dados acima, elabore um relatório estratégico, profundo e acionável para o empreendedor. Este relatório vale R$150+ e deve ser uma consultoria de alto valor — cada seção deve trazer revelações e orientações que um consultor de branding comum não poderia oferecer.
+Você é um numerólogo cabalístico especializado em nomes empresariais, branding energético e identidade visual. Com base nos dados acima, elabore um relatório estratégico, profundo e acionável para o empreendedor. Este é um relatório premium (nunca cite preço ou valor no texto) e deve ser uma consultoria de alto valor — cada seção deve trazer revelações e orientações que um consultor de branding comum não poderia oferecer.
 
 Escreva pelo menos 2–3 parágrafos por seção. Evite generalidades — cada insight deve estar ancorado nos números específicos deste negócio e deste empreendedor.
 

@@ -1,0 +1,88 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import { GlossaryExplorer } from '../../../frontend/components/glossary/GlossaryExplorer';
+import {
+  listPublishedGlossaryTerms,
+  matchUserGlossaryTerms,
+  type GlossaryAnalysisSnapshot,
+} from '../../../backend/glossary/glossary-service';
+import { supabase } from '../../../backend/db/supabase';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/auth/login');
+}
+
+const terms = await listPublishedGlossaryTerms();
+
+let latestAnalysis: GlossaryAnalysisSnapshot | null = null;
+try {
+  const { data } = await supabase
+    .from('analyses')
+    .select('id, nome_completo, numero_expressao, numero_destino, numero_motivacao, numero_missao, numero_personalidade, bloqueios, licoes_carmicas, tendencias_ocultas, debitos_karmicos')
+    .eq('user_id', user.id)
+    .eq('status', 'complete')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  latestAnalysis = data as GlossaryAnalysisSnapshot | null;
+} catch (err) {
+  console.warn('[app/glossario] Falha ao carregar análise do usuário:', err);
+}
+
+const matched = matchUserGlossaryTerms(terms, latestAnalysis);
+
+const explorerTerms = terms.map((item) => ({
+  slug: item.slug,
+  term: item.term,
+  category: item.category,
+  shortSummary: item.shortSummary,
+  relatedNumber: item.relatedNumber,
+  tags: item.tags,
+}));
+
+const personalizedMatches = matched.map(({ term, reasonBadge }) => ({
+  slug: term.slug,
+  term: term.term,
+  category: term.category,
+  shortSummary: term.shortSummary,
+  relatedNumber: term.relatedNumber,
+  tags: term.tags,
+  reasonBadge,
+}));
+---
+
+<AppLayout title="Glossário Cabalístico">
+  <div class="mx-auto max-w-[1440px] space-y-10 pt-4 pb-20 sm:space-y-12 sm:pt-6">
+    <div class="flex flex-col gap-5 px-1 sm:flex-row sm:items-end sm:justify-between sm:px-0">
+      <div class="max-w-2xl">
+        <p class="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-[#f2ca50]">
+          Glossário
+        </p>
+        <h1 class="font-cinzel text-2xl font-bold tracking-wide text-[#e5e2e1] sm:text-3xl">
+          Entenda cada termo da sua análise
+        </h1>
+        <p class="mt-4 text-sm leading-relaxed text-[#A0A0A0] sm:text-base">
+          Números, triângulos, bloqueios, nota e sugestões explicados em linguagem simples, do jeito que o sistema calcula.
+          Toque em um termo para ler o significado.
+        </p>
+      </div>
+
+      {latestAnalysis?.id && (
+        <a
+          href={`/app/resultado/${latestAnalysis.id}`}
+          class="inline-flex shrink-0 items-center justify-center rounded-full bg-white/[0.06] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#f2ca50] ring-1 ring-[#D4AF37]/30 transition hover:bg-white/[0.1]"
+        >
+          Voltar ao meu relatório →
+        </a>
+      )}
+    </div>
+
+    <GlossaryExplorer
+      client:load
+      terms={explorerTerms}
+      baseHref="/app/glossario"
+      personalizedMatches={personalizedMatches}
+    />
+  </div>
+</AppLayout>

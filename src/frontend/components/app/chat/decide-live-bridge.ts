@@ -2,6 +2,7 @@
  * Ponte entre o chat v2 (DEV-235) e POST /api/decide-live.
  */
 
+import { determineNextStep } from '../../../../shared/interactive-engine/router.js';
 import type {
   CandidateSuggestion,
   ChatReadingSummary,
@@ -17,6 +18,8 @@ import {
   mapOndeAssinaToApi,
   mapSubfocoToEnum,
   type QuestionnaireStepId,
+  inferAreaFocoFromText,
+  sanitizeOutroText,
 } from '../../../../shared/interactive-engine/questionnaire-adaptive.js';
 import type {
   AreaFocoNomeMagnetico,
@@ -24,8 +27,10 @@ import type {
 } from '../../../../shared/interactive-engine/copy.js';
 import {
   applySobrenomesUsoSelection,
+  selecionouSoPrimeiroNome,
   mapAberturaToEstilo,
   mergeContextoLeitura,
+  profileToPerfilChat,
   profileToRankingOpcoes,
   type RankingOpcoesPatch,
 } from '../../../../shared/interactive-engine/questionnaire-map.js';
@@ -48,6 +53,31 @@ export interface ChatCollectState {
   estiloPreferido: string | null;
   palpiteStatus: 'acertou' | 'parcial' | 'nao' | null;
   objetivoTexto: string;
+  /** DEV-303 */
+  preferenciasAssinatura: string[];
+  prioridadeConflito: string | null;
+  areaFocoOutro: string | null;
+  /** DEV-320 (o servidor diz se o fluxo com motivo está ligado). */
+  fluxoMotivoAtivo?: boolean;
+  motivoHarmonizacao?: string | null;
+  areaArtistica?: string | null;
+  areaArtisticaOutro?: string | null;
+  detalheArtistico?: string[];
+  generoPersona?: string | null;
+  imagemArtistica?: string[];
+  tipoNomeArtistico?: string | null;
+  outrosUsos?: string[];
+  /** DEV-326 · caminho do bebê */
+  bebeMae?: string | null;
+  bebePai?: string | null;
+  bebeSituacao?: string | null;
+  bebeDataTipo?: string | null;
+  bebeSexo?: string | null;
+  bebeData?: string | null;
+  bebeSobrenomes?: string[];
+  bebeNomesPais?: string[];
+  bebeNomeRegistrado?: string | null;
+  bebeEstilos?: string[];
 }
 
 export function isProfileCollectionComplete(nextStep: string): boolean {
@@ -72,9 +102,32 @@ export const INITIAL_COLLECT_STATE: ChatCollectState = {
   estiloPreferido: null,
   palpiteStatus: null,
   objetivoTexto: '',
+  preferenciasAssinatura: [],
+  prioridadeConflito: null,
+  areaFocoOutro: null,
+  fluxoMotivoAtivo: false,
+  motivoHarmonizacao: null,
+  areaArtistica: null,
+  areaArtisticaOutro: null,
+  detalheArtistico: [],
+  generoPersona: null,
+  imagemArtistica: [],
+  tipoNomeArtistico: null,
+  outrosUsos: [],
+  bebeMae: null,
+  bebePai: null,
+  bebeSituacao: null,
+  bebeDataTipo: null,
+  bebeSexo: null,
+  bebeData: null,
+  bebeSobrenomes: [],
+  bebeNomesPais: [],
+  bebeNomeRegistrado: null,
+  bebeEstilos: [],
 };
 
 type ApiPanel = {
+  arquetipo?: import('../../../../shared/archetype-summary').ArchetypeSummary;
   nomeExibido: string;
   score: number;
   potencial: number;
@@ -85,6 +138,7 @@ type ApiPanel = {
   impressao: number;
   bloqueiosCount: number;
   bloqueiosCodigos: string[];
+  vidaBloqueiosCodigos?: string[];
   compatibilidade?: string;
   trianguloVidaLinhas?: number[][];
 };
@@ -99,12 +153,17 @@ export type RawDecideLiveResponse = {
   panel?: ApiPanel;
   radarAxes?: Array<{ key: string; label: string; value: number }>;
   previewTop3?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
+  semOpcoesElegiveis?: boolean;
+  scoreNascimento?: number;
+  scoreMinimoSugestao?: number;
   diagramNodes?: Array<{ label: string; eyebrow: string }>;
   subfocoMomento?: string;
   areaFoco?: string;
   providerUsed?: string;
   readingSummary?: ChatReadingSummary;
   sobrenomesDetectados?: string[];
+  /** DEV-320 */
+  fluxoMotivoAtivo?: boolean;
   error?: string;
 };
 
@@ -119,6 +178,7 @@ export function buildSobrenomePillOptions(sobrenomes: string[]): Array<{ id: str
 export function mapApiPanel(api: ApiPanel): ResultPanelData {
   return {
     nome: api.nomeExibido,
+    arquetipo: api.arquetipo,
     score: api.score,
     expressao: api.expressao,
     destino: api.destino,
@@ -131,6 +191,7 @@ export function mapApiPanel(api: ApiPanel): ResultPanelData {
       codigo,
       titulo: `Sequência ${codigo}`,
     })),
+    vidaBloqueiosCodigos: api.vidaBloqueiosCodigos,
     trianguloVida: {
       topo: api.trianguloVidaLinhas?.[0]?.[0] ?? 0,
       base: api.trianguloVidaLinhas?.[0]?.slice(1) ?? [],
@@ -156,6 +217,15 @@ export function mapCandidate(
 ): CandidateSuggestion {
   const score = Number(raw.score ?? 0);
   const bloqueios = Array.isArray(raw.bloqueios) ? raw.bloqueios : [];
+  const bloqueiosCodigos = bloqueios
+    .map((b: { codigo?: string }) => b.codigo ?? '')
+    .filter(Boolean);
+  const explicacao =
+    typeof raw.explicacaoPerfil === 'string'
+      ? raw.explicacaoPerfil
+      : typeof raw.explicacao === 'string'
+        ? raw.explicacao
+        : undefined;
   return {
     id: raw.nomeCompleto.trim().toLowerCase().replace(/\s+/g, '-'),
     nome: raw.nomeCompleto,
@@ -164,6 +234,20 @@ export function mapCandidate(
     compatibilidade: String(raw.compatibilidade ?? 'neutro'),
     bloqueiosEliminados: 0,
     bloqueiosRestantes: bloqueios.length,
+    bloqueiosCodigos: bloqueiosCodigos.length > 0 ? bloqueiosCodigos : undefined,
+    maiorNota: raw.maiorNota === true,
+    principal: raw.principal === true,
+    secao: raw.secao === 'proximo' || raw.secao === 'novo' ? raw.secao : undefined,
+    tecnica: typeof raw.tecnica === 'string' ? raw.tecnica : undefined,
+    afinidade: typeof raw.afinidade === 'number' ? raw.afinidade : undefined,
+    explicacao,
+    grupoBebe:
+      raw.grupoBebe === 'seu' || raw.grupoBebe === 'menina' || raw.grupoBebe === 'menino' || raw.grupoBebe === 'neutro'
+        ? raw.grupoBebe
+        : undefined,
+    diasBons: typeof raw.diasBons === 'number' ? raw.diasBons : undefined,
+    diasTotal: typeof raw.diasTotal === 'number' ? raw.diasTotal : undefined,
+    destaque: explicacao,
     arcanosPositivos: 0,
     dimensoes: { amor: 0, carreira: 0, espiritual: 0 },
     panel: raw.panel
@@ -179,6 +263,12 @@ export function mapCandidate(
           impressao: Number(raw.impressao ?? 0),
           bloqueiosCount: bloqueios.length,
           bloqueiosCodigos: bloqueios.map((b: { codigo?: string }) => b.codigo ?? ''),
+          vidaBloqueiosCodigos: bloqueios
+            .filter((b: { codigo?: string; triangulos?: string[] }) =>
+              Array.isArray(b.triangulos) ? b.triangulos.includes('vida') : false,
+            )
+            .map((b: { codigo?: string }) => b.codigo ?? '')
+            .filter(Boolean),
         }),
   };
 }
@@ -210,6 +300,7 @@ export function buildNextQuestion(
       nomeCompleto,
       sobrenomes: sobrenomesDetectados,
       areaFoco: (collect.areaFoco as AreaFocoNomeMagnetico) ?? null,
+      areaArtistica: collect.areaArtistica ?? null,
     });
     const caption =
       spec.mode === 'multi'
@@ -263,6 +354,9 @@ export function mapDecideLiveResponse(
     readingSummary: raw.readingSummary,
     panel: raw.panel ? mapApiPanel(raw.panel) : undefined,
     previewTop3: (raw.previewTop3 ?? []).map(mapCandidate),
+    semOpcoesElegiveis: raw.semOpcoesElegiveis ?? false,
+    scoreNascimento: raw.scoreNascimento,
+    scoreMinimoSugestao: raw.scoreMinimoSugestao,
     providerUsed: raw.providerUsed,
     next_question: ctx
       ? buildNextQuestion(raw, ctx.nomeCompleto, ctx.collect, ctx.sobrenomesDetectados ?? [])
@@ -297,6 +391,20 @@ export function buildDecideLiveBody(
     subfocos_ordenados: collect.subfocosOrdenados.length ? collect.subfocosOrdenados : undefined,
     abertura_mudanca: collect.aberturaMudanca ?? undefined,
     nome_artistico: collect.nomeArtistico ?? undefined,
+    preferencias_assinatura: collect.preferenciasAssinatura?.length
+      ? collect.preferenciasAssinatura
+      : undefined,
+    prioridade_conflito: collect.prioridadeConflito ?? undefined,
+    area_foco_outro: collect.areaFocoOutro ?? undefined,
+    // DEV-320
+    motivo_harmonizacao: collect.motivoHarmonizacao ?? undefined,
+    area_artistica: collect.areaArtistica ?? undefined,
+    area_artistica_outro: collect.areaArtisticaOutro ?? undefined,
+    detalhe_artistico: collect.detalheArtistico?.length ? collect.detalheArtistico : undefined,
+    genero_persona: collect.generoPersona ?? undefined,
+    imagem_artistica: collect.imagemArtistica?.length ? collect.imagemArtistica : undefined,
+    tipo_nome_artistico: collect.tipoNomeArtistico ?? undefined,
+    outros_usos: collect.outrosUsos?.length ? collect.outrosUsos : undefined,
   };
 }
 
@@ -334,12 +442,17 @@ export function applyQuestionnaireStep(
     );
     next.sobrenomesObrigatorios = obrigatorios;
     next.sobrenomesExcluidos = excluidos;
-    next.sobrenomesDecididos = obrigatorios.length > 0;
+    next.sobrenomesDecididos =
+      obrigatorios.length > 0 || selecionouSoPrimeiroNome(labels, sobrenomesDetectados);
     return next;
   }
 
   if (stepId === 'relacao_nome') {
     next.relacaoNome = ids[0] ?? null;
+    // DEV-303: "Não me representa" já indica abertura para mudar; a pergunta de abertura é pulada.
+    if (next.relacaoNome === 'nao_representa' && !next.aberturaMudanca) {
+      next.estiloPreferido = mapAberturaToEstilo(null, next.relacaoNome, next.nomeArtistico);
+    }
     return next;
   }
 
@@ -355,6 +468,15 @@ export function applyQuestionnaireStep(
   }
 
   if (stepId === 'area_foco') {
+    // DEV-303: "Outro foco" (texto livre, até 60 caracteres) vira a área mais próxima por palavras-chave.
+    if (ids[0] === 'nome_outro' || ids[0] === 'area_outro') {
+      const texto = sanitizeOutroText(payload.otherText ?? labels[0] ?? '');
+      next.areaFocoOutro = texto || null;
+      next.areaFoco = inferAreaFocoFromText(texto) ?? 'carreira_negocios';
+      next.contextoLeitura = mergeContextoLeitura(next.contextoLeitura, stepId, texto);
+      return next;
+    }
+    next.areaFocoOutro = null;
     next.areaFoco = ids[0] ?? null;
     return next;
   }
@@ -367,7 +489,108 @@ export function applyQuestionnaireStep(
 
   if (stepId === 'abertura_mudanca') {
     next.aberturaMudanca = ids[0] ?? null;
-    next.estiloPreferido = mapAberturaToEstilo(next.aberturaMudanca, next.relacaoNome);
+    next.estiloPreferido = mapAberturaToEstilo(next.aberturaMudanca, next.relacaoNome, next.nomeArtistico);
+    return next;
+  }
+
+  if (stepId === 'preferencias_assinatura') {
+    // "Tanto faz" sozinho vale como resposta; junto de outra escolha, vale a escolha.
+    const escolhidas = ids.filter((id) => id !== 'tanto_faz');
+    next.preferenciasAssinatura = escolhidas.length > 0 ? escolhidas : ['tanto_faz'];
+    return next;
+  }
+
+  if (stepId === 'prioridade_conflito') {
+    next.prioridadeConflito = ids[0] ?? null;
+    return next;
+  }
+
+  // ── DEV-320 ──
+  if (stepId === 'motivo_harmonizacao') {
+    next.motivoHarmonizacao = ids[0] ?? null;
+    if (next.motivoHarmonizacao === 'bebe') {
+      // O caminho do bebê usa os dados do bebê, não o nome do usuário.
+      next.bebeMae = null;
+      next.bebePai = null;
+      next.bebeSituacao = null;
+      next.bebeDataTipo = null;
+      next.bebeSexo = null;
+      next.bebeData = null;
+      next.bebeEstilos = [];
+    }
+    if (next.motivoHarmonizacao === 'artistico') {
+      // O ramo artístico não pergunta onde assina nem a abertura: forma curta e uso criativo.
+      next.ondeAssinaRaw = ['arte_criativo'];
+      next.ondeAssina = mapOndeAssinaToApi(next.ondeAssinaRaw);
+      next.estiloPreferido = 'curto_direto';
+    }
+    return next;
+  }
+
+  if (stepId === 'area_artistica') {
+    if (ids[0] === 'area_artistica_outro') {
+      const texto = sanitizeOutroText(payload.otherText ?? labels[0] ?? '');
+      next.areaArtistica = 'outra';
+      next.areaArtisticaOutro = texto || null;
+      next.contextoLeitura = mergeContextoLeitura(next.contextoLeitura, stepId, texto);
+    } else {
+      next.areaArtistica = ids[0] ?? null;
+      next.areaArtisticaOutro = null;
+    }
+    next.detalheArtistico = [];
+    return next;
+  }
+
+  if (stepId === 'detalhe_artistico') {
+    next.detalheArtistico = ids;
+    return next;
+  }
+
+  if (stepId === 'genero_persona') {
+    next.generoPersona = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'imagem_artistica') {
+    next.imagemArtistica = ids;
+    return next;
+  }
+
+  if (stepId === 'tipo_nome_artistico') {
+    next.tipoNomeArtistico = ids[0] ?? null;
+    return next;
+  }
+
+  // ── DEV-326 ──
+  if (stepId === 'bebe_situacao') {
+    next.bebeSituacao = ids[0] ?? null;
+    // Mudou a situação: a data e os dados dependem dela.
+    next.bebeDataTipo = null;
+    next.bebeData = null;
+    return next;
+  }
+
+  if (stepId === 'bebe_data_tipo') {
+    next.bebeDataTipo = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'bebe_sexo') {
+    next.bebeSexo = ids[0] ?? null;
+    return next;
+  }
+
+  if (stepId === 'bebe_estilo') {
+    // "Tanto faz" sozinho vale como resposta; junto de outra escolha, vale a escolha.
+    const escolhidos = ids.filter((id) => id !== 'tanto_faz');
+    next.bebeEstilos = escolhidos.length > 0 ? escolhidos : ['tanto_faz'];
+    return next;
+  }
+
+  if (stepId === 'outros_usos') {
+    // "Nenhum outro" sozinho vale como resposta; junto de outra escolha, vale a escolha.
+    const escolhidos = ids.filter((id) => id !== 'nenhum_outro');
+    next.outrosUsos = escolhidos.length > 0 ? escolhidos : ['nenhum_outro'];
     return next;
   }
 
@@ -420,6 +643,7 @@ export function mergeCollectFromApi(
     ...prev,
     areaFoco: raw.areaFoco ?? prev.areaFoco,
     subfocoMomento: raw.subfocoMomento ?? prev.subfocoMomento,
+    fluxoMotivoAtivo: raw.fluxoMotivoAtivo ?? prev.fluxoMotivoAtivo ?? false,
   };
 }
 
@@ -448,6 +672,52 @@ export function collectStateToRankingPatch(collect: ChatCollectState): RankingOp
     aberturaMudanca: collect.aberturaMudanca,
     nomeArtistico: collect.nomeArtistico,
     contextoLeituraOutros: collect.contextoLeitura,
+    preferenciasAssinatura: collect.preferenciasAssinatura ?? [],
+    prioridadeConflito: collect.prioridadeConflito ?? null,
+    areaFocoOutro: collect.areaFocoOutro ?? null,
+    ...collectToPerfilArtistico(collect),
+  });
+}
+
+/** DEV-320: campos do motivo e do ramo artístico no formato do perfil do questionário. */
+function collectToPerfilArtistico(collect: ChatCollectState) {
+  return {
+    motivoHarmonizacao: collect.motivoHarmonizacao ?? null,
+    areaArtistica: collect.areaArtistica ?? null,
+    areaArtisticaOutro: collect.areaArtisticaOutro ?? null,
+    detalheArtistico: collect.detalheArtistico ?? [],
+    generoPersona: collect.generoPersona ?? null,
+    imagemArtistica: collect.imagemArtistica ?? [],
+    tipoNomeArtistico: collect.tipoNomeArtistico ?? null,
+    outrosUsos: collect.outrosUsos ?? [],
+  };
+}
+
+/** DEV-320/DEV-328: perfil do chat que vai junto da análise salva. */
+export function collectStateToPerfilChat(collect: ChatCollectState) {
+  return profileToPerfilChat({
+    nomeUsoBase: collect.nomeUsoBase,
+    sobrenomesObrigatorios: collect.sobrenomesObrigatorios,
+    sobrenomesExcluidos: collect.sobrenomesExcluidos,
+    relacaoNome: collect.relacaoNome,
+    ondeAssinaRaw: collect.ondeAssinaRaw,
+    estiloPresenca: collect.estiloPresenca,
+    areaFoco: collect.areaFoco,
+    subfocosOrdenados: collect.subfocosOrdenados,
+    aberturaMudanca: collect.aberturaMudanca,
+    nomeArtistico: collect.nomeArtistico,
+    contextoLeituraOutros: collect.contextoLeitura,
+    ...collectToPerfilArtistico(collect),
+    bebeMae: collect.bebeMae ?? null,
+    bebePai: collect.bebePai ?? null,
+    bebeSituacao: collect.bebeSituacao ?? null,
+    bebeDataTipo: collect.bebeDataTipo ?? null,
+    bebeSexo: collect.bebeSexo ?? null,
+    bebeData: collect.bebeData ?? null,
+    bebeSobrenomes: collect.bebeSobrenomes ?? [],
+    bebeNomesPais: collect.bebeNomesPais ?? [],
+    bebeNomeRegistrado: collect.bebeNomeRegistrado ?? null,
+    bebeEstilos: collect.bebeEstilos ?? [],
   });
 }
 
@@ -456,6 +726,9 @@ export type RegenerateSuggestionsApiPayload = {
   top3?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
   nossasSugestoes?: Array<Record<string, unknown> & { nomeCompleto: string; panel?: ApiPanel }>;
   poolEsgotado?: boolean;
+  semOpcoesElegiveis?: boolean;
+  scoreNascimento?: number;
+  scoreMinimoSugestao?: number;
 };
 
 /** Flatten API regenerate response into up to 3 unique candidates (chat cards). */
@@ -470,14 +743,23 @@ export function mapRegenerateApiToCandidates(
     ...(Array.isArray(data.top3) ? data.top3 : []),
     ...(Array.isArray(data.nossasSugestoes) ? data.nossasSugestoes : []),
   ];
+  const unicos: typeof rawList = [];
   for (const raw of rawList) {
     if (!raw?.nomeCompleto) continue;
     const key = raw.nomeCompleto.trim().toLowerCase();
     if (vistos.has(key)) continue;
     vistos.add(key);
-    out.push(mapCandidate(raw));
-    if (out.length >= limit) break;
+    unicos.push(raw);
   }
+  // DEV-301 (R3a): a sugestão de maior nota nunca fica de fora do corte visível.
+  const visiveis = unicos.slice(0, limit);
+  // DEV-317: os 2 selos (Principal e Maior nota) sempre entram no corte visível.
+  for (const destaque of [unicos.find((raw) => raw.principal === true), unicos.find((raw) => raw.maiorNota === true)]) {
+    if (!destaque || visiveis.includes(destaque) || visiveis.length === 0) continue;
+    const idx = [...visiveis].reverse().findIndex((raw) => raw.maiorNota !== true && raw.principal !== true);
+    if (idx >= 0) visiveis[visiveis.length - 1 - idx] = destaque;
+  }
+  for (const raw of visiveis) out.push(mapCandidate(raw));
   return out;
 }
 
@@ -505,6 +787,11 @@ export function buildRegenerateRequestBody(input: {
       assinaturaAtual: ranking.assinaturaAtual,
       restricaoDocumentosLegais: ranking.restricaoDocumentosLegais,
       maxNivelGeracao: ranking.maxNivelGeracao,
+      afinidades: ranking.afinidades,
+      manterPrimeiroNome: ranking.manterPrimeiroNome,
+      acentoNaAssinatura: ranking.acentoNaAssinatura,
+      prioridadeConflito: ranking.prioridadeConflito,
+      perfilChat: collectStateToPerfilChat(input.collect),
     },
   };
 
@@ -528,4 +815,47 @@ export function isRegeneratePoolExhausted(
   const novos = mapRegenerateApiToCandidates(data, 50);
   if (novos.length === 0) return true;
   return novos.every((c) => shown.has(c.nome.trim().toLowerCase()));
+}
+
+/** DEV-326: resposta do formulário do bebê (data, sobrenomes, nomes dos pais ou nome registrado). */
+export function applyBebeDados(
+  prev: ChatCollectState,
+  dados: { data: string; sobrenomes: string[]; nomesPais: string[]; nomeRegistrado: string | null },
+): ChatCollectState {
+  return {
+    ...prev,
+    bebeData: dados.data,
+    bebeSobrenomes: dados.sobrenomes,
+    bebeNomesPais: dados.nomesPais,
+    bebeNomeRegistrado: dados.nomeRegistrado,
+  };
+}
+
+/** DEV-326: nomes de nascimento da mãe e do pai (pelo menos um). */
+export function applyBebePais(prev: ChatCollectState, pais: { mae: string | null; pai: string | null }): ChatCollectState {
+  return { ...prev, bebeMae: pais.mae, bebePai: pais.pai };
+}
+
+/**
+ * DEV-326: o caminho do bebê roda inteiro no navegador. O roteador é código puro compartilhado,
+ * então nenhum dado do bebê ou dos pais passa pelo /api/decide-live.
+ */
+export function routeBabyLocally(collect: ChatCollectState): RawDecideLiveResponse {
+  const decisao = determineNextStep({
+    fluxoMotivoAtivo: true,
+    motivoHarmonizacao: collect.motivoHarmonizacao ?? 'bebe',
+    bebePaisDecididos: Boolean(collect.bebeMae || collect.bebePai),
+    bebeSituacao: collect.bebeSituacao ?? null,
+    bebeDataTipo: collect.bebeDataTipo ?? null,
+    bebeSexo: collect.bebeSexo ?? null,
+    bebeDadosDecididos: Boolean(collect.bebeData),
+    bebeEstiloDecidido: Boolean(collect.bebeEstilos?.length),
+  });
+  return {
+    next_step: decisao.nextStep,
+    remaining: decisao.remainingSteps,
+    promptSugestao: decisao.promptSugestao,
+    eyebrow: decisao.eyebrow,
+    fluxoMotivoAtivo: true,
+  };
 }

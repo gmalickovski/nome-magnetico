@@ -2,8 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { CandidateSuggestion } from './chat-types.js';
 import { Pill } from '../../ui/Pill.js';
 import { toggleSelection } from './selection.js';
-import { HarmonySuggestionCard } from '../../landing/ProductResultFrame.js';
+import {
+  ChatSuggestionCard,
+  ChatSuggestionSectionHeader,
+} from '../../shared/chat-ui/ChatSuggestionCard.js';
 import { mapCandidateToHarmonySuggestion } from './harmony-suggestion-mapper.js';
+import { ChatBackButton } from './ChatBackButton.js';
+import { dividirPorSecao, temSecoesArtisticas } from './artistic-suggestions-client.js';
+import { ORDEM_SECOES_BEBE, dividirPorGrupoBebe, temSecoesBebe } from './baby-suggestions-client.js';
+import { TITULO_SECAO_BEBE } from '../../../../shared/interactive-engine/ramos/bebe.js';
 
 export interface SuggestionPickerProps {
   suggestions: CandidateSuggestion[];
@@ -13,6 +20,20 @@ export interface SuggestionPickerProps {
   isRegenerating?: boolean;
   regenerateNotice?: string | null;
   canRegenerate?: boolean;
+  extraActionSlot?: React.ReactNode;
+  extraNoticeSlot?: React.ReactNode;
+  /** DEV-317: área "Teste um nome seu" (texto, campo e avisos). Fica sempre no fim, depois do "Gerar mais". */
+  manualSlot?: React.ReactNode;
+  /** DEV-317: muda quando a análise termina; rola até o início das sugestões. */
+  scrollSistemaToken?: number;
+  /** DEV-317: card a mostrar inteiro depois de testar um nome. */
+  scrollCandidato?: { id: string; n: number } | null;
+  /** DEV-324: volta ao palpite. */
+  onBack?: () => void;
+  /** DEV-326: no caminho do bebê não há palpite; o rótulo do botão é outro. */
+  backLabel?: string;
+  /** DEV-326: o teste de nome usa o nome de nascimento do usuário; não se aplica ao bebê. */
+  semTesteManual?: boolean;
   className?: string;
 }
 
@@ -29,8 +50,44 @@ export function SuggestionPicker({
   isRegenerating = false,
   regenerateNotice = null,
   canRegenerate = true,
+  extraActionSlot,
+  extraNoticeSlot,
+  manualSlot,
+  scrollSistemaToken = 0,
+  scrollCandidato = null,
+  onBack,
+  backLabel = 'Voltar ao palpite',
+  semTesteManual = false,
   className = '',
 }: SuggestionPickerProps) {
+  const sistemaRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!scrollSistemaToken) return;
+    const id = window.setTimeout(() => {
+      sistemaRef.current?.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, [scrollSistemaToken]);
+  const sistema = suggestions.filter((s) => s.origem !== 'manual');
+  const manuais = suggestions.filter((s) => s.origem === 'manual');
+  const [manuaisAbertos, setManuaisAbertos] = useState(true);
+  const [sistemaAberto, setSistemaAberto] = useState(true);
+  useEffect(() => {
+    if (!scrollCandidato) return;
+    setManuaisAbertos(true);
+    const id = window.setTimeout(() => {
+      document
+        .getElementById(`candidate-${scrollCandidato.id}`)
+        ?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    }, 160);
+    return () => window.clearTimeout(id);
+  }, [scrollCandidato]);
+  const totalManuais = useRef(manuais.length);
+  useEffect(() => {
+    // Nome novo testado: abre a lista para a pessoa ver o card na hora.
+    if (manuais.length > totalManuais.current) setManuaisAbertos(true);
+    totalManuais.current = manuais.length;
+  }, [manuais.length]);
   const rootRef = useRef<HTMLDivElement>(null);
   const [stagger, setStagger] = useState(false);
   const [touchPulseId, setTouchPulseId] = useState<string | null>(null);
@@ -50,87 +107,168 @@ export function SuggestionPicker({
     onSelect(nextSelected);
   };
 
+  // DEV-317: a ordem vem do motor (Principal, Maior nota e depois a ordem de tentativas). Não reordenar.
+  const renderCard = (sug: CandidateSuggestion, index: number) => {
+    const isCurrentSelected = selectedId === sug.id;
+    const touchPulse = touchPulseId === sug.id;
+    const card = mapCandidateToHarmonySuggestion(sug);
+    return (
+      <ChatSuggestionCard
+        key={sug.id}
+        id={`candidate-${sug.id}`}
+        card={card}
+        selected={isCurrentSelected}
+        touchPulse={touchPulse}
+        principal={Boolean(sug.principal)}
+        maiorNota={Boolean(sug.maiorNota)}
+        origem={sug.origem === 'manual' ? 'manual' : 'gerado'}
+        destaque={sug.destaque}
+        stagger={stagger}
+        delayIndex={index}
+        onSelect={() => handleCardClick(sug.id)}
+      />
+    );
+  };
+
+  const cabecalho = (
+    id: string,
+    titulo: string,
+    total: number,
+    aberto: boolean,
+    alternar: () => void,
+    controla: string,
+    cor: string,
+  ) => (
+    <div className="flex items-center justify-between gap-3">
+      <h3 id={id} className={`font-cinzel text-base sm:text-lg font-bold ${cor}`}>
+        {titulo}
+        {total > 0 && <span className="ml-2 font-inter text-xs font-medium text-chat-muted">({total})</span>}
+      </h3>
+      {total > 0 && (
+        <button
+          type="button"
+          onClick={alternar}
+          aria-expanded={aberto}
+          aria-controls={controla}
+          aria-label={`${aberto ? 'Esconder' : 'Mostrar'} ${titulo}`}
+          title={aberto ? 'Esconder' : 'Mostrar'}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-chat-ink transition-colors duration-300 hover:bg-white/5"
+        >
+          <svg
+            className={`h-5 w-5 transition-transform duration-300 ${aberto ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div ref={rootRef} className={`w-full space-y-4 ${className}`}>
-      <div className="space-y-1">
-        <h3 className="nm-h3 text-gold">Suas assinaturas recomendadas</h3>
-        <p className="text-xs sm:text-sm text-chat-ink leading-relaxed">
-          Toque em uma assinatura para ver a comparação detalhada no painel lateral.
-        </p>
-      </div>
+      <section
+        ref={sistemaRef}
+        aria-labelledby="system-names-title"
+        className="scroll-mt-3 rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4"
+      >
+        {cabecalho('system-names-title', 'Sugestões do sistema', sistema.length, sistemaAberto, () => setSistemaAberto((v) => !v), 'system-names-list', 'text-gold')}
+        {sistemaAberto && (
+          <div id="system-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+            {temSecoesBebe(sistema) ? (
+              // DEV-326: caminho do bebê, seções por grupo (nomes dos pais, menina, menino, neutros).
+              (() => {
+                const g = dividirPorGrupoBebe(sistema);
+                let inicio = 0;
+                return (
+                  <>
+                    {ORDEM_SECOES_BEBE.map((grupo) => {
+                      const itens = g[grupo];
+                      if (itens.length === 0) return null;
+                      const { titulo, dica } = TITULO_SECAO_BEBE[grupo];
+                      const de = inicio;
+                      inicio += itens.length;
+                      return (
+                        <div key={grupo} className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
+                          <ChatSuggestionSectionHeader titulo={titulo} count={itens.length} dica={dica} />
+                          {itens.map((sug, i) => renderCard(sug, de + i))}
+                        </div>
+                      );
+                    })}
+                    <p className="text-xs text-chat-muted">O relatório em PDF do caminho do bebê ainda não está disponível.</p>
+                  </>
+                );
+              })()
+            ) : temSecoesArtisticas(sistema) ? (
+              // DEV-321: ramo artístico, duas seções (próximos do nascimento e nomes novos).
+              (() => {
+                const s = dividirPorSecao(sistema);
+                const grupo = (titulo: string, dica: string, itens: typeof sistema, inicio: number) =>
+                  itens.length > 0 && (
+                    <div className="flex flex-col gap-3 sm:gap-3.5" role="group" aria-label={titulo}>
+                      <ChatSuggestionSectionHeader titulo={titulo} count={itens.length} dica={dica} />
+                      {itens.map((sug, i) => renderCard(sug, inicio + i))}
+                    </div>
+                  );
+                return (
+                  <>
+                    {grupo('Nomes artísticos próximos do seu', 'Formas do seu próprio nome, pensadas para o palco.', s.proximos, 0)}
+                    {grupo('Nomes totalmente novos', 'Nomes criados para o seu estilo e testados no seu mapa.', s.novos, s.proximos.length)}
+                    {s.outros.map((sug, i) => renderCard(sug, s.proximos.length + s.novos.length + i))}
+                  </>
+                );
+              })()
+            ) : (
+              sistema.map((sug, index) => renderCard(sug, index))
+            )}
+          </div>
+        )}
 
-      <div className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
-        {suggestions.map((sug, index) => {
-          const isCurrentSelected = selectedId === sug.id;
-          const touchPulse = touchPulseId === sug.id;
-          const card = mapCandidateToHarmonySuggestion(sug);
-          return (
-            <div
-              key={sug.id}
-              role="button"
-              tabIndex={0}
-              aria-pressed={isCurrentSelected}
-              onClick={() => handleCardClick(sug.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleCardClick(sug.id);
-                }
-              }}
-              className={`relative min-w-0 w-full text-left cursor-pointer rounded-2xl transition-all duration-150 select-none bg-[#1C1C1C] border focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] ${
-                isCurrentSelected
-                  ? 'border-2 border-[#D4AF37] shadow-[0_0_0_4px_rgba(212,175,55,0.15)] scale-100 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
-                  : touchPulse
-                    ? 'border border-[#D4AF37]/60 scale-[0.98]'
-                    : 'border border-[#D4AF37]/20 md:hover:-translate-y-0.5 md:hover:border-[#D4AF37]/60 md:hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]'
-              }`}
-            >
-              {isCurrentSelected && (
-                <>
-                  <span className="absolute inset-0 rounded-2xl bg-[#D4AF37]/[0.06] pointer-events-none" />
-                  <span className="absolute top-2 right-2 z-10 rounded-full bg-[#D4AF37] text-[#111111] text-[10px] font-semibold px-2 py-0.5">
-                    ✓ Escolhido
-                  </span>
-                </>
-              )}
-              <div className={isCurrentSelected ? '[&_.nm-score-eyebrow]:text-[#D4AF37]' : ''}>
-                <HarmonySuggestionCard
-                  c={card}
-                  stagger={stagger}
-                  delayIndex={index}
-                  className={`!shadow-none !bg-transparent !border-0 ${
-                    isCurrentSelected ? '[&_.nm-h3]:text-[#D4AF37]' : ''
-                  }`}
-                />
-              </div>
-              {sug.destaque && (
-                <p className="px-4 sm:px-5 pb-3 -mt-1 text-xs text-chat-muted italic">{sug.destaque}</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {regenerateNotice && (
-        <p className="text-sm text-amber-300/90 leading-relaxed px-0.5" role="status">
-          {regenerateNotice}
-        </p>
-      )}
-
-      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 pt-2">
-        <Pill
-          label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
-          size="lg"
-          disabled={isRegenerating || !canRegenerate}
-          onClick={onRegenerate}
-        />
-        {!canRegenerate && suggestions.length > 0 && (
-          <p className="text-xs text-chat-muted leading-relaxed">
-            Você já viu o máximo de sugestões desta rodada. Ajuste suas preferências para ver outras
-            combinações.
+        {regenerateNotice && (
+          <p className="text-xs text-amber-300/90 leading-relaxed px-0.5" role="status">
+            {regenerateNotice}
           </p>
         )}
-      </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-1">
+          {onBack && (
+            <ChatBackButton
+              onClick={onBack}
+              disabled={isRegenerating}
+              label={backLabel}
+              className="self-start"
+            />
+          )}
+          <Pill
+            label={isRegenerating ? 'Gerando novas opções...' : 'Gerar outras opções'}
+            size="lg"
+            disabled={isRegenerating || !canRegenerate}
+            onClick={onRegenerate}
+            className="w-full sm:w-auto shrink-0"
+          />
+          {extraActionSlot}
+        </div>
+        {!canRegenerate && sistema.length > 0 && (
+          <p className="text-xs text-chat-muted leading-relaxed">Você já viu todas as sugestões desta rodada.</p>
+        )}
+        {extraNoticeSlot}
+      </section>
+
+      {manualSlot && !semTesteManual && (
+        <section aria-labelledby="manual-names-title" className="rounded-2xl bg-[#161616] p-4 sm:p-5 space-y-4">
+          {cabecalho('manual-names-title', 'Suas sugestões', manuais.length, manuaisAbertos, () => setManuaisAbertos((v) => !v), 'manual-names-list', 'text-gold')}
+          {manualSlot}
+          {manuais.length > 0 && manuaisAbertos && (
+            <div id="manual-names-list" className="w-full min-w-0 flex flex-col gap-3 sm:gap-3.5">
+              {[...manuais].reverse().map((sug, index) => renderCard(sug, index))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

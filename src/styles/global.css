@@ -578,6 +578,7 @@
 
   .nm-app-shell--with-mobile-dock .nm-app-mobile-dock {
     bottom: calc(var(--nm-mobile-dock-margin) + env(safe-area-inset-bottom, 0px));
+    z-index: 80;
   }
 
   /* Navegação e ações contextuais compartilham uma única dock. */
@@ -628,13 +629,7 @@
 
 @media (max-width: 1023px) {
   .nm-app-shell--with-mobile-dock {
-    --nm-dock-context-scroll-max: min(5.75rem, calc(100vw - 13.75rem));
-  }
-
-  @media (max-width: 360px) {
-    .nm-app-shell--with-mobile-dock {
-      --nm-dock-context-scroll-max: min(4.125rem, calc(100vw - 12.5rem));
-    }
+    --nm-dock-context-scroll-max: 100%;
   }
 
   .nm-dock-context-scroll {
@@ -702,7 +697,7 @@
   box-shadow: 0 0 12px rgba(242, 202, 80, 0.45);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   @keyframes mobile-dock-btn-in {
     from {
       opacity: 0;
@@ -892,14 +887,14 @@
     }
     to {
       opacity: 1;
-      transform: translateY(10%);
+      transform: translateY(0);
     }
   }
 
   @keyframes nm-reading-sheet-out {
     from {
       opacity: 1;
-      transform: translateY(10%);
+      transform: translateY(0);
     }
     to {
       opacity: 0;
@@ -1067,7 +1062,7 @@
    * Alinhado a esquerda no mobile (<640px) para evitar espacamentos irregulares entre palavras,
    * e justificado em telas maiores (sm+) com a ultima linha alinhada a esquerda. */
   .nm-card-text {
-    @apply font-inter text-sm font-normal text-gray-300 leading-relaxed text-left sm:text-justify [text-align-last:left];
+    @apply font-inter text-sm font-normal text-[#e5e2e1]/90 leading-[1.6] text-left;
     text-wrap: pretty;
   }
 }
@@ -1137,12 +1132,17 @@
    com difusão suave e sem halos marcados no topo/esquerda.
    ============================================= */
 
+:root {
+  /* Sombra única dos cards: diagonal (baixo e direita), leve e sutil. Não somar outras sombras. */
+  --nm-card-shadow: 6px 10px 18px -8px rgba(0, 0, 0, 0.5);
+}
+
 .nm-floating-card {
   position: relative;
   border-radius: 1rem;
   background-color: #1c1c1c;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--nm-card-shadow);
 }
 
 .nm-floating-card-interactive {
@@ -1150,7 +1150,7 @@
   border-radius: 1rem;
   background-color: #1c1c1c;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--nm-card-shadow);
   transition:
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
     border-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1165,12 +1165,44 @@
   box-shadow: 12px 18px 24px -10px rgba(0, 0, 0, 0.65);
 }
 
+/* DEV-306 · Card do glossário: hover sutil e lento (ritmo meditativo do design system). */
+.nm-glossary-card {
+  position: relative;
+  border-radius: 1rem;
+  background-color: #181818;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.1), 0 10px 24px -8px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nm-glossary-card:hover,
+.nm-glossary-card:focus-visible {
+  transform: translateY(-1px);
+  background-color: #1d1d1d;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.22), 0 20px 50px -18px rgba(0, 0, 0, 0.6);
+}
+
+.nm-glossary-card:focus-visible {
+  outline: 2px solid #bea5ff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nm-glossary-card,
+  .nm-glossary-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
 .nm-floating-tile {
   position: relative;
   border-radius: 0.875rem;
   background-color: #141414;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 6px 10px 16px -8px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--nm-card-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {

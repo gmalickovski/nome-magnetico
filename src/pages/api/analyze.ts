@@ -1,3 +1,12 @@
+import { CONTEXTUAL_RADAR_VERSION } from '../../shared/interactive-engine/radar-context';
+import { normalizarChaveNome, validarNomeManual } from '../../shared/nome-social/manual-name-limits';
+import { computeContextualRadarAxes } from '../../shared/interactive-engine/motor-radar';
+import {
+  chaveNomesCaminho,
+  nomesArtisticosPersistSchema,
+  nomesBebePersistSchema,
+  perfilChatSchema,
+} from '../../shared/chat-analysis-persist';
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createUserClient, supabase as globalSupabase } from '../../backend/db/supabase';
@@ -13,8 +22,7 @@ import {
 import { calcularTodosTriangulos, detectarBloqueios, todasSequenciasNegativas } from '../../backend/numerology/triangle';
 import { calcularCincoNumeros } from '../../backend/numerology/numbers';
 import { detectarLicoesCarmicas, detectarTendenciasOcultas, mapearFrequencias, calcularDebitosCarmicos } from '../../backend/numerology/karmic';
-import { gerarNomesMagneticos } from '../../backend/numerology/suggestions';
-import { generateAnalysis, generateSuggestions, generateSocialAnalysis } from '../../backend/ai/brain';
+import { generateAnalysis, generateSocialAnalysis } from '../../backend/ai/brain';
 import {
   avaliarNome,
   calcularPotencialV3,
@@ -30,7 +38,7 @@ import {
   analisarNomesSocial,
   scoreNascimentoNomeSocial,
 } from '../../backend/numerology/products/nome-social';
-import { getGanhoMinimoPontos, passaGanhoMinimo } from '../../backend/numerology/suggestion-birth-invariant';
+import { motivoNaoOfertavel } from '../../backend/numerology/suggestion-birth-invariant';
 import type { ProductType } from '../../backend/payments/stripe';
 import type { AnalysisProductType } from '../../backend/db/analyses';
 import { logError } from '../../backend/utils/error-logger';
@@ -56,11 +64,13 @@ const schema = z.object({
     .enum(['nome_social', 'analise_gratuita'], { errorMap: () => ({ message: 'Produto indisponível.' }) })
     .default('nome_social'),
   nomes_candidatos: z.array(z.string().min(2)).optional(),
+  nomes_manuais: z.array(z.string().min(2).max(150).refine(n => !validarNomeManual(n))).max(5).optional(),
   // campos específicos nome_social (DEV-190 §6: sem genero_preferido e sem estilo_preferido)
   objetivo_apresentacao: z.string().max(500).optional(),
   vibracoes_desejadas: z.string().max(300).optional(),
   contexto_uso: z.string().optional(),
   assinatura_atual: z.string().max(150).optional(),
+  area_foco: z.string().max(80).optional(),
   onde_vai_usar: z.array(z.string().max(60)).max(10).optional(),
   aceita_encurtar_apelido: z.boolean().optional().default(false),
   nome_social_principal: z.string().min(2).max(150).optional(),
@@ -70,6 +80,10 @@ const schema = z.object({
   ranking_somente_chat: z.boolean().optional(),
   /** Histórico de sugestões vazio no export — não autogerar candidatos. */
   ranking_vazio_sem_autogeracao: z.boolean().optional(),
+  /** DEV-320/DEV-328: perfil do chat e resultados por caminho, guardados em `frequencias_numeros`. */
+  perfil_chat: perfilChatSchema.optional(),
+  nomes_artisticos: nomesArtisticosPersistSchema.optional(),
+  nomes_bebe: nomesBebePersistSchema.optional(),
   // análise gratuita (uma por usuário, sem subscription)
   is_free: z.boolean().optional(),
   gender: z.enum(['Masculino', 'Feminino', 'Neutro']).optional(),
@@ -171,7 +185,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     nome_completo, data_nascimento, product_type,
     nomes_candidatos,
     objetivo_apresentacao, vibracoes_desejadas, contexto_uso,
-    assinatura_atual, onde_vai_usar, aceita_encurtar_apelido,
+    assinatura_atual, area_foco, onde_vai_usar, aceita_encurtar_apelido,
     nome_social_principal,
     nome_ja_escolhido,
     ranking_somente_chat,
@@ -229,7 +243,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     await failStaleAnalysesForUser(user.id, product_type as AnalysisProductType);
   }
 
-  if (product_type === 'nome_social' || isGratuita) {
+  const isBabyChatPath = parsed.data.perfil_chat?.motivo === 'bebe';
+  const isCustomChatProductPath =
+    parsed.data.perfil_chat?.motivo === 'artistico' || isBabyChatPath;
+
+  if (!isBabyChatPath && (product_type === 'nome_social' || isGratuita)) {
     const parts = data_nascimento.split('/');
     const birthDateDb = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : data_nascimento;
     const shouldUpdateBirthProfile =
@@ -258,6 +276,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
+  const manualNames = new Set((parsed.data.nomes_manuais ?? []).map(normalizarChaveNome));
   const isChatPdfChosenSocial =
     product_type === 'nome_social' &&
     nome_ja_escolhido === true &&
@@ -268,7 +287,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       user.id,
       nome_social_principal!.trim()
     );
-    if (existing) {
+    const existingFreq = existing?.frequencias_numeros as any;
+    const requestedMotivo = parsed.data.perfil_chat?.motivo ?? null;
+    const existingMotivo = existingFreq?.perfilChat?.motivo ?? null;
+    const exportMatches =
+      existingMotivo === requestedMotivo &&
+      (!parsed.data.nomes_artisticos ||
+        chaveNomesCaminho(existingFreq?.nomesArtisticos) === chaveNomesCaminho(parsed.data.nomes_artisticos)) &&
+      (!parsed.data.nomes_bebe ||
+        chaveNomesCaminho(existingFreq?.nomesBebe) === chaveNomesCaminho(parsed.data.nomes_bebe)) &&
+      (!ranking_somente_chat || (
+        JSON.stringify(existingFreq?.ranking?.nomesCandidatos?.map((c: any) => normalizarChaveNome(c.nomeCompleto))) === JSON.stringify((nomes_candidatos ?? []).map(normalizarChaveNome)) &&
+        JSON.stringify(existingFreq?.ranking?.nomesCandidatos?.filter((c: any) => c.origem === 'manual').map((c: any) => normalizarChaveNome(c.nomeCompleto))) === JSON.stringify(Array.from(manualNames)) &&
+        existingFreq?.areaFoco === (area_foco ?? null) && JSON.stringify(existingFreq?.ondeVaiUsar ?? []) === JSON.stringify(onde_vai_usar ?? [])
+      ));
+    if (existing && exportMatches) {
       return new Response(JSON.stringify({ analysisId: existing.id, reused: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -334,6 +367,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
           }
         );
 
+        if (somenteChat && manualNames.size > 0) {
+          const seen = new Set<string>();
+          const scoreNascChat = scoreNascimentoNomeSocial(nome_completo, data_nascimento);
+          resultado.nomesCandidatos = candidatos.filter(n => {
+            const key = normalizarChaveNome(n);
+            if (seen.has(key)) return false;
+            seen.add(key); return true;
+          }).map(n => {
+            const evaluated = analisarNomeSocial(n, data_nascimento, 'usuario');
+            return { ...evaluated, score: avaliarNome(n, data_nascimento).score_v3, nomeCompleto: n, origem: manualNames.has(normalizarChaveNome(n)) ? 'manual' as const : 'gerado' as const };
+          }).filter(c =>
+            // Nome digitado pelo usuário é escolha dele; sugestão do sistema segue R1/R2 (DEV-301).
+            c.origem === 'manual' || motivoNaoOfertavel(c, scoreNascChat) === null
+          );
+        }
         if (nome_social_principal) {
           const principalNormalizado = nome_social_principal.trim().toLowerCase();
           const scoreNasc = scoreNascimentoNomeSocial(nome_completo, data_nascimento);
@@ -342,7 +390,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
               candidato => candidato.nomeCompleto.trim().toLowerCase() === principalNormalizado
             ) ?? analisarNomeSocial(nome_social_principal, data_nascimento, 'usuario');
 
-          if (!passaGanhoMinimo(nomeEscolhido.score, scoreNasc, getGanhoMinimoPontos())) {
+          if (!isCustomChatProductPath && !manualNames.has(principalNormalizado) && motivoNaoOfertavel(nomeEscolhido, scoreNasc) !== null) {
             resultado.melhorNome = null;
             resultado.semOpcoesElegiveis = true;
           } else {
@@ -362,7 +410,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const melhor = resultado.melhorNome;
-        const scoreFieldsSocial = melhor
+        let scoreFieldsSocial: { score: number | null; score_v3?: number; score_version?: string; potencial?: number } = melhor
           ? persistenciaScoreFields({
               scoreLegado: calcularScoreV1ComOcorrenciasExtras({
                 bloqueios: melhor.bloqueios,
@@ -376,6 +424,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
               nomeNascimentoPotencial: nome_completo,
             })
           : { score: null as number | null };
+        if (melhor && manualNames.has(normalizarChaveNome(melhor.nomeCompleto))) {
+          const manualScore = avaliarNome(melhor.nomeCompleto, data_nascimento).score_v3;
+          scoreFieldsSocial = { ...scoreFieldsSocial, score: manualScore, score_v3: manualScore, score_version: 'v3' };
+        }
         const potencialCalculado =
           'potencial' in scoreFieldsSocial && typeof scoreFieldsSocial.potencial === 'number'
             ? scoreFieldsSocial.potencial
@@ -395,11 +447,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         await updateAnalysis(analysis.id, {
           frequencias_numeros: {
-            ranking: resultado,
+            ranking: {
+              ...resultado,
+              areaFoco: area_foco ?? null,
+              ondeVaiUsar: onde_vai_usar ?? [],
+            },
             rankingSomenteChat: somenteChat,
+            ...(parsed.data.perfil_chat ? { perfilChat: parsed.data.perfil_chat } : {}),
+            ...(parsed.data.nomes_artisticos ? { nomesArtisticos: parsed.data.nomes_artisticos } : {}),
+            ...(parsed.data.nomes_bebe ? { nomesBebe: parsed.data.nomes_bebe } : {}),
+            scoreVersion: scoreFieldsSocial.score_version ?? (isScoreV3() ? 'v3' : 'v1'),
+            radarVersion: CONTEXTUAL_RADAR_VERSION,
+            radarSnapshot: nome_social_principal ? {
+              birthName: nome_completo, selectedName: nome_social_principal,
+              context: { areaFoco: area_foco ?? null, ondeAssinaRaw: onde_vai_usar ?? [] },
+              birth: computeContextualRadarAxes(nome_completo, data_nascimento, { areaFoco: area_foco, ondeAssinaRaw: onde_vai_usar }),
+              selected: computeContextualRadarAxes(nome_social_principal, data_nascimento, { areaFoco: area_foco, ondeAssinaRaw: onde_vai_usar }),
+            } : null,
             frequencias: freqMapSocial,
             selectedNomeSocial: nome_social_principal ? melhor?.nomeCompleto ?? nome_social_principal : null,
             assinaturaAtual: assinatura_atual?.trim() || null,
+            areaFoco: area_foco ?? null,
             ondeVaiUsar: onde_vai_usar ?? [],
             aceitaEncurtarApelido: Boolean(aceita_encurtar_apelido),
           } as unknown,
@@ -420,21 +488,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
         });
 
         // Salvar inputs do formulário para histórico (sem genero_preferido nem estilo_preferido — LGPD art. 6º III)
-        const parts = data_nascimento.split('/');
-        const dataNascIso = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : data_nascimento;
-        await supabase.from('social_name_inputs').insert({
-          analysis_id: analysis.id,
-          user_id: user.id,
-          nome_nascimento: nome_completo,
-          data_nascimento: dataNascIso,
-          objetivo_apresentacao: objetivo_apresentacao ?? null,
-          vibracoes_desejadas: vibracoes_desejadas ?? null,
-          contexto_uso: (onde_vai_usar && onde_vai_usar.length > 0 ? onde_vai_usar.join(', ') : contexto_uso) ?? null,
-          assinatura_atual: assinatura_atual?.trim() || null,
-          onde_vai_usar: onde_vai_usar ?? [],
-          aceita_encurtar_apelido: Boolean(aceita_encurtar_apelido),
-          nomes_candidatos: candidatos,
-        });
+        if (!isBabyChatPath) {
+          const parts = data_nascimento.split('/');
+          const dataNascIso = parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : data_nascimento;
+          await supabase.from('social_name_inputs').insert({
+            analysis_id: analysis.id,
+            user_id: user.id,
+            nome_nascimento: nome_completo,
+            data_nascimento: dataNascIso,
+            objetivo_apresentacao: objetivo_apresentacao ?? null,
+            vibracoes_desejadas: vibracoes_desejadas ?? null,
+            contexto_uso: (onde_vai_usar && onde_vai_usar.length > 0 ? onde_vai_usar.join(', ') : contexto_uso) ?? null,
+            assinatura_atual: assinatura_atual?.trim() || null,
+            onde_vai_usar: onde_vai_usar ?? [],
+            aceita_encurtar_apelido: Boolean(aceita_encurtar_apelido),
+            nomes_candidatos: candidatos,
+          });
+        }
 
         if (nome_social_principal || nome_ja_escolhido) {
           analiseTexto = buildSelectedSocialSummary({

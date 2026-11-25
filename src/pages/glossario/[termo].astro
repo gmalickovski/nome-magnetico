@@ -1,40 +1,56 @@
 ---
+import { resolveGlossaryRedirect } from '../../shared/glossary/canonical-terms';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { GlossaryHeader } from '../../frontend/components/blog/GlossaryHeader';
+import { LandingHeader } from '../../frontend/components/landing/LandingHeader';
 import { LandingFooter } from '../../frontend/components/landing/LandingFooter';
-import { createClient } from '@supabase/supabase-js';
+import { GlossaryTermOverlay } from '../../frontend/components/glossary/GlossaryTermOverlay';
+import {
+  getGlossaryTermBySlug,
+  listPublishedGlossaryTerms,
+} from '../../backend/glossary/glossary-service';
+import { GLOSSARY_CATEGORY_LABELS } from '../../shared/glossary/canonical-terms';
+import { linkGlossaryTermsInHtml } from '../../shared/glossary/term-linker';
 import { marked } from 'marked';
 
-const supabase = createClient(
-  import.meta.env.PUBLIC_SUPABASE_URL,
-  import.meta.env.PUBLIC_SUPABASE_ANON_KEY
-);
-
 const { termo } = Astro.params;
+if (!termo) {
+  return Astro.redirect('/glossario', 301);
+}
 
-const { data: termData } = await supabase
-  .from('glossary_terms')
-  .select('*')
-  .eq('slug', termo)
-  .eq('is_published', true)
-  .single();
+const redirectSlug = resolveGlossaryRedirect(termo);
+if (redirectSlug) {
+  return Astro.redirect(`/glossario/${redirectSlug}`, 301);
+}
 
-if (!termData) {
+const resolved = await getGlossaryTermBySlug(termo);
+if (!resolved) {
   return Astro.redirect('/glossario', 302);
 }
 
-const definitionHtml = await marked.parse(termData.definition_markdown ?? '', { gfm: true });
+const { term: termData, relatedTerms } = resolved;
+const allTerms = await listPublishedGlossaryTerms();
+
+marked.use({ gfm: true, breaks: false });
+const rawContentHtml = await marked.parse(termData.definitionMarkdown || '');
+const contentHtml = linkGlossaryTermsInHtml(
+  rawContentHtml,
+  allTerms.filter((item) => item.slug !== termData.slug),
+  { baseHref: '/glossario' },
+);
+
+const siteUrl = 'https://nomemagnetico.com.br';
+const canonicalUrl = `${siteUrl}/glossario/${termData.slug}`;
 
 const schemaDefinedTerm = {
   '@context': 'https://schema.org',
   '@type': 'DefinedTerm',
   name: termData.term,
-  description: termData.definition_markdown?.split('\n')[0] ?? termData.term,
-  url: `https://www.nomemagnetico.com.br/glossario/${termData.slug}`,
+  description: termData.metaDescription ?? termData.shortSummary,
+  url: canonicalUrl,
   inDefinedTermSet: {
     '@type': 'DefinedTermSet',
     name: 'Glossário de Numerologia Cabalística — Nome Magnético',
-    url: 'https://www.nomemagnetico.com.br/glossario',
+    url: `${siteUrl}/glossario`,
   },
 };
 
@@ -42,131 +58,125 @@ const schemaBreadcrumb = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.nomemagnetico.com.br' },
-    { '@type': 'ListItem', position: 2, name: 'Glossário', item: 'https://www.nomemagnetico.com.br/glossario' },
-    { '@type': 'ListItem', position: 3, name: termData.term, item: `https://www.nomemagnetico.com.br/glossario/${termData.slug}` },
+    { '@type': 'ListItem', position: 1, name: 'Início', item: siteUrl },
+    { '@type': 'ListItem', position: 2, name: 'Glossário', item: `${siteUrl}/glossario` },
+    { '@type': 'ListItem', position: 3, name: termData.term, item: canonicalUrl },
   ],
 };
 ---
 
 <BaseLayout
-  title={`${termData.term} — O Que É na Numerologia Cabalística | Nome Magnético`}
-  description={`Entenda o que é ${termData.term} na numerologia cabalística: definição completa, como calcular e como interpretar no seu mapa numerológico.`}
-  keywords={`o que é ${termData.term.toLowerCase()}, ${termData.term.toLowerCase()} numerologia, significado ${termData.term.toLowerCase()}, numerologia cabalística ${termData.term.toLowerCase()}`}
-  noIndex={true}
-  noIndexFollow={true}
+  title={termData.metaTitle ?? `${termData.term} — O Que É na Numerologia Cabalística | Nome Magnético`}
+  description={termData.metaDescription ?? termData.shortSummary}
+  keywords={`o que é ${termData.term.toLowerCase()}, ${termData.term.toLowerCase()} numerologia, numerologia cabalística, ${(termData.tags ?? []).join(', ').toLowerCase()}`}
+  noIndex={false}
+  noIndexFollow={false}
 >
   <script type="application/ld+json" set:html={JSON.stringify(schemaDefinedTerm)} />
   <script type="application/ld+json" set:html={JSON.stringify(schemaBreadcrumb)} />
 
-  <GlossaryHeader client:load />
+  <LandingHeader client:load />
 
-  <main class="min-h-screen bg-[#111111] pt-[72px] pb-12 md:pb-20">
-    <div class="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-12">
-      <div class="max-w-3xl mx-auto">
-
-        {/* ── CONTEÚDO ── */}
-        <article class="mt-6 sm:mt-8">
-
+  <main class="min-h-screen bg-[#131313] pt-28 pb-16 md:pt-32 md:pb-24">
+    <div class="mx-auto max-w-[1440px] px-6 md:px-10 lg:px-12">
+      <div class="mx-auto max-w-3xl">
         {/* Breadcrumb */}
-        <nav class="flex flex-wrap items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-600 mb-5 sm:mb-6" aria-label="Navegação estrutural">
-          <a href="/" class="hover:text-[#D4AF37] transition-colors">Início</a>
-          <span aria-hidden="true">›</span>
-          <a href="/glossario" class="hover:text-[#D4AF37] transition-colors">Glossário</a>
-          <span aria-hidden="true">›</span>
-          <span class="text-gray-500 line-clamp-1">{termData.term}</span>
+        <nav aria-label="Navegação estrutural" class="mb-6 flex flex-wrap items-center gap-2 text-xs text-[#A0A0A0]">
+          <a href="/" class="hover:text-[#f2ca50] transition-colors">Início</a>
+          <span>/</span>
+          <a href="/glossario" class="hover:text-[#f2ca50] transition-colors">Glossário</a>
+          <span>/</span>
+          <span class="text-[#e5e2e1] font-medium">{termData.term}</span>
         </nav>
 
-        {/* Badge */}
-        <div class="flex flex-wrap items-center gap-2 mb-4 sm:mb-5">
-          <span class="inline-flex items-center gap-1.5 bg-[#D4AF37]/10 border border-[#D4AF37]/25 rounded-full px-3 py-1">
-            <span class="text-[#D4AF37] text-[10px] sm:text-xs font-medium">Glossário · Numerologia Cabalística</span>
-          </span>
-          {termData.related_number && (
-            <span class="inline-flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1">
-              <span class="text-gray-400 text-[10px] sm:text-xs">Número {termData.related_number}</span>
+        {/* Cabeçalho do termo */}
+        <header class="nm-floating-card rounded-2xl p-6 sm:p-8 mb-8">
+          <div class="flex flex-wrap items-center gap-2.5 mb-3">
+            <span class="rounded-full bg-[#bea5ff]/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#d7c6ff]">
+              {GLOSSARY_CATEGORY_LABELS[termData.category]}
             </span>
-          )}
-        </div>
+            {termData.relatedNumber != null && (
+              <span class="rounded-full bg-[#D4AF37]/15 px-3 py-1 text-[11px] font-bold tabular-nums text-[#f2ca50]">
+                Número {termData.relatedNumber}
+              </span>
+            )}
+          </div>
 
-        {/* Título */}
-        <h1 class="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-5 sm:mb-6 leading-tight">
-          O Que É {termData.term}?
-        </h1>
+          <h1 class="font-cinzel text-2xl sm:text-4xl font-bold leading-tight text-[#e5e2e1]">
+            {termData.term}
+          </h1>
 
-        {/* Divisor */}
-        <div class="mb-6 h-px w-full opacity-20"
-          style="background: linear-gradient(90deg, transparent, #D4AF37 30%, #D4AF37 70%, transparent);">
-        </div>
+          <p class="mt-4 text-base leading-relaxed text-[#e5e2e1]/85">
+            {termData.shortSummary}
+          </p>
 
-        {/* Conteúdo */}
-        <div class="prose prose-invert prose-sm sm:prose-base max-w-none
-          prose-headings:font-cinzel prose-headings:text-[#e5e2e1] prose-headings:font-bold
-          prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
-          prose-h3:text-lg sm:prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-2
-          prose-p:text-gray-400 prose-p:leading-relaxed prose-p:mb-4
-          prose-a:text-[#D4AF37] prose-a:no-underline hover:prose-a:underline
-          prose-strong:text-[#e5e2e1] prose-strong:font-semibold
-          prose-blockquote:border-l-[#D4AF37] prose-blockquote:border-l-4 prose-blockquote:bg-white/3 prose-blockquote:rounded-r-xl prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:not-italic
-          prose-blockquote:text-gray-300
-          prose-ul:text-gray-400 prose-ol:text-gray-400
-          prose-li:mb-1
-          prose-hr:border-white/10">
-          <Fragment set:html={definitionHtml} />
-        </div>
-
-        {/* Tags */}
-        {termData.tags?.length > 0 && (
-          <div class="mt-8 pt-5 border-t border-white/8">
-            <div class="flex flex-wrap gap-2">
-              {termData.tags.map((tag: string) => (
-                <span class="text-xs text-gray-600 bg-white/3 border border-white/8 px-3 py-1 rounded-full">
-                  #{tag}
+          {termData.tags.length > 0 && (
+            <div class="mt-5 flex flex-wrap gap-2">
+              {termData.tags.map((tag) => (
+                <span class="rounded-full bg-white/[0.05] px-3 py-1 text-xs text-[#A0A0A0]">
+                  {tag}
                 </span>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </header>
 
-        {/* ── CTA ── */}
-        <div class="mt-10 sm:mt-12 bg-white/3 border border-[#D4AF37]/15 rounded-2xl p-6 sm:p-8 text-center">
-          <p class="text-[#D4AF37] text-[10px] sm:text-xs font-medium tracking-widest uppercase mb-2 sm:mb-3">Aprofunde o Conhecimento</p>
-          <h3 class="font-cinzel text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
-            Veja Isso no Seu Próprio Nome
-          </h3>
-          <p class="text-gray-400 text-xs sm:text-sm mb-5 sm:mb-6 max-w-md mx-auto leading-relaxed">
-            Entender o conceito é o primeiro passo. Descobrir como ele se manifesta no seu nome é a transformação.
-          </p>
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="/analise-gratuita"
-              class="w-full sm:w-auto inline-block border border-[#D4AF37]/40 text-[#D4AF37] font-medium px-6 py-3 rounded-xl hover:bg-[#D4AF37]/10 transition-all duration-300 text-sm text-center"
-            >
-              Teste Gratuito
-            </a>
-            <a
-              href="/precos"
-              class="w-full sm:w-auto inline-block bg-[#D4AF37] text-[#1A1A1A] font-bold px-6 py-3 rounded-xl hover:bg-[#f2ca50] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#D4AF37]/20 text-sm text-center"
-            >
-              Análise Completa
-            </a>
-          </div>
-        </div>
-
-        {/* Navegação final */}
-        <div class="mt-8 sm:mt-10 pt-5 border-t border-white/8 flex items-center justify-between">
-          <a href="/glossario" class="text-gray-600 hover:text-[#D4AF37] text-xs sm:text-sm transition-colors">
-            Voltar ao Glossário
-          </a>
-          <a href="/blog" class="text-gray-600 hover:text-[#D4AF37] text-xs sm:text-sm transition-colors">
-            Ver Blog
-          </a>
-        </div>
-
+        {/* Definição detalhada */}
+        <article class="prose prose-invert max-w-none prose-headings:font-cinzel prose-headings:text-[#f2ca50] prose-h3:text-xl prose-p:text-[#e5e2e1]/90 prose-p:leading-relaxed prose-strong:text-[#e5e2e1] prose-li:text-[#e5e2e1]/90 mb-12">
+          <Fragment set:html={contentHtml} />
         </article>
+
+        {/* CTA contextual */}
+        <section class="nm-floating-card rounded-2xl p-6 sm:p-8 mb-12 text-center sm:text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#f2ca50]">
+              Diagnóstico Gratuito
+            </p>
+            <h2 class="mt-1 font-cinzel text-xl font-bold text-[#e5e2e1]">
+              Descubra como isso aparece no seu nome
+            </h2>
+            <p class="mt-1.5 text-sm text-[#A0A0A0]">
+              Veja o seu Triângulo da Vida, a nota atual e os bloqueios em segundos.
+            </p>
+          </div>
+          <a
+            href="/analise-gratuita"
+            class="inline-flex shrink-0 items-center justify-center rounded-full bg-[#D4AF37] px-6 py-3 text-xs font-bold uppercase tracking-wider text-[#131313] hover:bg-[#f2ca50] transition"
+          >
+            Fazer análise gratuita →
+          </a>
+        </section>
+
+        {/* Termos Relacionados */}
+        {relatedTerms.length > 0 && (
+          <section>
+            <h2 class="mb-4 font-cinzel text-xl font-bold text-[#e5e2e1]">
+              Conceitos Relacionados
+            </h2>
+            <div class="grid gap-3.5 sm:grid-cols-2">
+              {relatedTerms.map((rel) => (
+                <a
+                  href={`/glossario/${rel.slug}`}
+                  class="nm-floating-card block rounded-2xl p-4 transition hover:bg-[#202020] hover:ring-1 hover:ring-[#D4AF37]/40"
+                >
+                  <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-[#bea5ff]">
+                    {GLOSSARY_CATEGORY_LABELS[rel.category]}
+                  </p>
+                  <h3 class="mt-1.5 font-cinzel text-base font-bold text-[#e5e2e1]">
+                    {rel.term}
+                  </h3>
+                  <p class="mt-1 text-xs leading-relaxed text-[#A0A0A0] line-clamp-2">
+                    {rel.shortSummary}
+                  </p>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   </main>
 
+  <GlossaryTermOverlay client:load baseHref="/glossario" />
   <LandingFooter client:visible />
 </BaseLayout>

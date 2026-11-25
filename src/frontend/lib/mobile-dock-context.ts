@@ -4,8 +4,12 @@
 
 export type MobileDockContext = 'app_nav' | 'action';
 
-/** Rotas com ações contextuais (Recomeçar, PDF, etc.) ao lado da nav global. */
-const ACTION_DOCK_PREFIXES = ['/app/analise/nome-social', '/app/resultado'] as const;
+/** Rotas com ações contextuais (Recomeçar, PDF, Painel) ao lado da nav global. */
+const ACTION_DOCK_PREFIXES = [
+  '/app/analise/nome-social',
+  '/app/analises',
+  '/app/resultado',
+] as const;
 
 export function resolveMobileDockContext(pathname: string): MobileDockContext {
   const path = pathname.replace(/\/+$/, '') || '/';

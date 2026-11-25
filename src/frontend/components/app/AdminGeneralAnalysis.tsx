@@ -944,7 +944,7 @@ export default function AdminGeneralAnalysis() {
                       <div className="mb-10">
                         <div className="mb-3 px-1">
                           <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">O Peso do Passado</p>
-                          <h3 className="font-cinzel text-lg font-bold text-white">Débitos Kármicos</h3>
+                          <h3 className="font-cinzel text-lg font-bold text-white">Débitos Kármicos <span className="text-[#f2ca50]">= {selectedCandidate.debitosCarmicos.length}</span></h3>
                         </div>
                         <KarmicDebts debitos={selectedCandidate.debitosCarmicos} nomeCompleto={selectedCandidate.nomeCompleto} />
                       </div>
@@ -955,7 +955,7 @@ export default function AdminGeneralAnalysis() {
                       <div className="mb-10">
                         <div className="mb-3 px-1">
                           <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Lacunas Energéticas</p>
-                          <h3 className="font-cinzel text-lg font-bold text-white">Lições Kármicas</h3>
+                          <h3 className="font-cinzel text-lg font-bold text-white">Lições Kármicas <span className="text-[#f2ca50]">= {selectedCandidate.licoesCarmicas.length}</span></h3>
                         </div>
                         <KarmicLessons licoes={selectedCandidate.licoesCarmicas} nomeCompleto={selectedCandidate.nomeCompleto} />
                       </div>
@@ -966,7 +966,7 @@ export default function AdminGeneralAnalysis() {
                       <div className="mb-10">
                         <div className="mb-3 px-1">
                           <p className="font-cinzel text-xs uppercase tracking-[0.15em] text-[#D4AF37]/70 mb-1">Frequências Numéricas</p>
-                          <h3 className="font-cinzel text-lg font-bold text-white">Tendências Ocultas</h3>
+                          <h3 className="font-cinzel text-lg font-bold text-white">Tendências Ocultas <span className="text-[#f2ca50]">= {selectedCandidate.tendenciasOcultas.length}</span></h3>
                         </div>
                         <HiddenTendencies
                           tendencias={selectedCandidate.tendenciasOcultas}

@@ -43,5 +43,21 @@ describe('generate-free-lead-pdf', () => {
     assert.ok(!('error' in dests), `inspect: ${'error' in dests ? dests.error : ''}`);
     assert.ok(dests['pdf-sumario'] >= 1);
     assert.ok(dests['pdf-essencia'] >= dests['pdf-sumario']);
+    assert.ok(
+      dests['pdf-essencia-arquetipo'] >= dests['pdf-essencia'] &&
+        dests['pdf-essencia-arquetipo'] < dests['pdf-essencia-triangulo-vida'],
+      'pdf-essencia-arquetipo deve ficar entre A Essência e Triângulo da Vida',
+    );
+    assert.ok(dests['pdf-essencia-karma'] >= dests['pdf-essencia-triangulo-vida']);
+    assert.ok(dests['pdf-mapa'] > dests['pdf-essencia-karma']);
+    assert.ok(dests['pdf-score'] >= dests['pdf-mapa']) // DEV-332: mesma página;
+    assert.ok(dests['pdf-nome-social'] > dests['pdf-score']);
+    for (const removed of [
+      'pdf-essencia-triangulo-pessoal',
+      'pdf-essencia-triangulo-social',
+      'pdf-essencia-triangulo-destino',
+    ]) {
+      assert.equal(dests[removed], undefined, `${removed} não deve existir no PDF gratuito`);
+    }
   });
 });

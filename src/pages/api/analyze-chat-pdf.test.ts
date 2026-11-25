@@ -1,3 +1,4 @@
+import { avaliarNome } from '../../backend/numerology/score';
 import { describe, it, mock, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -8,9 +9,13 @@ let mockReusableFreeAnalysis: { id: string; status: string } | null = null;
 let mockHasUsedFreeAnalysis = false;
 let mockCreatedAnalysisId = 'created-free-id-1';
 let createAnalysisCalls = 0;
+let paidAccess = false;
+let updates: Record<string, any>[] = [];
+let profileUpdates: Record<string, any>[] = [];
+let socialInputsInserts: Record<string, any>[] = [];
 
 const mockUserSupabase = {
-  from: (_table: string) => {
+  from: (table: string) => {
     const builder: any = {
       select: () => builder,
       eq: () => builder,
@@ -25,8 +30,14 @@ const mockUserSupabase = {
         },
         error: null,
       }),
-      update: () => builder,
-      insert: async () => ({ data: null, error: null }),
+      update: (payload: Record<string, any>) => {
+        if (table === 'profiles') profileUpdates.push(payload);
+        return builder;
+      },
+      insert: async (payload: Record<string, any>) => {
+        if (table === 'social_name_inputs') socialInputsInserts.push(payload);
+        return { data: null, error: null };
+      },
     };
     return builder;
   },
@@ -41,7 +52,7 @@ mock.module('../../backend/db/supabase', {
 
 mock.module('../../backend/db/subscriptions', {
   namedExports: {
-    hasActiveSubscription: async () => false,
+    hasActiveSubscription: async () => paidAccess,
   },
 });
 
@@ -54,7 +65,7 @@ mock.module('../../backend/db/analyses', {
       mockHasUsedFreeAnalysis = true;
       return { id, status: 'pending' };
     },
-    updateAnalysis: async () => null,
+    updateAnalysis: async (_id: string, value: Record<string, any>) => { updates.push(value); return null; },
     saveMagneticNames: async () => [],
     hasUsedFreeAnalysis: async () => mockHasUsedFreeAnalysis,
     findRecentNomeSocialAnalysisForPdf: async () => null,
@@ -69,6 +80,8 @@ mock.module('../../backend/db/analysis-processing', {
     STALE_ERROR_MESSAGE: 'stale',
   },
 });
+
+mock.module('../../backend/notifications/analysis-complete', { namedExports: { notifyPaidAnalysisComplete: async () => {} } });
 
 const { buildSelectedSocialSummary, POST } = await import('./analyze.ts');
 
@@ -89,6 +102,7 @@ describe('analyze chat PDF (sem LLM)', () => {
     mockHasUsedFreeAnalysis = false;
     mockCreatedAnalysisId = 'free-analysis-123';
     createAnalysisCalls = 0;
+    paidAccess = false; updates = [];
   });
 
   it('reutiliza análise recente quando nome_ja_escolhido + nome_social_principal', () => {
@@ -198,4 +212,115 @@ describe('analyze chat PDF (sem LLM)', () => {
     assert.match(nomeSocialChatSrc, /freePdfAbortRef/);
     assert.match(nomeSocialChatSrc, /waitAnalysisCompleteForPdf/);
   });
+});
+
+it('DEV-299 salva manual com nota inferior, proveniência e contexto para reabertura/PDF', async () => {
+  paidAccess = true; updates = [];
+  const nome = 'Aaaaaaa';
+  const response = await POST({ request: new Request('http://localhost/api/analyze', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ product_type: 'nome_social', nome_completo: 'Alexandra Mendes Vale', data_nascimento: '07/03/1992', nome_social_principal: nome, nome_ja_escolhido: true, nomes_candidatos: [nome], nomes_manuais: [nome], ranking_somente_chat: true, area_foco: 'carreira_negocios', onde_vai_usar: ['contratos'] }),
+  }), locals: { user: { id: 'fixture-owner', email: 'fixture@example.com' }, accessToken: 'token-fixture' } } as any);
+  assert.equal(response.status, 200);
+  for (let attempt = 0; attempt < 20 && !updates.some(u => u.status === 'complete'); attempt++) await new Promise<void>(resolve => setImmediate(resolve));
+  const saved = updates.find(u => u.frequencias_numeros?.ranking);
+  assert.ok(saved, 'persistiu frequência/ranking no background');
+  const data = saved.frequencias_numeros;
+  assert.equal(data.selectedNomeSocial, nome);
+  assert.equal(data.ranking.nomesCandidatos[0].origem, 'manual');
+  assert.equal(data.ranking.nomesCandidatos[0].score, avaliarNome(nome, '07/03/1992').score_v3);
+  assert.equal(data.radarVersion, 'contextual-v1');
+  assert.equal(data.radarSnapshot.birth.length, 5);
+  assert.equal(data.radarSnapshot.selectedName, nome);
+  assert.equal(data.areaFoco, 'carreira_negocios');
+});
+
+it('DEV-328 persiste perfil_chat, nomes_artisticos e nomes_bebe sem alterar perfil no caminho do bebê', async () => {
+  paidAccess = true;
+  updates = [];
+  profileUpdates = [];
+  socialInputsInserts = [];
+
+  const resArtistico = await POST({
+    request: new Request('http://localhost/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_type: 'nome_social',
+        nome_completo: 'Maria Silva',
+        data_nascimento: '01/01/1990',
+        nome_social_principal: 'Lira Sol',
+        nome_ja_escolhido: true,
+        nomes_candidatos: ['Mari Sol', 'Lira Sol'],
+        ranking_somente_chat: true,
+        perfil_chat: {
+          motivo: 'artistico',
+          areaArtistica: 'cantor',
+          tipoNomeArtistico: 'ambos',
+        },
+        nomes_artisticos: {
+          proximos: [{ nome: 'Mari Sol', nota: 78, expressao: 3, afinidade: 2, secao: 'proximo' }],
+          novos: [{ nome: 'Lira Sol', nota: 91, expressao: 5, afinidade: 1, secao: 'novo' }],
+          escolhido: 'Lira Sol',
+        },
+      }),
+    }),
+    locals: { user: { id: 'fixture-owner', email: 'fixture@example.com' }, accessToken: 'token-fixture' },
+  } as any);
+  assert.equal(resArtistico.status, 200);
+  for (let i = 0; i < 20 && !updates.some((u) => u.status === 'complete'); i++) {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  const savedArt = updates.find((u) => u.frequencias_numeros?.nomesArtisticos);
+  assert.ok(savedArt, 'persistiu nomesArtisticos');
+  assert.equal(savedArt.frequencias_numeros.perfilChat.motivo, 'artistico');
+  assert.equal(savedArt.frequencias_numeros.nomesArtisticos.escolhido, 'Lira Sol');
+  assert.ok(savedArt.frequencias_numeros.ranking.melhorNome, 'mantém melhorNome para caminho artístico');
+
+  updates = [];
+  profileUpdates = [];
+  socialInputsInserts = [];
+
+  const resBebe = await POST({
+    request: new Request('http://localhost/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_type: 'nome_social',
+        nome_completo: 'Alice Silva',
+        data_nascimento: '15/06/2027',
+        nome_social_principal: 'Alice Silva',
+        nome_ja_escolhido: true,
+        nomes_candidatos: ['Alice Silva'],
+        ranking_somente_chat: true,
+        perfil_chat: {
+          motivo: 'bebe',
+          bebeMae: 'Maria Silva',
+          bebeSituacao: 'nao_nasceu',
+          bebeDataTipo: 'prevista',
+          bebeSexo: 'menina',
+          bebeData: '15/06/2027',
+          bebeSobrenomes: ['Silva'],
+        },
+        nomes_bebe: {
+          seusNomes: [],
+          sugestoes: [{ nome: 'Alice Silva', nota: 88, expressao: 6, bloqueios: [], diasBons: 22, diasTotal: 29, grupo: 'menina' }],
+          janela: { dias: 29, centro: '15/06/2027' },
+          escolhido: 'Alice Silva',
+        },
+      }),
+    }),
+    locals: { user: { id: 'fixture-owner', email: 'fixture@example.com' }, accessToken: 'token-fixture' },
+  } as any);
+  assert.equal(resBebe.status, 200);
+  for (let i = 0; i < 20 && !updates.some((u) => u.status === 'complete'); i++) {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  const savedBebe = updates.find((u) => u.frequencias_numeros?.nomesBebe);
+  assert.ok(savedBebe, 'persistiu nomesBebe');
+  assert.equal(savedBebe.frequencias_numeros.perfilChat.motivo, 'bebe');
+  assert.equal(savedBebe.frequencias_numeros.nomesBebe.escolhido, 'Alice Silva');
+  assert.equal(profileUpdates.length, 0, 'não sobrescreve birth_name/birth_date em profiles no caminho do bebê');
+  assert.equal(socialInputsInserts.length, 0, 'não grava social_name_inputs no caminho do bebê');
+  assert.ok(savedBebe.frequencias_numeros.ranking.melhorNome, 'mantém melhorNome para caminho bebê');
 });

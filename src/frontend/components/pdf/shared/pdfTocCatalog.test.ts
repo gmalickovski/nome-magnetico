@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildGratuitoTocEntries, buildPaidTocEntries } from './pdfTocCatalog.ts';
@@ -15,30 +16,55 @@ describe('pdfTocCatalog', () => {
     assert.equal(pages, 2);
   });
 
-  it('gratuito inclui ids raiz da revisão Growth 05/11', () => {
+  it('gratuito inclui ids raiz da revisão Growth 05/11 e Arquétipo sem triângulos complementares', () => {
     const ids = buildGratuitoTocEntries().map((e) => e.id);
-    for (const id of ['pdf-essencia', 'pdf-mapa', 'pdf-score', 'pdf-nome-social']) {
+    for (const id of ['pdf-essencia', 'pdf-essencia-arquetipo', 'pdf-essencia-triangulo-vida', 'pdf-essencia-karma', 'pdf-mapa', 'pdf-score', 'pdf-nome-social']) {
       assert.ok(ids.includes(id), `faltando ${id}`);
     }
+    for (const removed of ['pdf-essencia-triangulo-pessoal', 'pdf-essencia-triangulo-social', 'pdf-essencia-triangulo-destino']) {
+      assert.ok(!ids.includes(removed), `não deveria incluir ${removed}`);
+    }
+    assert.ok(!buildGratuitoTocEntries({ hasPotencialCta: false }).some((e) => e.id === 'pdf-nome-social'));
   });
 
   it('pago inclui ids raiz e subassuntos principais', () => {
     const ids = buildPaidTocEntries(true).map((e) => e.id);
     for (const id of [
+      'pdf-resumo',
+      'pdf-intro-leitura',
       'pdf-ranking',
       'pdf-essencia',
       'pdf-harmonizacao',
       'pdf-harmonizacao-comparativa',
+      'pdf-nome-harmonizado',
       'pdf-guia',
       'pdf-score',
       'pdf-treino',
+      'pdf-anexos',
+      'pdf-anexos-ciclos',
+      'pdf-arcanos',
       'pdf-essencia-expressao',
       'pdf-essencia-triangulo-vida',
       'pdf-essencia-debitos',
       'pdf-harmonizacao-corpo',
-      'pdf-arquetipo',
+      'pdf-essencia-arquetipo',
+      'pdf-harmonizado-arquetipo',
     ]) {
       assert.ok(ids.includes(id), `faltando ${id}`);
     }
   });
+});
+
+it('DEV-299 / DEV-327 capítulos pai começam em Page independente mesmo com espaço anterior', () => {
+  const source =
+    readFileSync(new URL('../NomeSocialPDF.tsx', import.meta.url), 'utf8') +
+    '\n' +
+    readFileSync(new URL('../layout/NomeSocialLayoutSections.tsx', import.meta.url), 'utf8');
+  for (const id of ['pdf-resumo', 'pdf-essencia', 'pdf-harmonizacao', 'pdf-nome-harmonizado', 'pdf-guia', 'pdf-anexos']) {
+    assert.match(source, new RegExp('<Page[^>]*>\\s*(?:\\{[^}]*&&\\s*)?<PDFSectionAnchor\\s+id="' + id + '"'), id);
+  }
+  const entries = buildPaidTocEntries(true, { hasConclusion: true });
+  assert.equal(new Set(entries.map(e => e.id)).size, entries.length);
+  assert.ok(entries.some(e => e.level === 3));
+  assert.ok(!buildPaidTocEntries(false).some(e => e.id === 'pdf-ranking' || e.id === 'pdf-conclusao'));
 });

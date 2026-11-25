@@ -1,10 +1,13 @@
 import React from 'react';
 import { Pill } from '../../ui/Pill.js';
+import { ChatBackButton } from './ChatBackButton.js';
 
 export interface GuessButtonsProps {
   onExact: () => void;
   onPartial: () => void;
   onOther: () => void;
+  /** DEV-324: volta uma pergunta. */
+  onBack?: () => void;
   disabled?: boolean;
   className?: string;
 }
@@ -13,11 +16,13 @@ export function GuessButtons({
   onExact,
   onPartial,
   onOther,
+  onBack,
   disabled = false,
   className = '',
 }: GuessButtonsProps) {
   return (
     <div className={`flex flex-wrap gap-2.5 items-center mt-2 ${className}`}>
+      {onBack && <ChatBackButton onClick={onBack} disabled={disabled} />}
       <Pill
         label="Na mosca"
         size="lg"

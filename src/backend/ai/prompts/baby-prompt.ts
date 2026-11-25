@@ -270,7 +270,7 @@ ${candidatosTexto}
 
 ## Sua Tarefa
 
-Você é um numerólogo cabalístico especializado em nomes para bebês, com profundo conhecimento dos sétênios de desenvolvimento de Rudolf Steiner e da pedagogia baseada em temperamentos. Com base nos dados acima, elabore um relatório completo, caloroso, profundo e rico para os pais. Este relatório vale R$150+ e cada seção deve conter revelações específicas e acionáveis que os pais não encontrarão em nenhum outro lugar.
+Você é um numerólogo cabalístico especializado em nomes para bebês, com profundo conhecimento dos sétênios de desenvolvimento de Rudolf Steiner e da pedagogia baseada em temperamentos. Com base nos dados acima, elabore um relatório completo, caloroso, profundo e rico para os pais. Este é um relatório premium (nunca cite preço ou valor no texto) e cada seção deve conter revelações específicas e acionáveis que os pais não encontrarão em nenhum outro lugar.
 
 Escreva pelo menos 2–3 parágrafos por seção principal. Evite generalidades — cada afirmação deve ser ancorada nos números concretos desta criança.
 

@@ -80,3 +80,30 @@ O ecossistema do Nome Magnético garante unificação total entre as ferramentas
 | **Componente de Badge UI** | `src/frontend/components/app/CompatibilityBadge.tsx` |
 | **Relatório Impresso PDF** | `src/frontend/components/pdf/NomeSocialPDF.tsx` |
 | **Relatório Interativo HTML** | `src/frontend/components/app/resultado/NomeSocialResultado.astro` |
+
+---
+
+## 7. Regras de oferta de sugestões (Nome Social · motor v4 · DEV-301)
+
+A nota **não muda**; estas regras definem o que pode ser oferecido ao usuário:
+
+| Regra | Descrição |
+| :--- | :--- |
+| **R1** | Zero bloqueio. Na copy, a regra é descrita sobre o **Triângulo da Vida** (decisão de 24/11/2026). O motor ainda confere os 4 triângulos nesta regra; alinhar é a DEV-352. |
+| **R2** | Nota mínima `max(70, nascimento + 1)`. Nascimento abaixo de 70 → sugestões a partir de 70; nascimento ≥ 70 → sempre acima, nunca igual. `NOME_SOCIAL_GANHO_MINIMO_PONTOS` só sobe o mínimo. |
+| **R3** | O Nome de Ouro equilibra nota e perfil do cliente (curto, sem um sobrenome, só o primeiro nome), mantendo a ordem de prioridade do comparador, apenas entre as válidas. |
+| **R3a** | A opção válida de maior nota sempre aparece entre as visíveis (`maiorNota`). |
+| **R3b** | "Gerar mais" traz as próximas válidas de nota alta, sem repetir. |
+| **R4** | Regra dura nunca é relaxada. Sem opção válida → estado vazio. |
+
+Nomes do usuário que não passam em R1/R2 ficam em `comparacao` e não viram sugestão. O potencial (`calcularPotencialV3`) considera só variantes que passariam em R1/R2. Rollback: `NOME_SOCIAL_MOTOR_V4=false`. Código: `suggestion-birth-invariant.ts`, `products/nome-social.ts`, `score-config.ts`.
+
+### 7.1 Perfil da entrevista (DEV-302)
+
+Respostas de estilo ("como você quer ser percebido"), foco e subfoco viram números preferidos de Expressão, Motivação e Impressão (`src/backend/numerology/profile-affinity.ts`). A aderência só **desempata** entre sugestões que já passaram em R1/R2, dentro da mesma faixa de 5 pontos de nota (faixas alinhadas em 70, 85, 90...), depois das preferências explícitas de estilo e sobrenome. Não altera a nota, não cria candidatos e não esconde a sugestão de maior nota (R3a). O texto "por que este nome para você" cita só afinidades realmente atendidas.
+
+## 8. Fonte da tabela de letras e acentos
+
+A tabela de conversão de `src/backend/numerology/core.ts` (letras 1 a 8, X e Ç = 6, agudo +2, til +3, circunflexo +7, anel +7, grave x2, trema x2, apóstrofo +2 na letra anterior) coincide com a "Tabela de Números Cabalísticos" do Curso de Numerologia Cabalística (cursodenumerologiacabalistica.com). Conferido em 25/11/2026 contra `tabela-de-numeros-cabalisticos.pdf` (projeto vibraweb, `Docs Numerologia/`). Os PDFs do curso em `docs/PDF/` (fora do git) tratam de triângulos, arcanos, débitos, lições e tendências; não trazem a tabela de letras.
+
+A página pública `/como-funciona-o-score` não nomeia o curso; decisão de citar fica com o responsável pelo conteúdo.

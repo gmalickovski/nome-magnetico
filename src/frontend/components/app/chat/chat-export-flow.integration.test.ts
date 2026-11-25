@@ -68,8 +68,14 @@ describe('fluxo chat 3→6 → reabrir → export (integração mínima)', () =>
   });
 
   it('cumula 3+3, persiste sessão com analysisId e payload com 6 nomes exatos no motor', () => {
-    const round1 = [sug('Ana Vale', '1'), sug('Bia Costa', '2'), sug('Dora Melo', '3')];
-    const round2 = [sug('Eva Rios', '4'), sug('Fabi Nunes', '5'), sug('Iris Mattos', '6')];
+    // DEV-301: o chat só mostra sugestões que passam em R1/R2; o export reenvia essas mesmas.
+    const ofertadas = analisarNomesSocial([], 'Maria Silva Santos', '01/01/1990', {}).nomesCandidatos.map(
+      (c) => c.nomeCompleto,
+    );
+    assert.ok(ofertadas.length >= 6, 'motor deve oferecer ao menos 6 sugestões para a fixture');
+    const [n1, n2, n3, n4, n5, n6] = ofertadas as [string, string, string, string, string, string];
+    const round1 = [sug(n1, '1'), sug(n2, '2'), sug(n3, '3')];
+    const round2 = [sug(n4, '4'), sug(n5, '5'), sug(n6, '6')];
     const merged = mergeChatSuggestionsCumulative(round1, round2);
     assert.equal(merged.length, 6);
 
@@ -77,7 +83,7 @@ describe('fluxo chat 3→6 → reabrir → export (integração mínima)', () =>
     const payload = buildChatPdfAnalyzePayload({
       birthName: 'Maria Silva Santos',
       birthDate: '01/01/1990',
-      selectedSocialName: 'Ana Vale',
+      selectedSocialName: n1,
       collect: INITIAL_COLLECT_STATE,
       suggestions: merged,
     });

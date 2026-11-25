@@ -3,11 +3,14 @@ import { buildResultadoDockLayout } from './mobile-dock-screen.js';
 import MobileDockActionBridge from '../MobileDockActionBridge.js';
 import type { DockPrimaryActionId, DockSecondaryActionId } from './mobile-dock-screen.js';
 import { capturePostHogEvent } from '../../../lib/analytics.js';
+import { usePdfDownloadOverlay } from '../../../lib/pdf-download.js';
+import { ChatPdfPreparingOverlay } from './ChatPdfPreparingOverlay.js';
 
 export interface ResultadoMobileDockProps {
   analysisId: string;
   productType: string;
   isFree: boolean;
+  forceFreePdf?: boolean;
   redoHref: string;
 }
 
@@ -15,8 +18,10 @@ export function ResultadoMobileDock({
   analysisId,
   productType,
   isFree,
+  forceFreePdf = false,
   redoHref,
 }: ResultadoMobileDockProps) {
+  const { phase, startDownload, retry, dismiss } = usePdfDownloadOverlay();
   const layout = useMemo(
     () =>
       buildResultadoDockLayout({
@@ -65,7 +70,7 @@ export function ResultadoMobileDock({
         location: 'dock',
         surface: 'resultado',
       });
-      window.location.href = '/comprar?produto=nome_social&utm_source=app_dock';
+      window.location.href = '/comprar?produto=nome_social&from=app_dock';
       return;
     }
     if (action === 'download_pdf' && analysisId) {
@@ -74,18 +79,29 @@ export function ResultadoMobileDock({
         location: 'dock',
         surface: 'resultado',
       });
-      window.location.href = `/api/generate-pdf?id=${encodeURIComponent(analysisId)}`;
+      void startDownload({
+        analysisId,
+        productType,
+        forceFreePdf: Boolean(forceFreePdf || isFree || productType === 'analise_gratuita'),
+      });
     }
   };
 
   return (
-    <MobileDockActionBridge
-      layout={layout}
-      summaryPanelOpen={false}
-      summaryBadge={false}
-      onSecondary={handleSecondary}
-      onPrimary={handlePrimary}
-    />
+    <>
+      <MobileDockActionBridge
+        layout={layout}
+        summaryPanelOpen={false}
+        summaryBadge={false}
+        onSecondary={handleSecondary}
+        onPrimary={handlePrimary}
+      />
+      <ChatPdfPreparingOverlay
+        phase={phase}
+        onRetry={retry}
+        onDismissError={dismiss}
+      />
+    </>
   );
 }
 
