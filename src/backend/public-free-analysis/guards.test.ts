@@ -4,6 +4,7 @@ import {
   FreeAnalysisRequestSchema,
   HONEYPOT_FIELD,
   fakeHoneypotSuccessBody,
+  hasSamePublicRequestOrigin,
   isAllowedPublicOrigin,
   isHoneypotTripped,
   isPlausibleBirthDate,
@@ -59,6 +60,43 @@ describe('isAllowedPublicOrigin', () => {
       headers: { origin: 'http://localhost:4321' }, // pragma: allowlist secret
     });
     assert.equal(isAllowedPublicOrigin(req, true), true);
+  });
+});
+
+describe('hasSamePublicRequestOrigin', () => {
+  it('preserva a porta do app quando o adapter resolve o host como localhost', () => {
+    const url = new URL('http://localhost/api/analytics/paid-preferences');
+    const request = new Request(url, {
+      headers: { host: 'localhost:4321', origin: 'http://localhost:4321' }, // pragma: allowlist secret
+    });
+    assert.equal(hasSamePublicRequestOrigin(request, url), true);
+    request.headers.set('origin', 'http://localhost');
+    assert.equal(hasSamePublicRequestOrigin(request, url), false);
+    request.headers.set('origin', 'http://localhost:3000'); // pragma: allowlist secret
+    assert.equal(hasSamePublicRequestOrigin(request, url), false);
+  });
+
+  it('valida o host público configurado e ignora X-Forwarded-Host', (t) => {
+    const key = 'FREE_ANALYSIS_ALLOWED_ORIGINS';
+    const previous = process.env[key];
+    process.env[key] = 'https://site.example';
+    t.after(() => {
+      if (previous === undefined) delete process.env[key];
+      else process.env[key] = previous;
+    });
+
+    const url = new URL('https://localhost/api/analytics/paid-preferences');
+    const request = new Request(url, {
+      headers: { host: 'site.example', origin: 'https://site.example' },
+    });
+    assert.equal(hasSamePublicRequestOrigin(request, url), true);
+    request.headers.set('host', 'other.example');
+    request.headers.set('x-forwarded-host', 'site.example');
+    assert.equal(hasSamePublicRequestOrigin(request, url), false);
+    request.headers.set('origin', 'https://other.example');
+    assert.equal(hasSamePublicRequestOrigin(request, url), false);
+    request.headers.delete('origin');
+    assert.equal(hasSamePublicRequestOrigin(request, url), false);
   });
 });
 

@@ -179,6 +179,16 @@ describe('cupom', () => {
     assert.equal(resolveHqCouponDiscount(result, 9800), 8300);
   });
 
+  it('calcula o desconto do checkout sobre o preço do produto quando o cupom foi validado sem preço', () => {
+    const context = { productType: 'nome_social' as const, usedByHolder: false, useCount: 0, now: NOW };
+    const percent = evaluateCoupon(coupon({ discount_value: 10 }), context);
+    const fixed = evaluateCoupon(coupon({ discount_type: 'fixed', discount_value: 1500 }), context);
+
+    assert.equal(percent.discountedCents, undefined);
+    assert.equal(resolveHqCouponDiscount(percent, 9800), 8820);
+    assert.equal(resolveHqCouponDiscount(fixed, 9800), 8300);
+  });
+
   it('rejeita cupom inexistente, inativo ou expirado', () => {
     assert.equal(evaluateCoupon(null, { productType: 'nome_social', usedByHolder: false, useCount: 0, now: NOW }).error, COUPON_INVALID);
     assert.equal(
