@@ -2,6 +2,7 @@
  * Payload do evento `payment.confirmed` enviado ao n8n via notify().
  * Função pura: não faz I/O, para poder ser testada sem mocks.
  */
+import { greetingFirstName } from './first-name';
 
 export interface PaymentConfirmedSession {
   id: string;
@@ -58,7 +59,7 @@ export function buildPaymentConfirmedPayload(
 
   return {
     email,
-    firstName: input.profile?.nome?.trim() || email.split('@')[0],
+    firstName: greetingFirstName(input.profile?.nome, email),
     accessUrl: input.accessUrl,
     productType: input.productType,
     productName: input.productName,

@@ -18,6 +18,7 @@ import {
   type AccessAttributeOrigin,
 } from './access-attributes-payload';
 import { enrichNotificationPayload } from './enrich-payload';
+import { getPublicBaseUrl } from '../../utils/public-url';
 
 type NotificationEvent =
   | 'user.welcome'
@@ -197,7 +198,8 @@ export async function notify(
     return false;
   }
 
-  return sendToWebhook(url, event, payload);
+  // DEV-358: origem do ambiente para os links do template (reembolso, suporte, comprar).
+  return sendToWebhook(url, event, { baseUrl: getPublicBaseUrl(), ...payload });
 }
 
 /**

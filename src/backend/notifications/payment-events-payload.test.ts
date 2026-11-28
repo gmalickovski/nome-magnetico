@@ -31,6 +31,15 @@ describe('buildPaymentConfirmedPayload (DEV-259)', () => {
     assert.equal(p?.userId, 'user-1');
   });
 
+  it('DEV-358: saúda só pelo primeiro nome quando o perfil tem nome completo', () => {
+    const p = buildPaymentConfirmedPayload({
+      ...baseInput,
+      session: { id: 'cs_3', amount_total: 9800 },
+      profile: { email: 'm@example.com', nome: '  Maria   da Silva Souza ' },
+    });
+    assert.equal(p?.firstName, 'Maria');
+  });
+
   it('usa só customer_details.email quando perfil e customer_email não têm e-mail', () => {
     const session = { id: 'cs_2', customer_details: { email: 'cd@example.com' } };
     assert.equal(resolvePaymentRecipientEmail(session, { email: '' }), 'cd@example.com');

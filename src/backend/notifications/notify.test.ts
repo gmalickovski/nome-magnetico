@@ -95,4 +95,22 @@ describe('notify / sendToWebhook', () => {
     assert.equal(body.payload.email, undefined);
     assert.equal(body.payload.firstName, undefined);
   });
+
+  it('DEV-358: inclui baseUrl do ambiente no payload transacional', async () => {
+    process.env[WEBHOOK_KEY] = 'http://n8n.test/webhook';
+    const previousAppUrl = process.env.APP_URL;
+    process.env.APP_URL = 'http://localhost:4321/';
+    const send = mock.fn(async (_url: RequestInfo | URL, _init?: RequestInit) =>
+      new Response(null, { status: 200 }));
+    globalThis.fetch = send;
+    try {
+      assert.equal(await notify('payment.failed', { email: 'a@example.com', firstName: 'Ana' }), true);
+      const body = JSON.parse(String(send.mock.calls[0].arguments[1]?.body));
+      assert.equal(body.payload.baseUrl, 'http://localhost:4321');
+      assert.equal(body.payload.firstName, 'Ana');
+    } finally {
+      if (previousAppUrl === undefined) delete process.env.APP_URL;
+      else process.env.APP_URL = previousAppUrl;
+    }
+  });
 });
