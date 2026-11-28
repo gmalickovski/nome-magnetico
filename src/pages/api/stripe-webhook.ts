@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import type Stripe from 'stripe';
 import { buildPaymentConfirmedPayload } from '../../backend/notifications/payment-confirmed-payload';
-import { constructWebhookEvent, createCheckoutSession, PRODUCT_NAMES } from '../../backend/payments/stripe';
+import { constructWebhookEvent, createCheckoutSession, PRODUCT_NAMES, stripe } from '../../backend/payments/stripe';
+import { resolvePaidCheckoutMethod } from '../../backend/payments/checkout-payment-method';
 import { confirmCouponReservation, releaseCouponReservation } from '../../backend/payments/coupon-reservations';
 import { getEffectivePriceCore } from '../../backend/pricing/service';
 import {
@@ -145,6 +146,7 @@ export const POST: APIRoute = async ({ request }) => {
     customer_email?: string;
     customer_details?: { email?: string | null } | null;
     payment_status?: string;
+    payment_method_types?: string[] | null;
   };
 
   /**
@@ -449,11 +451,16 @@ export const POST: APIRoute = async ({ request }) => {
           break;
         }
 
-        // Cartão: payment_status = 'paid' → liberar acesso imediatamente.
+        // paid → liberar acesso imediatamente. Normalmente cartão, mas o Pix pago com o
+        // cliente na página também chega aqui já paid (DEV-356): o método vem do PaymentIntent.
         // Outros status síncronos (ex.: no_payment_required) seguem liberando acesso,
         // mas o purchase só sai quando o pagamento está paid.
-        await processPaymentSuccess(session, session.payment_status === 'paid' ? 'card' : null);
-        await recordPaidConversion(session, 'card');
+        const paidMethod = session.payment_status === 'paid'
+          ? await resolvePaidCheckoutMethod(session, (id) =>
+              stripe.paymentIntents.retrieve(id, { expand: ['payment_method'] }))
+          : null;
+        await processPaymentSuccess(session, paidMethod);
+        if (paidMethod) await recordPaidConversion(session, paidMethod);
         break;
       }
 

@@ -1,6 +1,6 @@
 # Analytics e Conversões de Pagamento
 
-Última atualização: 2026-11-22 · DEV-276
+Última atualização: 2026-11-28 · DEV-356
 
 Este documento descreve a arquitetura de analytics do Nome Magnético para eventos de marketing, checkout, visualização do blog, testes gratuitos e conversões canônicas de pagamento confirmado.
 
@@ -124,6 +124,58 @@ Webhook Stripe -> createSubscription -> PostHog purchase (posthog-node, uma vez 
 3. **Disparo GA4 Measurement Protocol:** POST para `https://www.google-analytics.com/mp/collect` com `transaction_id` = id da sessão Stripe. Sem `GA4_MEASUREMENT_ID` ou `GA4_API_SECRET`, o envio é no-op e não lança erro. O uuid v5 do PostHog (`evento + session_id`, também em `$insert_id`) impede um segundo `purchase` no PostHog se cartão e Pix, ou um retry do Stripe, dispararem de novo.
 
 O `begin_checkout` de e-commerce no GA4 (`value`, `currency=BRL`, `payment_method`) sai de `trackBeginCheckout` no clique que chama `POST /api/create-checkout`, com o mesmo consentimento do GA4 (`nm-cookie-consent=all`) e o filtro de admin. No PostHog, o mesmo POST chama `captureBeginCheckout` uma vez, com `payment_method`.
+
+---
+
+## Atribuição paga e fila de compra (DEV-353 · DEV-356)
+
+Liga com `PAID_ATTRIBUTION_ENABLED=1`. Sem a flag vale o caminho legado acima.
+
+```
+entrada com utm_source/utm_medium pagos + utm_id numérico (gclid/fbclid opcionais)
+  → banner: analytics + anúncios → POST /api/analytics/paid-preferences
+      → nm_paid_visitors (cookie httpOnly nm-paid-visitor; primeiro clique vale 7 dias)
+  → POST /api/create-checkout → nm_paid_checkout_snapshot → metadata.paid_attribution_ref
+  → webhook pago (cartão, ou Pix em completed/async_payment_succeeded)
+      → nm_enqueue_purchase: 1 linha por pedido (stripe session id) e destino (posthog, ga4)
+      → drainPurchaseDeliveries → outcome sent | skipped | failed (retry com backoff)
+```
+
+| Situação | Resultado esperado |
+| :--- | :--- |
+| UTM interna (`utm_source=app_chat`), autorreferência ou segundo clique dentro de 7 dias | primeiro clique preservado |
+| Recusa ou revogação do consentimento | visitante perde `click`/`ga`; snapshots perdem o clique; checkout sem `paid_attribution_ref` nem `ph_distinct_id`; nada na fila |
+| Consentimento trocado depois do checkout (`consent_epoch` diferente) | PostHog e GA4 `skipped` |
+| Pix pendente ou expirado | sem assinatura e sem linha na fila |
+| Pix pago com o cliente na página | chega em `checkout.session.completed` já `paid`; o método vem do PaymentIntent (`resolvePaidCheckoutMethod`), não é `card` |
+| Reentrega do mesmo evento Stripe | `createSubscription` não recria; fila `on conflict do nothing`; mesma contagem |
+| Destino sem configuração (PostHog sem chave, GA4 sem `GA4_API_SECRET` ou sem `client_id`) | `skipped`, nunca `failed` |
+| Meta | Pixel `PageView` no navegador. `Purchase` via CAPI não implementado: a fila não grava `meta` |
+
+### Diagnóstico (Supabase, só leitura)
+
+Conciliação por pedido pago nos últimos 7 dias: assinatura, valor, método e resultado por destino.
+
+```sql
+select s.stripe_session_id as pedido, s.amount_paid, s.created_at,
+       max(d.payload->>'paymentMethod') as metodo,
+       max(d.outcome) filter (where d.destination = 'posthog') as posthog,
+       max(d.outcome) filter (where d.destination = 'ga4') as ga4,
+       max(d.attempts) as tentativas,
+       count(d.*) filter (where d.finished_at is null) as abertas
+from public.subscriptions s
+left join public.nm_purchase_deliveries d on d.order_id = s.stripe_session_id
+where s.payment_provider = 'stripe' and s.created_at > now() - interval '7 days'
+group by 1, 2, 3 order by 3 desc;
+```
+
+Pedido sem linha na fila = compra sem atribuição consentida (caminho legado). Duplicata impossível por chave primária `(order_id, destination)`; para conferir: `select order_id, destination, count(*) from public.nm_purchase_deliveries group by 1, 2 having count(*) > 1;`.
+
+Métricas de relatório: **volume** = contagem de eventos; **conversão observada** = funil ordenado por pessoa no PostHog; **compra atribuída** = linha `sent` com `paid_campaign_id` conciliada a uma assinatura Stripe paga. Não somar as três.
+
+### Homologação em TESTE (28/11/2026)
+
+Local com Supabase TESTE, Stripe sandbox e `stripe listen`, `PAID_ATTRIBUTION_ENABLED=1` e `APP_URL=http://localhost:4321`. Origem sintética rotulada (`utm_id=356001`, `utm_campaign=dev356_sintetico`), sem alegar conversão de anúncio real. PostHog e GA4 sem chave no TESTE: a prova é a fila, não o painel. Evidência e IDs na DEV-356.
 
 ---
 

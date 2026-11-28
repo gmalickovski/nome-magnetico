@@ -42,7 +42,12 @@ mock.module('../../backend/payments/stripe', {
     constructWebhookEvent: () => constructedEvent,
     stripe: {
       charges: { retrieve: async () => ({ metadata: { product_type: 'nome_bebe', user_id: fixtureUserId } }) },
-      paymentIntents: { retrieve: async () => ({ metadata: { product_type: 'nome_empresa', user_id: fixtureUserId } }) },
+      paymentIntents: {
+        retrieve: async (id: string) => ({
+          metadata: { product_type: 'nome_empresa', user_id: fixtureUserId },
+          ...(id === 'pi_pix_paid' ? { payment_method: { type: 'pix' } } : {}),
+        }),
+      },
     },
     createCheckoutSession: async (params: Record<string, unknown>) => {
       createCheckoutCalls.push(params);
@@ -130,6 +135,7 @@ mock.module('../../backend/analytics/posthog-server', {
   namedExports: {
     captureServerEvent: async (payload: typeof posthogCalls[number]) => { posthogCalls.push(payload); },
     deliverServerEvent: async () => true,
+    posthogServerConfigured: () => true,
     posthogEventUuid: () => 'uuid-test',
     resolveCheckoutDistinctId,
   },
@@ -406,6 +412,27 @@ describe('stripe-webhook · cart recovery (DEV-278)', () => {
       assert.equal((await dispatchWebhook()).status, 200);
       assert.equal(recordedOrders.size, 2);
       assert.equal(recordedOrders.get(pix.id)?.paymentMethod, 'pix');
+    } finally {
+      if (previous === undefined) delete process.env.PAID_ATTRIBUTION_ENABLED;
+      else process.env.PAID_ATTRIBUTION_ENABLED = previous;
+    }
+  });
+
+  it('DEV-356 Pix pago já no checkout.session.completed registra pix, não cartão', async () => {
+    const previous = process.env.PAID_ATTRIBUTION_ENABLED;
+    process.env.PAID_ATTRIBUTION_ENABLED = '1';
+    try {
+      const pixPaid = {
+        id: 'cs_test_fixture_pix_inline', payment_status: 'paid', amount_total: 9800, currency: 'brl',
+        payment_intent: 'pi_pix_paid', payment_method_types: ['card', 'pix'],
+        metadata: { user_id: 'user-1', product_type: 'nome_social', paid_attribution_ref: 'fixture' },
+      };
+      constructedEvent = {
+        id: 'evt_pix_inline', type: 'checkout.session.completed', created: Math.floor(Date.now() / 1000),
+        data: { object: pixPaid },
+      };
+      assert.equal((await dispatchWebhook()).status, 200);
+      assert.equal(recordedOrders.get(pixPaid.id)?.paymentMethod, 'pix');
     } finally {
       if (previous === undefined) delete process.env.PAID_ATTRIBUTION_ENABLED;
       else process.env.PAID_ATTRIBUTION_ENABLED = previous;
