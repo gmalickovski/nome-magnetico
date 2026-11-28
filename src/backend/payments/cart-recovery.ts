@@ -1,15 +1,13 @@
 import type { ProductType } from '../../shared/product-labels';
 import { PRODUCT_LABELS } from '../../shared/product-labels';
+import { greetingFirstName } from '../notifications/first-name';
 
 /** Saudação do e-mail payment.failed (n8n); cart.abandoned não usa fallback. */
 export function paymentFailedDisplayFirstName(profile: {
   email: string;
   nome?: string | null;
 }): string {
-  const nome = profile.nome?.trim();
-  if (nome) return nome;
-  const local = profile.email.split('@')[0]?.trim();
-  return local || 'Cliente';
+  return greetingFirstName(profile.nome, profile.email);
 }
 
 export const MOTIVO_CART_ABANDONED = {

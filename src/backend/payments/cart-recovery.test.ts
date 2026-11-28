@@ -19,6 +19,14 @@ describe('cart-recovery · payment.failed firstName', () => {
     );
     assert.equal(paymentFailedDisplayFirstName({ email: 'maria@example.com', nome: '  Ana  ' }), 'Ana');
   });
+
+  it('DEV-358: usa só o primeiro nome de um nome completo', () => {
+    assert.equal(
+      paymentFailedDisplayFirstName({ email: 'm@example.com', nome: 'Maria da Silva Souza' }),
+      'Maria',
+    );
+    assert.equal(paymentFailedDisplayFirstName({ email: '', nome: '   ' }), 'Cliente');
+  });
 });
 
 describe('cart-recovery · Motivos fixos do Growth', () => {
