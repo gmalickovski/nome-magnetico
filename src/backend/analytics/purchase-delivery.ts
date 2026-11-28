@@ -4,7 +4,7 @@ import { supabase } from '../db/supabase';
 import { PRODUCT_LABELS, PRODUCT_TYPES } from '../../shared/product-labels';
 import { paidCampaignProperties, readGaIdentity } from './paid-attribution';
 import { sendGa4Purchase } from './ga4-mp';
-import { deliverServerEvent, posthogEventUuid } from './posthog-server';
+import { deliverServerEvent, posthogEventUuid, posthogServerConfigured } from './posthog-server';
 
 const purchaseSchema = z.object({
   distinctId: z.string().regex(/^[a-zA-Z0-9_-]{1,200}$/),
@@ -61,6 +61,10 @@ async function deliver(row: QueuedPurchase): Promise<Outcome> {
   const value = purchase.amountCents / 100;
   const plan = PRODUCT_LABELS[purchase.product];
   if (row.destination === 'posthog') {
+    // Sem chave no ambiente (ex.: TESTE) o destino fica desligado, como no GA4: não é falha.
+    if (!posthogServerConfigured()) return 'skipped';
+    // Sem contexto o consentimento do checkout foi revogado ou trocado, ou o snapshot expirou.
+    if (!context) return 'skipped';
     const sent = await deliverServerEvent({
       event: 'purchase',
       distinctId: purchase.distinctId,

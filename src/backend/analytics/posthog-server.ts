@@ -24,6 +24,11 @@ function resolveConfig(): { apiKey: string; host: string } | null {
   return { apiKey, host };
 }
 
+/** Destino PostHog do servidor configurado (chave e host https). */
+export function posthogServerConfigured(): boolean {
+  return resolveConfig() !== null;
+}
+
 function isShortLivedRuntime(): boolean {
   return Boolean(
     readServerEnv('AWS_LAMBDA_FUNCTION_NAME') ||
